@@ -98,13 +98,13 @@ echo "#start orca ray example tests"
 
 echo "#8 Start rl_pong example"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray/rl_pong/rl_pong.py --iterations 10
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/rl_pong/rl_pong.py --iterations 10
 now=$(date "+%s")
 time8=$((now-start))
 
 echo "#9 Start multiagent example"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray/rllib/multiagent_two_trainers.py --iterations 5
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/rllib/multiagent_two_trainers.py --iterations 5
 now=$(date "+%s")
 time9=$((now-start))
 

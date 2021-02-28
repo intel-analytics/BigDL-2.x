@@ -29,7 +29,7 @@ In above commands
 * `--cluster_mode` The mode of spark cluster, supporting local and yarn. Default is "local".
 - `--object_store_memory`The store memory you need to use on local. Default is 4g.
 - `--driver_cores` The number of driver's or local's cpu cores you want to use. Default is 8.
-- `--iterations` The number of iterations to train the model. Default is 10.
+- `--iterations` The number of iterations to train the model. Default is -1, training will not terminate.
 - `--batch_size` The number of roll-outs to do per batch. Default is 10.
 
 **Options for yarn only**

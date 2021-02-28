@@ -39,7 +39,7 @@ from ray.rllib.tests.test_multi_agent_env import MultiCartpole
 from ray.tune.logger import pretty_print
 from ray.tune.registry import register_env
 from zoo.orca import init_orca_context, stop_orca_context
-from zoo.ray import RayContext
+from zoo.orca import OrcaContext
 
 os.environ["LANG"] = "C.UTF-8"
 
@@ -80,17 +80,15 @@ if __name__ == "__main__":
                                driver_memory=args.driver_memory,
                                driver_cores=args.driver_cores,
                                num_executors=args.slave_num,
-                               extra_executor_memory_for_ray=args.extra_executor_memory_for_ray)
-        ray_ctx = RayContext(
-            sc=sc,
-            object_store_memory=args.object_store_memory)
+                               extra_executor_memory_for_ray=args.extra_executor_memory_for_ray,
+                               object_store_memory=args.object_store_memory)
+        ray_ctx = OrcaContext.get_ray_context()
     elif cluster_mode == "local":
         sc = init_orca_context(cores=args.driver_cores)
-        ray_ctx = RayContext(sc=sc, object_store_memory=args.object_store_memory)
+        ray_ctx = OrcaContext.get_ray_context()
     else:
         print("init_orca_context failed. cluster_mode should be either 'local' or 'yarn' but got "
               + cluster_mode)
-    ray_ctx.init()
 
     # Simple environment with 4 independent cartpole entities
     register_env("multi_cartpole", lambda _: MultiCartpole(4))
@@ -157,5 +155,6 @@ if __name__ == "__main__":
         # swap weights to synchronize
         dqn_trainer.set_weights(ppo_trainer.get_weights(["ppo_policy"]))
         ppo_trainer.set_weights(dqn_trainer.get_weights(["dqn_policy"]))
+
     ray_ctx.stop()
     stop_orca_context()

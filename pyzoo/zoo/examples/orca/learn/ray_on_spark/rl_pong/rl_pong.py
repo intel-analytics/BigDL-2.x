@@ -30,7 +30,7 @@ import numpy as np
 import ray
 
 from zoo.orca import init_orca_context, stop_orca_context
-from zoo.ray import RayContext
+from zoo.orca import OrcaContext
 
 os.environ["LANG"] = "C.UTF-8"
 # Define some hyperparameters.
@@ -218,17 +218,15 @@ if __name__ == "__main__":
                                num_executors=args.slave_num,
                                driver_memory=args.driver_memory,
                                driver_cores=args.driver_cores,
-                               extra_executor_memory_for_ray=args.extra_executor_memory_for_ray)
-        ray_ctx = RayContext(
-            sc=sc,
-            object_store_memory=args.object_store_memory)
+                               extra_executor_memory_for_ray=args.extra_executor_memory_for_ray,
+                               object_store_memory=args.object_store_memory)
+        ray_ctx = OrcaContext.get_ray_context()
     elif cluster_mode == "local":
         sc = init_orca_context(cores=args.driver_cores)
-        ray_ctx = RayContext(sc=sc, object_store_memory=args.object_store_memory)
+        ray_ctx = OrcaContext.get_ray_context()
     else:
         print("init_orca_context failed. cluster_mode should be either 'local' or 'yarn' but got "
               + cluster_mode)
-    ray_ctx.init()
 
     batch_size = args.batch_size
     # Run the reinforcement learning.
