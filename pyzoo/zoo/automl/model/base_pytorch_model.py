@@ -149,14 +149,14 @@ class PytorchBaseModel(BaseModel):
         for i in range(len(list(self.model.parameters()))):
             print(list(self.model.parameters())[i].size())
 
-    def evaluate(self, x, y, metric=['mse']):
+    def evaluate(self, x, y, metrics=['mse']):
         # reshape 1dim input
         x = self._reshape_input(x)
         y = self._reshape_input(y)
 
         yhat = self.predict(x)
         eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput="raw_values")
-                       for m in metric]
+                       for m in metrics]
         return eval_result
 
     def predict(self, x, mc=False):
