@@ -103,13 +103,11 @@ if __name__ == "__main__":
         "dqn_policy": (DQNTFPolicy, obs_space, act_space, {}),
     }
 
-
     def policy_mapping_fn(agent_id):
         if agent_id % 2 == 0:
             return "ppo_policy"
         else:
             return "dqn_policy"
-
 
     ppo_trainer = PPOTrainer(
         env="multi_cartpole",
