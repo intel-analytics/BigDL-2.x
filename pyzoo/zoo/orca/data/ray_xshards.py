@@ -87,7 +87,6 @@ def write_to_ray(idx, partition, redis_address, redis_password, partition_store_
         shard_ref = ray.put(shard)
         result.append(local_store.upload_shards.remote((idx, shard_id), shard_ref))
     ray.get(result)
-    ray.shutdown()
 
     return [(idx, local_store_name.split(":")[-1], local_store_name)]
 
@@ -97,7 +96,6 @@ def get_from_ray(idx, redis_address, redis_password, idx_to_store_name):
         ray.init(address=redis_address, _redis_password=redis_password, ignore_reinit_error=True)
     local_store_handle = ray.get_actor(idx_to_store_name[idx])
     partition = ray.get(local_store_handle.get_partition.remote(idx))
-    ray.shutdown()
     return partition
 
 
@@ -141,7 +139,13 @@ class RayXShards(XShards):
         rdd = sc.parallelize([0] * num_parts * 10, num_parts)\
             .mapPartitionsWithIndex(
             lambda idx, _: get_from_ray(idx, address, password, partition2store))
-        spark_xshards = SparkXShards(rdd)
+
+        # the reason why we trigger computation here is to ensure we get the data
+        # from ray before the RayXShards goes out of scope and the data get garbage collected
+        from pyspark.storagelevel import StorageLevel
+        rdd = rdd.cache()
+        result_rdd = rdd.map(lambda x: x) # sparkxshards will uncache the rdd when gc
+        spark_xshards = SparkXShards(result_rdd)
         return spark_xshards
 
     def _get_multiple_partition_refs(self, ids):
