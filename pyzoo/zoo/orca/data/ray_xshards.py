@@ -67,7 +67,7 @@ class LocalStore:
 
 def write_to_ray(idx, partition, redis_address, redis_password, partition_store_names):
     if not ray.is_initialized():
-        ray.init(address=redis_address, redis_password=redis_password, ignore_reinit_error=True)
+        ray.init(address=redis_address, _redis_password=redis_password, ignore_reinit_error=True)
     ip = ray.services.get_node_ip_address()
     local_store_name = None
     for name in partition_store_names:
@@ -77,7 +77,7 @@ def write_to_ray(idx, partition, redis_address, redis_password, partition_store_
     if local_store_name is None:
         local_store_name = random.choice(partition_store_names)
 
-    local_store = ray.util.get_actor(local_store_name)
+    local_store = ray.get_actor(local_store_name)
 
     # directly calling ray.put will set this driver as the owner of this object,
     # when the spark job finished, the driver might exit and make the object
@@ -94,8 +94,8 @@ def write_to_ray(idx, partition, redis_address, redis_password, partition_store_
 
 def get_from_ray(idx, redis_address, redis_password, idx_to_store_name):
     if not ray.is_initialized():
-        ray.init(address=redis_address, redis_password=redis_password, ignore_reinit_error=True)
-    local_store_handle = ray.util.get_actor(idx_to_store_name[idx])
+        ray.init(address=redis_address, _redis_password=redis_password, ignore_reinit_error=True)
+    local_store_handle = ray.get_actor(idx_to_store_name[idx])
     partition = ray.get(local_store_handle.get_partition.remote(idx))
     ray.shutdown()
     return partition
