@@ -271,8 +271,7 @@ if __name__ == "__main__":
         # update gradient after one iteration
         for k, v in model.items():
             g = grad_buffer[k]
-            rmsprop_cache[k] = (
-                    decay_rate * rmsprop_cache[k] + (1 - decay_rate) * g ** 2)
+            rmsprop_cache[k] = (decay_rate * rmsprop_cache[k] + (1 - decay_rate) * g ** 2)
             model[k] += learning_rate * g / (np.sqrt(rmsprop_cache[k]) + 1e-5)
             # Reset the batch gradient buffer.
             grad_buffer[k] = np.zeros_like(v)
