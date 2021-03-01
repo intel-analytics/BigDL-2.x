@@ -15,17 +15,7 @@
 #
 from abc import ABC, abstractmethod
 from builtins import ModuleNotFoundError
-
-
-def _try_import_pytorch_lightning_metrics():
-    try:
-        from pytorch_lightning import metrics
-    except ModuleNotFoundError as e:
-        raise RuntimeError("Could not find pytorch lightning, "
-                           "please install pytorch lightning when "
-                           "using orca metrics for pytorch")
-    return metrics
-
+import logging
 
 class Metric(ABC):
 
@@ -119,17 +109,6 @@ class AUC(Metric):
     def get_name(self):
         return "AUC"
 
-    def get_pytorch_metric(self):
-        if self.threshold_num != 200:
-            raise ValueError("pytorch AUC does not support threshold_num argument")
-        metrics = _try_import_pytorch_lightning_metrics()
-        class AUC(metrics.ROC):
-            def compute(self):
-                from pytorch_lightning.metrics.functional.classification import auc
-                fpr, tpr, _ = super().compute()
-                return auc(fpr, tpr)
-        return AUC()
-
 
 class MAE(Metric):
     """
@@ -146,10 +125,6 @@ class MAE(Metric):
     def get_name(self):
         return "MAE"
 
-    def get_pytorch_metric(self):
-        metrics = _try_import_pytorch_lightning_metrics()
-        return metrics.MeanAbsoluteError()
-
 
 class Accuracy(Metric):
     """
@@ -164,9 +139,8 @@ class Accuracy(Metric):
 
     >>> acc = Accuracy()
     """
-    def __init__(self, threshold=0.5, zero_based_label=True):
+    def __init__(self, zero_based_label=True):
         self.zero_based_label = zero_based_label
-        self.threshold = threshold
 
     def get_bigdl_metric(self):
         if self.threshold != 0.5:
@@ -175,12 +149,11 @@ class Accuracy(Metric):
         return KerasAccuracy(zero_based_label=self.zero_based_label)
 
     def get_pytorch_metric(self):
-        metrics = _try_import_pytorch_lightning_metrics()
-
+        from zoo.orca.learn.pytorch import pytorch_metrics
         if not self.zero_based_label:
             raise ValueError("pytorch Accuracy does not support one based accuracy, "
                              "please set zero_based_label to True")
-        return metrics.Accuracy(threshold=self.threshold)
+        return pytorch_metrics.Accuracy()
 
     def get_name(self):
         return "Accuracy"
@@ -201,10 +174,6 @@ class SparseCategoricalAccuracy(Metric):
     def get_name(self):
         return "SparseCategoricalAccuracy"
 
-    def get_pytorch_metric(self):
-        metrics = _try_import_pytorch_lightning_metrics()
-        return metrics.Accuracy(threshold=0.5)
-
 
 class CategoricalAccuracy(Metric):
     """
@@ -220,10 +189,6 @@ class CategoricalAccuracy(Metric):
     def get_name(self):
         return "CategoricalAccuracy"
 
-    def get_pytorch_metric(self):
-        metrics = _try_import_pytorch_lightning_metrics()
-        return metrics.Accuracy(threshold=0.5)
-
 
 class BinaryAccuracy(Metric):
     """
@@ -238,10 +203,6 @@ class BinaryAccuracy(Metric):
 
     def get_name(self):
         return "BinaryAccuracy"
-
-    def get_pytorch_metric(self):
-        metrics = _try_import_pytorch_lightning_metrics()
-        return metrics.Accuracy(threshold=0.5)
 
 
 class Top5Accuracy(Metric):
