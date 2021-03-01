@@ -61,7 +61,7 @@ class ModelBuilder:
     @classmethod
     def from_cls(cls, estimator):
         return cls(cls=estimator)
-    
+
     def restore(self, checkpoint_filename):
         '''Restore from a saved model'''
         if self.backend == "pytorch":

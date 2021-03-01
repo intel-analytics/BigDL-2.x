@@ -114,7 +114,6 @@ if __name__ == "__main__":
                    validation_data=(data["val_x"], data["val_y"]),
                    epochs=20)
     val_result_pytorch_manual = model.evaluate(x=data["x"], y=data["y"], metrics=['rmse'])
-    
 
     # 3. try another modelbuilder based on tfkeras
     modelBuilder_keras = ModelBuilder.from_tfkeras(model_creator_keras)
