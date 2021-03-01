@@ -126,7 +126,7 @@ class TemporalConvNet(nn.Module):
 
 
 def model_creator(config):
-    num_channels = config.get('num_channels', 
+    num_channels = config.get('num_channels',
                               [config.get("nhid", 30)] * (config.get("levels", 8)-1))
     return TemporalConvNet(past_seq_len=config["past_seq_len"],
                            input_feature_num=config["input_feature_num"],
