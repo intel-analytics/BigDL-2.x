@@ -318,7 +318,9 @@ class TorchRunner:
         if num_steps:
             loader = itertools.islice(loader, num_steps)
         with self.timers.record("validation"):
-            validation_stats = self.training_operator.validate(loader, info=info, metrics=self.metrics)
+            validation_stats = self.training_operator.validate(loader,
+                                                               info=info,
+                                                               metrics=self.metrics)
         if profile:
             validation_stats.update(profile=self.timers.stats())
         return validation_stats

@@ -44,4 +44,3 @@ class Accuracy:
 
     def compute(self):
         return self.correct.float() / self.total
-

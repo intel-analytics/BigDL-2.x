@@ -14,8 +14,7 @@
 # limitations under the License.
 #
 from abc import ABC, abstractmethod
-from builtins import ModuleNotFoundError
-import logging
+
 
 class Metric(ABC):
 
