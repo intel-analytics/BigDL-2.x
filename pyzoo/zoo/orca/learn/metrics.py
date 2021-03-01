@@ -142,8 +142,6 @@ class Accuracy(Metric):
         self.zero_based_label = zero_based_label
 
     def get_bigdl_metric(self):
-        if self.threshold != 0.5:
-            raise ValueError("bigdl Accuracy does not support threshold argument other than 0.5")
         from zoo.pipeline.api.keras.metrics import Accuracy as KerasAccuracy
         return KerasAccuracy(zero_based_label=self.zero_based_label)
 

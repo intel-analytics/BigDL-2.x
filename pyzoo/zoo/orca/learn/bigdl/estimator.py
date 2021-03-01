@@ -71,7 +71,7 @@ class BigDLEstimator(OrcaSparkEstimator):
                  feature_preprocessing=None, label_preprocessing=None, model_dir=None):
         self.loss = loss
         self.optimizer = optimizer
-        self.metrics = Metrics.convert_metrics_list(metrics)
+        self.metrics = Metric.convert_metrics_list(metrics)
         self.feature_preprocessing = feature_preprocessing
         self.label_preprocessing = label_preprocessing
         self.model_dir = model_dir
