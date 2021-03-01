@@ -16,7 +16,7 @@
 from collections import defaultdict
 
 import ray
-import ray.services
+import ray._private.services
 import uuid
 import random
 
@@ -68,7 +68,7 @@ class LocalStore:
 def write_to_ray(idx, partition, redis_address, redis_password, partition_store_names):
     if not ray.is_initialized():
         ray.init(address=redis_address, _redis_password=redis_password, ignore_reinit_error=True)
-    ip = ray.services.get_node_ip_address()
+    ip = ray._private.services.get_node_ip_address()
     local_store_name = None
     for name in partition_store_names:
         if name.endswith(ip):
@@ -163,7 +163,7 @@ class RayXShards(XShards):
         and run func for each actor and partition_ref pair.
 
         Actors should have a `get_node_ip` method to achieve locality scheduling.
-        The `get_node_ip` method should call ray.services.get_node_ip_address()
+        The `get_node_ip` method should call ray._private.services.get_node_ip_address()
         to return the correct ip address.
 
         The `func` should take an actor and a partition_ref as argument and
@@ -308,7 +308,7 @@ class RayXShards(XShards):
         ray_ctx = RayContext.get()
         address = ray_ctx.redis_address
         password = ray_ctx.redis_password
-        driver_ip = ray.services.get_node_ip_address()
+        driver_ip = ray._private.services.get_node_ip_address()
         uuid_str = str(uuid.uuid4())
         resources = ray.cluster_resources()
         nodes = []
