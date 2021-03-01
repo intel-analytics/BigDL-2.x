@@ -20,4 +20,4 @@ sudo docker build \
     --build-arg no_proxy=10.239.45.10 \
     -t analytics-zoo-ppml-trusted-cluster-serving-scala-graphene:0.10-SNAPSHOT -f ./Dockerfile .
 
-sudo docker tag analytics-zoo-ppml-trusted-cluster-serving-scala-graphene:0.10-SNAPSHOT analytics-zoo-ppml-trusted-cluster-serving-scala-graphene:0.10-SNAPSHOT
+sudo docker tag analytics-zoo-ppml-trusted-cluster-serving-scala-graphene:0.10-SNAPSHOT 10.239.47.32/arda/analytics-zoo-ppml-trusted-cluster-serving-scala-graphene:0.10-SNAPSHOT

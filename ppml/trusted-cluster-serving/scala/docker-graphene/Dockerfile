@@ -60,14 +60,18 @@ FROM ubuntu:18.04
 ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
 ARG FLINK_VERSION=1.10.1
 ENV ANALYTICS_ZOO_VERSION       ${ANALYTICS_ZOO_VERSION}
-ENV FLINK_VERSION		${FLINK_VERSION}
-ENV FLINK_HOME			/ppml/trusted-cluster-serving/java/work/flink-${FLINK_VERSION}
 ENV ANALYTICS_ZOO_HOME		/ppml/trusted-cluster-serving/java/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
 ENV JAVA_HOME			/opt/jdk8
 ENV PATH			${JAVA_HOME}/bin:${PATH}
 ENV LOCAL_IP			127.0.0.1
 ENV SGX_MEM_SIZE		64G
 ENV REDIS_PORT			6379
+ENV FLINK_VERSION               ${FLINK_VERSION}
+ENV FLINK_HOME                  /ppml/trusted-cluster-serving/java/work/flink-${FLINK_VERSION}
+ENV FLINK_JOB_MANAGER_IP        127.0.0.1
+ENV FLINK_JOB_MANAGER_PORT      8081
+ENV FLINK_SECURE_PASSWORD       1234qwer
+ENV CORE_NUM			2
 
 RUN mkdir -p /graphene && \
     mkdir -p /graphene/Runtime && \
@@ -111,6 +115,12 @@ ADD ./redis.Makefile /ppml/trusted-cluster-serving/redis/Makefile
 ADD ./redis-server.manifest.template /ppml/trusted-cluster-serving/redis/redis-server.manifest.template
 ADD ./init-redis.sh /ppml/trusted-cluster-serving/redis/init-redis.sh
 ADD ./start-redis.sh /ppml/trusted-cluster-serving/redis/start-redis.sh
+ADD ./java.Makefile /ppml/trusted-cluster-serving/java/Makefile
+ADD ./java.manifest.template /ppml/trusted-cluster-serving/java/java.manifest.template
+ADD ./init-java.sh /ppml/trusted-cluster-serving/java/init-java.sh
+ADD ./start-flink-jobmanager.sh /ppml/trusted-cluster-serving/java/start-flink-jobmanager.sh
 
 RUN chmod a+x /ppml/trusted-cluster-serving/redis/init-redis.sh && \
-    chmod a+x /ppml/trusted-cluster-serving/redis/start-redis.sh
+    chmod a+x /ppml/trusted-cluster-serving/redis/start-redis.sh && \
+    chmod a+x /ppml/trusted-cluster-serving/java/init-java.sh && \
+    chmod a+x /ppml/trusted-cluster-serving/java/start-flink-jobmanager.sh
