@@ -31,6 +31,9 @@ class SparkRunner:
                  redirect_spark_log=True):
         self.spark_log_level = spark_log_level
         self.redirect_spark_log = redirect_spark_log
+        with SparkContext._lock:
+            if SparkContext._active_spark_context:
+                print("WARNING: There's existing SparkContext. Please close it first.")
         import pyspark
         print("Current pyspark location is : {}".format(pyspark.__file__))
 
