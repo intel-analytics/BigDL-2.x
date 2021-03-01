@@ -22,25 +22,22 @@ from __future__ import print_function
 import argparse
 import os
 
-import model
+from zoo.examples.ray.parameter_server import model
 import numpy as np
 import ray
 
-from zoo import init_spark_on_yarn, init_spark_on_local
-from zoo.ray import RayContext
+from zoo.orca import init_orca_context, stop_orca_context
+from zoo.orca import OrcaContext
 
 os.environ["LANG"] = "C.UTF-8"
 parser = argparse.ArgumentParser(description="Run the synchronous parameter "
                                              "server example.")
+parser.add_argument('--cluster_mode', type=str, default="local",
+                    help='The mode for the Spark cluster. local or yarn.')
 parser.add_argument("--num_workers", default=4, type=int,
                     help="The number of workers to use.")
 parser.add_argument("--iterations", default=50, type=int,
                     help="Iteration time.")
-parser.add_argument("--hadoop_conf", type=str,
-                    help="turn on yarn mode by passing the path to the hadoop"
-                    "configuration folder. Otherwise, turn on local mode.")
-parser.add_argument("--conda_name", type=str,
-                    help="The name of conda environment.")
 parser.add_argument("--executor_cores", type=int, default=8,
                     help="The number of driver's cpu cores you want to use."
                     "You can change it depending on your own cluster setting.")
@@ -90,23 +87,24 @@ class Worker(object):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    if args.hadoop_conf:
-        sc = init_spark_on_yarn(
-            hadoop_conf=args.hadoop_conf,
-            conda_name=args.conda_name,
-            num_executors=args.num_workers,
-            executor_cores=args.executor_cores,
-            executor_memory=args.executor_memory,
-            driver_memory=args.driver_memory,
-            driver_cores=args.driver_cores,
-            extra_executor_memory_for_ray=args.extra_executor_memory_for_ray)
-        ray_ctx = RayContext(
-            sc=sc,
-            object_store_memory=args.object_store_memory)
+    cluster_mode = args.cluster_mode
+    if cluster_mode == "yarn":
+        sc = init_orca_context(cluster_mode=cluster_mode,
+                               cores=args.executor_cores,
+                               memory=args.executor_memory,
+                               init_ray_on_spark=True,
+                               num_executors=args.num_workers,
+                               driver_memory=args.driver_memory,
+                               driver_cores=args.driver_cores,
+                               extra_executor_memory_for_ray=args.extra_executor_memory_for_ray,
+                               object_store_memory=args.object_store_memory)
+        ray_ctx = OrcaContext.get_ray_context()
+    elif cluster_mode == "local":
+        sc = init_orca_context(cores=args.driver_cores)
+        ray_ctx = OrcaContext.get_ray_context()
     else:
-        sc = init_spark_on_local(cores=args.driver_cores)
-        ray_ctx = RayContext(sc=sc, object_store_memory=args.object_store_memory)
-    ray_ctx.init()
+        print("init_orca_context failed. cluster_mode should be either 'local' or 'yarn' but got "
+              + cluster_mode)
 
     # Create a parameter server.
     net = model.SimpleCNN()
@@ -136,4 +134,4 @@ if __name__ == "__main__":
             print("Iteration {}: accuracy is {}".format(i, accuracy))
         i += 1
     ray_ctx.stop()
-    sc.stop()
+    stop_orca_context()
