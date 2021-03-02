@@ -322,7 +322,7 @@ class TrainingOperator:
 
         result = {name: metric.compute() for name, metric in metrics.items()}
 
-        result["loss"] = sum(losses) / total_samples
+        result["val_loss"] = sum(losses) / total_samples
 
         result["num_samples"] = total_samples
 
