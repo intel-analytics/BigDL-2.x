@@ -61,3 +61,19 @@ class TestBasePytorchModel(TestCase):
                                     validation_data=(self.data["val_x"], self.data["val_y"]),
                                     epochs=20)
         assert val_result is not None
+
+    def test_evaluate(self):
+        modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator_pytorch,
+                                                 optimizer_creator=optimizer_creator,
+                                                 loss_creator=loss_creator)
+        model = modelBuilder.build(config={
+            "lr": 1e-2,
+            "batch_size": 32,
+        })
+        model.fit_eval(x=self.data["x"],
+                       y=self.data["y"],
+                       validation_data=(self.data["val_x"], self.data["val_y"]),
+                       epochs=20)
+        mse_eval = model.evaluate(x=self.data["val_x"], y=self.data["val_y"])
+        mse_eval_onnx = model.evaluate_with_onnx(x=self.data["val_x"], y=self.data["val_y"])
+        assert mse_eval == mse_eval_onnx
