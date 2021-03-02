@@ -20,7 +20,7 @@ You can run this example on local mode and yarn client mode.
 python rl_pong.py
 ```
 
-- Run with Yarn Client mode, export env `HADOOP_CONF_DIR`:
+- Run with Yarn Client mode:
 ```bash
 python rl_pong.py --cluster_mode yarn
 ```
