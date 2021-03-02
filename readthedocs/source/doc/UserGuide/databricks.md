@@ -58,4 +58,5 @@ init_orca_context(cluster_mode="spark-submit")
 ```
 
 Output on Databricks:
+
 ![Pic6](./images/Databricks6.PNG)
