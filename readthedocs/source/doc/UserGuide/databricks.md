@@ -50,7 +50,7 @@ spark.driver.cores 1
 
 ### **4. Running Analytics Zoo on Databricks**
 
-Open a new notebook. First call `init_nncontext()` at the beginning of your code. This will create a SparkContext with optimized performance configuration and initialize the BigDL engine.
+Open a new notebook. First call `init_orca_context` at the beginning of your code. This will create a SparkContext with optimized performance configuration and initialize the BigDL engine.
 
 ```python
 from zoo.orca import init_orca_context, stop_orca_context
