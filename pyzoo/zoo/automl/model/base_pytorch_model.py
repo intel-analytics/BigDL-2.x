@@ -227,6 +227,8 @@ class PytorchBaseModel(BaseModel):
             print("You should install onnx and onnxruntime to use onnx based method.")
         if dirname is None:
             dirname = tempfile.mkdtemp(prefix="onnx_cache_")
+        # code adapted from
+        # https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html
         torch.onnx.export(self.model,
                           x,
                           os.path.join(dirname, "cache.onnx"),
