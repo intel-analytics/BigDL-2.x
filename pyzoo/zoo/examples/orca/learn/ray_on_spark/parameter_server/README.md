@@ -24,7 +24,12 @@ python sync_parameter_server --iterations 20 --num_workers 2
 ```
 
 - Run with Yarn Client mode:
+You should download [MNIST](http://yann.lecun.com/exdb/mnist/) dataset first, and prepare package file as the flollowing steps:
 ```bash
+# prepare dataset
+zip MNIST_data.zip train-images-idx3-ubyte.gz train-labels-idx1-ubyte.gz t10k-images-idx3-ubyte.gz t10k-labels-idx1-ubyte.gz
+
+# run the example
 python async_parameter_server.py --iterations 20 --num_workers 2 --cluster_mode yarn
 python sync_parameter_server --iterations 20 --num_workers 2 --cluster_mode yarn
 ```
