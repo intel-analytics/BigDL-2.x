@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+
 """Example of using two different training methods at once in multi-agent.
 Here we create a number of CartPole agents, some of which are trained with
 DQN, and some of which are trained with PPO. We periodically sync weights
@@ -30,7 +31,6 @@ import argparse
 import gym
 import os
 
-
 from ray.rllib.agents.dqn.dqn import DQNTrainer
 from ray.rllib.agents.dqn.dqn_policy import DQNTFPolicy
 from ray.rllib.agents.ppo.ppo import PPOTrainer
@@ -38,59 +38,57 @@ from ray.rllib.agents.ppo.ppo_tf_policy import PPOTFPolicy
 from ray.rllib.tests.test_multi_agent_env import MultiCartpole
 from ray.tune.logger import pretty_print
 from ray.tune.registry import register_env
-from zoo import init_spark_on_yarn, init_spark_on_local
-from zoo.ray import RayContext
+from zoo.orca import init_orca_context, stop_orca_context
+from zoo.orca import OrcaContext
+
 os.environ["LANG"] = "C.UTF-8"
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--cluster_mode', type=str, default="local",
+                    help='The mode for the Spark cluster. local or yarn.')
 parser.add_argument("--iterations", type=int, default=10,
                     help="The number of iterations to train the model")
-parser.add_argument("--hadoop_conf", type=str,
-                    help="turn on yarn mode by passing the path to the hadoop"
-                    " configuration folder. Otherwise, turn on local mode.")
 parser.add_argument("--slave_num", type=int, default=2,
                     help="The number of slave nodes")
-parser.add_argument("--conda_name", type=str,
-                    help="The name of conda environment.")
 parser.add_argument("--executor_cores", type=int, default=8,
                     help="The number of driver's cpu cores you want to use."
-                    "You can change it depending on your own cluster setting.")
+                         "You can change it depending on your own cluster setting.")
 parser.add_argument("--executor_memory", type=str, default="10g",
                     help="The size of slave(executor)'s memory you want to use."
-                    "You can change it depending on your own cluster setting.")
+                         "You can change it depending on your own cluster setting.")
 parser.add_argument("--driver_memory", type=str, default="2g",
                     help="The size of driver's memory you want to use."
-                    "You can change it depending on your own cluster setting.")
+                         "You can change it depending on your own cluster setting.")
 parser.add_argument("--driver_cores", type=int, default=8,
                     help="The number of driver's cpu cores you want to use."
-                    "You can change it depending on your own cluster setting.")
+                         "You can change it depending on your own cluster setting.")
 parser.add_argument("--extra_executor_memory_for_ray", type=str, default="20g",
                     help="The extra executor memory to store some data."
-                    "You can change it depending on your own cluster setting.")
+                         "You can change it depending on your own cluster setting.")
 parser.add_argument("--object_store_memory", type=str, default="4g",
                     help="The memory to store data on local."
-                    "You can change it depending on your own cluster setting.")
-
+                         "You can change it depending on your own cluster setting.")
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    if args.hadoop_conf:
-        sc = init_spark_on_yarn(
-            hadoop_conf=args.hadoop_conf,
-            conda_name=args.conda_name,
-            num_executors=args.slave_num,
-            executor_cores=args.executor_cores,
-            executor_memory=args.executor_memory,
-            driver_memory=args.driver_memory,
-            driver_cores=args.driver_cores,
-            extra_executor_memory_for_ray=args.extra_executor_memory_for_ray)
-        ray_ctx = RayContext(
-            sc=sc,
-            object_store_memory=args.object_store_memory)
+    cluster_mode = args.cluster_mode
+    if cluster_mode == "yarn":
+        sc = init_orca_context(cluster_mode="yarn",
+                               cores=args.executor_cores,
+                               memory=args.executor_memory,
+                               init_ray_on_spark=True,
+                               driver_memory=args.driver_memory,
+                               driver_cores=args.driver_cores,
+                               num_executors=args.slave_num,
+                               extra_executor_memory_for_ray=args.extra_executor_memory_for_ray,
+                               object_store_memory=args.object_store_memory)
+        ray_ctx = OrcaContext.get_ray_context()
+    elif cluster_mode == "local":
+        sc = init_orca_context(cores=args.driver_cores)
+        ray_ctx = OrcaContext.get_ray_context()
     else:
-        sc = init_spark_on_local(cores=args.driver_cores)
-        ray_ctx = RayContext(sc=sc, object_store_memory=args.object_store_memory)
-    ray_ctx.init()
+        print("init_orca_context failed. cluster_mode should be either 'local' or 'yarn' but got "
+              + cluster_mode)
 
     # Simple environment with 4 independent cartpole entities
     register_env("multi_cartpole", lambda _: MultiCartpole(4))
@@ -155,5 +153,6 @@ if __name__ == "__main__":
         # swap weights to synchronize
         dqn_trainer.set_weights(ppo_trainer.get_weights(["ppo_policy"]))
         ppo_trainer.set_weights(dqn_trainer.get_weights(["dqn_policy"]))
+
     ray_ctx.stop()
-    sc.stop()
+    stop_orca_context()

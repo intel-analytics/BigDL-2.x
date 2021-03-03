@@ -29,8 +29,8 @@ import gym
 import numpy as np
 import ray
 
-from zoo import init_spark_on_yarn, init_spark_on_local
-from zoo.ray import RayContext
+from zoo.orca import init_orca_context, stop_orca_context
+from zoo.orca import OrcaContext
 
 os.environ["LANG"] = "C.UTF-8"
 # Define some hyperparameters.
@@ -84,10 +84,10 @@ def discount_rewards(r):
 # x is a vector that holds the preprocessed pixel information
 def policy_forward(x, model):
     # neurons in the hidden layer (W1) can detect various game senarios
-    h = np.dot(model["W1"], x)   # compute hidden layer neuron activations
+    h = np.dot(model["W1"], x)  # compute hidden layer neuron activations
     h[h < 0] = 0  # ReLU nonlinearity. threhold at zero
     # weights in W2 can then decide if each case we should go UP or DOWN
-    logp = np.dot(model["W2"], h)   # compuate the log probability of going up
+    logp = np.dot(model["W2"], h)  # compuate the log probability of going up
     p = sigmoid(logp)
     # Return probability of taking action 2, and hidden state.
     return p, h
@@ -95,9 +95,9 @@ def policy_forward(x, model):
 
 def policy_backward(eph, epx, epdlogp, model):
     """backward pass. (eph is array of intermediate hidden states)"""
-# the way to change the policy parameters is to
-# do some rollouts, take the gradient of the sampled actions
-#  multiply it by the score and add everything
+    # the way to change the policy parameters is to
+    # do some rollouts, take the gradient of the sampled actions
+    #  multiply it by the score and add everything
     dW2 = np.dot(eph.T, epdlogp).ravel()
     dh = np.outer(epdlogp, model["W2"])
     # Backprop relu.
@@ -179,17 +179,14 @@ class PongEnv(object):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train an RL agent")
 
-    parser.add_argument("--hadoop_conf", type=str,
-                        help="turn on yarn mode by passing the hadoop path"
-                        "configuration folder. Otherwise, turn on local mode.")
+    parser.add_argument('--cluster_mode', type=str, default="local",
+                        help='The mode for the Spark cluster. local or yarn.')
     parser.add_argument("--batch_size", default=10, type=int,
                         help="The number of roll-outs to do per batch.")
     parser.add_argument("--iterations", default=-1, type=int,
                         help="The number of model updates to perform. By "
-                        "default, training will not terminate.")
+                             "default, training will not terminate.")
 
-    parser.add_argument("--conda_name", type=str,
-                        help="The name of conda environment.")
     parser.add_argument("--slave_num", type=int, default=2,
                         help="The number of slave nodes")
     parser.add_argument("--executor_cores", type=int, default=8,
@@ -212,23 +209,24 @@ if __name__ == "__main__":
                              "You can change it depending on your own cluster setting.")
 
     args = parser.parse_args()
-    if args.hadoop_conf:
-        sc = init_spark_on_yarn(
-            hadoop_conf=args.hadoop_conf,
-            conda_name=args.conda_name,
-            num_executors=args.slave_num,
-            executor_cores=args.executor_cores,
-            executor_memory=args.executor_memory,
-            driver_memory=args.driver_memory,
-            driver_cores=args.driver_cores,
-            extra_executor_memory_for_ray=args.extra_executor_memory_for_ray)
-        ray_ctx = RayContext(
-            sc=sc,
-            object_store_memory=args.object_store_memory)
+    cluster_mode = args.cluster_mode
+    if cluster_mode == "yarn":
+        sc = init_orca_context(cluster_mode=cluster_mode,
+                               cores=args.executor_cores,
+                               memory=args.executor_memory,
+                               init_ray_on_spark=True,
+                               num_executors=args.slave_num,
+                               driver_memory=args.driver_memory,
+                               driver_cores=args.driver_cores,
+                               extra_executor_memory_for_ray=args.extra_executor_memory_for_ray,
+                               object_store_memory=args.object_store_memory)
+        ray_ctx = OrcaContext.get_ray_context()
+    elif cluster_mode == "local":
+        sc = init_orca_context(cores=args.driver_cores)
+        ray_ctx = OrcaContext.get_ray_context()
     else:
-        sc = init_spark_on_local(cores=args.driver_cores)
-        ray_ctx = RayContext(sc=sc, object_store_memory=args.object_store_memory)
-    ray_ctx.init()
+        print("init_orca_context failed. cluster_mode should be either 'local' or 'yarn' but got "
+              + cluster_mode)
 
     batch_size = args.batch_size
     # Run the reinforcement learning.
@@ -273,12 +271,11 @@ if __name__ == "__main__":
         # update gradient after one iteration
         for k, v in model.items():
             g = grad_buffer[k]
-            rmsprop_cache[k] = (
-                decay_rate * rmsprop_cache[k] + (1 - decay_rate) * g**2)
+            rmsprop_cache[k] = (decay_rate * rmsprop_cache[k] + (1 - decay_rate) * g ** 2)
             model[k] += learning_rate * g / (np.sqrt(rmsprop_cache[k]) + 1e-5)
             # Reset the batch gradient buffer.
             grad_buffer[k] = np.zeros_like(v)
         batch_num += 1
 
     ray_ctx.stop()
-    sc.stop()
+    stop_orca_context()
