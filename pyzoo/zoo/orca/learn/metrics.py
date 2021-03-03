@@ -168,6 +168,10 @@ class SparseCategoricalAccuracy(Metric):
             SparseCategoricalAccuracy as KerasSparseCategoricalAccuracy
         return KerasSparseCategoricalAccuracy()
 
+    def get_pytorch_metric(self):
+        from zoo.orca.learn.pytorch import pytorch_metrics
+        return pytorch_metrics.SparseCategoricalAccuracy()
+
     def get_name(self):
         return "SparseCategoricalAccuracy"
 

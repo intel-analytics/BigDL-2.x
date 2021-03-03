@@ -31,12 +31,27 @@ def _unify_input_formats(preds, target):
 class Accuracy:
 
     def __init__(self):
-
         self.correct = torch.tensor(0)
         self.total = torch.tensor(0)
 
     def __call__(self, preds, targets):
         preds, target = _unify_input_formats(preds, targets)
+        self.correct += torch.sum(preds == target)
+        self.total += target.numel()
+
+    def compute(self):
+        return self.correct.float() / self.total
+
+
+class SparseCategoricalAccuracy:
+
+    def __init__(self):
+        self.total = torch.tensor(0)
+        self.correct = torch.tensor(0)
+
+    def __call__(self, preds, targets):
+        assert preds.ndim == targets.ndim + 1, "To "
+        preds, target = torch.argmax(preds, dim=-1)
         self.correct += torch.sum(preds == target)
         self.total += target.numel()
 
