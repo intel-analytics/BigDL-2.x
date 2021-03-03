@@ -11,19 +11,19 @@ You can run Analytics Zoo program on [Databricks](https://databricks.com/) Spark
 
 ### **2. Installing Analytics Zoo libraries**
 
-1.In the left pane, click **Clusters** and select your cluster.
+2.1 In the left pane, click **Clusters** and select your cluster.
 
 ![](images/Databricks1.PNG)
 
-2.Install Analytics Zoo python environment using PyPI. Click **Libraries > Install New > PyPI**. Install official released version by texting "analytics-zoo" library. Or install latest [nightly build](https://pypi.org/project/analytics-zoo/#history) of Analytics Zoo with the specified version.
+2.2 Install Analytics Zoo python environment using PyPI. Click **Libraries > Install New > PyPI**. Install official released version by texting "analytics-zoo" library. Or install latest [nightly build](https://pypi.org/project/analytics-zoo/#history) of Analytics Zoo with the specified version.
 
 ![](images/Databricks2.PNG)
 
-3.Install Analytics Zoo prebuilt jar package. Click **Libraries > Install New > Upload > Jar**. Download Analytics Zoo prebuilt package from [Release Page](../release.md). Please note that you should choose the same spark version of package as your Databricks runtime version. Unzip it. Find jar named "analytics-zoo-bigdl_*-spark_*-jar-with-dependencies.jar" in the lib directory. Drop the jar on Databricks.
+2.3 Install Analytics Zoo prebuilt jar package. Click **Libraries > Install New > Upload > Jar**. Download Analytics Zoo prebuilt package from [Release Page](../release.md). Please note that you should choose the same spark version of package as your Databricks runtime version. Unzip it. Find jar named "analytics-zoo-bigdl_*-spark_*-jar-with-dependencies.jar" in the lib directory. Drop the jar on Databricks.
 
 ![](images/Databricks3.PNG)
 
-4.Make sure the jar file and analytics-zoo (with PyPI) are installed on all clusters. In **Libraries** tab of your cluster, check installed libraries and click “Install automatically on all clusters” option in **Admin Settings**.
+2.4 Make sure the jar file and analytics-zoo (with PyPI) are installed on all clusters. In **Libraries** tab of your cluster, check installed libraries and click “Install automatically on all clusters” option in **Admin Settings**.
 
 ![](images/Databricks4.PNG)
 
