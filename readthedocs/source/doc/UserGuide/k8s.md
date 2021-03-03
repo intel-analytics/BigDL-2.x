@@ -45,7 +45,7 @@ sudo docker run -itd --net=host \
 
 **Note:** to create the client container, `-v /etc/kubernetes:/etc/kubernetes:` and `-v /root/.kube:/root/.kube` are required to specify the path of kube config and installation.
 
-To specify more arguments, use:
+You can specify more arguments:
 
 ```bash
 sudo docker run -itd --net=host \
@@ -173,7 +173,7 @@ Then, refer [docker guide](./docker.md) to open Jupyter Notebook service from a 
 
 #### **3.4 Run Scala programs**
 
-Use spark-submit to submit your Analytics Zoo program (e.g. script.scala):
+Use spark-submit to submit your Analytics Zoo program.  e.g., run [anomalydetection](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/anomalydetection) example (running in either local mode or cluster mode) as follows:
 
 ```bash
 ${SPARK_HOME}/bin/spark-submit \
@@ -202,7 +202,7 @@ ${SPARK_HOME}/bin/spark-submit \
   --conf spark.sql.catalogImplementation='in-memory' \
   --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
   --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar \
-  --class your.class \
+  --class com.intel.analytics.zoo.examples.anomalydetection.AnomalyDetection \
   ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip \
   --inputDir /path
 ```
@@ -216,7 +216,7 @@ Options:
 - --properties-file: the customized conf properties.
 - --py-files: the extra python packages is needed.
 - --class: scala example class name.
-- --input_dir: input data path of the anomaly detection example. The data path is the mounted filesystem of the host. Refer to more details by [Kubernetes Volumes](https://spark.apache.org/docs/latest/running-on-kubernetes.html#using-kubernetes-volumes).
+- --inputDir: input data path of the anomaly detection example. The data path is the mounted filesystem of the host. Refer to more details by [Kubernetes Volumes](https://spark.apache.org/docs/latest/running-on-kubernetes.html#using-kubernetes-volumes).
 
 ### **4. Access logs and clear pods**
 
