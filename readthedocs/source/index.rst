@@ -1,5 +1,3 @@
-<meta name="google-site-verification" content="hG9ocvSRSRTY5z8g6RLn97_tdJvYRx_tVGhNdtZZavM" />
-
 Analytics Zoo Documentation
 ===========================
 
