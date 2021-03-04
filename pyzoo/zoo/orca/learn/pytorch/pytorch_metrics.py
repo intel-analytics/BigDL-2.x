@@ -59,3 +59,18 @@ class SparseCategoricalAccuracy:
 
     def compute(self):
         return self.correct.float() / self.total
+
+
+class CategoricalAccuracy:
+    def __init__(self):
+        self.total = torch.tensor(0)
+        self.correct = torch.tensor(0)
+
+    def __call__(self, preds, targets):
+        self.correct += torch.sum(
+            torch.eq(
+                torch.argmax(preds, dim=-1), torch.argmax(targets, dim=-1)))
+        self.total += targets.numel()
+
+    def compute(self):
+        return self.correct.float() / self.total

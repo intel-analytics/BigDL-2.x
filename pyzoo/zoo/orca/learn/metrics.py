@@ -187,6 +187,10 @@ class CategoricalAccuracy(Metric):
         from zoo.pipeline.api.keras.metrics import CategoricalAccuracy as KerasCategoricalAccuracy
         return KerasCategoricalAccuracy()
 
+    def get_pytorch_metric(self):
+        from zoo.orca.learn.pytorch import pytorch_metrics
+        return pytorch_metrics.CategoricalAccuracy()
+
     def get_name(self):
         return "CategoricalAccuracy"
 
