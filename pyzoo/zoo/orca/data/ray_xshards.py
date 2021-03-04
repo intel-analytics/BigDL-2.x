@@ -159,15 +159,15 @@ class RayXShards(XShards):
     def transform_shards_with_actors(self, actors, func,
                                      gang_scheduling=True):
         """
-        Assign each partition_ref (referencing a list of shards) to an actor,
-        and run func for each actor and partition_ref pair.
+        Assign a list of partition_refs (each partition_ref references a list of shards) to an actor
+        and run func for each actor and partition_ref_list pair.
 
         Actors should have a `get_node_ip` method to achieve locality scheduling.
         The `get_node_ip` method should call ray._private.services.get_node_ip_address()
         to return the correct ip address.
 
-        The `func` should take an actor and a partition_ref as argument and
-        invoke some remote func on that actor and return a new partition_ref.
+        The `func` should take an actor and a list of partition_refs as argument and
+        invoke some remote func on that actor and return a new list of partition_refs.
 
         Note that if you pass partition_ref directly to actor method, ray
         will resolve that partition_ref to the actual partition object, which
@@ -180,9 +180,9 @@ class RayXShards(XShards):
                                                                           gang_scheduling)
         assigned_partition_refs = [(part_ids, self._get_multiple_partition_refs(part_ids))
                                    for part_ids in assigned_partitions]
-        new_part_id_refs = {part_id: func(actor, part_ref)
+        new_part_id_refs = {part_id: new_ref
                             for actor, (part_ids, part_refs) in zip(actors, assigned_partition_refs)
-                            for part_id, part_ref in zip(part_ids, part_refs)}
+                            for part_id, new_ref in zip(part_ids, func(actor, part_refs))}
 
         actor_ip2part_id = defaultdict(list)
         for actor_ip, part_ids in zip(actor_ips, assigned_partitions):
@@ -199,9 +199,8 @@ class RayXShards(XShards):
         for actor, part_ids in zip(actors, assigned_partitions):
             assigned_partition_refs = self._get_multiple_partition_refs(part_ids)
             assigned_partition_refs_other = xshards._get_multiple_partition_refs(part_ids)
-            for part_id, this_part_ref, that_part_ref in \
-                    zip(part_ids, assigned_partition_refs, assigned_partition_refs_other):
-                new_ref = func(actor, this_part_ref, that_part_ref)
+            new_partition_refs = func(actor, assigned_partition_refs, assigned_partition_refs_other)
+            for part_id, new_ref in zip(part_ids, new_partition_refs):
                 new_part_id_refs[part_id] = new_ref
 
         actor_ip2part_id = defaultdict(list)

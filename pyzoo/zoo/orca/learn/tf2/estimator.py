@@ -62,9 +62,9 @@ class Estimator(object):
                                     backend=backend, compile_args_creator=compile_args_creator)
 
 
-def shards_ref_to_creator(shards_ref):
+def partition_refs_to_creator(partition_refs):
     def data_creator(config, batch_size):
-        return shards_ref
+        return partition_refs
 
     return data_creator
 
@@ -223,8 +223,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
             max_length, ray_xshards = process_spark_xshards(data, self.num_workers)
 
             if validation_data is None:
-                def transform_func(worker, shards_ref):
-                    params["data_creator"] = shards_ref_to_creator(shards_ref)
+                def transform_func(worker, partition_refs):
+                    params["data_creator"] = partition_refs_to_creator(partition_refs)
                     return worker.step.remote(**params)
 
                 stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
@@ -234,10 +234,10 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                 val_max_length, val_ray_xshards = process_spark_xshards(validation_data,
                                                                         self.num_workers)
 
-                def zip_func(worker, this_shards_ref, that_shards_ref):
-                    params["data_creator"] = shards_ref_to_creator(this_shards_ref)
+                def zip_func(worker, this_partition_refs, that_partition_refs):
+                    params["data_creator"] = partition_refs_to_creator(this_partition_refs)
                     params["validation_data_creator"] = \
-                        shards_ref_to_creator(that_shards_ref)
+                        partition_refs_to_creator(that_partition_refs)
                     return worker.step.remote(**params)
 
                 stats_shards = ray_xshards.zip_shards_with_actors(val_ray_xshards,
@@ -307,8 +307,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
 
             ray_xshards = RayXShards.from_spark_xshards(data)
 
-            def transform_func(worker, shards_ref):
-                params["data_creator"] = shards_ref_to_creator(shards_ref)
+            def transform_func(worker, partition_refs):
+                params["data_creator"] = partition_refs_to_creator(partition_refs)
                 return worker.validate.remote(**params)
 
             stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
@@ -329,8 +329,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
     def _predict_spark_xshards(self, xshards, params):
         ray_xshards = RayXShards.from_spark_xshards(xshards)
 
-        def transform_func(worker, shards_ref):
-            params["data_creator"] = shards_ref_to_creator(shards_ref)
+        def transform_func(worker, partition_refs):
+            params["data_creator"] = partition_refs_to_creator(partition_refs)
             return worker.predict.remote(**params)
 
         pred_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,

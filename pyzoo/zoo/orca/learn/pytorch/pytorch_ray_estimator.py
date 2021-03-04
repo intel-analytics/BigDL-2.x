@@ -52,10 +52,10 @@ def check_for_failure(remote_values):
     return False
 
 
-def shards_ref_to_creator(shards_ref):
+def partition_refs_to_creator(partition_refs):
 
     def data_creator(config, batch_size):
-        from zoo.orca.data.utils import ray_partition_get_data_label, index_data, get_size
+        from zoo.orca.data.utils import ray_partitions_get_data_label, index_data, get_size
         from torch.utils.data import Dataset, DataLoader
 
         class NDArrayDataset(Dataset):
@@ -75,9 +75,9 @@ def shards_ref_to_creator(shards_ref):
                     "multiprocessing_context"]:
             if arg in config:
                 params[arg] = config[arg]
-        data, label = ray_partition_get_data_label(ray.get(shards_ref),
-                                                   allow_tuple=False,
-                                                   allow_list=False)
+        data, label = ray_partitions_get_data_label(ray.get(partition_refs),
+                                                    allow_tuple=False,
+                                                    allow_list=False)
         print("Data size on worker: ", len(label))
         dataset = NDArrayDataset(data, label)
         data_loader = DataLoader(dataset, **params)
@@ -206,8 +206,8 @@ class PyTorchRayEstimator:
             from zoo.orca.data.utils import process_spark_xshards
             ray_xshards = process_spark_xshards(data, self.num_workers)
 
-            def transform_func(worker, shards_ref):
-                data_creator = shards_ref_to_creator(shards_ref)
+            def transform_func(worker, partition_refs):
+                data_creator = partition_refs_to_creator(partition_refs)
                 # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
                 return worker.train_epochs.remote(
                     data_creator, epochs, batch_size, profile, info, False)
@@ -285,8 +285,8 @@ class PyTorchRayEstimator:
             from zoo.orca.data.utils import process_spark_xshards
             ray_xshards = process_spark_xshards(data, self.num_workers)
 
-            def transform_func(worker, shards_ref):
-                data_creator = shards_ref_to_creator(shards_ref)
+            def transform_func(worker, partition_refs):
+                data_creator = partition_refs_to_creator(partition_refs)
                 # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
                 return worker.validate.remote(
                     data_creator, batch_size, num_steps, profile, info, False)
@@ -309,8 +309,8 @@ class PyTorchRayEstimator:
     def _predict_spark_xshards(self, xshards, param):
         ray_xshards = RayXShards.from_spark_xshards(xshards)
 
-        def transform_func(worker, shards_ref):
-            data_creator = lambda config, batch_size: shards_ref
+        def transform_func(worker, partition_refs):
+            data_creator = lambda config, batch_size: partition_refs
             return worker.predict.remote(
                 data_creator, **param)
 

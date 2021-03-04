@@ -39,7 +39,7 @@ from contextlib import closing
 import logging
 import socket
 
-from zoo.orca.data.utils import ray_partition_get_data_label
+from zoo.orca.data.utils import ray_partitions_get_data_label
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +137,7 @@ class HorovodDatasetHanlder(DatasetHandler):
 
     def _handle_xshards(self, dataset, steps, local_batch_size, shuffle):
         import tensorflow as tf
-        data, label = ray_partition_get_data_label(ray.get(dataset),
+        data, label = ray_partitions_get_data_label(ray.get(dataset),
                                                    allow_tuple=True,
                                                    allow_list=False)
         dataset = tf.data.Dataset.from_tensor_slices((data, label))
@@ -166,7 +166,7 @@ class TFDistributedDatasetHandler(DatasetHandler):
 
     def _handle_xshards(self, dataset, steps, local_batch_size, shuffle):
         import tensorflow as tf
-        data, label = ray_partition_get_data_label(ray.get(dataset),
+        data, label = ray_partitions_get_data_label(ray.get(dataset),
                                                    allow_tuple=True,
                                                    allow_list=False)
 
@@ -201,7 +201,7 @@ class LocalDatasetHandler(DatasetHandler):
 
     def _handle_xshards(self, dataset, steps, local_batch_size, shuffle):
         import tensorflow as tf
-        data, label = ray_partition_get_data_label(ray.get(dataset),
+        data, label = ray_partitions_get_data_label(ray.get(dataset),
                                                    allow_tuple=True,
                                                    allow_list=False)
         dataset = tf.data.Dataset.from_tensor_slices((data, label))
