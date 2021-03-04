@@ -90,3 +90,24 @@ class BinaryAccuracy:
 
     def compute(self):
         return self.correct.float() / self.total
+
+
+class Top5Accuracy:
+    def __init__(self):
+        self.total = torch.tensor(0)
+        self.correct = torch.tensor(0)
+
+    def __call__(self, preds, targets):
+        if preds.ndim == targets.ndim:
+            targets = torch.squeeze(targets, dim=-1)
+        batch_size = targets.size(0)
+
+        _, preds = preds.topk(5, dim=-1, largest=True, sorted=True)
+        preds = preds.type_as(targets).t()
+        targets = targets.view(1, -1).expand_as(preds)
+
+        self.correct += preds.eq(targets).view(-1).sum()
+        self.total += batch_size
+
+    def compute(self):
+        return self.correct.float() / self.total

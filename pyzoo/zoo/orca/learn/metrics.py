@@ -229,5 +229,9 @@ class Top5Accuracy(Metric):
         from zoo.pipeline.api.keras.metrics import Top5Accuracy as KerasTop5Accuracy
         return KerasTop5Accuracy()
 
+    def get_pytorch_metric(self):
+        from zoo.orca.learn.pytorch import pytorch_metrics
+        return pytorch_metrics.Top5Accuracy()
+
     def get_name(self):
         return "Top5Accuracy"
