@@ -97,34 +97,8 @@ def test_transform_shards_with_actors(orca_context_fixture):
 
     actors = [Add1Actor.remote() for i in range(3)]
     map_func = lambda actor, part_ref: actor.add_one.remote(part_ref)
-    result_xshards = ray_xshards.transform_shards_with_actors(actors, map_func,
-                                                              gang_scheduling=False)
+    result_xshards = ray_xshards.transform_shards_with_actors(actors, map_func)
     results = result_xshards.collect()
-    verify_collect_results(results, ndarray_dict_mapped)
-
-
-def test_transform_shards_with_actors_gang_scheduling_fail(orca_context_fixture):
-    ray_xshards, ndarray_dict = get_ray_xshards()
-    part_num = ray_xshards.num_partitions()
-
-    actors = [Add1Actor.remote() for i in range(part_num - 1)]
-    map_func = lambda actor, part_ref: actor.add_one.remote(part_ref)
-    with pytest.raises(AssertionError) as excinfo:
-        ray_xshards.transform_shards_with_actors(actors, map_func)
-        assert excinfo.match("there must be the same number of actors and partitions")
-
-
-def test_transform_shards_with_actors_gang_scheduling(orca_context_fixture):
-    ray_xshards, ndarray_dict = get_ray_xshards()
-    part_num = ray_xshards.num_partitions()
-    ndarray_dict_mapped = {k: value + 1 for k, value in ndarray_dict.items()}
-
-    actors = [Add1Actor.remote() for i in range(part_num)]
-    map_func = lambda actor, part_ref: actor.add_one.remote(part_ref)
-    result_xshards = ray_xshards.transform_shards_with_actors(actors, map_func,
-                                                              gang_scheduling=True)
-    results = result_xshards.collect()
-
     verify_collect_results(results, ndarray_dict_mapped)
 
 

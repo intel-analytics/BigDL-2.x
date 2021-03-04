@@ -228,8 +228,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                     return worker.step.remote(**params)
 
                 stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                                        transform_func,
-                                                                        gang_scheduling=True)
+                                                                        transform_func)
             else:
                 val_max_length, val_ray_xshards = process_spark_xshards(validation_data,
                                                                         self.num_workers)
@@ -242,8 +241,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
 
                 stats_shards = ray_xshards.zip_shards_with_actors(val_ray_xshards,
                                                                   self.remote_workers,
-                                                                  zip_func,
-                                                                  gang_scheduling=True)
+                                                                  zip_func)
             worker_stats = stats_shards.collect()
         else:
             params["data_creator"] = data
@@ -312,8 +310,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                 return worker.validate.remote(**params)
 
             stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                                    transform_func,
-                                                                    gang_scheduling=True)
+                                                                    transform_func)
             worker_stats = stats_shards.collect()
 
         else:  # data_creator functions; should return Iter or DataLoader
@@ -334,8 +331,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
             return worker.predict.remote(**params)
 
         pred_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                               transform_func,
-                                                               gang_scheduling=False)
+                                                               transform_func)
         spark_xshards = pred_shards.to_spark_xshards()
         return spark_xshards
 

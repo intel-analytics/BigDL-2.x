@@ -213,8 +213,7 @@ class PyTorchRayEstimator:
                     data_creator, epochs, batch_size, profile, info, False)
 
             stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                                    transform_func,
-                                                                    gang_scheduling=True)
+                                                                    transform_func)
             worker_stats = stats_shards.collect_partitions()
         else:
             assert isinstance(data, types.FunctionType), \
@@ -292,8 +291,7 @@ class PyTorchRayEstimator:
                     data_creator, batch_size, num_steps, profile, info, False)
 
             stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                                    transform_func,
-                                                                    gang_scheduling=True)
+                                                                    transform_func)
             worker_stats = stats_shards.collect_partitions()
         else:
             assert isinstance(data, types.FunctionType), \
@@ -315,8 +313,7 @@ class PyTorchRayEstimator:
                 data_creator, **param)
 
         pred_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                               transform_func,
-                                                               gang_scheduling=False)
+                                                               transform_func)
         spark_xshards = pred_shards.to_spark_xshards()
         return spark_xshards
 
