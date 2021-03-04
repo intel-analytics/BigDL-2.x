@@ -165,7 +165,7 @@ class RayServiceFuncGenerator(object):
     def _gen_master_command(self):
         webui = "true" if self.include_webui else "false"
         command = "{} start --head " \
-                  "--include-dashboard {} --port {} " \
+                  "--include-dashboard {} --dashboard-host 0.0.0.0 --port {} " \
                   "--redis-password {} --num-cpus {}". \
             format(self.ray_exec, webui, self.redis_port, self.password,
                    self.ray_node_cpu_cores)
@@ -263,7 +263,7 @@ class RayContext(object):
     _active_ray_context = None
 
     def __init__(self, sc, redis_port=None, password="123456", object_store_memory=None,
-                 verbose=False, env=None, extra_params=None, include_webui=False,
+                 verbose=False, env=None, extra_params=None, include_webui=True,
                  num_ray_nodes=None, ray_node_cpu_cores=None):
         """
         The RayContext would initiate a ray cluster on top of the configuration of SparkContext.
@@ -469,6 +469,7 @@ class RayContext(object):
                                               _redis_password=self.redis_password,
                                               object_store_memory=self.object_store_memory,
                                               include_dashboard=self.include_webui,
+                                              dashboard_host="0.0.0.0",
                                               *kwargs)
             else:
                 self.cluster_ips = self._gather_cluster_ips()
