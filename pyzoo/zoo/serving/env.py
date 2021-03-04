@@ -26,7 +26,6 @@ class ClusterServing:
             __file__ + "/../../conf/config.yaml")
         self.copy_config()
 
-
     def copy_config(self):
         if os.path.exists("config.yaml"):
             return
