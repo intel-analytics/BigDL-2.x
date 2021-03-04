@@ -21,18 +21,11 @@ import os
 
 
 class ClusterServing:
-
     def __init__(self):
         self.conf_path = os.path.abspath(
             __file__ + "/../../conf/config.yaml")
-        self.zoo_jar = 'zoo.jar'
-
         self.copy_config()
-        self.download_zoo_jar()
 
-    def download_zoo_jar(self):
-        if not os.path.exists(self.zoo_jar):
-            subprocess.Popen(['download-serving-jar.sh'])
 
     def copy_config(self):
         if os.path.exists("config.yaml"):
