@@ -36,7 +36,7 @@ class Accuracy:
 
     def __call__(self, preds, targets):
         preds, target = _unify_input_formats(preds, targets)
-        self.correct += torch.sum(preds == target)
+        self.correct += torch.sum(torch.eq(preds, targets))
         self.total += target.numel()
 
     def compute(self):
@@ -50,10 +50,12 @@ class SparseCategoricalAccuracy:
         self.correct = torch.tensor(0)
 
     def __call__(self, preds, targets):
-        assert preds.ndim == targets.ndim + 1, "To "
-        preds, target = torch.argmax(preds, dim=-1)
-        self.correct += torch.sum(preds == target)
-        self.total += target.numel()
+        if preds.ndim == targets.ndims:
+            targets = torch.squeeze(preds, dim=-1)
+        preds = torch.argmax(preds, dim=-1)
+        preds = preds.type_as(targets)
+        self.correct += torch.sum(torch.eq(preds, targets))
+        self.total += targets.numel()
 
     def compute(self):
         return self.correct.float() / self.total
