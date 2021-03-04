@@ -206,6 +206,10 @@ class BinaryAccuracy(Metric):
         from zoo.pipeline.api.keras.metrics import BinaryAccuracy as KerasBinaryAccuracy
         return KerasBinaryAccuracy()
 
+    def get_pytorch_metric(self):
+        from zoo.orca.learn.pytorch import pytorch_metrics
+        return pytorch_metrics.BinaryAccuracy()
+
     def get_name(self):
         return "BinaryAccuracy"
 

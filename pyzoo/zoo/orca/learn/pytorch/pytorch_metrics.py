@@ -54,12 +54,8 @@ class SparseCategoricalAccuracy:
             targets = torch.squeeze(targets, dim=-1)
         preds = torch.argmax(preds, dim=-1)
         preds = preds.type_as(targets)
-        print(preds)
-        print(targets)
         self.correct += torch.sum(torch.eq(preds, targets))
         self.total += targets.numel()
-        print(self.correct)
-        print(self.total)
 
     def compute(self):
         return self.correct.float() / self.total
@@ -80,3 +76,17 @@ class CategoricalAccuracy:
         return self.correct.float() / self.total
 
 
+class BinaryAccuracy:
+    def __init__(self):
+        self.total = torch.tensor(0)
+        self.correct = torch.tensor(0)
+
+    def __call__(self, preds, targets, threshold=0.5):
+        threshold = torch.tensor(threshold)
+        self.correct += torch.sum(
+            torch.eq(
+                torch.gt(preds, threshold), targets))
+        self.total += targets.numel()
+
+    def compute(self):
+        return self.correct.float() / self.total
