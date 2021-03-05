@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.tfpark
 
-import java.io.{IOException, ObjectInputStream, ObjectOutputStream, InvalidClassException, InputStream, ObjectStreamClass}
+import java.io._
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.models.utils.{CachedModels, ModelBroadcast, ModelInfo}
@@ -30,7 +30,9 @@ import com.intel.analytics.bigdl.nn.Module
 import com.intel.analytics.bigdl.optim.DistriOptimizer.CacheV1
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.intermediate.IRGraph
+import com.intel.analytics.zoo.common.CheckedObjectInputStream
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
+import com.intel.analytics.zoo.pipeline.api.net.SerializationHolder
 import com.intel.analytics.zoo.tfpark.Util._
 import org.apache.commons.lang3.SerializationUtils
 import org.apache.spark.SparkContext
@@ -42,12 +44,12 @@ import scala.reflect.ClassTag
 
 class TFModelBroadcast[T: ClassTag]()
                                    (implicit ev: TensorNumeric[T]) extends ModelBroadcast[T] {
-//  private type NativeType = (String, (Array[TensorMMap], Array[TensorMMap]))
+  //  private type NativeType = (String, (Array[TensorMMap], Array[TensorMMap]))
   private var broadcastModel: Broadcast[ModelInfo[T]] = _
   private var broadcastConsts: Broadcast[Map[String, Tensor[_]]] = _
   private var broadcastParameters: Broadcast[Array[Tensor[T]]] = _
   private var broadcastExtraParameters: Broadcast[Array[Tensor[T]]] = _
-//  private var broadcastParametersNative: Broadcast[Array[NativeType]] = _
+  //  private var broadcastParametersNative: Broadcast[Array[NativeType]] = _
   private var nodeNumber: Int = _
   private var coreNumber: Int = _
 
@@ -57,15 +59,15 @@ class TFModelBroadcast[T: ClassTag]()
   }
 
   /**
-   * broadcast the model
-   * first get and clear Const values from the model
-   * then get and clear the weight and bias parameters from the model
-   * finally broadcast Const values, the parameters and model(without parameters) separately
-   *
-   * @param sc    SparkContext
-   * @param model model to broadcast
-   * @return this
-   */
+    * broadcast the model
+    * first get and clear Const values from the model
+    * then get and clear the weight and bias parameters from the model
+    * finally broadcast Const values, the parameters and model(without parameters) separately
+    *
+    * @param sc    SparkContext
+    * @param model model to broadcast
+    * @return this
+    */
   override def broadcast(sc: SparkContext, model: Module[T]): this.type = {
     CachedModels.deleteAll(uuid) // delete the models on driver
 
@@ -96,13 +98,13 @@ class TFModelBroadcast[T: ClassTag]()
   }
 
   /**
-   * get the broadcast model
-   * put the weight and bias back to the model
-   *
-   * @param initGradient If create a tensor for gradient when fetch the model. Please note that
-   *                     the gradient is not needed in model inference
-   * @return model
-   */
+    * get the broadcast model
+    * put the weight and bias back to the model
+    *
+    * @param initGradient If create a tensor for gradient when fetch the model. Please note that
+    *                     the gradient is not needed in model inference
+    * @return model
+    */
   override def value(initGradient: Boolean = false, shareWeight: Boolean = true): Module[T] = {
     EngineRef.setCoreNumber(coreNumber)
     //    Engine.setNodeAndCore(nodeNumber, coreNumber)
@@ -147,22 +149,66 @@ class TFModelBroadcast[T: ClassTag]()
   }
 }
 
-private[zoo] class ModelInfo[T: ClassTag](val uuid: String, @transient var model: Module[T])(
-  implicit ev: TensorNumeric[T]) extends Serializable {
-  @throws(classOf[IOException])
-  private def writeObject(out: ObjectOutputStream): Unit = {
-    out.defaultWriteObject()
+private[zoo] class ModelInfo[T: ClassTag](var uuid: String, @transient var model: Module[T])(
+  implicit ev: TensorNumeric[T]) extends SerializationHolder {
+
+  override def writeInternal(out: CommonOutputStream): Unit = {
+    out.writeString(uuid)
+    val stream = new ByteArrayOutputStream()
+    val oos = new ObjectOutputStream(stream)
     val cloned = model.cloneModule()
-    out.writeObject(cloned)
+    oos.writeObject(cloned)
+    oos.close()
+    val w = stream.toByteArray
+    val len = w.length
+    out.writeInt(len)
     CachedModels.add(uuid, cloned)
   }
 
-  @throws(classOf[IOException])
-  private def readObject(in: ObjectInputStream): Unit = {
-    in.defaultReadObject()
-    model = in.readObject().asInstanceOf[Module[T]]
-    CachedModels.add(uuid, model)
+  //  @throws(classOf[IOException])
+  //  private def writeObject(out: ObjectOutputStream): Unit = {
+  //    val bos = new ByteArrayOutputStream
+  //    val out = new ObjectOutputStream(bos)
+  //    out.defaultWriteObject()
+  //    val cloned = model.cloneModule()
+  //    out.writeObject(cloned)
+  //    out.flush()
+  //    val bytes = bos.toByteArray()
+  //    bos.close()
+  //    CachedModels.add(uuid, cloned)
+  //  }
+
+  override def readInternal(in: CommonInputStream): Unit = {
+    uuid = in.readString()
+    val len = in.readInt()
+    require(len != 0, "model length should not be zero," +
+      "please set logging level to debug for more information")
+    assert(len >= 0, "model length should be an non-negative integer")
+    val w = new Array[Byte](len)
+    var numOfBytes = 0
+    while (numOfBytes < len) {
+      val read = in.read(w, numOfBytes, len - numOfBytes)
+      numOfBytes += read
+    }
+
+    val ois = new CheckedObjectInputStream(classOf[Tensor[T]], new ByteArrayInputStream(w))
+    try {
+      model = ois.readObject().asInstanceOf[Module[T]]
+      CachedModels.add(uuid, model)
+    } finally {
+      ois.close()
+    }
   }
+
+
+//  @throws(classOf[IOException])
+//  private def readObject(in: ObjectInputStream): Unit = {
+//
+//    val oin = new CheckedObjectInputStream(classOf[FloatModel], in)
+//    oin.defaultReadObject()
+//    model = oin.readObject().asInstanceOf[Module[T]]
+//    CachedModels.add(uuid, model)
+//  }
 }
 
 private[zoo] object ModelInfo {
@@ -290,7 +336,7 @@ object Util {
 
   private[zoo] def putWeightBias[T: ClassTag](broadcastWeightBias: Array[Tensor[T]],
                                               localModel: Module[T])(
-    implicit ev: TensorNumeric[T]): Unit = {
+                                               implicit ev: TensorNumeric[T]): Unit = {
     val localWeightBias = localModel.parameters()._1
     var i = 0
     while (i < localWeightBias.length) {
@@ -307,7 +353,7 @@ object Util {
 
   private[zoo] def putExtraParams[T: ClassTag](broadcastExtraParams: Array[Tensor[T]],
                                                localModel: Module[T])(
-    implicit ev: TensorNumeric[T]): Unit = {
+                                                implicit ev: TensorNumeric[T]): Unit = {
     val localExtraParams = localModel.getExtraParameter()
     if (localExtraParams != null) {
       var i = 0
@@ -324,7 +370,7 @@ object Util {
 
   private[zoo] def initGradWeightBias[T: ClassTag](broadcastWeightBias: Array[Tensor[T]],
                                                    localModel: Module[T])(
-    implicit ev: TensorNumeric[T]): Unit = {
+                                                    implicit ev: TensorNumeric[T]): Unit = {
     val (localWeightBias, localGradWeightBias) = localModel.parameters()
     // init gradient with a compacted storage
     val storage = Storage[T](localGradWeightBias.map(_.nElement()).sum)
