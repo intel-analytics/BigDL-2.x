@@ -16,10 +16,6 @@ set -e
 ray stop -f
 
 echo "#start orca ray example tests"
-_http_proxy=$http_proxy
-_https_proxy=$https_proxy
-unset http_proxy
-unset https_proxy
 echo "#1 Start rl_pong example"
 start=$(date "+%s")
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/rl_pong/rl_pong.py --iterations 10
@@ -43,9 +39,6 @@ start=$(date "+%s")
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/parameter_server/sync_parameter_server.py --iterations 10
 now=$(date "+%s")
 time4=$((now-start))
-
-export http_proxy=$_http_proxy
-export https_proxy=$_https_proxy
 
 echo "#5 Start mxnet lenet example"
 start=$(date "+%s")
