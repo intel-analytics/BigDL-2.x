@@ -12,7 +12,7 @@ Analytics Zoo is an open source _**Big Data AI**_ platform, and includes the fol
 
  - [Orca](https://analytics-zoo.readthedocs.io/): seamlessly scaling out TensorFlow, PyTorch and Keras programs for distributed Big Data
  - [Zouwu](): scalable time series analysis using AutoML 
- - [RayOnSpark](): running Ray programs directly on Big Data platform
+ - [RayOnSpark](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/ray.html): running Ray programs directly on Big Data platforms
 
 For more information, you may [read the docs](https://analytics-zoo.readthedocs.io/).
 
@@ -35,12 +35,12 @@ To install latest nightly build, use ```pip install --pre analytics-zoo```; see 
 
 Most AI projects start with a Python notebook running on a single laptop; however, one usually needs to go through a mountain of pains to scale it to handle larger data set in a distributed fashion. The  _**Orca**_ library seamlessly scales out your single node Python notebook across large clusters (so as to process distributed Big Data).
 
-First, initialize [Orca Context]():
+First, initialize [Orca Context](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html):
 
 ```python
 from zoo.orca import init_orca_context
 
-#cluster_mode can be "local", "k8s" or "yarn"
+# cluster_mode can be "local", "k8s" or "yarn"
 sc = init_orca_context(cluster_mode="yarn", cores=4, memory="10g", num_nodes=2) 
 ```
 
@@ -118,7 +118,35 @@ See the Zouwu [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/Us
 
 Ray is an open source distributed framework for emerging AI applications. _**RayOnSpark**_ allows users to directly run Ray programs on their existing Big Data clusters; it also allows Ray applications to seamlessly integrate into Big Data processing pipeline and directly process in-memory Spark RDDs or DataFrames.
 
-See the RayOnSpark [user guide]() for more details.
+First, initialize [Orca Context](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html) with `init_ray_on_spark=True`:
+
+```python
+from zoo.orca import init_orca_context
+
+# cluster_mode can be "local", "k8s" or "yarn"
+sc = init_orca_context(cluster_mode="yarn", cores=4, memory="10g", num_nodes=2, init_ray_on_spark=True) 
+```
+
+After the initialization, you can directly run Ray applications on the existing Big Data cluster with Ray tasks or actors launched across the cluster:
+
+```python
+import ray
+
+@ray.remote
+class Counter(object):
+      def __init__(self):
+          self.n = 0
+
+      def increment(self):
+          self.n += 1
+          return self.n
+
+
+counters = [Counter.remote() for i in range(5)]
+print(ray.get([c.increment.remote() for c in counters]))
+```
+
+See the RayOnSpark [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/ray.html) for more details.
 
 ## More information
 
