@@ -69,6 +69,11 @@ RUN git clone https://github.com/intel-analytics/analytics-zoo.git && \
         -Dhttps.proxyPort=$HTTPS_PROXY_PORT" && \
     mvn clean package -DskipTests -Dspark.version=${SPARK_VERSION} \
         -Dbigdl.artifactId=bigdl-SPARK_$SPARK_MAJOR_VERSION -P spark_2.4+ -Dbigdl.version=${BIGDL_VERSION}
+RUN cd /opt && \
+    mkdir resnet50 && \
+    cd resnet50 && \
+    wget -c "https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/openvino/2018_R5/resnet_v1_50.bin/download" -O resnet_v1_50.bin && \
+    wget -c "https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/openvino/2018_R5/resnet_v1_50.xml/download" -O resnet_v1_50.xml
 
 # stage.4 az ppml
 FROM ubuntu:18.04
@@ -122,6 +127,8 @@ COPY --from=flink /opt/jdk  /opt/jdk8
 COPY --from=flink /opt/flink-${FLINK_VERSION} /ppml/trusted-cluster-serving/java/work/flink-${FLINK_VERSION}
 COPY --from=analytics-zoo /analytics-zoo/zoo/target/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar /ppml/trusted-cluster-serving/java/work/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar
 COPY --from=analytics-zoo /analytics-zoo/zoo/target/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-http.jar /ppml/trusted-cluster-serving/java/work/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-http.jar
+COPY --from=analytics-zoo /opt/resnet50/ /ppml/trusted-cluster-serving/java/work/models/resnet50
+
 RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils vim curl nano wget unzip maven git tree && \
     apt-get install -y libsm6 make build-essential && \
@@ -145,10 +152,15 @@ ADD ./init-java.sh /ppml/trusted-cluster-serving/java/init-java.sh
 ADD ./start-flink-jobmanager.sh /ppml/trusted-cluster-serving/java/start-flink-jobmanager.sh
 ADD ./start-flink-taskmanager.sh /ppml/trusted-cluster-serving/java/start-flink-taskmanager.sh
 ADD ./start-http-frontend.sh /ppml/trusted-cluster-serving/java/start-http-frontend.sh
+ADD ./cluster-serving-config.yaml /ppml/trusted-cluster-serving/java/config.yaml
+ADD ./init-cluster-serving.sh /ppml/trusted-cluster-serving/java/init-cluster-serving.sh
+ADD ./start-cluster-serving-job.sh /ppml/trusted-cluster-serving/java/start-cluster-serving-job.sh
 
 RUN chmod a+x /ppml/trusted-cluster-serving/redis/init-redis.sh && \
     chmod a+x /ppml/trusted-cluster-serving/redis/start-redis.sh && \
     chmod a+x /ppml/trusted-cluster-serving/java/init-java.sh && \
     chmod a+x /ppml/trusted-cluster-serving/java/start-flink-jobmanager.sh && \
     chmod a+x /ppml/trusted-cluster-serving/java/start-flink-taskmanager.sh && \
-    chmod a+x /ppml/trusted-cluster-serving/java/start-http-frontend.sh
+    chmod a+x /ppml/trusted-cluster-serving/java/start-http-frontend.sh && \
+    chmod a+x /ppml/trusted-cluster-serving/java/init-cluster-serving.sh && \
+    chmod a+x /ppml/trusted-cluster-serving/java/start-cluster-serving-job.sh
