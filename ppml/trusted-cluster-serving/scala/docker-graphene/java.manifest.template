@@ -55,6 +55,10 @@ fs.mount.work.type = "chroot"
 fs.mount.work.path = "$(WORK_DIR)"
 fs.mount.work.uri = "file:$(WORK_DIR)"
 
+fs.mount.redis.type = "chroot"
+fs.mount.redis.path = "/ppml/trusted-cluster-serving/redis"
+fs.mount.redis.uri = "file:/ppml/trusted-cluster-serving/redis"
+
 sgx.enclave_size = "$(G_SGX_SIZE)"
 sgx.thread_num = 1024
 
@@ -114,6 +118,7 @@ sgx.allowed_files.hosts     = "file:/etc/hosts"
 sgx.allowed_files.group     = "file:/etc/group"
 sgx.allowed_files.passwd    = "file:/etc/passwd"
 sgx.allowed_files.gaiconf   = "file:/etc/gai.conf"
-sgx.allowed_files.tmp     = "file:/tmp"
+sgx.allowed_files.tmp       = "file:/tmp"
+sgx.allowed_files.redis     = "file:/ppml/trusted-cluster-serving/redis"
 
 sgx.nonpie_binary = 1
