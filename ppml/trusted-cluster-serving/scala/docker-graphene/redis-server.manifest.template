@@ -61,6 +61,6 @@ sgx.allowed_files.passwd = "file:/etc/passwd"
 sgx.allowed_files.gaiconf = "file:/etc/gai.conf"
 sgx.trusted_files.libssl = "file:/usr/$(ARCH_LIBDIR)/libssl.so.1.1"
 sgx.trusted_files.libcrypto = "file:/usr/$(ARCH_LIBDIR)/libcrypto.so.1.1"
-sgx.allowed_files.conf = "file:redis.conf"
+sgx.allowed_files.conf = "file:/ppml/trusted-cluster-serving/redis/redis.conf"
 
 sgx.allowed_files.work = "file:/ppml/trusted-cluster-serving/redis/work"
