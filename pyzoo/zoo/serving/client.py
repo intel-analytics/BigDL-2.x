@@ -23,6 +23,16 @@ import uuid
 
 RESULT_PREFIX = "cluster-serving_"
 
+def http_response_to_ndarray(r):
+    r = r.replace('=', ':')
+    r = r.replace('\"', '')
+    r = r.replace("value", "\"value\"")
+    r = r.replace("predictions", "\"predictions\"")
+
+    dict = json.loads(r)
+    value = dict["predictions"][0]['value']
+    ndarray = np.array(value)
+    return ndarray
 
 def perdict(frontend_url, request_str):
     httpx.post(frontend_url + "/predict", data=request_str)
