@@ -121,6 +121,10 @@ class MAE(Metric):
         from zoo.pipeline.api.keras.metrics import MAE as KerasMAE
         return KerasMAE()
 
+    def get_pytorch_metric(self):
+        from zoo.orca.learn.pytorch import pytorch_metrics
+        return pytorch_metrics.MAE()
+
     def get_name(self):
         return "MAE"
 
