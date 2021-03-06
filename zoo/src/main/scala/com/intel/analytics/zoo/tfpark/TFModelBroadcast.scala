@@ -19,17 +19,12 @@ package com.intel.analytics.zoo.tfpark
 import java.io._
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.models.utils.{CachedModels, ModelBroadcast, ModelInfo}
-import com.intel.analytics.bigdl.nn.Container
+import com.intel.analytics.bigdl.models.utils.{CachedModels, ModelBroadcast, ModelInfo} 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.nn.mkldnn.{MklDnnLayer, TensorMMap}
 import com.intel.analytics.bigdl.nn.tf.Const
 import com.intel.analytics.bigdl.tensor.{QuantizedTensor, QuantizedType, Storage, Tensor}
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.{NumericWildcard, TensorNumeric}
-import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.bigdl.optim.DistriOptimizer.CacheV1
-import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.bigdl.utils.intermediate.IRGraph
 import com.intel.analytics.zoo.common.CheckedObjectInputStream
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.api.net.SerializationHolder
@@ -59,15 +54,15 @@ class TFModelBroadcast[T: ClassTag]()
   }
 
   /**
-    * broadcast the model
-    * first get and clear Const values from the model
-    * then get and clear the weight and bias parameters from the model
-    * finally broadcast Const values, the parameters and model(without parameters) separately
-    *
-    * @param sc    SparkContext
-    * @param model model to broadcast
-    * @return this
-    */
+   * broadcast the model
+   * first get and clear Const values from the model
+   * then get and clear the weight and bias parameters from the model
+   * finally broadcast Const values, the parameters and model(without parameters) separately
+   *
+   * @param sc    SparkContext
+   * @param model model to broadcast
+   * @return this
+   */
   override def broadcast(sc: SparkContext, model: Module[T]): this.type = {
     CachedModels.deleteAll(uuid) // delete the models on driver
 
@@ -98,13 +93,13 @@ class TFModelBroadcast[T: ClassTag]()
   }
 
   /**
-    * get the broadcast model
-    * put the weight and bias back to the model
-    *
-    * @param initGradient If create a tensor for gradient when fetch the model. Please note that
-    *                     the gradient is not needed in model inference
-    * @return model
-    */
+   * get the broadcast model
+   * put the weight and bias back to the model
+   *
+   * @param initGradient If create a tensor for gradient when fetch the model. Please note that
+   *                     the gradient is not needed in model inference
+   * @return model
+   */
   override def value(initGradient: Boolean = false, shareWeight: Boolean = true): Module[T] = {
     EngineRef.setCoreNumber(coreNumber)
     //    Engine.setNodeAndCore(nodeNumber, coreNumber)
@@ -154,6 +149,7 @@ private[zoo] class ModelInfo[T: ClassTag](var uuid: String, @transient var model
 
   override def writeInternal(out: CommonOutputStream): Unit = {
     out.writeString(uuid)
+
     val stream = new ByteArrayOutputStream()
     val oos = new ObjectOutputStream(stream)
     val cloned = model.cloneModule()
