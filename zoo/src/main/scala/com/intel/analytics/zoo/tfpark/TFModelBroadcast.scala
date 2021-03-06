@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.tfpark
 import java.io._
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.models.utils.{CachedModels, ModelBroadcast, ModelInfo} 
+import com.intel.analytics.bigdl.models.utils.{CachedModels, ModelBroadcast, ModelInfo}
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.nn.mkldnn.{MklDnnLayer, TensorMMap}
 import com.intel.analytics.bigdl.nn.tf.Const
