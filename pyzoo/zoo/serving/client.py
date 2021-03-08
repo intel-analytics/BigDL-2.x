@@ -67,7 +67,7 @@ class InputQueue(API):
         if not ssl:
             super().__init__(host, port)
         else:
-            super().__init__(host, port, ssl_certfile, ssl_keyfile, ssl_ca_certs)
+            super().__init__(host, port, "serving_stream", ssl, ssl_certfile, ssl_keyfile, ssl_ca_certs)
         self.frontend_url = None
         if self.frontend_url:
             # frontend_url is provided, using frontend
@@ -223,7 +223,7 @@ class OutputQueue(API):
         if not ssl:
             super().__init__(host, port)
         else:
-            super().__init__(host, port, ssl_certfile, ssl_keyfile, ssl_ca_certs)
+            super().__init__(host, port, "serving_stream", ssl, ssl_certfile, ssl_keyfile, ssl_ca_certs)
 
     def dequeue(self):
         res_list = self.db.keys(RESULT_PREFIX + self.name + ':*')
