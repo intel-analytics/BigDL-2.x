@@ -95,4 +95,3 @@ def test_torch_MAE():
     m(pred, target)
     assert m.compute() == 0.875
 
-test_torch_MAE()
