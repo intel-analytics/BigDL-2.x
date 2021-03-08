@@ -26,6 +26,7 @@ import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.zoo.serving.http.FrontEndApp.decryptWithAES256
 import com.intel.analytics.zoo.serving.http.Instances
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.opencv.core.Size
@@ -35,13 +36,19 @@ import redis.clients.jedis.Jedis
 class PreProcessing(chwFlag: Boolean = true,
                     redisHost: String = "localhost",
                     redisPort: Int = 6379,
-                    jobName: String = Conventions.SERVING_STREAM_DEFAULT_NAME) {
+                    jobName: String = Conventions.SERVING_STREAM_DEFAULT_NAME,
+                    recordEncrypted: Boolean = false) {
   val logger = Logger.getLogger(getClass)
 
   var byteBuffer: Array[Byte] = null
   def decodeArrowBase64(key: String, s: String): Activity = {
     try {
-      byteBuffer = java.util.Base64.getDecoder.decode(s)
+      byteBuffer = if (recordEncrypted) {
+        java.util.Base64.getDecoder.decode(decryptWithAES256(s,
+          Conventions.MODEL_SECURED_SECRET, Conventions.MODEL_SECURED_SALT))
+      } else {
+        java.util.Base64.getDecoder.decode(s)
+      }
       val instance = Instances.fromArrow(byteBuffer)
 
       val kvMap = instance.instances.flatMap(insMap => {
