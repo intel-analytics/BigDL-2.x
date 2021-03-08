@@ -81,3 +81,27 @@ def test_torch_Top5Accuracy():
     target = torch.tensor([[2], [1]])
     top5acc(pred, target)
     assert top5acc.compute() == 0.75
+
+def test_torch_Precision():
+    from zoo.orca.learn.pytorch.pytorch_metrics import Precision
+    target = torch.tensor([0, 1, 1, 1])
+    pred = torch.tensor([1, 0, 1, 1])
+    prec = Precision()
+    prec(pred, target)
+    assert abs(prec.compute() - 2/3) < 1e-7
+    target = torch.tensor([1, 0, 1, 0])
+    pred = torch.tensor([1, 1, 1, 1])
+    prec(pred, target)
+    assert abs(prec.compute() - 4/7) < 1e-7
+
+def test_torch_Recall():
+    from zoo.orca.learn.pytorch.pytorch_metrics import Recall
+    target = torch.tensor([0, 1, 1, 1])
+    pred = torch.tensor([1, 0, 1, 1])
+    rec = Recall()
+    rec(pred, target)
+    assert abs(rec.compute() - 2/3) < 1e-7
+    target = torch.tensor([1, 0, 1, 0])
+    pred = torch.tensor([1, 1, 1, 1])
+    rec(pred, target)
+    assert abs(rec.compute() - 0.8) < 1e-7
