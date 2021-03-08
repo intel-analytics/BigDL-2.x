@@ -372,6 +372,14 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                 "train data and validation data should be both tf.data.Dataset"
 
     if isinstance(data, SparkXShards):
+        if data._get_class_name() == 'pandas.core.frame.Dataframe':
+            def data_dict_np(df):
+                res = {
+                    "x" : (df[feature_cols[i]].to_numpy() for i in range(len(feature_cols))),
+                    "y" : df[label_cols[0]].to_numpy()
+                }
+                return res
+            data = data.transform_shard(data_dict_np)
         dataset = xshards_to_tf_dataset(data,
                                         batch_size,
                                         batch_per_thread,
@@ -514,6 +522,14 @@ class TensorFlowEstimator(Estimator):
                 "feature columns is None; it should not be None in training"
             assert label_cols is not None, \
                 "label columns is None; it should not be None in training"
+
+        from zoo.orca.data import SparkXShards
+        if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.Dataframe':
+                assert feature_cols is not None, \
+                    "feature columns is None; it should not be None in training"
+                assert label_cols is not None, \
+                    "label columns is None; it should not be None in training"
 
         if checkpoint_trigger is not None:
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
