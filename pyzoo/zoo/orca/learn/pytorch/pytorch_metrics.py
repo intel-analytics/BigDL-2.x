@@ -219,3 +219,31 @@ class MAE:
 
     def compute(self):
         return self.correct.float() / self.total
+
+
+class MSE:
+    """Computes the mean square error between labels and predictions.
+
+    `loss = square(abs(y_true - y_pred), axis=-1)`
+
+    Usage:
+
+    ```python
+    pred = torch.tensor([[1, -2], [1, 1]])
+    target = torch.tensor([[0, 1], [0, 1]])
+    m = MSE()
+    m(pred, target)
+    print(m.compute())  # tensor(2.7500)
+    ```
+    """
+    def __init__(self):
+        self.total = torch.tensor(0)
+        self.correct = torch.tensor(0)
+
+    def __call__(self, preds, targets):
+        preds = preds.type_as(targets)
+        self.correct += torch.sum(torch.square(torch.sub(preds, targets)))
+        self.total += targets.numel()
+
+    def compute(self):
+        return self.correct.float() / self.total
