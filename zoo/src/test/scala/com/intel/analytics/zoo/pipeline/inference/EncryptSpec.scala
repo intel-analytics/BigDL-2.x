@@ -25,7 +25,7 @@ class EncryptSpec extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive with EncryptSupportive {
 
   val plain = "hello world, hello scala, hello encrypt, come on UNITED!!!"
-  val secrect = "analytics-zoo"
+  val secret = "analytics-zoo"
   val salt = "intel-analytics"
 
   var tempDir: File = _
@@ -40,19 +40,19 @@ class EncryptSpec extends FunSuite with Matchers with BeforeAndAfterAll
   }
 
   test("plain text should be encrypted") {
-    val encrypted = encryptWithAES256(plain, secrect, salt)
-    val decrypted = decryptWithAES256(encrypted, secrect, salt)
+    val encrypted = encryptWithAES256(plain, secret, salt)
+    val decrypted = decryptWithAES256(encrypted, secret, salt)
     decrypted should be (plain)
   }
 
   test("plain file should be encrypted") {
     val file = getClass.getResource("/application.conf")
     val encryptedFile = tempDir.getAbsolutePath + "/" + file.getFile.split("/").last + ".encrpyted"
-    encryptFileWithAES256(file.getFile, secrect, salt, encryptedFile)
+    encryptFileWithAES256(file.getFile, secret, salt, encryptedFile)
     new File(encryptedFile).exists() should be (true)
-    val decrypted = decryptFileWithAES256(encryptedFile, secrect, salt)
+    val decrypted = decryptFileWithAES256(encryptedFile, secret, salt)
     val decryptedFile = encryptedFile + ".decrypted"
-    decryptFileWithAES256(encryptedFile, secrect, salt, decryptedFile)
+    decryptFileWithAES256(encryptedFile, secret, salt, decryptedFile)
     new File(decryptedFile).exists() should be (true)
     val source = scala.io.Source.fromFile(file.getFile)
     val plain = try source.mkString finally source.close()

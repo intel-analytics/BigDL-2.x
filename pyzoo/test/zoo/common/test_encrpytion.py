@@ -23,11 +23,14 @@ class TestEncryption(object):
 
     def test_aes(self):
         letters = string.ascii_lowercase
-        random_str = ''.join(random.choice(letters) for i in range(100))
-        enc_str = encrypt_with_AES(random_str, 'secret', 'salt')
-        dec_str = decrypt_with_AES(enc_str, 'secret', 'salt')
-        print(dec_str)
+        # random_str = ''.join(random.choice(letters) for i in range(100))
+        random_str = "hello world, hello scala, hello encrypt, come on UNITED!!!"
+        enc_str = encrypt_with_AES(random_str, 'analytics-zoo', 'intel-analytics')
+        # enc_str = "iXRvHoK4RVIBXKkQW9wTT8aFm/qGkJYvlvwA5rz9WuxldGjDHorwudyAjhgQ3HHk+nVF7LgXMqOphVLojYFAHmu1AsA/gNOlAeKLZ5T9VlY="
+        dec_str = decrypt_with_AES(enc_str, 'analytics-zoo', 'intel-analytics')
         print(random_str)
+        print(enc_str)
+        print(dec_str)
         assert dec_str == random_str, \
             "Check encryption and decrption result"
 

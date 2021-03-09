@@ -18,13 +18,17 @@ package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.PrintWriter
 import java.util.Base64
+import java.security.SecureRandom
 import javax.crypto.{Cipher, SecretKeyFactory}
 import javax.crypto.spec.{IvParameterSpec, PBEKeySpec, SecretKeySpec}
 
 trait EncryptSupportive {
+  val BLOCK_SIZE = 16
 
   def encryptWithAES256(content: String, secret: String, salt: String): String = {
-    val iv = Array[Byte](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    val iv = new Array[Byte](BLOCK_SIZE)
+    val secureRandom: SecureRandom = SecureRandom.getInstance("SHA1PRNG")
+    secureRandom.nextBytes(iv)
     val ivParameterSpec = new IvParameterSpec(iv)
     val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
     val spec = new PBEKeySpec(secret.toCharArray(), salt.getBytes(), 65536, 256)
@@ -33,11 +37,13 @@ trait EncryptSupportive {
 
     val cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING")
     cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec)
-    Base64.getEncoder().encodeToString(cipher.doFinal(content.getBytes("UTF-8")))
+    val cipherTextWithoutIV = cipher.doFinal(content.getBytes("UTF-8"))
+    Base64.getEncoder().encodeToString(cipher.getIV ++ cipherTextWithoutIV)
   }
 
   def decryptWithAES256(content: String, secret: String, salt: String): String = {
-    val iv = Array[Byte](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    val cipherTextWithIV = Base64.getDecoder.decode(content)
+    val iv = cipherTextWithIV.slice(0, BLOCK_SIZE)
     val ivParameterSpec = new IvParameterSpec(iv)
     val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
     val spec = new PBEKeySpec(secret.toCharArray(), salt.getBytes(), 65536, 256)
@@ -46,7 +52,8 @@ trait EncryptSupportive {
 
     val cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING")
     cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec)
-    new String(cipher.doFinal(Base64.getDecoder().decode(content)))
+    val cipherTextWithoutIV = cipherTextWithIV.slice(BLOCK_SIZE, cipherTextWithIV.size)
+    new String(cipher.doFinal(cipherTextWithoutIV))
   }
 
   def encryptFileWithAES256(filePath: String, secret: String, salt: String, outputFile: String,
