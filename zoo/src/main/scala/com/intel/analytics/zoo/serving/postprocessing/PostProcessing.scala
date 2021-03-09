@@ -34,7 +34,8 @@ import com.intel.analytics.zoo.serving.utils.TensorUtils
  * this string could be parsed by json in Python to a list
  * @param tensor
  */
-class PostProcessing(tensor: Tensor[Float], filter: String = "") {
+class PostProcessing(tensor: Tensor[Float], filter: String = "",
+                     recordEncrypted: Boolean = false) {
   var t: Tensor[Float] = tensor
   val totalSize = TensorUtils.getTotalSize(t)
 
@@ -146,7 +147,8 @@ class PostProcessing(tensor: Tensor[Float], filter: String = "") {
 }
 object PostProcessing {
 
-  def apply(t: Activity, filter: String = "", index: Int = -1): String = {
+  def apply(t: Activity, filter: String = "", index: Int = -1,
+            recordEncrypted: Boolean = false): String = {
     if (filter == "") {
       require(index > 0, "index must > 0")
       val byteArr = ArrowSerializer.activityBatchToByte(t, index)

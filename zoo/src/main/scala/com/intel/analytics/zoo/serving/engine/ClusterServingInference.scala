@@ -72,12 +72,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
         dimCheck(t, "add", modelType)
         val result = ClusterServing.model.doPredict(t)
         dimCheck(result, "remove", modelType)
-        val value = if (recordEncrypted) {
-          encryptWithAES256(PostProcessing(result.toTensor[Float], filterType, 1),
-            Conventions.RECORD_SECURED_KEY, Conventions.RECORD_SECURED_SALT)
-        } else {
-          PostProcessing(result.toTensor[Float], filterType, 1)
-        }
+        val value = PostProcessing(result.toTensor[Float], filterType, 1, recordEncrypted)
         (pathByte._1, value)
       } catch {
         case e: Exception =>
@@ -109,12 +104,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
         dimCheck(t, "remove", modelType)
         val kvResult =
           (0 until thisBatchSize).map(i => {
-            val value = if (recordEncrypted) {
-              encryptWithAES256(PostProcessing(result, filterType, i + 1),
-                Conventions.RECORD_SECURED_KEY, Conventions.RECORD_SECURED_SALT)
-            } else {
-              PostProcessing(result, filterType, i + 1)
-            }
+            val value = PostProcessing(result, filterType, i + 1, recordEncrypted)
             (pathByte(i)._1, value)
           })
         kvResult
@@ -148,12 +138,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
         dimCheck(t, "remove", modelType)
         val kvResult =
           (0 until size).toParArray.map(i => {
-            val value = if (recordEncrypted) {
-              encryptWithAES256(PostProcessing(result, filterType, i + 1),
-                Conventions.RECORD_SECURED_KEY, Conventions.RECORD_SECURED_SALT)
-            } else {
-              PostProcessing(PostProcessing(result, filterType, i + 1)
-            }
+            val value = PostProcessing(result, filterType, i + 1, recordEncrypted)
             (itemBatch(i)._1, value)
           })
         kvResult

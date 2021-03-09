@@ -86,7 +86,7 @@ class PreProcessing(chwFlag: Boolean = true,
   def decodeImage(s: String, idx: Int = 0): Tensor[Float] = {
     byteBuffer = if (recordEncrypted) {
       java.util.Base64.getDecoder.decode(decryptWithAES256(s,
-        Conventions.RECORD_SECURED_KEY, Conventions.RECORD_SECURED_SALT))
+        Conventions.RECORD_SECURED_SECRET, Conventions.RECORD_SECURED_SALT))
     } else {
       java.util.Base64.getDecoder.decode(s)
     }
