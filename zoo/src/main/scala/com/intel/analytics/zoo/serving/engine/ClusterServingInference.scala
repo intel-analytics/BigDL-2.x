@@ -72,7 +72,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
         dimCheck(t, "add", modelType)
         val result = ClusterServing.model.doPredict(t)
         dimCheck(result, "remove", modelType)
-        val value = PostProcessing(result.toTensor[Float], filterType, 1, recordEncrypted)
+        val value = PostProcessing(result.toTensor[Float], filterType, 1)
         (pathByte._1, value)
       } catch {
         case e: Exception =>
@@ -104,7 +104,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
         dimCheck(t, "remove", modelType)
         val kvResult =
           (0 until thisBatchSize).map(i => {
-            val value = PostProcessing(result, filterType, i + 1, recordEncrypted)
+            val value = PostProcessing(result, filterType, i + 1)
             (pathByte(i)._1, value)
           })
         kvResult
@@ -138,7 +138,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
         dimCheck(t, "remove", modelType)
         val kvResult =
           (0 until size).toParArray.map(i => {
-            val value = PostProcessing(result, filterType, i + 1, recordEncrypted)
+            val value = PostProcessing(result, filterType, i + 1)
             (itemBatch(i)._1, value)
           })
         kvResult
