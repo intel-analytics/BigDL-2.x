@@ -78,10 +78,10 @@ class TCNForecaster(Forecaster):
             raise RuntimeError("You must call fit or restore first before calling predict!")
         return self.internal.predict(x)
 
-    def evaluate(self, x, y, metric=['mse']):
+    def evaluate(self, x, y, metrics=['mse']):
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate(x, y, metric=metric)
+        return self.internal.evaluate(x, y, metrics=metrics)
 
     def save(self, checkpoint_file):
         if not self.internal.model_built:
