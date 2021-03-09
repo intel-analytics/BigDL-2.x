@@ -117,7 +117,7 @@ class PytorchBaseModel(BaseModel):
                                   shuffle=True)
         batch_idx = 0
         if tqdm:
-            pbar = tqdm(total=len(train_loader))      
+            pbar = tqdm(total=len(train_loader))
         for x_batch, y_batch in train_loader:
             self.optimizer.zero_grad()
             yhat = self._forward(x_batch, y_batch)
