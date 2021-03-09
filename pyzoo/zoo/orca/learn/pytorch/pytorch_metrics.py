@@ -190,54 +190,36 @@ class Top5Accuracy:
     def compute(self):
         return self.correct.float() / self.total
 
-class Precision:
-    """Calculate the proportion of correctly identified positive labels.
-    More precisely, it gives the number of true positive over the sum of
-    true positives and false positives
+
+class BinaryCrossEntropy:
+    """Computes the crossentropy metric between the labels and predictions.
+    This is used when there are only two labels (0 and 1).
 
     Usage:
+
     ```python
-    target = torch.tensor([0, 1, 1, 1])
-    pred = torch.tensor([1, 0, 1, 1])
-    prec = Precision()
-    prec(pred, target)
-    assert abs(prec.compute() - 2/3) < 1e-7
+    pred = torch.tensor([[0.6, 0.4], [0.4, 0.6]])
+    target = torch.tensor([[0, 1], [0, 0]])
+    entropy = BinaryCrossEntropy()
+    entropy(pred, target)
+    assert abs(entropy.compute() - 0.81492424) < 1e-7
+    ```
     """
+
     def __init__(self):
-        self.positive = torch.tensor(0)
-        self.true_positive = torch.tensor(0)
+        self.total = torch.tensor(0)
+        self.crossentropy = torch.tensor(0)
 
     def __call__(self, preds, targets):
-        preds, targets = _unify_input_formats(preds, targets)
-        self.positive += preds.sum()
-        self.true_positive += (targets * preds).sum()
+        # Avoid problems with logarithm
+        epsilon = 1e-7
+        preds[preds <= 0] = epsilon
+        preds[preds >= 1] = 1 - epsilon
+        
+        output_size = targets.view(-1).size(0)
+        self.crossentropy = self.crossentropy + \
+            (- targets * torch.log(preds) - (1-targets) * torch.log(1-preds)).view(-1).sum()
+        self.total += output_size
 
     def compute(self):
-        epsilon = 1e-7
-        return self.true_positive.float() / (self.positive + epsilon)
-
-class Recall:
-    """Calculate the recall of the predictions with respect to the labels.
-    More precisely, it gives the number of true positive over the sum of
-    true positives and false negatives
-
-    Usage:
-    ```python
-    target = torch.tensor([0, 1, 1, 1])
-    pred = torch.tensor([1, 0, 1, 1])
-    rec = Recall()
-    rec(pred, target)
-    assert abs(rec.compute() - 2/3) < 1e-7
-    """
-    def __init__(self):
-        self.false_negative = torch.tensor(0)
-        self.true_positive = torch.tensor(0)
-
-    def __call__(self, preds, targets):
-        preds, targets = _unify_input_formats(preds, targets)
-        self.false_negative += (targets * (1 - preds)).sum()
-        self.true_positive += (targets * preds).sum()
-
-    def compute(self):
-        epsilon = 1e-7
-        return self.true_positive.float() / (self.true_positive + self.false_negative + epsilon)
+        return self.crossentropy.float() / self.total
