@@ -107,7 +107,6 @@ class PytorchBaseModel(BaseModel):
         tqdm = None
         try:
             from tqdm import tqdm
-            pbar = tqdm(total=len(train_loader))
         except ImportError:
             pass
         batch_size = self.config["batch_size"]
@@ -117,6 +116,8 @@ class PytorchBaseModel(BaseModel):
                                   batch_size=int(batch_size),
                                   shuffle=True)
         batch_idx = 0
+        if tqdm:
+            pbar = tqdm(total=len(train_loader))
         for x_batch, y_batch in train_loader:
             self.optimizer.zero_grad()
             yhat = self._forward(x_batch, y_batch)
