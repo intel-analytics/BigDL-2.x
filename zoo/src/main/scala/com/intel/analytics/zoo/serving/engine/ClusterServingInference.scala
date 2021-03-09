@@ -20,8 +20,10 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
+import com.intel.analytics.zoo.serving.http.FrontEndApp.encryptWithAES256
 import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
+import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.log4j.Logger
 
 /**
@@ -31,7 +33,8 @@ class ClusterServingInference(preProcessing: PreProcessing,
                               modelType: String,
                               filterType: String = "",
                               batchSize: Int = 4,
-                              resizeFlag: Boolean = true) {
+                              resizeFlag: Boolean = true,
+                              recordEncrypted: Boolean = false) {
   val logger = Logger.getLogger(getClass)
 
   def singleThreadPipeline(in: List[(String, String)]): List[(String, String)] = {
@@ -69,7 +72,12 @@ class ClusterServingInference(preProcessing: PreProcessing,
         dimCheck(t, "add", modelType)
         val result = ClusterServing.model.doPredict(t)
         dimCheck(result, "remove", modelType)
-        val value = PostProcessing(result.toTensor[Float], filterType, 1)
+        val value = if (recordEncrypted) {
+          encryptWithAES256(PostProcessing(result.toTensor[Float], filterType, 1),
+            Conventions.RECORD_SECURED_KEY, Conventions.RECORD_SECURED_SALT)
+        } else {
+          PostProcessing(result.toTensor[Float], filterType, 1)
+        }
         (pathByte._1, value)
       } catch {
         case e: Exception =>
@@ -101,7 +109,12 @@ class ClusterServingInference(preProcessing: PreProcessing,
         dimCheck(t, "remove", modelType)
         val kvResult =
           (0 until thisBatchSize).map(i => {
-            val value = PostProcessing(result, filterType, i + 1)
+            val value = if (recordEncrypted) {
+              encryptWithAES256(PostProcessing(result, filterType, i + 1),
+                Conventions.RECORD_SECURED_KEY, Conventions.RECORD_SECURED_SALT)
+            } else {
+              PostProcessing(result, filterType, i + 1)
+            }
             (pathByte(i)._1, value)
           })
         kvResult
@@ -135,7 +148,12 @@ class ClusterServingInference(preProcessing: PreProcessing,
         dimCheck(t, "remove", modelType)
         val kvResult =
           (0 until size).toParArray.map(i => {
-            val value = PostProcessing(result, filterType, i + 1)
+            val value = if (recordEncrypted) {
+              encryptWithAES256(PostProcessing(result, filterType, i + 1),
+                Conventions.RECORD_SECURED_KEY, Conventions.RECORD_SECURED_SALT)
+            } else {
+              PostProcessing(PostProcessing(result, filterType, i + 1)
+            }
             (itemBatch(i)._1, value)
           })
         kvResult

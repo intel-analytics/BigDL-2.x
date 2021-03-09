@@ -43,12 +43,7 @@ class PreProcessing(chwFlag: Boolean = true,
   var byteBuffer: Array[Byte] = null
   def decodeArrowBase64(key: String, s: String): Activity = {
     try {
-      byteBuffer = if (recordEncrypted) {
-        java.util.Base64.getDecoder.decode(decryptWithAES256(s,
-          Conventions.MODEL_SECURED_SECRET, Conventions.MODEL_SECURED_SALT))
-      } else {
-        java.util.Base64.getDecoder.decode(s)
-      }
+      byteBuffer = java.util.Base64.getDecoder.decode(s)
       val instance = Instances.fromArrow(byteBuffer)
 
       val kvMap = instance.instances.flatMap(insMap => {
@@ -89,7 +84,12 @@ class PreProcessing(chwFlag: Boolean = true,
   }
 
   def decodeImage(s: String, idx: Int = 0): Tensor[Float] = {
-    byteBuffer = java.util.Base64.getDecoder.decode(s)
+    byteBuffer = if (recordEncrypted) {
+      java.util.Base64.getDecoder.decode(decryptWithAES256(s,
+        Conventions.RECORD_SECURED_KEY, Conventions.RECORD_SECURED_SALT))
+    } else {
+      java.util.Base64.getDecoder.decode(s)
+    }
     val mat = OpenCVMethod.fromImageBytes(byteBuffer, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
 //    Imgproc.resize(mat, mat, new Size(224, 224))
     val (height, width, channel) = (mat.height(), mat.width(), mat.channels())
