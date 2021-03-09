@@ -372,14 +372,16 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                 "train data and validation data should be both tf.data.Dataset"
 
     if isinstance(data, SparkXShards):
-        if data._get_class_name() == 'pandas.core.frame.Dataframe':
-            def data_dict_np(df):
-                res = {
-                    "x" : (df[feature_cols[i]].to_numpy() for i in range(len(feature_cols))),
-                    "y" : df[label_cols[0]].to_numpy()
-                }
-                return res
-            data = data.transform_shard(data_dict_np)
+        if data._get_class_name() == 'pandas.core.frame.DataFrame':
+            def to_train_val_shard(df):
+                result = dict()
+                result["x"] = tuple([df[feature_col].to_numpy() for feature_col in feature_cols])
+                if label_cols:
+                    result["y"] = df[label_cols[0]].to_numpy()
+                return result
+            data = data.transform_shard(to_train_val_shard)
+            if validation_data:
+                validation_data = validation_data.transform_shard(to_train_val_shard)
         dataset = xshards_to_tf_dataset(data,
                                         batch_size,
                                         batch_per_thread,
@@ -489,13 +491,15 @@ class TensorFlowEstimator(Estimator):
         Train this graph model with train data.
 
         :param data: train data. It can be XShards, Spark DataFrame, tf.data.Dataset.
-        If data is XShards, each partition is a dictionary of  {'x': feature,
+        If data is XShards, each partition can be a dictionary of  {'x': feature,
         'y': label}, where feature(label) is a numpy array or a tuple of numpy arrays.
         If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param epochs: number of epochs to train.
         :param batch_size: total batch size for each iteration.
-        :param feature_cols: feature column names if train data is Spark DataFrame.
-        :param label_cols: label column names if train data is Spark DataFrame.
+        :param feature_cols: feature column names if train data is Spark DataFrame or XShards
+         of pandas dataframe.
+        :param label_cols: label column names if train data is Spark DataFrame or XShards of
+        pandas dataframe.
         :param validation_data: validation data. Validation data type should be the same
         as train data.
         :param auto_shard_files: whether to automatically detect if the dataset is file-based and
@@ -523,7 +527,6 @@ class TensorFlowEstimator(Estimator):
             assert label_cols is not None, \
                 "label columns is None; it should not be None in training"
 
-        from zoo.orca.data import SparkXShards
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.Dataframe':
                 assert feature_cols is not None, \
@@ -608,6 +611,11 @@ class TensorFlowEstimator(Estimator):
         if isinstance(data, DataFrame):
             assert feature_cols is not None, \
                 "feature columns is None; it should not be None in prediction"
+        if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.Dataframe':
+                assert feature_cols is not None, \
+                    "feature columns is None; it should not be None in prediction"
+
 
         assert not is_tf_data_dataset(data), "tf.data.Dataset currently cannot be used for" \
                                              "estimator prediction"
@@ -660,6 +668,13 @@ class TensorFlowEstimator(Estimator):
                 "feature columns is None; it should not be None in evaluation"
             assert label_cols is not None, \
                 "label columns is None; it should not be None in evaluation"
+
+        if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.Dataframe':
+                assert feature_cols is not None, \
+                    "feature columns is None; it should not be None in evaluation"
+                assert label_cols is not None, \
+                    "label columns is None; it should not be None in evaluation"
 
         dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
                              validation_data=None,
