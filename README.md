@@ -11,15 +11,15 @@
 Analytics Zoo is an open source _**Big Data AI**_ platform, and includes the following libraries for scaling end-to-end AI to distributed Big Data: 
 
  - [Orca](https://analytics-zoo.readthedocs.io/): seamlessly scaling out TensorFlow, PyTorch and Keras programs for distributed Big Data
- - [Zouwu](): scalable time series analysis using AutoML 
  - [RayOnSpark](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/ray.html): running Ray programs directly on Big Data platforms
+ - [Zouwu](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/zouwu.html): scalable time series analysis using AutoML 
 
 For more information, you may [read the docs](https://analytics-zoo.readthedocs.io/).
 
 ---
 
 ## Installing
-You can use Analytics Zoo on [Google Colab]() without any installation. Analytics Zoo also includes a set of [notebooks]() that you can directly open and run in Colab.
+You can use Analytics Zoo on [Google Colab](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/colab.html) without any installation. Analytics Zoo also includes a set of [notebooks](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/notebooks.html) that you can directly open and run in Colab.
 
 To install Analytics Zoo, we recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)  environments.
 
@@ -80,10 +80,38 @@ est.fit(data=df,
 
 See [TensorFlow](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-tf-quickstart.html) and [PyTorch](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-pytorch-quickstart.html) quick start for more details.
 
+## Getting Started with RayOnSpark
+
+Ray is an open source distributed framework for emerging AI applications. _**RayOnSpark**_ allows users to directly run Ray programs on existing Big Data clusters, and direcly write Ray code inline with their Spark code (so as to process the in-memory Spark RDDs or DataFrames).
+
+```python
+from zoo.orca import init_orca_context
+
+# cluster_mode can be "local", "k8s" or "yarn"
+sc = init_orca_context(cluster_mode="yarn", cores=4, memory="10g", num_nodes=2, init_ray_on_spark=True) 
+
+import ray
+
+@ray.remote
+class Counter(object):
+      def __init__(self):
+          self.n = 0
+
+      def increment(self):
+          self.n += 1
+          return self.n
+
+
+counters = [Counter.remote() for i in range(5)]
+print(ray.get([c.increment.remote() for c in counters]))
+```
+
+See the RayOnSpark [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/ray.html) for more details.
+
+
 ## Getting Started with Zouwu
 
 Time series prediction takes observations from previous time steps as input and predicts the values at future time steps. The _**Zouwu**_ library makes it easy to build end-to-end time series analysis by applying AutoML to extremely large-scale time series prediction.
-
 
 To train a time series model with AutoML, first initialize [Orca Context]():
 
@@ -113,40 +141,6 @@ ts_pipeline.predict(test_df)
 ```
 
 See the Zouwu [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/zouwu.html) for more details.
-
-## Getting Started with RayOnSpark
-
-Ray is an open source distributed framework for emerging AI applications. _**RayOnSpark**_ allows users to directly run Ray programs on their existing Big Data clusters; it also allows Ray applications to seamlessly integrate into Big Data processing pipeline and directly process in-memory Spark RDDs or DataFrames.
-
-First, initialize [Orca Context](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html) with `init_ray_on_spark=True`:
-
-```python
-from zoo.orca import init_orca_context
-
-# cluster_mode can be "local", "k8s" or "yarn"
-sc = init_orca_context(cluster_mode="yarn", cores=4, memory="10g", num_nodes=2, init_ray_on_spark=True) 
-```
-
-After the initialization, you can directly run Ray applications on the existing Big Data cluster with Ray tasks or actors launched across the cluster:
-
-```python
-import ray
-
-@ray.remote
-class Counter(object):
-      def __init__(self):
-          self.n = 0
-
-      def increment(self):
-          self.n += 1
-          return self.n
-
-
-counters = [Counter.remote() for i in range(5)]
-print(ray.get([c.increment.remote() for c in counters]))
-```
-
-See the RayOnSpark [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/ray.html) for more details.
 
 ## More information
 
