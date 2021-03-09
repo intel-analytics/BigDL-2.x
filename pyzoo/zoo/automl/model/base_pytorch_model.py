@@ -126,6 +126,7 @@ class PytorchBaseModel(BaseModel):
             self.optimizer.step()
             total_loss += loss.item()
             batch_idx += 1
+            pbar.set_description("Loss: {}".format(loss.item()))
             pbar.update(1)
         pbar.close()
         train_loss = total_loss/batch_idx
