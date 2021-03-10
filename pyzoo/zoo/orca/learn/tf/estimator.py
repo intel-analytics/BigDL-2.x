@@ -381,16 +381,6 @@ def to_dataset(data, batch_size, batch_per_thread, validation_data,
                 "train data and validation data should be both tf.data.Dataset"
 
     if isinstance(data, SparkXShards):
-        if data._get_class_name() == 'pandas.core.frame.DataFrame':
-            def to_train_val_shard(df):
-                result = dict()
-                result["x"] = tuple([df[feature_col].to_numpy() for feature_col in feature_cols])
-                if label_cols:
-                    result["y"] = df[label_cols[0]].to_numpy()
-                return result
-            data = data.transform_shard(to_train_val_shard)
-            if validation_data:
-                validation_data = validation_data.transform_shard(to_train_val_shard)
         dataset = xshards_to_tf_dataset(data,
                                         batch_size,
                                         batch_per_thread,
