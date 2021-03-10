@@ -26,7 +26,7 @@ import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.zoo.serving.http.FrontEndApp.decryptWithAES256
+import com.intel.analytics.zoo.pipeline.inference.EncryptSupportive
 import com.intel.analytics.zoo.serving.http.Instances
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.opencv.core.Size
@@ -37,7 +37,7 @@ class PreProcessing(chwFlag: Boolean = true,
                     redisHost: String = "localhost",
                     redisPort: Int = 6379,
                     jobName: String = Conventions.SERVING_STREAM_DEFAULT_NAME,
-                    recordEncrypted: Boolean = false) {
+                    recordEncrypted: Boolean = false) extends EncryptSupportive {
   val logger = Logger.getLogger(getClass)
 
   var byteBuffer: Array[Byte] = null
