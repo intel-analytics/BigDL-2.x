@@ -129,6 +129,25 @@ class MAE(Metric):
         return "MAE"
 
 
+class MSE(Metric):
+    """
+    Metric for mean square error, similar from MSE criterion
+
+    >>> mse = MSE()
+
+    """
+
+    def get_bigdl_metric(self):
+        raise NotImplementedError
+
+    def get_pytorch_metric(self):
+        from zoo.orca.learn.pytorch import pytorch_metrics
+        return pytorch_metrics.MSE()
+
+    def get_name(self):
+        return "MSE"
+
+
 class Accuracy(Metric):
     """
     Measures top1 accuracy for multi-class classification
