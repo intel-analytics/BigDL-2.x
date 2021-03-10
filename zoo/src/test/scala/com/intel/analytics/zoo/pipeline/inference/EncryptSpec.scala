@@ -40,19 +40,21 @@ class EncryptSpec extends FunSuite with Matchers with BeforeAndAfterAll
   }
 
   test("plain text should be encrypted") {
-    val encrypted = encryptWithAES256(plain, secret, salt)
-    val decrypted = decryptWithAES256(encrypted, secret, salt)
+    var encrypted = encryptWithAESCBC(plain, secret, salt)
+    var decrypted = decryptWithAESCBC(encrypted, secret, salt)
     decrypted should be (plain)
+    encrypted = encryptWithAESCBC(plain, secret, salt, 128)
+    decrypted = decryptWithAESCBC(encrypted, secret, salt, 128)
   }
 
   test("plain file should be encrypted") {
     val file = getClass.getResource("/application.conf")
     val encryptedFile = tempDir.getAbsolutePath + "/" + file.getFile.split("/").last + ".encrpyted"
-    encryptFileWithAES256(file.getFile, secret, salt, encryptedFile)
+    encryptFileWithAESCBC(file.getFile, secret, salt, encryptedFile)
     new File(encryptedFile).exists() should be (true)
-    val decrypted = decryptFileWithAES256(encryptedFile, secret, salt)
+    val decrypted = decryptFileWithAESCBC(encryptedFile, secret, salt)
     val decryptedFile = encryptedFile + ".decrypted"
-    decryptFileWithAES256(encryptedFile, secret, salt, decryptedFile)
+    decryptFileWithAESCBC(encryptedFile, secret, salt, decryptedFile)
     new File(decryptedFile).exists() should be (true)
     val source = scala.io.Source.fromFile(file.getFile)
     val plain = try source.mkString finally source.close()
@@ -66,8 +68,8 @@ class EncryptSpec extends FunSuite with Matchers with BeforeAndAfterAll
     val weightFile = s"$dir/resnet_v1_50.bin"
     val decryptedModelFile = modelFile + ".encrpyted"
     val decryptedWeightFile = weightFile + ".encrpyted"
-    // encryptFileWithAES256(modelFile, secrect, salt, decryptedModelFile, "ISO-8859-1")
-    // encryptFileWithAES256(weightFile, secrect, salt, decryptedWeightFile, "ISO-8859-1")
+    // encryptFileWithAESCBC(modelFile, secrect, salt, decryptedModelFile, "ISO-8859-1")
+    // encryptFileWithAESCBC(weightFile, secrect, salt, decryptedWeightFile, "ISO-8859-1")
     val model = new InferenceModel(1)
     model.doLoadEncryptedOpenVINO(decryptedModelFile, decryptedWeightFile, secrect, salt)
   }

@@ -19,19 +19,25 @@ import random
 
 from zoo.common.encryption import encrypt_with_AES, decrypt_with_AES
 
+
 class TestEncryption(object):
 
-    def test_aes(self):
+    def test_aes128(self):
         letters = string.ascii_lowercase
         random_str = ''.join(random.choice(letters) for i in range(100))
         # random_str = "hello world, hello scala, hello encrypt, come on UNITED!!!"
         enc_str = encrypt_with_AES(random_str, 'analytics-zoo', 'intel-analytics')
         dec_str = decrypt_with_AES(enc_str, 'analytics-zoo', 'intel-analytics')
-        print(random_str)
-        print(enc_str)
-        print(dec_str)
         assert dec_str == random_str, \
-            "Check encryption and decrption result"
+            "Check AES128 encryption and decryption result"
+
+    def test_aes256(self):
+        letters = string.ascii_lowercase
+        random_str = ''.join(random.choice(letters) for i in range(100))
+        enc_str = encrypt_with_AES(random_str, 'analytics-zoo', 'intel-analytics', 256)
+        dec_str = decrypt_with_AES(enc_str, 'analytics-zoo', 'intel-analytics', 256)
+        assert dec_str == random_str, \
+            "Check AES256 encryption and decryption result"
 
 
 if __name__ == "__main__":

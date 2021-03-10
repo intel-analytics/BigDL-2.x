@@ -20,18 +20,19 @@ import java.io.PrintWriter
 import java.util.Base64
 import java.security.SecureRandom
 import javax.crypto.{Cipher, SecretKeyFactory}
-import javax.crypto.spec.{IvParameterSpec, PBEKeySpec, SecretKeySpec}
+import javax.crypto.spec.{GCMParameterSpec, IvParameterSpec, PBEKeySpec, SecretKeySpec}
 
 trait EncryptSupportive {
   val BLOCK_SIZE = 16
 
-  def encryptWithAES256(content: String, secret: String, salt: String): String = {
+  def encryptWithAESCBC(content: String, secret: String, salt: String,
+                        keyLen: Int = 128): String = {
     val iv = new Array[Byte](BLOCK_SIZE)
     val secureRandom: SecureRandom = SecureRandom.getInstance("SHA1PRNG")
     secureRandom.nextBytes(iv)
     val ivParameterSpec = new IvParameterSpec(iv)
     val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-    val spec = new PBEKeySpec(secret.toCharArray(), salt.getBytes(), 65536, 256)
+    val spec = new PBEKeySpec(secret.toCharArray(), salt.getBytes(), 65536, keyLen)
     val tmp = secretKeyFactory.generateSecret(spec)
     val secretKeySpec = new SecretKeySpec(tmp.getEncoded(), "AES")
 
@@ -41,12 +42,13 @@ trait EncryptSupportive {
     Base64.getEncoder().encodeToString(cipher.getIV ++ cipherTextWithoutIV)
   }
 
-  def decryptWithAES256(content: String, secret: String, salt: String): String = {
+  def decryptWithAESCBC(content: String, secret: String, salt: String,
+                        keyLen: Int = 128): String = {
     val cipherTextWithIV = Base64.getDecoder.decode(content)
     val iv = cipherTextWithIV.slice(0, BLOCK_SIZE)
     val ivParameterSpec = new IvParameterSpec(iv)
     val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-    val spec = new PBEKeySpec(secret.toCharArray(), salt.getBytes(), 65536, 256)
+    val spec = new PBEKeySpec(secret.toCharArray(), salt.getBytes(), 65536, keyLen)
     val tmp = secretKeyFactory.generateSecret(spec)
     val secretKeySpec = new SecretKeySpec(tmp.getEncoded(), "AES")
 
@@ -56,26 +58,27 @@ trait EncryptSupportive {
     new String(cipher.doFinal(cipherTextWithoutIV))
   }
 
-  def encryptFileWithAES256(filePath: String, secret: String, salt: String, outputFile: String,
-  encoding: String = "UTF-8")
+  def encryptFileWithAESCBC(filePath: String, secret: String, salt: String, outputFile: String,
+                            keyLen: Int = 128, encoding: String = "UTF-8")
   : Unit = {
     val source = scala.io.Source.fromFile(filePath, encoding)
     val content = try source.mkString finally source.close()
-    val encrypted = encryptWithAES256(content, secret, salt)
+    val encrypted = encryptWithAESCBC(content, secret, salt)
     new PrintWriter(outputFile) { write(encrypted); close }
   }
 
-  def decryptFileWithAES256(filePath: String, secret: String, salt: String): String = {
-    val source = scala.io.Source.fromFile(filePath)
+  def decryptFileWithAESCBC(filePath: String, secret: String, salt: String,
+                            keyLen: Int = 128, encoding: String = "UTF-8"): String = {
+    val source = scala.io.Source.fromFile(filePath, encoding)
     val content = try source.mkString finally source.close()
-    decryptWithAES256(content, secret, salt)
+    decryptWithAESCBC(content, secret, salt, keyLen)
   }
 
-  def decryptFileWithAES256(filePath: String, secret: String, salt: String, outputFile: String)
-  : Unit = {
+  def decryptFileWithAESCBC(filePath: String, secret: String, salt: String,
+                            outputFile: String): Unit = {
     val source = scala.io.Source.fromFile(filePath)
     val content = try source.mkString finally source.close()
-    val decrypted = decryptWithAES256(content, secret, salt)
+    val decrypted = decryptWithAESCBC(content, secret, salt)
     new PrintWriter(outputFile) { write(decrypted); close }
   }
 
