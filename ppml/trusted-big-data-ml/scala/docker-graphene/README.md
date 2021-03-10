@@ -26,10 +26,15 @@ sudo docker build \
 ## How to Run
 
 ### Prepare the data
-To train a model with ppml in analytics zoo and bigdl, you need to prepare the data first. The Docker image is taking lenet and mnist as example.
-You can download the MNIST Data from [here](http://yann.lecun.com/exdb/mnist/). Unzip all the files and put them in one folder(e.g. mnist).
-There're four files. **train-images-idx3-ubyte** contains train images, **train-labels-idx1-ubyte** is train label file, **t10k-images-idx3-ubyte** has validation images and **t10k-labels-idx1-ubyte** contains validation labels. For more detail, please refer to the download page.
-After you uncompress the gzip files, these files may be renamed by some uncompress tools, e.g. **train-images-idx3-ubyte** is renamed to **train-images.idx3-ubyte**. Please change the name back before you run the example. 
+To train a model with ppml in analytics zoo and bigdl, you need to prepare the data first. The Docker image is taking lenet and mnist as example. <br>
+You can download the MNIST Data from [here](http://yann.lecun.com/exdb/mnist/). Unzip all the files and put them in one folder(e.g. mnist). <br>
+There're four files. **train-images-idx3-ubyte** contains train images, **train-labels-idx1-ubyte** is train label file, **t10k-images-idx3-ubyte** has validation images and **t10k-labels-idx1-ubyte** contains validation labels. For more detail, please refer to the download page. <br>
+After you uncompress the gzip files, these files may be renamed by some uncompress tools, e.g. **train-images-idx3-ubyte** is renamed to **train-images.idx3-ubyte**. Please change the name back before you run the example.  <br>
+Then set the path to your data: <br>
+```bash
+export DATA_PATH=/path/to/your/data
+```
+
 
 ### Prepare the keys
 The ppml in analytics zoo need secured keys to enable spark security such as AUTHENTICATION, RPC Encryption, Local Storage Encryption and TLS, you need to prepare the secure keys and keystores.
@@ -45,6 +50,10 @@ The ppml in analytics zoo need secured keys to enable spark security such as AUT
     openssl pkcs12 -in keystore.pkcs12 -nodes -out server.pem
     openssl rsa -in server.pem -out server.key
     openssl x509 -in server.pem -out server.crt
+```
+Then set the path to kays: 
+```bash
+export KEYS_PATH=/path/to/your/keys
 ```
 
 ### Run the PPML Docker image
@@ -82,3 +91,11 @@ sudo docker logs spark-local | egrep "###|INFO"
 ```
 
 #### In spark standalone cluster mode
+
+
+### How to run it on spark in sgx with Docker
+#### Create and run one Docker image
+
+#### Example one: SparkPi
+#### Example two: BigDL Lenet
+#### Example three: TPC-H
