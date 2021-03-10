@@ -39,15 +39,43 @@ class EncryptSpec extends FunSuite with Matchers with BeforeAndAfterAll
     tempDir.delete()
   }
 
-  test("plain text should be encrypted") {
-    var encrypted = encryptWithAESCBC(plain, secret, salt)
-    var decrypted = decryptWithAESCBC(encrypted, secret, salt)
+  test("AES CBC plain text should be encrypted") {
+    var encrypted = timing(s"CBC 128 encryption") {
+      encryptWithAESCBC(plain, secret, salt)
+    }
+    var decrypted = timing(s"CBC 128 decryption") {
+      decryptWithAESCBC(encrypted, secret, salt)
+    }
+    println("CBC128 Text increase: " + encrypted.length * 100.0/ plain.length)
     decrypted should be (plain)
-    encrypted = encryptWithAESCBC(plain, secret, salt, 128)
-    decrypted = decryptWithAESCBC(encrypted, secret, salt, 128)
+    encrypted = timing(s"CBC 256 encryption") {
+      encryptWithAESCBC(plain, secret, salt, 128)
+    }
+    println("CBC256 Text increase: ", encrypted.length * 100.0/ plain.length)
+    decrypted = timing(s"CBC 256 decryption") {
+      decryptWithAESCBC(encrypted, secret, salt, 128)
+    }
   }
 
-  test("plain file should be encrypted") {
+  test("AES GCM plain text should be encrypted") {
+    var encrypted = timing(s"GCM 128 encryption") {
+      encryptWithAESGCM(plain, secret, salt)
+    }
+    println("GCM128 Text increase: " + encrypted.length * 100.0 / plain.length)
+    var decrypted = timing(s"GCM 128 decryption") {
+      decryptWithAESGCM(encrypted, secret, salt)
+    }
+    decrypted should be (plain)
+    encrypted = timing(s"GCM 256 encryption") {
+      encryptWithAESGCM(plain, secret, salt, 128)
+    }
+    println("GCM256 Text increase: " + encrypted.length * 100.0 / plain.length )
+    decrypted = timing(s"GCM 256 encryption") {
+      decryptWithAESGCM(encrypted, secret, salt, 128)
+    }
+  }
+
+  test("AES CBC plain file should be encrypted") {
     val file = getClass.getResource("/application.conf")
     val encryptedFile = tempDir.getAbsolutePath + "/" + file.getFile.split("/").last + ".encrpyted"
     encryptFileWithAESCBC(file.getFile, secret, salt, encryptedFile)

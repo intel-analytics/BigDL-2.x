@@ -22,6 +22,7 @@ import java.security.SecureRandom
 import javax.crypto.{Cipher, SecretKeyFactory}
 import javax.crypto.spec.{GCMParameterSpec, IvParameterSpec, PBEKeySpec, SecretKeySpec}
 
+
 trait EncryptSupportive {
   val BLOCK_SIZE = 16
 
@@ -57,6 +58,40 @@ trait EncryptSupportive {
     val cipherTextWithoutIV = cipherTextWithIV.slice(BLOCK_SIZE, cipherTextWithIV.size)
     new String(cipher.doFinal(cipherTextWithoutIV))
   }
+
+  def encryptWithAESGCM(content: String, secret: String, salt: String,
+                        keyLen: Int = 128): String = {
+    val iv = new Array[Byte](12)
+    val secureRandom: SecureRandom = SecureRandom.getInstance("SHA1PRNG")
+    secureRandom.nextBytes(iv)
+    val gcmParameterSpec = new GCMParameterSpec(128, iv)
+    val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+    val spec = new PBEKeySpec(secret.toCharArray(), salt.getBytes(), 65536, keyLen)
+    val tmp = secretKeyFactory.generateSecret(spec)
+    val secretKeySpec = new SecretKeySpec(tmp.getEncoded(), "AES")
+
+    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+    cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, gcmParameterSpec)
+    val cipherTextWithoutIV = cipher.doFinal(content.getBytes("UTF-8"))
+    Base64.getEncoder().encodeToString(cipher.getIV ++ cipherTextWithoutIV)
+  }
+
+  def decryptWithAESGCM(content: String, secret: String, salt: String,
+                        keyLen: Int = 128): String = {
+    val cipherTextWithIV = Base64.getDecoder.decode(content)
+    val iv = cipherTextWithIV.slice(0, 12)
+    val gcmParameterSpec = new GCMParameterSpec(128, iv)
+    val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+    val spec = new PBEKeySpec(secret.toCharArray(), salt.getBytes(), 65536, keyLen)
+    val tmp = secretKeyFactory.generateSecret(spec)
+    val secretKeySpec = new SecretKeySpec(tmp.getEncoded(), "AES")
+
+    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+    cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, gcmParameterSpec)
+    val cipherTextWithoutIV = cipherTextWithIV.slice(12, cipherTextWithIV.size)
+    new String(cipher.doFinal(cipherTextWithoutIV))
+  }
+
 
   def encryptFileWithAESCBC(filePath: String, secret: String, salt: String, outputFile: String,
                             keyLen: Int = 128, encoding: String = "UTF-8")
