@@ -160,6 +160,9 @@ class PytorchBaseModel(BaseModel):
         return eval_result
 
     def predict(self, x, mc=False):
+        # reshape 1dim input
+        x = self._reshape_input(x)
+
         if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling predict!")
         x = PytorchBaseModel.to_torch(x).float()
@@ -245,6 +248,9 @@ class PytorchBaseModel(BaseModel):
         self.onnx_model_built = True
 
     def predict_with_onnx(self, x, mc=False, dirname=None):
+        # reshape 1dim input
+        x = self._reshape_input(x)
+
         x = PytorchBaseModel.to_torch(x).float()
         if not self.onnx_model_built:
             self._build_onnx(x[0:1], dirname=dirname)
