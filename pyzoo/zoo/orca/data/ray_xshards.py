@@ -158,16 +158,13 @@ class RayXShards(XShards):
 
     def transform_shards_with_actors(self, actors, func):
         """
-        Assign a list of partition_refs (each partition_ref references a list of shards) to an actor
-        and run func for each actor and partition_ref_list pair.
-
+        Assign each partition_ref (referencing a list of shards) to an actor,
+        and run func for each actor and partition_ref pair.
         Actors should have a `get_node_ip` method to achieve locality scheduling.
         The `get_node_ip` method should call ray._private.services.get_node_ip_address()
         to return the correct ip address.
-
-        The `func` should take an actor and a list of partition_refs as argument and
-        invoke some remote func on that actor and return a new list of partition_refs.
-
+        The `func` should take an actor and a partition_ref as argument and
+        invoke some remote func on that actor and return a new partition_ref.
         Note that if you pass partition_ref directly to actor method, ray
         will resolve that partition_ref to the actual partition object, which
         is a list of shards. If you pass partition_ref indirectly through other
@@ -178,9 +175,9 @@ class RayXShards(XShards):
         assigned_partitions, actor_ips = self.assign_partitions_to_actors(actors)
         assigned_partition_refs = [(part_ids, self._get_multiple_partition_refs(part_ids))
                                    for part_ids in assigned_partitions]
-        new_part_id_refs = {part_id: new_ref
+        new_part_id_refs = {part_id: func(actor, part_ref)
                             for actor, (part_ids, part_refs) in zip(actors, assigned_partition_refs)
-                            for part_id, new_ref in zip(part_ids, func(actor, part_refs))}
+                            for part_id, part_ref in zip(part_ids, part_refs)}
 
         actor_ip2part_id = defaultdict(list)
         for actor_ip, part_ids in zip(actor_ips, assigned_partitions):
@@ -189,6 +186,7 @@ class RayXShards(XShards):
         return RayXShards.from_partition_refs(actor_ip2part_id, new_part_id_refs)
 
     def zip_shards_with_actors(self, xshards, actors, func):
+        # todo: remove
         assert self.num_partitions() == xshards.num_partitions(),\
             "the rdds to be zipped must have the same number of partitions"
         assigned_partitions, actor_ips = self.assign_partitions_to_actors(actors)
@@ -205,6 +203,7 @@ class RayXShards(XShards):
             actor_ip2part_id[actor_ip].extend(part_ids)
 
         return RayXShards.from_partition_refs(actor_ip2part_id, new_part_id_refs)
+
 
     def assign_partitions_to_actors(self, actors):
         num_parts = self.num_partitions()
