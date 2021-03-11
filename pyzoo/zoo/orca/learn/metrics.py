@@ -288,7 +288,7 @@ class SparseCategoricalCrossEntropy(Metric):
 class KLDivergence(Metric):
     """
     Calculates the Kullback-Liebler Divergence metric between the label and prediction.
-    
+
     >>> div = KLDivergence()
     """
 
