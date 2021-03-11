@@ -68,7 +68,7 @@ def test_assign_partitions_to_actors(orca_context_fixture):
 
     actor_num = 3
     actors = [Add1Actor.remote() for i in range(actor_num)]
-    parts_list, _ = ray_xshards.assign_partitions_to_actors(actors, one_to_one=False)
+    parts_list, _ = ray_xshards.assign_partitions_to_actors(actors)
 
     assert len(parts_list) == actor_num
 
@@ -78,17 +78,6 @@ def test_assign_partitions_to_actors(orca_context_fixture):
             assert len(parts_list[counter]) == div + 1
         else:
             assert len(parts_list[counter]) == div
-
-
-def test_assign_partitions_to_actors_one_to_one_fail(orca_context_fixture):
-    ray_xshards, _ = get_ray_xshards()
-    part_num = ray_xshards.num_partitions()
-
-    actors = [Add1Actor.remote() for i in range(part_num - 1)]
-    with pytest.raises(AssertionError) as excinfo:
-        parts_list, _ = ray_xshards.assign_partitions_to_actors(actors, one_to_one=True)
-
-        assert excinfo.match("there must be the same number of actors and partitions")
 
 
 def test_transform_shards_with_actors(orca_context_fixture):
