@@ -212,9 +212,8 @@ class PyTorchRayEstimator:
                 return worker.train_epochs.remote(
                     data_creator, epochs, batch_size, profile, info, False)
 
-            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+            worker_stats = ray_xshards.reduce_partitions_for_actors(self.remote_workers,
                                                                     transform_func)
-            worker_stats = stats_shards.collect_partitions()
         else:
             assert isinstance(data, types.FunctionType), \
                 "data should be either an instance of SparkXShards or a callable function, but " \
@@ -290,9 +289,8 @@ class PyTorchRayEstimator:
                 return worker.validate.remote(
                     data_creator, batch_size, num_steps, profile, info, False)
 
-            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+            worker_stats = ray_xshards.reduce_partitions_for_actors(self.remote_workers,
                                                                     transform_func)
-            worker_stats = stats_shards.collect_partitions()
         else:
             assert isinstance(data, types.FunctionType), \
                 "data should be either an instance of SparkXShards or a callable function, but " \
@@ -307,8 +305,8 @@ class PyTorchRayEstimator:
     def _predict_spark_xshards(self, xshards, param):
         ray_xshards = RayXShards.from_spark_xshards(xshards)
 
-        def transform_func(worker, partition_refs):
-            data_creator = lambda config, batch_size: partition_refs
+        def transform_func(worker, shards_ref):
+            data_creator = lambda config, batch_size: shards_ref
             return worker.predict.remote(
                 data_creator, **param)
 

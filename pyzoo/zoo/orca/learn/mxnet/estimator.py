@@ -204,7 +204,7 @@ class MXNetEstimator(OrcaRayEstimator):
                                                None,
                                                train_resize_batch_num)
 
-                stats_shards = ray_xshards.transform_shards_with_actors(self.workers,
+                worker_stats = ray_xshards.reduce_partitions_for_actors(self.workers,
                                                                         transform_func)
             else:
                 val_ray_xshards = process_spark_xshards(validation_data, self.num_workers)
@@ -219,13 +219,12 @@ class MXNetEstimator(OrcaRayEstimator):
                                                batch_size,
                                                validation_data_creator,
                                                train_resize_batch_num)
-                stats_shards = ray_xshards.zip_shards_with_actors(val_ray_xshards,
+                worker_stats = ray_xshards.zip_shards_with_actors(val_ray_xshards,
                                                                   self.workers,
                                                                   zip_func)
             server_stats = [server.train.remote(None, epochs, batch_size,
                                                 None, train_resize_batch_num)
                             for server in self.servers]
-            worker_stats = stats_shards.collect()
             server_stats = ray.get(server_stats)
             server_stats = list(itertools.chain.from_iterable(server_stats))
             stats = worker_stats + server_stats
