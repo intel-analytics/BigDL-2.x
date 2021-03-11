@@ -102,7 +102,7 @@ Analytics Zoo has been tested on __Python 3.6 and 3.7__ with the following libra
 
 ```bash
 pyspark==2.4.3
-ray==0.8.4 or 0.8.6
+ray==1.2.0
 tensorflow==1.15.0 or >2.0
 pytorch>=1.5.0
 torchvision>=0.6.0

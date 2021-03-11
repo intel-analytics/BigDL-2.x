@@ -10,7 +10,7 @@
 
 ### **Step 0: Prepare Environment**
 
-[Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) is needed to prepare the Python environment for running this example. Please refer to the [install guide](../../UserGuide/python.md) for more details.
+[conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) is needed to prepare the Python environment for running this example. Please refer to the [install guide](../../UserGuide/python.md) for more details.
 
 ```bash
 conda create -n zoo python=3.7 # zoo is conda environment name, you can use any name you like.
@@ -78,7 +78,7 @@ adam = torch.optim.Adam(model.parameters(), 0.001)
 
 ### **Step 3: Define Train Dataset**
 
-You can define the dataset using standard [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html). Orca also supports a data creator function or [Orca SparkXShards](./data).
+You can define the dataset using standard [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html). Orca also supports a data creator function or [Orca XShards](../Overview/data-parallel-processing.md).
 
 ```python
 import torch
