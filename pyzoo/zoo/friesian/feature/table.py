@@ -16,8 +16,7 @@
 
 from pyspark.sql.functions import col, udf, array, broadcast, log
 from zoo.orca import OrcaContext
-from bigdl.util.common import JavaValue
-from zoo.common.utils import callZooFunc
+from zoo.friesian.feature.utils import assign_category_id, fill_na
 
 
 class Table:
@@ -40,7 +39,7 @@ class Table:
         return broadcast(self.df)
 
     def fillna(self, value, columns):
-        return Table(self.df.fillna(value, columns))
+        return Table(fill_na(self.df, value, columns))
 
     def clip(self, columns, value=0):
         df = self.df
@@ -72,6 +71,9 @@ class Table:
     def rename(self, existing, new):
         return Table(self.df.withColumnRenamed(existing, new))
 
+    def show(self, n=20, truncate=True, vertical=False):
+        self.df.show(n, truncate, vertical)
+
 
 class FeatureTable(Table):
     @classmethod
@@ -92,7 +94,7 @@ class FeatureTable(Table):
                 .drop(col_name).withColumnRenamed("id", col_name)
         return FeatureTable(data_df)
 
-    def categorify(self, columns, freq_limit, out_path=None):
+    def categorify(self, columns, freq_limit, out_path=None, write_mode="overwrite"):
         data_df = self.df
         frequency_dict = {}
         default_limit = None
@@ -116,19 +118,33 @@ class FeatureTable(Table):
 
             df_count_filtered_list.append(df_col)
 
-        df_id_list = FeatureTable._assign_category_id(df_count_filtered_list, columns)
+        df_id_list = assign_category_id(df_count_filtered_list, columns)
+        df_id_list = map(lambda x: StringIndex(x), df_id_list)
         if out_path is not None:
-
+            for df in df_id_list:
+                df.write_parquet(out_path, write_mode)
         else:
             return df_id_list
-
-    @staticmethod
-    def _assign_category_id(df_list, columns):
-        return callZooFunc("float", "categoryAssignId", df_list, columns)
 
 
 # Assume this table only has two columns: col_name and id
 class StringIndex(Table):
+    def __init__(self, df):
+        super().__init__(df)
+        cols = df.columns
+        if len(cols) != 2:
+            raise ValueError("StringIndex should have only 2 columns, col_name and id")
+        assert "id" in cols, "id should in the DataFrame"
+        for c in cols:
+            if c != "id":
+                self.col_name = c
+                break
+        self.df = df
+
     @classmethod
     def read_parquet(cls, paths):
         return cls(Table._read_parquet(paths))
+
+    def write_parquet(self, path, mode="overwrite"):
+        path = path + "/" + self.col_name + ".parquet"
+        self.df.write.parquet(path, mode=mode)

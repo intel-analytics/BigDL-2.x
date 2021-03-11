@@ -14,4 +14,12 @@
 # limitations under the License.
 #
 
-from .table import FeatureTable, StringIndex
+from zoo.common.utils import callZooFunc
+
+
+def assign_category_id(df_list, columns):
+    return callZooFunc("float", "categoryAssignId", df_list, columns)
+
+
+def fill_na(df, fill_val, columns):
+    return callZooFunc("float", "fillNA", df, fill_val, columns)

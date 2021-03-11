@@ -26,6 +26,7 @@ class XShards(object):
     """
     A collection of data which can be pre-processed in parallel.
     """
+
     def transform_shard(self, func, *args):
         """
         Transform each shard in the XShards using specified function.
@@ -114,10 +115,12 @@ But got data of type {}
         data_shards = SparkXShards(rdd)
         return data_shards
 
+
 class SparkXShards(XShards):
     """
     A collection of data which can be pre-processed in parallel on Spark
     """
+
     def __init__(self, rdd, transient=False):
         self.rdd = rdd
         self.user_cached = False
@@ -137,6 +140,7 @@ class SparkXShards(XShards):
         :param args: other arguments in this function.
         :return: a new SparkXShards.
         """
+
         def transform(iter, func, *args):
             for x in iter:
                 yield func(x, *args)
@@ -203,9 +207,9 @@ class SparkXShards(XShards):
             import pandas as pd
 
             if num_partitions > self.rdd.getNumPartitions():
-                rdd = self.rdd\
+                rdd = self.rdd \
                     .flatMap(lambda df: df.apply(lambda row: (row[0], row.values.tolist()), axis=1)
-                             .values.tolist())\
+                             .values.tolist()) \
                     .partitionBy(num_partitions)
 
                 schema = self._get_schema()
@@ -213,12 +217,13 @@ class SparkXShards(XShards):
                 def merge_rows(iter):
                     data = [value[1] for value in list(iter)]
                     if data:
-                        df = pd.DataFrame(data=data, columns=schema['columns'])\
+                        df = pd.DataFrame(data=data, columns=schema['columns']) \
                             .astype(schema['dtypes'])
                         return [df]
                     else:
                         # no data in this partition
                         return iter
+
                 repartitioned_shard = SparkXShards(rdd.mapPartitions(merge_rows))
             else:
                 def combine_df(iter):
@@ -227,6 +232,7 @@ class SparkXShards(XShards):
                         return [pd.concat(dfs)]
                     else:
                         return iter
+
                 rdd = self.rdd.coalesce(num_partitions)
                 repartitioned_shard = SparkXShards(rdd.mapPartitions(combine_df))
         elif self._get_class_name() == 'list':
@@ -248,13 +254,13 @@ class SparkXShards(XShards):
             dtype = elem.dtype
             if len(shape) > 0:
                 if num_partitions > self.rdd.getNumPartitions():
-                    rdd = self.rdd\
-                        .flatMap(lambda data: list(data))\
+                    rdd = self.rdd \
+                        .flatMap(lambda data: list(data)) \
                         .repartition(num_partitions)
 
                     repartitioned_shard = SparkXShards(rdd.mapPartitions(
                         lambda iter: np.stack([list(iter)], axis=0)
-                        .astype(dtype)))
+                            .astype(dtype)))
                 else:
                     rdd = self.rdd.coalesce(num_partitions)
                     from functools import reduce
@@ -286,7 +292,7 @@ class SparkXShards(XShards):
                 # change data to key value pairs
                 rdd = self.rdd.flatMap(
                     lambda df: df.apply(lambda row: (row[cols], row.values.tolist()), axis=1)
-                    .values.tolist())
+                        .values.tolist())
 
                 partition_num = self.rdd.getNumPartitions() if not num_partitions \
                     else num_partitions
@@ -303,6 +309,7 @@ class SparkXShards(XShards):
                 else:
                     # no data in this partition
                     return []
+
             # merge records to df in each partition
             partitioned_shard = SparkXShards(partitioned_rdd.mapPartitions(merge))
             self._uncache()
@@ -337,7 +344,8 @@ class SparkXShards(XShards):
         """
         # get number of splits
         list_split_length = self.rdd.map(lambda data: len(data) if isinstance(data, list) or
-                                         isinstance(data, tuple) else 1).collect()
+                                                                   isinstance(data,
+                                                                              tuple) else 1).collect()
         # check if each element has same splits
         if list_split_length.count(list_split_length[0]) != len(list_split_length):
             raise Exception("Cannot split this XShards because its partitions "
@@ -347,7 +355,9 @@ class SparkXShards(XShards):
                 def get_data(order):
                     def transform(data):
                         return data[order]
+
                     return transform
+
                 split_shard_list = [SparkXShards(self.rdd.map(get_data(i)))
                                     for i in range(list_split_length[0])]
                 self._uncache()
@@ -378,7 +388,7 @@ class SparkXShards(XShards):
                              "in each partition")
 
     def __len__(self):
-        return self.rdd.map(lambda data: len(data) if hasattr(data, '__len__') else 1)\
+        return self.rdd.map(lambda data: len(data) if hasattr(data, '__len__') else 1) \
             .reduce(lambda l1, l2: l1 + l2)
 
     def save_pickle(self, path, batchSize=10):
@@ -403,6 +413,7 @@ class SparkXShards(XShards):
             except:
                 raise Exception("Invalid key for this XShards")
             return value
+
         return SparkXShards(self.rdd.map(get_data), transient=True)
 
     def _for_each(self, func, *args, **kwargs):
@@ -412,6 +423,7 @@ class SparkXShards(XShards):
             except Exception as e:
                 return e
             return result
+
         result_rdd = self.rdd.map(lambda x: utility_func(x, func, *args, **kwargs))
         return result_rdd
 

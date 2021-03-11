@@ -18,12 +18,13 @@ package com.intel.analytics.zoo.friesian.python
 
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession, internal}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import java.util.{List => JList, Map => JMap}
 
 import org.apache.spark.TaskContext
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{broadcast, col, count, max, min, row_number, spark_partition_id, udf}
+import org.apache.spark.sql.functions.{col, row_number, spark_partition_id, udf}
+import org.apache.spark.sql.types.{BooleanType, DataType, LongType, NumericType, StringType}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
@@ -35,14 +36,50 @@ object PythonFriesian {
 }
 
 class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo[T] {
-  def fillNA(df: DataFrame, fillVal: Int = 0, columns: JList[String] = null): DataFrame = {
+  val numericTypes: List[String] = List("long", "double", "integer")
+
+  def fillNA(df: DataFrame, fillVal: Any = 0, columns: JList[String] = null): DataFrame = {
+    val cols = if(columns == null) {
+      df.columns
+    } else {
+      columns.asScala.toArray
+    }
+
+    val cols_idx = cols.map(col_n => {
+      val idx = df.columns.indexOf(col_n)
+      if(idx == -1) {
+        throw new IllegalArgumentException(s"The column name ${col_n} is not exist")
+      }
+      idx
+    })
+
+    fillnaidx(df, fillVal, cols_idx)
+  }
+
+  private def fillnaidx(df: DataFrame, fillVal: Any, columns: Array[Int]): DataFrame = {
+    val targetType = fillVal match {
+      case _: Double | _: Long | _: Int => "numeric"
+      case _: String => "string"
+      case _: Boolean => "boolean"
+      case _ => throw new IllegalArgumentException(
+        s"Unsupported value type ${fillVal.getClass.getName} ($fillVal).")
+    }
+
     val schema = df.schema
+
+    val fillValList = columns.map(idx => {
+      val matchAndVal = checkTypeAndCast(schema(idx).dataType.typeName, targetType, fillVal)
+      if (!matchAndVal._1){
+        throw new IllegalArgumentException(s"$targetType is not matched at fillValue")
+      }
+      matchAndVal._2
+    })
+
     val dfUpdated = df.rdd.map(row => {
       val origin = row.toSeq.toArray
-      for (c <- columns.asScala.toArray) {
-        val idx = row.fieldIndex(c)
+      for ((idx, fillV) <- columns zip fillValList) {
         if (row.isNullAt(idx)) {
-          origin.update(idx, fillVal)
+          origin.update(idx, fillV)
         }
       }
       Row.fromSeq(origin)
@@ -52,25 +89,25 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     spark.createDataFrame(dfUpdated, schema)
   }
 
-  def fillNA(df: DataFrame, fillVal: Int = 0, columns: JList[Int]): Unit = {
-    val schema = df.schema
-    val dfUpdated = df.rdd.map(row => {
-      val origin = row.toSeq.toArray
-      for (idx <- columns.asScala.toArray) {
-        if (row.isNullAt(idx)) {
-          origin.update(idx, fillVal)
-        }
+  private def checkTypeAndCast(schemaType: String, targetType: String, fillVal: Any):
+  (Boolean, Any) = {
+    if (schemaType == targetType) {
+      return (true, fillVal)
+    } else if (targetType == "numeric"){
+      val fillNum = fillVal.asInstanceOf[Number]
+      return schemaType match {
+          case "long" => (true, fillNum.longValue)
+          case "integer" => (true, fillNum.intValue)
+          case "double" => (true, fillNum.doubleValue)
+          case _ => (false, fillVal)
       }
-      Row.fromSeq(origin)
-    })
-
-    val spark = SparkSession.builder().config(dfUpdated.sparkContext.getConf).getOrCreate()
-    spark.createDataFrame(dfUpdated, schema)
+    }
+    (false, fillVal)
   }
 
-  private def get_count(rows: Iterator[Row]): Iterator[(Int, Int)] ={
+  private def getCount(rows: Iterator[Row]): Iterator[(Int, Int)] ={
     if(rows.isEmpty){
-      Array().iterator
+      Array[(Int, Int)]().iterator
     } else {
       val part_id = TaskContext.get().partitionId()
       Array(Tuple2(part_id, rows.size)).iterator
@@ -79,10 +116,9 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def categoryAssignId(df_list: JList[DataFrame], columns: JList[String]): JList[DataFrame] = {
     val idx_df_list = (0 until columns.size).map(x => {
-      val col_n = columns.get(x)
       val df = df_list.get(x).withColumn("part_id", spark_partition_id())
       df.cache()
-      val count_list: Array[(Int, Int)] = df.rdd.mapPartitions(get_count).collect()
+      val count_list: Array[(Int, Int)] = df.rdd.mapPartitions(getCount).collect()
       val base_dict = scala.collection.mutable.Map[Int, Int]()
       var running_sum = 0
       for (count_tuple <- count_list) {

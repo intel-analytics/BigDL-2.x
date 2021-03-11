@@ -14,4 +14,22 @@
 # limitations under the License.
 #
 
-from .table import FeatureTable, StringIndex
+import os.path
+import shutil
+
+import pytest
+from unittest import TestCase
+
+from zoo.common.nncontext import *
+from zoo.friesian.feature import FeatureTable
+
+
+class TestTable(TestCase):
+    def setup_method(self, method):
+        self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+
+    def test_fillna(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_df = FeatureTable.read_parquet(file_path)
+        feature_df.fillna(0, ["col_1"])
+        feature_df.show()
