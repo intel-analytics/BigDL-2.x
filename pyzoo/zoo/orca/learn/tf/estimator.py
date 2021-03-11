@@ -25,7 +25,7 @@ from zoo.orca.data import SparkXShards
 from zoo.orca.learn.tf.utils import *
 from zoo.orca.learn.trigger import Trigger
 from zoo.orca.learn.utils import find_latest_checkpoint, convert_predict_rdd_to_xshard, \
-    convert_predict_rdd_to_dataframe
+    convert_predict_rdd_to_dataframe, process_xshards_of_pandas_dataframe
 from zoo.tfpark import KerasModel
 from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 from zoo.tfpark.tf_optimizer import StatelessMetric
@@ -44,8 +44,8 @@ class Estimator(SparkEstimator):
         Train the model with train data.
 
         :param data: train data. It can be XShards, Spark DataFrame, tf.data.Dataset.
-        If data is XShards, each partition can be a XShards of Pandas Dataframe or
-         a dictionary of  {'x': feature, 'y': label}, where feature(label) is a numpy array or
+        If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+        {'x': feature, 'y': label}, where feature(label) is a numpy array or
          a tuple of numpy arrays.
         :param epochs: number of epochs to train.
         :param batch_size: total batch size for each iteration. Default: 32.
@@ -69,8 +69,8 @@ class Estimator(SparkEstimator):
         Predict input data
 
         :param data: data to be predicted. It can be XShards, Spark DataFrame.
-        If data is XShards, each partition can be a XShards of Pandas Dataframe or
-         a dictionary of  {'x': feature}, where feature is a numpy array or a tuple of numpy arrays.
+        If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+        {'x': feature}, where feature is a numpy array or a tuple of numpy arrays.
         :param batch_size: batch size per thread
         :param feature_cols: list of feature column names if input data is Spark DataFrame or
         XShards of Pandas Dataframe.
@@ -92,8 +92,8 @@ class Estimator(SparkEstimator):
         Evaluate model.
 
         :param data: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
-        If data is XShards, each partition can be a XShards of Pandas Dataframe or
-         a dictionary of  {'x': feature, 'y': label}, where feature(label) is a numpy array or
+        If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+        {'x': feature, 'y': label}, where feature(label) is a numpy array or
          a tuple of numpy arrays.
         If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param batch_size: batch size per thread.
@@ -360,17 +360,6 @@ def is_tf_data_dataset(data):
     return is_dataset or is_dataset_v2
 
 
-def transform_to_shard_dict(data, feature_cols, label_cols=None):
-    def to_shard_dict(df):
-        result = dict()
-        result["x"] = tuple([df[feature_col].to_numpy() for feature_col in feature_cols])
-        if label_cols:
-            result["y"] = df[label_cols[0]].to_numpy()
-        return result
-    data = data.transform_shard(to_shard_dict)
-    return data
-
-
 def to_dataset(data, batch_size, batch_per_thread, validation_data,
                feature_cols, label_cols, hard_code_batch_size,
                sequential_order, shuffle, auto_shard_files, memory_type="DRAM"):
@@ -499,8 +488,8 @@ class TensorFlowEstimator(Estimator):
         Train this graph model with train data.
 
         :param data: train data. It can be XShards, Spark DataFrame, tf.data.Dataset.
-        If data is XShards, each partition can be a XShards of Pandas Dataframe or
-        a dictionary of {'x': feature, 'y': label}, where feature(label) is a numpy array or
+        If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+        {'x': feature, 'y': label}, where feature(label) is a numpy array or
         a tuple of numpy arrays.
         If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param epochs: number of epochs to train.
@@ -542,13 +531,9 @@ class TensorFlowEstimator(Estimator):
                     "feature columns is None; it should not be None in training"
                 assert label_cols is not None, \
                     "label columns is None; it should not be None in training"
-                data = transform_to_shard_dict(data, feature_cols, label_cols)
-                if validation_data is not None:
-                    assert validation_data._get_class_name() == 'pandas.core.frame.DataFrame', \
-                        "train data and validation data should be both SparkXShards of " \
-                        "Pandas DataFrame"
-                    validation_data = transform_to_shard_dict(validation_data, feature_cols,
-                                                              label_cols)
+            data, validation_data = process_xshards_of_pandas_dataframe(data, feature_cols,
+                                                                        label_cols, validation_data,
+                                                                        "fit")
 
         if checkpoint_trigger is not None:
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
@@ -607,7 +592,7 @@ class TensorFlowEstimator(Estimator):
         Predict input data
 
         :param data: data to be predicted. It can be XShards, Spark DataFrame.
-        If data is XShards, each partition can be XShards of Pandas Dataframe or a dictionary of
+        If data is XShards, each partition can be Pandas Dataframe or a dictionary of
         {'x': feature}, where feature is a numpy array or a tuple of numpy arrays.
         :param batch_size: batch size per thread
         :param feature_cols: list of feature column names if input data is Spark DataFrame
@@ -632,7 +617,7 @@ class TensorFlowEstimator(Estimator):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
                 assert feature_cols is not None, \
                     "feature columns is None; it should not be None in prediction"
-                data = transform_to_shard_dict(data, feature_cols)
+                data = process_xshards_of_pandas_dataframe(data, feature_cols)
 
         assert not is_tf_data_dataset(data), "tf.data.Dataset currently cannot be used for" \
                                              "estimator prediction"
@@ -666,8 +651,8 @@ class TensorFlowEstimator(Estimator):
         Evaluate model.
 
         :param data: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
-        If data is XShards, each partition can be XShards of Pandas Dataframe or
-        a dictionary of {'x': feature, 'y': label}, where feature(label) is a numpy array or
+        If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+        {'x': feature, 'y': label}, where feature(label) is a numpy array or
         a tuple of numpy arrays.
         If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param batch_size: batch size per thread.
@@ -695,7 +680,7 @@ class TensorFlowEstimator(Estimator):
                     "feature columns is None; it should not be None in evaluation"
                 assert label_cols is not None, \
                     "label columns is None; it should not be None in evaluation"
-                data = transform_to_shard_dict(data, feature_cols, label_cols)
+                data = process_xshards_of_pandas_dataframe(data, feature_cols, label_cols)
 
         dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
                              validation_data=None,
@@ -787,8 +772,8 @@ class KerasEstimator(Estimator):
         Train this keras model with train data.
 
         :param data: train data. It can be XShards, Spark DataFrame, tf.data.Dataset.
-        If data is XShards, each partition can be a XShards of Pandas Dataframe  or
-        a dictionary of {'x': feature, 'y': label}, where feature(label) is a numpy array or
+        If data is XShards, each partition can be Pandas Dataframe  or a dictionary of
+        {'x': feature, 'y': label}, where feature(label) is a numpy array or
         a tuple of numpy arrays.
         If data is tf.data.Dataset, each element is [feature tensor tuple, label tensor tuple]
         :param epochs: number of epochs to train.
@@ -832,13 +817,10 @@ class KerasEstimator(Estimator):
                     "feature columns is None; it should not be None in training"
                 assert label_cols is not None, \
                     "label columns is None; it should not be None in training"
-                data = transform_to_shard_dict(data, feature_cols, label_cols)
-                if validation_data is not None:
-                    assert validation_data._get_class_name() == 'pandas.core.frame.DataFrame', \
-                        "train data and validation data should be both SparkXShards of " \
-                        "Pandas DataFrame"
-                    validation_data = transform_to_shard_dict(validation_data, feature_cols,
-                                                              label_cols)
+                data, validation_data = process_xshards_of_pandas_dataframe(data, feature_cols,
+                                                                            label_cols,
+                                                                            validation_data,
+                                                                            "fit")
 
         if checkpoint_trigger is not None:
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
@@ -886,7 +868,7 @@ class KerasEstimator(Estimator):
 
         :param data: data to be predicted.
         It can be XShards, Spark DataFrame, or tf.data.Dataset.
-        If data is XShards, each partition can be XShards of Pandas Dataframe or a dictionary of
+        If data is XShards, each partition can be Pandas Dataframe or a dictionary of
         {'x': feature}, where feature is a numpy array or a tuple of numpy arrays.
         If data is tf.data.Dataset, each element is feature tensor tuple
         :param batch_size: batch size per thread
@@ -912,7 +894,7 @@ class KerasEstimator(Estimator):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
                 assert feature_cols is not None, \
                     "feature columns is None; it should not be None in prediction"
-                data = transform_to_shard_dict(data, feature_cols)
+                data = process_xshards_of_pandas_dataframe(data, feature_cols)
 
         assert not is_tf_data_dataset(data), "tf.data.Dataset currently cannot be used for" \
                                              "estimator prediction"
@@ -942,8 +924,8 @@ class KerasEstimator(Estimator):
         Evaluate model.
 
         :param data: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
-        If data is XShards, each partition can be XShards of Pandas Dataframe or
-        a dictionary of {'x': feature, 'y': label}, where feature(label) is a numpy array or
+        If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+        {'x': feature, 'y': label}, where feature(label) is a numpy array or
         a tuple of numpy arrays.
         If data is tf.data.Dataset, each element is [feature tensor tuple, label tensor tuple]
         :param batch_size: batch size per thread.
@@ -968,7 +950,7 @@ class KerasEstimator(Estimator):
                     "feature columns is None; it should not be None in evaluation"
                 assert label_cols is not None, \
                     "label columns is None; it should not be None in evaluation"
-                data = transform_to_shard_dict(data, feature_cols, label_cols)
+                data = process_xshards_of_pandas_dataframe(data, feature_cols, label_cols)
 
         dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
                              validation_data=None,
