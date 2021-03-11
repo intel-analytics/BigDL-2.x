@@ -45,7 +45,7 @@ class Estimator(SparkEstimator):
 
         :param data: train data. It can be XShards, Spark DataFrame, tf.data.Dataset.
         If data is XShards, each partition can be a XShards of Pandas Dataframe or
-         a dictionary of  {'x': feature, 'y': label}, where feature(label) is a numpy array or 
+         a dictionary of  {'x': feature, 'y': label}, where feature(label) is a numpy array or
          a tuple of numpy arrays.
         :param epochs: number of epochs to train.
         :param batch_size: total batch size for each iteration. Default: 32.
@@ -72,7 +72,7 @@ class Estimator(SparkEstimator):
         If data is XShards, each partition can be a XShards of Pandas Dataframe or
          a dictionary of  {'x': feature}, where feature is a numpy array or a tuple of numpy arrays.
         :param batch_size: batch size per thread
-        :param feature_cols: list of feature column names if input data is Spark DataFrame or 
+        :param feature_cols: list of feature column names if input data is Spark DataFrame or
         XShards of Pandas Dataframe.
         :param auto_shard_files: whether to automatically detect if the dataset is file-based and
         and apply sharding on files, otherwise sharding on records. Default is False.
@@ -93,7 +93,7 @@ class Estimator(SparkEstimator):
 
         :param data: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
         If data is XShards, each partition can be a XShards of Pandas Dataframe or
-         a dictionary of  {'x': feature, 'y': label}, where feature(label) is a numpy array or 
+         a dictionary of  {'x': feature, 'y': label}, where feature(label) is a numpy array or
          a tuple of numpy arrays.
         If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param batch_size: batch size per thread.
