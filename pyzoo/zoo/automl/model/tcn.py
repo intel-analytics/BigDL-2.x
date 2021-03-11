@@ -126,8 +126,8 @@ class TemporalConvNet(nn.Module):
 
 
 def model_creator(config):
-    if all(k in config for k in ["num_channels", "nhid", "levels"]):
-        print("WARNING: You set num_channels, nhid and levels for TCN,\
+    if "num_channels" in config and any(k in config for k in ["nhid", "levels"]):
+        print("WARNING: You set both num_channels and (nhid, levels) for TCN,\
               only num_channels will be effective.")
     num_channels = config.get("num_channels",
                               [config.get("nhid", 30)] * (config.get("levels", 8)-1))
