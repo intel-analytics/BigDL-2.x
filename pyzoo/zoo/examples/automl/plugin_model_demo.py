@@ -100,7 +100,7 @@ if __name__ == "__main__":
     print(best_trials[0].config)
 
     # rebuild this best config model and evaluate
-    best_model = modelBuilder.restore(best_trials[0].model_path)
+    best_model = modelBuilder.build_from_ckpt(best_trials[0].model_path)
     searched_best_model = best_model.evaluate(data["val_x"], data["val_y"], metrics=["rmse"])
 
     # 2. you can also use the model builder with a fix config

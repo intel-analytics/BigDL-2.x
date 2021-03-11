@@ -62,7 +62,7 @@ class ModelBuilder:
     def from_cls(cls, estimator):
         return cls(cls=estimator)
 
-    def restore(self, checkpoint_filename):
+    def build_from_ckpt(self, checkpoint_filename):
         '''Restore from a saved model'''
         if self.backend == "pytorch":
             from zoo.automl.model.base_pytorch_model import PytorchBaseModel
