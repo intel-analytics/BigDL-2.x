@@ -18,13 +18,16 @@
 package com.intel.analytics.zoo.pipeline.inference
 
 import java.io.File
-
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
+
+import java.util.Base64
+import scala.util.Random
 
 class EncryptSpec extends FunSuite with Matchers with BeforeAndAfterAll
   with InferenceSupportive with EncryptSupportive {
 
-  val plain = "hello world, hello scala, hello encrypt, come on UNITED!!!"
+  // val plain = "hello world, hello scala, hello encrypt, come on UNITED!!!"
+  val plain = Random.nextString(224 * 224 * 3 * 16)
   val secret = "analytics-zoo"
   val salt = "intel-analytics"
 
@@ -49,11 +52,11 @@ class EncryptSpec extends FunSuite with Matchers with BeforeAndAfterAll
     println("CBC128 Text increase: " + encrypted.length * 100.0/ plain.length)
     decrypted should be (plain)
     encrypted = timing(s"CBC 256 encryption") {
-      encryptWithAESCBC(plain, secret, salt, 128)
+      encryptWithAESCBC(plain, secret, salt, 256)
     }
-    println("CBC256 Text increase: ", encrypted.length * 100.0/ plain.length)
+    println("CBC256 Text increase: " + encrypted.length * 100.0/ plain.length)
     decrypted = timing(s"CBC 256 decryption") {
-      decryptWithAESCBC(encrypted, secret, salt, 128)
+      decryptWithAESCBC(encrypted, secret, salt, 256)
     }
   }
 
@@ -62,16 +65,22 @@ class EncryptSpec extends FunSuite with Matchers with BeforeAndAfterAll
       encryptWithAESGCM(plain, secret, salt)
     }
     println("GCM128 Text increase: " + encrypted.length * 100.0 / plain.length)
+    // println(encrypted)
     var decrypted = timing(s"GCM 128 decryption") {
       decryptWithAESGCM(encrypted, secret, salt)
     }
+    val bytes = Base64.getDecoder.decode(encrypted)
+    timing(s"GCM 128 bytes decryption") {
+      decryptBytesWithAESGCM(bytes, secret, salt, 128)
+    }
     decrypted should be (plain)
     encrypted = timing(s"GCM 256 encryption") {
-      encryptWithAESGCM(plain, secret, salt, 128)
+      encryptWithAESGCM(plain, secret, salt, 256)
     }
     println("GCM256 Text increase: " + encrypted.length * 100.0 / plain.length )
-    decrypted = timing(s"GCM 256 encryption") {
-      decryptWithAESGCM(encrypted, secret, salt, 128)
+    // println(encrypted)
+    decrypted = timing(s"GCM 256 decryption") {
+      decryptWithAESGCM(encrypted, secret, salt, 256)
     }
   }
 

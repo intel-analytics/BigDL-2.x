@@ -78,8 +78,15 @@ trait EncryptSupportive {
 
   def decryptWithAESGCM(content: String, secret: String, salt: String,
                         keyLen: Int = 128): String = {
-    val cipherTextWithIV = Base64.getDecoder.decode(content)
+    new String(decryptBytesWithAESGCM(Base64.getDecoder.decode(content), secret,
+      salt, keyLen))
+  }
+
+  def decryptBytesWithAESGCM(content: Array[Byte], secret: String, salt: String,
+                        keyLen: Int = 128): Array[Byte] = {
+    val cipherTextWithIV = content
     val iv = cipherTextWithIV.slice(0, 12)
+    // 128 means 16 for tag
     val gcmParameterSpec = new GCMParameterSpec(128, iv)
     val secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
     val spec = new PBEKeySpec(secret.toCharArray(), salt.getBytes(), 65536, keyLen)
@@ -88,8 +95,8 @@ trait EncryptSupportive {
 
     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
     cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, gcmParameterSpec)
-    val cipherTextWithoutIV = cipherTextWithIV.slice(12, cipherTextWithIV.size)
-    new String(cipher.doFinal(cipherTextWithoutIV))
+    val cipherTextWithoutIV = cipherTextWithIV.slice(12, cipherTextWithIV.length)
+    cipher.doFinal(cipherTextWithoutIV)
   }
 
 

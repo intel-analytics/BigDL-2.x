@@ -17,27 +17,28 @@ import pytest
 import string
 import random
 
-from zoo.common.encryption import encrypt_with_AES, decrypt_with_AES
+from zoo.common.gcm_encryption import encrypt_with_AES_GCM, decrypt_with_AES_GCM
 
-class TestEncryption(object):
 
-    def test_aes128(self):
+class TestGCMEncryption(object):
+
+    def test_aes_gcm128(self):
         letters = string.ascii_lowercase
         random_str = ''.join(random.choice(letters) for i in range(100))
         # random_str = "hello world, hello scala, hello encrypt, come on UNITED!!!"
-        enc_str = encrypt_with_AES(random_str, 'analytics-zoo', 'intel-analytics')
-        dec_str = decrypt_with_AES(enc_str, 'analytics-zoo', 'intel-analytics')
+        enc_str = encrypt_with_AES_GCM(random_str.encode("utf-8"), 'analytics-zoo', 'intel-analytics')
+        dec_str = decrypt_with_AES_GCM(enc_str, 'analytics-zoo', 'intel-analytics')
         assert dec_str == random_str, \
-            "Check AES GCM 128 encryption and decryption result"
+            "Check AES128 encryption and decryption result"
 
-    def test_aes256(self):
+    def test_aes_gcm256(self):
         letters = string.ascii_lowercase
         random_str = ''.join(random.choice(letters) for i in range(100))
-        enc_str = encrypt_with_AES(random_str, 'analytics-zoo', 'intel-analytics', 256)
-        dec_str = decrypt_with_AES(enc_str, 'analytics-zoo', 'intel-analytics', 256)
+        # random_str = "hello world, hello scala, hello encrypt, come on UNITED!!!"
+        enc_str = encrypt_with_AES_GCM(random_str.encode("utf-8"), 'analytics-zoo', 'intel-analytics', 256)
+        dec_str = decrypt_with_AES_GCM(enc_str, 'analytics-zoo', 'intel-analytics', 256)
         assert dec_str == random_str, \
-            "Check AES GCM 256 encryption and decryption result"
-
+            "Check AES256 encryption and decryption result"
 
 if __name__ == "__main__":
     pytest.main([__file__])

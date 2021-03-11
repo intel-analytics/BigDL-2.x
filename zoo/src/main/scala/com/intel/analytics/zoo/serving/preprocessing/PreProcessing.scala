@@ -85,8 +85,8 @@ class PreProcessing(chwFlag: Boolean = true,
 
   def decodeImage(s: String, idx: Int = 0): Tensor[Float] = {
     byteBuffer = if (recordEncrypted) {
-      java.util.Base64.getDecoder.decode(decryptWithAESCBC(s,
-        Conventions.RECORD_SECURED_SECRET, Conventions.RECORD_SECURED_SALT))
+      decryptBytesWithAESGCM(java.util.Base64.getDecoder.decode(s),
+        Conventions.RECORD_SECURED_SECRET, Conventions.RECORD_SECURED_SALT)
     } else {
       java.util.Base64.getDecoder.decode(s)
     }
