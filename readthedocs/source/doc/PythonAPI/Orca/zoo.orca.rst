@@ -9,13 +9,6 @@ orca.learn.bigdl.estimator
     :undoc-members:
     :show-inheritance:
 
-orca.learn.mxnet.estimator
----------------------------
-
-.. automodule:: zoo.orca.learn.mxnet.estimator
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 orca.learn.tf.estimator
 ------------------------
