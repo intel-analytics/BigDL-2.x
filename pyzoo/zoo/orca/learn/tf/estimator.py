@@ -704,6 +704,9 @@ class TensorFlowEstimator(Estimator):
         """
         raise NotImplementedError
 
+    def shutdown(self):
+        self.sess.close()
+
 
 class KerasEstimator(Estimator):
     def __init__(self, keras_model, metrics, model_dir, optimizer):
