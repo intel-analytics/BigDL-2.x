@@ -28,8 +28,40 @@ class TestTable(TestCase):
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
 
-    def test_fillna(self):
+    def test_fillna_int(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_df = FeatureTable.read_parquet(file_path)
-        feature_df.fillna(0, ["col_1"])
-        feature_df.show()
+        filled_df = feature_df.fillna(0, ["col_1", "col_2"])
+        assert filled_df.df.filter("col_1 is null").count() == 0, "col_1 null values should be " \
+                                                                  "filled"
+        assert filled_df.df.filter("col_2 is null").count() == 0, "col_2 null values should be " \
+                                                                  "filled"
+
+    def test_fillna_double(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_df = FeatureTable.read_parquet(file_path)
+        filled_df = feature_df.fillna(3.2, ["col_1", "col_2"])
+        assert filled_df.df.filter("col_1 is null").count() == 0, "col_1 null values should be " \
+                                                                  "filled"
+        assert filled_df.df.filter("col_2 is null").count() == 0, "col_2 null values should be " \
+                                                                  "filled"
+
+    def test_fillna_string(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_df = FeatureTable.read_parquet(file_path)
+        with self.assertRaises(Exception) as context:
+            feature_df.fillna(3.2, ["col_3", "col_4"])
+        self.assertTrue('numeric is not matched at fillValue' in str(context.exception))
+
+        filled_df = feature_df.fillna("bb", ["col_3", "col_4"])
+        assert filled_df.df.filter("col_3 is null").count() == 0, "col_3 null values should be " \
+                                                                  "filled"
+        assert filled_df.df.filter("col_4 is null").count() == 0, "col_4 null values should be " \
+                                                                  "filled"
+
+    def test_categorify(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_df = FeatureTable.read_parquet(file_path)
+        string_idx_list = feature_df.categorify(["col_3", "col_4"], freq_limit="2")
+        for s in string_idx_list:
+            s.show()
