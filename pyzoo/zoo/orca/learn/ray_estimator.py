@@ -81,12 +81,3 @@ class Estimator(BaseEstimator):
         :return:
         """
         pass
-
-    @abstractmethod
-    def shutdown(self):
-        """
-        Shut down workers and releases resources.
-
-        :return:
-        """
-        pass

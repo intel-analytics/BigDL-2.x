@@ -705,6 +705,9 @@ class TensorFlowEstimator(Estimator):
         raise NotImplementedError
 
     def shutdown(self):
+        """
+        Close session and release resources.
+        """
         self.sess.close()
 
 
