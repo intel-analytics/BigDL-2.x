@@ -245,7 +245,7 @@ def process_xshards_of_pandas_dataframe(data, feature_cols, label_cols=None, val
     if mode == "fit":
         if validation_data:
             assert validation_data._get_class_name() == 'pandas.core.frame.DataFrame',\
-                "train data and validation data should be both Xhards of Pandas DataFrame"
+                "train data and validation data should be both XShards of Pandas DataFrame"
             validation_data = transform_to_shard_dict(validation_data, feature_cols, label_cols)
         return data, validation_data
     else:
