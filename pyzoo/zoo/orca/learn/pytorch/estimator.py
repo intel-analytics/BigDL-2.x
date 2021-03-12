@@ -28,6 +28,7 @@ from torch.optim.optimizer import Optimizer as TorchOptimizer
 from torch.utils.data import DataLoader
 from pyspark.sql import DataFrame
 import warnings
+import torch
 
 
 class Estimator(object):
@@ -264,11 +265,11 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
             self.loss = TorchLoss.from_pytorch(loss)
         if optimizer is None:
             from zoo.orca.learn.optimizers.schedule import Default
-            optimizer = SGD(learningrate_schedule=Default())
-        if isinstance(optimizer, TorchOptimizer):
-            optimizer = TorchOptim.from_pytorch(optimizer)
+            self.optimizer = SGD(learningrate_schedule=Default())
+        elif isinstance(optimizer, TorchOptimizer):
+            self.optimizer = TorchOptim.from_pytorch(optimizer)
         elif isinstance(optimizer, OrcaOptimizer):
-            optimizer = optimizer.get_optimizer()
+            self.optimizer = optimizer.get_optimizer()
         else:
             raise ValueError("Only PyTorch optimizer and orca optimizer are supported")
         from zoo.orca.learn.metrics import Metric
@@ -277,7 +278,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         self.app_name = None
         self.model_dir = model_dir
         self.model = TorchModel.from_pytorch(model)
-        self.estimator = SparkEstimator(self.model, optimizer, model_dir, bigdl_type=bigdl_type)
+        self.estimator = SparkEstimator(self.model, self.optimizer, model_dir, bigdl_type=bigdl_type)
 
     def _handle_dataframe(self, data, validation_data, feature_cols, label_cols):
         schema = data.schema
@@ -451,16 +452,48 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         """
         return self.model.to_pytorch()
 
+    def _get_optimizer_path(self, model_path):
+        if "." in model_path:
+            path_split = model_path.rsplit('.', 1)
+            return "." + path_split[0] + "_optim." + path_split[1]
+        else:
+            return "." + model_path + "_optim"
+
     def save(self, model_path):
         """
-        Save is not supported in SparkPyTorchEstimator.
+        Saves the Estimator state (including model and optimizer) to the provided model_path.
 
-        :param model_path: path to save the trained model.
+        :param model_path: path to save the model.
+        :return: model_path
+        """
+
+        optim_path = self._get_optimizer_path(model_path)
+        torch.save(self.get_model().state_dict(), model_path)
+        self.optimizer.save(path=optim_path, overWrite=True)   
+        
+        return model_path
+
+    ### TODO: change load
+    def load(self, model_path):
+        """
+        Load the Estimator state (including model and optimizer) from provided model_path.
+
+        :param model_path: path to the saved model.
         :return:
         """
-        raise NotImplementedError
 
-    def load(self, checkpoint, loss=None):
+        try:
+            pytorch_model = self.get_model().load_state_dict(torch.load(model_path))
+            self.model = TorchModel.from_pytorch(pytorch_model)
+            optim_path = self._get_optimizer_path(model_path)
+            self.optimizer = OptimMethod.load(optim_path)
+        except Exception:
+            raise ValueError("Cannot load the PyTorch model and optimizer state. Please "
+                             "check your model path.")
+        self.estimator = SparkEstimator(self.model, self.optimizer, self.model_dir)
+
+
+    def load_orca_model_or_checkpoint(self, checkpoint, loss=None):
         """
         Load existing model or checkpoint
 
@@ -506,7 +539,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         :param path: directory containing Orca checkpoint files.
         """
-        self.load(checkpoint=path)
+        self.load_orca_model_or_checkpoint(checkpoint=path)
 
     def get_train_summary(self, tag=None):
         """
