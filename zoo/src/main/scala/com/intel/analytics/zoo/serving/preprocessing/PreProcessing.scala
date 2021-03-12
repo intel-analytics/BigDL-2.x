@@ -26,7 +26,7 @@ import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.zoo.pipeline.inference.EncryptSupportive
+import com.intel.analytics.zoo.pipeline.inference.{EncryptSupportive, InferenceSupportive}
 import com.intel.analytics.zoo.serving.http.Instances
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.opencv.core.Size
@@ -37,7 +37,8 @@ class PreProcessing(chwFlag: Boolean = true,
                     redisHost: String = "localhost",
                     redisPort: Int = 6379,
                     jobName: String = Conventions.SERVING_STREAM_DEFAULT_NAME,
-                    recordEncrypted: Boolean = false) extends EncryptSupportive {
+                    recordEncrypted: Boolean = false)
+  extends EncryptSupportive with InferenceSupportive {
   val logger = Logger.getLogger(getClass)
 
   var byteBuffer: Array[Byte] = null
@@ -85,8 +86,15 @@ class PreProcessing(chwFlag: Boolean = true,
 
   def decodeImage(s: String, idx: Int = 0): Tensor[Float] = {
     byteBuffer = if (recordEncrypted) {
-      decryptBytesWithAESGCM(java.util.Base64.getDecoder.decode(s),
-        Conventions.RECORD_SECURED_SECRET, Conventions.RECORD_SECURED_SALT)
+      val bytes = timing(s"base64decoding") {
+        logger.debug("String size " + s.length)
+        java.util.Base64.getDecoder.decode(s)
+      }
+      timing(s"decryption with gcm 128") {
+        logger.debug("Byte size " + bytes.size)
+        decryptBytesWithAESGCM(bytes,
+          Conventions.RECORD_SECURED_SECRET, Conventions.RECORD_SECURED_SALT)
+      }
     } else {
       java.util.Base64.getDecoder.decode(s)
     }
