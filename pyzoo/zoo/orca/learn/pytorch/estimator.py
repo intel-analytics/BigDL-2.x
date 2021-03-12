@@ -481,8 +481,11 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         :return:
         """
 
+        from zoo.pipeline.api.torch import TorchModel
+
         try:
-            pytorch_model = self.get_model().load_state_dict(torch.load(model_path))
+            pytorch_model = self.get_model()
+            pytorch_model.load_state_dict(torch.load(model_path))
             self.model = TorchModel.from_pytorch(pytorch_model)
             optim_path = self._get_optimizer_path(model_path)
             self.optimizer = OptimMethod.load(optim_path)
