@@ -129,7 +129,7 @@ class TorchRunner:
         self.setup_operator(self.models)
 
     def setup_address(self):
-        ip = ray.services.get_node_ip_address()
+        ip = ray._private.services.get_node_ip_address()
         port = find_free_port()
         return f"tcp://{ip}:{port}"
 
@@ -156,7 +156,7 @@ class TorchRunner:
 
         logger.debug("Creating model")
         self.models = self.model_creator(self.config)
-        if not isinstance(self.models, Iterable):
+        if isinstance(self.models, nn.Sequential) or not isinstance(self.models, Iterable):
             self.models = [self.models]
         assert all(isinstance(model, nn.Module) for model in self.models), (
             "All models must be PyTorch models: {}.".format(self.models))
@@ -213,7 +213,7 @@ class TorchRunner:
 
     def get_node_ip(self):
         """Returns the IP address of the current node."""
-        return ray.services.get_node_ip_address()
+        return ray._private.services.get_node_ip_address()
 
     def find_free_port(self):
         """Finds a free port on the current node."""

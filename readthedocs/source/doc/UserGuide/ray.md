@@ -10,7 +10,7 @@ _**Note:** Analytics Zoo has been tested on Ray 0.8.4 and you are highly recomme
 ### **1. Install**
 
 We recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the Python environment. 
-When installing analytics-zoo with pip, you can specify the extras key `[ray]` to additionally install the additional dependencies essential for running Ray (i.e. `ray==0.8.4`, `psutil`, `aiohttp`, `setproctitle`, `pyarrow==0.17.0`):
+When installing analytics-zoo with pip, you can specify the extras key `[ray]` to additionally install the additional dependencies essential for running Ray (i.e. `ray==1.2.0`, `psutil`, `aiohttp`, `setproctitle`, `pyarrow==0.17.0`):
 
 ```bash
 conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.

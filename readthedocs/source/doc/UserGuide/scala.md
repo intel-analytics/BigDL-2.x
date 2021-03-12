@@ -3,22 +3,25 @@
 ---
 
 ### **1. Try Analytics Zoo Examples**
-This section will show you how to download analytics-zoo's prebuild package and run the build-in examples.
+This section will show you how to download Analytics Zoo prebuild packages and run the build-in examples.
+
 #### **1.1 Download and config** 
-You can download the Analytics Zoo release and nightly build from the [Release Page](../release.md). 
-After you extra the prebuild package, Environment Variables **ANALYTICS_ZOO_HOME** and **SPARK_HOME** should be set:
+You can download the Analytics Zoo official releases and nightly build from the [Release Page](../release.md). After extracting the prebuild package, you need to set environment variables **ANALYTICS_ZOO_HOME** and **SPARK_HOME** as follows:
 
 ```bash
-export SPARK_HOME=folder path where you extract the spark package
-export ANALYTICS_ZOO_HOME=folder path where you extract the analytics zoo package
+export SPARK_HOME=folder path where you extract the Spark package
+export ANALYTICS_ZOO_HOME=folder path where you extract the Analytics Zoo package
 ```
 
 #### **1.2 Use Spark interactive shell**
-You can try Analytics Zoo easily using the Spark interactive shell. Run below command to start spark shell with Analytics Zoo support:
+You can  try Analytics Zoo using the Spark interactive shell as follows:
+
 ```bash
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh --master local[2]
 ```
-You will see a welcome message looking like below:
+
+You will then see a welcome message like below:
+
 ```
 Welcome to
       ____              __
@@ -32,7 +35,8 @@ Type in expressions to have them evaluated.
 Type :help for more information.
 ```
 
-Before you play with Analytics Zoo API's, you should use `initNNcontext` to verify your environment:
+Before you try Analytics Zoo APIs, you should use `initNNcontext` to verify your environment:
+
 ```scala
 scala> import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.common.NNContext
@@ -44,9 +48,9 @@ sc: org.apache.spark.SparkContext = org.apache.spark.SparkContext@487f025
 ```
 
 #### **1.3 Run Analytics Zoo examples**
-You can run a analytics zoo program, e.g., the [Wide&Deep Recommendation](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/recommendation), as a standard Spark program (running in either local mode or cluster mode) as follows:
+You can run an Analytics Zoo example, e.g., the [Wide & Deep Recommendation](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/recommendation), as a standard Spark program (running in either local mode or cluster mode) as follows:
 
-1. Download Census Income Data Set to `./data/census` from [here](https://archive.ics.uci.edu/ml/datasets/Census+Income).
+1. Download Census Income Dataset to `./data/census` from [here](https://archive.ics.uci.edu/ml/datasets/Census+Income).
 2. Run the following command:
 ```bash
 # Spark local mode
@@ -101,10 +105,12 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
 --- 
 
 ### **2. Build Analytics Zoo Applications**
-This section will show you how to build your own deep learning project with analytics-zoo. 
+This section will show you how to build your own deep learning project with Analytics Zoo. 
+
 #### **2.1 Add Analytics Zoo dependency**
 ##### **2.1.1 official Release** 
-Currently, Analytics Zoo releases are hosted on maven central; here's an example to add the Analytics Zoo dependency to your own project:
+Currently, Analytics Zoo releases are hosted on maven central; below is an example to add the Analytics Zoo dependency to your own project:
+
 ```xml
 <dependency>
     <groupId>com.intel.analytics.zoo</groupId>
@@ -112,8 +118,7 @@ Currently, Analytics Zoo releases are hosted on maven central; here's an example
     <version>0.9.0</version>
 </dependency>
 ```
-You can find the other SPARK version [here](https://search.maven.org/search?q=analytics-zoo-bigdl), such as `spark_2.1.1, spark_2.2.1, spark_2.3.1, spark_3.0.0`.   
-
+You can find the other SPARK version [here](https://search.maven.org/search?q=analytics-zoo-bigdl), such as `spark_2.1.1`, `spark_2.2.1`, `spark_2.3.1`, `spark_3.0.0`.   
 
 SBT developers can use
 ```sbt
@@ -121,9 +126,9 @@ libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.12.1-s
 ```
 
 ##### **2.1.2 Nightly Build**
-Currently, Analytics Zoo development version is hosted on [SonaType](https://oss.sonatype.org/content/groups/public/com/intel/analytics/zoo/).
+Currently, Analytics Zoo nightly build is hosted on [SonaType](https://oss.sonatype.org/content/groups/public/com/intel/analytics/zoo/).
 
-To link your application with the latest Analytics Zoo development version, you should add some dependencies like [official releases](#11-official-release), but set `0.9.0` to snapshot version(like 0.10.0-snapshot), and add below repository to your pom.xml.
+To link your application with the latest Analytics Zoo nightly build, you should add some dependencies like [official releases](#11-official-release), but change `0.9.0` to the snapshot version (such as 0.10.0-snapshot), and add below repository to your pom.xml.
 
 ```xml
 <repository>
@@ -146,6 +151,4 @@ resolvers += "ossrh repository" at "https://oss.sonatype.org/content/repositorie
 
 
 #### **2.2 Build a Scala project**
-To enable Analytics Zoo in project, you should add Analytics Zoo to your project's dependencies using maven or sbt. 
-Here is a [simple MLP example](https://github.com/intel-analytics/zoo-tutorials/tree/master/scala/SimpleMlp) to show you how to use analytics zoo to build your own deep learning project with maven or sbt, and how to build and run the simple example in IDEA and spark-submit.
-
+To enable Analytics Zoo in project, you should add Analytics Zoo to your project's dependencies using maven or sbt. Here is a [simple MLP example](https://github.com/intel-analytics/zoo-tutorials/tree/master/scala/SimpleMlp) to show you how to use Analytics Zoo to build your own deep learning project using maven or sbt, and how to run the simple example in IDEA and spark-submit.

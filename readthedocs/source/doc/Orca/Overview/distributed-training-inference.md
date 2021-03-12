@@ -58,9 +58,9 @@ est.fit(data=mnist_train,
 predictions = est.predict(data=df,
                           feature_cols=['image'])
 ```
-The `data` argument in `fit` method can be a spark DataFrame, a XShards or a `tf.data.Dataset`. The `data` argument in `predict` method can be a spark DataFrame or a XShards. See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
+The `data` argument in `fit` method can be a Spark DataFrame, an *XShards* or a `tf.data.Dataset`. The `data` argument in `predict` method can be a spark DataFrame or an *XShards*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
 
-View the related [Python API doc]() <TODO: link to be added> for more details.
+View the related [Python API doc]() for more details.
 
 #### **2.2 TensorFlow 2.x and Keras 2.4+**
 
@@ -92,12 +92,11 @@ stats = est.fit(data=train_data_creator,
 predictions = est.predict(data=df,
                           feature_cols=['image'])
 ```
-The `data` argument in `fit` method can be a spark DataFrame, a XShards or a function that takes `config` and `batch_size` as input and returns a `tf.data.Dataset`. The `data` argument in `predict` method can be a spark DataFrame or a XShards (each element needs to be a `{"x": a numpy ndarray}`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
+The `data` argument in `fit` method can be a spark DataFrame, an *XShards* or a *Data Creator Function* (that returns a `tf.data.Dataset`). The `data` argument in `predict` method can be a spark DataFrame or an *XShards*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
 
-View the related [Python API doc]() <TODO: link to be added> for more details.
+View the related [Python API doc]() for more details.
 
-
-***For more details, view the distributed TensorFlow training/inference [page](). <TODO: link to be added>***
+***For more details, view the distributed TensorFlow training/inference [page]().***
 
 ### **3. PyTorch Estimator**
 
@@ -120,13 +119,14 @@ Then users can perform distributed model training and inference as follows:
 est.fit(data=train_loader, epochs=args.epochs)
 predictions = est.predict(xshards)
 ```
-The input to `fit` methods can be a `torch.utils.data.DataLoader`, a *XShards*, or a *Data Creator Function* (which takes `config` and `batch_size` as input and returns a `torch.utils.data.DataLoader`). The input to `predict` methods should be a *XShards* (each element needs to be a `{"x": a numpy ndarray}`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details. <TODO: we need to add Spark Dataframe support too>
+The input to `fit` methods can be a `torch.utils.data.DataLoader`, a Spark Dataframe, an *XShards*, or a *Data Creator Function* (that returns a `torch.utils.data.DataLoader`). The input to `predict` methods should be a Spark Dataframe, or an *XShards*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
 
-View the related [Python API doc]() <TODO: link to be added> for more details.
+View the related [Python API doc]() for more details.
 
 **Using `torch.distributed` or *Horovod* backend**
 
 Alternatively, users can create a PyTorch `Estimator` using `torch.distributed` or *Horovod* backend by specifying the `backend` argument to be "torch_distributed" or "horovod". In this case, the `model` and `optimizer` should be wrapped in _Creater Functions_. For example:
+
 ```python
 def model_creator(config):
     model = LeNet() # a torch.nn.Module
@@ -150,9 +150,10 @@ est.fit(data=train_loader_func, epochs=args.epochs)
 predictions = est.predict(data=df,
                           feature_cols=['image'])
 ```
-The input to `fit` methods can be a *XShards*, or a *Data Creator Function* (which takes `config` and `batch_size` as input and returns a `torch.utils.data.DataLoader`). The `data` argument in `predict` method can be a spark DataFrame or a XShards (each element needs to be a `{"x": a numpy ndarray}`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
 
-View the related [Python API doc]() <TODO: link to be added> for more details.
+The input to `fit` methods can be a Spark DataFrame, an *XShards*, or a *Data Creator Function* (that returns a `torch.utils.data.DataLoader`). The `data` argument in `predict` method can be a Spark DataFrame or an *XShards*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.md) for more details.
+
+View the related [Python API doc]() for more details.
 
 ***For more details, view the distributed PyTorch training/inference [page]()<TODO: link to be added>.***
 
@@ -189,7 +190,7 @@ def get_train_data_iter(config, kv):
 est.fit(get_train_data_iter, epochs=2)
 ```
 
-The input to `fit` methods can be *XShards*, or a *Data Creator Function* (which takes config and kv as arguments and returns an `MXNet DataIter/DataLoader` for training). See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
+The input to `fit` methods can be an *XShards*, or a *Data Creator Function* (that returns an `MXNet DataIter/DataLoader`). See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
 
 View the related [Python API doc]() for more details.
 
@@ -219,7 +220,7 @@ est.fit(df, 1, batch_size=4)
 result_df = est.predict(df)
 ```
 
-The input to `fit` and `predict` methods can be *XShards*, or a *Spark Dataframe*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
+The input to `fit` and `predict` methods can be a *Spark Dataframe*, or an *XShards*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
 
 View the related [Python API doc]() for more details.
 
@@ -244,6 +245,6 @@ shards = XShards.partition({"x": input_data})
 result_shards = est.predict(shards)
 ```
 
-The input to `predict` methods can be *XShards*, or a *numpy array*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
+The input to `predict` methods can be an *XShards*, or a *numpy array*. See the *data-parallel processing pipeline* [page](./data-parallel-processing.html) for more details.
 
 View the related [Python API doc]() for more details.

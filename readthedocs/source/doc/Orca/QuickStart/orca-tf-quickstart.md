@@ -10,7 +10,7 @@
 
 ### **Step 0: Prepare Environment**
 
-We recommend using [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment. Please refer to the [install guide](../../UserGuide/python.md) for more details.
+We recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment. Please refer to the [install guide](../../UserGuide/python.md) for more details.
 
 ```bash
 conda create -n zoo python=3.7 # "zoo" is conda environment name, you can use any name you like.
@@ -69,7 +69,7 @@ acc = accuracy(logits, labels)
 ```
 ### **Step 3: Define Train Dataset**
 
-You can define the dataset using standard [tf.data.Dataset](https://www.tensorflow.org/api_docs/python/tf/data/Dataset). Orca also supports [Spark DataFrame](https://spark.apache.org/docs/latest/sql-programming-guide.html) and [Orca XShards](./data).
+You can define the dataset using standard [tf.data.Dataset](https://www.tensorflow.org/api_docs/python/tf/data/Dataset). Orca also supports [Spark DataFrame](https://spark.apache.org/docs/latest/sql-programming-guide.html) and [Orca XShards](../Overview/data-parallel-processing.md).
 
 ```python
 import tensorflow_datasets as tfds
