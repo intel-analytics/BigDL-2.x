@@ -531,7 +531,7 @@ class TensorFlowEstimator(Estimator):
                     "feature columns is None; it should not be None in training"
                 assert label_cols is not None, \
                     "label columns is None; it should not be None in training"
-            data, validation_data = process_xshards_of_pandas_dataframe(data, feature_cols,
+                data, validation_data = process_xshards_of_pandas_dataframe(data, feature_cols,
                                                                         label_cols, validation_data,
                                                                         "fit")
 
