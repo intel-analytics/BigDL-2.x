@@ -191,6 +191,7 @@ class Top5Accuracy:
     def compute(self):
         return self.correct.float() / self.total
 
+
 class MSE:
     """Computes the mean square error between labels and predictions.
 
@@ -276,8 +277,7 @@ class BinaryCrossEntropy:
 
         output_size = targets.view(-1).size(0)
         self.crossentropy = self.crossentropy + \
-            (- targets * torch.log(preds) - 
-                 (1-targets) * torch.log(1-preds)).view(-1).sum()
+            (- targets * torch.log(preds) - (1-targets) * torch.log(1-preds)).view(-1).sum()
         self.total += output_size
 
     def compute(self):
@@ -409,7 +409,7 @@ class Poisson:
     def __call__(self, preds, targets):
         # Avoid problems with dividing zero
         epsilon = 1e-7
-        
+
         output_size = targets.view(-1).size(0)
         self.poisson = self.poisson + \
             (preds - targets * torch.log(preds + epsilon)).sum()
