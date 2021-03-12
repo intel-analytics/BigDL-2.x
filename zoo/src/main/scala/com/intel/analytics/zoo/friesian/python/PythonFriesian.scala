@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.friesian.python
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import java.util.{List => JList, Map => JMap}
+import java.util.{List => JList}
 
 import org.apache.spark.TaskContext
 import org.apache.spark.sql.expressions.Window
@@ -114,8 +114,9 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     }
   }
 
-  def categoryAssignId(df_list: JList[DataFrame], columns: JList[String]): JList[DataFrame] = {
-    val idx_df_list = (0 until columns.size).map(x => {
+  def categoryAssignId(df_list: JList[DataFrame], columns: JList[String]): JList[Object] = {
+    val idx_df_list = new java.util.ArrayList[Object]()
+    for (x <- 0 until columns.size) {
       val df = df_list.get(x).withColumn("part_id", spark_partition_id())
       df.cache()
       val count_list: Array[(Int, Int)] = df.rdd.mapPartitions(getCount).collect()
@@ -131,10 +132,10 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       val get_label = udf((part_id: Int, row_number: Int)=> {
         row_number + base_dict_bc.value.getOrElse(part_id, 0)
       })
-      df_row_number.withColumn("id",
-        get_label(col("part_id"), col("row_number")))
-        .drop("part_id", "row_number", "count")
-    })
-    idx_df_list.toList.asJava
+      idx_df_list.add(df_row_number
+        .withColumn("id", get_label(col("part_id"), col("row_number")))
+        .drop("part_id", "row_number", "count"))
+    }
+    idx_df_list
   }
 }

@@ -33,7 +33,7 @@ class FriesianSpec extends ZooSpecHelper {
 
   override def doBefore(): Unit = {
     Logger.getLogger("org").setLevel(Level.ERROR)
-    val conf = new SparkConf().setMaster("local[1]").setAppName("NCFTest")
+    val conf = new SparkConf().setMaster("local[1]").setAppName("FriesianTest")
     sc = NNContext.initNNContext(conf)
     sqlContext = SQLContext.getOrCreate(sc)
   }

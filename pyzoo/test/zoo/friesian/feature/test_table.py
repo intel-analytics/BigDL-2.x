@@ -62,6 +62,6 @@ class TestTable(TestCase):
     def test_categorify(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_df = FeatureTable.read_parquet(file_path)
-        string_idx_list = feature_df.categorify(["col_3", "col_4"], freq_limit="2")
-        for s in string_idx_list:
-            s.show()
+        string_idx_list = feature_df.categorify(["col_3", "col_4"], freq_limit="1")
+        assert string_idx_list[0].df.count() == 3, "col_3 should have 3 indices"
+        assert string_idx_list[1].df.count() == 2, "col_4 should have 2 indices"

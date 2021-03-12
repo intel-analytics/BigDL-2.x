@@ -15,6 +15,7 @@
 #
 
 from pyspark.sql.functions import col, udf, array, broadcast, log
+from pyspark.sql import DataFrame
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import assign_category_id, fill_na
 
@@ -118,8 +119,9 @@ class FeatureTable(Table):
 
             df_count_filtered_list.append(df_col)
 
+        spark = OrcaContext.get_spark_session()
         df_id_list = assign_category_id(df_count_filtered_list, columns)
-        df_id_list = map(lambda x: StringIndex(x), df_id_list)
+        df_id_list = list(map(lambda x: StringIndex(DataFrame(x, spark)), df_id_list))
         if out_path is not None:
             for df in df_id_list:
                 df.write_parquet(out_path, write_mode)
@@ -139,7 +141,6 @@ class StringIndex(Table):
             if c != "id":
                 self.col_name = c
                 break
-        self.df = df
 
     @classmethod
     def read_parquet(cls, paths):
