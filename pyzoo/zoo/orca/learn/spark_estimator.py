@@ -206,7 +206,7 @@ class Estimator(BaseEstimator):
     @abstractmethod
     def shutdown(self):
         """
-        Shut down workers and releases resources.
+        Releases resources.
 
         :return:
         """

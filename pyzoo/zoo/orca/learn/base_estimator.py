@@ -83,7 +83,7 @@ class BaseEstimator(ABC):
     @abstractmethod
     def shutdown(self):
         """
-        Shut down workers and releases resources.
+        Releases resources.
 
         :return:
         """

@@ -347,6 +347,11 @@ class Estimator(SparkEstimator):
         return Estimator.from_keras(keras_model=model)
 
     def shutdown(self):
+        """
+        Releases resources.
+
+        :return:
+        """
         pass
 
 

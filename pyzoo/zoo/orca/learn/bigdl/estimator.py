@@ -482,4 +482,9 @@ class BigDLEstimator(OrcaSparkEstimator):
         return data, val_data, col_name
 
     def shutdown(self):
+        """
+        Releases resources.
+
+        :return:
+        """
         pass

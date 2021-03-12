@@ -576,4 +576,9 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         self.estimator.set_l2_norm_gradient_clipping(clip_norm=clip_norm)
 
     def shutdown(self):
+        """
+        Releases resources.
+
+        :return:
+        """
         pass

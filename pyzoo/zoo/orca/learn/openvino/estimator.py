@@ -247,4 +247,9 @@ class OpenvinoEstimator(SparkEstimator):
         raise NotImplementedError
 
     def shutdown(self):
+        """
+        Releases resources.
+
+        :return:
+        """
         pass
