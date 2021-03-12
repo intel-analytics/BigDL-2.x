@@ -245,11 +245,3 @@ class OpenvinoEstimator(SparkEstimator):
         Load_latest_orca_checkpoint is not supported in OpenVINOEstimator
         """
         raise NotImplementedError
-
-    def shutdown(self):
-        """
-        Releases resources.
-
-        :return:
-        """
-        pass

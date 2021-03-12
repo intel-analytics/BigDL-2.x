@@ -203,11 +203,10 @@ class Estimator(BaseEstimator):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def shutdown(self):
         """
         Releases resources.
 
         :return:
         """
-        raise NotImplementedError
+        pass

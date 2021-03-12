@@ -480,11 +480,3 @@ class BigDLEstimator(OrcaSparkEstimator):
                 if val_data is not None:
                     val_data = assembler.transform(val_data)
         return data, val_data, col_name
-
-    def shutdown(self):
-        """
-        Releases resources.
-
-        :return:
-        """
-        pass

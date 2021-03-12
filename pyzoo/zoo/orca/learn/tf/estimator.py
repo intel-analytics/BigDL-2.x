@@ -346,14 +346,6 @@ class Estimator(SparkEstimator):
         model = load_from_file(load_func, path)
         return Estimator.from_keras(keras_model=model)
 
-    def shutdown(self):
-        """
-        Releases resources.
-
-        :return:
-        """
-        pass
-
 
 def is_tf_data_dataset(data):
     is_dataset = isinstance(data, tf.data.Dataset)

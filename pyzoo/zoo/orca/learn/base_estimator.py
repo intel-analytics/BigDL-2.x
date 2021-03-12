@@ -87,4 +87,4 @@ class BaseEstimator(ABC):
 
         :return:
         """
-        raise NotImplementedError
+        pass
