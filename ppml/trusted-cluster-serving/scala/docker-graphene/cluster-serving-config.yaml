@@ -27,7 +27,7 @@ secure:
   # default: false
   secure_enabled:
   # default:
-  secure_trust_store_path: /ppml/trusted-cluster-serving/java/work/keys/keystore.jks
+  secure_trust_store_path: /ppml/trusted-cluster-serving/redis/work/keys/keystore.jks
   # default:
   secure_struct_store_password:
   # default: false

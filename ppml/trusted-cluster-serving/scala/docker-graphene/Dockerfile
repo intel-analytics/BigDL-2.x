@@ -134,6 +134,7 @@ RUN apt-get update --fix-missing && \
     apt-get install -y libsm6 make build-essential && \
     apt-get install -y autoconf gawk bison libcurl4-openssl-dev python3-protobuf libprotobuf-c-dev protobuf-c-compiler && \
     apt-get install -y openssl libssl-dev pkg-config && \
+    apt-get install -y netcat && \
     mkdir -p /graphene/Pal/src/host/Linux-SGX/signer && \
     cd /graphene/Pal/src/host/Linux-SGX/signer && \
     openssl genrsa -3 -out enclave-key.pem 3072
@@ -155,6 +156,7 @@ ADD ./start-http-frontend.sh /ppml/trusted-cluster-serving/java/start-http-front
 ADD ./cluster-serving-config.yaml /ppml/trusted-cluster-serving/java/config.yaml
 ADD ./init-cluster-serving.sh /ppml/trusted-cluster-serving/java/init-cluster-serving.sh
 ADD ./start-cluster-serving-job.sh /ppml/trusted-cluster-serving/java/start-cluster-serving-job.sh
+ADD ./start-all.sh /ppml/trusted-cluster-serving/start-all.sh
 
 RUN chmod a+x /ppml/trusted-cluster-serving/redis/init-redis.sh && \
     chmod a+x /ppml/trusted-cluster-serving/redis/start-redis.sh && \
@@ -163,4 +165,5 @@ RUN chmod a+x /ppml/trusted-cluster-serving/redis/init-redis.sh && \
     chmod a+x /ppml/trusted-cluster-serving/java/start-flink-taskmanager.sh && \
     chmod a+x /ppml/trusted-cluster-serving/java/start-http-frontend.sh && \
     chmod a+x /ppml/trusted-cluster-serving/java/init-cluster-serving.sh && \
-    chmod a+x /ppml/trusted-cluster-serving/java/start-cluster-serving-job.sh
+    chmod a+x /ppml/trusted-cluster-serving/java/start-cluster-serving-job.sh && \
+    chmod a+x /ppml/trusted-cluster-serving/start-all.sh
