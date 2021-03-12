@@ -359,7 +359,7 @@ class SparkXShards(XShards):
 
     def split(self):
         """
-        
+
         Split SparkXShards into multiple SparkXShards.
         Each element in the SparkXShards needs be a list or tuple with same length.
 
