@@ -24,7 +24,6 @@ import java.util.{List => JList}
 import org.apache.spark.TaskContext
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.{col, row_number, spark_partition_id, udf}
-import org.apache.spark.sql.types.{BooleanType, DataType, LongType, NumericType, StringType}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
