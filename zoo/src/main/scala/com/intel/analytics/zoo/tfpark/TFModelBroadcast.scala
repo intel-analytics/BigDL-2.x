@@ -144,67 +144,62 @@ class TFModelBroadcast[T: ClassTag]()
   }
 }
 
-private[zoo] class ModelInfo[T: ClassTag](var uuid: String, @transient var model: Module[T])(
-  implicit ev: TensorNumeric[T]) extends SerializationHolder {
+private[zoo] class ModelInfo[T: ClassTag](val uuid: String, @transient var model: Module[T])(
+  implicit ev: TensorNumeric[T]) extends Serializable {
 
-  override def writeInternal(out: CommonOutputStream): Unit = {
-    out.writeString(uuid)
-
-    val stream = new ByteArrayOutputStream()
-    val oos = new ObjectOutputStream(stream)
-    val cloned = model.cloneModule()
-    oos.writeObject(cloned)
-    oos.close()
-    val w = stream.toByteArray
-    val len = w.length
-    out.writeInt(len)
-    CachedModels.add(uuid, cloned)
-  }
-
-  //  @throws(classOf[IOException])
-  //  private def writeObject(out: ObjectOutputStream): Unit = {
-  //    val bos = new ByteArrayOutputStream
-  //    val out = new ObjectOutputStream(bos)
-  //    out.defaultWriteObject()
-  //    val cloned = model.cloneModule()
-  //    out.writeObject(cloned)
-  //    out.flush()
-  //    val bytes = bos.toByteArray()
-  //    bos.close()
-  //    CachedModels.add(uuid, cloned)
-  //  }
-
-  override def readInternal(in: CommonInputStream): Unit = {
-    uuid = in.readString()
-    val len = in.readInt()
-    require(len != 0, "model length should not be zero," +
-      "please set logging level to debug for more information")
-    assert(len >= 0, "model length should be an non-negative integer")
-    val w = new Array[Byte](len)
-    var numOfBytes = 0
-    while (numOfBytes < len) {
-      val read = in.read(w, numOfBytes, len - numOfBytes)
-      numOfBytes += read
-    }
-
-    val ois = new CheckedObjectInputStream(classOf[Tensor[T]], new ByteArrayInputStream(w))
-    try {
-      model = ois.readObject().asInstanceOf[Module[T]]
-      CachedModels.add(uuid, model)
-    } finally {
-      ois.close()
-    }
-  }
-
-
-//  @throws(classOf[IOException])
-//  private def readObject(in: ObjectInputStream): Unit = {
+//  override def writeInternal(out: CommonOutputStream): Unit = {
+//    out.writeString(uuid)
 //
-//    val oin = new CheckedObjectInputStream(classOf[FloatModel], in)
-//    oin.defaultReadObject()
-//    model = oin.readObject().asInstanceOf[Module[T]]
-//    CachedModels.add(uuid, model)
+//    val stream = new ByteArrayOutputStream()
+//    val oos = new ObjectOutputStream(stream)
+//    val cloned = model.cloneModule()
+//    oos.writeObject(cloned)
+//    oos.close()
+//    val w = stream.toByteArray
+//    val len = w.length
+//    out.writeInt(len)
+//    CachedModels.add(uuid, cloned)
 //  }
+
+    @throws(classOf[IOException])
+    private def writeObject(out: ObjectOutputStream): Unit = {
+      out.defaultWriteObject()
+      val cloned = model.cloneModule()
+      out.writeObject(cloned)
+      CachedModels.add(uuid, cloned)
+    }
+
+//  override def readInternal(in: CommonInputStream): Unit = {
+//    uuid = in.readString()
+//    val len = in.readInt()
+//    require(len != 0, "model length should not be zero," +
+//      "please set logging level to debug for more information")
+//    assert(len >= 0, "model length should be an non-negative integer")
+//    val w = new Array[Byte](len)
+//    var numOfBytes = 0
+//    while (numOfBytes < len) {
+//      val read = in.read(w, numOfBytes, len - numOfBytes)
+//      numOfBytes += read
+//    }
+//
+//    val ois = new CheckedObjectInputStream(classOf[Tensor[T]], new ByteArrayInputStream(w))
+//    try {
+//      model = ois.readObject().asInstanceOf[Module[T]]
+//      CachedModels.add(uuid, model)
+//    } finally {
+//      ois.close()
+//    }
+//  }
+
+
+  @throws(classOf[IOException])
+  private def readObject(in: ObjectInputStream): Unit = {
+
+    val oin = new CheckedObjectInputStream(classOf[ModelInfo[T]], in)
+    oin.defaultReadObject()
+    model = oin.readObject().asInstanceOf[Module[T]]
+    CachedModels.add(uuid, model)
+  }
 }
 
 private[zoo] object ModelInfo {
