@@ -59,20 +59,21 @@ def scheduler_creator(optimizer, config):
     return torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.9)
 
 
-def train_data_creator(config):
+def train_data_creator(config, batch_size):
     train_dataset = LinearDataset(2, 5, size=config.get("data_size", 1000))
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
-        batch_size=config.get("batch_size", 32),
+        batch_size=batch_size
     )
     return train_loader
 
 
-def validation_data_creator(config):
+def validation_data_creator(config, batch_size):
     val_dataset = LinearDataset(2, 5, size=config.get("val_size", 400))
     validation_loader = torch.utils.data.DataLoader(
         val_dataset,
-        batch_size=config.get("batch_size", 32))
+        batch_size=batch_size
+    )
     return validation_loader
 
 
@@ -115,9 +116,35 @@ if __name__ == "__main__":
                              "You can change it depending on your own cluster setting.")
     parser.add_argument("--workers_per_node", type=int, default=2,
                         help="The number of workers to run on each node")
+    parser.add_argument('--k8s_master', type=str, default="",
+                        help="The k8s master. "
+                             "It should be k8s://https://<k8s-apiserver-host>: "
+                             "<k8s-apiserver-port>.")
+    parser.add_argument("--container_image", type=str, default="",
+                        help="The runtime k8s image. "
+                             "You can change it with your k8s image.")
+    parser.add_argument('--k8s_driver_host', type=str, default="",
+                        help="The k8s driver localhost.")
+    parser.add_argument('--k8s_driver_port', type=str, default="",
+                        help="The k8s driver port.")
 
     args = parser.parse_args()
-    init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
-                      num_nodes=args.num_nodes, memory=args.memory)
+    if args.cluster_mode == "local":
+        init_orca_context(cluster_mode="local", cores=args.cores,
+                          num_nodes=args.num_nodes, memory=args.memory)
+    elif args.cluster_mode == "yarn":
+        init_orca_context(cluster_mode="yarn-client", cores=args.cores,
+                          num_nodes=args.num_nodes, memory=args.memory)
+    elif args.cluster_mode == "k8s":
+        if not args.k8s_master or not args.container_image \
+                or not args.k8s_driver_host or not args.k8s_driver_port:
+            parser.print_help()
+            parser.error('k8s_master, container_image,'
+                         'k8s_driver_host/port are required not to be empty')
+        init_orca_context(cluster_mode="k8s", master=args.k8s_master,
+                          container_image=args.container_image,
+                          num_nodes=args.num_nodes, cores=args.cores,
+                          conf={"spark.driver.host": args.k8s_driver_host,
+                                "spark.driver.port": args.k8s_driver_port})
     train_example(workers_per_node=args.workers_per_node)
     stop_orca_context()

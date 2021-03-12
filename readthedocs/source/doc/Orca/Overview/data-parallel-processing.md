@@ -63,24 +63,24 @@ def preprocess(data):
     data['image'] = tf.cast(data["image"], tf.float32) / 255.
     return data['image'], data['label']
 
-def train_data_creator(config):
+def train_data_creator(config, batch_size):
     dataset = tfds.load(name="mnist", split="train", data_dir=dataset_dir)
     dataset = dataset.map(preprocess)
     dataset = dataset.shuffle(1000)
-    dataset = dataset.batch(config["batch_size"])
+    dataset = dataset.batch(batch_size)
     return dataset
 ```
 
 Pytorch:
 ```python
-def train_data_creator(config):
+def train_data_creator(config, batch_size):
     train_loader = torch.utils.data.DataLoader(
             datasets.MNIST(config["dir"], train=True, download=True,
                            transform=transforms.Compose([
                                transforms.ToTensor(),
                                transforms.Normalize((0.1307,), (0.3081,))
                            ])),
-            batch_size=config["batch_size"], shuffle=True)
+            batch_size=batch_size, shuffle=True)
     return train_loader
 ```
 

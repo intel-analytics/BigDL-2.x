@@ -21,10 +21,11 @@ import numbers
 import torch
 import numpy as np
 
-from zoo.orca.data.shard import RayXShards
+from zoo.orca.data.ray_xshards import RayXShards
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch.torch_runner import TorchRunner
-from zoo.orca.learn.utils import maybe_dataframe_to_xshards
+from zoo.orca.learn.utils import maybe_dataframe_to_xshards, dataframe_to_xshards, \
+    convert_predict_xshards_to_dataframe, update_predict_xshards
 from zoo.ray import RayContext
 
 import ray
@@ -53,7 +54,7 @@ def check_for_failure(remote_values):
 
 def shards_ref_to_creator(shards_ref):
 
-    def data_creator(config):
+    def data_creator(config, batch_size):
         from zoo.orca.data.utils import ray_partition_get_data_label, index_data, get_size
         from torch.utils.data import Dataset, DataLoader
 
@@ -68,8 +69,7 @@ def shards_ref_to_creator(shards_ref):
             def __getitem__(self, i):
                 return index_data(self.x, i), index_data(self.y, i)
 
-        assert "batch_size" in config, "batch_size must be set in config"
-        params = {"batch_size": config["batch_size"], "shuffle": True}
+        params = {"batch_size": batch_size, "shuffle": True}
         for arg in ["shuffle", "sampler", "batch_sampler", "num_workers", "collate_fn",
                     "pin_memory", "drop_last", "timeout", "worker_init_fn",
                     "multiprocessing_context"]:
@@ -93,6 +93,7 @@ class PyTorchRayEstimator:
             model_creator,
             optimizer_creator,
             loss_creator=None,
+            metrics=None,
             scheduler_creator=None,
             training_operator_cls=TrainingOperator,
             initialization_hook=None,
@@ -132,7 +133,9 @@ class PyTorchRayEstimator:
             training_operator_cls=self.training_operator_cls,
             scheduler_step_freq=self.scheduler_step_freq,
             use_tqdm=self.use_tqdm,
-            config=worker_config)
+            config=worker_config,
+            metrics=metrics
+        )
 
         if backend == "torch_distributed":
             cores_per_node = ray_ctx.ray_node_cpu_cores // workers_per_node
@@ -303,33 +306,46 @@ class PyTorchRayEstimator:
             worker_stats = ray.get([w.validate.remote(**params) for w in self.remote_workers])
         return self._process_stats(worker_stats)
 
+    def _predict_spark_xshards(self, xshards, param):
+        ray_xshards = RayXShards.from_spark_xshards(xshards)
+
+        def transform_func(worker, shards_ref):
+            data_creator = lambda config, batch_size: shards_ref
+            return worker.predict.remote(
+                data_creator, **param)
+
+        pred_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
+                                                               transform_func,
+                                                               gang_scheduling=False)
+        spark_xshards = pred_shards.to_spark_xshards()
+        return spark_xshards
+
     def predict(self,
                 data,
                 batch_size=32,
                 feature_cols=None,
                 profile=False):
         from zoo.orca.data import SparkXShards
-        data, _ = maybe_dataframe_to_xshards(data,
-                                             validation_data=None,
-                                             feature_cols=feature_cols,
-                                             label_cols=None,
-                                             mode="predict")
-        if isinstance(data, SparkXShards):
-            ray_xshards = RayXShards.from_spark_xshards(data)
-
-            def transform_func(worker, shards_ref):
-                data_creator = lambda config: shards_ref
-                return worker.predict.remote(
-                    data_creator, batch_size, profile)
-
-            pred_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                                   transform_func,
-                                                                   gang_scheduling=False)
-            spark_xshards = pred_shards.to_spark_xshards()
+        param = dict(
+            batch_size=batch_size,
+            profile=profile
+        )
+        from pyspark.sql import DataFrame
+        if isinstance(data, DataFrame):
+            xshards, _ = dataframe_to_xshards(data,
+                                              validation_data=None,
+                                              feature_cols=feature_cols,
+                                              label_cols=None,
+                                              mode="predict")
+            pred_shards = self._predict_spark_xshards(xshards, param)
+            result = convert_predict_xshards_to_dataframe(data, pred_shards)
+        elif isinstance(data, SparkXShards):
+            pred_shards = self._predict_spark_xshards(data, param)
+            result = update_predict_xshards(data, pred_shards)
         else:
             raise ValueError("Only xshards or Spark DataFrame is supported for predict")
 
-        return spark_xshards
+        return result
 
     def get_model(self):
         """Returns the learned model(s)."""

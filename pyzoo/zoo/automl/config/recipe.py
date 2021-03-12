@@ -100,6 +100,26 @@ class MTNetSmokeRecipe(Recipe):
         }
 
 
+class TCNSmokeRecipe(Recipe):
+    """
+    A very simple Recipe for smoke test that runs one epoch and one iteration
+    with only 1 random sample.
+    """
+
+    def __init__(self):
+        super(self.__class__, self).__init__()
+
+    def search_space(self, all_available_features):
+        return {
+            "lr": 0.001,
+            "batch_size": 16,
+            "nhid": 8,
+            "levels": 8,
+            "kernel_size": 3,
+            "dropout": 0.1
+        }
+
+
 class PastSeqParamHandler(object):
     """
     Utility to handle PastSeq Param
@@ -200,7 +220,7 @@ class GridRandomRecipe(Recipe):
 
             # ----------- optimization parameters
             "lr": tune.uniform(0.001, 0.01),
-            "batch_size": tune.choice([32, 64], replace=False),
+            "batch_size": tune.choice([32, 64]),
             "epochs": self.epochs,
             "past_seq_len": self.past_seq_config,
         }
@@ -378,7 +398,7 @@ class MTNetGridRandomRecipe(Recipe):
 
         # -- optimization params
         self.lr = tune.uniform(0.001, 0.01)
-        self.batch_size = self.batch_size = tune.grid_search(batch_size)
+        self.batch_size = tune.grid_search(batch_size)
         self.epochs = epochs
 
         # ---- model params
@@ -416,6 +436,59 @@ class MTNetGridRandomRecipe(Recipe):
             "past_seq_len": self.past_seq_len,
             "cnn_hid_size": self.cnn_hid_size,
             "cnn_height": self.cnn_height
+        }
+
+
+class TCNGridRandomRecipe(Recipe):
+    """
+    Grid+Random Recipe for TCN
+    """
+    # TODO: use some more generalized exp hyperparameters
+
+    def __init__(self,
+                 num_rand_samples=1,
+                 training_iteration=40,
+                 batch_size=[256, 512],
+                 hidden_size=[32, 48],
+                 levels=[6, 8],
+                 kernel_size=[3, 5],
+                 dropout=[0, 0.1],
+                 lr=[0.001, 0.003]
+                 ):
+        """
+        Constructor.
+        :param num_rand_samples: number of hyper-param configurations sampled randomly
+        :param training_iteration: no. of iterations for training (n epochs) in trials
+        :param batch_size: grid search candidates for batch size
+        :param hidden_size: grid search candidates for hidden size of each layer
+        :param levels: the number of layers
+        :param kernel_size: the kernel size of each layer
+        :param dropout: dropout rate (1 - keep probability)
+        :param lr: learning rate
+        """
+        super(self.__class__, self).__init__()
+        # -- run time params
+        self.num_samples = num_rand_samples
+        self.training_iteration = training_iteration
+
+        # -- optimization params
+        self.lr = tune.choice(lr)
+        self.batch_size = tune.grid_search(batch_size)
+
+        # ---- model params
+        self.hidden_size = tune.grid_search(hidden_size)
+        self.levels = tune.grid_search(levels)
+        self.kernel_size = tune.grid_search(kernel_size)
+        self.dropout = tune.choice(dropout)
+
+    def search_space(self, all_available_features):
+        return {
+            "lr": self.lr,
+            "batch_size": self.batch_size,
+            "nhid": self.hidden_size,
+            "levels": self.levels,
+            "kernel_size": self.kernel_size,
+            "dropout": self.dropout
         }
 
 
@@ -475,7 +548,7 @@ class RandomRecipe(Recipe):
 
             # ----------- optimization parameters
             "lr": tune.uniform(0.001, 0.01),
-            "batch_size": tune.choice([32, 64, 1024], replace=False),
+            "batch_size": tune.choice([32, 64, 1024]),
             "epochs": self.epochs,
             "past_seq_len": self.past_seq_config,
         }

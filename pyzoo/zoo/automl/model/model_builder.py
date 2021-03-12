@@ -30,11 +30,10 @@ class ModelBuilder:
                    loss_creator=loss_creator
                    )
 
-    # @classmethod
-    # def from_tfkeras(cls, model_creator, compile_args_creator):
-    #     return cls(backend="keras",
-    #                model_creator=model_creator,
-    #                compile_args_creator=compile_args_creator)
+    @classmethod
+    def from_tfkeras(cls, model_creator):
+        return cls(backend="keras",
+                   model_creator=model_creator)
 
     @classmethod
     def from_name(cls, name, dev_option="pytorch"):
@@ -52,26 +51,44 @@ class ModelBuilder:
             from zoo.automl.model.tcn import TCNPytorch
             return cls(cls=get_class(PytorchBaseModel))
 
-        # elif dev_option == 'tf.keras':
-        #     from zoo.automl.model.base_keras_model import KerasBaseModel
-        #     from zoo.automl.model.VanillaLSTM import VanillaLSTM
-        #     from zoo.automl.model.MTNet_keras import MTNetKeras
-        #     from zoo.automl.model.Seq2Seq import LSTMSeq2Seq
-        #     return cls(cls=get_class(KerasBaseModel))
+        elif dev_option == 'tf.keras':
+            from zoo.automl.model.base_keras_model import KerasBaseModel
+            from zoo.automl.model.VanillaLSTM import VanillaLSTM
+            from zoo.automl.model.MTNet_keras import MTNetKeras
+            from zoo.automl.model.Seq2Seq import LSTMSeq2Seq
+            return cls(cls=get_class(KerasBaseModel))
 
     @classmethod
     def from_cls(cls, estimator):
         return cls(cls=estimator)
 
-    def build(self, config):
+    def build_from_ckpt(self, checkpoint_filename):
+        '''Restore from a saved model'''
         if self.backend == "pytorch":
             from zoo.automl.model.base_pytorch_model import PytorchBaseModel
-            return PytorchBaseModel(**self.params,
-                                    config=config)
-        # elif self.backend == "keras":
-        #     from zoo.automl.model.base_keras_model import KerasBaseModel
-        #     return KerasBaseModel(**self.params,
-        #                           config=config)
+            model = PytorchBaseModel(**self.params)
+            model.restore(checkpoint_filename)
+            return model
+
+        elif self.backend == "keras":
+            from zoo.automl.model.base_keras_model import KerasBaseModel
+            model = KerasBaseModel(**self.params)
+            model.restore(checkpoint_filename)
+            return model
+
+    def build(self, config):
+        '''Build a new model'''
+        if self.backend == "pytorch":
+            from zoo.automl.model.base_pytorch_model import PytorchBaseModel
+            model = PytorchBaseModel(**self.params)
+            model.build(config)
+            return model
+
+        elif self.backend == "keras":
+            from zoo.automl.model.base_keras_model import KerasBaseModel
+            model = KerasBaseModel(**self.params)
+            model.build(config)
+            return model
 
         elif self.cls is not None:
             return self.cls(config=config)

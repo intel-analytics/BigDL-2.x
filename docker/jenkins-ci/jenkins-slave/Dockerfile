@@ -2,6 +2,9 @@ FROM ubuntu:16.04
 
 WORKDIR /opt/work
 
+ARG JDK_VERSION=8u192
+ARG JDK_URL=your_jdk_url
+
 ENV JAVA_8_HOME         /opt/work/jdk8
 ENV JAVA_HOME           ${JAVA_8_HOME}
 ENV SCALA_HOME          /opt/work/scala
@@ -30,11 +33,12 @@ RUN apt-get update --fix-missing && \
     apt-get install -y libgtk2.0-dev
 
 #jdk8
-RUN wget https://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u271-linux-x64.tar.gz && \
-    gunzip jdk-8u271-linux-x64.tar.gz && \
-    tar -xf jdk-8u271-linux-x64.tar -C /opt && \
-    rm jdk-8u271-linux-x64.tar && \
-    ln -s /opt/jdk1.8.0_271 /opt/jdk && \
+RUN wget $JDK_URL && \
+    gunzip jdk-$JDK_VERSION-linux-x64.tar.gz && \
+    tar -xf jdk-$JDK_VERSION-linux-x64.tar -C /opt && \
+    rm jdk-$JDK_VERSION-linux-x64.tar && \
+    mv /opt/jdk* /opt/jdk$JDK_VERSION && \
+    ln -s /opt/jdk$JDK_VERSION /opt/jdk && \
 #scala
     wget https://downloads.lightbend.com/scala/2.11.8/scala-2.11.8.tgz && \
     gunzip scala-2.11.8.tgz && \
@@ -106,7 +110,7 @@ RUN export TENSOR_FLOW_VERION=1.10.0 && \
     conda install -y -n py35 -c mingfeima mkldnn==0.16.1 && \
     conda install -y -n py35 -c pytorch pytorch-cpu==1.0.0 torchvision-cpu==0.2.1 && \
         /bin/bash -c "source activate py35 && \
-        pip install onnx==1.3.0 ray==0.7.2 conda-pack==0.3.1 psutil==5.6.2 && \
+        pip install onnx==1.3.0 ray==1.2.0 conda-pack==0.3.1 psutil==5.6.2 && \
         pip install aiohttp==3.5.4 setproctitle==1.1.10 gym==0.14.0 && \
         pip install atari_py==0.2.6 lz4==2.1.10 && source deactivate" && \
 #py36
@@ -126,7 +130,7 @@ RUN export TENSOR_FLOW_VERION=1.10.0 && \
     conda install -y -n py36 -c mingfeima mkldnn==0.16.1 && \
     conda install -y -n py36 -c pytorch pytorch-cpu==1.0.0 torchvision-cpu==0.2.1 && \
         /bin/bash -c "source activate py36 && \
-        pip install onnx==1.3.0 ray==0.7.2 conda-pack==0.3.1 psutil==5.6.2 && \
+        pip install onnx==1.3.0 ray==1.2.0 conda-pack==0.3.1 psutil==5.6.2 && \
         pip install aiohttp==3.5.4 setproctitle==1.1.10 gym==0.14.0 && \
         pip install atari_py==0.2.6 lz4==2.1.10 && source deactivate" && \
 #keras=2.1.6

@@ -24,6 +24,7 @@ class OrcaContextMeta(type):
     __eager_mode = True
     _serialize_data_creator = False
     _train_data_store = "DRAM"
+    __shard_size = None
 
     @property
     def log_output(cls):
@@ -101,6 +102,24 @@ class OrcaContextMeta(type):
             "train_data_store must be either DRAM or PMEM or DIRECT or DISK_n"
         cls._train_data_store = value
 
+    @property
+    def _shard_size(cls):
+        """
+        The number of Rows in Spark DataFrame to transform as one shard of SparkXShards. We convert
+        Spark DataFrame input to SparkXShards internally in fit/predict/evaluate of
+        PyTorchRayEstimator and TensorFlow2Estimator. This parameter may affect the performance in
+        transferring an SparkXShards to an RayXShards.
+        Default to be None, in which case Rows in one partition will be transformed as one shard.
+        """
+        return cls.__shard_size
+
+    @_shard_size.setter
+    def _shard_size(cls, value):
+        if value is not None:
+            assert isinstance(value, int) and value > 0, \
+                "shard size should be either None or a positive integer."
+        cls.__shard_size = value
+
 
 class OrcaContext(metaclass=OrcaContextMeta):
     @staticmethod
@@ -110,6 +129,15 @@ class OrcaContext(metaclass=OrcaContextMeta):
             return SparkContext.getOrCreate()
         else:
             raise Exception("No active SparkContext. Please create a SparkContext first")
+
+    @staticmethod
+    def get_sql_context():
+        from pyspark.sql import SQLContext
+        return SQLContext.getOrCreate(OrcaContext.get_spark_context())
+
+    @staticmethod
+    def get_spark_session():
+        return OrcaContext.get_sql_context().sparkSession
 
     @staticmethod
     def get_ray_context():

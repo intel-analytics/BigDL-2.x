@@ -2,13 +2,15 @@
 
 ---
 
-**In this guide we will describe how to scale out TensorFlow (v1.15) programs using Orca in 4 simple steps.**
-
 <a target="_blank" href="https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/tf_lenet_mnist.ipynb"><img src="https://www.tensorflow.org/images/colab_logo_32px.png" />Run in Google Colab</a>&nbsp; <a target="_blank" href="https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/tf_lenet_mnist.ipynb"><img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />View source on GitHub</a>
+
+---
+
+**In this guide we will describe how to scale out _TensorFlow 1.15_ programs using Orca in 4 simple steps.** (_[Keras 2.3](./orca-keras-quickstart.md) and [TensorFlow 2](./orca-tf2keras-quickstart.md) guides are also available._)
 
 ### **Step 0: Prepare Environment**
 
-We recommend using [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment. Please refer to the [install guide](../../UserGuide/python.md) for more details.
+We recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) to prepare the environment. Please refer to the [install guide](../../UserGuide/python.md) for more details.
 
 ```bash
 conda create -n zoo python=3.7 # "zoo" is conda environment name, you can use any name you like.
@@ -67,7 +69,7 @@ acc = accuracy(logits, labels)
 ```
 ### **Step 3: Define Train Dataset**
 
-You can define the dataset using standard [tf.data.Dataset](https://www.tensorflow.org/api_docs/python/tf/data/Dataset). Orca also supports [Spark DataFrame](https://spark.apache.org/docs/latest/sql-programming-guide.html) and [Orca XShards](./data).
+You can define the dataset using standard [tf.data.Dataset](https://www.tensorflow.org/api_docs/python/tf/data/Dataset). Orca also supports [Spark DataFrame](https://spark.apache.org/docs/latest/sql-programming-guide.html) and [Orca XShards](../Overview/data-parallel-processing.md).
 
 ```python
 import tensorflow_datasets as tfds

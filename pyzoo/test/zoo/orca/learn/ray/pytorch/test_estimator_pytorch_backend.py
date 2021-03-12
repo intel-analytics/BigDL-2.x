@@ -20,9 +20,13 @@ import pytest
 
 import torch
 import torch.nn as nn
+from zoo.orca.learn.metrics import Accuracy
 
 from zoo import init_nncontext
 from zoo.orca.learn.pytorch import Estimator
+from zoo.orca.data import SparkXShards
+from zoo.orca.data.image.utils import chunks
+
 
 np.random.seed(1337)  # for reproducibility
 
@@ -74,7 +78,7 @@ class IdentityNet(nn.Module):
         self.fc1 = nn.Linear(50, 50)
 
     def forward(self, input_):
-        return input_[:, 0]
+        return input_
 
 
 class MultiInputNet(nn.Module):
@@ -92,20 +96,21 @@ class MultiInputNet(nn.Module):
         return x
 
 
-def train_data_loader(config):
+def train_data_loader(config, batch_size):
     train_dataset = LinearDataset(size=config.get("data_size", 1000))
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
-        batch_size=config.get("batch_size", 32),
+        batch_size=batch_size
     )
     return train_loader
 
 
-def val_data_loader(config):
+def val_data_loader(config, batch_size):
     val_dataset = LinearDataset(size=config.get("val_size", 400))
     validation_loader = torch.utils.data.DataLoader(
         val_dataset,
-        batch_size=config.get("batch_size", 32))
+        batch_size=batch_size
+    )
     return validation_loader
 
 
@@ -121,6 +126,7 @@ def get_estimator(workers_per_node=1, model_fn=get_model):
     estimator = Estimator.from_torch(model=model_fn,
                                      optimizer=get_optimizer,
                                      loss=nn.BCELoss(),
+                                     metrics=Accuracy(),
                                      config={"lr": 1e-2},
                                      workers_per_node=workers_per_node,
                                      backend="torch_distributed")
@@ -134,7 +140,7 @@ class TestPyTorchEstimator(TestCase):
         print(train_stats)
         val_stats = estimator.evaluate(val_data_loader, batch_size=64)
         print(val_stats)
-        assert 0 < val_stats["val_accuracy"] < 1
+        assert 0 < val_stats["Accuracy"] < 1
         assert estimator.get_model()
 
         # Verify syncing weights, i.e. the two workers have the same weights after training
@@ -171,9 +177,23 @@ class TestPyTorchEstimator(TestCase):
 
         sc = init_nncontext()
         rdd = sc.range(0, 100)
-        from pyspark.sql import SparkSession
-        spark = SparkSession(sc)
-        from pyspark.ml.linalg import DenseVector
+        df = rdd.map(lambda x: (np.random.randn(50).astype(np.float).tolist(),
+                                [int(np.random.randint(0, 2, size=()))])
+                     ).toDF(["feature", "label"])
+
+        estimator = get_estimator(workers_per_node=2)
+        estimator.fit(df, batch_size=4, epochs=2,
+                      feature_cols=["feature"],
+                      label_cols=["label"])
+        estimator.evaluate(df, batch_size=4,
+                           feature_cols=["feature"],
+                           label_cols=["label"])
+
+    def test_dataframe_shard_size_train_eval(self):
+        from zoo.orca import OrcaContext
+        OrcaContext._shard_size = 30
+        sc = init_nncontext()
+        rdd = sc.range(0, 100)
         df = rdd.map(lambda x: (np.random.randn(50).astype(np.float).tolist(),
                                 [int(np.random.randint(0, 2, size=()))])
                      ).toDF(["feature", "label"])
@@ -189,11 +209,8 @@ class TestPyTorchEstimator(TestCase):
     def test_dataframe_predict(self):
 
         sc = init_nncontext()
-        rdd = sc.parallelize(range(100))
-
-        from pyspark.sql import SparkSession
-        spark = SparkSession(sc)
-        df = rdd.map(lambda x: ([float(x)] * 50,
+        rdd = sc.parallelize(range(20))
+        df = rdd.map(lambda x: ([float(x)] * 5,
                                 [int(np.random.randint(0, 2, size=()))])
                      ).toDF(["feature", "label"])
 
@@ -201,8 +218,23 @@ class TestPyTorchEstimator(TestCase):
                                   model_fn=lambda config: IdentityNet())
         result = estimator.predict(df, batch_size=4,
                                    feature_cols=["feature"])
-        result = np.concatenate([shard["prediction"] for shard in result.collect()])
-        assert np.array_equal(result, np.array(range(100)).astype(np.float))
+        expr = "sum(cast(feature <> to_array(prediction) as int)) as error"
+        assert result.selectExpr(expr).first()["error"] == 0
+
+    def test_xshards_predict(self):
+
+        sc = init_nncontext()
+        rdd = sc.range(0, 110).map(lambda x: np.array([x]*50))
+        shards = rdd.mapPartitions(lambda iter: chunks(iter, 5)).map(lambda x: {"x": np.stack(x)})
+        shards = SparkXShards(shards)
+
+        estimator = get_estimator(workers_per_node=2,
+                                  model_fn=lambda config: IdentityNet())
+        result_shards = estimator.predict(shards, batch_size=4)
+        result = np.concatenate([shard["prediction"] for shard in result_shards.collect()])
+        expected_result = np.concatenate([shard["x"] for shard in result_shards.collect()])
+
+        assert np.array_equal(result, expected_result)
 
     def test_multiple_inputs_model(self):
 

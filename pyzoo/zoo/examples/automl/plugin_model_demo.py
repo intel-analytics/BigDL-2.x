@@ -18,6 +18,7 @@
 from zoo.automl.search import SearchEngineFactory
 from zoo.automl.model import ModelBuilder
 import torch
+import tensorflow as tf
 import torch.nn as nn
 from zoo.automl.config.recipe import Recipe
 from ray import tune
@@ -29,6 +30,17 @@ from zoo.orca import init_orca_context
 def model_creator(config):
     """Returns a torch.nn.Module object."""
     return nn.Linear(1, config.get("hidden_size", 1))
+
+
+def model_creator_keras(config):
+    """Returns a tf.keras model"""
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Dense(1)
+    ])
+    model.compile(loss="mse",
+                  optimizer='sgd',
+                  metrics=["mse"])
+    return model
 
 
 def optimizer_creator(model, config):
@@ -44,11 +56,12 @@ class SimpleRecipe(Recipe):
     def __init__(self):
         super().__init__()
         self.num_samples = 2
+        self.training_iteration = 20
 
     def search_space(self, all_available_features):
         return {
-            "lr": tune.uniform(0.001, 0.01),
-            "batch_size": tune.choice([32, 64])
+            "lr": tune.uniform(0.01, 0.02),
+            "batch_size": tune.choice([16, 32, 64])
         }
 
 
@@ -58,10 +71,9 @@ def get_data():
         y = a*x + b
         return x, y
     train_x, train_y = get_linear_data(2, 5, 1000)
-    df = pd.DataFrame({'x': train_x, 'y': train_y})
     val_x, val_y = get_linear_data(2, 5, 400)
-    val_df = pd.DataFrame({'x': val_x, 'y': val_y})
-    return df, val_df
+    data = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
+    return data
 
 
 if __name__ == "__main__":
@@ -78,17 +90,18 @@ if __name__ == "__main__":
 
     # pass input data, modelbuilder and recipe into searcher.compile. Note that if user doesn't pass
     # feature transformer, the default identity feature transformer will be used.
-    df, val_df = get_data()
-    searcher.compile(df,
-                     modelBuilder,
-                     recipe=SimpleRecipe(),
-                     feature_cols=["x"],
-                     target_col="y",
-                     validation_df=val_df)
+    data = get_data()
+    searcher.compile(data=data,
+                     model_create_func=modelBuilder,
+                     recipe=SimpleRecipe())
 
     searcher.run()
     best_trials = searcher.get_best_trials(k=1)
     print(best_trials[0].config)
+
+    # rebuild this best config model and evaluate
+    best_model = modelBuilder.build_from_ckpt(best_trials[0].model_path)
+    searched_best_model = best_model.evaluate(data["val_x"], data["val_y"], metrics=["rmse"])
 
     # 2. you can also use the model builder with a fix config
     model = modelBuilder.build(config={
@@ -96,8 +109,25 @@ if __name__ == "__main__":
         "batch_size": 32,  # used in data_creator
     })
 
-    val_result = model.fit_eval(x=df[["x"]],
-                                y=df[["y"]],
-                                validation_data=(val_df[["x"]], val_df["y"]),
-                                epochs=1)
-    print(val_result)
+    model.fit_eval(x=data["x"],
+                   y=data["y"],
+                   validation_data=(data["val_x"], data["val_y"]),
+                   epochs=20)
+    val_result_pytorch_manual = model.evaluate(x=data["x"], y=data["y"], metrics=['rmse'])
+
+    # 3. try another modelbuilder based on tfkeras
+    modelBuilder_keras = ModelBuilder.from_tfkeras(model_creator_keras)
+    model = modelBuilder_keras.build(config={
+        "lr": 1e-2,  # used in optimizer_creator
+        "batch_size": 32,  # used in data_creator
+        "metric": "mse"
+    })
+
+    model.fit_eval(x=data["x"],
+                   y=data["y"],
+                   validation_data=(data["val_x"], data["val_y"]),
+                   epochs=20)
+    val_result_tensorflow_manual = model.evaluate(x=data["x"], y=data["y"], metrics=['rmse'])
+    print("Searched best model validation rmse:", searched_best_model)
+    print("Pytorch model validation rmse:", val_result_pytorch_manual)
+    print("Tensorflow model validation rmse:", val_result_tensorflow_manual)

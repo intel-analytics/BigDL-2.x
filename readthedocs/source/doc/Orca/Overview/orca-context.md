@@ -20,7 +20,7 @@ In `init_orca_context`, the user may specify necessary runtime configurations fo
 - *Cluster mode*: Users can specify the computing environment for the program (a local machine, K8s cluster, Hadoop/YARN cluster, etc.).
 - *Physical resources*: Users can specify the amount of physical resources to be allocated for the program on the underlying cluster, including the number of nodes in the cluster, the cores and memory allocated for each node, etc.
 
-The Orca program simply runs `init_orca_context` on the local machine, which will automatically provision the runtime Python environment and distributed execution engine on the underlying computing environment (such as a single laptop, a large K8s or Hadoop cluster, etc.). <TODO: Add a architecture chart?>
+The Orca program simply runs `init_orca_context` on the local machine, which will automatically provision the runtime Python environment and distributed execution engine on the underlying computing environment (such as a single laptop, a large K8s or Hadoop cluster, etc.).
 
 View the related [Python API doc]() for more details.
 
@@ -58,12 +58,16 @@ ray_ctx = OrcaContext.get_ray_context()
 
 Users can make extra configurations when using the functionalities of Project Orca via `OrcaContext`.
 
-* `OrcaContext.log_output`: Default to be False. Setting it to True is recommended when running Jupyter notebook (this will display all the program output in the notebook). Make sure you set it before `init_orca_context`.
-* `OrcaContext.serialize_data_creator`: Default to be False. Setting it to True would add a file lock when initializing data for distributed training (this may be useful if you run multiple workers on a single node and they download data to the same destination).
+* `OrcaContext.log_output`: Default to be False. `OrcaContext.log_output = True` is recommended when running Jupyter notebook (this will display all the program output in the notebook). Make sure you set it before `init_orca_context`.
+
+* `OrcaContext.serialize_data_creator`: Default to be False. `OrcaContext.serialize_data_creator = True` would add a file lock when initializing data for distributed training (this may be useful if you run multiple workers on a single node and they download data to the same destination).
+
 * `OrcaContext.pandas_read_backend`: Setting it to the backend to be used for reading data as Panda DataFrame. See [here](./data-parallel-processing.html#data-parallel-pandas) for more details.
-* `OrcaContext.train_data_store`: Setting memory type for train data storage. One of `DRAM`, `PMEM`, or `DISK_n`. Default to be `DRAM`; setting it to `DISK_n` (e.g., `DISK_2`) if the training data cannot fit in memory (this will store the data on disk, and cache only `1/n` of the data in memory; after going through the `1/n`,  the current cache will be released and another `1/n` will be loaded into memory). You can set it to `PMEM` if you have AEP hardware.
+
+* `OrcaContext.train_data_store`: Default to "DRAM"; `OrcaContext.train_data_store = "DISK_n"` (e.g., "DISK_2") if the training data cannot fit in memory (this will store the data on disk, and cache only 1/n of the data in memory; after going through the 1/n, it will release the current cache, and load another 1/n into memory). Currently it works for TensorFlow and Keras Estimators only.
 
 ---
+
 ### **5. Termination**
 
 After the Orca program finishes, the user can call `stop_orca_context` to release resources and shut down the underlying Spark and/or Ray execution engine.

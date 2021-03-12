@@ -63,6 +63,7 @@ class TorchRunner:
                  model_creator,
                  optimizer_creator,
                  loss_creator=None,
+                 metrics=None,
                  scheduler_creator=None,
                  training_operator_cls=None,
                  config=None,
@@ -79,6 +80,7 @@ class TorchRunner:
         self.epochs = 0
         self.models = None
         self.optimizers = None
+        self.metrics = metrics
         self.criterion = None
         self.schedulers = None
         self.train_loader = None
@@ -127,7 +129,7 @@ class TorchRunner:
         self.setup_operator(self.models)
 
     def setup_address(self):
-        ip = ray.services.get_node_ip_address()
+        ip = ray._private.services.get_node_ip_address()
         port = find_free_port()
         return f"tcp://{ip}:{port}"
 
@@ -154,7 +156,7 @@ class TorchRunner:
 
         logger.debug("Creating model")
         self.models = self.model_creator(self.config)
-        if not isinstance(self.models, Iterable):
+        if isinstance(self.models, nn.Sequential) or not isinstance(self.models, Iterable):
             self.models = [self.models]
         assert all(isinstance(model, nn.Module) for model in self.models), (
             "All models must be PyTorch models: {}.".format(self.models))
@@ -211,7 +213,7 @@ class TorchRunner:
 
     def get_node_ip(self):
         """Returns the IP address of the current node."""
-        return ray.services.get_node_ip_address()
+        return ray._private.services.get_node_ip_address()
 
     def find_free_port(self):
         """Finds a free port on the current node."""
@@ -249,14 +251,12 @@ class TorchRunner:
     def train_epochs(self, data_creator, epochs=1, batch_size=32, profile=False,
                      info=None, wrap_dataloader=None):
         config = self.config.copy()
-        if "batch_size" not in config:
-            config["batch_size"] = batch_size
         if OrcaContext.serialize_data_creator:
             with FileLock(
                     os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
-                loader = data_creator(config)
+                loader = data_creator(config, batch_size)
         else:
-            loader = data_creator(config)
+            loader = data_creator(config, batch_size)
 
         if wrap_dataloader is None:
             if TorchRunner.should_wrap_dataloader(loader):
@@ -299,17 +299,15 @@ class TorchRunner:
                  info=None, wrap_dataloader=None):
         """Evaluates the model on the validation data set."""
         config = self.config.copy()
-        if "batch_size" not in config:
-            config["batch_size"] = batch_size
         info = info or {}
         self._toggle_profiling(profile=profile)
 
         if OrcaContext.serialize_data_creator:
             with FileLock(
                     os.path.join(tempfile.gettempdir(), ".orcadata.lock")):
-                loader = data_creator(config)
+                loader = data_creator(config, batch_size)
         else:
-            loader = data_creator(config)
+            loader = data_creator(config, batch_size)
 
         if wrap_dataloader is None:
             if TorchRunner.should_wrap_dataloader(loader):
@@ -320,7 +318,9 @@ class TorchRunner:
         if num_steps:
             loader = itertools.islice(loader, num_steps)
         with self.timers.record("validation"):
-            validation_stats = self.training_operator.validate(loader, info=info)
+            validation_stats = self.training_operator.validate(loader,
+                                                               info=info,
+                                                               metrics=self.metrics)
         if profile:
             validation_stats.update(profile=self.timers.stats())
         return validation_stats
@@ -328,16 +328,14 @@ class TorchRunner:
     def predict(self, data_creator, batch_size=32, profile=False):
         """Evaluates the model on the validation data set."""
         config = self.config.copy()
-        if "batch_size" not in config:
-            config["batch_size"] = batch_size
         self._toggle_profiling(profile=profile)
 
-        shards_ref = data_creator(config)
+        shards_ref = data_creator(config, batch_size)
         if not isinstance(shards_ref, ray.ObjectID):
             raise ValueError("Only xshards is supported for predict")
 
         partition = ray.get(shards_ref)
-        params = {"batch_size": config["batch_size"], "shuffle": False}
+        params = {"batch_size": batch_size, "shuffle": False}
         for arg in ["shuffle", "sampler", "batch_sampler", "num_workers", "collate_fn",
                     "pin_memory", "drop_last", "timeout", "worker_init_fn",
                     "multiprocessing_context"]:
@@ -352,8 +350,8 @@ class TorchRunner:
             dataset = torch.utils.data.TensorDataset(*tensors)
             data_loader = DataLoader(dataset, **params)
             y = self.training_operator.predict(iter(data_loader))
-            shard["prediction"] = y
-            return shard
+
+            return {"prediction": y}
 
         with self.timers.record("predict"):
             new_part = [predict_fn(shard) for shard in partition]

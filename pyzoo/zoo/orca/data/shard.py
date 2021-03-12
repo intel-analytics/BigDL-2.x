@@ -70,18 +70,19 @@ class XShards(object):
         return SparkXShards(sc.pickleFile(path, minPartitions))
 
     @staticmethod
-    def partition(data):
+    def partition(data, num_shards=None):
         """
 
         Partition local in memory data and form a SparkXShards
 
         :param data: np.ndarray, a tuple, list, dict of np.ndarray, or a nested structure
         made of tuple, list, dict with ndarray as the leaf value
+        :param num_shards: the number of shards that the data will be partitioned into
         :return: a SparkXShards
         """
         sc = init_nncontext()
         node_num, core_num = get_node_and_core_number()
-        total_core_num = node_num * core_num
+        shard_num = node_num * core_num if num_shards is None else num_shards
         import numpy as np
         type_err_msg = """
 The types supported in zoo.orca.data.XShards.partition are
@@ -93,20 +94,28 @@ But got data of type {}
         """.format(type(data))
         supported_types = {list, tuple, dict}
         if isinstance(data, np.ndarray):
-            arrays = np.array_split(data, total_core_num)
+            if data.shape[0] < shard_num:
+                raise ValueError("The length of data {} is smaller than the total number "
+                                 "of shards {}. Please adjust the num_shards option to be "
+                                 "at most {}.".format(data.shape[0], shard_num, data.shape[0]))
+            arrays = np.array_split(data, shard_num)
             rdd = sc.parallelize(arrays)
         else:
             assert type(data) in supported_types, type_err_msg
             flattened = nest.flatten(data)
             data_length = len(flattened[0])
             data_to_be_shard = []
-            for i in range(total_core_num):
+            if data_length < shard_num:
+                raise ValueError("The length of data {} is smaller than the total number "
+                                 "of shards {}. Please adjust the num_shards option to be "
+                                 "at most {}.".format(data_length, shard_num, data_length))
+            for i in range(shard_num):
                 data_to_be_shard.append([])
             for x in flattened:
                 assert len(x) == data_length, \
                     "the ndarrays in data must all have the same size in first dimension, " \
                     "got first ndarray of size {} and another {}".format(data_length, len(x))
-                x_parts = np.array_split(x, total_core_num)
+                x_parts = np.array_split(x, shard_num)
                 for idx, x_part in enumerate(x_parts):
                     data_to_be_shard[idx].append(x_part)
 
@@ -115,70 +124,6 @@ But got data of type {}
 
         data_shards = SparkXShards(rdd)
         return data_shards
-
-
-class RayXShards(XShards):
-    """
-
-    A collection of data which can be pre-processed in parallel on Ray
-    """
-    def __init__(self, ray_rdd):
-        self.ray_rdd = ray_rdd
-
-    def transform_shard(self, func, *args):
-        raise Exception("Transform is not supported for RayXShards")
-
-    def transform_shards_with_actors(self, actors, func,
-                                     gang_scheduling=True):
-        """
-
-        Assign each partition_ref (referencing a list of shards) to an actor,
-        and run func for each actor and partition_ref pair.
-
-        Actors should have a `get_node_ip` method to achieve locality scheduling.
-        The `get_node_ip` method should call ray.services.get_node_ip_address()
-        to return the correct ip address.
-
-        The `func` should take an actor and a partition_ref as argument and
-        invoke some remote func on that actor and return a new partition_ref.
-
-        Note that if you pass partition_ref directly to actor method, ray
-        will resolve that partition_ref to the actual partition object, which
-        is a list of shards. If you pass partition_ref indirectly through other
-        object, say [partition_ref], ray will send the partition_ref itself to
-        actor, and you may need to use ray.get(partition_ref) on actor to retrieve
-        the actor partition objects.
-        """
-        new_ray_rdd = self.ray_rdd.map_partitions_with_actors(actors,
-                                                              func,
-                                                              gang_scheduling)
-        return RayXShards(new_ray_rdd)
-
-    def zip_shards_with_actors(self, xshards, actors, func, gang_scheduling=True):
-        new_ray_rdd = self.ray_rdd.zip_partitions_with_actors(xshards.ray_rdd,
-                                                              actors,
-                                                              func,
-                                                              gang_scheduling)
-        return RayXShards(new_ray_rdd)
-
-    def collect(self):
-        return self.ray_rdd.collect()
-
-    # Collect without flattening the results.
-    def collect_partitions(self):
-        return self.ray_rdd.collect_partitions()
-
-    def num_partitions(self):
-        return self.ray_rdd.num_partitions()
-
-    def to_spark_xshards(self):
-        return SparkXShards(self.ray_rdd.to_spark_rdd())
-
-    @staticmethod
-    def from_spark_xshards(spark_xshards):
-        from zoo.orca.data.ray_rdd import RayRdd
-        ray_rdd = RayRdd.from_spark_rdd(spark_xshards.rdd)
-        return RayXShards(ray_rdd)
 
 
 class SparkXShards(XShards):

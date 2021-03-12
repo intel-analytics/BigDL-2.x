@@ -11,9 +11,9 @@ data:
   # default, None
   filter:
 params:
-  # default, 4
+  # default, number of cores per model in serving
   core_number:
-  # default: model number will auto-adapt to core_number, do not set it if not sure about the behavior
+  # default: number of models in serving
   model_number:
   # default: OFF
   performance_mode:

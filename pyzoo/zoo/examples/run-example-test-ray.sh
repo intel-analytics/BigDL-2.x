@@ -15,31 +15,30 @@ set -e
 
 ray stop -f
 
-echo "Start ray example tests"
-#start execute
+echo "#start orca ray example tests"
 echo "#1 Start rl_pong example"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rl_pong/rl_pong.py --iterations 10
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/rl_pong/rl_pong.py --iterations 10
 now=$(date "+%s")
 time1=$((now-start))
 
-echo "#2 Start async_parameter example"
+echo "#2 Start multiagent example"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/async_parameter_server.py --iterations 10
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/rllib/multiagent_two_trainers.py --iterations 5
 now=$(date "+%s")
 time2=$((now-start))
 
-echo "#3 Start sync_parameter example"
+echo "#3 Start async_parameter example"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/parameter_server/sync_parameter_server.py --iterations 10
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/parameter_server/async_parameter_server.py --iterations 10
 now=$(date "+%s")
 time3=$((now-start))
 
-echo "#4 Start multiagent example"
-start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray/rllib/multiagent_two_trainers.py --iterations 5
-now=$(date "+%s")
-time4=$((now-start))
+echo "#4 Start sync_parameter example"
+#start=$(date "+%s")
+#python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/parameter_server/sync_parameter_server.py --iterations 10
+#now=$(date "+%s")
+#time4=$((now-start))
 
 echo "#5 Start mxnet lenet example"
 start=$(date "+%s")
@@ -58,29 +57,48 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/mxnet/lenet_mnist.py 
 now=$(date "+%s")
 time5=$((now-start))
 
-echo "#6 Start fashion-mnist example with Tensorboard visualization"
+echo "#6 Start fashion_mnist example with Tensorboard visualization"
 start=$(date "+%s")
 
-if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/data ]
+if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/data ]
 then
     echo "fashion-mnist already exists"
 else
-    wget -nv $FTP_URI/analytics-zoo-data/data/fashion-mnist.zip -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/
-    unzip ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/fashion-mnist.zip
+    wget -nv $FTP_URI/analytics-zoo-data/data/fashion-mnist.zip -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/
+    unzip ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/fashion-mnist.zip
 fi
 
 sed "s/epochs=5/epochs=1/g;s/batch_size=4/batch_size=256/g" \
-    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/fashion-mnist.py \
-    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/fashion-mnist_tmp.py
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/fashion_mnist.py \
+    > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/fashion_mnist_tmp.py
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion-mnist/fashion-mnist_tmp.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/fashion_mnist_tmp.py
 now=$(date "+%s")
 time6=$((now-start))
 
+
+echo "#7 start example for orca super-resolution"
+start=$(date "+%s")
+
+if [ ! -f BSDS300-images.tgz ]; then
+  wget -nv $FTP_URI/analytics-zoo-data/BSDS300-images.tgz
+fi
+if [ ! -d dataset/BSDS300/images ]; then
+  mkdir dataset
+  tar -xzf BSDS300-images.tgz -C dataset
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py
+
+now=$(date "+%s")
+time7=$((now-start))
+
+
 echo "Ray example tests finished"
-echo "#1 rl_pong time used:$time1 seconds"
-echo "#2 async_parameter_server time used:$time2 seconds"
-echo "#3 sync_parameter_server time used:$time3 seconds"
-echo "#4 multiagent_two_trainers time used:$time4 seconds"
+echo "#1 orca rl_pong time used:$time1 seconds"
+echo "#2 orca async_parameter_server time used:$time2 seconds"
+echo "#3 orca sync_parameter_server time used:$time3 seconds"
+echo "#4 orca multiagent_two_trainers time used:$time4 seconds"
 echo "#5 mxnet_lenet time used:$time5 seconds"
 echo "#6 fashion-mnist time used:$time6 seconds"
+echo "#7 orca super-resolution example time used:$time7 seconds"

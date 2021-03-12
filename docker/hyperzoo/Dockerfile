@@ -6,6 +6,8 @@ ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
 ARG BIGDL_VERSION=0.12.1
 ARG SPARK_VERSION=2.4.3
 ARG FLINK_VERSION=1.10.0
+ARG JDK_VERSION=8u192
+ARG JDK_URL=your_jdk_url
 
 ENV FLINK_HOME                          /opt/flink-${FLINK_VERSION}
 ENV ANALYTICS_ZOO_VERSION               ${ANALYTICS_ZOO_VERSION}
@@ -55,11 +57,12 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py37_4.8.3-Linux-x86_64.
     bash Miniconda3-py37_4.8.3-Linux-x86_64.sh -b && \
     rm -f Miniconda3-py37_4.8.3-Linux-x86_64.sh && \
 #java
-    wget https://enos.itcollege.ee/~jpoial/allalaadimised/jdk8/jdk-8u271-linux-x64.tar.gz  && \
-    gunzip jdk-8u271-linux-x64.tar.gz && \
-    tar -xf jdk-8u271-linux-x64.tar -C /opt && \
-    rm jdk-8u271-linux-x64.tar && \
-    ln -s /opt/jdk1.8.0_271 /opt/jdk && \
+    wget $JDK_URL && \
+    gunzip jdk-$JDK_VERSION-linux-x64.tar.gz && \
+    tar -xf jdk-$JDK_VERSION-linux-x64.tar -C /opt && \
+    rm jdk-$JDK_VERSION-linux-x64.tar && \
+    mv /opt/jdk* /opt/jdk$JDK_VERSION && \
+    ln -s /opt/jdk$JDK_VERSION /opt/jdk && \
 #spark
     wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     tar -zxvf spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
@@ -73,16 +76,16 @@ RUN chmod +x /sbin/tini
 #python
 RUN apt-get install -y python3-minimal && \
     apt-get install -y build-essential python3 python3-setuptools python3-dev python3-pip && \
-    pip3 install --upgrade pip==20.2.4 && \
+    pip3 install --upgrade pip && \
     pip install --upgrade setuptools && \
     pip install numpy scipy && \
-    pip install --no-binary pandas==0.23.4 -I pandas && \
-    pip install scikit-learn matplotlib seaborn jupyter wordcloud moviepy requests h5py opencv-python tensorflow==1.15.0 && \
-    pip install torch==1.5.0 torchvision==0.6.0 -f https://download.pytorch.org/whl/torch_stable.html && \
+    pip install pandas==1.0.3 && \
+    pip install scikit-learn matplotlib seaborn jupyter jupyterlab wordcloud moviepy requests h5py opencv-python tensorflow==1.15.0 && \
+    pip install torch==1.7.1 torchvision==0.8.2  && \
     ln -s /usr/bin/python3 /usr/bin/python && \
     #Fix tornado await process
     pip uninstall -y -q tornado && \
-    pip install tornado==5.1.1 && \
+    pip install tornado && \
     python3 -m ipykernel.kernelspec && \
     pip install tensorboard && \
     pip install jep && \
@@ -92,13 +95,15 @@ RUN apt-get install -y python3-minimal && \
     pip install redis && \
     pip install keras && \
     pip install mxnet-mkl==1.6.0 && \
-    pip install ray==0.8.4 && \
+    pip install ray==1.2.0 && \
     pip install Pillow==6.1 && \
     pip install psutil aiohttp && \
     pip install py4j && \
     pip install gym gym[atari] && \
     pip install lz4 && \
     pip install ray[rllib] && \
+    pip install cmake==3.16.3 && \
+    pip install horovod==0.19.2 && \
     git clone https://github.com/tensorflow/models/ /opt/models && \
 #redis
     wget http://download.redis.io/releases/redis-5.0.5.tar.gz && \
@@ -135,8 +140,6 @@ ADD *.sh /opt/work/scripts/
 RUN chmod a+x /opt/work/scripts/*.*
 
 RUN /opt/work/scripts/download-cluster-serving-all-zip.sh
-RUN cd cluster-serving && \
-    ./cluster-serving-setup.sh
 
 ADD resources/ /opt/work/cluster-serving/resources/
 ADD *.py /opt/work/cluster-serving/
