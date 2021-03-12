@@ -266,7 +266,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         if optimizer is None:
             from zoo.orca.learn.optimizers.schedule import Default
             self.optimizer = SGD(learningrate_schedule=Default())
-        elif isinstance(optimizer, TorchOptimizer):
+        if isinstance(optimizer, TorchOptimizer):
             self.optimizer = TorchOptim.from_pytorch(optimizer)
         elif isinstance(optimizer, OrcaOptimizer):
             self.optimizer = optimizer.get_optimizer()
@@ -473,7 +473,6 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         
         return model_path
 
-    ### TODO: change load
     def load(self, model_path):
         """
         Load the Estimator state (including model and optimizer) from provided model_path.
