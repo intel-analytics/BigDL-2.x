@@ -346,6 +346,9 @@ class Estimator(SparkEstimator):
         model = load_from_file(load_func, path)
         return Estimator.from_keras(keras_model=model)
 
+    def shutdown(self):
+        pass
+
 
 def is_tf_data_dataset(data):
     is_dataset = isinstance(data, tf.data.Dataset)
@@ -706,7 +709,7 @@ class TensorFlowEstimator(Estimator):
 
     def shutdown(self):
         """
-        Close session and release resources.
+        Close TensorFlow session and release resources.
         """
         self.sess.close()
 

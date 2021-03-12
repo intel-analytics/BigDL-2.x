@@ -202,3 +202,12 @@ class Estimator(BaseEstimator):
         :param path: directory containing Orca checkpoint files.
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def shutdown(self):
+        """
+        Shut down workers and releases resources.
+
+        :return:
+        """
+        raise NotImplementedError
