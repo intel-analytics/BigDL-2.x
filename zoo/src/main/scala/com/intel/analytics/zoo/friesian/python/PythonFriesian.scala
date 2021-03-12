@@ -38,7 +38,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   val numericTypes: List[String] = List("long", "double", "integer")
 
   def fillNA(df: DataFrame, fillVal: Any = 0, columns: JList[String] = null): DataFrame = {
-    val cols = if(columns == null) {
+    val cols = if (columns == null) {
       df.columns
     } else {
       columns.asScala.toArray
@@ -68,7 +68,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     val fillValList = columns.map(idx => {
       val matchAndVal = checkTypeAndCast(schema(idx).dataType.typeName, targetType, fillVal)
-      if (!matchAndVal._1){
+      if (!matchAndVal._1) {
         throw new IllegalArgumentException(s"$targetType is not matched at fillValue")
       }
       matchAndVal._2
@@ -92,7 +92,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   (Boolean, Any) = {
     if (schemaType == targetType) {
       return (true, fillVal)
-    } else if (targetType == "numeric"){
+    } else if (targetType == "numeric") {
       val fillNum = fillVal.asInstanceOf[Number]
       return schemaType match {
           case "long" => (true, fillNum.longValue)
@@ -104,8 +104,8 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     (false, fillVal)
   }
 
-  private def getCount(rows: Iterator[Row]): Iterator[(Int, Int)] ={
-    if(rows.isEmpty){
+  private def getCount(rows: Iterator[Row]): Iterator[(Int, Int)] = {
+    if (rows.isEmpty) {
       Array[(Int, Int)]().iterator
     } else {
       val part_id = TaskContext.get().partitionId()
@@ -126,9 +126,9 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         running_sum += count_tuple._2
       }
       val base_dict_bc = df.rdd.sparkContext.broadcast(base_dict)
-      val windowSpec  = Window.partitionBy("part_id").orderBy("count")
+      val windowSpec = Window.partitionBy("part_id").orderBy("count")
       val df_row_number = df.withColumn("row_number", row_number.over(windowSpec))
-      val get_label = udf((part_id: Int, row_number: Int)=> {
+      val get_label = udf((part_id: Int, row_number: Int) => {
         row_number + base_dict_bc.value.getOrElse(part_id, 0)
       })
       idx_df_list.add(df_row_number

@@ -65,7 +65,8 @@ class Table:
         assert isinstance(columns, list)
         return Table(self.df.withColumn(merged_col_name, array(columns)).drop(*columns))
 
-    # May not need the below methods if IndexTable only has two columns with the desired names: col_name and id.
+    # May not need the below methods if IndexTable only has two columns with the desired names:
+    # col_name and id.
     def drop(self, *cols):
         return Table(self.df.drop(*cols))
 
