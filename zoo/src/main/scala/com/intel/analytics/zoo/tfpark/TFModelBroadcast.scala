@@ -149,7 +149,6 @@ private[zoo] class ModelInfo[T: ClassTag](var uuid: String, @transient var model
 
   override def writeInternal(out: CommonOutputStream): Unit = {
     out.writeString(uuid)
-
     val stream = new ByteArrayOutputStream()
     val oos = new ObjectOutputStream(stream)
     val cloned = model.cloneModule()
@@ -158,7 +157,7 @@ private[zoo] class ModelInfo[T: ClassTag](var uuid: String, @transient var model
     val w = stream.toByteArray
     val len = w.length
     out.writeInt(len)
-    out.writeObject(cloned)
+    out.write(w)
     CachedModels.add(uuid, cloned)
   }
 
@@ -183,7 +182,7 @@ private[zoo] class ModelInfo[T: ClassTag](var uuid: String, @transient var model
       numOfBytes += read
     }
 
-    val ois = new CheckedObjectInputStream(classOf[Tensor[T]], new ByteArrayInputStream(w))
+    val ois = new CheckedObjectInputStream(classOf[Module[T]], new ByteArrayInputStream(w))
     try {
       model = ois.readObject().asInstanceOf[Module[T]]
       CachedModels.add(uuid, model)
