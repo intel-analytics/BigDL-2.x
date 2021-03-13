@@ -161,14 +161,6 @@ private[zoo] class ModelInfo[T: ClassTag](var uuid: String, @transient var model
     CachedModels.add(uuid, cloned)
   }
 
-//    @throws(classOf[IOException])
-//    private def writeObject(out: ObjectOutputStream): Unit = {
-//      out.writeUTF(uuid)
-//      val cloned = model.cloneModule()
-//      out.writeObject(cloned)
-//      CachedModels.add(uuid, cloned)
-//    }
-
   override def readInternal(in: CommonInputStream): Unit = {
     uuid = in.readString()
     val len = in.readInt()
@@ -190,16 +182,6 @@ private[zoo] class ModelInfo[T: ClassTag](var uuid: String, @transient var model
       ois.close()
     }
   }
-
-
-//  @throws(classOf[IOException])
-//  private def readObject(in: ObjectInputStream): Unit = {
-//
-//    val oin = new CheckedObjectInputStream(classOf[ModelInfo[T]], in)
-//    oin.defaultReadObject()
-//    model = oin.readObject().asInstanceOf[Module[T]]
-//    CachedModels.add(uuid, model)
-//  }
 }
 
 private[zoo] object ModelInfo {
