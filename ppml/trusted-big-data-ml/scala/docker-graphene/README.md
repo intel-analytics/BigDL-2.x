@@ -30,11 +30,6 @@ To train a model with ppml in analytics zoo and bigdl, you need to prepare the d
 You can download the MNIST Data from [here](http://yann.lecun.com/exdb/mnist/). Unzip all the files and put them in one folder(e.g. mnist). <br>
 There're four files. **train-images-idx3-ubyte** contains train images, **train-labels-idx1-ubyte** is train label file, **t10k-images-idx3-ubyte** has validation images and **t10k-labels-idx1-ubyte** contains validation labels. For more detail, please refer to the download page. <br>
 After you uncompress the gzip files, these files may be renamed by some uncompress tools, e.g. **train-images-idx3-ubyte** is renamed to **train-images.idx3-ubyte**. Please change the name back before you run the example.  <br>
-Then set the path to your data: <br>
-```bash
-export DATA_PATH=/path/to/your/data
-```
-
 
 ### Prepare the keys
 The ppml in analytics zoo need secured keys to enable spark security such as AUTHENTICATION, RPC Encryption, Local Storage Encryption and TLS, you need to prepare the secure keys and keystores.
@@ -51,15 +46,43 @@ The ppml in analytics zoo need secured keys to enable spark security such as AUT
     openssl rsa -in server.pem -out server.key
     openssl x509 -in server.pem -out server.crt
 ```
-Then set the path to kays: 
-```bash
-export KEYS_PATH=/path/to/your/keys
-```
 
 ### Run the PPML Docker image
 
 #### In spark local mode
-##### Start the container to run analytics zoo model training in ppml.
+##### Start the container to run SparkPi test in ppml
+```bash
+export DATA_PATH=the_dir_path_of_your_prepared_data
+export KEYS_PATH=the_dir_path_of_your_prepared_keys
+export LOCAL_IP=your_local_ip_of_the_sgx_server
+sudo docker run -itd \
+    --privileged \
+    --net=host \
+    --cpuset-cpus="0-5" \
+    --oom-kill-disable \
+    --device=/dev/gsgx \
+    --device=/dev/sgx/enclave \
+    --device=/dev/sgx/provision \
+    -v /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket \
+    -v $DATA_PATH:/ppml/trusted-big-data-ml/work/data \
+    -v $KEYS_PATH:/ppml/trusted-big-data-ml/work/keys \
+    --name=spark-local \
+    -e LOCAL_IP=$LOCAL_IP \
+    -e SGX_MEM_SIZE=64G \
+    intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:latest \
+    bash
+sudo docker exec -it spark-local bash
+cd ppml/trusted-bid-data-ml
+export SPARK_HOME=/ppml/trusted-big-data-ml/work/spark-2.3.4
+export SCALA_HOME=/ppml/trusted-big-data-ml/work/scala-2.11.12
+export PATH=$SPARK_HOME/bin:$PATH:$SCALA_HOME
+./init.sh
+$SPARK_HOME/bin/spark-submit --class org.apache.spark.examples.SparkPi --master local $SPARK_HOME/examples/jars/spark-examples_2.11-2.4.3.jar
+```
+The result shows like this: <br>
+>   Pi is roughly 3.1384956924784624
+
+##### Start the container to run lenet model training with BigDL in ppml.
 ```bash
 export DATA_PATH=the_dir_path_of_your_prepared_data
 export KEYS_PATH=the_dir_path_of_your_prepared_keys
@@ -89,13 +112,89 @@ or
 ```bash
 sudo docker logs spark-local | egrep "###|INFO"
 ```
+The result shows like: <br>
+>   ############# train optimized[P1182:T2:java] ---- end time: 310534 ms return from shim_write(...) = 0x1d <br>
+>   ############# ModuleLoader.saveToFile File.saveBytes end, used 827002 ms[P1182:T2:java] ---- end time: 1142754 ms return from shim_write(...) = 0x48 <br>
+>   ############# ModuleLoader.saveToFile saveWeightsToFile end, used 842543 ms[P1182:T2:java] ---- end time: 1985297 ms return from shim_write(...) = 0x4b <br>
+>   ############# model saved[P1182:T2:java] ---- end time: 1985297 ms return from shim_write(...) = 0x19 <br>
+
+##### Start the container to run TPC-H in ppml.
+Create the container: <br>
+```bash
+git clone https://github.com/qiuxin2012/tpch-spark.git
+
+export DATA_PATH=the_dir_path_of_your_prepared_data
+export KEYS_PATH=the_dir_path_of_your_prepared_keys
+export LOCAL_IP=your_local_ip_of_the_sgx_server
+sudo docker run -itd \
+    --privileged \
+    --net=host \
+    --cpuset-cpus="0-5" \
+    --oom-kill-disable \
+    --device=/dev/gsgx \
+    --device=/dev/sgx/enclave \
+    --device=/dev/sgx/provision \
+    -v /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket \
+    -v $DATA_PATH:/ppml/trusted-big-data-ml/work/data \
+    -v $KEYS_PATH:/ppml/trusted-big-data-ml/work/keys \
+    --name=spark-local \
+    -e LOCAL_IP=$LOCAL_IP \
+    -e SGX_MEM_SIZE=64G \
+    intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:latest \
+    bash
+```
+Build the environment of TPC-H with sbt: <br>
+```bash
+docker cp tpch-spark/ spark-local:/ppml/trusted-big-data-ml
+docker cp scala-2.11.12.tgz spark-local:/ppml/trusted-big-data-ml/work
+docker cp spark-2.3.4-bin-hadoop2.7.tgz spark-local:/ppml/trusted-big-data-ml/work
+docker cp sbt-1.4.8.tgz spark-local:/ppml/trusted-big-data-ml/work
+sudo docker exec -it spark-local bash
+cd ppml/trusted-big-data-ml/work
+tar -zxvf spark-2.3.4-bin-hadoop2.7.tgz
+tar -zxvf scala-2.11.12.tgz
+tar -zxvf sbt-1.4.8.tgz
+cd ..
+export SPARK_HOME=/ppml/trusted-big-data-ml/work/spark-2.3.4
+export SCALA_HOME=/ppml/trusted-big-data-ml/work/scala-2.11.12
+export SBT_HOME=/ppml/trusted-big-data-ml/work/sbt
+export PATH=$SBT_HOME:$SPARK_HOME/bin:$PATH:$SCALA_HOME
+
+cd tpch-spark/dbgen
+make
+./dbgen -h
+./dbgen
+```
+The result shows like this: <br>
+>   TPC-H Population Generator (Version 2.17.0)
+>   Copyright Transaction Processing Performance Council 1994 - 2010
+
+Establish the dataset using TPC-H:<br>
+```bash
+./dbgen -s 10
+```
+Build the SBT environment for TPC-H:<br>
+```bash
+add cd ..
+cd ../..
+cd work/sbt
+vim ./sbt
+```
+*Add these to ./sbt file:* <br>
+```bash
+SBT_OPTS="-Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=256M"
+java $SBT_OPTS -jar /ppml/trusted-big-data-ml/work/sbt/bin/sbt-launch.jar "$@"
+```
+
+Then first run sbt, download the files: <br>
+```bash
+chmod u+x ./sbt
+./sbt sbtVersion
+```
 
 #### In spark standalone cluster mode
 
 
-### How to run it on spark in sgx with Docker
-#### Create and run one Docker image
 
-#### Example one: SparkPi
 #### Example two: BigDL Lenet
 #### Example three: TPC-H
