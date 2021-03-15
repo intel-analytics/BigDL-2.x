@@ -33,7 +33,7 @@ On the cluster configuration page, click the **Advanced Options** toggle. Click 
 
 ![](images/Databricks5.PNG)
 
-See below for an example of Spark config setting needed by Analytics Zoo. Here it sets 1 core and 6g memory per executor and driver. Note that "spark.cores.max" needs to be properly set below.
+See below for an example of Spark config setting needed by Analytics Zoo. Here it sets 1 core per executor. Note that "spark.cores.max" needs to be properly set below.
 
 ```
 spark.shuffle.reduceLocality.enabled false
@@ -41,21 +41,18 @@ spark.serializer org.apache.spark.serializer.JavaSerializer
 spark.shuffle.blockTransferService nio
 spark.databricks.delta.preview.enabled true
 spark.executor.cores 1
-spark.executor.memory 6g
 spark.speculation false
-spark.driver.memory 6g
 spark.scheduler.minRegisteredResourcesRatio 1.0
 spark.cores.max 4
-spark.driver.cores 1
 ```
 
 ### **4. Running Analytics Zoo on Databricks**
 
-Open a new notebook, and call `init_orca_context` at the beginning of your code (with `cluster_mode` set to "spark-submit"). This will create a SparkContext with optimized performance configuration and initialize the BigDL engine.
+Open a new notebook, and call `init_orca_context` at the beginning of your code (with `cluster_mode` set to "standalone"). This will create a SparkContext with optimized performance configuration and initialize the BigDL engine.
 
 ```python
 from zoo.orca import init_orca_context, stop_orca_context
-init_orca_context(cluster_mode="spark-submit")
+init_orca_context(cluster_mode="standalone", num_executors=2)
 ```
 
 Output on Databricks:
