@@ -506,7 +506,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         
         self.estimator = SparkEstimator(self.model, self.optimizer, self.model_dir)
 
-    def load_orca_checkpoint(self, path, version=None, prefix=None, loss=None):
+    def load_orca_checkpoint(self, path, version=None, prefix=None):
         """
         Load existing checkpoint. To load a specific checkpoint, please provide both `version` and
         `perfix`. If `version` is None, then the latest checkpoint will be loaded.
@@ -516,17 +516,12 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         :param version: checkpoint version, which is the suffix of model.* file, i.e., for modle.4
                file, the version is 4. If it is None, then load the latest checkpoint.
         :param prefix: optimMethod prefix, for example 'optimMethod-TorchModelf53bddcc'.
-        :param loss: PyTorch loss function. If it is None, then the loss function remains unchanged.
         :return:
         """
         import os
         from bigdl.nn.layer import Model
         from bigdl.optim.optimizer import OptimMethod
         from zoo.orca.learn.utils import find_latest_checkpoint
-        
-        if loss is not None:
-            from zoo.pipeline.api.torch import TorchLoss
-            self.loss = TorchLoss.from_pytorch(loss)
         
         if version is None:
             path, prefix, version = find_latest_checkpoint(path, model_type="pytorch")

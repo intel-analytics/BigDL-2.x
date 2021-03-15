@@ -193,12 +193,3 @@ class Estimator(BaseEstimator):
         i.e., for modle.4 file, the version is 4.
         """
         raise NotImplementedError
-
-    @abstractmethod
-    def load_latest_orca_checkpoint(self, path):
-        """
-        Load latest Orca checkpoint under specified directory.
-
-        :param path: directory containing Orca checkpoint files.
-        """
-        raise NotImplementedError
