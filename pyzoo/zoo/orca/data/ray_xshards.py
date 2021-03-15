@@ -209,7 +209,8 @@ class RayXShards(XShards):
         results = ray.get(result_refs)
         return results
 
-    def zip_shards_with_actors(self, xshards, actors, reduce_partitions_func, return_refs=False):
+    def zip_reduce_shards_with_actors(self, xshards, actors, reduce_partitions_func,
+                                      return_refs=False):
         assert self.num_partitions() == xshards.num_partitions(),\
             "the rdds to be zipped must have the same number of partitions"
         assigned_partitions, _ = self.assign_partitions_to_actors(actors)

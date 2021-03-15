@@ -81,10 +81,13 @@ def test_assign_partitions_to_actors(orca_context_fixture):
 
 
 def test_transform_shards_with_actors(orca_context_fixture):
+    import random
     ray_xshards, ndarray_dict = get_ray_xshards()
     ndarray_dict_mapped = {k: value + 1 for k, value in ndarray_dict.items()}
+    num_partitions = ray_xshards.num_partitions()
 
-    actors = [Add1Actor.remote() for i in range(3)]
+    num_actors = random.randint(1, num_partitions)
+    actors = [Add1Actor.remote() for _ in range(num_actors)]
     map_func = lambda actor, part_ref: actor.add_one.remote(part_ref)
     result_xshards = ray_xshards.transform_shards_with_actors(actors, map_func)
     results = result_xshards.collect()

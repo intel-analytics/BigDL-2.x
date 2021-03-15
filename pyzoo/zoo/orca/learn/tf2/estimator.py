@@ -239,9 +239,9 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                         make_data_creator(that_partition_refs)
                     return worker.step.remote(**params)
 
-                worker_stats = ray_xshards.zip_shards_with_actors(val_ray_xshards,
-                                                                  self.remote_workers,
-                                                                  zip_func)
+                worker_stats = ray_xshards.zip_reduce_shards_with_actors(val_ray_xshards,
+                                                                         self.remote_workers,
+                                                                         zip_func)
         else:
             params["data_creator"] = data
             params["validation_data_creator"] = validation_data

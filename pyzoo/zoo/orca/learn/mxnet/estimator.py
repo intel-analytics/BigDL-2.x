@@ -219,9 +219,9 @@ class MXNetEstimator(OrcaRayEstimator):
                                                batch_size,
                                                validation_data_creator,
                                                train_resize_batch_num)
-                worker_stats = ray_xshards.zip_shards_with_actors(val_ray_xshards,
-                                                                  self.workers,
-                                                                  zip_func)
+                worker_stats = ray_xshards.zip_reduce_shards_with_actors(val_ray_xshards,
+                                                                         self.workers,
+                                                                         zip_func)
             server_stats = [server.train.remote(None, epochs, batch_size,
                                                 None, train_resize_batch_num)
                             for server in self.servers]

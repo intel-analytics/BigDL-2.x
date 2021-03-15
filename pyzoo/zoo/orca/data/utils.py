@@ -297,8 +297,6 @@ def _convert_list_tuple(data, allow_tuple, allow_list):
 def process_spark_xshards(spark_xshards, num_workers):
     from zoo.orca.data.ray_xshards import RayXShards
     data = spark_xshards
-    # if data.num_partitions() != num_workers:
-    #     data = data.repartition(num_workers)
     ray_xshards = RayXShards.from_spark_xshards(data)
     return ray_xshards
 
