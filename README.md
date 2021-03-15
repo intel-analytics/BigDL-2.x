@@ -109,9 +109,10 @@ See the RayOnSpark [user guide](https://analytics-zoo.readthedocs.io/en/latest/d
 
 ## DL for Scala with BigDL
 
-Analytics Zoo makes it easier to develop large-scale deep learning applications on Spark in Scala/JVM, by providing  Spark ML pipeline support and Keras-style API for BigDL (a distributed deep learning framework for Spark).
+Analytics Zoo makes it easier to develop large-scale deep learning applications on Spark in Scala/JVM, by providing  ***Spark ML pipeline*** support and ***Keras***-style API for [BigDL](https://github.com/intel-analytics/BigDL) (a distributed deep learning framework for Spark).
 
 First, call `initNNContext` at the beginning of the Scala code: 
+
 ```scala
 import com.intel.analytics.zoo.common.NNContext
 val sc = NNContext.initNNContext()
