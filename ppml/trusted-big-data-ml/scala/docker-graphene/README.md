@@ -205,10 +205,10 @@ spark-submit --class "main.scala.TpchQuery" --master local[*] target/scala-2.11/
 The result shows like this: <br>
 >   INFO Executor: Finished task 6.0 in stage 286.0 (TID 25381). 7928 bytes result sent to driver
 >   INFO TaskSetManager: Finished task 6.0 in stage 286.0 (TID 25381) in 13 ms on localhost (executor driver) (7/7)
->   INFO TaskSchedulerImpl: Removed TaskSet 286.0, whose tasks have all completed, from pool
->   INFO DAGScheduler: ResultStage 286 (save at TpchQuery.scala:42) finished in 0.040 s
->   INFO DAGScheduler: Job 37 finished: save at TpchQuery.scala:42, took 0.226678 s
->   INFO FileFormatWriter: Write Job badb70fd-2b10-47ef-b58a-f1bfc3e026ca committed.
->   INFO FileFormatWriter: Finished processing stats for write job badb70fd-2b10-47ef-b58a-f1bfc3e026ca.
+>   INFO TaskSchedulerImpl: Removed TaskSet 286.0, whose tasks have all completed, from pool <br>
+>   INFO DAGScheduler: ResultStage 286 (save at TpchQuery.scala:42) finished in 0.040 s <br>
+>   INFO DAGScheduler: Job 37 finished: save at TpchQuery.scala:42, took 0.226678 s <br>
+>   INFO FileFormatWriter: Write Job badb70fd-2b10-47ef-b58a-f1bfc3e026ca committed. <br>
+>   INFO FileFormatWriter: Finished processing stats for write job badb70fd-2b10-47ef-b58a-f1bfc3e026ca. <br>
 
 #### In spark standalone cluster mode
