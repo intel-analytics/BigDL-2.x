@@ -2,17 +2,18 @@
 
 <p align="center"> <img src="docs/docs/Image/logo.jpg" height="140px"><br></p>
 
-**Distributed TensorFlow, PyTorch and keras on Apache Spark & Ray**
+**Distributed TensorFlow, PyTorch, keras and BigDL on Apache Spark & Ray**
 
 </div>
 
 ---
 
-Analytics Zoo is an open source _**Big Data AI**_ platform, and includes the following libraries for scaling end-to-end AI to distributed Big Data: 
+Analytics Zoo is an open source _**Big Data AI**_ platform, and includes the following features for scaling end-to-end AI to distributed Big Data: 
 
  - [Orca](#getting-started-with-orca): seamlessly scale out TensorFlow, PyTorch and Keras programs for Big Data (using Spark & Ray)
  - [RayOnSpark](#getting-started-with-rayonspark): run Ray programs directly on Big Data clusters
- - [Zouwu](#getting-started-with-zouwu): scalable time series analysis using AutoML 
+ - [DL for Scala](#dl_for_scala_with_bigdl): develop DL applications in Scala (using Spark ML pipeline and/or Keras APIs for BigDL)  
+ - [Zouwu](#getting-started-with-zouwu): scalable time series analysis using AutoML
 
 For more information, you may [read the docs](https://analytics-zoo.readthedocs.io/).
 
@@ -106,6 +107,37 @@ print(ray.get([c.increment.remote() for c in counters]))
 
 See the RayOnSpark [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/ray.html) and [examples]() for more details.
 
+## DL for Scala with BigDL
+
+Analytics Zoo makes it easier to develop large-scale deep learning applications on Spark in Scala/JVM, by providing  Spark ML pipeline support and Keras-style API for BigDL (a distributed deep learning framework for Spark).
+
+First, call `initNNContext` at the beginning of the Scala code: 
+```scala
+import com.intel.analytics.zoo.common.NNContext
+val sc = NNContext.initNNContext()
+```
+
+Then, define the BigDL model using Keras-style API:
+
+```scala
+val input = Input[Float](inputShape = Shape(10))  
+val dense = Dense[Float](12).inputs(input)  
+val output = Activation[Float]("softmax").inputs(dense)  
+val model = Model(input, output)
+```
+
+After that, use `NNEstimator` to train/predict/evaluate the model using Spark ML pipeline:
+
+```scala
+val scaler = new MinMaxScaler().setInputCol("in").setOutputCol("value")
+val estimator = NNEstimator(model, CrossEntropyCriterion())  
+    .setBatchSize(size).setOptimMethod(new Adam()).setMaxEpoch(epoch)
+val pipeline = new Pipeline().setStages(Array(scaler, estimator))
+
+val pipelineModel = pipeline.fit(trainingDF)  
+val predictions = pipelineModel.transform(validationDF)
+```
+See the [Scala](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/scala.html) , [NNframes]() and [Keras API]()  user guides for more details.
 
 ## Getting Started with Zouwu
 
