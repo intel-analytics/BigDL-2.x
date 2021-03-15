@@ -100,7 +100,6 @@ class Counter(object):
           self.n += 1
           return self.n
 
-
 counters = [Counter.remote() for i in range(5)]
 print(ray.get([c.increment.remote() for c in counters]))
 ```
