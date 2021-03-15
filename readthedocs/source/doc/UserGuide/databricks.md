@@ -48,7 +48,7 @@ spark.cores.max 4
 
 ### **4. Running Analytics Zoo on Databricks**
 
-Open a new notebook, and call `init_orca_context` at the beginning of your code (with `cluster_mode` set to "standalone"). This will create a SparkContext with optimized performance configuration and initialize the BigDL engine.
+Open a new notebook, and call `init_orca_context` at the beginning of your code (with `cluster_mode` set to "standalone").
 
 ```python
 from zoo.orca import init_orca_context, stop_orca_context
