@@ -121,11 +121,11 @@ The result shows like: <br>
 ##### Start the container to run TPC-H in ppml.
 Download SBT: <br>
 ```bash
-git clone https://github.com/sbt/sbt/releases/download/v1.4.8/sbt-1.4.8.tgz
+wget https://github.com/sbt/sbt/releases/download/v1.4.8/sbt-1.4.8.tgz
 tar -zxvf sbt-1.4.8.tgz
-git clone https://archive.apache.org/dist/spark/spark-2.3.4/spark-2.3.4.tgz
+wget https://archive.apache.org/dist/spark/spark-2.3.4/spark-2.3.4.tgz
 tar -zxvf spark-2.3.4.tgz
-git clone https://downloads.lightbend.com/scala/2.11.12/scala-2.11.12.tgz
+wget https://downloads.lightbend.com/scala/2.11.12/scala-2.11.12.tgz
 tar -zxvf scala-2.11.12.tgz
 export SBT_HOME=the_dir_path_of_your_unzipped_sbt-1.4.8
 export SPARK_HOME=the_dir_path_of_your_unzipped_spark-2.3.4
