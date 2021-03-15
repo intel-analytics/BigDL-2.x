@@ -77,7 +77,7 @@ est.fit(data=df,
         label_cols=['label'])
 ```
 
-See [TensorFlow](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-tf-quickstart.html) and [PyTorch](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-pytorch-quickstart.html) quickstart for more details. For more information, please refer to the [document website](https://analytics-zoo.readthedocs.io/).
+See [TensorFlow](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-tf-quickstart.html) and [PyTorch](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-pytorch-quickstart.html) quickstart, as well as the [document website](https://analytics-zoo.readthedocs.io/), for more details.
 
 ## Getting Started with RayOnSpark
 
@@ -105,7 +105,7 @@ counters = [Counter.remote() for i in range(5)]
 print(ray.get([c.increment.remote() for c in counters]))
 ```
 
-See the RayOnSpark [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/ray.html) for more details.
+See the RayOnSpark [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/ray.html) and [examples]() for more details.
 
 
 ## Getting Started with Zouwu
@@ -139,7 +139,7 @@ ts_pipeline = trainer.fit(train_df, validation_df)
 ts_pipeline.predict(test_df)
 ```
 
-See the Zouwu [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/zouwu.html) for more details.
+See the Zouwu [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/zouwu.html) and [examples](pyzoo/zoo/zouwu/use-case/) for more details.
 
 ## More information
 
