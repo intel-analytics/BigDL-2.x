@@ -16,9 +16,12 @@
 
 package com.intel.analytics.zoo.pipeline.nnframes
 
+import java.util.{List => JList, Map => JMap}
+
 import com.intel.analytics.bigdl.dataset.{SampleToMiniBatch, _}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.optim._
+import com.intel.analytics.bigdl.python.api.EvaluatedResult
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.tensor.{Tensor, DoubleType => TensorDouble, FloatType => TensorFloat}
 import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
@@ -44,6 +47,7 @@ import org.json4s.JsonDSL._
 import org.json4s.{DefaultFormats, JObject}
 
 import scala.reflect.ClassTag
+import scala.collection.JavaConverters._
 
 private[nnframes] trait HasBatchSize extends Params {
 
@@ -143,8 +147,8 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
    * If it's DRAM, will cache dataset into dynamic random-access memory
    * If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
    * If it's DISK_AND_DRAM(numSlice: Int), will cache dataset into disk, and only hold 1/n
-   *      of the data into memory during the training. After going through the 1/n, we will
-   *      release the current cache, and load another 1/n into memory.
+   * of the data into memory during the training. After going through the 1/n, we will
+   * release the current cache, and load another 1/n into memory.
    * By default, DRAM is used.
    */
   final val dataCacheLevel = new Param[MemoryType](
@@ -172,6 +176,7 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
       (row: Row, index: Int) => row.get(index)
     }
   }
+
   // set default here to apply to both estimator and model
   setDefault(batchSize -> 1)
 }
@@ -190,25 +195,25 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
  * conversion and training.
  * More concrete examples are available in package [[com.intel.analytics.zoo.examples.nnframes]]
  *
- * @param model BigDL module to be optimized
+ * @param model     BigDL module to be optimized
  * @param criterion BigDL criterion
  * @tparam T data type of BigDL Model
  */
-class NNEstimator[T: ClassTag] private[zoo] (
-    @transient val model: Module[T],
-    val criterion : Criterion[T],
-    override val uid: String = Identifiable.randomUID("nnestimator")
-  )(implicit ev: TensorNumeric[T])
+class NNEstimator[T: ClassTag] private[zoo](
+                                             @transient val model: Module[T],
+                                             val criterion: Criterion[T],
+                                             override val uid: String = Identifiable.randomUID("nnestimator")
+                                           )(implicit ev: TensorNumeric[T])
   extends DLEstimatorBase[NNEstimator[T], NNModel[T]] with NNParams[T]
     with TrainingParams[T] {
 
   def setSamplePreprocessing[FF <: Any, LL <: Any](
-      value: Preprocessing[(FF, Option[LL]), Sample[T]]): this.type =
+                                                    value: Preprocessing[(FF, Option[LL]), Sample[T]]): this.type =
     set(samplePreprocessing, value.asInstanceOf[Preprocessing[Any, Sample[T]]])
 
   def setFeaturesCol(featuresColName: String): this.type = set(featuresCol, featuresColName)
 
-  def setLabelCol(labelColName : String) : this.type = set(labelCol, labelColName)
+  def setLabelCol(labelColName: String): this.type = set(labelCol, labelColName)
 
   def setPredictionCol(value: String): this.type = set(predictionCol, value)
 
@@ -225,6 +230,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
    */
   @deprecated("Please set with optimMethod directly", "0.4.0")
   def setLearningRate(value: Double): this.type = set(learningRate, value)
+
   setDefault(learningRate -> 1e-3)
 
   /**
@@ -232,12 +238,15 @@ class NNEstimator[T: ClassTag] private[zoo] (
    */
   @deprecated("Please set with optimMethod directly.", "0.4.0")
   def setLearningRateDecay(value: Double): this.type = set(learningRateDecay, value)
+
   setDefault(learningRateDecay -> 0.0)
 
   def setMaxEpoch(value: Int): this.type = set(maxEpoch, value)
+
   setDefault(maxEpoch -> 50)
 
   def setOptimMethod(value: OptimMethod[T]): this.type = set(optimMethod, value)
+
   set(optimMethod, new SGD[T])
 
   def setConstantGradientClipping(min: Float, max: Float): this.type = {
@@ -251,11 +260,13 @@ class NNEstimator[T: ClassTag] private[zoo] (
   def setCachingSample(value: Boolean): this.type = {
     set(cachingSample, value)
   }
+
   setDefault(cachingSample, true)
 
   def setDataCacheLevel(value: MemoryType): this.type = {
     set(dataCacheLevel, value)
   }
+
   setDefault(dataCacheLevel, DRAM)
 
   /**
@@ -307,17 +318,18 @@ class NNEstimator[T: ClassTag] private[zoo] (
   @transient protected var validationDF: DataFrame = _
   @transient protected var validationMethods: Array[ValidationMethod[T]] = _
   @transient protected var validationBatchSize: Int = 0
+
   /**
    * Set a validate evaluation during training. Default: not enabled.
    *
-   * @param trigger how often to evaluation validation set
+   * @param trigger      how often to evaluation validation set
    * @param validationDF validate data set
-   * @param vMethods a set of validation method [[ValidationMethod]]
-   * @param batchSize batch size for validation
+   * @param vMethods     a set of validation method [[ValidationMethod]]
+   * @param batchSize    batch size for validation
    * @return this estimator
    */
   def setValidation(trigger: Trigger, validationDF: DataFrame,
-                    vMethods : Array[ValidationMethod[T]], batchSize: Int)
+                    vMethods: Array[ValidationMethod[T]], batchSize: Int)
   : this.type = {
     this.validationTrigger = Some(trigger)
     this.validationDF = validationDF
@@ -344,9 +356,9 @@ class NNEstimator[T: ClassTag] private[zoo] (
   /**
    * Set check points during training. Not enabled by default.
    *
-   * @param path the directory to save
-   * @param trigger how often to save the check point
-   * @param isOverWrite: whether to overwrite existing snapshots in path. Default is True
+   * @param path        the directory to save
+   * @param trigger     how often to save the check point
+   * @param isOverWrite : whether to overwrite existing snapshots in path. Default is True
    * @return this estimator
    */
   def setCheckpoint(path: String, trigger: Trigger, isOverWrite: Boolean = true): this.type = {
@@ -357,7 +369,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
     this
   }
 
-  protected def validateParams(schema : StructType): Unit = {
+  protected def validateParams(schema: StructType): Unit = {
     if (isSet(endWhen) && isSet(maxEpoch)) {
       throw new IllegalArgumentException(s"endWhen and maxEpoch cannot be both set")
     }
@@ -367,7 +379,7 @@ class NNEstimator[T: ClassTag] private[zoo] (
     }
   }
 
-  override def transformSchema(schema : StructType): StructType = {
+  override def transformSchema(schema: StructType): StructType = {
     validateParams(schema)
     ev.getType() match {
       case TensorDouble =>
@@ -379,8 +391,8 @@ class NNEstimator[T: ClassTag] private[zoo] (
   }
 
   private def getDataSet(
-      dataFrame: DataFrame,
-      batchSize: Int): FeatureSet[MiniBatch[T]] = {
+                          dataFrame: DataFrame,
+                          batchSize: Int): FeatureSet[MiniBatch[T]] = {
 
     val sp = $(samplePreprocessing).asInstanceOf[Preprocessing[(Any, Option[Any]), Sample[T]]]
     val featureColIndex = dataFrame.schema.fieldIndex($(featuresCol))
@@ -477,6 +489,30 @@ class NNEstimator[T: ClassTag] private[zoo] (
     wrapBigDLModel(model)
   }
 
+  def internalEval(dataFrame: DataFrame): JList[EvaluatedResult] = {
+    val validationFeatureset = getDataSet(dataFrame, validationBatchSize)
+    val optimizer = new InternalDistriOptimizer(model, null, criterion)
+    if (validationTrigger.isDefined) {
+      optimizer.setValidation(
+        validationTrigger.get,
+        validationFeatureset,
+        validationMethods)
+      if (this.validationSummary.isDefined) {
+        optimizer.setValidationSummary(this.validationSummary.get)
+      }
+    }
+
+    val evalResult = optimizer.evaluate(validationFeatureset, validationMethods)
+    toEvaluatedResult(evalResult)
+  }
+
+  protected def toEvaluatedResult(evalResult: Map[ValidationMethod[T], ValidationResult]
+                                 ): JList[EvaluatedResult] = {
+    val evalResultArray = evalResult.map(result =>
+      EvaluatedResult(result._2.result()._1, result._2.result()._2, result._1.toString()))
+    evalResultArray.toList.asJava
+  }
+
   /**
    * sub classes can extend the method and return required model for different transform tasks
    */
@@ -522,13 +558,13 @@ object NNEstimator {
   /**
    * Construct a [[NNEstimator]] with default Preprocessing: A SeqToTensor
    *
-   * @param model BigDL module to be optimized
-   * @param criterion  BigDL criterion method
+   * @param model     BigDL module to be optimized
+   * @param criterion BigDL criterion method
    */
   def apply[T: ClassTag](
-      model: Module[T],
-      criterion: Criterion[T]
-    )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
+                          model: Module[T],
+                          criterion: Criterion[T]
+                        )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
     new NNEstimator(model, criterion)
       .setSamplePreprocessing(FeatureLabelPreprocessing(SeqToTensor(), SeqToTensor()))
   }
@@ -539,22 +575,22 @@ object NNEstimator {
    * Float, Double, Int, Array[Float], Array[Double], Array[Int] and MLlib Vector. The feature and
    * label data are converted to Tensors with the specified sizes before sending to the model.
    *
-   * @param model BigDL module to be optimized
-   * @param criterion  BigDL criterion method
+   * @param model       BigDL module to be optimized
+   * @param criterion   BigDL criterion method
    * @param featureSize The size (Tensor dimensions) of the feature data. e.g. an image may be with
    *                    width * height = 28 * 28, featureSize = Array(28, 28).
-   * @param labelSize The size (Tensor dimensions) of the label data.
+   * @param labelSize   The size (Tensor dimensions) of the label data.
    */
   def apply[T: ClassTag](
-      model: Module[T],
-      criterion: Criterion[T],
-      featureSize : Array[Int],
-      labelSize : Array[Int]
-    )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
+                          model: Module[T],
+                          criterion: Criterion[T],
+                          featureSize: Array[Int],
+                          labelSize: Array[Int]
+                        )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
     new NNEstimator(model, criterion)
       .setSamplePreprocessing(FeatureLabelPreprocessing(
         SeqToTensor(featureSize), SeqToTensor(labelSize))
-    )
+      )
   }
 
   /**
@@ -566,40 +602,40 @@ object NNEstimator {
    * This API is used for multi-input model, where user need to specify the tensor sizes for
    * each of the model input.
    *
-   * @param model BigDL module to be optimized
-   * @param criterion  BigDL criterion method
+   * @param model       BigDL module to be optimized
+   * @param criterion   BigDL criterion method
    * @param featureSize The sizes (Tensor dimensions) of the feature data. e.g. an image may be with
    *                    width * height = 28 * 28, featureSize = Array(28, 28).
-   * @param labelSize The size (Tensor dimensions) of the label data.
+   * @param labelSize   The size (Tensor dimensions) of the label data.
    */
   def apply[T: ClassTag](
-      model: Module[T],
-      criterion: Criterion[T],
-      featureSize : Array[Array[Int]],
-      labelSize : Array[Int]
-    )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
+                          model: Module[T],
+                          criterion: Criterion[T],
+                          featureSize: Array[Array[Int]],
+                          labelSize: Array[Int]
+                        )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
     new NNEstimator(model, criterion)
       .setSamplePreprocessing(FeatureLabelPreprocessing(
         SeqToMultipleTensors(featureSize),
         SeqToTensor(labelSize)
       )
-    )
+      )
   }
 
   /**
    * Construct a [[NNEstimator]] with a feature Preprocessing and label Preprocessing.
    *
-   * @param model BigDL module to be optimized
-   * @param criterion BigDL criterion method
+   * @param model                BigDL module to be optimized
+   * @param criterion            BigDL criterion method
    * @param featurePreprocessing Preprocessing[Any, Tensor[T] ]
-   * @param labelPreprocessing Preprocessing[Any, Tensor[T] ]
+   * @param labelPreprocessing   Preprocessing[Any, Tensor[T] ]
    */
   def apply[F, L, T: ClassTag](
-      model: Module[T],
-      criterion: Criterion[T],
-      featurePreprocessing: Preprocessing[F, Tensor[T]],
-      labelPreprocessing: Preprocessing[L, Tensor[T]]
-    )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
+                                model: Module[T],
+                                criterion: Criterion[T],
+                                featurePreprocessing: Preprocessing[F, Tensor[T]],
+                                labelPreprocessing: Preprocessing[L, Tensor[T]]
+                              )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
     new NNEstimator(model, criterion)
       .setSamplePreprocessing(FeatureLabelPreprocessing(featurePreprocessing, labelPreprocessing))
   }
@@ -608,16 +644,16 @@ object NNEstimator {
    * Construct a [[NNEstimator]] with a featurePreprocessing only. The constructor is useful
    * when both feature and label are derived from the same column of the original DataFrame.
    *
-   * @param model BigDL module to be optimized
-   * @param criterion  BigDL criterion method
+   * @param model                BigDL module to be optimized
+   * @param criterion            BigDL criterion method
    * @param featurePreprocessing A [[Preprocessing]] that transforms the feature data to a
-   *        Sample[T].
+   *                             Sample[T].
    */
   def apply[F, T: ClassTag](
-      model: Module[T],
-      criterion: Criterion[T],
-      featurePreprocessing: Preprocessing[F, Sample[T]]
-    )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
+                             model: Module[T],
+                             criterion: Criterion[T],
+                             featurePreprocessing: Preprocessing[F, Sample[T]]
+                           )(implicit ev: TensorNumeric[T]): NNEstimator[T] = {
     new NNEstimator(model, criterion)
       .setSamplePreprocessing(TupleToFeatureAdapter(featurePreprocessing))
   }
@@ -638,9 +674,9 @@ object NNEstimator {
  *
  * @param model trained BigDL models to use in prediction.
  */
-class NNModel[T: ClassTag] private[zoo] (
-    @transient val model: Module[T],
-    override val uid: String = "DLModel")(implicit ev: TensorNumeric[T])
+class NNModel[T: ClassTag] private[zoo](
+                                         @transient val model: Module[T],
+                                         override val uid: String = "DLModel")(implicit ev: TensorNumeric[T])
   extends DLTransformerBase[NNModel[T]] with NNParams[T]
     with HasBatchSize with MLWritable {
 
@@ -660,7 +696,8 @@ class NNModel[T: ClassTag] private[zoo] (
 
   /**
    * set Preprocessing.
-   * @param value: A [[Preprocessing]] that transforms the feature data to a Sample[T].
+   *
+   * @param value : A [[Preprocessing]] that transforms the feature data to a Sample[T].
    */
   def setSamplePreprocessing[FF <: Any](value: Preprocessing[FF, Sample[T]]): this.type =
     set(samplePreprocessing, value.asInstanceOf[Preprocessing[Any, Sample[T]]])
@@ -728,7 +765,7 @@ class NNModel[T: ClassTag] private[zoo] (
     output.clone().storage().array()
   }
 
-  override def transformSchema(schema : StructType): StructType = {
+  override def transformSchema(schema: StructType): StructType = {
     ev.getType() match {
       case TensorDouble =>
         SchemaUtils.appendColumn(schema, $(predictionCol), ArrayType(DoubleType, false))
@@ -755,8 +792,8 @@ object NNModel extends MLReadable[NNModel[_]] {
    * @param model BigDL module to be optimized
    */
   def apply[T: ClassTag](
-      model: Module[T]
-    )(implicit ev: TensorNumeric[T]): NNModel[T] = {
+                          model: Module[T]
+                        )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model)
       .setSamplePreprocessing(SeqToTensor() -> TensorToSample())
   }
@@ -764,14 +801,14 @@ object NNModel extends MLReadable[NNModel[_]] {
   /**
    * Construct a [[NNModel]] with a feature size.
    *
-   * @param model BigDL module to be optimized
+   * @param model       BigDL module to be optimized
    * @param featureSize The size (Tensor dimensions) of the feature data. e.g. an image may be with
    *                    width * height = 28 * 28, featureSize = Array(28, 28).
    */
   def apply[T: ClassTag](
-      model: Module[T],
-      featureSize: Array[Int]
-    )(implicit ev: TensorNumeric[T]): NNModel[T] = {
+                          model: Module[T],
+                          featureSize: Array[Int]
+                        )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model)
       .setSamplePreprocessing(SeqToTensor(featureSize) -> TensorToSample())
   }
@@ -786,13 +823,13 @@ object NNModel extends MLReadable[NNModel[_]] {
    * This API is used for multi-input model, where user need to specify the tensor sizes for
    * each of the model input.
    *
-   * @param model model to be used, which should be a multi-input model.
+   * @param model       model to be used, which should be a multi-input model.
    * @param featureSize The sizes (Tensor dimensions) of the feature data.
    */
   def apply[T: ClassTag](
-      model: Module[T],
-      featureSize : Array[Array[Int]]
-    )(implicit ev: TensorNumeric[T]): NNModel[T] = {
+                          model: Module[T],
+                          featureSize: Array[Array[Int]]
+                        )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model)
       .setSamplePreprocessing(SeqToMultipleTensors(featureSize) -> MultiTensorsToSample())
   }
@@ -800,17 +837,18 @@ object NNModel extends MLReadable[NNModel[_]] {
   /**
    * Construct a [[NNModel]] with a feature Preprocessing.
    *
-   * @param model BigDL module to be optimized
+   * @param model                BigDL module to be optimized
    * @param featurePreprocessing Preprocessing[F, Tensor[T] ].
    */
   def apply[F, T: ClassTag](
-      model: Module[T],
-      featurePreprocessing: Preprocessing[F, Tensor[T]]
-    )(implicit ev: TensorNumeric[T]): NNModel[T] = {
+                             model: Module[T],
+                             featurePreprocessing: Preprocessing[F, Tensor[T]]
+                           )(implicit ev: TensorNumeric[T]): NNModel[T] = {
     new NNModel(model).setSamplePreprocessing(featurePreprocessing -> TensorToSample())
   }
 
   import scala.language.existentials
+
   implicit val format: DefaultFormats.type = DefaultFormats
 
   private[nnframes] class NNModelReader() extends MLReader[NNModel[_]] {
@@ -857,7 +895,7 @@ object NNModel extends MLReadable[NNModel[_]] {
   }
 
   class NNModelWriter[@specialized(Float, Double) T: ClassTag](
-    instance: NNModel[T])(implicit ev: TensorNumeric[T]) extends MLWriter {
+                                                                instance: NNModel[T])(implicit ev: TensorNumeric[T]) extends MLWriter {
     override protected def saveImpl(path: String): Unit = {
       NNModel.saveImpl[T](instance, instance.model,
         path, sc, shouldOverwrite)
@@ -869,17 +907,17 @@ object NNModel extends MLReadable[NNModel[_]] {
    * For compatibility with spark ml pipeline, TensorDataType is stored separately in extraMetadata.
    *
    * @tparam T TensorDataType
-   * @param instance  NNModel
-   * @param path  Path to which to save the NNModel.
-   * @param extraMetadata  Metadata such as featureSize.
+   * @param instance      NNModel
+   * @param path          Path to which to save the NNModel.
+   * @param extraMetadata Metadata such as featureSize.
    */
   private[nnframes] def saveImpl[@specialized(Float, Double) T: ClassTag](
-      instance: NNModel[T],
-      module: Module[T],
-      path: String,
-      sc: SparkContext,
-      isOverWrite: Boolean = false,
-      extraMetadata: Option[JObject] = None)(implicit ev: TensorNumeric[T]): Unit = {
+                                                                           instance: NNModel[T],
+                                                                           module: Module[T],
+                                                                           path: String,
+                                                                           sc: SparkContext,
+                                                                           isOverWrite: Boolean = false,
+                                                                           extraMetadata: Option[JObject] = None)(implicit ev: TensorNumeric[T]): Unit = {
 
     val tensorDataType = ev.getType() match {
       case TensorDouble => "TensorDouble"

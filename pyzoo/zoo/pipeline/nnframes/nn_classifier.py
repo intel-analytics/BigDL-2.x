@@ -25,7 +25,6 @@ from bigdl.util.common import *
 from zoo.feature.common import *
 from zoo import init_nncontext
 
-
 if sys.version >= '3':
     long = int
     unicode = str
@@ -384,6 +383,24 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         """
         return self.validation_config
 
+    def setNNBatchSize(self, batch_size):
+        pythonBigDL_method_name = "setNNBatchSize"
+        callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
+                           batch_size)
+        return self
+
+    def setNNFeaturesCol(self, feature_cols):
+        pythonBigDL_method_name = "setNNFeaturesCol"
+        callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
+                           feature_cols)
+        return self
+
+    def setNNLabelCol(self, label_cols):
+        pythonBigDL_method_name = "setNNLabelCol"
+        callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
+                           label_cols)
+        return self
+
     def clearGradientClipping(self):
         """
         Clear clipping params, in this case, clipping will not be applied.
@@ -472,6 +489,12 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         Sets the value of :py:attr:`labelCol`.
         """
         return self._set(labelCol=value)
+
+    def eval(self, val_data):
+        pythonBigDL_method_name = "internalEval"
+        result = callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
+                             val_data)
+        return result
 
 
 class NNModel(JavaTransformer, MLWritable, MLReadable, HasFeaturesCol, HasPredictionCol,
