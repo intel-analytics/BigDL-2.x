@@ -18,6 +18,4 @@ sudo docker build \
     --build-arg JDK_VERSION=8u192 \
     --build-arg JDK_URL=http://10.239.45.10:8081/repository/raw/jdk/jdk-8u192-linux-x64.tar.gz \
     --build-arg no_proxy=10.239.45.10 \
-    -t analytics-zoo-ppml-trusted-cluster-serving-scala-graphene:0.10-SNAPSHOT -f ./Dockerfile .
-
-sudo docker tag analytics-zoo-ppml-trusted-cluster-serving-scala-graphene:0.10-SNAPSHOT 10.239.45.10/arda/analytics-zoo-ppml-trusted-cluster-serving-scala-graphene:0.10-SNAPSHOT
+    -t intelanalytics/analytics-zoo-ppml-trusted-cluster-serving-scala-graphene:0.10-SNAPSHOT -f ./Dockerfile .
