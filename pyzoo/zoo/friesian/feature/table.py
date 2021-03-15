@@ -17,7 +17,7 @@
 from pyspark.sql.functions import col, udf, array, broadcast, log
 from pyspark.sql import DataFrame
 from zoo.orca import OrcaContext
-from zoo.friesian.feature.utils import assign_category_id, fill_na
+from zoo.friesian.feature.utils import assign_string_idx, fill_na
 
 
 class Table:
@@ -42,11 +42,11 @@ class Table:
     def fillna(self, value, columns):
         return Table(fill_na(self.df, value, columns))
 
-    def clip(self, columns, value=0):
+    def clip(self, columns, min=0):
         df = self.df
         if not isinstance(columns, list):
             columns = [columns]
-        clip_udf = udf(lambda data: max(value, data))
+        clip_udf = udf(lambda data: max(min, data))
         for col_name in columns:
             df = df.withColumn(col_name, clip_udf(col(col_name)))
         return Table(df)
@@ -70,8 +70,13 @@ class Table:
     def drop(self, *cols):
         return Table(self.df.drop(*cols))
 
-    def rename(self, existing, new):
-        return Table(self.df.withColumnRenamed(existing, new))
+    def rename(self, columns):
+        assert isinstance(columns, dict), "columns should be a dictionary of {'old_name1': " \
+                                          "'new_name1', 'old_name2': 'new_name2'}"
+        new_df = self.df
+        for old_name, new_name in columns.items():
+            new_df = new_df.withColumnRenamed(old_name, new_name)
+        return Table(new_df)
 
     def show(self, n=20, truncate=True, vertical=False):
         self.df.show(n, truncate, vertical)
@@ -96,7 +101,7 @@ class FeatureTable(Table):
                 .drop(col_name).withColumnRenamed("id", col_name)
         return FeatureTable(data_df)
 
-    def categorify(self, columns, freq_limit, out_path=None, write_mode="overwrite"):
+    def gen_string_idx(self, columns, freq_limit):
         data_df = self.df
         frequency_dict = {}
         default_limit = None
@@ -112,7 +117,7 @@ class FeatureTable(Table):
         df_count_filtered_list = []
 
         for col_n in columns:
-            df_col = data_df.filter(col_n + ' is not null').groupBy(col_n).count()
+            df_col = data_df.select(col_n).filter(col_n + ' is not null').groupBy(col_n).count()
             if col_n in frequency_dict:
                 df_col = df_col.filter(col('count') >= int(frequency_dict[col_n]))
             elif default_limit:
@@ -121,13 +126,9 @@ class FeatureTable(Table):
             df_count_filtered_list.append(df_col)
 
         spark = OrcaContext.get_spark_session()
-        df_id_list = assign_category_id(df_count_filtered_list, columns)
-        df_id_list = list(map(lambda x: StringIndex(DataFrame(x, spark)), df_id_list))
-        if out_path is not None:
-            for df in df_id_list:
-                df.write_parquet(out_path, write_mode)
-        else:
-            return df_id_list
+        df_id_list = assign_string_idx(df_count_filtered_list)
+        string_idx_list = list(map(lambda x: StringIndex(DataFrame(x, spark)), df_id_list))
+        return string_idx_list
 
 
 # Assume this table only has two columns: col_name and id

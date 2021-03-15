@@ -43,7 +43,7 @@ class FriesianSpec extends ZooSpecHelper {
     val df = sqlContext.read.parquet(path)
     val friesian = PythonFriesian.ofFloat()
     val cols = Array("col_1", "col_2")
-    val dfFilled = friesian.fillNA(df, 0, cols.toList.asJava)
+    val dfFilled = friesian.fillNa(df, 0, cols.toList.asJava)
     assert(dfFilled.filter(dfFilled("col_1").isNull).count == 0)
     assert(dfFilled.filter(dfFilled("col_2").isNull).count == 0)
   }
@@ -53,7 +53,7 @@ class FriesianSpec extends ZooSpecHelper {
     val df = sqlContext.read.parquet(path)
     val friesian = PythonFriesian.ofFloat()
     val cols = Array("col_3", "col_4")
-    val dfFilled = friesian.fillNA(df, "bb", cols.toList.asJava)
+    val dfFilled = friesian.fillNa(df, "bb", cols.toList.asJava)
     assert(dfFilled.filter(dfFilled("col_3").isNull).count == 0)
     assert(dfFilled.filter(dfFilled("col_4").isNull).count == 0)
   }
@@ -64,7 +64,7 @@ class FriesianSpec extends ZooSpecHelper {
     val friesian = PythonFriesian.ofFloat()
     val cols = Array("col_1", "col_4")
     assertThrows[IllegalArgumentException] {
-      friesian.fillNA(df, "bb", cols.toList.asJava)
+      friesian.fillNa(df, "bb", cols.toList.asJava)
     }
   }
 }

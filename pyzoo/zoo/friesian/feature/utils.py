@@ -17,9 +17,9 @@
 from zoo.common.utils import callZooFunc
 
 
-def assign_category_id(df_list, columns):
-    return callZooFunc("float", "categoryAssignId", df_list, columns)
+def assign_string_idx(df_list):
+    return callZooFunc("float", "assignStringIdx", df_list)
 
 
 def fill_na(df, fill_val, columns):
-    return callZooFunc("float", "fillNA", df, fill_val, columns)
+    return callZooFunc("float", "fillNa", df, fill_val, columns)

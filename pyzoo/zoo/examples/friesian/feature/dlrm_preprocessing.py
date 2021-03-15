@@ -27,6 +27,19 @@ LABEL_COL = 0
 INT_COLS = ["_c{}".format(i) for i in list(range(1, 14))]
 CAT_COLS = ["_c{}".format(i) for i in list(range(14, 40))]
 
+conf = {"spark.network.timeout": "10000000",
+        "spark.sql.broadcastTimeout": "7200",
+        "spark.sql.shuffle.partitions": "2000",
+        "spark.locality.wait": "0s",
+        "spark.sql.hive.filesourcePartitionFileCacheSize": "4096000000",
+        "spark.sql.crossJoin.enabled": "true",
+        "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
+        "spark.kryo.unsafe": "true",
+        "spark.kryoserializer.buffer.max": "1024m",
+        "spark.task.cpus": "1",
+        "spark.executor.heartbeatInterval": "200s",
+        "spark.driver.maxResultSize": "40G"}
+
 
 def _parse_args():
     parser = ArgumentParser()
@@ -34,8 +47,6 @@ def _parse_args():
     parser.add_argument('--days', required=True)
     parser.add_argument('--input_folder', required=True)
     parser.add_argument('--output_folder')
-    parser.add_argument('--model_size_file')
-    parser.add_argument('--model_folder', required=True)
     parser.add_argument(
         '--write_mode',
         choices=['overwrite', 'errorifexists'],
@@ -58,16 +69,16 @@ if __name__ == '__main__':
 
     time_start = time()
     paths = [os.path.join(args.input_folder, 'day_%d.parquet' % i) for i in args.day_range]
-    df = FeatureTable.read_parquet(paths)
-    df_id_list = df.categorify(CAT_COLS, freq_limit=15)
+    tbl = FeatureTable.read_parquet(paths)
+    idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
 
-    df_all_data = FeatureTable.read_parquet(paths[:-1])
-    df_all_data = df_all_data.encode_string(CAT_COLS, df_id_list)\
+    tbl_all_data = FeatureTable.read_parquet(paths[:-1])
+    tbl_all_data = tbl_all_data.encode_string(CAT_COLS, idx_list)\
         .fillna(0, INT_COLS + CAT_COLS).clip(INT_COLS).log(INT_COLS)
-    df_all_data = df_all_data.merge(INT_COLS, "X_int").merge(CAT_COLS, "X_cat")
-    df_all_data.compute()
-    time_end = time()
-    print("Train data loading and preprocessing time: ", time_end - time_start)
-    df_all_data.df.show(5)
-    print("Finished")
-    stop_orca_context()
+    tbl_all_data = tbl_all_data.merge(INT_COLS, "X_int").merge(CAT_COLS, "X_cat")
+    tbl_all_data.compute()
+    # time_end = time()
+    # print("Train data loading and preprocessing time: ", time_end - time_start)
+    # tbl_all_data.df.show(5)
+    # print("Finished")
+    # stop_orca_context()
