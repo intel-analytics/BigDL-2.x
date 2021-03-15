@@ -2,12 +2,12 @@
 
 ---
 
-You can run Analytics Zoo program on [Databricks](https://databricks.com/) Spark cluster.
+You can run Analytics Zoo program on the [Databricks](https://databricks.com/) cluster as follows.
 
-### **1. Create a Databricks Spark cluster**
+### **1. Create a Databricks Cluster**
 
 - Create either [AWS Databricks](https://docs.databricks.com/getting-started/try-databricks.html) workspace or [Azure Databricks](https://docs.microsoft.com/en-us/azure/azure-databricks/) workspace. 
-- Create a Databricks Spark [clusters](https://docs.databricks.com/clusters/create.html) using the UI. Choose Databricks runtime version. This guide is tested on Runtime 5.5 LTS (includes Apache Spark 2.4.3, Scala 2.11).
+- Create a Databricks [clusters](https://docs.databricks.com/clusters/create.html) using the UI. Choose Databricks runtime version. This guide is tested on Runtime 5.5 LTS (includes Apache Spark 2.4.3, Scala 2.11).
 
 ### **2. Installing Analytics Zoo libraries**
 
@@ -51,7 +51,7 @@ spark.driver.cores 1
 
 ### **4. Running Analytics Zoo on Databricks**
 
-Open a new notebook. First call `init_orca_context` at the beginning of your code. This will create a SparkContext with optimized performance configuration and initialize the BigDL engine.
+Open a new notebook, and call `init_orca_context` at the beginning of your code (with `cluster_mode` set to "spark-submit"). This will create a SparkContext with optimized performance configuration and initialize the BigDL engine.
 
 ```python
 from zoo.orca import init_orca_context, stop_orca_context
