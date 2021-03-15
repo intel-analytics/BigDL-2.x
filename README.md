@@ -65,7 +65,6 @@ item = keras.layers.Input(shape=[1])
 feat = keras.layers.concatenate([user, item], axis=1)  
 predictions = keras.layers.Dense(2, activation='softmax')(feat)  
 model = keras.models.Model(inputs=[user, item], outputs=predictions)  
-
 model.compile(optimizer='rmsprop',  
               loss='sparse_categorical_crossentropy',  
               metrics=['accuracy'])
@@ -78,7 +77,7 @@ est.fit(data=df,
         label_cols=['label'])
 ```
 
-See [TensorFlow](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-tf-quickstart.html) and [PyTorch](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-pytorch-quickstart.html) quick start for more details. For more information, please refer to the [document website](https://analytics-zoo.readthedocs.io/).
+See [TensorFlow](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-tf-quickstart.html) and [PyTorch](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-pytorch-quickstart.html) quickstart for more details. For more information, please refer to the [document website](https://analytics-zoo.readthedocs.io/).
 
 ## Getting Started with RayOnSpark
 
