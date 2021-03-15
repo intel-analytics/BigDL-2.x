@@ -98,9 +98,6 @@ ENV FLINK_TASK_MANAGER_IP		127.0.0.1
 ENV FLINK_TASK_MANAGER_DATA_PORT	6124
 ENV FLINK_TASK_MANAGER_RPC_PORT		6125
 ENV FLINK_TASK_MANAGER_TASKSLOTS_NUM	1
-ENV FLINK_SECURE_PASSWORD		1234qwer
-ENV HTTPS_SECURE_PASSWORD		1234qwer
-ENV REDIS_SECURE_PASSWORD		1234qwer
 ENV CORE_NUM                            2
 
 RUN mkdir -p /graphene && \
@@ -110,8 +107,10 @@ RUN mkdir -p /graphene && \
     mkdir -p /graphene/Pal/src && \
     mkdir -p /ppml/trusted-cluster-serving/redis && \
     mkdir -p /ppml/trusted-cluster-serving/redis/work/keys && \
+    mkdir -p /ppml/trusted-cluster-serving/redis/work/passowrd && \
     mkdir -p /ppml/trusted-cluster-serving/java/work && \
     mkdir -p /ppml/trusted-cluster-serving/java/work/keys && \
+    mkdir -p /ppml/trusted-cluster-serving/java/work/passowrd && \
     mkdir -p /ppml/trusted-cluster-serving/java/work/data && \
     mkdir -p /ppml/trusted-cluster-serving/java/work/models
 

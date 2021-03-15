@@ -2,7 +2,7 @@
 set -x
 
 core_num=$CORE_NUM
-secure_passowrd=$REDIS_SECURE_PASSWORD
+secure_passowrd=`openssl rsautl -inkey /ppml/trusted-cluster-serving/redis/work/passowrd/key.txt -decrypt </ppml/trusted-cluster-serving/redis/work/passowrd/output.bin`
 redis_host=$REDIS_HOST
 
 sed -i "s#core_number:#core_number: ${core_num}#" config.yaml

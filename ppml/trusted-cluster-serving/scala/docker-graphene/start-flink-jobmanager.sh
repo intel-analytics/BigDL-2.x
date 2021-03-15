@@ -6,10 +6,9 @@ core_num=$CORE_NUM
 job_manager_host=$FLINK_JOB_MANAGER_IP
 job_manager_rest_port=$FLINK_JOB_MANAGER_REST_PORT
 job_manager_rpc_port=$FLINK_JOB_MANAGER_RPC_PORT
-secure_passowrd=$FLINK_SECURE_PASSWORD
+secure_passowrd=`openssl rsautl -inkey /ppml/trusted-cluster-serving/java/work/passowrd/key.txt -decrypt </ppml/trusted-cluster-serving/java/work/passowrd/output.bin`
 flink_home=$FLINK_HOME
 flink_version=$FLINK_VERSION
-
 
 echo "### Launching Flink Jobmanager ###"
 

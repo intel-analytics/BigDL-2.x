@@ -10,7 +10,7 @@ task_manager_host=$FLINK_TASK_MANAGER_IP
 task_manager_data_port=$FLINK_TASK_MANAGER_DATA_PORT
 task_manager_rpc_port=$FLINK_TASK_MANAGER_RPC_PORT
 task_manager_taskslots_num=$FLINK_TASK_MANAGER_TASKSLOTS_NUM
-secure_passowrd=$FLINK_SECURE_PASSWORD
+secure_passowrd=`openssl rsautl -inkey /ppml/trusted-cluster-serving/java/work/passowrd/key.txt -decrypt </ppml/trusted-cluster-serving/java/work/passowrd/output.bin`
 flink_home=$FLINK_HOME
 flink_version=$FLINK_VERSION
 
