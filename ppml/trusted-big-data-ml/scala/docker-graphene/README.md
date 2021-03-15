@@ -119,10 +119,61 @@ The result shows like: <br>
 >   ############# model saved[P1182:T2:java] ---- end time: 1985297 ms return from shim_write(...) = 0x19 <br>
 
 ##### Start the container to run TPC-H in ppml.
-Create the container: <br>
+Download SBT: <br>
+```bash
+git clone https://github.com/sbt/sbt/releases/download/v1.4.8/sbt-1.4.8.tgz
+tar -zxvf sbt-1.4.8.tgz
+git clone https://archive.apache.org/dist/spark/spark-2.3.4/spark-2.3.4.tgz
+tar -zxvf spark-2.3.4.tgz
+git clone https://downloads.lightbend.com/scala/2.11.12/scala-2.11.12.tgz
+tar -zxvf scala-2.11.12.tgz
+export SBT_HOME=the_dir_path_of_your_unzipped_sbt-1.4.8
+export SPARK_HOME=the_dir_path_of_your_unzipped_spark-2.3.4
+export SCALA_HOME=the_dir_path_of_your_unzipped_scala-2.11.12
+export PATH=$SBT_HOME:$SPARK_HOME/bin:$PATH:$SCALA_HOME
+cd sbt
+vim ./sbt
+```
+Please add these into this sbt file and save it:
+```bash
+SBT_OPTS="-Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=256M"
+java $SBT_OPTS -jar $SBT_HOME/bin/sbt-launch.jar "$@"
+```
+If there is some mistake, try to change your $SBT_HOME with the absulate path
+
+Build SBT: <br>
+```bash
+chmod u+x ./sbt
+./sbt sbtVersion
+```
+Run `./sbt sbtVersion` the first time, the machine would take some time to download some dependecies.
+
+Download and build TPC-H: <br>
 ```bash
 git clone https://github.com/qiuxin2012/tpch-spark.git
+cd tpch-spark/dbgen
+make
+./dbgen -h
+./dbgen
+```
+The result shows like: <br>
+>   TPC-H Population Generator (Version 2.17.0)
+>   Copyright Transaction Processing Performance Council 1994 - 2010
 
+Build the TPC-H with 10G: <br>
+```bash
+./dbgen -s 10
+```
+
+Package TPC-H with SBT: <br>
+```bash
+cd ..
+sbt package
+```
+Check if we have `spark-tpc-h-queries_2.11-1.0.jar ` under `/tpch-spark/target/scala-2.11`, if have, we package successfully.
+
+Create the container: <br>
+```bash
 export DATA_PATH=the_dir_path_of_your_prepared_data
 export KEYS_PATH=the_dir_path_of_your_prepared_keys
 export LOCAL_IP=your_local_ip_of_the_sgx_server
@@ -143,58 +194,21 @@ sudo docker run -itd \
     intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:latest \
     bash
 ```
-Build the environment of TPC-H with sbt: <br>
+Copy TPC-H to container: <br>
 ```bash
 docker cp tpch-spark/ spark-local:/ppml/trusted-big-data-ml
-docker cp scala-2.11.12.tgz spark-local:/ppml/trusted-big-data-ml/work
-docker cp spark-2.3.4-bin-hadoop2.7.tgz spark-local:/ppml/trusted-big-data-ml/work
-docker cp sbt-1.4.8.tgz spark-local:/ppml/trusted-big-data-ml/work
 sudo docker exec -it spark-local bash
-cd ppml/trusted-big-data-ml/work
-tar -zxvf spark-2.3.4-bin-hadoop2.7.tgz
-tar -zxvf scala-2.11.12.tgz
-tar -zxvf sbt-1.4.8.tgz
-cd ..
-export SPARK_HOME=/ppml/trusted-big-data-ml/work/spark-2.3.4
-export SCALA_HOME=/ppml/trusted-big-data-ml/work/scala-2.11.12
-export SBT_HOME=/ppml/trusted-big-data-ml/work/sbt
-export PATH=$SBT_HOME:$SPARK_HOME/bin:$PATH:$SCALA_HOME
-
-cd tpch-spark/dbgen
-make
-./dbgen -h
-./dbgen
+cd ppml/trusted-big-data-ml/tpch-spark
+export PATH=$SPARK_HOME/bin:$PATH
+spark-submit --class "main.scala.TpchQuery" --master local[*] target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar dbgen
 ```
 The result shows like this: <br>
->   TPC-H Population Generator (Version 2.17.0)
->   Copyright Transaction Processing Performance Council 1994 - 2010
-
-Establish the dataset using TPC-H:<br>
-```bash
-./dbgen -s 10
-```
-Build the SBT environment for TPC-H:<br>
-```bash
-add cd ..
-cd ../..
-cd work/sbt
-vim ./sbt
-```
-*Add these to ./sbt file:* <br>
-```bash
-SBT_OPTS="-Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=256M"
-java $SBT_OPTS -jar /ppml/trusted-big-data-ml/work/sbt/bin/sbt-launch.jar "$@"
-```
-
-Then first run sbt, download the files: <br>
-```bash
-chmod u+x ./sbt
-./sbt sbtVersion
-```
+>   INFO Executor: Finished task 6.0 in stage 286.0 (TID 25381). 7928 bytes result sent to driver
+>   INFO TaskSetManager: Finished task 6.0 in stage 286.0 (TID 25381) in 13 ms on localhost (executor driver) (7/7)
+>   INFO TaskSchedulerImpl: Removed TaskSet 286.0, whose tasks have all completed, from pool
+>   INFO DAGScheduler: ResultStage 286 (save at TpchQuery.scala:42) finished in 0.040 s
+>   INFO DAGScheduler: Job 37 finished: save at TpchQuery.scala:42, took 0.226678 s
+>   INFO FileFormatWriter: Write Job badb70fd-2b10-47ef-b58a-f1bfc3e026ca committed.
+>   INFO FileFormatWriter: Finished processing stats for write job badb70fd-2b10-47ef-b58a-f1bfc3e026ca.
 
 #### In spark standalone cluster mode
-
-
-
-#### Example two: BigDL Lenet
-#### Example three: TPC-H
