@@ -35,7 +35,7 @@ train_data, test_data = df.randomSplit([0.8, 0.2], 100)
 ### **3. Put Spark DataFrame in distributed training** 
 
 ```python
-est = Estimator.from_keras(model_creator=model_creator, workers_per_node=1)
+est = Estimator.from_keras(model_creator=model_creator) # the model accept two inputs and one label
 
 stats = est.fit(train_data,
                 epochs=epochs,
