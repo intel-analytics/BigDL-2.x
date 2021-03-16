@@ -110,13 +110,13 @@ echo "#start orca ray example tests"
 
 echo "#6 Start rl_pong example"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/rl_pong/rl_pong.py --iterations 10 --cluster_mode yarn
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/rl_pong/rl_pong.py --iterations 10 --cluster_mode yarn
 now=$(date "+%s")
 time6=$((now-start))
 
 echo "#7 Start multiagent example"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/rllib/multiagent_two_trainers.py --iterations 5 --cluster_mode yarn
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/rllib/multiagent_two_trainers.py --iterations 5 --cluster_mode yarn
 now=$(date "+%s")
 time7=$((now-start))
 
@@ -125,13 +125,13 @@ if [ ! -f MNIST_data.zip ]; then
   wget $FTP_URI/analytics-zoo-data/MNIST_data.zip
 fi
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/parameter_server/async_parameter_server.py --iterations 10 --num_workers 2 --cluster_mode yarn
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/parameter_server/async_parameter_server.py --iterations 10 --num_workers 2 --cluster_mode yarn
 now=$(date "+%s")
 time8=$((now-start))
 
 echo "#9 Start sync_parameter example"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/parameter_server/sync_parameter_server.py --iterations 10 --num_workers 2 --cluster_mode yarn
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/parameter_server/sync_parameter_server.py --iterations 10 --num_workers 2 --cluster_mode yarn
 now=$(date "+%s")
 time9=$((now-start))
 clear_up
