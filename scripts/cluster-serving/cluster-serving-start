@@ -57,7 +57,7 @@ if [ -z "${REDIS_HOME}" ]; then
     echo "Note that you need to set it otherwise Cluster Serving would not start or stop Redis for you."
 else
     echo "Trying to start Redis server with default parameter"
-    ${REDIS_HOME}/src/redis-server &
+    ${REDIS_HOME}/src/redis-server ${REDIS_HOME}/redis.conf &
     sleep 1
 
     # sleep for 1 sec to ensure server is ready and client could connect
