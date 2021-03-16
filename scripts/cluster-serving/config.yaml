@@ -5,6 +5,8 @@ model:
   path: /path/to/model
   # name, default is serving_stream, you need to specify if running multiple servings
   name:
+  # whether the model support bath inference; default is true
+  batch_inference:
 data:
   # default, localhost:6379
   src:

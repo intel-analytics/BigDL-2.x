@@ -72,6 +72,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
   var weightPath: String = null
   var defPath: String = null
   var modelDir: String = null
+  var batchInference: Boolean = true
   /**
    * secure related
    */
@@ -101,8 +102,8 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     }
     jobName = getYaml(modelConfig,
       "name", Conventions.SERVING_STREAM_DEFAULT_NAME).asInstanceOf[String]
-
-
+    batchInference = getYaml(modelConfig,
+      "batch_inference", true).asInstanceOf[Boolean]
 
     /**
      * Tensorflow usually use NHWC input
@@ -139,7 +140,10 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     resize = getYaml(dataConfig, "resize", true).asInstanceOf[Boolean]
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
-    thrdPerModel = getYaml(paramsConfig, "core_number", 4).asInstanceOf[Int]
+    thrdPerModel = getYaml(paramsConfig, "core_number",
+      if(batchInference) 4
+      else 1
+    ).asInstanceOf[Int]
 
     modelPar = getYaml(paramsConfig, "model_number", default = 1).asInstanceOf[Int]
 
