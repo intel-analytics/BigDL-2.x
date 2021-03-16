@@ -132,7 +132,7 @@ After that, use `NNEstimator` to train/predict/evaluate the model using Spark ML
 ```scala
 val scaler = new MinMaxScaler().setInputCol("in").setOutputCol("value")
 val estimator = NNEstimator(model, CrossEntropyCriterion())  
-    .setBatchSize(size).setOptimMethod(new Adam()).setMaxEpoch(epoch)
+        .setBatchSize(size).setOptimMethod(new Adam()).setMaxEpoch(epoch)
 val pipeline = new Pipeline().setStages(Array(scaler, estimator))
 
 val pipelineModel = pipeline.fit(trainingDF)  
