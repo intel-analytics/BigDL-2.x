@@ -19,11 +19,11 @@ package com.intel.analytics.zoo.friesian.python
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.friesian.feature.Utils
-import org.apache.spark.sql.DataFrame
 import java.util.{List => JList}
 
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.{col, row_number, spark_partition_id, udf}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
@@ -53,6 +53,40 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     })
 
     Utils.fillNaIndex(df, fillVal, cols_idx)
+  }
+
+  def fillNaInt(df: DataFrame, fillVal: Int = 0, columns: JList[String] = null): DataFrame = {
+    val cols = if (columns == null) {
+      df.columns
+    } else {
+      columns.asScala.toArray
+    }
+
+    val schema = df.schema
+
+    val cols_idx = cols.map(col_n => {
+      val idx = df.columns.indexOf(col_n)
+      if(idx == -1) {
+        throw new IllegalArgumentException(s"The column name ${col_n} does not exist")
+      }
+      if (schema(idx).dataType.typeName != "integer") {
+        throw new IllegalArgumentException(s"Only columns of IntegerType are supported")
+      }
+      idx
+    })
+
+    val dfUpdated = df.rdd.map(row => {
+      val origin = row.toSeq.toArray
+      for (idx <- cols_idx) {
+        if (row.isNullAt(idx)) {
+          origin.update(idx, fillVal)
+        }
+      }
+      Row.fromSeq(origin)
+    })
+
+    val spark = df.sparkSession
+    spark.createDataFrame(dfUpdated, schema)
   }
 
   def assignStringIdx(df_list: JList[DataFrame]): JList[DataFrame] = {
