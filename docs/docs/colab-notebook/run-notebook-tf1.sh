@@ -15,5 +15,14 @@ ipython ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/keras_len
 now=$(date "+%s")
 time2=$((now - start))
 
+echo "#3 start test for zouwu_autots_nyc_taxi.ipynb"
+start=$(date "+%s")
+sed -i 's/\!/#/g' ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/zouwu/zouwu_autots_nyc_taxi.ipynb
+ipython ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/zouwu/zouwu_autots_nyc_taxi.ipynb
+now=$(date "+%s")
+time3=$((now - start))
+
 echo "#1 tf_lenet_mnist time used: $time1 seconds"
 echo "#2 keras_lenet_mnist time used: $time2 seconds"
+echo "#3 zouwu_autots_nyc_taxi time used: $time3 seconds"
+
