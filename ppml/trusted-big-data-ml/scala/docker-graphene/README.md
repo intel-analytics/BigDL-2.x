@@ -50,11 +50,14 @@ The ppml in analytics zoo need secured keys to enable spark security such as AUT
 ### Run the PPML Docker image
 
 #### In spark local mode
-##### Start the container to run SparkPi test in ppml
+##### Start the container to run tests in ppml
 ```bash
 export DATA_PATH=the_dir_path_of_your_prepared_data
 export KEYS_PATH=the_dir_path_of_your_prepared_keys
 export LOCAL_IP=your_local_ip_of_the_sgx_server
+
+sudo docker pull 10.239.45.10/arda/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:0.10-SNAPSHOT
+
 sudo docker run -itd \
     --privileged \
     --net=host \
@@ -69,42 +72,66 @@ sudo docker run -itd \
     --name=spark-local \
     -e LOCAL_IP=$LOCAL_IP \
     -e SGX_MEM_SIZE=64G \
-    intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:latest \
+    10.239.45.10/arda/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:0.10-SNAPSHOT \
     bash
+    
 sudo docker exec -it spark-local bash
 cd ppml/trusted-bid-data-ml
-export SPARK_HOME=/ppml/trusted-big-data-ml/work/spark-2.3.4
-export SCALA_HOME=/ppml/trusted-big-data-ml/work/scala-2.11.12
-export PATH=$SPARK_HOME/bin:$PATH:$SCALA_HOME
 ./init.sh
-$SPARK_HOME/bin/spark-submit --class org.apache.spark.examples.SparkPi --master local $SPARK_HOME/examples/jars/spark-examples_2.11-2.4.3.jar
 ```
-The result shows like this: <br>
->   Pi is roughly 3.1384956924784624
 
-##### Start the container to run lenet model training with BigDL in ppml.
+##### Example Test 1 
 ```bash
-export DATA_PATH=the_dir_path_of_your_prepared_data
-export KEYS_PATH=the_dir_path_of_your_prepared_keys
-export LOCAL_IP=your_local_ip_of_the_sgx_server
-sudo docker run -itd \
-    --privileged \
-    --net=host \
-    --cpuset-cpus="0-5" \
-    --oom-kill-disable \
-    --device=/dev/gsgx \
-    --device=/dev/sgx/enclave \
-    --device=/dev/sgx/provision \
-    -v /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket \
-    -v $DATA_PATH:/ppml/trusted-big-data-ml/work/data \
-    -v $KEYS_PATH:/ppml/trusted-big-data-ml/work/keys \
-    --name=spark-local \
-    -e LOCAL_IP=$LOCAL_IP \
-    -e SGX_MEM_SIZE=64G \
-    intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:latest \
-    bash -c "cd /ppml/trusted-big-data-ml/ && ./init.sh && ./start-spark-local-train-sgx.sh"
+vim start-spark-local-pi-sgx.sh
 ```
-check the log:
+Add these code in the `start-spark-local-pi-sgx.sh` file: <br>
+```bash
+#!/bin/bash
+
+set -x
+
+SGX=1 ./pal_loader /opt/jdk8/bin/java \
+        -cp '/ppml/trusted-big-data-ml/work/spark-2.4.3/examples/jars/spark-examples_2.11-2.4.3.jar:/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+        -Xmx10g \
+        -Dbigdl.mklNumThreads=1 \
+        -XX:ActiveProcessorCount=24 \
+        org.apache.spark.deploy.SparkSubmit \
+        --master 'local[4]' \
+        --conf spark.driver.port=10027 \
+        --conf spark.scheduler.maxRegisteredResourcesWaitingTime=5000000 \
+        --conf spark.worker.timeout=600 \
+        --conf spark.starvation.timeout=250000 \
+        --conf spark.rpc.askTimeout=600 \
+        --conf spark.blockManager.port=10025 \
+        --conf spark.driver.host=127.0.0.1 \
+        --conf spark.driver.blockManager.port=10026 \
+        --conf spark.io.compression.codec=lz4 \
+        --class org.apache.spark.examples.SparkPi \
+        --executor-cores 4 \
+        --total-executor-cores 4 \
+        --executor-memory 10G \
+        /ppml/trusted-big-data-ml/work/spark-2.4.3/examples/jars/spark-examples_2.11-2.4.3.jar | tee spark.local.pi.sgx.log
+```
+
+Then run the script to run pi test in spark: <br>
+```bash
+./start-spark-local-pi-sgx.sh
+```
+
+Open one new screen and check the log:
+```bash
+sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.pi.sgx.log | egrep "###|INFO|Pi"
+```
+
+The check result would shows like this: <br>
+>   Pi is roughly 3.1422957114785572
+
+##### Example Test 2
+```bash
+./start-spark-local-train-sgx.sh
+```
+
+Open one new screen and check the log:
 ```bash
 sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.sgx.log | egrep "###|INFO"
 ```
@@ -112,6 +139,7 @@ or
 ```bash
 sudo docker logs spark-local | egrep "###|INFO"
 ```
+
 The result shows like: <br>
 >   ############# train optimized[P1182:T2:java] ---- end time: 310534 ms return from shim_write(...) = 0x1d <br>
 >   ############# ModuleLoader.saveToFile File.saveBytes end, used 827002 ms[P1182:T2:java] ---- end time: 1142754 ms return from shim_write(...) = 0x48 <br>
@@ -119,88 +147,53 @@ The result shows like: <br>
 >   ############# model saved[P1182:T2:java] ---- end time: 1985297 ms return from shim_write(...) = 0x19 <br>
 
 ##### Start the container to run TPC-H in ppml.
-Download SBT: <br>
-```bash
-wget https://github.com/sbt/sbt/releases/download/v1.4.8/sbt-1.4.8.tgz
-tar -zxvf sbt-1.4.8.tgz
-wget https://archive.apache.org/dist/spark/spark-2.3.4/spark-2.3.4.tgz
-tar -zxvf spark-2.3.4.tgz
-wget https://downloads.lightbend.com/scala/2.11.12/scala-2.11.12.tgz
-tar -zxvf scala-2.11.12.tgz
-export SBT_HOME=the_dir_path_of_your_unzipped_sbt-1.4.8
-export SPARK_HOME=the_dir_path_of_your_unzipped_spark-2.3.4
-export SCALA_HOME=the_dir_path_of_your_unzipped_scala-2.11.12
-export PATH=$SBT_HOME:$SPARK_HOME/bin:$PATH:$SCALA_HOME
-cd sbt
-vim ./sbt
-```
-Please add these into this sbt file and save it:
-```bash
-SBT_OPTS="-Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=256M"
-java $SBT_OPTS -jar $SBT_HOME/bin/sbt-launch.jar "$@"
-```
-If there is some mistake, try to change your $SBT_HOME with the absulate path
+Before run TPC-H test in container we created, we should download and install [SBT](https://www.scala-sbt.org/download.html), then build and package TPC-H dataset according to [TPC-H](https://github.com/qiuxin2012/tpch-spark) with your needs. After packaged, check if we have `spark-tpc-h-queries_2.11-1.0.jar ` under `/tpch-spark/target/scala-2.11`, if have, we package successfully.
 
-Build SBT: <br>
-```bash
-chmod u+x ./sbt
-./sbt sbtVersion
-```
-Run `./sbt sbtVersion` the first time, the machine would take some time to download some dependecies.
-
-Download and build TPC-H: <br>
-```bash
-git clone https://github.com/qiuxin2012/tpch-spark.git
-cd tpch-spark/dbgen
-make
-./dbgen -h
-./dbgen
-```
-The result shows like: <br>
->   TPC-H Population Generator (Version 2.17.0)
->   Copyright Transaction Processing Performance Council 1994 - 2010
-
-Build the TPC-H with 10G: <br>
-```bash
-./dbgen -s 10
-```
-
-Package TPC-H with SBT: <br>
-```bash
-cd ..
-sbt package
-```
-Check if we have `spark-tpc-h-queries_2.11-1.0.jar ` under `/tpch-spark/target/scala-2.11`, if have, we package successfully.
-
-Create the container: <br>
-```bash
-export DATA_PATH=the_dir_path_of_your_prepared_data
-export KEYS_PATH=the_dir_path_of_your_prepared_keys
-export LOCAL_IP=your_local_ip_of_the_sgx_server
-sudo docker run -itd \
-    --privileged \
-    --net=host \
-    --cpuset-cpus="0-5" \
-    --oom-kill-disable \
-    --device=/dev/gsgx \
-    --device=/dev/sgx/enclave \
-    --device=/dev/sgx/provision \
-    -v /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket \
-    -v $DATA_PATH:/ppml/trusted-big-data-ml/work/data \
-    -v $KEYS_PATH:/ppml/trusted-big-data-ml/work/keys \
-    --name=spark-local \
-    -e LOCAL_IP=$LOCAL_IP \
-    -e SGX_MEM_SIZE=64G \
-    intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:latest \
-    bash
-```
-Copy TPC-H to container: <br>
+Copy TPC-H to container to run test: <br>
 ```bash
 docker cp tpch-spark/ spark-local:/ppml/trusted-big-data-ml
 sudo docker exec -it spark-local bash
-cd ppml/trusted-big-data-ml/tpch-spark
-export PATH=$SPARK_HOME/bin:$PATH
-spark-submit --class "main.scala.TpchQuery" --master local[*] target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar dbgen
+cd ppml/trusted-big-data-ml
+vim start-spark-local-tpc-h-sgx.sh
+```
+
+Add these code in the `start-spark-local-tpc-h-sgx.sh` file: <br>
+```bash
+#!/bin/bash
+
+set -x
+
+SGX=1 ./pal_loader /opt/jdk8/bin/java \
+        -cp '/ppml/trusted-big-data-ml/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar:/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+        -Xmx10g \
+        -Dbigdl.mklNumThreads=1 \
+        -XX:ActiveProcessorCount=24 \
+        org.apache.spark.deploy.SparkSubmit \
+        --master 'local[4]' \
+        --conf spark.driver.port=10027 \
+        --conf spark.scheduler.maxRegisteredResourcesWaitingTime=5000000 \
+        --conf spark.worker.timeout=600 \
+        --conf spark.starvation.timeout=250000 \
+        --conf spark.rpc.askTimeout=600 \
+        --conf spark.blockManager.port=10025 \
+        --conf spark.driver.host=127.0.0.1 \
+        --conf spark.driver.blockManager.port=10026 \
+        --conf spark.io.compression.codec=lz4 \
+        --class "main.scala.TpchQuery" \
+        --executor-cores 4 \
+        --total-executor-cores 4 \
+        --executor-memory 10G \
+        /ppml/trusted-big-data-ml/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar | tee spark.local.tpc.h.sgx.log
+```
+
+Then run the script to run TPC-H test in spark: <br>
+```bash
+./start-spark-local-tpc-h-sgx.sh
+```
+
+Open one new screen and check the log: <br>
+```bash
+sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.tpc.h.sgx.log | egrep "###|INFO"
 ```
 The result shows like this: <br>
 >   INFO Executor: Finished task 6.0 in stage 286.0 (TID 25381). 7928 bytes result sent to driver
