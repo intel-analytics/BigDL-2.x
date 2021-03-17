@@ -123,7 +123,7 @@ Open another terminal and check the log:
 sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.pi.sgx.log | egrep "###|INFO|Pi"
 ```
 
-The result shows like: <br>
+The result should look like: <br>
 >   Pi is roughly 3.1422957114785572
 
 ##### Example Test 2
@@ -140,7 +140,7 @@ or
 sudo docker logs spark-local | egrep "###|INFO"
 ```
 
-The result shows like: <br>
+The result should look like: <br>
 >   ############# train optimized[P1182:T2:java] ---- end time: 310534 ms return from shim_write(...) = 0x1d <br>
 >   ############# ModuleLoader.saveToFile File.saveBytes end, used 827002 ms[P1182:T2:java] ---- end time: 1142754 ms return from shim_write(...) = 0x48 <br>
 >   ############# ModuleLoader.saveToFile saveWeightsToFile end, used 842543 ms[P1182:T2:java] ---- end time: 1985297 ms return from shim_write(...) = 0x4b <br>
@@ -195,7 +195,7 @@ Open another terminal and check the log: <br>
 ```bash
 sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.tpc.h.sgx.log | egrep "###|INFO"
 ```
-The result shows like: <br>
+The result should look like: <br>
 >   INFO Executor: Finished task 6.0 in stage 286.0 (TID 25381). 7928 bytes result sent to driver
 >   INFO TaskSetManager: Finished task 6.0 in stage 286.0 (TID 25381) in 13 ms on localhost (executor driver) (7/7)
 >   INFO TaskSchedulerImpl: Removed TaskSet 286.0, whose tasks have all completed, from pool <br>
