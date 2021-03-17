@@ -47,10 +47,10 @@ The ppml in analytics zoo need secured keys to enable spark security such as AUT
     openssl x509 -in server.pem -out server.crt
 ```
 
-### Run the PPML Docker image
+### Run PPML Docker image
 
 #### In spark local mode
-##### Start the container to run tests in ppml
+##### Start container to run tests in ppml
 ```bash
 export DATA_PATH=the_dir_path_of_your_prepared_data
 export KEYS_PATH=the_dir_path_of_your_prepared_keys
@@ -118,12 +118,12 @@ Then run the script to run pi test in spark: <br>
 ./start-spark-local-pi-sgx.sh
 ```
 
-Open one new screen and check the log:
+Open another terminal and check the log:
 ```bash
 sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.pi.sgx.log | egrep "###|INFO|Pi"
 ```
 
-The check result would shows like this: <br>
+The result shows like: <br>
 >   Pi is roughly 3.1422957114785572
 
 ##### Example Test 2
@@ -131,7 +131,7 @@ The check result would shows like this: <br>
 ./start-spark-local-train-sgx.sh
 ```
 
-Open one new screen and check the log:
+Open another terminal and check the log:
 ```bash
 sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.sgx.log | egrep "###|INFO"
 ```
@@ -146,10 +146,10 @@ The result shows like: <br>
 >   ############# ModuleLoader.saveToFile saveWeightsToFile end, used 842543 ms[P1182:T2:java] ---- end time: 1985297 ms return from shim_write(...) = 0x4b <br>
 >   ############# model saved[P1182:T2:java] ---- end time: 1985297 ms return from shim_write(...) = 0x19 <br>
 
-##### Start the container to run TPC-H in ppml.
+##### Example Test 3
 Before run TPC-H test in container we created, we should download and install [SBT](https://www.scala-sbt.org/download.html), then build and package TPC-H dataset according to [TPC-H](https://github.com/qiuxin2012/tpch-spark) with your needs. After packaged, check if we have `spark-tpc-h-queries_2.11-1.0.jar ` under `/tpch-spark/target/scala-2.11`, if have, we package successfully.
 
-Copy TPC-H to container to run test: <br>
+Copy TPC-H to container: <br>
 ```bash
 docker cp tpch-spark/ spark-local:/ppml/trusted-big-data-ml
 sudo docker exec -it spark-local bash
@@ -191,11 +191,11 @@ Then run the script to run TPC-H test in spark: <br>
 ./start-spark-local-tpc-h-sgx.sh
 ```
 
-Open one new screen and check the log: <br>
+Open another terminal and check the log: <br>
 ```bash
 sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.tpc.h.sgx.log | egrep "###|INFO"
 ```
-The result shows like this: <br>
+The result shows like: <br>
 >   INFO Executor: Finished task 6.0 in stage 286.0 (TID 25381). 7928 bytes result sent to driver
 >   INFO TaskSetManager: Finished task 6.0 in stage 286.0 (TID 25381) in 13 ms on localhost (executor driver) (7/7)
 >   INFO TaskSchedulerImpl: Removed TaskSet 286.0, whose tasks have all completed, from pool <br>
