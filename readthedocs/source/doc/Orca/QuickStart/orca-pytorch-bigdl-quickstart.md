@@ -1,4 +1,4 @@
-# PyTorch Quickstart
+# PyTorch Quickstart (bigdl backend)
 
 ---
 
@@ -6,7 +6,7 @@
 
 ---
 
-**In this guide we will describe how to scale out _PyTorch_ programs using Orca in 4 simple steps.**
+**In this guide we will describe how to scale out _PyTorch_ programs with _BigDL_ backend using Orca in 4 simple steps.**
 
 ### **Step 0: Prepare Environment**
 
@@ -78,7 +78,7 @@ adam = torch.optim.Adam(model.parameters(), 0.001)
 
 ### **Step 3: Define Train Dataset**
 
-You can define the dataset using standard [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html). Orca also supports a data creator function or [Orca SparkXShards](./data).
+You can define the dataset using standard [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html).
 
 ```python
 import torch
@@ -104,6 +104,30 @@ test_loader = torch.utils.data.DataLoader(
     batch_size=test_batch_size, shuffle=False) 
 ```
 
+We can also use a data creator function (as shown below) or [Orca SparkXShards](./data) to represent the data. 
+
+```python
+def train_loader_creator():
+    train_loader = torch.utils.data.DataLoader(
+        datasets.MNIST(dir, train=True, download=True,
+                       transform=transforms.Compose([
+                           transforms.ToTensor(),
+                           transforms.Normalize((0.1307,), (0.3081,))
+                       ])),
+        batch_size=320, shuffle=True)
+    return train_loader
+def test_loader_creator():
+    test_loader = torch.utils.data.DataLoader(
+        datasets.MNIST(dir, train=False,
+                       transform=transforms.Compose([
+                           transforms.ToTensor(),
+                           transforms.Normalize((0.1307,), (0.3081,))
+                       ])),
+        batch_size=320, shuffle=False)
+    return test_loader
+```
+
+
 ### **Step 4: Fit with Orca Estimator**
 
 First, Create an Estimator
@@ -126,6 +150,15 @@ est.fit(data=train_loader, epochs=10, validation_data=test_loader,
 result = est.evaluate(data=test_loader)
 for r in result:
     print(str(r))
+```
+
+If you are using a data creator function, then you may use the following instead.
+
+```python
+est.fit(data=train_loader_creator, epochs=10, validation_data=test_loader_creator,
+        checkpoint_trigger=EveryEpoch())
+
+result = est.evaluate(data=test_loader_creator)
 ```
 
 **Note:** You should call `stop_orca_context()` when your application finishes.

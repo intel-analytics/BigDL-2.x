@@ -1,4 +1,4 @@
-# PyTorch Distributed Quickstart
+# PyTorch Quickstart (torch\_distributed backend)
 
 ---
 
@@ -6,7 +6,7 @@
 
 ---
 
-**In this guide we will describe how to scale out _PyTorch_ programs under _Ray_ backend using Orca in 4 simple steps.**
+**In this guide we will describe how to scale out _PyTorch_ programs with pytorch\_distributed backend using Orca in 4 simple steps.**
 
 ### **Step 0: Prepare Environment**
 
