@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import torch
+from abc import ABC, abstractmethod
 
 
 def _unify_input_formats(preds, target):
@@ -26,6 +27,24 @@ def _unify_input_formats(preds, target):
     if preds.ndim == target.ndim and preds.is_floating_point():
         preds = (preds >= 0.5).long()
     return preds, target
+
+
+def _check_same_shape(preds, targets):
+    if preds.shape != targets.shape:
+        raise RuntimeError("preds and targets are expected to have the same shape")
+
+
+class PytorchMetric(ABC):
+    """
+    Base class for all pytorch metrics
+    """
+    @abstractmethod
+    def __call__(self, preds, targets):
+        pass
+
+    @abstractmethod
+    def compute(self):
+        pass
 
 
 class Accuracy:
@@ -210,15 +229,16 @@ class MSE:
 
     def __init__(self):
         self.total = torch.tensor(0)
-        self.correct = torch.tensor(0)
+        self.sum_squared_error = torch.tensor(0)
 
     def __call__(self, preds, targets):
+        _check_same_shape(preds, targets)
         preds = preds.type_as(targets)
-        self.correct += torch.sum(torch.square(torch.sub(preds, targets)))
+        self.sum_squared_error += torch.sum(torch.square(torch.sub(preds, targets)))
         self.total += targets.numel()
 
     def compute(self):
-        return self.correct.float() / self.total
+        return self.sum_squared_error.float() / self.total
 
 
 class MAE:
@@ -239,15 +259,16 @@ class MAE:
 
     def __init__(self):
         self.total = torch.tensor(0)
-        self.correct = torch.tensor(0)
+        self.sum_abs_error = torch.tensor(0)
 
-    def __call__(self, preds, targets, threshold=0.5):
+    def __call__(self, preds, targets):
+        _check_same_shape(preds, targets)
         preds = preds.type_as(targets)
-        self.correct += torch.sum(torch.abs(torch.sub(preds, targets)))
+        self.sum_abs_error += torch.sum(torch.abs(torch.sub(preds, targets)))
         self.total += targets.numel()
 
     def compute(self):
-        return self.correct.float() / self.total
+        return self.sum_abs_error.float() / self.total
 
 
 class BinaryCrossEntropy:
@@ -376,7 +397,7 @@ class KLDivergence:
     def __call__(self, preds, targets):
         # Avoid problems with dividing zero
         epsilon = 1e-7
-
+        _check_same_shape(preds, targets)
         output_size = targets.size(0)
         div = targets / preds
         self.divergence = self.divergence + \
@@ -409,7 +430,7 @@ class Poisson:
     def __call__(self, preds, targets):
         # Avoid problems with dividing zero
         epsilon = 1e-7
-
+        _check_same_shape(preds, targets)
         output_size = targets.view(-1).size(0)
         self.poisson = self.poisson + \
             (preds - targets * torch.log(preds + epsilon)).sum()
