@@ -37,6 +37,12 @@ object PythonFriesian {
 class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo[T] {
   val numericTypes: List[String] = List("long", "double", "integer")
 
+  def readParquet(paths: JList[String]): DataFrame = {
+    val spark = SparkSession.builder().getOrCreate()
+    val pathsScala = paths.asScala
+    spark.read.parquet(pathsScala: _*)
+  }
+
   def fillNa(df: DataFrame, fillVal: Any = 0, columns: JList[String] = null): DataFrame = {
     val cols = if (columns == null) {
       df.columns
@@ -144,8 +150,10 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         df_col
       }
 
-      df_col_filtered.cache()
-      val count_list: Array[(Int, Int)] = df_col_filtered.rdd.mapPartitions(Utils.getPartitionSize)
+//      df_col_filtered.cache()
+      val df_with_part_id = df_col_filtered.withColumn("part_id", spark_partition_id())
+      df_with_part_id.cache()
+      val count_list: Array[(Int, Int)] = df_with_part_id.rdd.mapPartitions(Utils.getPartitionSize)
         .collect()
       val base_dict = scala.collection.mutable.Map[Int, Int]()
       var running_sum = 0
@@ -154,7 +162,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         running_sum += count_tuple._2
       }
       val base_dict_bc = df_col_filtered.rdd.sparkContext.broadcast(base_dict)
-      val df_with_part_id = df_col_filtered.withColumn("part_id", spark_partition_id())
+
       val windowSpec = Window.partitionBy("part_id").orderBy("count")
       val df_row_number = df_with_part_id.withColumn("row_number", row_number.over(windowSpec))
       val get_label = udf((part_id: Int, row_number: Int) => {

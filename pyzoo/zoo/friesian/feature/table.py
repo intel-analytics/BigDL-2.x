@@ -17,7 +17,8 @@
 from pyspark.sql.functions import col, udf, array, broadcast, log
 from pyspark.sql import DataFrame
 from zoo.orca import OrcaContext
-from zoo.friesian.feature.utils import assign_string_idx, fill_na, assign_string_idx2
+from zoo.friesian.feature.utils import assign_string_idx, fill_na, assign_string_idx2, \
+    fill_na_int, read_parquet
 
 
 class Table:
@@ -28,8 +29,7 @@ class Table:
     def _read_parquet(paths):
         if not isinstance(paths, list):
             paths = [paths]
-        spark = OrcaContext.get_spark_session()
-        df = spark.read.parquet(*paths)
+        df = read_parquet(paths)
         return df
 
     def compute(self):
@@ -41,6 +41,9 @@ class Table:
 
     def fillna(self, value, columns):
         return Table(fill_na(self.df, value, columns))
+
+    def fillna_int(self, value, columns):
+        return Table(fill_na_int(self.df, value, columns))
 
     def clip(self, columns, min=0):
         df = self.df

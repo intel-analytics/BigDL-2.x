@@ -26,4 +26,12 @@ def assign_string_idx2(df, columns, freq_limit):
 
 
 def fill_na(df, fill_val, columns):
+    return callZooFunc("float", "fillNa", df, fill_val, columns)
+
+
+def fill_na_int(df, fill_val, columns):
     return callZooFunc("float", "fillNaInt", df, fill_val, columns)
+
+
+def read_parquet(paths):
+    return callZooFunc("float", "readParquet", paths)
