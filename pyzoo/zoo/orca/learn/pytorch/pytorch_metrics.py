@@ -47,7 +47,7 @@ class PytorchMetric(ABC):
         pass
 
 
-class Accuracy:
+class Accuracy(PytorchMetric):
     """Calculates how often predictions matches labels.
 
     For example, if `y_true` is tensor([1, 2, 3, 4])_ and `y_pred` is tensor([0, 2, 3, 4])
@@ -76,7 +76,7 @@ class Accuracy:
         return self.correct.float() / self.total
 
 
-class SparseCategoricalAccuracy:
+class SparseCategoricalAccuracy(PytorchMetric):
     """Calculates how often predictions matches integer labels.
 
     For example, if `y_true` is tensor([[2], [1]]) and `y_pred` is
@@ -111,7 +111,7 @@ class SparseCategoricalAccuracy:
         return self.correct.float() / self.total
 
 
-class CategoricalAccuracy:
+class CategoricalAccuracy(PytorchMetric):
     """Calculates how often predictions matches integer labels.
 
     For example, if `y_true` is torch.tensor([[0, 0, 1], [0, 1, 0]]) and `y_pred` is
@@ -145,7 +145,7 @@ class CategoricalAccuracy:
         return self.correct.float() / self.total
 
 
-class BinaryAccuracy:
+class BinaryAccuracy(PytorchMetric):
     """Calculates how often predictions matches labels.
 
     For example, if `y_true` is tensor([1, 1, 0, 0]) and `y_pred` is tensor([0.98, 1, 0, 0.6])
@@ -179,7 +179,7 @@ class BinaryAccuracy:
         return self.correct.float() / self.total
 
 
-class Top5Accuracy:
+class Top5Accuracy(PytorchMetric):
     """Computes how often integer targets are in the top `K` predictions.
 
       Usage:
@@ -211,7 +211,7 @@ class Top5Accuracy:
         return self.correct.float() / self.total
 
 
-class MSE:
+class MSE(PytorchMetric):
     """Computes the mean square error between labels and predictions.
 
     `loss = square(abs(y_true - y_pred), axis=-1)`
@@ -241,7 +241,7 @@ class MSE:
         return self.sum_squared_error.float() / self.total
 
 
-class MAE:
+class MAE(PytorchMetric):
     """Computes the mean absolute error between labels and predictions.
 
     `loss = mean(abs(y_true - y_pred), axis=-1)`
@@ -271,7 +271,7 @@ class MAE:
         return self.sum_abs_error.float() / self.total
 
 
-class BinaryCrossEntropy:
+class BinaryCrossEntropy(PytorchMetric):
     """Computes the crossentropy metric between the labels and predictions.
     This is used when there are only two labels (0 and 1).
 
@@ -305,7 +305,7 @@ class BinaryCrossEntropy:
         return self.crossentropy.float() / self.total
 
 
-class CategoricalCrossEntropy:
+class CategoricalCrossEntropy(PytorchMetric):
     """Computes the crossentropy metric between the labels and predictions.
     This is used when there are multiple lables. The labels should be in
     the form of one-hot vectors.
@@ -340,7 +340,7 @@ class CategoricalCrossEntropy:
         return self.crossentropy.float() / self.total
 
 
-class SparseCategoricalCrossEntropy:
+class SparseCategoricalCrossEntropy(PytorchMetric):
     """Computes the crossentropy metric between the labels and predictions.
     This is used when there are multiple lables. The labels should be in
     the form of integers, instead of one-hot vectors.
@@ -375,7 +375,7 @@ class SparseCategoricalCrossEntropy:
         return self.crossentropy.float() / self.total
 
 
-class KLDivergence:
+class KLDivergence(PytorchMetric):
     """Computes the Kullback-Liebler divergence metric between labels and
     predictions.
 
@@ -408,7 +408,7 @@ class KLDivergence:
         return self.divergence.float() / self.total
 
 
-class Poisson:
+class Poisson(PytorchMetric):
     """Computes the Poisson metric between labels and
     predictions.
 
