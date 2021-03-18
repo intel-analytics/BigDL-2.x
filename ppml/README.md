@@ -1,5 +1,6 @@
 ## PPML (Privacy Preserving Machine Learning) 
 ### Create SGX driver
+```bash
 sudo apt install dkms
 wget --no-check-certificate https://download.01.org/intel-sgx/sgx-linux/2.12/distro/ubuntu18.04-server/sgx_linux_x64_driver_1.36.2.bin
 sudo chmod a+x sgx_linux_x64_driver_1.36.2.bin
@@ -11,3 +12,4 @@ sudo rmmod gsgx || true
 make
 sudo insmod gsgx.ko
 ll /dev/gsgx && ll /dev/sgx/enclave && ll /dev/sgx/provision
+```
