@@ -22,6 +22,10 @@ import base64
 import hashlib
 
 
+# For cryptography < 3.0
+back_end = default_backend()
+
+
 def get_private_key(secret_key, salt, key_len=128):
     """
     Generate AES required random secret/privacy key
@@ -83,7 +87,8 @@ def encrypt_bytes_with_AES_CBC(plain_text_bytes, secret_key, salt, key_len=128, 
     data = padder.update(plain_text_bytes)
     data += padder.finalize()
     # create Cipher
-    encryptor = Cipher(algorithms.AES(key), modes.CBC(iv)).encryptor()
+    encryptor = Cipher(algorithms.AES(key),
+                       modes.CBC(iv), backend=back_end).encryptor()
     ct = encryptor.update(data) + encryptor.finalize()
     return iv + ct
 
@@ -101,7 +106,8 @@ def decrypt_bytes_with_AES_CBC(cipher_text_bytes, secret_key, salt, key_len=128,
     key = get_private_key(secret_key, salt, key_len)
     iv = cipher_text_bytes[:block_size]
     # create Cipher
-    decryptor = Cipher(algorithms.AES(key), modes.CBC(iv)).decryptor()
+    decryptor = Cipher(algorithms.AES(key),
+                       modes.CBC(iv), backend=back_end).decryptor()
     ct = decryptor.update(cipher_text_bytes[block_size:]) + decryptor.finalize()
     # unpadding
     unpadder = padding.PKCS7(key_len).unpadder()
@@ -153,7 +159,8 @@ def encrypt_bytes_with_AES_GCM(plain_text_bytes, secret_key, salt, key_len=128, 
     key = get_private_key(secret_key, salt, key_len)
     iv = os.urandom(block_size)
     # create Cipher
-    encryptor = Cipher(algorithms.AES(key), modes.GCM(iv)).encryptor()
+    encryptor = Cipher(algorithms.AES(key),
+                       modes.GCM(iv), backend=back_end).encryptor()
     ct = encryptor.update(plain_text_bytes) + encryptor.finalize()
     return iv + ct + encryptor.tag
 
@@ -172,7 +179,8 @@ def decrypt_bytes_with_AES_GCM(cipher_text_bytes, secret_key, salt, key_len=128,
     tag = cipher_text_bytes[-16:]
     iv = cipher_text_bytes[:block_size]
     # create Cipher
-    decryptor = Cipher(algorithms.AES(key), modes.GCM(iv, tag)).decryptor()
+    decryptor = Cipher(algorithms.AES(key),
+                       modes.GCM(iv, tag), backend=back_end).decryptor()
     # 16 for tag
     ct = decryptor.update(cipher_text_bytes[block_size:-16]) + decryptor.finalize()
     return ct
