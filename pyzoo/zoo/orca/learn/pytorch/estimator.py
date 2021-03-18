@@ -533,11 +533,11 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
             
         try:
             self.model = Model.load(os.path.join(path, "model.{}".format(version)))
-            optimizer = OptimMethod.load(os.path.join(path, "{}.{}".format(prefix, version)))
+            self.optimizer = OptimMethod.load(os.path.join(path, "{}.{}".format(prefix, version)))
         except Exception:
             raise ValueError("Cannot load PyTorch checkpoint, please check your checkpoint path "
                              "and checkpoint type.")
-        self.estimator = SparkEstimator(self.model, optimizer, self.model_dir)
+        self.estimator = SparkEstimator(self.model, self.optimizer, self.model_dir)
 
     def get_train_summary(self, tag=None):
         """
