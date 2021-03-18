@@ -35,3 +35,7 @@ def fill_na_int(df, fill_val, columns):
 
 def read_parquet(paths):
     return callZooFunc("float", "readParquet", paths)
+
+
+def dlrm_preprocess(paths, CAT_columns, INT_columns, freq_limit):
+    return callZooFunc("float", "dlrmPreprocess", paths, CAT_columns, INT_columns, freq_limit)
