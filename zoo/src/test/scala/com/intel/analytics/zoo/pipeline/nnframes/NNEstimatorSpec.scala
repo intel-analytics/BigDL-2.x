@@ -632,10 +632,10 @@ private case class MinibatchData[T](featureData: Array[T], labelData: Array[T])
 object NNEstimatorSpec {
   // Generate noisy input of the form Y = signum(x.dot(weights) + intercept + noise)
   def generateTestInput(
-                         numRecords: Int,
-                         weight: Array[Double],
-                         intercept: Double,
-                         seed: Long): Seq[(Array[Double], Double)] = {
+      numRecords: Int,
+      weight: Array[Double],
+      intercept: Double,
+      seed: Long): Seq[(Array[Double], Double)] = {
     val rnd = RandomGenerator.RNG
     val data = (1 to numRecords)
       .map(i => Array.tabulate(weight.length)(index => rnd.uniform(0, 1) * 2 - 1))
