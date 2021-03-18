@@ -117,14 +117,14 @@ class Estimator(SparkEstimator):
         """
         raise NotImplementedError
 
-    def load(self, model_path):
+    def load(self, checkpoint, **kwargs):
         """
-        Load existing model 
+        Load existing checkpoint
 
-        :param checkpoint: Path to the existing model.
+        :param checkpoint: Path to the existing checkpoint.
         :return:
         """
-        raise NotImplementedError
+        self.load_latest_orca_checkpoint(checkpoint)
 
     def clear_gradient_clipping(self):
         """
@@ -246,24 +246,29 @@ class Estimator(SparkEstimator):
         """
         raise NotImplementedError
 
-    def load_orca_checkpoint(self, path, version=None):
+    def load_orca_checkpoint(self, path, version):
         """
-        Load Orca checkpoint. To load a specific checkpoint, please provide a `version`.
-        If `version` is None, then the latest checkpoint will be loaded.
+        Load specified Orca checkpoint.
 
         :param path: checkpoint directory which contains model.* and
-               optimMethod-TFParkTraining.* files.
+        optimMethod-TFParkTraining.* files.
         :param version: checkpoint version, which is the suffix of model.* file,
-               i.e., for modle.4 file, the version is 4.
+        i.e., for modle.4 file, the version is 4.
         """
-        if version is None:
-            path, _, version = find_latest_checkpoint(path, model_type="tf")
-            if path is None:
-                raise Exception("Cannot find checkpoint")
-        
         self.load_checkpoint = True
         self.checkpoint_path = path
         self.checkpoint_version = version
+
+    def load_latest_orca_checkpoint(self, path):
+        """
+        Load latest Orca checkpoint under specified directory.
+
+        :param path: directory containing Orca checkpoint files.
+        """
+        ckpt_path, _, version = find_latest_checkpoint(path, model_type="tf")
+        if ckpt_path is None:
+            raise Exception("Cannot find checkpoint")
+        self.load_orca_checkpoint(ckpt_path, version)
 
     @staticmethod
     def from_graph(*, inputs, outputs=None,
@@ -914,15 +919,6 @@ class KerasEstimator(Estimator):
         :return:
         """
         self.save_keras_model(model_path, overwrite=overwrite)
-
-    def load(self, model_path):
-        """
-        Load existing keras model
-
-        :param checkpoint: Path to the existing model.
-        :return:
-        """
-        self.model = KerasModel.load_model(model_path)
 
     def clear_gradient_clipping(self):
         """
