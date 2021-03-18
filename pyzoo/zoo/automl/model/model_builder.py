@@ -62,7 +62,22 @@ class ModelBuilder:
     def from_cls(cls, estimator):
         return cls(cls=estimator)
 
+    def build_from_ckpt(self, checkpoint_filename):
+        '''Restore from a saved model'''
+        if self.backend == "pytorch":
+            from zoo.automl.model.base_pytorch_model import PytorchBaseModel
+            model = PytorchBaseModel(**self.params)
+            model.restore(checkpoint_filename)
+            return model
+
+        elif self.backend == "keras":
+            from zoo.automl.model.base_keras_model import KerasBaseModel
+            model = KerasBaseModel(**self.params)
+            model.restore(checkpoint_filename)
+            return model
+
     def build(self, config):
+        '''Build a new model'''
         if self.backend == "pytorch":
             from zoo.automl.model.base_pytorch_model import PytorchBaseModel
             model = PytorchBaseModel(**self.params)

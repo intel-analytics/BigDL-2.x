@@ -51,7 +51,7 @@ class TestTcn(TestCase):
         self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
         mse, smape = self.model.evaluate(self.val_data[0],
                                          self.val_data[1],
-                                         metric=["mse", "smape"])
+                                         metrics=["mse", "smape"])
         assert len(mse) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
         assert len(smape) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
 

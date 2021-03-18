@@ -193,3 +193,11 @@ class Estimator(BaseEstimator):
         i.e., for modle.4 file, the version is 4.
         """
         raise NotImplementedError
+
+    def shutdown(self):
+        """
+        Releases resources.
+
+        :return:
+        """
+        pass

@@ -60,8 +60,8 @@ class SimpleRecipe(Recipe):
 
     def search_space(self, all_available_features):
         return {
-            "lr": tune.uniform(0.001, 0.01),
-            "batch_size": tune.choice([32, 64])
+            "lr": tune.uniform(0.01, 0.02),
+            "batch_size": tune.choice([16, 32, 64])
         }
 
 
@@ -99,17 +99,21 @@ if __name__ == "__main__":
     best_trials = searcher.get_best_trials(k=1)
     print(best_trials[0].config)
 
+    # rebuild this best config model and evaluate
+    best_model = modelBuilder.build_from_ckpt(best_trials[0].model_path)
+    searched_best_model = best_model.evaluate(data["val_x"], data["val_y"], metrics=["rmse"])
+
     # 2. you can also use the model builder with a fix config
     model = modelBuilder.build(config={
         "lr": 1e-2,  # used in optimizer_creator
         "batch_size": 32,  # used in data_creator
     })
 
-    val_result = model.fit_eval(x=data["x"],
-                                y=data["y"],
-                                validation_data=(data["val_x"], data["val_y"]),
-                                epochs=20)
-    print(val_result)
+    model.fit_eval(x=data["x"],
+                   y=data["y"],
+                   validation_data=(data["val_x"], data["val_y"]),
+                   epochs=20)
+    val_result_pytorch_manual = model.evaluate(x=data["x"], y=data["y"], metrics=['rmse'])
 
     # 3. try another modelbuilder based on tfkeras
     modelBuilder_keras = ModelBuilder.from_tfkeras(model_creator_keras)
@@ -119,8 +123,11 @@ if __name__ == "__main__":
         "metric": "mse"
     })
 
-    val_result = model.fit_eval(x=data["x"],
-                                y=data["y"],
-                                validation_data=(data["val_x"], data["val_y"]),
-                                epochs=20)
-    print(val_result)
+    model.fit_eval(x=data["x"],
+                   y=data["y"],
+                   validation_data=(data["val_x"], data["val_y"]),
+                   epochs=20)
+    val_result_tensorflow_manual = model.evaluate(x=data["x"], y=data["y"], metrics=['rmse'])
+    print("Searched best model validation rmse:", searched_best_model)
+    print("Pytorch model validation rmse:", val_result_pytorch_manual)
+    print("Tensorflow model validation rmse:", val_result_tensorflow_manual)

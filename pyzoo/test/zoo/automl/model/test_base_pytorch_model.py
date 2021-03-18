@@ -18,6 +18,7 @@ from zoo.automl.model import ModelBuilder
 import numpy as np
 import torch
 import torch.nn as nn
+import math
 
 
 def get_data():
@@ -61,3 +62,45 @@ class TestBasePytorchModel(TestCase):
                                     validation_data=(self.data["val_x"], self.data["val_y"]),
                                     epochs=20)
         assert val_result is not None
+
+    def test_evaluate(self):
+        modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator_pytorch,
+                                                 optimizer_creator=optimizer_creator,
+                                                 loss_creator=loss_creator)
+        model = modelBuilder.build(config={
+            "lr": 1e-2,
+            "batch_size": 32,
+        })
+        model.fit_eval(x=self.data["x"],
+                       y=self.data["y"],
+                       validation_data=(self.data["val_x"], self.data["val_y"]),
+                       epochs=20)
+        mse_eval = model.evaluate(x=self.data["val_x"], y=self.data["val_y"])
+        try:
+            import onnx
+            import onnxruntime
+            mse_eval_onnx = model.evaluate_with_onnx(x=self.data["val_x"], y=self.data["val_y"])
+            np.testing.assert_almost_equal(mse_eval, mse_eval_onnx)
+        except ImportError:
+            pass
+
+    def test_predict(self):
+        modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator_pytorch,
+                                                 optimizer_creator=optimizer_creator,
+                                                 loss_creator=loss_creator)
+        model = modelBuilder.build(config={
+            "lr": 1e-2,
+            "batch_size": 32,
+        })
+        model.fit_eval(x=self.data["x"],
+                       y=self.data["y"],
+                       validation_data=(self.data["val_x"], self.data["val_y"]),
+                       epochs=20)
+        pred = model.predict(x=self.data["val_x"])
+        try:
+            import onnx
+            import onnxruntime
+            pred_onnx = model.predict_with_onnx(x=self.data["val_x"])
+            np.testing.assert_almost_equal(pred, pred_onnx)
+        except ImportError:
+            pass

@@ -58,7 +58,8 @@ class TestZouwuModelTCNForecaster(TestCase):
                                    future_seq_len=5,
                                    input_feature_num=1,
                                    output_feature_num=1,
-                                   kernel_size=3,
+                                   kernel_size=4,
+                                   num_channels=[16, 16],
                                    lr=0.01)
         train_mse = forecaster.fit(train_data[0], train_data[1], epochs=2)
         test_pred = forecaster.predict(test_data[0])
@@ -71,7 +72,8 @@ class TestZouwuModelTCNForecaster(TestCase):
                                    future_seq_len=5,
                                    input_feature_num=1,
                                    output_feature_num=1,
-                                   kernel_size=3,
+                                   kernel_size=4,
+                                   num_channels=[16, 16],
                                    lr=0.01)
         train_mse = forecaster.fit(train_data[0], train_data[1], epochs=2)
         with tempfile.TemporaryDirectory() as tmp_dir_name:

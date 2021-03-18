@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
+import tempfile
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
@@ -31,6 +33,8 @@ class PytorchBaseModel(BaseModel):
         self.config = None
         self.model = None
         self.model_built = False
+        self.onnx_model = None
+        self.onnx_model_built = False
 
     def build(self, config):
         # check config and update
@@ -111,6 +115,12 @@ class PytorchBaseModel(BaseModel):
                                   batch_size=int(batch_size),
                                   shuffle=True)
         batch_idx = 0
+        tqdm = None
+        try:
+            from tqdm import tqdm
+            pbar = tqdm(total=len(train_loader))
+        except ImportError:
+            pass
         for x_batch, y_batch in train_loader:
             self.optimizer.zero_grad()
             yhat = self._forward(x_batch, y_batch)
@@ -119,6 +129,11 @@ class PytorchBaseModel(BaseModel):
             self.optimizer.step()
             total_loss += loss.item()
             batch_idx += 1
+            if tqdm:
+                pbar.set_description("Loss: {}".format(loss.item()))
+                pbar.update(1)
+        if tqdm:
+            pbar.close()
         train_loss = total_loss/batch_idx
         return train_loss
 
@@ -145,13 +160,20 @@ class PytorchBaseModel(BaseModel):
         for i in range(len(list(self.model.parameters()))):
             print(list(self.model.parameters())[i].size())
 
-    def evaluate(self, x, y, metric=['mse']):
+    def evaluate(self, x, y, metrics=['mse']):
+        # reshape 1dim input
+        x = self._reshape_input(x)
+        y = self._reshape_input(y)
+
         yhat = self.predict(x)
         eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput="raw_values")
-                       for m in metric]
+                       for m in metrics]
         return eval_result
 
     def predict(self, x, mc=False):
+        # reshape 1dim input
+        x = self._reshape_input(x)
+
         if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling predict!")
         x = PytorchBaseModel.to_torch(x).float()
@@ -197,6 +219,59 @@ class PytorchBaseModel(BaseModel):
     def restore(self, checkpoint_file):
         state_dict = torch.load(checkpoint_file)
         self.load_state_dict(state_dict)
+
+    def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None):
+        # reshape 1dim input
+        x = self._reshape_input(x)
+        y = self._reshape_input(y)
+
+        yhat = self.predict_with_onnx(x, dirname=dirname)
+        eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput="raw_values")
+                       for m in metrics]
+        return eval_result
+
+    def _build_onnx(self, x, dirname=None):
+        if not self.model_built:
+            raise RuntimeError("You must call fit_eval or restore\
+                               first before calling onnx methods!")
+        try:
+            import onnx
+            import onnxruntime
+        except:
+            print("You should install onnx and onnxruntime to use onnx based method.")
+        if dirname is None:
+            dirname = tempfile.mkdtemp(prefix="onnx_cache_")
+        # code adapted from
+        # https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html
+        torch.onnx.export(self.model,
+                          x,
+                          os.path.join(dirname, "cache.onnx"),
+                          export_params=True,
+                          opset_version=10,
+                          do_constant_folding=True,
+                          input_names=['input'],
+                          output_names=['output'],
+                          dynamic_axes={'input': {0: 'batch_size'},
+                                        'output': {0: 'batch_size'}})
+        self.onnx_model = onnx.load(os.path.join(dirname, "cache.onnx"))
+        onnx.checker.check_model(self.onnx_model)
+        self.ort_session = onnxruntime.InferenceSession(os.path.join(dirname, "cache.onnx"))
+        self.onnx_model_built = True
+
+    def predict_with_onnx(self, x, mc=False, dirname=None):
+        # reshape 1dim input
+        x = self._reshape_input(x)
+
+        x = PytorchBaseModel.to_torch(x).float()
+        if not self.onnx_model_built:
+            self._build_onnx(x[0:1], dirname=dirname)
+
+        def to_numpy(tensor):
+            return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
+
+        ort_inputs = {self.ort_session.get_inputs()[0].name: to_numpy(x)}
+        ort_outs = self.ort_session.run(None, ort_inputs)
+        return ort_outs[0]
 
     def _get_required_parameters(self):
         return {}
