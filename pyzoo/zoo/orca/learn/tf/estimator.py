@@ -25,7 +25,7 @@ from zoo.orca.data import SparkXShards
 from zoo.orca.learn.tf.utils import *
 from zoo.orca.learn.trigger import Trigger
 from zoo.orca.learn.utils import find_latest_checkpoint, convert_predict_rdd_to_xshard, \
-    convert_predict_rdd_to_dataframe
+    convert_predict_rdd_to_dataframe, process_xshards_of_pandas_dataframe
 from zoo.tfpark import KerasModel
 from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 from zoo.tfpark.tf_optimizer import StatelessMetric
@@ -44,20 +44,24 @@ class Estimator(SparkEstimator):
         Train the model with train data.
 
         :param data: train data. It can be XShards, Spark DataFrame, tf.data.Dataset.
-        If data is XShards, each partition is a dictionary of  {'x': feature,
-        'y': label}, where feature(label) is a numpy array or a tuple of numpy arrays.
+               If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+               {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
+               numpy arrays.
         :param epochs: number of epochs to train.
         :param batch_size: total batch size for each iteration. Default: 32.
-        :param feature_cols: feature column names if train data is Spark DataFrame.
-        :param label_cols: label column names if train data is Spark DataFrame.
+        :param feature_cols: feature column names if train data is Spark DataFrame or XShards
+         of Pandas Dataframe.
+        :param label_cols: label column names if train data is Spark DataFrame or XShards
+         of Pandas Dataframe.
         :param validation_data: validation data. Validation data type should be the same
-        as train data.
+               as train data.
         :param session_config: tensorflow session configuration for training.
-        Should be object of tf.ConfigProto
+               Should be object of tf.ConfigProto
         :param checkpoint_trigger: when to trigger checkpoint during training.
-        Should be a zoo.orca.learn.trigger, like EveryEpoch(), SeveralIteration(num_iterations),etc.
+               Should be a zoo.orca.learn.trigger, like EveryEpoch(), SeveralIteration(
+               num_iterations),etc.
         :param auto_shard_files: whether to automatically detect if the dataset is file-based and
-        and apply sharding on files, otherwise sharding on records. Default is False.
+               and apply sharding on files, otherwise sharding on records. Default is False.
         """
         raise NotImplementedError
 
@@ -66,19 +70,20 @@ class Estimator(SparkEstimator):
         Predict input data
 
         :param data: data to be predicted. It can be XShards, Spark DataFrame.
-        If data is XShards, each partition is a dictionary of  {'x': feature}, where feature is a
-        numpy array or a tuple of numpy arrays.
+               If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+               {'x': feature}, where feature is a numpy array or a tuple of numpy arrays.
         :param batch_size: batch size per thread
-        :param feature_cols: list of feature column names if input data is Spark DataFrame.
+        :param feature_cols: list of feature column names if input data is Spark DataFrame or
+        XShards of Pandas Dataframe.
         :param auto_shard_files: whether to automatically detect if the dataset is file-based and
-        and apply sharding on files, otherwise sharding on records. Default is False.
+               and apply sharding on files, otherwise sharding on records. Default is False.
         :return: predicted result.
-        If input data is XShards or tf.data.Dataset, the predict result is a XShards, each
-         partition of the XShards is a dictionary of {'prediction': result}, where the result is a
-         numpy array or a list of numpy arrays.
-        If input data is Spark DataFrame, the predict result is a DataFrame which includes original
-        columns plus 'prediction' column. The 'prediction' column can be FloatType, VectorUDT
-        or Array of VectorUDT depending on model outputs shape.
+                 If input data is XShards or tf.data.Dataset, the predict result is a XShards, each
+                 partition of the XShards is a dictionary of {'prediction': result}, where the
+                 result is a numpy array or a list of numpy arrays.
+                 If input data is Spark DataFrame, the predict result is a DataFrame which includes
+                 original columns plus 'prediction' column. The 'prediction' column can be
+                 FloatType, VectorUDT or Array of VectorUDT depending on model outputs shape.
         """
         raise NotImplementedError
 
@@ -88,14 +93,17 @@ class Estimator(SparkEstimator):
         Evaluate model.
 
         :param data: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
-        If data is XShards, each partition is a dictionary of  {'x': feature, 'y': label}, where
-        feature(label) is a numpy array or a tuple of numpy arrays.
-        If data is tf.data.Dataset, each element is a tuple of input tensors.
+               If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+               {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
+               numpy arrays.
+               If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param batch_size: batch size per thread.
-        :param feature_cols: feature_cols: feature column names if train data is Spark DataFrame.
-        :param label_cols: label column names if train data is Spark DataFrame.
+        :param feature_cols: feature_cols: feature column names if train data is Spark DataFrame or
+        XShards of Pandas Dataframe.
+        :param label_cols: label column names if train data is Spark DataFrame or XShards
+         of Pandas Dataframe.
         :param auto_shard_files: whether to automatically detect if the dataset is file-based and
-        and apply sharding on files, otherwise sharding on records. Default is False.
+               and apply sharding on files, otherwise sharding on records. Default is False.
         :return: evaluation result as a dictionary of {'metric name': metric value}
         """
         raise NotImplementedError
@@ -161,7 +169,7 @@ class Estimator(SparkEstimator):
         Get the scalar from model train summary
         Return list of summary data of [iteration_number, scalar_value, timestamp]
 
-        tag: The string variable represents the scalar wanted
+        :param tag: The string variable represents the scalar wanted
         """
         if self.tf_optimizer:
             return self.tf_optimizer.estimator.get_train_summary(tag)
@@ -192,7 +200,7 @@ class Estimator(SparkEstimator):
         'MeanAveragePrecision'      |   'PascalMeanAveragePrecision' (Zoo)
         'StatelessMetric'           |   '${name}'
 
-        tag: The string variable represents the scalar wanted
+        :param tag: The string variable represents the scalar wanted
         """
         if self.tf_optimizer:
             for val_method in self.tf_optimizer.tf_model.val_methods:
@@ -230,8 +238,8 @@ class Estimator(SparkEstimator):
         :param filepath: keras model weights save path.
         :param overwrite: Whether to silently overwrite any existing file at the target location.
         :param save_format: Either 'tf' or 'h5'. A `filepath` ending in '.h5' or
-            '.keras' will default to HDF5 if `save_format` is `None`. Otherwise
-            `None` defaults to 'tf'.
+               '.keras' will default to HDF5 if `save_format` is `None`. Otherwise
+               `None` defaults to 'tf'.
         """
         raise NotImplementedError
 
@@ -241,8 +249,8 @@ class Estimator(SparkEstimator):
 
         :param filepath: keras model weights save path.
         :param by_name: Boolean, whether to load weights by name or by topological
-            order. Only topological loading is supported for weight files in
-            TensorFlow format.
+               order. Only topological loading is supported for weight files in
+               TensorFlow format.
         """
         raise NotImplementedError
 
@@ -251,9 +259,9 @@ class Estimator(SparkEstimator):
         Load specified Orca checkpoint.
 
         :param path: checkpoint directory which contains model.* and
-        optimMethod-TFParkTraining.* files.
+               optimMethod-TFParkTraining.* files.
         :param version: checkpoint version, which is the suffix of model.* file,
-        i.e., for modle.4 file, the version is 4.
+               i.e., for modle.4 file, the version is 4.
         """
         self.load_checkpoint = True
         self.checkpoint_path = path
@@ -284,18 +292,18 @@ class Estimator(SparkEstimator):
         :param loss: The loss tensor of the TensorFlow model, should be a scalar
         :param optimizer: tensorflow optimization method.
         :param clip_norm: float >= 0. Gradients will be clipped when their L2 norm exceeds
-        this value.
+               this value.
         :param clip_value:  a float >= 0 or a tuple of two floats.
-        If clip_value is a float, gradients will be clipped when their absolute value
-        exceeds this value.
-        If clip_value is a tuple of two floats, gradients will be clipped when their value less
-        than clip_value[0] or larger than clip_value[1].
+               If clip_value is a float, gradients will be clipped when their absolute value
+               exceeds this value.
+               If clip_value is a tuple of two floats, gradients will be clipped when their value
+               less than clip_value[0] or larger than clip_value[1].
         :param metrics: metric tensor.
         :param updates: Collection for the update ops. For example, when performing batch
-        normalization, the moving_mean and moving_variance should be updated and the user should add
-        tf.GraphKeys.UPDATE_OPS to updates. Default is None.
+               normalization, the moving_mean and moving_variance should be updated and the user
+               should add tf.GraphKeys.UPDATE_OPS to updates. Default is None.
         :param sess: the current TensorFlow Session, if you want to used a pre-trained model,
-        you should use the Session to load the pre-trained variables and pass it to estimator
+               you should use the Session to load the pre-trained variables and pass it to estimator
         :param model_dir: location to save model checkpoint and summaries.
         :param backend: backend for estimator. Now it only can be "bigdl".
         :return: an Estimator object.
@@ -323,7 +331,7 @@ class Estimator(SparkEstimator):
         :param metrics: user specified metric.
         :param model_dir: location to save model checkpoint and summaries.
         :param optimizer: an optional orca optimMethod that will override the optimizer in
-                          keras_model.compile
+               keras_model.compile
         :param backend: backend for estimator. Now it only can be "bigdl".
         :return: an Estimator object.
         """
@@ -481,25 +489,29 @@ class TensorFlowEstimator(Estimator):
         Train this graph model with train data.
 
         :param data: train data. It can be XShards, Spark DataFrame, tf.data.Dataset.
-        If data is XShards, each partition is a dictionary of  {'x': feature,
-        'y': label}, where feature(label) is a numpy array or a tuple of numpy arrays.
-        If data is tf.data.Dataset, each element is a tuple of input tensors.
+               If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+               {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
+               numpy arrays.
+               If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param epochs: number of epochs to train.
         :param batch_size: total batch size for each iteration.
-        :param feature_cols: feature column names if train data is Spark DataFrame.
-        :param label_cols: label column names if train data is Spark DataFrame.
+        :param feature_cols: feature column names if train data is Spark DataFrame or XShards
+         of Pandas Dataframe.
+        :param label_cols: label column names if train data is Spark DataFrame or XShards of
+        Pandas Dataframe.
         :param validation_data: validation data. Validation data type should be the same
-        as train data.
+               as train data.
         :param auto_shard_files: whether to automatically detect if the dataset is file-based and
-        and apply sharding on files, otherwise sharding on records. Default is False.
+               and apply sharding on files, otherwise sharding on records. Default is False.
         :param session_config: tensorflow session configuration for training.
-        Should be object of tf.ConfigProto
+               Should be object of tf.ConfigProto
         :param feed_dict: a dictionary. The key is TensorFlow tensor, usually a
-        placeholder, the value of the dictionary is a tuple of two elements. The first one of
-        the tuple is the value to feed to the tensor in training phase and the second one
-        is the value to feed to the tensor in validation phase.
+               placeholder, the value of the dictionary is a tuple of two elements. The first one of
+               the tuple is the value to feed to the tensor in training phase and the second one
+               is the value to feed to the tensor in validation phase.
         :param checkpoint_trigger: when to trigger checkpoint during training.
-        Should be a zoo.orca.learn.trigger, like EveryEpoch(), SeveralIteration(num_iterations),etc.
+               Should be a zoo.orca.learn.trigger, like EveryEpoch(), SeveralIteration(
+               num_iterations),etc.
         """
 
         assert self.labels is not None, \
@@ -514,6 +526,16 @@ class TensorFlowEstimator(Estimator):
                 "feature columns is None; it should not be None in training"
             assert label_cols is not None, \
                 "label columns is None; it should not be None in training"
+
+        if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                assert feature_cols is not None, \
+                    "feature columns is None; it should not be None in training"
+                assert label_cols is not None, \
+                    "label columns is None; it should not be None in training"
+                data, validation_data = process_xshards_of_pandas_dataframe(data, feature_cols,
+                                                                            label_cols,
+                                                                            validation_data, "fit")
 
         if checkpoint_trigger is not None:
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
@@ -572,19 +594,20 @@ class TensorFlowEstimator(Estimator):
         Predict input data
 
         :param data: data to be predicted. It can be XShards, Spark DataFrame.
-        If data is XShards, each partition is a dictionary of  {'x': feature}, where feature is a
-        numpy array or a tuple of numpy arrays.
+               If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+               {'x': feature}, where feature is a numpy array or a tuple of numpy arrays.
         :param batch_size: batch size per thread
-        :param feature_cols: list of feature column names if input data is Spark DataFrame.
+        :param feature_cols: list of feature column names if input data is Spark DataFrame
+        or XShards of Pandas DataFrame.
         :param auto_shard_files: whether to automatically detect if the dataset is file-based and
-        and apply sharding on files, otherwise sharding on records. Default is False.
+               and apply sharding on files, otherwise sharding on records. Default is False.
         :return: predicted result.
-         If input data is XShards or tf.data.Dataset, the predict result is a XShards, each
-         partition of the XShards is a dictionary of {'prediction': result}, where the result is a
-         numpy array or a list of numpy arrays.
-         If input data is Spark DataFrame, the predict result is a DataFrame which includes original
-         columns plus 'prediction' column. The 'prediction' column can be FloatType, VectorUDT
-         or Array of VectorUDT depending on model outputs shape.
+                 If input data is XShards or tf.data.Dataset, the predict result is a XShards, each
+                 partition of the XShards is a dictionary of {'prediction': result}, where the
+                 result is a numpy array or a list of numpy arrays.
+                 If input data is Spark DataFrame, the predict result is a DataFrame which includes
+                 original columns plus 'prediction' column. The 'prediction' column can be
+                 FloatType, VectorUDT or Array of VectorUDT depending on model outputs shape.
         """
 
         assert self.outputs is not None, \
@@ -592,6 +615,11 @@ class TensorFlowEstimator(Estimator):
         if isinstance(data, DataFrame):
             assert feature_cols is not None, \
                 "feature columns is None; it should not be None in prediction"
+        if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                assert feature_cols is not None, \
+                    "feature columns is None; it should not be None in prediction"
+                data = process_xshards_of_pandas_dataframe(data, feature_cols)
 
         assert not is_tf_data_dataset(data), "tf.data.Dataset currently cannot be used for" \
                                              "estimator prediction"
@@ -625,14 +653,17 @@ class TensorFlowEstimator(Estimator):
         Evaluate model.
 
         :param data: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
-        If data is XShards, each partition is a dictionary of  {'x': feature, 'y': label}, where
-        feature(label) is a numpy array or a tuple of numpy arrays.
-        If data is tf.data.Dataset, each element is a tuple of input tensors.
+               If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+               {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
+               numpy arrays.
+               If data is tf.data.Dataset, each element is a tuple of input tensors.
         :param batch_size: batch size per thread.
-        :param feature_cols: feature_cols: feature column names if train data is Spark DataFrame.
-        :param label_cols: label column names if train data is Spark DataFrame.
+        :param feature_cols: feature_cols: feature column names if train data is Spark DataFrame
+        or XShards of Pandas DataFrame.
+        :param label_cols: label column names if train data is Spark DataFrame or XShards
+         of Pandas DataFrame.
         :param auto_shard_files: whether to automatically detect if the dataset is file-based and
-        and apply sharding on files, otherwise sharding on records. Default is False.
+               and apply sharding on files, otherwise sharding on records. Default is False.
         :return: evaluation result as a dictionary of {'metric name': metric value}
         """
 
@@ -644,6 +675,14 @@ class TensorFlowEstimator(Estimator):
                 "feature columns is None; it should not be None in evaluation"
             assert label_cols is not None, \
                 "label columns is None; it should not be None in evaluation"
+
+        if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                assert feature_cols is not None, \
+                    "feature columns is None; it should not be None in evaluation"
+                assert label_cols is not None, \
+                    "label columns is None; it should not be None in evaluation"
+                data = process_xshards_of_pandas_dataframe(data, feature_cols, label_cols)
 
         dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
                              validation_data=None,
@@ -704,6 +743,12 @@ class TensorFlowEstimator(Estimator):
         """
         raise NotImplementedError
 
+    def shutdown(self):
+        """
+        Close TensorFlow session and release resources.
+        """
+        self.sess.close()
+
 
 class KerasEstimator(Estimator):
     def __init__(self, keras_model, metrics, model_dir, optimizer):
@@ -735,21 +780,26 @@ class KerasEstimator(Estimator):
         Train this keras model with train data.
 
         :param data: train data. It can be XShards, Spark DataFrame, tf.data.Dataset.
-        If data is XShards, each partition is a dictionary of  {'x': feature,
-        'y': label}, where feature(label) is a numpy array or a tuple of numpy arrays.
-        If data is tf.data.Dataset, each element is [feature tensor tuple, label tensor tuple]
+               If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+               {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
+               numpy arrays.
+               If data is tf.data.Dataset, each element is [feature tensor tuple, label tensor
+               tuple]
         :param epochs: number of epochs to train.
         :param batch_size: total batch size for each iteration.
-        :param feature_cols: feature column names if train data is Spark DataFrame.
-        :param label_cols: label column names if train data is Spark DataFrame.
+        :param feature_cols: feature column names if train data is Spark DataFrame or XShards
+         of Pandas DataFrame.
+        :param label_cols: label column names if train data is Spark DataFrame or XShards of
+        Pandas DataFrame.
         :param validation_data: validation data. Validation data type should be the same
-        as train data.
+               as train data.
         :param session_config: tensorflow session configuration for training.
-        Should be object of tf.ConfigProto
+               Should be object of tf.ConfigProto
         :param checkpoint_trigger: when to trigger checkpoint during training.
-        Should be a zoo.orca.learn.trigger, like EveryEpoch(), SeveralIteration(num_iterations),etc.
+               Should be a zoo.orca.learn.trigger, like EveryEpoch(), SeveralIteration(
+               num_iterations),etc.
         :param auto_shard_files: whether to automatically detect if the dataset is file-based and
-        and apply sharding on files, otherwise sharding on records. Default is False.
+               and apply sharding on files, otherwise sharding on records. Default is False.
         """
 
         if isinstance(data, DataFrame):
@@ -770,6 +820,17 @@ class KerasEstimator(Estimator):
                     "If validation_data is tf.data.Dataset, each element should be " \
                     "(feature tensors, label tensor), where each feature/label tensor can be " \
                     "either a single tensor or a tuple of tensors"
+
+        if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                assert feature_cols is not None, \
+                    "feature columns is None; it should not be None in training"
+                assert label_cols is not None, \
+                    "label columns is None; it should not be None in training"
+                data, validation_data = process_xshards_of_pandas_dataframe(data, feature_cols,
+                                                                            label_cols,
+                                                                            validation_data,
+                                                                            "fit")
 
         if checkpoint_trigger is not None:
             checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
@@ -816,26 +877,34 @@ class KerasEstimator(Estimator):
         Predict input data
 
         :param data: data to be predicted.
-        It can be XShards, Spark DataFrame, or tf.data.Dataset.
-        If data is XShards, each partition is a dictionary of  {'x': feature}, where feature is a
-        numpy array or a tuple of numpy arrays.
-        If data is tf.data.Dataset, each element is feature tensor tuple
+               It can be XShards, Spark DataFrame, or tf.data.Dataset.
+               If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+               {'x': feature}, where feature is a numpy array or a tuple of numpy arrays.
+               If data is tf.data.Dataset, each element is feature tensor tuple
         :param batch_size: batch size per thread
-        :param feature_cols: list of feature column names if input data is Spark DataFrame.
+        :param feature_cols: list of feature column names if input data is Spark DataFrame or
+        XShards
+         of Pandas DataFrame.
         :param auto_shard_files: whether to automatically detect if the dataset is file-based and
-        and apply sharding on files, otherwise sharding on records. Default is False.
+               and apply sharding on files, otherwise sharding on records. Default is False.
         :return: predicted result.
-         If input data is XShards or tf.data.Dataset, the predict result is also a XShards,
-         and the schema for each result is: {'prediction': predicted numpy array or
-          list of predicted numpy arrays}.
-         If input data is Spark DataFrame, the predict result is a DataFrame which includes
-         original columns plus 'prediction' column. The 'prediction' column can be FloatType,
-         VectorUDT or Array of VectorUDT depending on model outputs shape.
+                 If input data is XShards or tf.data.Dataset, the predict result is also a XShards,
+                 and the schema for each result is: {'prediction': predicted numpy array or
+                 list of predicted numpy arrays}.
+                 If input data is Spark DataFrame, the predict result is a DataFrame which includes
+                 original columns plus 'prediction' column. The 'prediction' column can be
+                 FloatType, VectorUDT or Array of VectorUDT depending on model outputs shape.
         """
 
         if isinstance(data, DataFrame):
             assert feature_cols is not None, \
                 "feature columns is None; it should not be None in prediction"
+
+        if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                assert feature_cols is not None, \
+                    "feature columns is None; it should not be None in prediction"
+                data = process_xshards_of_pandas_dataframe(data, feature_cols)
 
         assert not is_tf_data_dataset(data), "tf.data.Dataset currently cannot be used for" \
                                              "estimator prediction"
@@ -865,14 +934,18 @@ class KerasEstimator(Estimator):
         Evaluate model.
 
         :param data: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
-        If data is XShards, each partition is a dictionary of  {'x': feature, 'y': label}, where
-        feature(label) is a numpy array or a tuple of numpy arrays.
-        If data is tf.data.Dataset, each element is [feature tensor tuple, label tensor tuple]
+               If data is XShards, each partition can be Pandas Dataframe or a dictionary of
+               {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
+               numpy arrays.
+               If data is tf.data.Dataset, each element is [feature tensor tuple, label tensor
+               tuple]
         :param batch_size: batch size per thread.
-        :param feature_cols: feature_cols: feature column names if train data is Spark DataFrame.
-        :param label_cols: label column names if train data is Spark DataFrame.
+        :param feature_cols: feature_cols: feature column names if train data is Spark DataFrame or
+        XShards of Pandas DataFrame.
+        :param label_cols: label column names if train data is Spark DataFrame or XShards
+         of Pandas DataFrame.
         :param auto_shard_files: whether to automatically detect if the dataset is file-based and
-        and apply sharding on files, otherwise sharding on records. Default is False.
+               and apply sharding on files, otherwise sharding on records. Default is False.
         :return: evaluation result as a dictionary of {'metric name': metric value}
         """
 
@@ -881,6 +954,14 @@ class KerasEstimator(Estimator):
                 "feature columns is None; it should not be None in evaluation"
             assert label_cols is not None, \
                 "label columns is None; it should not be None in evaluation"
+
+        if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                assert feature_cols is not None, \
+                    "feature columns is None; it should not be None in evaluation"
+                assert label_cols is not None, \
+                    "label columns is None; it should not be None in evaluation"
+                data = process_xshards_of_pandas_dataframe(data, feature_cols, label_cols)
 
         dataset = to_dataset(data, batch_size=-1, batch_per_thread=batch_size,
                              validation_data=None,
@@ -962,8 +1043,8 @@ class KerasEstimator(Estimator):
         :param filepath: keras model weights save path.
         :param overwrite: Whether to silently overwrite any existing file at the target location.
         :param save_format: Either 'tf' or 'h5'. A `filepath` ending in '.h5' or
-            '.keras' will default to HDF5 if `save_format` is `None`. Otherwise
-            `None` defaults to 'tf'.
+               '.keras' will default to HDF5 if `save_format` is `None`. Otherwise
+               `None` defaults to 'tf'.
         """
         self.model.save_weights(filepath, overwrite, save_format)
 
@@ -973,7 +1054,7 @@ class KerasEstimator(Estimator):
 
         :param filepath: keras model weights save path.
         :param by_name: Boolean, whether to load weights by name or by topological
-            order. Only topological loading is supported for weight files in
-            TensorFlow format.
+               order. Only topological loading is supported for weight files in
+               TensorFlow format.
         """
         self.model.load_weights(filepath, by_name)

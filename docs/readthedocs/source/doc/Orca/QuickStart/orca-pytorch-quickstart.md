@@ -12,6 +12,7 @@
 
 [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) is needed to prepare the Python environment for running this example. Please refer to the [install guide](../../UserGuide/python.md) for more details.
 
+
 ```bash
 conda create -n zoo python=3.7 # zoo is conda environment name, you can use any name you like.
 conda activate zoo
@@ -126,7 +127,6 @@ def test_loader_creator():
         batch_size=320, shuffle=False)
     return test_loader
 ```
-
 
 ### **Step 4: Fit with Orca Estimator**
 
