@@ -34,6 +34,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.Merge.merge
 import com.intel.analytics.zoo.pipeline.api.keras.layers.{Dense, Input}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import org.apache.flink.types.Nothing
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.MinMaxScaler
@@ -362,7 +363,7 @@ class NNEstimatorSpec extends ZooSpecHelper {
     val df = sqlContext.createDataFrame(data).toDF("features", "label")
     val estimator = NNEstimator(model, criterion, Array(6), Array(1))
       .setBatchSize(4)
-      .setValidation(None, None, Array(new Loss[Float]()), 2)
+      .setValidation(null, null, Array(new Loss[Float]()), 2)
       .setValidationSummary(ValidationSummary(logdir.getPath, "NNEstimatorValidation"))
 
     val result = estimator.internalEval(df)
