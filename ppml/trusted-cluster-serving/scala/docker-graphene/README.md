@@ -71,7 +71,7 @@ sudo docker run -itd \
 ```
 
 #### In distributed mode
-##### setup passwordless ssh login to all the  nodes.
+##### setup passwordless ssh login to all the nodes.
 ##### config the environments for master, workers, docker image and security keys/passowrd files.
 ```bash
 nano environments.sh
