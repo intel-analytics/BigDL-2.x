@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.nnframes.python
 
-import java.util.{ArrayList => JArrayList, List => JList, Map => JMap}
+import java.util.{ArrayList => JArrayList, List => JList}
 
 import com.intel.analytics.bigdl.dataset.{Sample, Transformer}
 import com.intel.analytics.bigdl.optim.{OptimMethod, Trigger, ValidationMethod, ValidationResult}

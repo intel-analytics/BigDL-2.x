@@ -257,7 +257,7 @@ class BigDLEstimator(OrcaSparkEstimator):
             self.nn_estimator.setNNBatchSize(batch_size).setNNFeaturesCol(feature_cols) \
                 .setNNLabelCol(label_cols)
 
-            self.nn_estimator.setValidation(None, data,
+            self.nn_estimator.setValidation(None, None,
                                             self.metrics, batch_size)
             if self.log_dir is not None and self.app_name is not None:
                 from bigdl.optim.optimizer import TrainSummary
