@@ -347,6 +347,28 @@ class TestTFRayEstimator(TestCase):
                          label_cols=["label"])
         trainer.predict(df, feature_cols=["feature"]).collect()
 
+    def test_pandas_dataframe(self):
+
+        file_path = os.path.join(resource_path, "orca/learn/ncf2.csv")
+        train_data_shard = zoo.orca.data.pandas.read_csv(file_path)
+
+        config = {
+            "lr": 0.8
+        }
+
+        trainer = Estimator.from_keras(
+            model_creator=model_creator,
+            verbose=True,
+            config=config,
+            workers_per_node=2)
+
+        trainer.fit(train_data_shard, epochs=1, batch_size=4, steps_per_epoch=25,
+                    feature_cols=["user"],
+                    label_cols=["label"])
+        trainer.evaluate(train_data_shard, batch_size=4, num_steps=25, feature_cols=["user"],
+                         label_cols=["label"])
+        trainer.predict(train_data_shard, feature_cols=["user"]).collect()
+
     def test_dataframe_shard_size(self):
         from zoo.orca import OrcaContext
         OrcaContext._shard_size = 3

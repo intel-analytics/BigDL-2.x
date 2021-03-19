@@ -173,7 +173,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
 
         :param data: train data. It can be XShards, Spark DataFrame or creator function which
                returns Iter or DataLoader.
-               If data is XShards, each partition can be Pandas DataFrame or a dictionary of
+               If data is XShards, each partition can be a Pandas DataFrame or a dictionary of
                {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
                numpy arrays.
         :param epochs: Number of epochs to train the model. Default: 1.
@@ -272,7 +272,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
 
         :param data: evaluate data. It can be XShards, Spark DataFrame or creator function which
                returns Iter or DataLoader.
-               If data is XShards, each partition can be Pandas DataFrame or a dictionary of
+               If data is XShards, each partition can be a Pandas DataFrame or a dictionary of
                {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
                numpy arrays.
         :param batch_size: Batch size used for evaluation. Default: 32.
@@ -359,7 +359,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         Predict the input data
 
         :param data: predict input data.  It can be XShards or Spark DataFrame.
-               If data is XShards, each partition can be Pandas DataFrame or a dictionary of
+               If data is XShards, each partition can be a Pandas DataFrame or a dictionary of
                {'x': feature}, where feature is a numpy array or a tuple of numpy arrays.
         :param batch_size: Batch size used for inference. Default: None.
         :param verbose: Prints output of one model if true.
