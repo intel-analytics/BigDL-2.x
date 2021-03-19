@@ -140,15 +140,15 @@ class TestEstimatorForKeras(TestCase):
             assert abs(res5_c[idx]["prediction"][0][1] - res6_c[idx]["prediction"][1]) == 0
 
     def test_nnEstimator_evaluation(self):
-        df, _ = self.get_estimator_df2()
+        df = self.get_estimator_df2()
         linear_model = Sequential().add(Linear(2, 2)).add(LogSoftMax())
 
         est = Estimator.from_bigdl(model=linear_model, loss=ClassNLLCriterion(), optimizer=Adam(),
                                    feature_preprocessing=SeqToTensor([2]),
                                    label_preprocessing=SeqToTensor([1]),
                                    metrics=Accuracy())
-        est.fit(data=df, epochs=10, batch_size=6, validation_data=df, validation_trigger=EveryEpoch())
-        result = est.evaluate(df, batch_size=4)
+        est.fit(data=df, epochs=10, batch_size=8)
+        result = est.evaluate(df, batch_size=8)
 
         shift = udf(lambda p: float(p.index(max(p))), DoubleType())
         pred = est.predict(df).withColumn("prediction", shift(col('prediction'))).cache()

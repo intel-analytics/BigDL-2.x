@@ -386,19 +386,19 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
     def setNNBatchSize(self, batch_size):
         pythonBigDL_method_name = "setNNBatchSize"
         callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
-                           batch_size)
+                    batch_size)
         return self
 
     def setNNFeaturesCol(self, feature_cols):
         pythonBigDL_method_name = "setNNFeaturesCol"
         callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
-                           feature_cols)
+                    feature_cols)
         return self
 
     def setNNLabelCol(self, label_cols):
         pythonBigDL_method_name = "setNNLabelCol"
         callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
-                           label_cols)
+                    label_cols)
         return self
 
     def clearGradientClipping(self):
