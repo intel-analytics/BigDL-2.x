@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
+import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.log4j.Logger
 
 /**
@@ -32,6 +33,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
                               filterType: String = "",
                               batchSize: Int = 4,
                               resizeFlag: Boolean = true,
+                              recordEncrypted: Boolean = false,
                               batchDisabled: Boolean = false) {
   val logger = Logger.getLogger(getClass)
 

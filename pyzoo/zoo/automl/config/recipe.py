@@ -220,7 +220,7 @@ class GridRandomRecipe(Recipe):
 
             # ----------- optimization parameters
             "lr": tune.uniform(0.001, 0.01),
-            "batch_size": tune.choice([32, 64], replace=False),
+            "batch_size": tune.choice([32, 64]),
             "epochs": self.epochs,
             "past_seq_len": self.past_seq_config,
         }
@@ -548,7 +548,7 @@ class RandomRecipe(Recipe):
 
             # ----------- optimization parameters
             "lr": tune.uniform(0.001, 0.01),
-            "batch_size": tune.choice([32, 64, 1024], replace=False),
+            "batch_size": tune.choice([32, 64, 1024]),
             "epochs": self.epochs,
             "past_seq_len": self.past_seq_config,
         }

@@ -81,6 +81,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
   var redisSecureTrustStoreToken: String = null
 
   var modelEncrypted: Boolean = false
+  var recordEncrypted: Boolean = false
 
   /**
    * Initialize the parameters by loading config file
@@ -132,6 +133,7 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
     redisSecureTrustStoreToken = getYaml(
       secureConfig, "secure_struct_store_password", "1234qwer").asInstanceOf[String]
     modelEncrypted = getYaml(secureConfig, "model_encrypted", false).asInstanceOf[Boolean]
+    recordEncrypted = getYaml(secureConfig, "record_encrypted", false).asInstanceOf[Boolean]
 
     val typeStr = getYaml(dataConfig, "type", "image")
     require(typeStr != null, "data type in config must be specified.")
