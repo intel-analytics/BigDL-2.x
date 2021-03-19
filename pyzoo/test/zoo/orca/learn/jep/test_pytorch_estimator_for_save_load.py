@@ -91,7 +91,7 @@ class TestEstimatorForSaveAndLoad(TestCase):
         paras1 = list(est.get_model().named_parameters())
         est.save("model_epoch_1")
 
-        # epoch 2       
+        # epoch 2
         est.fit(data=train_loader, epochs=2, validation_data=test_loader, batch_size=batch_size,
                 checkpoint_trigger=EveryEpoch())
         paras2 = list(est.get_model().named_parameters())
