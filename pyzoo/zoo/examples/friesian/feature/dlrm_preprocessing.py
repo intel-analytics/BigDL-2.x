@@ -83,7 +83,7 @@ if __name__ == '__main__':
     # tbl_all_data = tbl_all_data.merge(INT_COLS, "X_int").merge(CAT_COLS, "X_cat")
     # tbl_all_data.compute()
     preprocessed = dlrm_preprocess(paths, CAT_COLS, INT_COLS, args.frequency_limit)
-    preprocessed.count()
+    # preprocessed.count()
     time_end = time()
     print("Train data loading and preprocessing time: ", time_end - time_start)
     # tbl_all_data.df.show(5)

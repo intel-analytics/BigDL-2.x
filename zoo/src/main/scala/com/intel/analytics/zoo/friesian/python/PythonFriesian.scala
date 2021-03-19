@@ -42,9 +42,10 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   val numericTypes: List[String] = List("long", "double", "integer")
 
   def dlrmPreprocess(paths: JList[String], CATColumns: JList[String], INTColumns: JList[String],
-                     frequencyLimit: String = null): JavaRDD[(Int, JList[Float], JList[Int])] = {
+                     frequencyLimit: String = null): Unit = {
 //    val CATCols = CATColumns.asScala
 //    val INTCols = INTColumns.asScala
+    val start = System.nanoTime()
     val df = readParquet(paths)
     val dfStringIdxList = assignStringIdx2(df, CATColumns, frequencyLimit)
     var allDataDf = readParquet(paths.subList(0, paths.size() - 1))
@@ -94,7 +95,9 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       // (y, X_int, X_cat)
       (row.getInt(0), intFeatures.toList.asJava, catFeatures.toList.asJava)
     })
-    preprocessed
+    preprocessed.count()
+    val end = System.nanoTime
+    println("scala process time: " + (end - start) / 1e9d)
   }
 
   def readParquet(paths: JList[String]): DataFrame = {
