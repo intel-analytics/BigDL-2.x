@@ -77,11 +77,11 @@ sudo docker run -itd \
     
 sudo docker exec -it spark-local bash
 cd ppml/trusted-bid-data-ml
-./init.sh
 ```
 
 ##### Example Test 1 
 ```bash
+./init.sh
 vim start-spark-local-pi-sgx.sh
 ```
 Add these code in the `start-spark-local-pi-sgx.sh` file: <br>
@@ -128,6 +128,7 @@ The result should look like: <br>
 
 ##### Example Test 2
 ```bash
+./init.sh
 ./start-spark-local-train-sgx.sh
 ```
 
@@ -154,6 +155,7 @@ Copy TPC-H to container: <br>
 docker cp tpch-spark/ spark-local:/ppml/trusted-big-data-ml/work
 sudo docker exec -it spark-local bash
 cd ppml/trusted-big-data-ml/
+./init.sh
 vim start-spark-local-tpc-h-sgx.sh
 ```
 
@@ -164,7 +166,7 @@ Add these code in the `start-spark-local-tpc-h-sgx.sh` file: <br>
 set -x
 
 SGX=1 ./pal_loader /opt/jdk8/bin/java \
-        -cp '/ppml/trusted-big-data-ml/work/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar:/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+        -cp '/ppml/trusted-big-data-ml/work/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar:/ppml/trusted-big-data-ml/work/tpch-spark/dbgen/*:/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
         -Xmx10g \
         -Dbigdl.mklNumThreads=1 \
         -XX:ActiveProcessorCount=24 \
@@ -179,11 +181,12 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
         --conf spark.driver.host=127.0.0.1 \
         --conf spark.driver.blockManager.port=10026 \
         --conf spark.io.compression.codec=lz4 \
-        --class "main.scala.TpchQuery" \
+        --class main.scala.TpchQuery \
         --executor-cores 4 \
         --total-executor-cores 4 \
         --executor-memory 10G \
-        /ppml/trusted-big-data-ml/work/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar | tee spark.local.tpc.h.sgx.log
+        /ppml/trusted-big-data-ml/work/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar \
+        /ppml/trusted-big-data-ml/work/tpch-spark/dbgen | tee spark.local.tpc.h.sgx.log
 ```
 
 Then run the script to run TPC-H test in spark: <br>
@@ -195,13 +198,5 @@ Open another terminal and check the log: <br>
 ```bash
 sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.tpc.h.sgx.log | egrep "###|INFO"
 ```
-The result should look like: <br>
->   INFO Executor: Finished task 6.0 in stage 286.0 (TID 25381). 7928 bytes result sent to driver
->   INFO TaskSetManager: Finished task 6.0 in stage 286.0 (TID 25381) in 13 ms on localhost (executor driver) (7/7)
->   INFO TaskSchedulerImpl: Removed TaskSet 286.0, whose tasks have all completed, from pool <br>
->   INFO DAGScheduler: ResultStage 286 (save at TpchQuery.scala:42) finished in 0.040 s <br>
->   INFO DAGScheduler: Job 37 finished: save at TpchQuery.scala:42, took 0.226678 s <br>
->   INFO FileFormatWriter: Write Job badb70fd-2b10-47ef-b58a-f1bfc3e026ca committed. <br>
->   INFO FileFormatWriter: Finished processing stats for write job badb70fd-2b10-47ef-b58a-f1bfc3e026ca. <br>
 
 #### In spark standalone cluster mode
