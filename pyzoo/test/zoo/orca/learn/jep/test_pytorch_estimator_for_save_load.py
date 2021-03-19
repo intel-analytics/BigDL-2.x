@@ -24,10 +24,9 @@ from torchvision import datasets, transforms
 
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca import OrcaContext
-from zoo.orca.learn.pytorch import Estimator 
+from zoo.orca.learn.pytorch import Estimator
 from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch
-
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
@@ -51,11 +50,11 @@ class TestEstimatorForSaveAndLoad(TestCase):
             def __init__(self):
                 super(Network, self).__init__()
 
-                self.fc1 = nn.Linear(28*28, 500)
+                self.fc1 = nn.Linear(28 * 28, 500)
                 self.fc2 = nn.Linear(500, 10)
 
             def forward(self, x):
-                x = x.view(-1, 28*28)
+                x = x.view(-1, 28 * 28)
                 x = F.relu(self.fc1(x))
                 x = self.fc2(x)
                 return F.log_softmax(x, dim=1)
@@ -65,26 +64,26 @@ class TestEstimatorForSaveAndLoad(TestCase):
         criterion = nn.NLLLoss()
         adam = torch.optim.Adam(model.parameters(), 0.001)
 
-        dir='./dataset'
-        batch_size=320
+        dir = "./dataset"
+        batch_size = 320
         train_loader = torch.utils.data.DataLoader(
-                datasets.MNIST(dir, train=True, download=True,
-                               transform=transforms.Compose([
-                                   transforms.ToTensor(),
-                                    transforms.Normalize((0.1307,), (0.3081,))
-                               ])),
-                batch_size= batch_size, shuffle=True)
+            datasets.MNIST(dir, train=True, download=True,
+                           transform=transforms.Compose([
+                               transforms.ToTensor(),
+                               transforms.Normalize((0.1307,), (0.3081,))
+                           ])),
+            batch_size=batch_size, shuffle=True)
 
         test_loader = torch.utils.data.DataLoader(
-                datasets.MNIST(dir, train=False,
-                               transform=transforms.Compose([
-                                   transforms.ToTensor(),
-                                   transforms.Normalize((0.1307,), (0.3081,))
-                               ])),
-                batch_size=batch_size, shuffle=False)
+            datasets.MNIST(dir, train=False,
+                           transform=transforms.Compose([
+                               transforms.ToTensor(),
+                               transforms.Normalize((0.1307,), (0.3081,))
+                           ])),
+            batch_size=batch_size, shuffle=False)
 
         # epoch 1
-        est = Estimator.from_torch(model=model, optimizer=adam, loss=criterion, 
+        est = Estimator.from_torch(model=model, optimizer=adam, loss=criterion,
                                    metrics=[Accuracy()])
 
         est.fit(data=train_loader, epochs=1, validation_data=test_loader, batch_size=batch_size,
@@ -93,7 +92,7 @@ class TestEstimatorForSaveAndLoad(TestCase):
         est.save("model_epoch_1")
 
         # epoch 2       
-        est.fit(data=train_loader, epochs=2, validation_data=test_loader, batch_size=batch_size, 
+        est.fit(data=train_loader, epochs=2, validation_data=test_loader, batch_size=batch_size,
                 checkpoint_trigger=EveryEpoch())
         paras2 = list(est.get_model().named_parameters())
         est.load("model_epoch_1")
