@@ -54,6 +54,9 @@ class FlinkRedisSink(params: ClusterServingHelper)
   }
 }
 ```
+Please note that normally you should do the space (memory or disk) control of your data pipeline in your code.
+
+
 Please locate Flink Source and Flink Sink code to `com/intel/analytics/zoo/serving/engine/`
 
 If you have some method which need to be wrapped as a class, you could locate them in `com/intel/analytics/zoo/serving/pipeline/`
