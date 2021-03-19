@@ -21,16 +21,14 @@ import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.friesian.feature.Utils
 import java.util.{List => JList}
 
-import org.apache.spark.rdd.RDD
-import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{array, broadcast, col, row_number, spark_partition_id, udf}
+import org.apache.spark.sql.functions.{array, broadcast, col, log, row_number, spark_partition_id, udf}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
-import scala.math.log
+import scala.math.{log => mathlog}
 
 object PythonFriesian {
   def ofFloat(): PythonFriesian[Float] = new PythonFriesian[Float]()
@@ -41,7 +39,7 @@ object PythonFriesian {
 class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo[T] {
   val numericTypes: List[String] = List("long", "double", "integer")
 
-  def dlrmPreprocess(paths: JList[String], CATColumns: JList[String], INTColumns: JList[String],
+  def dlrmPreprocessRDD(paths: JList[String], CATColumns: JList[String], INTColumns: JList[String],
                      frequencyLimit: String = null): Unit = {
 //    val CATCols = CATColumns.asScala
 //    val INTCols = INTColumns.asScala
@@ -59,19 +57,6 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         .drop(colName)
         .withColumnRenamed("id", colName)
     }
-//    val allColumns = INTCols ++ CATCols
-//    allDataDf = fillNaInt(allDataDf, 0, allColumns.asJava)
-//    val zeroThreshold = (value: Int) => {
-//      if (value < 0) 0 else value
-//    }
-//
-//    val zeroThresholdUDF = udf(zeroThreshold)
-//    for(colName <- INTCols) {
-//      allDataDf = allDataDf.withColumn(colName, log(zeroThresholdUDF(col(colName)) + 1))
-//    }
-//    allDataDf = allDataDf.withColumn("X_int", array(INTCols.map(x => col(x)):_*))
-//    allDataDf = allDataDf.withColumn("X_cat", array(CATCols.map(x => col(x)):_*))
-//    allDataDf = allDataDf.select(col("_c0"), col("X_int"), col("X_cat"))
     val preprocessed = allDataDf.rdd.map(row => {
       val intFeatures = new ArrayBuffer[Float]()
       for( i <- 1 to 13) {
@@ -80,7 +65,11 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         }
         else {
           val intFeature = row.getInt(i)
-          if (intFeature < 0) intFeatures.append(0) else intFeatures.append(log(intFeature + 1).toFloat)
+          if (intFeature < 0) {
+            intFeatures.append(0)
+          } else {
+            intFeatures.append(mathlog(intFeature + 1).toFloat)
+          }
         }
       }
       val catFeatures = new ArrayBuffer[Int]()
@@ -98,6 +87,52 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     preprocessed.count()
     val end = System.nanoTime
     println("scala process time: " + (end - start) / 1e9d)
+  }
+
+  def dlrmPreprocessReturnDF(paths: JList[String], CATColumns: JList[String],
+                             INTColumns: JList[String],
+                             frequencyLimit: String = null): DataFrame = {
+    val CATCols = CATColumns.asScala
+    val INTCols = INTColumns.asScala
+    val start = System.nanoTime()
+    val df = readParquet(paths)
+    val dfStringIdxList = assignStringIdx2(df, CATColumns, frequencyLimit)
+    var allDataDf = readParquet(paths.subList(0, paths.size() - 1))
+    for (i <- 0 until CATColumns.size()) {
+      val colName = CATColumns.get(i)
+      val model = dfStringIdxList.get(i)
+      // missing check would_broadcast
+      val broadcastModel = broadcast(model)
+      allDataDf = allDataDf
+        .join(broadcastModel, allDataDf(colName) === broadcastModel(colName), joinType="left")
+        .drop(colName)
+        .withColumnRenamed("id", colName)
+    }
+    val allColumns = INTCols ++ CATCols
+    allDataDf = fillNaInt(allDataDf, 0, allColumns.asJava)
+    val zeroThreshold = (value: Int) => {
+      if (value < 0) 0 else value
+    }
+
+    val zeroThresholdUDF = udf(zeroThreshold)
+    for(colName <- INTCols) {
+      allDataDf = allDataDf.withColumn(colName, log(zeroThresholdUDF(col(colName)) + 1))
+    }
+    allDataDf = allDataDf.withColumn("X_int", array(INTCols.map(x => col(x)):_*))
+    allDataDf = allDataDf.withColumn("X_cat", array(CATCols.map(x => col(x)):_*))
+    allDataDf = allDataDf.select(col("_c0"), col("X_int"), col("X_cat"))
+    val end = System.nanoTime
+    println("scala process time: " + (end - start) / 1e9d)
+    allDataDf
+  }
+
+  def dlrmPreprocess(paths: JList[String], CATColumns: JList[String], INTColumns: JList[String],
+                     frequencyLimit: String = null): Unit = {
+    val start = System.nanoTime()
+    val allDataDf = dlrmPreprocessReturnDF(paths, CATColumns, INTColumns, frequencyLimit)
+    allDataDf.rdd.count()
+    val end = System.nanoTime
+    println("scala process time2: " + (end - start) / 1e9d)
   }
 
   def readParquet(paths: JList[String]): DataFrame = {

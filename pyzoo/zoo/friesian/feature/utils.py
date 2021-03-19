@@ -39,3 +39,13 @@ def read_parquet(paths):
 
 def dlrm_preprocess(paths, CAT_columns, INT_columns, freq_limit):
     return callZooFunc("float", "dlrmPreprocess", paths, CAT_columns, INT_columns, freq_limit)
+
+
+def dlrm_preprocess_returndf(paths, CAT_columns, INT_columns, freq_limit):
+    return callZooFunc("float", "dlrmPreprocessReturnDF", paths, CAT_columns, INT_columns,
+                       freq_limit)
+
+
+def dlrm_preprocess_rdd(paths, CAT_columns, INT_columns, freq_limit):
+    return callZooFunc("float", "dlrmPreprocessRDD", paths, CAT_columns, INT_columns,
+                       freq_limit)

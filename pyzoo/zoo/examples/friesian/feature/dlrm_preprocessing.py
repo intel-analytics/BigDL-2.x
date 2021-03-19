@@ -15,7 +15,8 @@
 #
 
 from zoo.friesian.feature import FeatureTable
-from zoo.friesian.feature.utils import dlrm_preprocess
+from zoo.friesian.feature.utils import dlrm_preprocess, dlrm_preprocess_returndf, \
+    dlrm_preprocess_rdd
 
 import os
 
@@ -82,8 +83,7 @@ if __name__ == '__main__':
     #     .fillna_int(0, INT_COLS + CAT_COLS).clip(INT_COLS).log(INT_COLS)
     # tbl_all_data = tbl_all_data.merge(INT_COLS, "X_int").merge(CAT_COLS, "X_cat")
     # tbl_all_data.compute()
-    preprocessed = dlrm_preprocess(paths, CAT_COLS, INT_COLS, args.frequency_limit)
-    # preprocessed.count()
+    preprocessed = dlrm_preprocess_returndf(paths, CAT_COLS, INT_COLS, args.frequency_limit)
     time_end = time()
     print("Train data loading and preprocessing time: ", time_end - time_start)
     # tbl_all_data.df.show(5)
