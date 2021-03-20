@@ -127,9 +127,11 @@ val output = Activation[Float]("softmax").inputs(dense)
 val model = Model(input, output)
 ```
 
-After that, use `NNEstimator` to train/predict/evaluate the model using Spark ML pipeline:
+After that, use `NNEstimator` to train/predict/evaluate the model using Spark Dataframes and ML pipelines:
 
 ```scala
+val trainingDF = spark.read.parquet("train_daia")
+val validationDF = spark.read.parquet("val_data")
 val scaler = new MinMaxScaler().setInputCol("in").setOutputCol("value")
 val estimator = NNEstimator(model, CrossEntropyCriterion())  
         .setBatchSize(size).setOptimMethod(new Adam()).setMaxEpoch(epoch)
