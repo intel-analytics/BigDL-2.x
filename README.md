@@ -109,7 +109,7 @@ See the RayOnSpark [user guide](https://analytics-zoo.readthedocs.io/en/latest/d
 
 ## Getting Started with BigDL Extensions
 
-Analytics Zoo makes it easier to develop large-scale deep learning applications on Apache Spark, by providing high-level ***Spark ML pipeline*** and ***Keras***-like APIs on top of [BigDL](https://github.com/intel-analytics/BigDL), a distributed deep learning framework for Spark.
+Analytics Zoo makes it easier to develop large-scale deep learning applications on Apache Spark, by providing high-level ***Spark ML pipeline*** and ***Keras***-like APIs on top of [BigDL](https://github.com/intel-analytics/BigDL) (a distributed deep learning framework for Spark).
 
 First, call `initNNContext` at the beginning of the Scala code: 
 
