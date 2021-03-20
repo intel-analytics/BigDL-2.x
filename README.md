@@ -12,7 +12,7 @@ Analytics Zoo is an open source _**Big Data AI**_ platform, and includes the fol
 
  - [Orca](#getting-started-with-orca): seamlessly scale out TensorFlow, PyTorch and Keras programs for Big Data (using Spark & Ray)
  - [RayOnSpark](#getting-started-with-rayonspark): run Ray programs directly on Big Data clusters
- - [BigDL Extensions](#dl-for-scala-with-bigdl): increase productivity with BigDL using Spark ML pipeline and Keras-like APIs
+ - [BigDL Extensions](#bigdl-extensions): increase productivity with BigDL using Spark ML pipeline and Keras-like APIs
  - [Zouwu](#getting-started-with-zouwu): scalable time series analysis using AutoML
 
 For more information, you may [read the docs](https://analytics-zoo.readthedocs.io/).
