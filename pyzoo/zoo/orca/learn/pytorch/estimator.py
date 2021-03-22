@@ -326,19 +326,21 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         :param data: train data. It can be a XShards, Spark Dataframe, PyTorch DataLoader and
                PyTorch DataLoader creator function.
-               If data is an XShards, each partition is a dictionary of  {'x': feature,
-               'y': label}, where feature(label) is a numpy array or a list of numpy arrays.
+               If data is an XShards, each partition can be a Pandas DataFrame or a dictionary of
+               {'x': feature, 'y': label}, where feature(label) is a numpy array or
+               a list of numpy arrays.
         :param epochs: Number of epochs to train the model. Default: 1.
         :param batch_size: Batch size used for training. Only used when data is an XShards.
                Default: 32.
         :param feature_cols: Feature column name(s) of data. Only used when data
-               is a Spark DataFrame. Default: None.
+               is a Spark DataFrame or an XShards of Pandas DataFrame. Default: None.
         :param label_cols: Label column name(s) of data. Only used when data is
-               a Spark DataFrame. Default: None.
+               a Spark DataFrame or an XShards of Pandas DataFrame. Default: None.
         :param validation_data: Validation data. XShards, PyTorch DataLoader and PyTorch DataLoader
                creator function are supported.
-               If data is XShards, each partition is a dictionary of  {'x': feature,
-               'y': label}, where feature(label) is a numpy array or a list of numpy arrays.
+               If data is XShards, each partition can be a Pandas DataFrame or a dictionary of
+               {'x': feature, 'y': label}, where feature(label) is a numpy array or a list of
+               numpy arrays.
         :param checkpoint_trigger: Orca Trigger to set a checkpoint.
         :return: The trained estimator object.
         """
@@ -385,11 +387,11 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         Predict input data.
 
         :param data: data to be predicted. It can be an XShards or a Spark Dataframe.
-               If it is an XShards, each partition is a dictionary of
+               If it is an XShards, each partition can be a Pandas DataFrame or a dictionary of
                {'x': feature}, where feature is a numpy array or a list of numpy arrays.
         :param batch_size: batch size used for inference.
         :param feature_cols: Feature column name(s) of data. Only used when data
-               is a Spark DataFrame. Default: None.
+               is a Spark DataFrame or an XShards of Pandas DataFrame. Default: None.
         :return: predicted result. The predict result is a XShards, each partition of the XShards
                  is a dictionary of {'prediction': result}, where result is a numpy array or a list
                  of numpy arrays.
@@ -423,13 +425,14 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         :param data: data: evaluation data. It can be an XShards, Spark Dataframe,
                PyTorch DataLoader and PyTorch DataLoader creator function.
-               If data is an XShards, each partition is a dictionary of  {'x': feature,
-               'y': label}, where feature(label) is a numpy array or a list of numpy arrays.
+               If data is an XShards, each partition can be a Pandas DataFrame or a dictionary of
+               {'x': feature, 'y': label}, where feature(label) is a numpy array or a list of
+               numpy arrays.
         :param batch_size: Batch size used for evaluation. Only used when data is a SparkXShard.
         :param feature_cols: Feature column name(s) of data. Only used when data
-               is a Spark DataFrame. Default: None.
+               is a Spark DataFrame or an XShards of Pandas DataFrame. Default: None.
         :param label_cols: Label column name(s) of data. Only used when data is
-               a Spark DataFrame. Default: None.
+               a Spark DataFrame or an XShards of Pandas DataFrame. Default: None.
         :param validation_metrics: Orca validation metrics to be computed on validation_data.
         :return: validation results.
         """
