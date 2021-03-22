@@ -374,8 +374,8 @@ class TestTFRayEstimator(TestCase):
         trainer.fit(train_data_shard, epochs=1, batch_size=4, steps_per_epoch=25,
                     feature_cols=["user", "item"],
                     label_cols=["label"])
-        trainer.evaluate(train_data_shard, batch_size=4, num_steps=25, feature_cols=
-        ["user", "item"], label_cols=["label"])
+        trainer.evaluate(train_data_shard, batch_size=4, num_steps=25,
+                         feature_cols=["user", "item"], label_cols=["label"])
         trainer.predict(train_data_shard, feature_cols=["user", "item"]).collect()
 
     def test_dataframe_shard_size(self):
