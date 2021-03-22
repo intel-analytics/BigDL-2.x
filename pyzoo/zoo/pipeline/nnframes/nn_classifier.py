@@ -490,7 +490,7 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         """
         return self._set(labelCol=value)
 
-    def eval(self, val_data):
+    def _eval(self, val_data):
         pythonBigDL_method_name = "internalEval"
         result = callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
                              val_data)

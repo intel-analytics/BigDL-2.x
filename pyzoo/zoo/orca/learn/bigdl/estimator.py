@@ -265,7 +265,7 @@ class BigDLEstimator(OrcaSparkEstimator):
                 val_summary = ValidationSummary(log_dir=self.log_dir, app_name=self.app_name)
                 self.nn_estimator.setValidationSummary(val_summary)
 
-            result = self.nn_estimator.eval(data)
+            result = self.nn_estimator._eval(data)
 
         elif isinstance(data, SparkXShards):
             from zoo.orca.data.utils import xshard_to_sample
