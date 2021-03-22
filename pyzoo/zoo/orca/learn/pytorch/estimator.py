@@ -15,7 +15,7 @@
 #
 from zoo.orca.data.utils import row_to_sample, xshard_to_sample
 from zoo.orca.learn.utils import convert_predict_rdd_to_dataframe, bigdl_metric_results_to_dict, \
-    process_xshards_of_pandas_dataframe_bigdl
+    process_xshards_of_pandas_dataframe
 from zoo.pipeline.estimator.estimator import Estimator as SparkEstimator
 from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
@@ -359,11 +359,11 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
-                data, validation_data = process_xshards_of_pandas_dataframe_bigdl(data,
-                                                                                  feature_cols,
-                                                                                  label_cols,
-                                                                                  validation_data,
-                                                                                  "fit")
+                data, validation_data = process_xshards_of_pandas_dataframe(data, feature_cols,
+                                                                            label_cols,
+                                                                            validation_data,
+                                                                            backend="bigdl",
+                                                                            mode="fit")
             train_fset, val_fset = self._handle_xshards(data, validation_data)
             self.estimator.train(train_fset, self.loss, end_trigger, checkpoint_trigger,
                                  val_fset, self.metrics, batch_size)
@@ -399,7 +399,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         from zoo.orca.learn.utils import convert_predict_rdd_to_xshard
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
-                data = process_xshards_of_pandas_dataframe_bigdl(data, feature_cols)
+                data = process_xshards_of_pandas_dataframe(data, feature_cols, backend="bigdl")
             from zoo.orca.data.utils import xshard_to_sample
             data_rdd = data.rdd.flatMap(xshard_to_sample)
 
@@ -444,9 +444,9 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
-                data, validation_data = process_xshards_of_pandas_dataframe_bigdl(data,
-                                                                                  feature_cols,
-                                                                                  label_cols)
+                data, validation_data = process_xshards_of_pandas_dataframe(data, feature_cols,
+                                                                            label_cols,
+                                                                            backend="bigdl")
             val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(xshard_to_sample))
             result = self.estimator.evaluate(val_feature_set, self.metrics, batch_size)
         elif isinstance(data, DataFrame):

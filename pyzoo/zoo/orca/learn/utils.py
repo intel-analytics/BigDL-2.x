@@ -238,7 +238,8 @@ def transform_to_shard_dict(data, feature_cols, label_cols=None, backend=None):
 
     def to_shard_dict_bigdl(df):
         result = dict()
-        result["x"] = np.stack([df[feature_col].to_numpy() for feature_col in feature_cols], axis=1)
+        result["x"] = [np.expand_dims(df[feature_col].to_numpy(), axis=1) for feature_col
+                       in feature_cols]
         if label_cols:
             result["y"] = df[label_cols[0]].to_numpy()
         return result
@@ -250,28 +251,14 @@ def transform_to_shard_dict(data, feature_cols, label_cols=None, backend=None):
 
 
 def process_xshards_of_pandas_dataframe(data, feature_cols, label_cols=None, validation_data=None,
-                                        mode=None):
-    data = transform_to_shard_dict(data, feature_cols, label_cols)
-    if mode == "fit":
-        if validation_data:
-            assert validation_data._get_class_name() == 'pandas.core.frame.DataFrame',\
-                "train data and validation data should be both XShards of Pandas DataFrame"
-            validation_data = transform_to_shard_dict(validation_data, feature_cols, label_cols)
-        return data, validation_data
-    else:
-        return data
-
-
-def process_xshards_of_pandas_dataframe_bigdl(data, feature_cols, label_cols=None,
-                                              validation_data=None,
-                                              mode=None):
-    data = transform_to_shard_dict(data, feature_cols, label_cols, backend="bigdl")
+                                        mode=None, backend=None):
+    data = transform_to_shard_dict(data, feature_cols, label_cols, backend)
     if mode == "fit":
         if validation_data:
             assert validation_data._get_class_name() == 'pandas.core.frame.DataFrame',\
                 "train data and validation data should be both XShards of Pandas DataFrame"
             validation_data = transform_to_shard_dict(validation_data, feature_cols, label_cols,
-                                                      backend="bigdl")
+                                                      backend)
         return data, validation_data
     else:
         return data

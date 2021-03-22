@@ -35,19 +35,6 @@ import tempfile
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
 
 
-class SimpleModel(nn.Module):
-    def __init__(self):
-        super(SimpleModel, self).__init__()
-        self.fc = nn.Linear(2, 2)
-
-    def forward(self, x):
-        x = self.fc(x)
-        return F.log_softmax(x, dim=1)
-
-
-def loss_func(input, target):
-    return nn.CrossEntropyLoss().forward(input, target.flatten().long())
-
 class TestEstimatorForSpark(TestCase):
 
     def setUp(self):
@@ -63,8 +50,19 @@ class TestEstimatorForSpark(TestCase):
         stop_orca_context()
 
     def test_bigdl_pytorch_estimator_shard(self):
+        class SimpleModel(nn.Module):
+            def __init__(self):
+                super(SimpleModel, self).__init__()
+                self.fc = nn.Linear(2, 2)
+
+            def forward(self, x):
+                x = self.fc(x)
+                return F.log_softmax(x, dim=1)
 
         model = SimpleModel()
+
+        def loss_func(input, target):
+            return nn.CrossEntropyLoss().forward(input, target.flatten().long())
 
         def transform(df):
             result = {
@@ -106,27 +104,36 @@ class TestEstimatorForSpark(TestCase):
             assert (pred_c[0]["prediction"] == pred_c_2[0]["prediction"]).all()
 
     def test_bigdl_pytorch_estimator_pandas_dataframe(self):
+        class SimpleModel(nn.Module):
+            def __init__(self):
+                super(SimpleModel, self).__init__()
+                self.fc = nn.Linear(1, 1)
+
+            def forward(self, x):
+                x = self.fc(x)
+                return F.log_softmax(x, dim=1)
 
         model = SimpleModel()
+
         OrcaContext.pandas_read_backend = "pandas"
-        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        file_path = os.path.join(resource_path, "orca/learn/simple_feature_label.csv")
         data_shard = read_csv(file_path)
 
         with tempfile.TemporaryDirectory() as temp_dir_name:
-            estimator = Estimator.from_torch(model=model, loss=loss_func,
+            estimator = Estimator.from_torch(model=model, loss=nn.BCELoss(),
                                              metrics=[Accuracy()],
                                              optimizer=SGD(learningrate_schedule=Default()),
                                              model_dir=temp_dir_name)
-            estimator.fit(data=data_shard, epochs=4, batch_size=2, feature_cols=['user', 'item'],
+            estimator.fit(data=data_shard, epochs=4, batch_size=2, feature_cols=['feature'],
                           label_cols=['label'], validation_data=data_shard,
                           checkpoint_trigger=EveryEpoch())
-            estimator.evaluate(data_shard, batch_size=2, feature_cols=['user', 'item'],
+            estimator.evaluate(data_shard, batch_size=2, feature_cols=['feature'],
                                label_cols=['label'])
-            est2 = Estimator.from_torch(model=model, loss=loss_func,
+            est2 = Estimator.from_torch(model=model, loss=nn.BCELoss(),
                                         metrics=[Accuracy()],
                                         optimizer=None)
-            est2.load(temp_dir_name, loss=loss_func)
-            est2.predict(data_shard,feature_cols=['user', 'item'])
+            est2.load(temp_dir_name, loss=nn.BCELoss())
+            est2.predict(data_shard,feature_cols=['feature'])
 
 if __name__ == "__main__":
     pytest.main([__file__])
