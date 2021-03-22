@@ -54,6 +54,17 @@ evaluate(x, y, metrics=['mse'])
 - **`y`**: A numpy array with shape (num_samples, horizon, target_dim).
 - **`metrics`**: A list contains metrics for test/valid data.
 
+### evaluate_with_onnx
+
+```python
+evaluate_with_onnx(x, y, metrics=['mse'], dirname=None)
+```
+
+- **`x`**: A numpy array with shape (num_samples, lookback, feature_dim).
+- **`y`**: A numpy array with shape (num_samples, horizon, target_dim).
+- **`metrics`**: A list contains metrics for test/valid data.
+- **`dirname`**: The directory to save onnx model file. This value defaults to None for no saving file.
+
 ### predict
 
 ```python
@@ -62,13 +73,22 @@ predict(x)
 
 - **`x`**: A numpy array with shape (num_samples, lookback, feature_dim).
 
+### predict_with_onnx
+
+```python
+predict_with_onnx(x, dirname=None)
+```
+
+- **`x`**: A numpy array with shape (num_samples, lookback, feature_dim).
+- **`dirname`**: The directory to save onnx model file. This value defaults to None for no saving file.
+
 ### save
 
 ```python
 save(checkpoint_file)
 ```
 
-- **`checkpoint_file`**: The location you want to save the forecaster
+- **`checkpoint_file`**: The location you want to save the forecaster.
 
 ### restore
 
@@ -76,4 +96,4 @@ save(checkpoint_file)
 restore(checkpoint_file)
 ```
 
-- **`checkpoint_file`**: The checkpoint file location you want to load the forecaster
+- **`checkpoint_file`**: The checkpoint file location you want to load the forecaster.
