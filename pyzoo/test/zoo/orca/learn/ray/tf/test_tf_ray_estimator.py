@@ -348,6 +348,15 @@ class TestTFRayEstimator(TestCase):
         trainer.predict(df, feature_cols=["feature"]).collect()
 
     def test_pandas_dataframe(self):
+        def model_creator(config):
+            import tensorflow as tf
+            input1 = tf.keras.layers.Input(shape=(1,))
+            input2 = tf.keras.layers.Input(shape=(1,))
+            concatenation = tf.concat([input1, input2], axis=-1)
+            outputs = tf.keras.layers.Dense(units=1, activation='softmax')(concatenation)
+            model = tf.keras.Model(inputs=[input1, input2], outputs=outputs)
+            model.compile(**compile_args(config))
+            return model
 
         file_path = os.path.join(resource_path, "orca/learn/ncf2.csv")
         train_data_shard = zoo.orca.data.pandas.read_csv(file_path)
@@ -363,11 +372,11 @@ class TestTFRayEstimator(TestCase):
             workers_per_node=2)
 
         trainer.fit(train_data_shard, epochs=1, batch_size=4, steps_per_epoch=25,
-                    feature_cols=["user"],
+                    feature_cols=["user", "item"],
                     label_cols=["label"])
-        trainer.evaluate(train_data_shard, batch_size=4, num_steps=25, feature_cols=["user"],
-                         label_cols=["label"])
-        trainer.predict(train_data_shard, feature_cols=["user"]).collect()
+        trainer.evaluate(train_data_shard, batch_size=4, num_steps=25, feature_cols=
+        ["user", "item"], label_cols=["label"])
+        trainer.predict(train_data_shard, feature_cols=["user", "item"]).collect()
 
     def test_dataframe_shard_size(self):
         from zoo.orca import OrcaContext
