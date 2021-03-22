@@ -444,7 +444,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
-                data, validation_data = process_xshards_of_pandas_dataframe(data, feature_cols,
+                data = process_xshards_of_pandas_dataframe(data, feature_cols,
                                                                             label_cols,
                                                                             backend="bigdl")
             val_feature_set = FeatureSet.sample_rdd(data.rdd.flatMap(xshard_to_sample))
