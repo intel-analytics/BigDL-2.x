@@ -231,22 +231,22 @@ class PyTorchRayEstimator(OrcaRayEstimator):
         """
         return self.estimator.get_model()
 
-    def save(self, checkpoint):
+    def save(self, model_path):
         """
-        Saves the Estimator state (including model and optimizer) to the provided checkpoint path.
+        Saves the Estimator state (including model and optimizer) to the provided model_path.
 
-        :param checkpoint: (str) Path to target checkpoint file.
+        :param model_path: (str) Path to save the model.
         :return:
         """
-        return self.estimator.save(checkpoint=checkpoint)
+        return self.estimator.save(model_path)
 
-    def load(self, checkpoint):
+    def load(self, model_path):
         """
-        Loads the Estimator state (including model and optimizer) from the provided checkpoint.
+        Loads the Estimator state (including model and optimizer) from the provided model_path.
 
-        :param checkpoint: (str) Path to target checkpoint file.
+        :param model_path: (str) Path to the existing model.
         """
-        return self.estimator.load(checkpoint=checkpoint)
+        return self.estimator.load(model_path)
 
     def shutdown(self, force=False):
         """
