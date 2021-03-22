@@ -135,6 +135,17 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     println("scala process time2: " + (end - start) / 1e9d)
   }
 
+  def dlrmPreprocessReturnDFCompute(paths: JList[String], CATColumns: JList[String],
+                                    INTColumns: JList[String], frequencyLimit: String = null)
+  : DataFrame = {
+    val start = System.nanoTime()
+    val allDataDf = dlrmPreprocessReturnDF(paths, CATColumns, INTColumns, frequencyLimit)
+    allDataDf.rdd.count()
+    val end = System.nanoTime
+    println("scala process time2: " + (end - start) / 1e9d)
+    allDataDf
+  }
+
   def readParquet(paths: JList[String]): DataFrame = {
     val spark = SparkSession.builder().getOrCreate()
     val pathsScala = paths.asScala

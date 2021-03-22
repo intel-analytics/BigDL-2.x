@@ -49,3 +49,8 @@ def dlrm_preprocess_returndf(paths, CAT_columns, INT_columns, freq_limit):
 def dlrm_preprocess_rdd(paths, CAT_columns, INT_columns, freq_limit):
     return callZooFunc("float", "dlrmPreprocessRDD", paths, CAT_columns, INT_columns,
                        freq_limit)
+
+
+def dlrm_preprocess_returndf_compute(paths, CAT_columns, INT_columns, freq_limit):
+    return callZooFunc("float", "dlrmPreprocessReturnDFCompute", paths, CAT_columns, INT_columns,
+                       freq_limit)
