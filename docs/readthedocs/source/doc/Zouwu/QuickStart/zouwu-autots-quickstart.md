@@ -6,7 +6,7 @@
 
 ---
 
-**In this guide we will demonstrate how to use _Zouwu AutoTS_ for automated time seires forecasting in 4 simple steps.
+**In this guide we will demonstrate how to use _Zouwu AutoTS_ for automated time seires forecasting in 4 simple steps.**
 
 ### **Step 0: Prepare Environment**
 
@@ -62,7 +62,7 @@ ts_pipeline = trainer.fit(train_df, val_df,
 
 ### **Step 4: Further deployment with TSPipeline**
 
-You can use the result ts_pipeline for prediction, evaluation or (incremental) fitting.
+You can use the result `ts_pipeline` for prediction, evaluation or (incremental) fitting.
 ```python
 # predict with the best trial
 pred_df = ts_pipeline.predict(test_df)
@@ -85,3 +85,4 @@ loaded_ppl = TSPipeline.load(my_ppl_file_path)
 That's it, the same code can run seamlessly in your local laptop and the distribute K8s or Hadoop cluster.
 
 **Note:** An `OrcaContext` is only necessary for `AutoTSTrainer` and is not needed if you only use `TSPipeline`.
+
