@@ -21,6 +21,10 @@ def compute(df):
     return callZooFunc("float", "compute", df)
 
 
+def log_with_clip(df, columns):
+    return callZooFunc("float", "log", df, columns)
+
+
 def assign_string_idx(df_list):
     return callZooFunc("float", "assignStringIdx", df_list)
 

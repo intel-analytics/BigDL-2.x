@@ -15,6 +15,7 @@
 #
 
 from zoo.friesian.feature import FeatureTable
+from zoo.friesian.feature.table import Table
 from zoo.friesian.feature.utils import dlrm_preprocess, dlrm_preprocess_returndf, \
     dlrm_preprocess_rdd
 

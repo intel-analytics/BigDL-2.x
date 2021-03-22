@@ -22,7 +22,8 @@ import com.intel.analytics.zoo.friesian.feature.Utils
 import java.util.{List => JList}
 
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{array, broadcast, col, log, row_number, spark_partition_id, udf}
+import org.apache.spark.sql.functions.{array, broadcast, col, log => sqllog, row_number,
+  spark_partition_id, udf}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
 import scala.reflect.ClassTag
@@ -116,7 +117,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     val zeroThresholdUDF = udf(zeroThreshold)
     for(colName <- INTCols) {
-      allDataDf = allDataDf.withColumn(colName, log(zeroThresholdUDF(col(colName)) + 1))
+      allDataDf = allDataDf.withColumn(colName, sqllog(zeroThresholdUDF(col(colName)) + 1))
     }
     allDataDf = allDataDf.withColumn("X_int", array(INTCols.map(x => col(x)):_*))
     allDataDf = allDataDf.withColumn("X_cat", array(CATCols.map(x => col(x)):_*))
@@ -285,5 +286,19 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def compute(df: DataFrame): Unit = {
     df.rdd.count()
+  }
+
+  def log(df: DataFrame, columns: JList[String]): DataFrame = {
+    var resultDF = df
+    val zeroThreshold = (value: Int) => {
+      if (value < 0) 0 else value
+    }
+
+    val zeroThresholdUDF = udf(zeroThreshold)
+    for(i <- 0 to columns.size()) {
+      val colName = columns.get(i)
+      resultDF = resultDF.withColumn(colName, sqllog(zeroThresholdUDF(col(colName)) + 1))
+    }
+    resultDF
   }
 }

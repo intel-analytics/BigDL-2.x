@@ -18,7 +18,7 @@ from pyspark.sql.functions import col, udf, array, broadcast, log
 from pyspark.sql import DataFrame
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import assign_string_idx, fill_na, assign_string_idx2, \
-    fill_na_int, read_parquet, compute
+    fill_na_int, read_parquet, compute, log_with_clip
 
 
 class Table:
@@ -66,6 +66,9 @@ class Table:
         for col_name in columns:
             df = df.withColumn(col_name, log(col(col_name) + 1))
         return Table(df)
+
+    def log_with_clip(self, columns):
+        return Table(log_with_clip(self.df, columns))
 
     # Merge column values as a list to a new col
     def merge(self, columns, merged_col_name):
