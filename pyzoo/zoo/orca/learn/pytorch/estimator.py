@@ -268,10 +268,10 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
             self.loss = TorchLoss.from_pytorch(loss)
         if optimizer is None:
             from zoo.orca.learn.optimizers.schedule import Default
-            self.optimizer = SGD(learningrate_schedule=Default())
-        if isinstance(self.optimizer, TorchOptimizer):
+            self.optimizer = SGD(learningrate_schedule=Default()).get_optimizer()
+        elif isinstance(optimizer, TorchOptimizer):
             self.optimizer = TorchOptim.from_pytorch(optimizer)
-        elif isinstance(self.optimizer, OrcaOptimizer):
+        elif isinstance(optimizer, OrcaOptimizer):
             self.optimizer = optimizer.get_optimizer()
         else:
             raise ValueError("Only PyTorch optimizer and orca optimizer are supported")
