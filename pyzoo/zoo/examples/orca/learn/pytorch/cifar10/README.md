@@ -8,7 +8,7 @@ We recommend you to use Anaconda to prepare the environment, especially if you w
 ```
 conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
-pip install analytics-zoo  # 0.10.0b20210315 or above
+pip install analytics-zoo  # 0.10.0.dev3 or above
 pip install torch
 pip install torchvision
 pip install jep==3.9.0
