@@ -163,6 +163,6 @@ class TCNForecaster(Forecaster):
         """
         restore the forecaster.
 
-        :param checkpoint_file: The location you want to save the forecaster.
+        :param checkpoint_file: The checkpoint file location you want to load the forecaster.
         """
         self.internal.restore(checkpoint_file)
