@@ -18,7 +18,7 @@ from pyspark.sql.functions import col, udf, array, broadcast, log
 from pyspark.sql import DataFrame
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import assign_string_idx, fill_na, assign_string_idx2, \
-    fill_na_int, read_parquet
+    fill_na_int, read_parquet, compute
 
 
 class Table:
@@ -33,6 +33,10 @@ class Table:
         return df
 
     def compute(self):
+        compute(self.df)
+        return self
+
+    def count(self):
         print("Table size: ", self.df.count())
         return self
 

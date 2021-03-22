@@ -17,6 +17,10 @@
 from zoo.common.utils import callZooFunc
 
 
+def compute(df):
+    return callZooFunc("float", "compute", df)
+
+
 def assign_string_idx(df_list):
     return callZooFunc("float", "assignStringIdx", df_list)
 

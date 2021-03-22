@@ -282,4 +282,8 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         .drop("part_id", "row_number", "count")
     }).asJava
   }
+
+  def compute(df: DataFrame): Unit = {
+    df.rdd.count()
+  }
 }
