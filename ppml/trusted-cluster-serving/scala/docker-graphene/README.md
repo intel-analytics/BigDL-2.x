@@ -3,45 +3,20 @@ Please mind the ip and file path settings, they should be changed to the ip/path
 
 ## How To Build
 ```bash
-export HTTP_PROXY_HOST=your_http_proxy_host
-export HTTP_PROXY_PORT=your_http_proxy_port
-export HTTPS_PROXY_HOST=your_https_proxy_host
-export HTTPS_PROXY_PORT=your_https_proxy_port
-export JDK_URL=http://your-http-url-to-download-jdk
-sudo docker build \
-    --build-arg http_proxy=http://$HTTP_PROXY_HOST:$HTTP_PROXY_PORT \
-    --build-arg https_proxy=http://$HTTPS_PROXY_HOST:$HTTPS_PROXY_PORT \
-    --build-arg HTTP_PROXY_HOST=$HTTP_PROXY_HOST \
-    --build-arg HTTP_PROXY_PORT=$HTTP_PROXY_PORT \
-    --build-arg HTTPS_PROXY_HOST=$HTTPS_PROXY_HOST \
-    --build-arg HTTPS_PROXY_PORT=$HTTPS_PROXY_PORT \
-    --build-arg JDK_VERSION=8u192 \
-    --build-arg JDK_URL=$JDK_URL \
-    --build-arg no_proxy=x.x.x.x \
-    -t intelanalytics/analytics-zoo-ppml-trusted-cluster-serving-scala-graphene:0.10-SNAPSHOT -f ./Dockerfile .
+./build_docker_image.sh your_http_proxy_host your_http_proxy_port your_https_proxy_host your_https_proxy_port http://your-http-url-to-download-jdk
 ```
+For example: <br>
+`./build_docker_image.sh 8081 8082 8083 8084 https://www.oracle.com/cn/java/technologies/javase/javase-jdk8-downloads.html`
 
 ## How To Run
 ### Prepare the keys
-The ppml in analytics zoo need secured keys to enable flink TLS, https and tlse enabled Redis, you need to prepare the secure keys and keystores.
+The ppml in analytics zoo need secured keys to enable flink TLS, https and tlse enabled Redis, you need to prepare the secure keys and keystores. <br>
 ```bash
-    mkdir keys && cd keys
-    openssl genrsa -des3 -out server.key 2048 ```
-    openssl req -new -key server.key -out server.csr
-    openssl x509 -req -days 9999 -in server.csr -signkey server.key -out server.crt
-    cat server.key > server.pem
-    cat server.crt >> server.pem
-    openssl pkcs12 -export -in server.pem -out keystore.pkcs12
-    keytool -importkeystore -srckeystore keystore.pkcs12 -destkeystore keystore.jks -srcstoretype PKCS12 -deststoretype JKS
-    openssl pkcs12 -in keystore.pkcs12 -nodes -out server.pem
-    openssl rsa -in server.pem -out server.key
-    openssl x509 -in server.pem -out server.crt
+./run_docker_create_keys.sh
 ```
-You also need to store the password you used in previous step in a secured file:
-```
-    mkdir password && cd password
-    openssl genrsa -out key.txt 2048
-    echo "YOUR_PASSWORD" | openssl rsautl -inkey key.txt -encrypt >output.bin
+You also need to store the password you used in previous step in a secured file: <br>
+```bash
+./run_docker_store_pwd.sh
 ```
 
 ### Run the PPML Docker image
@@ -50,7 +25,7 @@ You also need to store the password you used in previous step in a secured file:
 ```bash
 ./run_docker_local_example.sh the_dir_path_of_your_prepared_keys the_dir_path_of_your_prepared_password your_local_ip_of_the_sgx_server
 ```
-for example: <br>
+For example: <br>
 `./run_docker_local_example.sh /home/user/keys /home/user/password 127.0.0.1`
 
 #### In distributed mode
