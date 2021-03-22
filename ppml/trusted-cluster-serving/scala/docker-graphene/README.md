@@ -48,27 +48,10 @@ You also need to store the password you used in previous step in a secured file:
 #### In local mode
 ##### Start the container to run analytics zoo cluster serving in ppml.
 ```bash
-export KEYS_PATH=the_dir_path_of_your_prepared_keys
-export SECURE_PASSWORD_PATH=the_dir_path_of_your_prepared_password
-export LOCAL_IP=your_local_ip_of_the_sgx_server
-sudo docker run -itd \
-    --privileged \
-    --net=host \
-    --cpuset-cpus="0-30" \
-    --oom-kill-disable \
-    --device=/dev/gsgx \
-    --device=/dev/sgx/enclave \
-    --device=/dev/sgx/provision \
-    -v /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket \
-    -v $KEYS_PATH:/ppml/trusted-cluster-serving/redis/work/keys \
-    -v $KEYS_PATH:/ppml/trusted-cluster-serving/java/work/keys \
-    -v $SECURE_PASSWORD_PATH:/ppml/trusted-cluster-serving/redis/work/passowrd \
-    -v $SECURE_PASSWORD_PATH:/ppml/trusted-cluster-serving/java/work/passowrd \
-    --name=flink-local \
-    -e LOCAL_IP=$LOCAL_IP \
-    -e CORE_NUM=30 \
-    intelanalytics/analytics-zoo-ppml-trusted-cluster-serving-scala-graphene:0.10-SNAPSHOT /ppml/trusted-cluster-serving/start-all.sh
+./run_docker_local_example.sh the_dir_path_of_your_prepared_keys the_dir_path_of_your_prepared_password your_local_ip_of_the_sgx_server
 ```
+for example: <br>
+`./run_docker_local_example.sh /home/user/keys /home/user/password 127.0.0.1`
 
 #### In distributed mode
 ##### setup passwordless ssh login to all the nodes.
