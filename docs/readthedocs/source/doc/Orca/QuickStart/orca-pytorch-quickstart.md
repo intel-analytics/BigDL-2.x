@@ -117,6 +117,7 @@ def train_loader_creator():
                        ])),
         batch_size=320, shuffle=True)
     return train_loader
+
 def test_loader_creator():
     test_loader = torch.utils.data.DataLoader(
         datasets.MNIST(dir, train=False,
