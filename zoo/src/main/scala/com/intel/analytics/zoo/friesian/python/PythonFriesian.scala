@@ -46,7 +46,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 //    val INTCols = INTColumns.asScala
     val start = System.nanoTime()
     val df = readParquet(paths)
-    val dfStringIdxList = assignStringIdx2(df, CATColumns, frequencyLimit)
+    val dfStringIdxList = assignStringIdx(df, CATColumns, frequencyLimit)
     var allDataDf = readParquet(paths.subList(0, paths.size() - 1))
     for (i <- 0 until CATColumns.size()) {
       val colName = CATColumns.get(i)
@@ -97,7 +97,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     val INTCols = INTColumns.asScala
     val start = System.nanoTime()
     val df = readParquet(paths)
-    val dfStringIdxList = assignStringIdx2(df, CATColumns, frequencyLimit)
+    val dfStringIdxList = assignStringIdx(df, CATColumns, frequencyLimit)
     var allDataDf = readParquet(paths.subList(0, paths.size() - 1))
     for (i <- 0 until CATColumns.size()) {
       val colName = CATColumns.get(i)
