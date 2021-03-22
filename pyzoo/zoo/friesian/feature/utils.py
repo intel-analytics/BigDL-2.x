@@ -25,12 +25,8 @@ def log_with_clip(df, columns):
     return callZooFunc("float", "log", df, columns)
 
 
-def assign_string_idx(df_list):
-    return callZooFunc("float", "assignStringIdx", df_list)
-
-
-def assign_string_idx2(df, columns, freq_limit):
-    return callZooFunc("float", "assignStringIdx2", df, columns, freq_limit)
+def assign_string_idx(df, columns, freq_limit):
+    return callZooFunc("float", "assignStringIdx", df, columns, freq_limit)
 
 
 def fill_na(df, fill_val, columns):
@@ -39,10 +35,6 @@ def fill_na(df, fill_val, columns):
 
 def fill_na_int(df, fill_val, columns):
     return callZooFunc("float", "fillNaInt", df, fill_val, columns)
-
-
-def read_parquet(paths):
-    return callZooFunc("float", "readParquet", paths)
 
 
 def dlrm_preprocess(paths, CAT_columns, INT_columns, freq_limit):

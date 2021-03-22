@@ -17,8 +17,8 @@
 from pyspark.sql.functions import col, udf, array, broadcast, log
 from pyspark.sql import DataFrame
 from zoo.orca import OrcaContext
-from zoo.friesian.feature.utils import assign_string_idx, fill_na, assign_string_idx2, \
-    fill_na_int, read_parquet, compute, log_with_clip
+from zoo.friesian.feature.utils import assign_string_idx, fill_na, \
+    fill_na_int, compute, log_with_clip
 
 
 class Table:
@@ -29,7 +29,8 @@ class Table:
     def _read_parquet(paths):
         if not isinstance(paths, list):
             paths = [paths]
-        df = read_parquet(paths)
+        spark = OrcaContext.get_spark_session()
+        df = spark.read.parquet(*paths)
         return df
 
     def compute(self):
@@ -58,13 +59,13 @@ class Table:
             df = df.withColumn(col_name, clip_udf(col(col_name)))
         return Table(df)
 
-    # Assume all entries of columns are non-negative
     def log(self, columns):
         df = self.df
         if not isinstance(columns, list):
             columns = [columns]
+        clip_udf = udf(lambda data: max(0, data))
         for col_name in columns:
-            df = df.withColumn(col_name, log(col(col_name) + 1))
+            df = df.withColumn(col_name, log(clip_udf(col(col_name)) + 1))
         return Table(df)
 
     def log_with_clip(self, columns):
@@ -112,32 +113,8 @@ class FeatureTable(Table):
         return FeatureTable(data_df)
 
     def gen_string_idx(self, columns, freq_limit):
-        # data_df = self.df
-        # frequency_dict = {}
-        # default_limit = None
-        # if freq_limit:
-        #     frequency_limit = freq_limit.split(",")
-        #     for fl in frequency_limit:
-        #         frequency_pair = fl.split(":")
-        #         if len(frequency_pair) == 1:
-        #             default_limit = int(frequency_pair[0])
-        #         elif len(frequency_pair) == 2:
-        #             frequency_dict[frequency_pair[0]] = frequency_pair[1]
-        #
-        # df_count_filtered_list = []
-        #
-        # for col_n in columns:
-        #     df_col = data_df.select(col_n).filter(col_n + ' is not null').groupBy(col_n).count()
-        #     if col_n in frequency_dict:
-        #         df_col = df_col.filter(col('count') >= int(frequency_dict[col_n]))
-        #     elif default_limit:
-        #         df_col = df_col.filter(col('count') >= default_limit)
-        #
-        #     df_count_filtered_list.append(df_col)
-
         spark = OrcaContext.get_spark_session()
-        # df_id_list = assign_string_idx(df_count_filtered_list)
-        df_id_list = assign_string_idx2(self.df, columns, freq_limit)
+        df_id_list = assign_string_idx(self.df, columns, freq_limit)
         string_idx_list = list(map(lambda x: StringIndex(DataFrame(x, spark)), df_id_list))
         return string_idx_list
 
