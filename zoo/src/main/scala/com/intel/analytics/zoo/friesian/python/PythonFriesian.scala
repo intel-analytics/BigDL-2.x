@@ -295,7 +295,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     }
 
     val zeroThresholdUDF = udf(zeroThreshold)
-    for(i <- 0 to columns.size()) {
+    for(i <- 0 until columns.size()) {
       val colName = columns.get(i)
       resultDF = resultDF.withColumn(colName, sqllog(zeroThresholdUDF(col(colName)) + 1))
     }
