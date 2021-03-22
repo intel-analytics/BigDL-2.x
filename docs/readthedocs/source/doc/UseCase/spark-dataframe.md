@@ -2,17 +2,16 @@
 
 ---
 
-<a target="_blank" href="https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/ncf_dataframe.ipynb"><img src="https://www.tensorflow.org/images/colab_logo_32px.png" />Run in Google Colab</a>&nbsp; <a target="_blank" href="https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/ncf_dataframe.ipynb"><img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />View source on GitHub</a>
-
+![](../../../image/colab_logo_32px.png)[Run in Google Colab](https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/ncf_dataframe.ipynb) &nbsp;![](../../../image/GitHub-Mark-32px.png)[View source on GitHub](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/ncf_dataframe.ipynb)
 ---
 
 **In this guide we will describe how to use Spark Dataframes to scale-out data processing for distribtued deep learning.**
 
 The dataset in this guide we used is [movielens-1M](https://grouplens.org/datasets/movielens/1m/), which contains 1 million ratings of 5 levels from 6000 users on 4000 movies. We will read the data into Spark Dataframe and directly use the Spark Dataframe as the input to the distributed training.
 
-### **1. Read file into Spark DataFrame**
+### **1. Read input data into Spark DataFrame**
 
-Spark supports to read files in CSV, JSON, TEXT, Parquet, and many more file formats into Spark DataFrame. Spark SQL provides `spark.read.csv("path")` to read a CSV file into Spark DataFrame.
+First, read the input data into Spark Dataframes. Spark supports to read files in CSV, JSON, TEXT, Parquet, and many more file formats into Spark DataFrame. Spark SQL provides `spark.read.csv("path")` to read a CSV file into Spark DataFrame.
 
 ```python
 from zoo.orca import OrcaContext
@@ -23,7 +22,9 @@ df = spark.read.csv(new_rating_files, sep=':', inferSchema=True).toDF(
   "user", "item", "label", "timestamp")
 ```
 
-### **2. Preprocess Spark DataFrame**
+### **2. Process data using Spark Dataframe operations**
+
+Next, process the data using Spark Dataframe operations.
 
 ```python
 # update label starting from 0. That's because ratings go from 1 to 5, while the matrix column index goes from 0 to 4
@@ -38,6 +39,8 @@ train_data, test_data = df.randomSplit([0.8, 0.2], 100)
 This example defines NCF model in the _Creator Function_ using TensroFlow 2 APIs as follows.
 
 ```python
+import tensorflow as tf
+from tensorflow import keras
 def model_creator(config):
     embedding_size=16
     user = keras.layers.Input(dtype=tf.int32, shape=(None,))
@@ -74,6 +77,8 @@ def model_creator(config):
 
 ### **4. Use Spark DataFrame in distributed training**
 
+Finally, run distributed model training/inference on the Spark Dataframes directly.
+
 ```python
 # create an Estimator
 est = Estimator.from_keras(model_creator=model_creator, workers_per_node=1) # the model accept two inputs and one label
@@ -99,3 +104,4 @@ stats = est.evaluate(test_data,
 est.shutdown()
 print(stats)
 ```
+
