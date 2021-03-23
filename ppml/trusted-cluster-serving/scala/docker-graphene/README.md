@@ -12,18 +12,18 @@ export JDK_URL=http://your-http-url-to-download-jdk
 ```
 Then build docker image: <br>
 ```bash
-./build_docker_image.sh
+./build-docker-image.sh
 ```
 
 ## How To Run
 ### Prepare the keys
 The ppml in analytics zoo need secured keys to enable flink TLS, https and tlse enabled Redis, you need to prepare the secure keys and keystores. <br>
 ```bash
-./run_docker_create_keys.sh
+./generate-keys.sh
 ```
 You also need to store the password you used in previous step in a secured file: <br>
 ```bash
-./run_docker_store_pwd.sh
+./generate-password.sh
 ```
 
 ### Run the PPML Docker image
