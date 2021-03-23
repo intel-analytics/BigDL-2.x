@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from bigdl.util.common import Sample as BSample, JTensor as BJTensor,\
-    JavaCreator, _get_gateway, _java2py, _py2java
+    JavaCreator, _get_gateway, _py2java
 import numpy as np
 import os
 import tempfile
