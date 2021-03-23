@@ -2,11 +2,18 @@
 Please mind the ip and file path settings, they should be changed to the ip/path of your own sgx server on which you are running the programs.
 
 ## How To Build
+Set parameter before you build: <br>
 ```bash
-./build_docker_image.sh your_http_proxy_host your_http_proxy_port your_https_proxy_host your_https_proxy_port http://your-http-url-to-download-jdk
+export HTTP_PROXY_HOST=your_http_proxy_host
+export HTTP_PROXY_PORT=your_http_proxy_port
+export HTTPS_PROXY_HOST=your_https_proxy_host
+export HTTPS_PROXY_PORT=your_https_proxy_port
+export JDK_URL=http://your-http-url-to-download-jdk
 ```
-For example: <br>
-`./build_docker_image.sh 8081 8082 8083 8084 https://www.oracle.com/cn/java/technologies/javase/javase-jdk8-downloads.html`
+Then build docker image: <br>
+```bash
+./build_docker_image.sh
+```
 
 ## How To Run
 ### Prepare the keys
