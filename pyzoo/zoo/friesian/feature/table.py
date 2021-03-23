@@ -18,7 +18,7 @@ from pyspark.sql.functions import col, udf, array, broadcast, log
 from pyspark.sql import DataFrame
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import assign_string_idx, fill_na, \
-    fill_na_int, compute, log_with_clip
+    fill_na_int, compute, log_with_clip, clip_scala
 
 
 class Table:
@@ -44,6 +44,9 @@ class Table:
     def broadcast(self):
         return broadcast(self.df)
 
+    def fillna_df(self, value, columns):
+        return Table(self.df.fillna(value, columns))
+
     def fillna(self, value, columns):
         return Table(fill_na(self.df, value, columns))
 
@@ -59,16 +62,14 @@ class Table:
             df = df.withColumn(col_name, clip_udf(col(col_name)))
         return Table(df)
 
-    def log(self, columns):
-        df = self.df
+    def clip_scala(self, columns, min=0):
         if not isinstance(columns, list):
             columns = [columns]
-        clip_udf = udf(lambda data: max(0, data))
-        for col_name in columns:
-            df = df.withColumn(col_name, log(clip_udf(col(col_name)) + 1))
-        return Table(df)
+        return Table(clip_scala(self.df, columns, min))
 
-    def log_with_clip(self, columns):
+    def log(self, columns):
+        if not isinstance(columns, list):
+            columns = [columns]
         return Table(log_with_clip(self.df, columns))
 
     # Merge column values as a list to a new col

@@ -37,20 +37,5 @@ def fill_na_int(df, fill_val, columns):
     return callZooFunc("float", "fillNaInt", df, fill_val, columns)
 
 
-def dlrm_preprocess(paths, CAT_columns, INT_columns, freq_limit):
-    return callZooFunc("float", "dlrmPreprocess", paths, CAT_columns, INT_columns, freq_limit)
-
-
-def dlrm_preprocess_returndf(paths, CAT_columns, INT_columns, freq_limit):
-    return callZooFunc("float", "dlrmPreprocessReturnDF", paths, CAT_columns, INT_columns,
-                       freq_limit)
-
-
-def dlrm_preprocess_rdd(paths, CAT_columns, INT_columns, freq_limit):
-    return callZooFunc("float", "dlrmPreprocessRDD", paths, CAT_columns, INT_columns,
-                       freq_limit)
-
-
-def dlrm_preprocess_returndf_compute(paths, CAT_columns, INT_columns, freq_limit):
-    return callZooFunc("float", "dlrmPreprocessReturnDFCompute", paths, CAT_columns, INT_columns,
-                       freq_limit)
+def clip_scala(df, columns, min):
+    return callZooFunc("float", "friesianClip", df, columns, min)
