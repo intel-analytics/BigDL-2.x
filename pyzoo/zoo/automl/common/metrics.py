@@ -19,6 +19,7 @@ from sklearn.metrics import r2_score as R2
 from sklearn.metrics import mean_absolute_error as MAE
 from sklearn.metrics import mean_squared_log_error as MSLE
 import numpy as np
+import pandas as pd
 
 
 EPSILON = 1e-10
@@ -32,12 +33,16 @@ def _standardize_input(y_true, y_pred, multioutput):
     """
     if y_true is None or y_pred is None:
         raise ValueError("The input is None.")
-    if not isinstance(y_true, (list, tuple, np.ndarray)):
-        raise ValueError("Expected array-like input. Only list/tuple/ndarray are supported")
+    if not isinstance(y_true, (list, tuple, np.ndarray, pd.DataFrame)):
+        raise ValueError("Expected array-like input."
+                         "Only list/tuple/ndarray/pd.DataFrame are supported")
     if isinstance(y_true, (list, tuple)):
         y_true = np.array(y_true)
     if isinstance(y_pred, (list, tuple)):
         y_pred = np.array(y_pred)
+    if isinstance(y_true, pd.DataFrame) and isinstance(y_pred, pd.DataFrame):
+        y_true = y_true.to_numpy()
+        y_pred = y_pred.to_numpy()
 
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))

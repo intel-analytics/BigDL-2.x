@@ -85,11 +85,11 @@ class Estimator(BaseEstimator):
         raise NotImplementedError
 
     @abstractmethod
-    def load(self, checkpoint):
+    def load(self, model_path):
         """
-        Load existing model or checkpoint
+        Load existing model from model_path
 
-        :param checkpoint: Path to the existing model or checkpoint.
+        :param model_path: Path to the existing model.
         :return:
         """
         raise NotImplementedError
@@ -194,11 +194,10 @@ class Estimator(BaseEstimator):
         """
         raise NotImplementedError
 
-    @abstractmethod
-    def load_latest_orca_checkpoint(self, path):
+    def shutdown(self):
         """
-        Load latest Orca checkpoint under specified directory.
+        Releases resources.
 
-        :param path: directory containing Orca checkpoint files.
+        :return:
         """
-        raise NotImplementedError
+        pass
