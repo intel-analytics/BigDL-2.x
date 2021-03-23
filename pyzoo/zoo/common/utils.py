@@ -135,6 +135,38 @@ def callZooFunc(bigdl_type, name, *args):
             return result
     raise error
 
+def _java2py(gateway, r, encoding="bytes"):
+    if isinstance(r, JavaObject):
+        clsName = r.getClass().getSimpleName()
+        # convert RDD into JavaRDD
+        if clsName != 'JavaRDD' and clsName.endswith("RDD"):
+            r = r.toJavaRDD()
+            clsName = 'JavaRDD'
+
+        if clsName == 'JavaRDD':
+            jrdd = gateway.jvm.org.apache.spark.bigdl.api.python.BigDLSerDe.javaToPython(r)
+            return RDD(jrdd, get_spark_context())
+
+        if clsName == 'DataFrame':
+            return DataFrame(r, get_spark_sql_context(get_spark_context()))
+
+        if clsName == 'Dataset':
+            return DataFrame(r, get_spark_sql_context(get_spark_context()))
+
+        if clsName == "ImageFrame[]":
+            return r
+
+        if clsName in _picklable_classes:
+            r = gateway.jvm.org.apache.spark.bigdl.api.python.BigDLSerDe.dumps(r)
+        elif isinstance(r, (JavaArray, JavaList, JavaMap)):
+            try:
+                r = gateway.jvm.org.apache.spark.bigdl.api.python.BigDLSerDe.dumps(
+                    r)
+            except Py4JJavaError:
+                pass  # not pickable
+        if isinstance(r, (bytearray, bytes)):
+            r = PickleSerializer().loads(bytes(r), encoding=encoding)
+    return r
 
 class JTensor(BJTensor):
 
