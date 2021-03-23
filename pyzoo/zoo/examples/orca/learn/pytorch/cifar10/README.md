@@ -14,12 +14,21 @@ pip install torchvision
 pip install jep==3.9.0
 pip install six cloudpickle
 pip install matplotlib
+pip install ray==1.2.0
 ```
 
 ## Run on local after pip install
 
+The default backend is `bigdl`.
+
 ```
 python cifar10.py
+```
+
+You can also run with `torch_distributed` backend:
+
+```
+python cifar10.py --backend torch_distributed
 ```
 
 ## Run on yarn cluster for yarn-client mode after pip install
@@ -31,6 +40,8 @@ python cifar10.py --cluster_mode yarn-client
 
 ## Results
 
+### With bigdl backend
+
 You can find the logs for training as follows:
 ```
 2020-12-03 15:25:30 INFO  DistriOptimizer$:426 - [Epoch 2 47680/50000][Iteration 24420][Wall Clock 497.634203315s] Trained 4 records in 0.022554577 seconds. Throughput is 177.3476 records/second. Loss is 0.82751834.
@@ -39,4 +50,13 @@ You can find the logs for training as follows:
 Final test results will be printed at the end:
 ```
 Accuracy of the network on the 10000 test images: 0.541100025177002 
+```
+
+### With torch_distributed backend
+
+Final test results will be printed at the end:
+```
+num_samples : 10000
+Accuracy : tensor(0.5378)
+val_loss : 1.3078322240829467
 ```
