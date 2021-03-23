@@ -11,12 +11,12 @@ Then build docker image by running this command: <br>
 ## How To Run
 ### Prepare the keys
 The ppml in analytics zoo need secured keys to enable flink TLS, https and tlse enabled Redis, you need to prepare the secure keys and keystores. <br>
-This script in under /ppml: <br>
+This script is under /analytics-zoo/ppml: <br>
 ```bash
 ./generate-keys.sh
 ```
 You also need to store the password you used in previous step in a secured file: <br>
-This script in also under /ppml: <br>
+This script is also under /analytics-zoo/ppml: <br>
 ```bash
 ./generate-password.sh
 ```
