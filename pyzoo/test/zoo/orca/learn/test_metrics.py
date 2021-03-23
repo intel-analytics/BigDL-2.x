@@ -94,6 +94,14 @@ def test_torch_MAE():
     target = torch.tensor([[0, 1], [0, 1]])
     m(pred, target)
     assert m.compute() == 0.875
+    pred = torch.tensor([[1.5, 2.5], [1.0, 1.0]])
+    target = torch.tensor([[0.2, 1.1], [0.5, 1.0]])
+    m(pred, target)
+    assert abs(m.compute() - 0.85) < 1e-6 
+    pred = torch.tensor([[1.5, 2.5], [1.8, 2.0]])
+    target = torch.tensor([[0, 1], [0, 1]])
+    m(pred, target)
+    assert abs(m.compute() - 1) < 1e-6 
 
 
 def test_torch_MSE():
@@ -107,6 +115,14 @@ def test_torch_MSE():
     target = torch.tensor([[1, 1], [0, 1]])
     m(pred, target)
     assert m.compute() == 1.25
+    pred = torch.tensor([[1.3, 1.0], [0.2, 1.0]])
+    target = torch.tensor([[1.1, 1.0], [0.0, 1.0]])
+    m(pred, target)
+    assert abs(m.compute() - 0.84) < 1e-6
+    pred = torch.tensor([[1.2, 1.2], [0.2, 0.8]])
+    target = torch.tensor([[1, 1], [0, 1]])
+    m(pred, target)
+    assert abs(m.compute() - 0.64) < 1e-6
 
 
 def test_torch_BinaryCrossEntropy():
