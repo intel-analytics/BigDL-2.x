@@ -222,8 +222,6 @@ class TestPytorch(TestCase):
             az_model.save(path, True)
             loaded_model = Model.load(path)
             loaded_torchModel = TorchModel.from_value(loaded_model.value)
-            from bigdl.nn.layer import Model
-            from bigdl.nn.layer import Model
             dummy_input = torch.ones(16, 2)
             loaded_torchModel.forward(dummy_input.numpy())
             loaded_torchModel.toPytorch()
