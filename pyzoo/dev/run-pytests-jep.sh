@@ -24,6 +24,7 @@ python -m pytest -v ../test/zoo/orca/learn/jep/test_pytorch_estimator_for_spark.
 python -m pytest -v ../test/zoo/orca/learn/jep/test_pytorch_estimator_for_dataloader.py
 python -m pytest -v ../test/zoo/orca/learn/jep/test_pytorch_estimator_for_spark_creator.py
 python -m pytest -v ../test/zoo/orca/learn/jep/test_pytorch_estimator_for_dataframe.py
+python -m pytest -v ../test/zoo/orca/learn/jep/test_pytorch_estimator_for_save_load.py
 python -m pytest -v ../test/zoo/pipeline/api/torch/test_torch_estimator.py
 python -m pytest -v ../test/zoo/pipeline/api/torch/test_torch.py
 python -m pytest -v ../test/zoo/pipeline/api/torch/test_torch_optim.py
