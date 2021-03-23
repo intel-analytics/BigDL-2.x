@@ -27,7 +27,7 @@ This script in also under /ppml: <br>
 Before run the following command, please modify the pathes in the run-docker-local-example.sh file at first. <br>
 Then run the example with docker: <br>
 ```bash
-./run-docker-local-example.sh
+./start-local-cluster-serving.sh
 ```
 
 #### In distributed mode
