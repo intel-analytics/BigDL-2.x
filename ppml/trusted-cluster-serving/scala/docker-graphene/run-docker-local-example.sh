@@ -1,3 +1,6 @@
+export KEYS_PATH=the_dir_path_of_your_prepared_keys
+export SECURE_PASSWORD_PATH=the_dir_path_of_your_prepared_password
+export LOCAL_IP=your_local_ip_of_the_sgx_server
 sudo docker run -itd \
     --privileged \
     --net=host \
