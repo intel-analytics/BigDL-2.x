@@ -41,7 +41,7 @@ Then run the following command: <br>
 ```bash
 ./start-local-big-data-ml.sh
 sudo docker exec -it spark-local bash
-cd ppml/trusted-bid-data-ml
+cd /ppml/trusted-big-data-ml
 ```
 
 ##### Example Test 1 
