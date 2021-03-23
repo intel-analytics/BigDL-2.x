@@ -21,5 +21,7 @@ ll /dev/gsgx && ll /dev/sgx/enclave && ll /dev/sgx/provision
 
 ### Generate password
 ```bash
-./generate-password.sh path_of_your_password
+./generate-password.sh used_password_in_generate-keys.sh
 ```
+For example: <br>
+`./generate-password.sh abcd1234`
