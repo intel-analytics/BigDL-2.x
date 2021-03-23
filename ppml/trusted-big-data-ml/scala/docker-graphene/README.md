@@ -82,3 +82,16 @@ sudo docker logs spark-local | egrep "###|INFO"
 ```
 
 #### In spark standalone cluster mode
+##### setup passwordless ssh login to all the nodes.
+##### config the environments for master, workers, docker image, security keys/passowrd files and data path.
+```bash
+nano environments.sh
+```
+##### start the distributed cluster serving
+```bash
+./start-distributed-big-data-ml.sh
+```
+##### stop the distributed cluster serving 
+```bash
+./stop-distributed-big-data-ml.sh
+```
