@@ -23,6 +23,14 @@ This script is under /analytics-zoo/ppml:
 ```bash
     ./generate-keys.sh
 ```
+### Prepare the password
+You also need to store the password you used in previous step in a secured file:
+This script is also under /analytics-zoo/ppml:
+```bash
+./generate-password.sh used_password_in_generate-keys.sh
+```
+For example:
+`./generate-password.sh abcd1234`
 
 ### Run PPML Docker image
 
