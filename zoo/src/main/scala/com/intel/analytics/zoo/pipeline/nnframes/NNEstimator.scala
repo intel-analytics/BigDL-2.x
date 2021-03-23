@@ -489,7 +489,7 @@ class NNEstimator[T: ClassTag] private[zoo](
     wrapBigDLModel(model)
   }
 
-  // todo: Maybe try 
+  // todo: Maybe try
   // https://spark.apache.org/docs/latest/api/python/reference/pyspark.ml.html#evaluation
   def internalEval(dataFrame: DataFrame): JList[EvaluatedResult] = {
     val validationFeatureset = getDataSet(dataFrame, validationBatchSize)
