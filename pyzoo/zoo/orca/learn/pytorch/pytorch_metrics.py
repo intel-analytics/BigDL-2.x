@@ -237,7 +237,7 @@ class MSE(PytorchMetric):
         self.total += targets.numel()
 
     def compute(self):
-        return self.sum_squared_error.float() / self.total
+        return self.sum_squared_error / self.total
 
 
 class MAE(PytorchMetric):
