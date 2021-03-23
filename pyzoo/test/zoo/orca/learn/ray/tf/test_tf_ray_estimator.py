@@ -369,7 +369,7 @@ class TestTFRayEstimator(TestCase):
             model_creator=model_creator,
             verbose=True,
             config=config,
-            workers_per_node=2)
+            workers_per_node=1)
 
         trainer.fit(train_data_shard, epochs=1, batch_size=4, steps_per_epoch=25,
                     feature_cols=["user", "item"],
