@@ -2,7 +2,7 @@
 
 ---
 
-<a target="_blank" href="https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.ipynb"><img src="https://www.tensorflow.org/images/colab_logo_32px.png" />Run in Google Colab</a>&nbsp; <a target="_blank" href="https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.ipynb"><img src="https://www.tensorflow.org/images/GitHub-Mark-32px.png" />View source on GitHub</a>
+![](../../../../image/colab_logo_32px.png)[Run in Google Colab](https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.ipynb) &nbsp;![](../../../../image/GitHub-Mark-32px.png)[View source on GitHub](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.ipynb)
 
 ---
 
@@ -28,7 +28,7 @@ from zoo.orca import init_orca_context, stop_orca_context
 
 
 if args.cluster_mode == "local":
-    init_orca_context(cores=1, memory="2g")   # run in local mode
+    init_orca_context(cores=1, memory="2g") # run in local mode
 elif args.cluster_mode == "k8s":
     init_orca_context(cluster_mode="k8s", num_nodes=2, cores=4) # run on K8s cluster
 elif args.cluster_mode == "yarn":
@@ -37,7 +37,7 @@ elif args.cluster_mode == "yarn":
     driver_memory="10g", driver_cores=1,
     conf={"spark.rpc.message.maxSize": "1024",
         "spark.task.maxFailures": "1",
-        "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})   # run on Hadoop YARN cluster
+        "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"}) # run on Hadoop YARN cluster
 ```
 
 This is the only place where you need to specify local or distributed mode. View [Orca Context](./../Overview/orca-context.md) for more details.
