@@ -52,10 +52,10 @@ class FriesianSpec extends ZooSpecHelper {
     val path = resource.getFile + "/data1.parquet"
     val df = sqlContext.read.parquet(path)
     val friesian = PythonFriesian.ofFloat()
-    val cols = Array("col_3", "col_4")
+    val cols = Array("col_4", "col_5")
     val dfFilled = friesian.fillNa(df, "bb", cols.toList.asJava)
-    assert(dfFilled.filter(dfFilled("col_3").isNull).count == 0)
     assert(dfFilled.filter(dfFilled("col_4").isNull).count == 0)
+    assert(dfFilled.filter(dfFilled("col_5").isNull).count == 0)
   }
 
   "Fill NA string int" should "throw exception" in {
@@ -66,5 +66,14 @@ class FriesianSpec extends ZooSpecHelper {
     assertThrows[IllegalArgumentException] {
       friesian.fillNa(df, "bb", cols.toList.asJava)
     }
+  }
+
+  "Clip" should "work properly" in {
+    val path = resource.getFile + "/data1.parquet"
+    val df = sqlContext.read.parquet(path)
+    val friesian = PythonFriesian.ofFloat()
+    val cols = Array("col_2", "col_3")
+    val dfClip = friesian.friesianClip(df, cols.toList.asJava, 2)
+    dfClip.show()
   }
 }

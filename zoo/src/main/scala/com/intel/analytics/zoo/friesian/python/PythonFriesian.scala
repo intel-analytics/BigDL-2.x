@@ -144,7 +144,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     df.rdd.count()
   }
 
-  def log(df: DataFrame, columns: JList[String]): DataFrame = {
+  def log(df: DataFrame, columns: JList[String], clip: Boolean=true): DataFrame = {
     var resultDF = df
     val zeroThreshold = (value: Int) => {
       if (value < 0) 0 else value
@@ -153,7 +153,11 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     val zeroThresholdUDF = udf(zeroThreshold)
     for(i <- 0 until columns.size()) {
       val colName = columns.get(i)
-      resultDF = resultDF.withColumn(colName, sqllog(zeroThresholdUDF(col(colName)) + 1))
+      if (clip) {
+        resultDF = resultDF.withColumn(colName, sqllog(zeroThresholdUDF(col(colName)) + 1))
+      } else{
+        resultDF = resultDF.withColumn(colName, sqllog(col(colName)))
+      }
     }
     resultDF
   }

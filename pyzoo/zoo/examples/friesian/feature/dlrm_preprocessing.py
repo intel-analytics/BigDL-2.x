@@ -44,8 +44,24 @@ conf = {"spark.network.timeout": "10000000",
 def _parse_args():
     parser = ArgumentParser()
 
-    parser.add_argument('--days', required=True)
-    parser.add_argument('--input_folder', required=True)
+    parser.add_argument('--cluster_mode', type=str, default="local",
+                        help='The cluster mode, such as local, yarn or standalone.')
+    parser.add_argument('--master', type=str, default=None,
+                        help='The master url, only used when cluster mode is standalone.')
+    parser.add_argument('--executor_cores', type=int, default=48,
+                        help='The executor core number.')
+    parser.add_argument('--executor_memory', type=str, default="160g",
+                        help='The executor memory.')
+    parser.add_argument('--num_executor', type=int, default=8,
+                        help='The number of executor.')
+    parser.add_argument('--driver_cores', type=int, default=4,
+                        help='The driver core number.')
+    parser.add_argument('--driver_memory', type=str, default="36g",
+                        help='The driver memory.')
+    parser.add_argument('--days', type=str, required=True,
+                        help="Day range for preprocessing, such as 0-23, 0-1.")
+    parser.add_argument('--input_folder', type=str, required=True,
+                        help="Path to the folder of parquet files.")
     parser.add_argument('--output_folder')
     parser.add_argument(
         '--write_mode',
@@ -55,7 +71,6 @@ def _parse_args():
     parser.add_argument('--frequency_limit')
 
     args = parser.parse_args()
-
     start, end = args.days.split('-')
     args.day_range = list(range(int(start), int(end) + 1))
     args.days = len(args.day_range)
@@ -65,8 +80,19 @@ def _parse_args():
 
 if __name__ == '__main__':
     args = _parse_args()
-    init_orca_context("local", cores=36, memory="50g")
-
+    if args.cluster_mode == "local":
+        init_orca_context("local", cores=args.executor_cores, memory=args.executor_memory)
+    elif args.cluster_mode == "standalone":
+        init_orca_context("standalone", master=args.master,
+                          cores=args.executor_cores, num_nodes=args.num_executor,
+                          memory=args.executor_memory,
+                          driver_cores=args.driver_cores,
+                          driver_memory=args.driver_memory, conf=conf)
+    elif args.cluster_mode == "yarn":
+        init_orca_context("yarn-client", cores=args.executor_cores,
+                          num_nodes=args.num_executor, memory=args.executor_memory,
+                          driver_cores=args.driver_cores, driver_memory=args.driver_memory,
+                          conf=conf)
     time_start = time()
     paths = [os.path.join(args.input_folder, 'day_%d.parquet' % i) for i in args.day_range]
     tbl = FeatureTable.read_parquet(paths)

@@ -21,8 +21,8 @@ def compute(df):
     return callZooFunc("float", "compute", df)
 
 
-def log_with_clip(df, columns):
-    return callZooFunc("float", "log", df, columns)
+def log_with_clip(df, columns, clip=True):
+    return callZooFunc("float", "log", df, columns, clip)
 
 
 def assign_string_idx(df, columns, freq_limit):
@@ -37,5 +37,5 @@ def fill_na_int(df, fill_val, columns):
     return callZooFunc("float", "fillNaInt", df, fill_val, columns)
 
 
-def clip_scala(df, columns, min):
+def friesian_clip(df, columns, min):
     return callZooFunc("float", "friesianClip", df, columns, min)
