@@ -31,7 +31,7 @@ from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 from zoo.tfpark.tf_optimizer import StatelessMetric
 from zoo.tfpark.utils import evaluate_metrics
 from zoo.util import nest
-from zoo.util.tf import save_tf_checkpoint
+from zoo.util.tf import save_tf_checkpoint, load_tf_checkpoint
 from zoo.orca.learn.spark_estimator import Estimator as SparkEstimator
 
 
@@ -125,14 +125,14 @@ class Estimator(SparkEstimator):
         """
         raise NotImplementedError
 
-    def load(self, checkpoint, **kwargs):
+    def load(self, model_path):
         """
-        Load existing checkpoint
+        Load existing model 
 
-        :param checkpoint: Path to the existing checkpoint.
+        :param model_path: Path to the existing model.
         :return:
         """
-        self.load_latest_orca_checkpoint(checkpoint)
+        raise NotImplementedError
 
     def clear_gradient_clipping(self):
         """
@@ -222,12 +222,28 @@ class Estimator(SparkEstimator):
         """
         raise NotImplementedError
 
+    def load_tf_checkpoint(self, path):
+        """
+        Load tensorflow checkpoint to this estimator.
+
+        :param path: tensorflow checkpoint path.
+        """
+        raise NotImplementedError
+
     def save_keras_model(self, path, overwrite=True):
         """
         Save tensorflow keras model in this estimator.
 
         :param path: keras model save path.
         :param overwrite: Whether to silently overwrite any existing file at the target location.
+        """
+        raise NotImplementedError
+
+    def load_keras_model(self, path):
+        """
+        Load tensorflow keras model to this estimator.
+
+        :param path: keras model path.
         """
         raise NotImplementedError
 
@@ -254,29 +270,24 @@ class Estimator(SparkEstimator):
         """
         raise NotImplementedError
 
-    def load_orca_checkpoint(self, path, version):
+    def load_orca_checkpoint(self, path, version=None):
         """
-        Load specified Orca checkpoint.
+        Load Orca checkpoint. To load a specific checkpoint, please provide a `version`.
+        If `version` is None, then the latest checkpoint will be loaded.
 
         :param path: checkpoint directory which contains model.* and
                optimMethod-TFParkTraining.* files.
         :param version: checkpoint version, which is the suffix of model.* file,
                i.e., for modle.4 file, the version is 4.
         """
+        if version is None:
+            path, _, version = find_latest_checkpoint(path, model_type="tf")
+            if path is None:
+                raise Exception("Cannot find checkpoint")
+        
         self.load_checkpoint = True
         self.checkpoint_path = path
         self.checkpoint_version = version
-
-    def load_latest_orca_checkpoint(self, path):
-        """
-        Load latest Orca checkpoint under specified directory.
-
-        :param path: directory containing Orca checkpoint files.
-        """
-        ckpt_path, _, version = find_latest_checkpoint(path, model_type="tf")
-        if ckpt_path is None:
-            raise Exception("Cannot find checkpoint")
-        self.load_orca_checkpoint(ckpt_path, version)
 
     @staticmethod
     def from_graph(*, inputs, outputs=None,
@@ -708,6 +719,13 @@ class TensorFlowEstimator(Estimator):
         """
         save_tf_checkpoint(self.sess, path)
 
+    def load_tf_checkpoint(self, path):
+        """
+        Load tensorflow checkpoint to this estimator.
+        :param path: tensorflow checkpoint path.
+        """
+        load_tf_checkpoint(self.sess, path)
+
     def get_model(self):
         """
         Get_model is not supported in tensorflow graph estimator
@@ -716,12 +734,20 @@ class TensorFlowEstimator(Estimator):
 
     def save(self, model_path):
         """
-        Save model to model_path
+        Save model (tensorflow checkpoint) to model_path
 
         :param model_path: path to save the trained model.
         :return:
         """
         self.save_tf_checkpoint(model_path)
+
+    def load(self, model_path):
+        """
+        Load existing model (tensorflow checkpoint) from model_path
+        :param model_path: Path to the existing tensorflow checkpoint.
+        :return:
+        """
+        self.load_tf_checkpoint(model_path)
 
     def clear_gradient_clipping(self):
         """
@@ -982,6 +1008,14 @@ class KerasEstimator(Estimator):
         """
         self.model.save_model(path, overwrite=overwrite)
 
+    def load_keras_model(self, path):
+        """
+        Load tensorflow keras model to this estimator.
+
+        :param path: keras model path.
+        """
+        self.model = KerasModel.load_model(path)
+
     def get_model(self):
         """
         Get the trained Keras model
@@ -1000,6 +1034,15 @@ class KerasEstimator(Estimator):
         :return:
         """
         self.save_keras_model(model_path, overwrite=overwrite)
+
+    def load(self, model_path):
+        """
+        Load existing keras model
+
+        :param checkpoint: Path to the existing keras model.
+        :return:
+        """
+        self.load_keras_model(model_path)
 
     def clear_gradient_clipping(self):
         """
