@@ -29,11 +29,16 @@ You also need to store the password you used in previous step in a secured file:
 ### Run the PPML Docker image
 #### In local mode
 ##### Start the container to run analytics zoo cluster serving in ppml.
+Set the parameter of path: <br>
 ```bash
-./run_docker_local_example.sh the_dir_path_of_your_prepared_keys the_dir_path_of_your_prepared_password your_local_ip_of_the_sgx_server
+export KEYS_PATH=the_dir_path_of_your_prepared_keys
+export SECURE_PASSWORD_PATH=the_dir_path_of_your_prepared_password
+export LOCAL_IP=your_local_ip_of_the_sgx_server
 ```
-For example: <br>
-`./run_docker_local_example.sh /home/user/keys /home/user/password 127.0.0.1`
+Then run the example with docker: <br>
+```bash
+./run_docker_local_example.sh
+```
 
 #### In distributed mode
 ##### setup passwordless ssh login to all the nodes.
