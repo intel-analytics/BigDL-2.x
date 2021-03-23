@@ -383,19 +383,31 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         """
         return self.validation_config
 
-    def setNNBatchSize(self, batch_size):
+    def _setNNBatchSize(self, batch_size):
+        """
+        Set BatchSize in NNEstimator directly instead of Deserialized from python object
+        For evaluting use ONLY
+        """
         pythonBigDL_method_name = "setNNBatchSize"
         callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
                     batch_size)
         return self
 
-    def setNNFeaturesCol(self, feature_cols):
+    def _setNNFeaturesCol(self, feature_cols):
+        """
+        Set FeaturesCol in NNEstimator directly instead of Deserialized from python object
+        For evaluting use ONLY
+        """
         pythonBigDL_method_name = "setNNFeaturesCol"
         callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
                     feature_cols)
         return self
 
-    def setNNLabelCol(self, label_cols):
+    def _setNNLabelCol(self, label_cols):
+        """
+        Set LabelCol in NNEstimator directly instead of Deserialized from python object
+        For evaluting use ONLY
+        """
         pythonBigDL_method_name = "setNNLabelCol"
         callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
                     label_cols)
@@ -491,6 +503,11 @@ class NNEstimator(JavaEstimator, HasFeaturesCol, HasLabelCol, HasPredictionCol, 
         return self._set(labelCol=value)
 
     def _eval(self, val_data):
+        """
+        Call Evaluting process.
+
+        :param val_data: validation data. Spark DataFrame
+        """
         pythonBigDL_method_name = "internalEval"
         result = callZooFunc(self.bigdl_type, pythonBigDL_method_name, self.value,
                              val_data)

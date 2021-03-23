@@ -231,7 +231,7 @@ class BigDLEstimator(OrcaSparkEstimator):
         """
         Evaluate model.
 
-        :param data: validation data. It can be XShards, each partition is a dictionary of
+        :param data: validation data. It can be XShardsor or Spark DataFrame, each partition is a dictionary of
                {'x': feature, 'y': label}, where feature(label) is a numpy array or a list of numpy
                arrays.
         :param batch_size: Batch size used for validation. Default: 32.
@@ -254,8 +254,8 @@ class BigDLEstimator(OrcaSparkEstimator):
                 data, _, label_cols = \
                     BigDLEstimator._combine_cols(data, label_cols, col_name="label")
 
-            self.nn_estimator.setNNBatchSize(batch_size).setNNFeaturesCol(feature_cols) \
-                .setNNLabelCol(label_cols)
+            self.nn_estimator._setNNBatchSize(batch_size)._setNNFeaturesCol(feature_cols) \
+                ._setNNLabelCol(label_cols)
 
             self.nn_estimator.setValidation(None, None,
                                             self.metrics, batch_size)
