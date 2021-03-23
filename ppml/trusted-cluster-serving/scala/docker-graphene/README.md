@@ -18,8 +18,10 @@ This script is under /analytics-zoo/ppml: <br>
 You also need to store the password you used in previous step in a secured file: <br>
 This script is also under /analytics-zoo/ppml: <br>
 ```bash
-./generate-password.sh
+./generate-password.sh used_password_in_generate-keys.sh
 ```
+For example: <br>
+`./generate-password.sh abcd1234`
 
 ### Run the PPML Docker image
 #### In local mode
