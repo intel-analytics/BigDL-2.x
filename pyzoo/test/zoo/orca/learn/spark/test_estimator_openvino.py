@@ -53,10 +53,10 @@ class TestEstimatorForOpenVINO(TestCase):
     def test_openvino_predict_ndarray(self):
         input_data = np.random.random([20, 4, 3, 224, 224])
         result = self.est.predict(input_data)
-        print(result)
+        assert isinstance(result, np.ndarray)
+        assert result.shape[0] == 20
 
     def test_openvino_predict_xshards(self):
-        # xshards
         input_data_list = [np.random.random([1, 4, 3, 224, 224]),
                            np.random.random([2, 4, 3, 224, 224])]
         sc = init_nncontext()
@@ -69,19 +69,20 @@ class TestEstimatorForOpenVINO(TestCase):
         shards = shards.transform_shard(pre_processing)
         result = self.est.predict(shards)
         result_c = result.collect()
-        print(result_c)
+        assert isinstance(result, SparkXShards)
+        assert result_c[0]["prediction"].shape[0] == 1
+        assert result_c[1]["prediction"].shape[0] == 2
 
     def test_openvino_predict_spark_df(self):
-        # Spark DataFrame
-        from pyspark.sql import SparkSession
-        from pyspark.sql.types import ArrayType, DoubleType
+        from pyspark.sql import SparkSession, DataFrame
+
         sc = init_nncontext()
-        spark = SparkSession(sc)
+        spark = SparkSession(sc)        
         rdd = sc.range(0, 3)
         input_df = rdd.map(lambda x: (np.random.random([1, 4, 3, 224, 224]).tolist(),[0])
                            ).toDF(["feature", "label"])
         result_df = self.est.predict(input_df, feature_cols=["feature"])
-        result_df.show()        
+        assert isinstance(result_df, DataFrame)
 
 
 if __name__ == "__main__":
