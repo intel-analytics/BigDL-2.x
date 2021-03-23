@@ -13,3 +13,13 @@ make
 sudo insmod gsgx.ko
 ll /dev/gsgx && ll /dev/sgx/enclave && ll /dev/sgx/provision
 ```
+
+### Generate keys
+```bash
+./generate-keys.sh
+```
+
+### Generate password
+```bash
+./generate-password.sh path_of_your_password
+```
