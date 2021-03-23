@@ -80,6 +80,7 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
 
 Then run the script to run pi test in spark: <br>
 ```bash
+chmod a+x start-spark-local-pi-sgx.sh
 ./start-spark-local-pi-sgx.sh
 ```
 
@@ -156,6 +157,7 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
 
 Then run the script to run TPC-H test in spark: <br>
 ```bash
+chmod a+x start-spark-local-tpc-h-sgx.sh
 ./start-spark-local-tpc-h-sgx.sh
 ```
 
