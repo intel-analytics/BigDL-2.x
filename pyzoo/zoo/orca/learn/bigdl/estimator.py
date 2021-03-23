@@ -231,9 +231,9 @@ class BigDLEstimator(OrcaSparkEstimator):
         """
         Evaluate model.
 
-        :param data: validation data. It can be XShardsor or Spark DataFrame, each partition is a dictionary of
-               {'x': feature, 'y': label}, where feature(label) is a numpy array or a list of numpy
-               arrays.
+        :param data: validation data. It can be XShardsor or Spark DataFrame, each partition is
+               a dictionary of {'x': feature, 'y': label}, where feature(label) is a numpy array
+               or a list of numpy arrays.
         :param batch_size: Batch size used for validation. Default: 32.
         :param feature_cols: (Not supported yet) Feature column name(s) of data. Only used when
                data is a Spark  DataFrame. Default: None.
