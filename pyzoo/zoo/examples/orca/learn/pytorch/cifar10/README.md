@@ -11,9 +11,11 @@ conda activate zoo
 pip install analytics-zoo  # 0.10.0.dev3 or above
 pip install torch
 pip install torchvision
+pip install matplotlib
+# for bigdl:
 pip install jep==3.9.0
 pip install six cloudpickle
-pip install matplotlib
+# for torch_distributed:
 pip install ray==1.2.0
 ```
 
