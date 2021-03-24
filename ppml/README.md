@@ -4,11 +4,11 @@ Artificial intelligence on big data is increasingly important to many real-world
 Analytics Zoo helps to build PPML applications on top of Intel® SGX
 Software Guard Extensions (Intel® SGX) and library OS such as Graphene and Occlum. Analytics Zoo supports big data analytics, machine learning and cluster serving as PPML applications on top of Intel® SGX and Graphene/Occlum.
 
-###Intel® SGX
+### Intel® SGX
 Intel® SGX runs on Intel’s Trusted Execution Environment (TEE), offering hardwarebased memory encryption that isolates specific application code and data in memory. Intel® SGX enables user-level code to allocate private regions of memory, called enclaves, which are designed to be protected from processes running at higher privilege levels. 
 
-###Graphene
+### Graphene
 Graphene is a lightweight guest OS, designed to run a single application with minimal host requirements. Graphene can run applications in an isolated environment with benefits comparable to running a complete OS in a virtual machine -- including guest customization, ease of porting to different OSes, and process migration. Graphene supports native, unmodified Linux applications on any platform. Currently, Graphene runs on Linux and Intel SGX enclaves on Linux platforms. With Intel SGX support, Graphene can secure a critical application in a hardware-encrypted memory region. Graphene can protect applications from a malicious system stack with minimal porting effort.
 
-###Occlum
+### Occlum
 Occlum is a memory-safe, multi-process library OS (LibOS) for Intel SGX. As a LibOS, it enables legacy applications to run on SGX with little or even no modifications of source code, thus protecting the confidentiality and integrity of user workloads transparently.
