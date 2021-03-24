@@ -20,11 +20,6 @@ import os
 import tempfile
 import uuid
 import shutil
-from py4j.protocol import Py4JJavaError
-from py4j.java_gateway import JavaObject
-from py4j.java_collections import ListConverter, JavaArray, JavaList, JavaMap, MapConverter
-from py4j.java_gateway import JavaGateway, GatewayClient
-from pyspark.serializers import PickleSerializer
 
 from urllib.parse import urlparse
 
@@ -143,6 +138,16 @@ def callZooFunc(bigdl_type, name, *args):
 
 # TODO: change to bigdl's _java2py when update to bigdl 0.12.2
 def _java2py(gateway, r, encoding="bytes"):
+    from py4j.protocol import Py4JJavaError
+    from py4j.java_gateway import JavaObject
+    from py4j.java_collections import ListConverter, JavaArray, JavaList, JavaMap, MapConverter
+    from py4j.java_gateway import JavaGateway, GatewayClient
+    from pyspark import RDD, SparkContext
+    from pyspark.serializers import PickleSerializer, AutoBatchedSerializer
+    from pyspark.sql import DataFrame, SQLContext
+    from pyspark.mllib.common import callJavaFunc
+    from pyspark import SparkConf
+    from pyspark.files import SparkFiles
     if isinstance(r, JavaObject):
         clsName = r.getClass().getSimpleName()
         # convert RDD into JavaRDD
