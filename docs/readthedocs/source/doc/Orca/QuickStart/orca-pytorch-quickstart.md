@@ -88,25 +88,22 @@ from torchvision import datasets, transforms
 torch.manual_seed(0)
 dir='./'
 
-def train_loader_creator():
-    train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('./', train=True, download=True,
-                       transform=transforms.Compose([
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))
-                       ])),
-        batch_size=320, shuffle=True)
-    return train_loader
-
-def test_loader_creator():
-    test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('./', train=False,
-                       transform=transforms.Compose([
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))
-                       ])),
-        batch_size=320, shuffle=False)
-    return test_loader
+batch_size=64
+test_batch_size=64
+train_loader = torch.utils.data.DataLoader(
+    datasets.MNIST(dir, train=True, download=True,
+                   transform=transforms.Compose([
+                       transforms.ToTensor(),
+                       transforms.Normalize((0.1307,), (0.3081,))
+                   ])),
+    batch_size=batch_size, shuffle=True)
+test_loader = torch.utils.data.DataLoader(
+    datasets.MNIST(dir, train=False,
+                   transform=transforms.Compose([
+                       transforms.ToTensor(),
+                       transforms.Normalize((0.1307,), (0.3081,))
+                   ])),
+    batch_size=test_batch_size, shuffle=False)
 ```
 
 Alternatively, we can also use a [Data Creator Function](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist_data_creator_func.ipynb)) or [Orca XShards](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/Orca/data.md) as the input data, especially when the data size is very large)
@@ -132,7 +129,7 @@ est.fit(data=train_loader, epochs=10, validation_data=test_loader,
 
 result = est.evaluate(data=test_loader)
 for r in result:
-    print(str(r))
+    print(r, ":", result[r])
 ```
 
 **Note:** You should call `stop_orca_context()` when your application finishes.
