@@ -20,6 +20,10 @@ import os
 import tempfile
 import uuid
 import shutil
+from py4j.protocol import Py4JJavaError
+from py4j.java_gateway import JavaObject
+from py4j.java_collections import ListConverter, JavaArray, JavaList, JavaMap, MapConverter
+from py4j.java_gateway import JavaGateway, GatewayClient
 
 from urllib.parse import urlparse
 
