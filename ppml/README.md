@@ -7,11 +7,13 @@ Please mind the ip and file path settings, they should be changed to the ip/path
 ```
 
 ### Generate keys
+The ppml in analytics zoo need secured keys, you need to prepare the secure keys and keystores. <br>
 ```bash
 ./generate-keys.sh
 ```
 
 ### Generate password
+You also need to store the password you used in previous step in a secured file: <br>
 ```bash
 ./generate-password.sh used_password_in_generate-keys.sh
 ```
