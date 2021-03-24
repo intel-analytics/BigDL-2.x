@@ -14,12 +14,18 @@
 # limitations under the License.
 #
 from bigdl.util.common import Sample as BSample, JTensor as BJTensor,\
-    JavaCreator, _get_gateway, _java2py, _py2java
+    JavaCreator, _get_gateway, _py2java, get_spark_context, get_spark_sql_context, \
+    _picklable_classes
+from pyspark import RDD
+from pyspark.serializers import PickleSerializer
+from py4j.protocol import Py4JJavaError
+from py4j.java_gateway import JavaObject
+from py4j.java_collections import JavaArray, JavaList, JavaMap
+from pyspark.sql import DataFrame
 import numpy as np
 import os
 import tempfile
 import uuid
-import shutil
 
 from urllib.parse import urlparse
 
@@ -134,6 +140,45 @@ def callZooFunc(bigdl_type, name, *args):
         else:
             return result
     raise error
+
+
+# TODO: change to bigdl's _java2py when update to bigdl 0.12.2
+def _java2py(gateway, r, encoding="bytes"):
+    if isinstance(r, JavaObject):
+        clsName = r.getClass().getSimpleName()
+        # convert RDD into JavaRDD
+        if clsName != 'JavaRDD' and clsName.endswith("RDD"):
+            r = r.toJavaRDD()
+            clsName = 'JavaRDD'
+
+        if clsName == 'JavaRDD':
+            jrdd = gateway.jvm.org.apache.spark.bigdl.api.python.BigDLSerDe.javaToPython(r)
+            return RDD(jrdd, get_spark_context())
+
+        if clsName == 'DataFrame':
+            return DataFrame(r, get_spark_sql_context(get_spark_context()))
+
+        if clsName == 'Dataset':
+            return DataFrame(r, get_spark_sql_context(get_spark_context()))
+
+        if clsName == "ImageFrame[]":
+            return r
+
+        if clsName in _picklable_classes:
+            r = gateway.jvm.org.apache.spark.bigdl.api.python.BigDLSerDe.dumps(r)
+        elif isinstance(r, (JavaArray, JavaList)) and len(r) != 0 \
+                and r[0].getClass().getSimpleName() in ['DataFrame', 'Dataset']:
+            spark = get_spark_sql_context(get_spark_context())
+            r = list(map(lambda x: DataFrame(x, spark), r))
+        elif isinstance(r, (JavaArray, JavaList, JavaMap)):
+            try:
+                r = gateway.jvm.org.apache.spark.bigdl.api.python.BigDLSerDe.dumps(
+                    r)
+            except Py4JJavaError:
+                pass  # not pickable
+        if isinstance(r, (bytearray, bytes)):
+            r = PickleSerializer().loads(bytes(r), encoding=encoding)
+    return r
 
 
 class JTensor(BJTensor):

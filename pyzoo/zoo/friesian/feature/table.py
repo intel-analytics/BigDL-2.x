@@ -79,8 +79,8 @@ class Table:
             new_df = new_df.withColumnRenamed(old_name, new_name)
         return Table(new_df)
 
-    def show(self, n=20, truncate=True, vertical=False):
-        self.df.show(n, truncate, vertical)
+    def show(self, n=20, truncate=True):
+        self.df.show(n, truncate)
 
 
 class FeatureTable(Table):
@@ -103,9 +103,8 @@ class FeatureTable(Table):
         return FeatureTable(data_df)
 
     def gen_string_idx(self, columns, freq_limit):
-        spark = OrcaContext.get_spark_session()
         df_id_list = assign_string_idx(self.df, columns, freq_limit)
-        string_idx_list = list(map(lambda x: StringIndex(DataFrame(x, spark)), df_id_list))
+        string_idx_list = list(map(lambda x: StringIndex(x), df_id_list))
         return string_idx_list
 
 

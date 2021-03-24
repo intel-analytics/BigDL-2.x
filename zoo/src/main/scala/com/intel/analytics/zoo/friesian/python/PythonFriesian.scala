@@ -16,13 +16,15 @@
 
 package com.intel.analytics.zoo.friesian.python
 
+import java.util
+
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.friesian.feature.Utils
 import java.util.{List => JList}
 
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{col, log => sqllog, row_number, spark_partition_id, udf}
+import org.apache.spark.sql.functions.{col, row_number, spark_partition_id, udf, log => sqllog}
 import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.reflect.ClassTag
