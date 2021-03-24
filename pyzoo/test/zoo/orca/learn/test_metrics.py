@@ -97,11 +97,11 @@ def test_torch_MAE():
     pred = torch.tensor([[1.5, 2.5], [1.0, 1.0]])
     target = torch.tensor([[0.2, 1.1], [0.5, 1.0]])
     m(pred, target)
-    assert abs(m.compute() - 0.85) < 1e-6
+    assert abs(m.compute() - 0.85) < 1e-7   # add float tolerance for floating point precision
     pred = torch.tensor([[1.5, 2.5, 1.5, 2.5], [1.8, 2.0, 0.5, 4.5]])
     target = torch.tensor([[0, 1, 0, 0], [0, 1, 2, 2]])
     m(pred, target)
-    assert abs(m.compute() - 1.2) < 1e-6
+    assert abs(m.compute() - 1.2) < 1e-7
 
 
 def test_torch_MSE():
@@ -118,11 +118,11 @@ def test_torch_MSE():
     pred = torch.tensor([[1.3, 1.0], [0.2, 1.0]])
     target = torch.tensor([[1.1, 1.0], [0.0, 1.0]])
     m(pred, target)
-    assert abs(m.compute() - 0.84) < 1e-6
+    assert abs(m.compute() - 0.84) < 1e-7
     pred = torch.tensor([[1.2, 1.2, 1.2, 1.8], [0.2, 0.8, 0.9, 1.1]])
     target = torch.tensor([[1, 1, 1, 2], [0, 1, 1, 1]])
     m(pred, target)
-    assert abs(m.compute() - 0.517) < 1e-6
+    assert abs(m.compute() - 0.517) < 1e-7
 
 
 def test_torch_BinaryCrossEntropy():
