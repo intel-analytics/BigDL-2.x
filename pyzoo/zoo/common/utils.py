@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from bigdl.util.common import Sample as BSample, JTensor as BJTensor,\
-    JavaCreator, _get_gateway, _py2java
+    JavaCreator, _get_gateway, _py2java, _picklable_classes
 import numpy as np
 import os
 import tempfile
@@ -24,6 +24,7 @@ from py4j.protocol import Py4JJavaError
 from py4j.java_gateway import JavaObject
 from py4j.java_collections import ListConverter, JavaArray, JavaList, JavaMap, MapConverter
 from py4j.java_gateway import JavaGateway, GatewayClient
+from pyspark.serializers import PickleSerializer
 
 from urllib.parse import urlparse
 
