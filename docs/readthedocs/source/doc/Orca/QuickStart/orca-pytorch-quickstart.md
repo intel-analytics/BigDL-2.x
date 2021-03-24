@@ -106,7 +106,7 @@ test_loader = torch.utils.data.DataLoader(
     batch_size=test_batch_size, shuffle=False)
 ```
 
-Alternatively, we can also use a [Data Creator Function](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist_data_creator_func.ipynb)) or [Orca XShards](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/Orca/data.md) as the input data, especially when the data size is very large)
+Alternatively, we can also use a [Data Creator Function](../../../../../docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist_data_creator_func.ipynb)) or [Orca XShards](../../../../../docs/Orca/data.md) as the input data, especially when the data size is very large)
 
 ### **Step 4: Fit with Orca Estimator**
 
