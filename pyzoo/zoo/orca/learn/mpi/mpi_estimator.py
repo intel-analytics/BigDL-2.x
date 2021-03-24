@@ -7,7 +7,7 @@ from pyspark import RDD
 from pyspark.sql import DataFrame
 from torch.utils.data import Dataset, DataLoader
 from zoo.util.utils import get_node_ip
-from .mpi_runner import MPIRunner
+from mpi_runner import MPIRunner
 
 
 class MPIEstimator:
@@ -43,18 +43,18 @@ class MPIEstimator:
                 assert isinstance(validation_data, DataFrame)
                 validation_data = validation_data.rdd
         if isinstance(data, RDD):
-            # Launch plasma
-            object_store_address = self.mpi_runner.launch_plasma()
-            # partition_id (not used), partition_size, object_id, node_ip
+            # Launch plasma. TODO: make object store memory configurable?
+            object_store_address = self.mpi_runner.launch_plasma(object_store_memory="100g")
+            # partition_id, subpartition_id, partition_size, object_id, node_ip
             plasma_meta = data.mapPartitionsWithIndex(
                 put_to_plasma(object_store_address)).collect()
-            data_creator = create_plasma_dataloader(plasma_meta, object_store_address,
-                                                    self.mpi_runner.processes_per_node, batch_size)
+            data_creator = plasma_data_creator(plasma_meta, object_store_address,
+                                               self.mpi_runner.processes_per_node, batch_size)
             if validation_data:
                 assert isinstance(validation_data, RDD)
                 validate_plasma_meta = validation_data.mapPartitionsWithIndex(
                     put_to_plasma(object_store_address)).collect()
-                validation_data_creator = create_plasma_dataloader(
+                validation_data_creator = plasma_data_creator(
                     validate_plasma_meta, object_store_address,
                     self.mpi_runner.processes_per_node, validate_batch_size)
             else:
@@ -81,6 +81,7 @@ class MPIEstimator:
                                   "root@{}:{}/".format(host, self.dir)])
             os.waitpid(p.pid, 0)
         self.mpi_runner.run("mpi_train.py", pkl_path=self.dir)
+        self.mpi_runner.shutdown_plasma()
 
     def shutdown(self):
         self.mpi_runner.shutdown_plasma()
@@ -91,8 +92,9 @@ def put_to_plasma(address):
 
     def f(index, iterator):
         client = plasma.connect(address)
-        part_size = 1000000  # TODO: Make this configurable?
+        part_size = 10000  # TODO: Make subpartition size configurable?
         buffer = []
+        sub_index = 0
         for record in iterator:
             if len(buffer) == part_size:
                 import random
@@ -110,7 +112,8 @@ def put_to_plasma(address):
                 # TODO: add list support
                 object_id = client.put(res_buffer)
                 buffer = [record]
-                yield index, part_size, object_id, get_node_ip()
+                yield index, sub_index, part_size, object_id, get_node_ip()
+                sub_index += 1
             else:
                 buffer.append(record)
         remain_size = len(buffer)
@@ -121,12 +124,16 @@ def put_to_plasma(address):
             buffer_y = [record[1] for record in buffer]
             res_buffer = {"y": np.array(buffer_y)}  # int32?
             if isinstance(buffer_x[0], dict):
+                res_x = {}
                 for k in list(buffer_x[0].keys()):
-                    res_buffer[k] = np.array([record[k] for record in buffer_x])
+                    res_x[k] = np.array([record[k] for record in buffer_x])
+                res_buffer["x"] = res_x
+            else:
+                res_buffer["x"] = np.array(buffer_x)
             object_id = client.put(res_buffer)
             buffer = []
             client.disconnect()
-            yield index, remain_size, object_id, get_node_ip()
+            yield index, sub_index, remain_size, object_id, get_node_ip()
         else:
             client.disconnect()
 
@@ -140,17 +147,19 @@ class PlasmaNDArrayDataset(Dataset):
         print("Connected to plasma")
 
         # All the subpartitions on this node
-        all_data = [subpartition for subpartition in meta_data if subpartition[3] == get_node_ip()]
-        rank = os.environ.get("PMI_RANK", 0)
+        all_data = [subpartition for subpartition in meta_data if subpartition[4] == get_node_ip()]
+        rank = int(os.environ.get("PMIX_RANK", 0))  # PMIX_RANK for OpenMPI
         local_rank = rank % workers_per_node
-        data_splits = list(chunks(all_data, workers_per_node))
+        print("Local rank: ", local_rank)
+        data_splits = list(chunks(all_data, len(all_data) // workers_per_node))
         worker_data = data_splits[local_rank]
         if len(data_splits) == (workers_per_node + 1):  # Can't evenly split among workers
             remain_data = data_splits[-1]
             if local_rank < len(remain_data):
                 worker_data += [remain_data[local_rank]]
-        self.object_ids = [subpartition[2] for subpartition in worker_data]
-        self.sizes = [subpartition[1] for subpartition in worker_data]
+        self.object_ids = [subpartition[3] for subpartition in worker_data]
+        self.sizes = [subpartition[2] for subpartition in worker_data]
+        print("Data size for worker: ", sum(self.sizes))
         self.batch_size = batch_size
         offsets = []
         for i in self.sizes:
@@ -167,7 +176,7 @@ class PlasmaNDArrayDataset(Dataset):
         self.load_from_plasma(self.current_index)
 
     def load_from_plasma(self, index):
-        # print("Loading partition {}".format(index))
+        print("Loading {}".format(self.object_ids[index]))
         current_data = self.client.get(self.object_ids[index], timeout_ms=0)
         self.current_x = current_data["x"]
         self.current_y = current_data["y"]
@@ -234,16 +243,20 @@ class PlasmaNDArrayDataset(Dataset):
         # return X_int, lS_o, lS_i, T
 
 
-def create_plasma_dataloader(meta_data, object_store_address, workers_per_node=1, batch_size=1):
-    dataset = PlasmaNDArrayDataset(meta_data, object_store_address, workers_per_node, batch_size)
-    # TODO: support more options
-    loader = DataLoader(
-        dataset,
-        batch_size=None,
-        shuffle=False,
-        collate_fn=None,
-    )
-    return loader
+def plasma_data_creator(meta_data, object_store_address, workers_per_node=1, batch_size=1):
+
+    def create_plasma_dataloader(config):
+        dataset = PlasmaNDArrayDataset(meta_data, object_store_address, workers_per_node, batch_size)
+        # TODO: support more options
+        loader = DataLoader(
+            dataset,
+            batch_size=None,
+            shuffle=False,
+            collate_fn=None,
+        )
+        return loader
+
+    return create_plasma_dataloader
 
 
 def chunks(lst, n):

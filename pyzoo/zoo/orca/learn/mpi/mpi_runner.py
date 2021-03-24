@@ -21,7 +21,7 @@ from zoo.util.utils import get_node_ip
 from zoo.orca import OrcaContext
 
 # Assumption:
-# 1. All hosts has mpi installed
+# 1. All hosts has oneCCL installed
 # 2. The driver can ssh all hosts without password
 # 3. All hosts have the same working directory.
 # 4. All hosts have the same Python environment in the same location.
@@ -48,7 +48,7 @@ class MPIRunner:
         self.master = self.hosts[0]
         print("Master: ", self.master)
         self.remote_hosts = []
-        for host in hosts:
+        for host in self.hosts:
             if host != driver_ip:
                 self.remote_hosts.append(host)
         print("Remote hosts: ", self.remote_hosts)
@@ -65,7 +65,8 @@ class MPIRunner:
                                   "root@{}:{}".format(host, file_dir)])
             os.waitpid(p.pid, 0)
         cmd = ['mpiexec.hydra']
-        mpi_config = "-l -np {} -ppn {} ".format(
+        # -l would label the output with process rank. -l/-ppn not available for openmpi.
+        mpi_config = "-np {} -ppn {} -l ".format(
             self.processes_per_node * len(self.hosts),
             self.processes_per_node)
         mpi_env = os.environ.copy()
@@ -80,8 +81,8 @@ class MPIRunner:
         # cmd.append("ls")
         cmd.append(sys.executable)
         cmd.append("-u")  # This can print as the program runs
-        cmd.append("train.py")
-        for k, v in kwargs.values():
+        cmd.append(file_path)
+        for k, v in kwargs.items():
             cmd.append("--{}={}".format(str(k), str(v)))
         print(cmd)
 
@@ -93,14 +94,25 @@ class MPIRunner:
         process = subprocess.Popen(cmd, env=mpi_env)
         process.wait()
 
-    def launch_plasma(self):
-        pass  # TODO. Use Spark or SSH
-        # import subprocess
-        # p = subprocess.Popen(
-        #     ["/opt/work/anaconda3/envs/dlrm/bin/plasma_store", "-m", "100000000000", "-s", object_store_address])
+    def launch_plasma(self, object_store_memory="2g"):
+        # TODO: Or can use spark to launch plasma
+        from zoo.ray.utils import resource_to_bytes
+        self.plasma_path = "/".join(sys.executable.split("/")[:-1] + ["plasma_store"])
+        self.object_store_memory = resource_to_bytes(object_store_memory)
+        self.object_store_address = "/tmp/analytics_zoo_plasma"
+        command = "{} -m {} -s {}".format(self.plasma_path, self.object_store_memory, self.object_store_address)
+        for host in self.hosts:
+            if host != get_node_ip():
+                p = subprocess.Popen(["ssh", "root@{}".format(host), command])
+            else:
+                p = subprocess.Popen(command.split())
+            print("Plasma launched on {}".format(host))
+        return self.object_store_address
 
     def shutdown_plasma(self):
-        pass
-        # import subprocess
-        # p = subprocess.Popen(["pkill", "plasma"])
-        # os.waitpid(p.pid, 0)
+        for host in self.hosts:
+            if host != get_node_ip():
+                p = subprocess.Popen(["ssh", "root@{}".format(host), "pkill plasma"])
+            else:
+                p = subprocess.Popen(["pkill", "plasma"])
+            os.waitpid(p.pid, 0)
