@@ -31,6 +31,7 @@ from zoo.feature.common import FeatureSet
 
 from bigdl.nn.layer import Model
 
+
 class TestPytorch(TestCase):
 
     def setUp(self):
