@@ -16,13 +16,12 @@
 #
 
 from zoo.automl.search import SearchEngineFactory
-from zoo.automl.model import ModelBuilder
+from zoo.zouwu.model.forecast.model import ModelBuilder
 import torch
 import tensorflow as tf
 import torch.nn as nn
 from zoo.automl.config.recipe import Recipe
 from ray import tune
-import pandas as pd
 import numpy as np
 from zoo.orca import init_orca_context
 

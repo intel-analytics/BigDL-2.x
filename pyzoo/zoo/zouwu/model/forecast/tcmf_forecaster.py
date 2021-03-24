@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.automl.model.tcmf_model import TCMFNdarrayModelWrapper, TCMFXshardsModelWrapper
+from zoo.zouwu.model.forecast.model.tcmf_model import TCMFNdarrayModelWrapper, TCMFXshardsModelWrapper
 from zoo.orca.data import SparkXShards
 from zoo.zouwu.model.forecast.abstract import Forecaster
 

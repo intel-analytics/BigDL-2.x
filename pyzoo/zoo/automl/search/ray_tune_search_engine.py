@@ -25,7 +25,7 @@ from zoo.automl.impute.impute import *
 from ray.tune import Trainable
 import ray.tune.track
 from zoo.automl.logger import TensorboardXLogger
-from zoo.automl.model.model_builder import ModelBuilder
+from zoo.zouwu.model.forecast.model import ModelBuilder
 from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 from zoo.automl.search.tune_utils import (create_searcher,
                                           create_scheduler)

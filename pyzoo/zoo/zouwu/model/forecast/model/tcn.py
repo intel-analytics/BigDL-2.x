@@ -42,7 +42,7 @@
 import torch
 import torch.nn as nn
 from torch.nn.utils import weight_norm
-from zoo.automl.model.base_pytorch_model import PytorchBaseModel
+from zoo.zouwu.model.forecast.model.base_pytorch_model import PytorchBaseModel
 
 
 class Chomp1d(nn.Module):

@@ -46,7 +46,6 @@
 
 
 import pickle
-import random
 
 import numpy as np
 import torch
@@ -55,8 +54,8 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.nn.utils import weight_norm
 
-from zoo.automl.model.tcmf.data_loader import TCMFDataLoader
-from zoo.automl.model.tcmf.time import TimeCovariates
+from zoo.zouwu.model.forecast.model.tcmf.data_loader import TCMFDataLoader
+from zoo.zouwu.model.forecast.model.tcmf.time import TimeCovariates
 
 import logging
 
@@ -406,7 +405,7 @@ class LocalModel(object):
                                           early_stop=early_stop,
                                           tenacity=tenacity)
         else:
-            from zoo.automl.model.tcmf.local_model_distributed_trainer import train_yseq_hvd
+            from zoo.zouwu.model.forecast.model import train_yseq_hvd
             import ray
 
             # check whether there has been an activate ray context yet.

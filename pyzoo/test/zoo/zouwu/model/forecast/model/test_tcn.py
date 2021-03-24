@@ -14,9 +14,8 @@
 # limitations under the License.
 #
 
-import pytest
 from unittest import TestCase
-from zoo.automl.model.tcn import TCNPytorch
+from zoo.zouwu.model.forecast.model.tcn import TCNPytorch
 import numpy as np
 import tempfile
 import os

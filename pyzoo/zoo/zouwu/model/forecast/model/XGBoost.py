@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from abc import ABC
 
 import pickle
 import pandas as pd
@@ -20,7 +19,7 @@ from xgboost.sklearn import XGBRegressor
 
 from xgboost.sklearn import XGBClassifier
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.model.abstract import BaseModel
+from zoo.zouwu.model.forecast.model.abstract import BaseModel
 
 
 class XGBoost(BaseModel):

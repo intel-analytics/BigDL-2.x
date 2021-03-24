@@ -22,7 +22,7 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline, load_ts_pipeline
 from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
 from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
-from zoo.automl.model.time_sequence import TimeSequenceModel
+from zoo.zouwu.model.forecast.model import TimeSequenceModel
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.config.recipe import *
 

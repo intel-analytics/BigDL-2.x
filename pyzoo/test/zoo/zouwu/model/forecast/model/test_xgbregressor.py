@@ -21,7 +21,7 @@ import pandas as pd
 import os
 from numpy.testing import assert_array_almost_equal
 
-from zoo.automl.model.XGBoost import XGBoost
+from zoo.zouwu.model.forecast.model.XGBoost import XGBoost
 from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 
 

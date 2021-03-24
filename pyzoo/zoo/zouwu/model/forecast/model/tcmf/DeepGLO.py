@@ -54,9 +54,9 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 
-from zoo.automl.model.tcmf.data_loader import TCMFDataLoader
-from zoo.automl.model.tcmf.local_model import TemporalConvNet, LocalModel
-from zoo.automl.model.tcmf.time import TimeCovariates
+from zoo.zouwu.model.forecast.model.tcmf.data_loader import TCMFDataLoader
+from zoo.zouwu.model.forecast.model.tcmf.local_model import TemporalConvNet, LocalModel
+from zoo.zouwu.model.forecast.model.tcmf.time import TimeCovariates
 
 import copy
 

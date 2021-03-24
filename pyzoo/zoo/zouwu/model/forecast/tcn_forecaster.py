@@ -15,7 +15,7 @@
 #
 
 from zoo.zouwu.model.forecast.abstract import Forecaster
-from zoo.automl.model.tcn import TCNPytorch
+from zoo.zouwu.model.forecast.model.tcn import TCNPytorch
 
 
 class TCNForecaster(Forecaster):

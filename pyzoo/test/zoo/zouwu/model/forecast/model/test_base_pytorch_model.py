@@ -14,11 +14,10 @@
 # limitations under the License.
 #
 from unittest import TestCase
-from zoo.automl.model import ModelBuilder
+from zoo.zouwu.model.forecast.model import ModelBuilder
 import numpy as np
 import torch
 import torch.nn as nn
-import math
 
 
 def get_data():
