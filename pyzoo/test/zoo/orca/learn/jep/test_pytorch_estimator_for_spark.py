@@ -132,7 +132,7 @@ class TestEstimatorForSpark(TestCase):
             est2 = Estimator.from_torch(model=model, loss=nn.BCELoss(),
                                         metrics=[Accuracy()],
                                         optimizer=None)
-            est2.load(temp_dir_name, loss=nn.BCELoss())
+            est2.load(temp_dir_name)
             est2.predict(data_shard,feature_cols=['feature'])
 
 if __name__ == "__main__":
