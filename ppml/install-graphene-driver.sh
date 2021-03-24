@@ -10,4 +10,4 @@ sudo rmmod graphene_sgx || true
 sudo rmmod gsgx || true
 make
 sudo insmod gsgx.ko
-ll /dev/gsgx && ll /dev/sgx/enclave && ll /dev/sgx/provision
+ls /dev/gsgx && ls /dev/sgx/enclave && ls /dev/sgx/provision
