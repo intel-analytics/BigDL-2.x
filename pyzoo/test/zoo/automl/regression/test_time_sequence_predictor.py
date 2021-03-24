@@ -21,7 +21,7 @@ from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
 import pandas as pd
 import numpy as np
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
-from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
+from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 
 
 class TestTimeSequencePredictor(ZooTestCase):

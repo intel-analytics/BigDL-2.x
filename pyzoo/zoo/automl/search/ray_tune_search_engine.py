@@ -17,7 +17,6 @@
 import ray
 from ray import tune
 from copy import deepcopy
-import os
 
 from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
@@ -27,7 +26,7 @@ from ray.tune import Trainable
 import ray.tune.track
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model.model_builder import ModelBuilder
-from zoo.automl.feature.identity_transformer import IdentityTransformer
+from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 from zoo.automl.search.tune_utils import (create_searcher,
                                           create_scheduler)
 

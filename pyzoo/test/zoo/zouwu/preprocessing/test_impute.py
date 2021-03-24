@@ -19,7 +19,7 @@ import pandas as pd
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
+from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 from zoo.zouwu.preprocessing.impute.LastFill import LastFill
 
 

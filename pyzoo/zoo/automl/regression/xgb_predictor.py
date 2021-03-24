@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 from zoo.automl.regression.base_predictor import BasePredictor
-from zoo.automl.feature.identity_transformer import IdentityTransformer
+from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 
 from zoo.automl.model.XGBoost import XGBoost
 

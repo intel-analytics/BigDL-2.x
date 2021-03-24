@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.search import SearchEngineFactory
@@ -26,7 +25,7 @@ from ray import tune
 import pandas as pd
 import numpy as np
 from zoo.orca import init_orca_context, stop_orca_context
-from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
+from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 import json
 
 

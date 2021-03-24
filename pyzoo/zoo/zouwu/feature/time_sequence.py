@@ -15,10 +15,10 @@
 #
 
 from zoo.automl.common.util import save_config
-from zoo.automl.feature.abstract import BaseFeatureTransformer
+from zoo.zouwu.feature.abstract import BaseFeatureTransformer
 
 import sklearn
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 import json

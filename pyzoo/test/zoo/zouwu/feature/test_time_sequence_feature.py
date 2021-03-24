@@ -13,15 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-import shutil
-import tempfile
 
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.common.util import *
-from zoo.automl.feature.time_sequence import *
+from zoo.zouwu.feature.time_sequence import *
 from numpy.testing import assert_array_almost_equal
 import json
 

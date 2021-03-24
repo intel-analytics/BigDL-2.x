@@ -15,12 +15,7 @@
 #
 
 from zoo.automl.common.util import save_config
-from zoo.automl.feature.abstract import BaseFeatureTransformer
-
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-import pandas as pd
-import numpy as np
-import json
+from zoo.zouwu.feature.abstract import BaseFeatureTransformer
 
 
 class IdentityTransformer(BaseFeatureTransformer):

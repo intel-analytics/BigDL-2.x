@@ -15,10 +15,9 @@
 # limitations under the License.
 #
 from zoo.automl.regression.base_predictor import BasePredictor
-from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
+from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 
 from zoo.automl.model.time_sequence import TimeSequenceModel
-import pandas as pd
 
 
 class TimeSequencePredictor(BasePredictor):

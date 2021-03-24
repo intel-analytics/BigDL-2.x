@@ -19,7 +19,7 @@ import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.model.MTNet_keras import MTNetKeras
-from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
+from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 import pandas as pd
 import numpy as np
 import tensorflow as tf

@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-import pytest
-
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
 import numpy as np
@@ -24,7 +22,7 @@ import os
 from numpy.testing import assert_array_almost_equal
 
 from zoo.automl.model.XGBoost import XGBoost
-from zoo.automl.feature.identity_transformer import IdentityTransformer
+from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 
 
 class TestXgbregressor(ZooTestCase):

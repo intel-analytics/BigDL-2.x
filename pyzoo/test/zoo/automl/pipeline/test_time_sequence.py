@@ -21,14 +21,13 @@ import pytest
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline, load_ts_pipeline
 from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
-from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
+from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 from zoo.automl.model.time_sequence import TimeSequenceModel
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.config.recipe import *
 
 import numpy as np
 import pandas as pd
-from pandas.testing import assert_frame_equal
 from numpy.testing import assert_array_almost_equal
 import os
 
