@@ -50,9 +50,15 @@ class LSTMSeq2Seq(BaseModel):
         self.latent_dim = config.get('latent_dim', 128)
         self.dropout = config.get('dropout', 0.2)
         self.lr = config.get('lr', 0.001)
+        self.loss = config.get('loss', 'mse')
         # for restore in continuous training
         self.batch_size = config.get('batch_size', 64)
         training = True if mc else None
+        # data related
+        # self.past_seq_len = config.get('past_seq_len', None)
+        # self.future_seq_len = config.get('future_seq_len', None)
+        # self.feature_num = config.get('feature_num', None)
+        # self.target_col_num = config.get('target_col_num', None)
 
         # Define an input sequence and process it.
         self.encoder_inputs = Input(shape=(None, self.feature_num), name="encoder_inputs")
@@ -84,7 +90,7 @@ class LSTMSeq2Seq(BaseModel):
         # Define the model that will turn
         # `encoder_input_data` & `decoder_input_data` into `decoder_target_data`
         self.model = Model([self.encoder_inputs, self.decoder_inputs], decoder_outputs)
-        self.model.compile(loss='mse',
+        self.model.compile(loss=self.loss,
                            metrics=[self.metric],
                            optimizer=keras.optimizers.RMSprop(lr=self.lr))
         return self.model
