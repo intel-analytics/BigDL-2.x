@@ -136,7 +136,7 @@ def callZooFunc(bigdl_type, name, *args):
     raise error
 
 
-#TODO: change to bigdl's _java2py when update to bigdl 0.12.2
+# TODO: change to bigdl's _java2py when update to bigdl 0.12.2
 def _java2py(gateway, r, encoding="bytes"):
     if isinstance(r, JavaObject):
         clsName = r.getClass().getSimpleName()
