@@ -167,7 +167,8 @@ def _java2py(gateway, r, encoding="bytes"):
         if clsName in _picklable_classes:
             r = gateway.jvm.org.apache.spark.bigdl.api.python.BigDLSerDe.dumps(r)
         elif isinstance(r, (JavaArray, JavaList)) and len(r) != 0 \
-                and r[0].getClass().getSimpleName() in ['DataFrame', 'Dataset']:
+                and isinstance(r[0], JavaObject) and \
+                r[0].getClass().getSimpleName() in ['DataFrame', 'Dataset']:
             spark = get_spark_sql_context(get_spark_context())
             r = list(map(lambda x: DataFrame(x, spark), r))
         elif isinstance(r, (JavaArray, JavaList, JavaMap)):
