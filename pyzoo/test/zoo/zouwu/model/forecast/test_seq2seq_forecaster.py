@@ -18,6 +18,7 @@ import pytest
 import numpy as np
 import tempfile
 import os
+import tensorflow as tf
 
 from zoo.zouwu.model.forecast.seq2seq_forecaster import Seq2SeqForecaster
 from unittest import TestCase
@@ -69,11 +70,32 @@ class TestZouwuModelSeq2SeqForecaster(TestCase):
                                   target_col_num=2)
         train_mse = forecaster.fit(train_data[0], train_data[1], epochs=10)
         with tempfile.TemporaryDirectory() as tmp_dir_name:
-            ckpt_name = os.path.join(tmp_dir_name, "ckpt")
             test_pred_save = forecaster.predict(test_data[0])
-            forecaster.save(ckpt_name)
-            forecaster.restore(ckpt_name)
+            forecaster.save(tmp_dir_name)
+            forecaster.restore(tmp_dir_name)
             test_pred_restore = forecaster.predict(test_data[0])
         np.testing.assert_almost_equal(test_pred_save, test_pred_restore)
     
+    def test_tcn_forecaster_runtime_error(self):
+        train_data, val_data, test_data = create_data()
+        forecaster = Seq2SeqForecaster(past_seq_len=24,
+                                  future_seq_len=5,
+                                  feature_num=2,
+                                  target_col_num=2)
+        with pytest.raises(RuntimeError):
+            with tempfile.TemporaryDirectory() as tmp_dir_name:
+                ckpt_name = os.path.join(tmp_dir_name, "ckpt")
+                forecaster.save(ckpt_name)
+        with pytest.raises(RuntimeError):
+            forecaster.predict(test_data[0])
+        with pytest.raises(RuntimeError):
+            forecaster.evaluate(test_data[0], test_data[1])
 
+    def test_tcn_forecaster_shape_error(self):
+        train_data, val_data, test_data = create_data()
+        forecaster = Seq2SeqForecaster(past_seq_len=24,
+                                  future_seq_len=5,
+                                  feature_num=2,
+                                  target_col_num=1)
+        with pytest.raises(AssertionError):
+            forecaster.fit(train_data[0], train_data[1], epochs=2)

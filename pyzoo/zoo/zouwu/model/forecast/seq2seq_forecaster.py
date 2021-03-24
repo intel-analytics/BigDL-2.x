@@ -87,7 +87,7 @@ class Seq2SeqForecaster(Forecaster):
     def evaluate(self, x, y, metrics=['mse']):
         if not self.internal.model:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate(x, y, metrics=metrics)
+        return self.internal.evaluate(x, y, metric=metrics)
     
     def save(self, checkpoint_dir):
         if not self.internal.model:
