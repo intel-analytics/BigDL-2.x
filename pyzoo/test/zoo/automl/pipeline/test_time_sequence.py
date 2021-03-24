@@ -24,7 +24,7 @@ from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
 from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 from zoo.zouwu.model.forecast.model import TimeSequenceModel
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.config.recipe import *
+from zoo.zouwu.config.recipe import *
 
 import numpy as np
 import pandas as pd

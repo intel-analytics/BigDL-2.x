@@ -17,7 +17,7 @@
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.config.recipe import *
+from zoo.zouwu.config.recipe import *
 
 
 class TestTimeSequencePredictor(ZooTestCase):

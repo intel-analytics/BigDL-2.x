@@ -18,8 +18,7 @@ import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.common.nncontext import *
-from zoo.automl.impute.impute import TimeMergeImputor
-from zoo.automl.common.util import *
+from zoo.automl.impute import TimeMergeImputor
 
 
 class TestImpute(ZooTestCase):

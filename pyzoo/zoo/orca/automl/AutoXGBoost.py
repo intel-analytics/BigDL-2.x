@@ -15,7 +15,6 @@
 #
 
 from zoo.automl.regression.xgb_predictor import XgbPredictor
-from zoo.automl.config.recipe import *
 
 
 class AutoXGBoost(object):

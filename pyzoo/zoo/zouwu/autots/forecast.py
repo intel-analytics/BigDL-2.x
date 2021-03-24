@@ -15,7 +15,7 @@
 #
 
 from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
-from zoo.automl.config.recipe import *
+from zoo.zouwu.config.recipe import *
 from zoo.automl.pipeline.time_sequence import load_ts_pipeline
 
 

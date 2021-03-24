@@ -68,7 +68,7 @@ df = df.reset_index()
 init_orca_context(cores=4, memory="4g", init_ray_on_spark=True)
 
 from zoo.zouwu.autots.forecast import AutoTSTrainer
-from zoo.automl.config.recipe import *
+from zoo.zouwu.config.recipe import *
 
 trainer = AutoTSTrainer(dt_col="datetime",
                         target_col=["AvgRate", "total"],

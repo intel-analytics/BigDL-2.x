@@ -19,7 +19,7 @@ from zoo.automl.search.ray_tune_search_engine import RayTuneSearchEngine
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
-from zoo.automl.config.recipe import *
+from zoo.zouwu.config.recipe import *
 from zoo.ray import RayContext
 
 

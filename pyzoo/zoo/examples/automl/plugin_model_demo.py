@@ -20,7 +20,7 @@ from zoo.zouwu.model.forecast.model import ModelBuilder
 import torch
 import tensorflow as tf
 import torch.nn as nn
-from zoo.automl.config.recipe import Recipe
+from zoo.zouwu.config.recipe import Recipe
 from ray import tune
 import numpy as np
 from zoo.orca import init_orca_context

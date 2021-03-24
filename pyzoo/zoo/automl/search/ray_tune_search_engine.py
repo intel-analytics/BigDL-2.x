@@ -21,7 +21,6 @@ from copy import deepcopy
 from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.impute.impute import *
 from ray.tune import Trainable
 import ray.tune.track
 from zoo.automl.logger import TensorboardXLogger

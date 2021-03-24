@@ -57,7 +57,7 @@ class TestTimeSequencePredictor(ZooTestCase):
         assert pipeline.config is not None
 
     def test_fit_LSTMGridRandomRecipe(self):
-        from zoo.automl.config.recipe import LSTMGridRandomRecipe
+        from zoo.zouwu.config.recipe import LSTMGridRandomRecipe
         train_df, _, future_seq_len = self.create_dataset()
         tsp = TimeSequencePredictor(dt_col="datetime",
                                     target_col="value",
@@ -81,7 +81,7 @@ class TestTimeSequencePredictor(ZooTestCase):
         assert pipeline.config["past_seq_len"] == 2
 
     def test_fit_BayesRecipe(self):
-        from zoo.automl.config.recipe import BayesRecipe
+        from zoo.zouwu.config.recipe import BayesRecipe
         train_df, _, future_seq_len = self.create_dataset()
         tsp = TimeSequencePredictor(dt_col="datetime",
                                     target_col="value",
