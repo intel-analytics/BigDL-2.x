@@ -29,6 +29,7 @@ from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 from zoo.automl.search.tune_utils import (create_searcher,
                                           create_scheduler)
 from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
+import pandas as pd
 
 SEARCH_ALG_ALLOWED = ("variant_generator", "skopt", "bayesopt")
 

@@ -19,6 +19,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from zoo.zouwu.model.forecast.model.abstract import BaseModel
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
+import pandas as pd
 
 
 class PytorchBaseModel(BaseModel):

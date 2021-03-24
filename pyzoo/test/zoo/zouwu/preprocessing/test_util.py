@@ -14,10 +14,10 @@
 # limitations under the License.
 #
 
-import pytest
-
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.common.util import *
+from zoo.zouwu.preprocessing.utils import train_val_test_split
+import pandas as pd
 
 
 class TestUtil(ZooTestCase):

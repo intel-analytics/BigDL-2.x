@@ -22,6 +22,8 @@ from zoo.zouwu.feature.time_sequence import *
 from numpy.testing import assert_array_almost_equal
 import json
 
+from zoo.zouwu.preprocessing.utils import train_val_test_split
+
 
 class TestTimeSequenceFeature(ZooTestCase):
     def setup_method(self, method):

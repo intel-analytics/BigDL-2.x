@@ -405,7 +405,8 @@ class LocalModel(object):
                                           early_stop=early_stop,
                                           tenacity=tenacity)
         else:
-            from zoo.zouwu.model.forecast.model import train_yseq_hvd
+            from zoo.zouwu.model.forecast.model.tcmf.local_model_distributed_trainer import\
+                train_yseq_hvd
             import ray
 
             # check whether there has been an activate ray context yet.

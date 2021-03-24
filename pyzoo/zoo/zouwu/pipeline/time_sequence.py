@@ -22,6 +22,7 @@ from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 from zoo.zouwu.model.forecast.model.time_sequence import TimeSequenceModel
 from zoo.zouwu.model.forecast.model.XGBoost import XGBoost
 from zoo.automl.common.parameters import *
+import pandas as pd
 
 
 class TimeSequencePipeline(Pipeline):

@@ -21,6 +21,7 @@ from zoo.zouwu.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
 from zoo.zouwu.config.recipe import *
 from zoo.ray import RayContext
+import pandas as pd
 
 
 ALLOWED_FIT_METRICS = ("mse", "mae", "r2")
