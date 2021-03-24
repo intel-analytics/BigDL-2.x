@@ -97,7 +97,7 @@ def test_torch_MAE():
     pred = torch.tensor([[1.5, 2.5], [1.0, 1.0]])
     target = torch.tensor([[0.2, 1.1], [0.5, 1.0]])
     m(pred, target)
-    assert abs(m.compute() - 0.85) < 1e-7   # add float tolerance for floating point precision
+    assert abs(m.compute() - 0.85) < 1e-7   # add fault tolerance for floating point precision
     pred = torch.tensor([[1.5, 2.5, 1.5, 2.5], [1.8, 2.0, 0.5, 4.5]])
     target = torch.tensor([[0, 1, 0, 0], [0, 1, 2, 2]])
     m(pred, target)
