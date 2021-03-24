@@ -20,7 +20,7 @@ from zoo.zouwu.model.forecast.model.abstract import BaseModel
 from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
 import pandas as pd
 import numpy as np
-from zoo.automl.pipeline.time_sequence import TimeSequencePipeline
+from zoo.zouwu.pipeline.time_sequence import TimeSequencePipeline
 from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 
 

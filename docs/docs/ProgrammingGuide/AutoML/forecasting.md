@@ -87,10 +87,11 @@ ray_ctx.stop()
 pipeline.save("/tmp/saved_pipeline/my.ppl")
 ```
 
-* Load the _Pipeline_ object from a file 
+* Load the _Pipeline_ object from a file
+
 ```python
-from zoo.automl.pipeline.time_sequence import load_ts_pipeline
- 
+from zoo.zouwu.pipeline.time_sequence import load_ts_pipeline
+
 pipeline = load_ts_pipeline("/tmp/saved_pipeline/my.ppl")
 ```
 
