@@ -2,7 +2,7 @@
 
 ---
 
-![](../../../../image/colab_logo_32px.png)[Run in Google Colab](https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.ipynb) &nbsp;![](../../../../image/GitHub-Mark-32px.png)[View source on GitHub](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist.ipynb)
+![](../../../../image/colab_logo_32px.png)[Run in Google Colab](https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist_data_loader.ipynb) &nbsp;![](../../../../image/GitHub-Mark-32px.png)[View source on GitHub](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist_data_loader.ipynb)
 
 ---
 
@@ -79,38 +79,18 @@ adam = torch.optim.Adam(model.parameters(), 0.001)
 
 ### **Step 3: Define Train Dataset**
 
-You can define the dataset using standard [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html).
+You can define the dataset using standard [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html). 
 
 ```python
 import torch
 from torchvision import datasets, transforms
 
 torch.manual_seed(0)
-dir='./dataset'
-batch_size=64
-test_batch_size=64
-train_loader = torch.utils.data.DataLoader(
-    datasets.MNIST(dir, train=True, download=True,
-                   transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.1307,), (0.3081,))
-                   ])),
-    batch_size=batch_size, shuffle=True)
-test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST(dir, train=False,
-                   transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.1307,), (0.3081,))
-                   ])),
-    batch_size=test_batch_size, shuffle=False) 
-```
+dir='./'
 
-We can also use a data creator function (as shown below) or [Orca SparkXShards](./data) to represent the data. 
-
-```python
 def train_loader_creator():
     train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST(dir, train=True, download=True,
+        datasets.MNIST('./', train=True, download=True,
                        transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
@@ -120,7 +100,7 @@ def train_loader_creator():
 
 def test_loader_creator():
     test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST(dir, train=False,
+        datasets.MNIST('./', train=False,
                        transform=transforms.Compose([
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
@@ -128,6 +108,8 @@ def test_loader_creator():
         batch_size=320, shuffle=False)
     return test_loader
 ```
+
+Alternatively, we can also use a [Data Creator Function](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist_data_loader.ipynb)) or [Orca XShards](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/Orca/data.md) as the input data, especially when the data size is very large)
 
 ### **Step 4: Fit with Orca Estimator**
 
@@ -151,15 +133,6 @@ est.fit(data=train_loader, epochs=10, validation_data=test_loader,
 result = est.evaluate(data=test_loader)
 for r in result:
     print(str(r))
-```
-
-If you are using a data creator function, then you may use the following instead.
-
-```python
-est.fit(data=train_loader_creator, epochs=10, validation_data=test_loader_creator,
-        checkpoint_trigger=EveryEpoch())
-
-result = est.evaluate(data=test_loader_creator)
 ```
 
 **Note:** You should call `stop_orca_context()` when your application finishes.

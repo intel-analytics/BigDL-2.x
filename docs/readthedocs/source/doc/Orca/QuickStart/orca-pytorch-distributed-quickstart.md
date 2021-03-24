@@ -79,7 +79,7 @@ def optim_creator(model, config):
 
 ### **Step 3: Define Train Dataset**
 
-You can define the dataset using a *Data Creator Function* that returns a PyTorch `DataLoader`. Orca also supports [Orca SparkXShards](./data).
+You can define the dataset using a *Data Creator Function* that returns a PyTorch `DataLoader`. Orca also supports [Orca SparkXShards](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/Orca/data.md).
 
 ```python
 import torch
