@@ -14,8 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.automl.common.util import save_config
-from zoo.automl.impute.abstract import BaseImputation
+from zoo.zouwu.preprocessing.impute.abstract import BaseImputation
 from zoo.zouwu.preprocessing.impute.LastFill import LastFill
 
 

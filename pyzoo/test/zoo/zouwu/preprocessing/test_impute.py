@@ -14,43 +14,40 @@
 # limitations under the License.
 #
 
-import numpy as np
-import pandas as pd
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
-from zoo.zouwu.preprocessing.impute.LastFill import LastFill
+from zoo.common.nncontext import *
+from zoo.zouwu.preprocessing.impute import TimeMergeImputor
 
 
-class TestDataImputation(ZooTestCase):
-
+class TestImpute(ZooTestCase):
     def setup_method(self, method):
-        self.ft = TimeSequenceFeatureTransformer()
-        self.create_data()
+        sparkConf = init_spark_conf().setMaster("local[1]").setAppName("TestImpute")
+        self.sc = init_nncontext(sparkConf)
+        self.sqlContext = SQLContext(self.sc)
 
     def teardown_method(self, method):
-        pass
+        self.sc.stop()
 
-    def create_data(self):
-        data = np.random.random_sample((5, 50))
-        mask = np.random.random_sample((5, 50))
-        mask[mask >= 0.4] = 2
-        mask[mask < 0.4] = 1
-        mask[mask < 0.2] = 0
-        data[mask == 0] = None
-        data[mask == 1] = np.nan
-        df = pd.DataFrame(data)
-        idx = pd.date_range(start='2020-07-01 00:00:00', end='2020-07-01 08:00:00', freq='2H')
-        df.index = idx
-        self.data = df
-
-    def test_lastfill(self):
-        last_fill = LastFill()
-        mse_missing = last_fill.evaluate(self.data, 0.1)
-        imputed_data = last_fill.impute(self.data)
-        assert imputed_data.isna().sum().sum() == 0
-        mse = last_fill.evaluate(imputed_data, 0.1)
+    def test_time_merge_imputor(self):
+        dict = [{'str_timestamp': "2020-11-09T07:52:00.000Z", 'value': 1},
+                {'str_timestamp': "2020-11-09T07:52:03.000Z", 'value': 2},
+                {'str_timestamp': "2020-11-09T07:52:09.000Z", 'value': 3}]
+        df = self.sqlContext.createDataFrame(dict)
+        from pyspark.sql.functions import to_timestamp
+        df = df.withColumn("timestamp", to_timestamp(df['str_timestamp']))
+        df.show(20, False)
+        imputor = TimeMergeImputor(5, "timestamp", "max")
+        imputor.impute(df).show(20, False)
+        imputor = TimeMergeImputor(5, "timestamp")
+        imputor.impute(df).show(20, False)
+        imputor = TimeMergeImputor(5, "timestamp", "min")
+        imputor.impute(df).show(20, False)
+        imputor = TimeMergeImputor(5, "timestamp", "mean")
+        imputor.impute(df).show(20, False)
+        imputor = TimeMergeImputor(5, "timestamp", "sum")
+        imputor.impute(df).show(20, False)
 
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -17,7 +17,7 @@
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.search import SearchEngineFactory
 from zoo.zouwu.model.forecast.model import ModelBuilder
-from zoo.zouwu.model.forecast.model import model_creator as LSTM_model_creator
+from zoo.zouwu.model.forecast.model.VanillaLSTM_pytorch import model_creator as LSTM_model_creator
 import torch
 import torch.nn as nn
 from zoo.zouwu.config.recipe import Recipe
