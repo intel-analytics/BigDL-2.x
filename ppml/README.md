@@ -1,4 +1,6 @@
 ## PPML (Privacy Preserving Machine Learning) 
+Please mind the ip and file path settings, they should be changed to the ip/path of your own sgx server on which you are running the programs. <br>
+
 ### Create SGX driver
 ```bash
 ./install-graphene-driver.sh
