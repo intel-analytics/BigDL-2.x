@@ -1,4 +1,4 @@
-# PyTorch Quickstart (BigDL backend)
+# PyTorch Quickstart
 
 ---
 
@@ -6,7 +6,7 @@
 
 ---
 
-**In this guide we will describe how to scale out _PyTorch_ programs with _BigDL_ backend using Orca in 4 simple steps.**
+**In this guide we will describe how to scale out _PyTorch_ programs using Orca in 4 simple steps.**
 
 ### **Step 0: Prepare Environment**
 
@@ -109,7 +109,8 @@ def test_loader_creator():
     return test_loader
 ```
 
-Alternatively, we can also use a [Data Creator Function](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist_data_loader.ipynb)) or [Orca XShards](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/Orca/data.md) as the input data, especially when the data size is very large)
+
+Alternatively, we can also use a *Data Creator Function* (see example [here](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist_data_loader.ipynb)) or [Orca XShards](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/Orca/data.md) as the input data, especially when the data size is very large)
 
 ### **Step 4: Fit with Orca Estimator**
 
