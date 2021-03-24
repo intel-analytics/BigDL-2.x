@@ -14,14 +14,7 @@
 # limitations under the License.
 #
 from bigdl.util.common import Sample as BSample, JTensor as BJTensor,\
-    JavaCreator, _get_gateway, _py2java, get_spark_context, get_spark_sql_context, \
-    _picklable_classes
-from pyspark import RDD
-from pyspark.serializers import PickleSerializer
-from py4j.protocol import Py4JJavaError
-from py4j.java_gateway import JavaObject
-from py4j.java_collections import JavaArray, JavaList, JavaMap
-from pyspark.sql import DataFrame
+    JavaCreator, _get_gateway, _py2java
 import numpy as np
 import os
 import tempfile
@@ -144,6 +137,14 @@ def callZooFunc(bigdl_type, name, *args):
 
 # TODO: change to bigdl's _java2py when update to bigdl 0.12.2
 def _java2py(gateway, r, encoding="bytes"):
+    from bigdl.util.common import get_spark_context, get_spark_sql_context, _picklable_classes
+    from pyspark import RDD
+    from pyspark.serializers import PickleSerializer
+    from py4j.protocol import Py4JJavaError
+    from py4j.java_gateway import JavaObject
+    from py4j.java_collections import JavaArray, JavaList, JavaMap
+    from pyspark.sql import DataFrame
+
     if isinstance(r, JavaObject):
         clsName = r.getClass().getSimpleName()
         # convert RDD into JavaRDD
@@ -167,8 +168,8 @@ def _java2py(gateway, r, encoding="bytes"):
         if clsName in _picklable_classes:
             r = gateway.jvm.org.apache.spark.bigdl.api.python.BigDLSerDe.dumps(r)
         elif isinstance(r, (JavaArray, JavaList)) and len(r) != 0 \
-                and isinstance(r[0], JavaObject) and \
-                r[0].getClass().getSimpleName() in ['DataFrame', 'Dataset']:
+                and isinstance(r[0], JavaObject) \
+                and r[0].getClass().getSimpleName() in ['DataFrame', 'Dataset']:
             spark = get_spark_sql_context(get_spark_context())
             r = list(map(lambda x: DataFrame(x, spark), r))
         elif isinstance(r, (JavaArray, JavaList, JavaMap)):
