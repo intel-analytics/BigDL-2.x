@@ -17,7 +17,7 @@ import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.zouwu.model.forecast.model.abstract import BaseModel
-from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
+from zoo.zouwu.regression.time_sequence_predictor import TimeSequencePredictor
 import pandas as pd
 import numpy as np
 from zoo.zouwu.pipeline.time_sequence import TimeSequencePipeline

@@ -51,11 +51,13 @@ ray_ctx.init()
 #### 2. Create a _TimeSequencePredictor_
 
 * `dt_col` and `target_col` are datetime cols and target column in the input dataframe 
-* `future_seq_len` is how many data points ahead to predict. 
-  
+* `future_seq_len` is how many data points ahead to predict.
+
 ```python
-from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
-tsp = TimeSequencePredictor(dt_col="datetime", target_col="value", extra_features_col=None, future_seq_len=1)
+from zoo.zouwu.regression.time_sequence_predictor import TimeSequencePredictor
+
+tsp = TimeSequencePredictor(dt_col="datetime", target_col="value", extra_features_col=None,
+                            future_seq_len=1)
 ```
 
 #### 3. Train on historical time sequence. 
