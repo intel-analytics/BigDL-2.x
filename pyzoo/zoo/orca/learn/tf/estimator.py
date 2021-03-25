@@ -1023,10 +1023,10 @@ class KerasEstimator(Estimator):
         """
         Load existing keras model
 
-        :param checkpoint: Path to the existing keras model.
+        :param model_path: Path to the existing keras model.
         :return:
         """
-        self.load_keras_model(model_path)
+        self.model = KerasModel.load_model(model_path)
 
     def clear_gradient_clipping(self):
         """
