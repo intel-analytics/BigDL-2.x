@@ -262,7 +262,7 @@ class TestEstimatorForGraph(TestCase):
             model_dir=model_dir
         )
 
-        est.load_latest_orca_checkpoint(model_dir)
+        est.load_orca_checkpoint(model_dir)
 
         est.fit(data=data_shard,
                 batch_size=8,
