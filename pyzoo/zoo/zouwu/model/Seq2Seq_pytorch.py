@@ -22,19 +22,19 @@ import numpy as np
 
 class LSTMSeq2Seq(nn.Module):
     def __init__(self,
-                input_feature_num,
-                future_seq_len,
-                output_feature_num,
-                lstm_hidden_dim=128,
-                fc_hidden_dim=128,
-                fc_layer_num=2,
-                lstm_layer_num=1, 
-                dropout=0.25):
+                 input_feature_num,
+                 future_seq_len,
+                 output_feature_num,
+                 lstm_hidden_dim=128,
+                 fc_hidden_dim=128,
+                 fc_layer_num=2,
+                 lstm_layer_num=1,
+                 dropout=0.25):
         super(LSTMSeq2Seq, self).__init__()
         self.lstm_encoder = nn.LSTM(input_feature_num,
                                     lstm_hidden_dim,
-                                    lstm_layer_num, 
-                                    dropout=dropout, 
+                                    lstm_layer_num,
+                                    dropout=dropout,
                                     batch_first=True)
         self.lstm_decoder = nn.LSTMCell(lstm_hidden_dim, lstm_hidden_dim)
         fc_layers = [lstm_hidden_dim] + [fc_hidden_dim]*(fc_layer_num-1) + [output_feature_num]
@@ -60,6 +60,7 @@ class LSTMSeq2Seq(nn.Module):
 
         return out
 
+
 def model_creator(config):
     return LSTMSeq2Seq(input_feature_num=config["input_feature_num"],
                        lstm_hidden_dim=config.get("lstm_hidden_dim", 128),
@@ -70,12 +71,15 @@ def model_creator(config):
                        fc_layer_num=config.get("fc_layer_num", 2),
                        fc_hidden_dim=config.get("fc_hidden_dim", 128))
 
+
 def optimizer_creator(model, config):
     return getattr(torch.optim, config.get("optim", "Adam"))(model.parameters(),
                                                              lr=config.get("lr", 4e-3))
 
+
 def loss_creator(config):
     return nn.MSELoss()
+
 
 class Seq2SeqPytorch(PytorchBaseModel):
     def __init__(self, check_optional_config=False):

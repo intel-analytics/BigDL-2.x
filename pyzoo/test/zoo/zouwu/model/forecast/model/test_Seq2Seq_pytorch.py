@@ -19,6 +19,7 @@ import numpy as np
 import tempfile
 import os
 
+
 def create_data():
     num_train_samples = 1000
     num_val_samples = 400
@@ -37,6 +38,7 @@ def create_data():
     val_data = get_x_y(num_val_samples)
     test_data = get_x_y(num_test_samples)
     return train_data, val_data, test_data
+
 
 class TestSeq2SeqPytorch(TestCase):
     train_data, val_data, test_data = create_data()
