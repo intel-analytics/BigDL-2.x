@@ -1,9 +1,10 @@
-# trusted-cluster-serving
-Trusted Cluster Serving allows user to run end to end Intel Analytics Zoo cluster serving with flink local and distributed cluster on Graphene-SGX.
+# Trusted Cluster Serving
+SGX-based Trusted Big Data ML allows user to run end to end Intel Analytics Zoo cluster serving with flink local and distributed cluster on Graphene-SGX.
 
 *Please mind the ip and file path settings, they should be changed to the ip/path of your own sgx server on which you are running the programs.*
 
 ## How To Build
+-------------
 Before run the following command, please modify the pathes in the build-docker-image.sh file at first. <br>
 Then build docker image by running this command: <br>
 ```bash
@@ -11,6 +12,7 @@ Then build docker image by running this command: <br>
 ```
 
 ## How To Run
+-------------
 ### Prerequisite
 To launch Trusted Big Data ML applications on Graphene-SGX, you need to install graphene-sgx-driver:
 ```bash
@@ -18,22 +20,22 @@ To launch Trusted Big Data ML applications on Graphene-SGX, you need to install 
 ```
 
 ### Prepare the keys
-The ppml in analytics zoo need secured keys to enable flink TLS, https and tlse enabled Redis, you need to prepare the secure keys and keystores. <br>
-This script is under /analytics-zoo/ppml: <br>
+The ppml in analytics zoo need secured keys to enable flink TLS, https and TLS enabled Redis, you need to prepare the secure keys and keystores. <br>
+This script is in /analytics-zoo/ppml/scripts: <br>
 ```bash
 ../../../scripts/generate-keys.sh
 ```
 
 ### Prepare the password
 You also need to store the password you used in previous step in a secured file: <br>
-This script is also under /analytics-zoo/ppml: <br>
+This script is also in /analytics-zoo/ppml/scripts: <br>
 ```bash
 ../../../scripts/generate-password.sh used_password_when_generate_keys
 ```
 
-### Run the PPML Docker image
+### Run the PPML as Docker container
 #### In local mode
-##### Start the container to run analytics zoo cluster serving in ppml.
+###### Start the container to run analytics zoo cluster serving in ppml.
 Before run the following command, please modify the pathes in the start-local-cluster-serving.sh file at first. <br>
 Then run the example with docker: <br>
 ```bash
@@ -41,16 +43,16 @@ Then run the example with docker: <br>
 ```
 
 #### In distributed mode
-##### setup passwordless ssh login to all the nodes.
-##### config the environments for master, workers, docker image and security keys/passowrd files.
+###### Please setup passwordless ssh login to all the nodes first.
+###### Specify the environments for master, workers, docker image and security keys/passowrd files in environments.sh.
 ```bash
 nano environments.sh
 ```
-##### start the distributed cluster serving
+###### Start the distributed cluster serving
 ```bash
 ./start-distributed-cluster-serving.sh
 ```
-##### stop the distributed cluster serving 
+###### Stop the distributed cluster serving 
 ```bash
 ./stop-distributed-cluster-serving.sh
 ```
