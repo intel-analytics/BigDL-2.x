@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from bigdl.util.common import Sample as BSample, JTensor as BJTensor,\
-    JavaCreator, _get_gateway, _py2java, _picklable_classes
+    JavaCreator, _get_gateway, _py2java
 import numpy as np
 import os
 import tempfile
@@ -148,6 +148,7 @@ def _java2py(gateway, r, encoding="bytes"):
     from pyspark.mllib.common import callJavaFunc
     from pyspark import SparkConf
     from pyspark.files import SparkFiles
+    from bigdl.util.common import get_spark_context, _picklable_classes, get_spark_sql_context
     if isinstance(r, JavaObject):
         clsName = r.getClass().getSimpleName()
         # convert RDD into JavaRDD
