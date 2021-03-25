@@ -642,7 +642,7 @@ class TestEstimatorForGraph(TestCase):
                 batch_size=8,
                 epochs=5,
                 validation_data=data_shard)
-        
+
         temp = tempfile.mkdtemp()
         model_checkpoint = os.path.join(temp, 'tmp.ckpt')
         est.save(model_checkpoint)

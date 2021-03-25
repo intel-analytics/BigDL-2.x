@@ -127,7 +127,7 @@ class Estimator(SparkEstimator):
 
     def load(self, model_path):
         """
-        Load existing model 
+        Load existing model
 
         :param model_path: Path to the existing model.
         :return:
@@ -275,8 +275,9 @@ class Estimator(SparkEstimator):
         if version is None:
             path, _, version = find_latest_checkpoint(path, model_type="tf")
             if path is None:
-                raise Exception("Cannot find checkpoint")
-        
+                raise ValueError("Cannot find tf checkpoint, please check your checkpoint"
+                                 " path.")
+
         self.load_checkpoint = True
         self.checkpoint_path = path
         self.checkpoint_version = version
