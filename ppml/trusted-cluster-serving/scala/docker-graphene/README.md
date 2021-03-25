@@ -32,15 +32,15 @@ This script is also in /analytics-zoo/ppml/scripts: <br>
 ```
 
 ### Run the PPML as Docker containers
-#### In local mode
-###### Start the container to run analytics zoo cluster serving in ppml.
+* In local mode
+##### Start the container to run analytics zoo cluster serving in ppml.
 Before run the following command, please modify the pathes in the start-local-cluster-serving.sh file at first. <br>
 Then run the example with docker: <br>
 ```bash
 ./start-local-cluster-serving.sh
 ```
 
-#### In distributed mode
+* In distributed mode
 *Please setup passwordless ssh login to all the nodes first.*
 ##### Specify the environments for master, workers, docker image and security keys/passowrd files in environments.sh.
 ```bash
