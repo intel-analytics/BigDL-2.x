@@ -114,7 +114,7 @@ The result should look like: <br>
 >   ############# model saved[P1182:T2:java] ---- end time: 1985297 ms return from shim_write(...) = 0x19 <br>
 
 ##### Example Test 3
-Before run TPC-H test in container we created, we should download and install [SBT](https://www.scala-sbt.org/download.html), then build and package TPC-H dataset according to [TPC-H](https://github.com/qiuxin2012/tpch-spark) with your needs. After packaged, check if we have `spark-tpc-h-queries_2.11-1.0.jar ` under `/tpch-spark/target/scala-2.11`, if have, we package successfully.
+Before run TPC-H test in container we created, we should download and install [SBT](https://www.scala-sbt.org/download.html) and [HDFS](https://hadoop.apache.org/docs/r1.2.1/), then build and package TPC-H dataset according to [TPC-H](https://github.com/qiuxin2012/tpch-spark) with your needs. After packaged, check if we have `spark-tpc-h-queries_2.11-1.0.jar ` under `/tpch-spark/target/scala-2.11`, if have, we package successfully.
 
 Copy TPC-H to container: <br>
 ```bash
@@ -125,7 +125,7 @@ cd ppml/trusted-big-data-ml/
 vim start-spark-local-tpc-h-sgx.sh
 ```
 
-Add these code in the `start-spark-local-tpc-h-sgx.sh` file: <br>
+Please modify your LOCAL_IP in this script and then add these code in the `start-spark-local-tpc-h-sgx.sh` file: <br>
 ```bash
 #!/bin/bash
 
