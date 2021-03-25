@@ -16,7 +16,7 @@ Then build docker image by running this command: <br>
 ### Prerequisite
 To launch Trusted Big Data ML applications on Graphene-SGX, you need to install graphene-sgx-driver:
 ```bash
-    ../../../scripts/install-graphene-driver.sh
+../../../scripts/install-graphene-driver.sh
 ```
 
 ### Prepare the data
@@ -29,13 +29,13 @@ After you uncompress the gzip files, these files may be renamed by some uncompre
 The ppml in analytics zoo need secured keys to enable spark security such as AUTHENTICATION, RPC Encryption, Local Storage Encryption and TLS, you need to prepare the secure keys and keystores.
 This script is under /analytics-zoo/ppml:
 ```bash
-    ../../../scripts/generate-keys.sh
+../../../scripts/generate-keys.sh
 ```
 ### Prepare the password
 You also need to store the password you used in previous step in a secured file:
 This script is also under /analytics-zoo/ppml:
 ```bash
-    ../../../scripts/generate-password.sh used_password_when_generate_keys
+../../../scripts/generate-password.sh used_password_when_generate_keys
 ```
 
 ### Run PPML Docker image
