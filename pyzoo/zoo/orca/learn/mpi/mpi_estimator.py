@@ -39,8 +39,8 @@ class MPIEstimator:
         self.dir = os.getcwd()
         self.mpi_runner = MPIRunner(hosts=hosts, processes_per_node=workers_per_node, env=env)
         with open("saved_mpi_estimator.pkl", "wb") as f:
-            cloudpickle.dump(
-                (model_creator, optimizer_creator, loss_creator, scheduler_creator, config, init_func), f)
+            cloudpickle.dump((model_creator, optimizer_creator, loss_creator,
+                              scheduler_creator, config, init_func), f)
         for host in self.mpi_runner.remote_hosts:
             p = subprocess.Popen(["scp", "saved_mpi_estimator.pkl",
                                   "root@{}:{}/".format(host, self.dir)])
@@ -49,8 +49,8 @@ class MPIEstimator:
     # Specify feature_cols and label_cols for Spark DataFrame data.
     # Specify train_func or validate_func for customized training and validation logic.
     # Specify train_batches and validate_batches in case of unbalance data.
-    # Specify validate_steps to validate periodically. Note that validation would always be triggered at
-    # the end of an epoch.
+    # Specify validate_steps to validate periodically. Note that validation would always be
+    # triggered at the end of an epoch.
     def fit(self, data, epochs=1, batch_size=32, validation_data=None, validate_batch_size=32,
             train_func=None, validate_func=None, train_batches=None, validate_batches=None,
             validate_steps=None, feature_cols=None, label_cols=None):
@@ -271,8 +271,10 @@ class PlasmaNDArrayDataset(Dataset):
             x_list.append(index(self.current_x, start=-current_available_size))
             y_list.append(index(self.current_y, start=-current_available_size))
         else:
-            x_list.append(index(self.current_x, start=-current_available_size, end=-current_available_size + self.batch_size))
-            y_list.append(index(self.current_y, start=-current_available_size, end=-current_available_size + self.batch_size))
+            x_list.append(index(self.current_x, start=-current_available_size,
+                                end=-current_available_size + self.batch_size))
+            y_list.append(index(self.current_y, start=-current_available_size,
+                                end=-current_available_size + self.batch_size))
 
         if isinstance(self.current_x, list):
             x_np = []
@@ -297,10 +299,12 @@ class PlasmaNDArrayDataset(Dataset):
         # return X_int, lS_o, lS_i, T
 
 
-def plasma_data_creator(meta_data, object_store_address, workers_per_node=1, batch_size=1):
+def plasma_data_creator(meta_data, object_store_address,
+                        workers_per_node=1, batch_size=1):
 
     def create_plasma_dataloader(config):
-        dataset = PlasmaNDArrayDataset(meta_data, object_store_address, workers_per_node, batch_size)
+        dataset = PlasmaNDArrayDataset(meta_data, object_store_address,
+                                       workers_per_node, batch_size)
         # TODO: support more options
         loader = DataLoader(
             dataset,
@@ -357,7 +361,8 @@ def train_epoch(model, train_ld, train_batches, optimizer, loss, scheduler):
 def validate(model, valid_ld, validate_batches):
     valid_iter = iter(valid_ld)
     for j in range(validate_batches):
-        if j > 0 and j % len(validate_batches) == 0:  # For the case where there are not enough batches.
+        # Iterate again from the beginning if running out of batches.
+        if j > 0 and j % len(validate_batches) == 0:
             valid_iter = iter(valid_ld)
         x, y = next(valid_iter)
         o = model(x, y)

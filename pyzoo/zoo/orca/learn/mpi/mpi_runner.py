@@ -109,7 +109,8 @@ class MPIRunner:
         self.plasma_path = "/".join(sys.executable.split("/")[:-1] + ["plasma_store"])
         self.object_store_memory = resource_to_bytes(object_store_memory)
         self.object_store_address = "/tmp/analytics_zoo_plasma"
-        command = "{} -m {} -s {}".format(self.plasma_path, self.object_store_memory, self.object_store_address)
+        command = "{} -m {} -s {}".format(
+            self.plasma_path, self.object_store_memory, self.object_store_address)
         for host in self.hosts:
             if host != get_node_ip():
                 p = subprocess.Popen(["ssh", "root@{}".format(host), command])

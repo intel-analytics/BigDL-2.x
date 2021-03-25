@@ -28,10 +28,12 @@ args = parser.parse_args()
 pkl_path = args.pkl_path
 
 with open("{}/saved_mpi_estimator.pkl".format(pkl_path), "rb") as f:
-    model_creator, optimizer_creator, loss_creator, scheduler_creator, config, init_func = cloudpickle.load(f)
+    model_creator, optimizer_creator, loss_creator, \
+        scheduler_creator, config, init_func = cloudpickle.load(f)
 
 with open("{}/mpi_train_data.pkl".format(pkl_path), "rb") as f:
-    train_data_creator, epochs, validation_data_creator, train_func, validate_func, train_batches, validate_batches, validate_steps = cloudpickle.load(f)
+    train_data_creator, epochs, validation_data_creator, train_func, \
+        validate_func, train_batches, validate_batches, validate_steps = cloudpickle.load(f)
 
 if init_func:
     print("Initializing distributed environment")
