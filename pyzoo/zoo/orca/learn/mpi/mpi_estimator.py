@@ -96,7 +96,7 @@ class MPIEstimator:
             p = subprocess.Popen(["scp", "mpi_train_data.pkl",
                                   "root@{}:{}/".format(host, self.dir)])
             os.waitpid(p.pid, 0)
-        self.mpi_runner.run("mpi_train.py", pkl_path=self.dir)
+        self.mpi_runner.run(os.path.abspath(__file__ + "/../mpi_train.py"), pkl_path=self.dir)
         self.mpi_runner.shutdown_plasma()
 
     def shutdown(self):
