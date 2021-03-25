@@ -14,8 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.automl.regression.xgb_predictor import XgbPredictor
-from zoo.automl.config.recipe import *
+from zoo.zouwu.regression.xgb_predictor import XgbPredictor
 
 
 class AutoXGBoost(object):
