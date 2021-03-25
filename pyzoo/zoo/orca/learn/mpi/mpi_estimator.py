@@ -16,13 +16,13 @@
 
 import os
 import types
-import numpy as np
 import subprocess
 import cloudpickle
 from pyspark.sql import DataFrame
 from torch.utils.data import Dataset, DataLoader
 from zoo.util.utils import get_node_ip
 from zoo.orca.learn.mpi.mpi_runner import MPIRunner
+from zoo.orca.learn.mpi.utils import *
 
 
 class MPIEstimator:
@@ -72,8 +72,8 @@ class MPIEstimator:
                 train_size_map[ip][partition_id].append(subpartition_size)
             size = 0
             count = 0
-            for node, data in train_size_map.items():
-                for partition_id, subpartition_size in data.items():
+            for node, meta in train_size_map.items():
+                for partition_id, subpartition_size in meta.items():
                     size += sum(subpartition_size)
                     count += len(subpartition_size)
                 print("Node {} has {} subpartitions and {} train records".format(node, count, size))
@@ -143,28 +143,6 @@ def convert_row(feature_cols, label_cols):
 
 def put_to_plasma(address):
 
-    def process_buffer(buffer):
-        import random
-        random.shuffle(buffer)  # TODO: Make shuffle configurable?
-        buffer_x = [record[0] for record in buffer]
-        buffer_y = [record[1] for record in buffer]
-        res_buffer = dict()
-        if isinstance(buffer_x[0], list):
-            res_x = []
-            for i in range(len(buffer_x[0])):
-                res_x.append(np.array([record[i] for record in buffer_x]))
-            res_buffer["x"] = res_x
-        else:
-            res_buffer["x"] = np.array(buffer_x)
-        if isinstance(buffer_y[0], list):
-            res_y = []
-            for i in range(len(buffer_x[0])):
-                res_y.append(np.array([record[i] for record in buffer_y]))
-            res_buffer["y"] = res_y
-        else:  # TODO: int features and label of type int32?
-            res_buffer["y"] = np.array(buffer_y)
-        return res_buffer
-
     def f(index, iterator):
         import pyarrow.plasma as plasma
         client = plasma.connect(address)
@@ -173,7 +151,7 @@ def put_to_plasma(address):
         sub_index = 0
         for record in iterator:
             if len(buffer) == part_size:
-                res_buffer = process_buffer(buffer)
+                res_buffer = process_records(buffer)
                 object_id = client.put(res_buffer)  # TODO: check memory usage
                 buffer = [record]
                 yield index, sub_index, part_size, object_id, get_node_ip()
@@ -182,7 +160,7 @@ def put_to_plasma(address):
                 buffer.append(record)
         remain_size = len(buffer)
         if remain_size > 0:
-            res_buffer = process_buffer(buffer)
+            res_buffer = process_records(buffer)
             object_id = client.put(res_buffer)
             buffer = []
             client.disconnect()
@@ -315,32 +293,6 @@ def plasma_data_creator(meta_data, object_store_address,
         return loader
 
     return create_plasma_dataloader
-
-
-def chunks(lst, n):
-    """Yield successive n-sized chunks from lst."""
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
-
-
-def index(x, start=None, end=None):
-    if isinstance(x, list):
-        return [index_numpy(x_i, start, end) for x_i in x]
-    else:
-        return index_numpy(x, start, end)
-
-
-def index_numpy(x, start=None, end=None):
-    if start:
-        if end:
-            return x[start:end]
-        else:
-            return x[start:]
-    else:
-        if end:
-            return x[:end]
-        else:
-            return x
 
 
 def train_epoch(model, train_ld, train_batches, optimizer, loss, scheduler):
