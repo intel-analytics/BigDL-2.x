@@ -104,11 +104,12 @@ class MultiInputNet(nn.Module):
 
 class SimpleModel(nn.Module):
     def __init__(self):
-        super(SimpleModel, self).__init__()
-        self.fc = nn.Linear(1, 1)
+        super().__init__()
+        self.fc = nn.Linear(4, 2)
         self.out_act = nn.Sigmoid()
 
-    def forward(self, x):
+    def forward(self, input1, input2):
+        x = torch.cat((input1, input2), -1)
         x = self.fc(x)
         x = self.out_act(x)
         return x
@@ -257,16 +258,18 @@ class TestPyTorchEstimator(TestCase):
     def test_pandas_dataframe(self):
 
         OrcaContext.pandas_read_backend = "pandas"
-        file_path = os.path.join(resource_path, "orca/learn/simple_feature_label.csv")
-        data_shard = read_csv(file_path, usecols=[0, 1], dtype={0: np.float32, 1: np.float32})
+        file_path = os.path.join(resource_path, "orca/learn/ncf.csv")
+        data_shard = read_csv(file_path, usecols=[0, 1, 2], dtype={0: np.float32, 1: np.float32,
+                                                                   2: np.float32})
 
         estimator = get_estimator(model_fn=lambda config: SimpleModel())
-        estimator.fit(data_shard, batch_size=1, epochs=2,
-                      feature_cols=["feature"],
+        estimator.fit(data_shard, batch_size=2, epochs=2,
+                      feature_cols=["user", "item"],
                       label_cols=["label"])
 
-        estimator.evaluate(data_shard, batch_size=1, feature_cols=["feature"], label_cols=["label"])
-        result = estimator.predict(data_shard, batch_size=1, feature_cols=["feature"])
+        estimator.evaluate(data_shard, batch_size=2, feature_cols=["user", "item"],
+                           label_cols=["label"])
+        result = estimator.predict(data_shard, batch_size=2, feature_cols=["user", "item"])
         result.collect()
 
     def test_multiple_inputs_model(self):
