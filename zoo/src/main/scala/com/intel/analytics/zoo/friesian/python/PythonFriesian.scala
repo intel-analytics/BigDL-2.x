@@ -93,15 +93,17 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def assignStringIdx(df: DataFrame, columns: JList[String], frequencyLimit: String = null)
   : JList[DataFrame] = {
-    val freq_list = frequencyLimit.split(",")
     var default_limit: Option[Int] = None
     val freq_map = scala.collection.mutable.Map[String, Int]()
-    for (fl <- freq_list) {
-      val frequency_pair = fl.split(":")
-      if (frequency_pair.length == 1) {
-        default_limit = Some(frequency_pair(0).toInt)
-      } else if (frequency_pair.length == 2) {
-        freq_map += (frequency_pair(0) -> frequency_pair(1).toInt)
+    if (frequencyLimit != null) {
+      val freq_list = frequencyLimit.split(",")
+      for (fl <- freq_list) {
+        val frequency_pair = fl.split(":")
+        if (frequency_pair.length == 1) {
+          default_limit = Some(frequency_pair(0).toInt)
+        } else if (frequency_pair.length == 2) {
+          freq_map += (frequency_pair(0) -> frequency_pair(1).toInt)
+        }
       }
     }
     val cols = columns.asScala.toList

@@ -76,4 +76,34 @@ class FriesianSpec extends ZooSpecHelper {
     val dfClip = friesian.friesianClip(df, cols.toList.asJava, 2)
     dfClip.show()
   }
+
+  "AssignStringIdx limit null" should "work properly" in {
+    val path = resource.getFile + "/data1.parquet"
+    val df = sqlContext.read.parquet(path)
+    val friesian = PythonFriesian.ofFloat()
+    val cols = Array("col_4", "col_5")
+    val stringIdxList = friesian.assignStringIdx(df, cols.toList.asJava, null)
+    assert(stringIdxList.get(0).count == 3)
+    assert(stringIdxList.get(1).count == 2)
+  }
+
+  "AssignStringIdx limit int" should "work properly" in {
+    val path = resource.getFile + "/data1.parquet"
+    val df = sqlContext.read.parquet(path)
+    val friesian = PythonFriesian.ofFloat()
+    val cols = Array("col_4", "col_5")
+    val stringIdxList = friesian.assignStringIdx(df, cols.toList.asJava, "2")
+    assert(stringIdxList.get(0).count == 1)
+    assert(stringIdxList.get(1).count == 1)
+  }
+
+  "AssignStringIdx limit dict" should "work properly" in {
+    val path = resource.getFile + "/data1.parquet"
+    val df = sqlContext.read.parquet(path)
+    val friesian = PythonFriesian.ofFloat()
+    val cols = Array("col_4", "col_5")
+    val stringIdxList = friesian.assignStringIdx(df, cols.toList.asJava, "col_4:1,col_5:3")
+    assert(stringIdxList.get(0).count == 3)
+    assert(stringIdxList.get(1).count == 1)
+  }
 }
