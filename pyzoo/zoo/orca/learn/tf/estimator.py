@@ -239,14 +239,6 @@ class Estimator(SparkEstimator):
         """
         raise NotImplementedError
 
-    def load_keras_model(self, path):
-        """
-        Load tensorflow keras model to this estimator.
-
-        :param path: keras model path.
-        """
-        raise NotImplementedError
-
     def save_keras_weights(self, filepath, overwrite=True, save_format=None):
         """
         Save tensorflow keras model weights in this estimator.
@@ -1007,14 +999,6 @@ class KerasEstimator(Estimator):
         :param overwrite: Whether to silently overwrite any existing file at the target location.
         """
         self.model.save_model(path, overwrite=overwrite)
-
-    def load_keras_model(self, path):
-        """
-        Load tensorflow keras model to this estimator.
-
-        :param path: keras model path.
-        """
-        self.model = KerasModel.load_model(path)
 
     def get_model(self):
         """
