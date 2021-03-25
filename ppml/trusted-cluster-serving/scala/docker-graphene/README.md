@@ -12,13 +12,13 @@ Then build docker image by running this command: <br>
 
 ## How To Run
 ### Prerequisite
-To launch Trusted Big Data ML applications on Graphene-SGX, you need to install graphene-sgx-driver:
+To launch Trusted Cluster Serving on Graphene-SGX, you need to install graphene-sgx-driver:
 ```bash
 ../../../scripts/install-graphene-driver.sh
 ```
 
 ### Prepare the keys
-The ppml in analytics zoo need secured keys to enable flink TLS, https and TLS enabled Redis, you need to prepare the secure keys and keystores. <br>
+The ppml in analytics zoo needs secured keys to enable flink TLS, https and TLS enabled Redis, you need to prepare the secure keys and keystores. <br>
 This script is in /analytics-zoo/ppml/scripts: <br>
 ```bash
 ../../../scripts/generate-keys.sh
