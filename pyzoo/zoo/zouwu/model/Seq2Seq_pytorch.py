@@ -67,7 +67,7 @@ def model_creator(config):
                        dropout=config.get("dropout", 0.25),
                        output_feature_num=config["output_feature_num"],
                        future_seq_len=config["future_seq_len"],
-                       fc_layer_num=config.get("fc_layer_num", 2)
+                       fc_layer_num=config.get("fc_layer_num", 2),
                        fc_hidden_dim=config.get("fc_hidden_dim", 128))
 
 def optimizer_creator(model, config):
