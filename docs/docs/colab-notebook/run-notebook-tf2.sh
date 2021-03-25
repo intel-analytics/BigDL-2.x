@@ -1,4 +1,4 @@
-# run with ipython
+set -e
 
 echo "#1 start test for tf2_lenet_mnist.ipynb"
 #replace '!pip install --pre' to '#pip install --pre', here we test pr with built whl package. In nightly-build job, we test only use "ipython notebook" for pre-release Analytics Zoo
