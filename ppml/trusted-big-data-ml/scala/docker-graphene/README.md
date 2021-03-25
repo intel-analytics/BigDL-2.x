@@ -1,5 +1,7 @@
 # trusted-big-data-ml
-Please mind the ip and file path settings, they should be changed to the ip/path of your own sgx server on which you are running the programs.
+Trusted Big Data ML allows user to run end to end big data analytics application and Intel Analytics Zoo and BigDL model training with spark local and distributed cluster on Graphene-SGX.
+
+*Please mind the ip and file path settings, they should be changed to the ip/path of your own sgx server on which you are running the programs.*
 
 
 ## How To Build 
@@ -10,6 +12,12 @@ Then build docker image by running this command: <br>
 ```
 
 ## How to Run
+
+### Prerequisite
+To launch Trusted Big Data ML applications on Graphene-SGX, you need to install graphene-sgx-driver:
+```bash
+    ../../../scripts/install-graphene-driver.sh
+```
 
 ### Prepare the data
 To train a model with ppml in analytics zoo and bigdl, you need to prepare the data first. The Docker image is taking lenet and mnist as example. <br>
