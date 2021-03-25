@@ -46,14 +46,19 @@ class MPIEstimator:
                                   "root@{}:{}/".format(host, self.dir)])
             os.waitpid(p.pid, 0)
 
+    # Specify feature_cols and label_cols for Spark DataFrame data.
+    # Specify train_func or validate_func for customized training and validation logic.
+    # Specify train_batches and validate_batches in case of unbalance data.
+    # Specify validate_steps to validate periodically. Note that validation would always be triggered at
+    # the end of an epoch.
     def fit(self, data, epochs=1, batch_size=32, validation_data=None, validate_batch_size=32,
-            train_func=None, validate_func=None, train_steps=None, validate_steps=None,
-            feature_cols=None, label_cols=None):
+            train_func=None, validate_func=None, train_batches=None, validate_batches=None,
+            validate_steps=None, feature_cols=None, label_cols=None):
         if isinstance(data, DataFrame):
             assert feature_cols is not None and label_cols is not None, \
                 "feature_cols and label_cols must be provided if data is a Spark DataFrame"
             data = data.rdd.map(convert_row(feature_cols, label_cols))
-            # Launch plasma. TODO: make object store memory configurable?
+            # TODO: make object store memory configurable?
             object_store_address = self.mpi_runner.launch_plasma(object_store_memory="100g")
             # partition_id, subpartition_id, subpartition_size, object_id, node_ip
             plasma_meta = data.mapPartitionsWithIndex(
@@ -76,6 +81,7 @@ class MPIEstimator:
                 count = 0
             data_creator = plasma_data_creator(plasma_meta, object_store_address,
                                                self.mpi_runner.processes_per_node, batch_size)
+            data.unpersist()
             if validation_data:
                 assert isinstance(validation_data, DataFrame)
                 validation_data = validation_data.rdd.map(convert_row(feature_cols, label_cols))
@@ -84,6 +90,7 @@ class MPIEstimator:
                 validation_data_creator = plasma_data_creator(
                     validate_plasma_meta, object_store_address,
                     self.mpi_runner.processes_per_node, validate_batch_size)
+                validation_data.unpersist()
             else:
                 validation_data_creator = None
         else:
@@ -102,7 +109,8 @@ class MPIEstimator:
 
         with open("mpi_train_data.pkl", "wb") as f:
             cloudpickle.dump((data_creator, epochs, validation_data_creator,
-                              train_func, validate_func, train_steps, validate_steps), f)
+                              train_func, validate_func, train_batches,
+                              validate_batches, validate_steps), f)
         for host in self.mpi_runner.remote_hosts:
             p = subprocess.Popen(["scp", "mpi_train_data.pkl",
                                   "root@{}:{}/".format(host, self.dir)])
