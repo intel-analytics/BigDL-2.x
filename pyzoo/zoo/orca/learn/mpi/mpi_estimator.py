@@ -1,9 +1,24 @@
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import os
 import types
 import numpy as np
 import subprocess
 import cloudpickle
-from pyspark import RDD
 from pyspark.sql import DataFrame
 from torch.utils.data import Dataset, DataLoader
 from zoo.util.utils import get_node_ip
@@ -30,19 +45,14 @@ class MPIEstimator:
             p = subprocess.Popen(["scp", "saved_mpi_estimator.pkl",
                                   "root@{}:{}/".format(host, self.dir)])
             os.waitpid(p.pid, 0)
-            # train.py is within analytics-zoo and should be available on all nodes
-            # p = subprocess.Popen(["scp", "mpi_train.py",
-            #                       "root@{}:{}/".format(host, self.dir)])
-            # os.waitpid(p.pid, 0)
 
     def fit(self, data, epochs=1, batch_size=32, validation_data=None, validate_batch_size=32,
-            train_func=None, validate_func=None, train_steps=None, validate_steps=None):
-        if isinstance(data, DataFrame):   # Row: x (first column, can be a dict), y (second column)
-            data = data.rdd
-            if validation_data:
-                assert isinstance(validation_data, DataFrame)
-                validation_data = validation_data.rdd
-        if isinstance(data, RDD):
+            train_func=None, validate_func=None, train_steps=None, validate_steps=None,
+            feature_cols=None, label_cols=None):
+        if isinstance(data, DataFrame):
+            assert feature_cols is not None and label_cols is not None, \
+                "feature_cols and label_cols must be provided if data is a Spark DataFrame"
+            data = data.rdd.map(convert_row(feature_cols, label_cols))
             # Launch plasma. TODO: make object store memory configurable?
             object_store_address = self.mpi_runner.launch_plasma(object_store_memory="100g")
             # partition_id, subpartition_id, subpartition_size, object_id, node_ip
@@ -67,7 +77,8 @@ class MPIEstimator:
             data_creator = plasma_data_creator(plasma_meta, object_store_address,
                                                self.mpi_runner.processes_per_node, batch_size)
             if validation_data:
-                assert isinstance(validation_data, RDD)
+                assert isinstance(validation_data, DataFrame)
+                validation_data = validation_data.rdd.map(convert_row(feature_cols, label_cols))
                 validate_plasma_meta = validation_data.mapPartitionsWithIndex(
                     put_to_plasma(object_store_address)).collect()
                 validation_data_creator = plasma_data_creator(
@@ -103,30 +114,59 @@ class MPIEstimator:
         self.mpi_runner.shutdown_plasma()
 
 
+def convert_row(feature_cols, label_cols):
+    def convert_for_cols(row, cols):
+        result = []
+        for name in cols:
+            result.append(row[name])
+        if len(result) == 1:
+            return result[0]
+        return result
+
+    def transform(row):
+        features = convert_for_cols(row, feature_cols)
+        if label_cols:
+            labels = convert_for_cols(row, label_cols)
+            return features, labels
+        else:
+            return features,
+    return transform
+
+
 def put_to_plasma(address):
-    import pyarrow.plasma as plasma
+
+    def process_buffer(buffer):
+        import random
+        random.shuffle(buffer)  # TODO: Make shuffle configurable?
+        buffer_x = [record[0] for record in buffer]
+        buffer_y = [record[1] for record in buffer]
+        res_buffer = dict()
+        if isinstance(buffer_x[0], list):
+            res_x = []
+            for i in range(len(buffer_x[0])):
+                res_x.append(np.array([record[i] for record in buffer_x]))
+            res_buffer["x"] = res_x
+        else:
+            res_buffer["x"] = np.array(buffer_x)
+        if isinstance(buffer_y[0], list):
+            res_y = []
+            for i in range(len(buffer_x[0])):
+                res_y.append(np.array([record[i] for record in buffer_y]))
+            res_buffer["y"] = res_y
+        else:  # TODO: int features and label of type int32?
+            res_buffer["y"] = np.array(buffer_y)
+        return res_buffer
 
     def f(index, iterator):
+        import pyarrow.plasma as plasma
         client = plasma.connect(address)
-        part_size = 10000  # TODO: Make subpartition size configurable?
+        part_size = 1000000  # TODO: Make subpartition size configurable?
         buffer = []
         sub_index = 0
         for record in iterator:
             if len(buffer) == part_size:
-                import random
-                random.shuffle(buffer)  # TODO: Make shuffle configurable?
-                buffer_x = [record[0] for record in buffer]
-                buffer_y = [record[1] for record in buffer]
-                res_buffer = {"y": np.array(buffer_y)}  # TODO: int features and label of type int32?
-                if isinstance(buffer_x[0], dict):
-                    res_x = {}
-                    for k in list(buffer_x[0].keys()):
-                        res_x[k] = np.array([record[k] for record in buffer_x])
-                    res_buffer["x"] = res_x
-                else:
-                    res_buffer["x"] = np.array(buffer_x)
-                # TODO: add list support
-                object_id = client.put(res_buffer)
+                res_buffer = process_buffer(buffer)
+                object_id = client.put(res_buffer)  # TODO: check memory usage
                 buffer = [record]
                 yield index, sub_index, part_size, object_id, get_node_ip()
                 sub_index += 1
@@ -134,18 +174,7 @@ def put_to_plasma(address):
                 buffer.append(record)
         remain_size = len(buffer)
         if remain_size > 0:
-            import random
-            random.shuffle(buffer)
-            buffer_x = [record[0] for record in buffer]
-            buffer_y = [record[1] for record in buffer]
-            res_buffer = {"y": np.array(buffer_y)}  # int32?
-            if isinstance(buffer_x[0], dict):
-                res_x = {}
-                for k in list(buffer_x[0].keys()):
-                    res_x[k] = np.array([record[k] for record in buffer_x])
-                res_buffer["x"] = res_x
-            else:
-                res_buffer["x"] = np.array(buffer_x)
+            res_buffer = process_buffer(buffer)
             object_id = client.put(res_buffer)
             buffer = []
             client.disconnect()
@@ -164,7 +193,8 @@ class PlasmaNDArrayDataset(Dataset):
 
         # All the subpartitions on this node
         all_data = [subpartition for subpartition in meta_data if subpartition[4] == get_node_ip()]
-        rank = int(os.environ.get("PMI_RANK", 0))  # PMIX_RANK for OpenMPI
+        rank = int(os.environ.get("PMI_RANK", 0))
+        # rank = int(os.environ.get("PMIX_RANK", 0))  # For OpenMPI
         local_rank = rank % workers_per_node
         print("Local rank: ", local_rank)
         data_splits = list(chunks(all_data, len(all_data) // workers_per_node))
@@ -236,10 +266,10 @@ class PlasmaNDArrayDataset(Dataset):
             x_list.append(index(self.current_x, start=-current_available_size, end=-current_available_size + self.batch_size))
             y_list.append(index(self.current_y, start=-current_available_size, end=-current_available_size + self.batch_size))
 
-        if isinstance(self.current_x, dict):
-            x_np = {}
-            for k in self.current_x.keys():
-                x_np[k] = np.concatenate([x[k] for x in x_list])
+        if isinstance(self.current_x, list):
+            x_np = []
+            for i in range(len(self.current_x)):
+                x_np.append(np.concatenate([x[i] for x in x_list]))
         else:
             x_np = np.concatenate(x_list)
         y_np = np.concatenate(y_list)
@@ -282,12 +312,8 @@ def chunks(lst, n):
 
 
 def index(x, start=None, end=None):
-    # TODO: support list
-    if isinstance(x, dict):
-        res = {}
-        for k, v in x.items():
-            res[k] = index_numpy(v, start, end)
-        return res
+    if isinstance(x, list):
+        return [index_numpy(x_i, start, end) for x_i in x]
     else:
         return index_numpy(x, start, end)
 

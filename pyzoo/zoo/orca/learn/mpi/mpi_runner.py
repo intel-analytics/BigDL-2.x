@@ -39,7 +39,11 @@ class MPIRunner:
 
             from zoo.orca import OrcaContext
             sc = OrcaContext.get_spark_context()
-            num_executors = int(sc.getConf().get("spark.executor.instances"))
+            master = sc.getConf().get("spark.master")
+            if master == "local" or master.startswith("local["):
+                num_executors = 1
+            else:
+                num_executors = int(sc.getConf().get("spark.executor.instances"))
             self.hosts = list(set(sc.range(0, num_executors, numSlices=num_executors).barrier()
                                   .mapPartitions(get_ip).collect()))
         else:  # User specified hosts, assumed to be non-duplicate
@@ -65,8 +69,10 @@ class MPIRunner:
             p = subprocess.Popen(["scp", file_path,
                                   "root@{}:{}".format(host, file_dir)])
             os.waitpid(p.pid, 0)
-        cmd = ['mpiexec.hydra']
+        # cmd = ["mpiexec.openmpi"]
+        cmd = ["mpiexec.hydra"]
         # -l would label the output with process rank. -l/-ppn not available for openmpi.
+        # mpi_config = "-np {} ".format(
         mpi_config = "-np {} -ppn {} -l ".format(
             self.processes_per_node * len(self.hosts),
             self.processes_per_node)
