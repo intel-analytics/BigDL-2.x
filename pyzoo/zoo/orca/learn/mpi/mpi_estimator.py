@@ -7,7 +7,7 @@ from pyspark import RDD
 from pyspark.sql import DataFrame
 from torch.utils.data import Dataset, DataLoader
 from zoo.util.utils import get_node_ip
-from mpi_runner import MPIRunner
+from zoo.orca.learn.mpi.mpi_runner import MPIRunner
 
 
 class MPIEstimator:
@@ -31,7 +31,7 @@ class MPIEstimator:
                                   "root@{}:{}/".format(host, self.dir)])
             os.waitpid(p.pid, 0)
             # train.py is within analytics-zoo and should be available on all nodes
-            # p = subprocess.Popen(["scp", "train.py",
+            # p = subprocess.Popen(["scp", "mpi_train.py",
             #                       "root@{}:{}/".format(host, self.dir)])
             # os.waitpid(p.pid, 0)
 
@@ -45,9 +45,25 @@ class MPIEstimator:
         if isinstance(data, RDD):
             # Launch plasma. TODO: make object store memory configurable?
             object_store_address = self.mpi_runner.launch_plasma(object_store_memory="100g")
-            # partition_id, subpartition_id, partition_size, object_id, node_ip
+            # partition_id, subpartition_id, subpartition_size, object_id, node_ip
             plasma_meta = data.mapPartitionsWithIndex(
                 put_to_plasma(object_store_address)).collect()
+            train_size_map = {}
+            for partition_id, subpartition_id, subpartition_size, object_id, ip in plasma_meta:
+                if ip not in train_size_map:
+                    train_size_map[ip] = {}
+                if partition_id not in train_size_map[ip]:
+                    train_size_map[ip][partition_id] = []
+                train_size_map[ip][partition_id].append(subpartition_size)
+            size = 0
+            count = 0
+            for node, data in train_size_map.items():
+                for partition_id, subpartition_size in data.items():
+                    size += sum(subpartition_size)
+                    count += len(subpartition_size)
+                print("Node {} has {} subpartitions and {} train records".format(node, count, size))
+                size = 0
+                count = 0
             data_creator = plasma_data_creator(plasma_meta, object_store_address,
                                                self.mpi_runner.processes_per_node, batch_size)
             if validation_data:
@@ -148,7 +164,7 @@ class PlasmaNDArrayDataset(Dataset):
 
         # All the subpartitions on this node
         all_data = [subpartition for subpartition in meta_data if subpartition[4] == get_node_ip()]
-        rank = int(os.environ.get("PMIX_RANK", 0))  # PMIX_RANK for OpenMPI
+        rank = int(os.environ.get("PMI_RANK", 0))  # PMIX_RANK for OpenMPI
         local_rank = rank % workers_per_node
         print("Local rank: ", local_rank)
         data_splits = list(chunks(all_data, len(all_data) // workers_per_node))

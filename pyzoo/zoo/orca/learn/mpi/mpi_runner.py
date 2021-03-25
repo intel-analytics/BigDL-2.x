@@ -18,7 +18,7 @@ import os
 import sys
 import subprocess
 from zoo.util.utils import get_node_ip
-from zoo.orca import OrcaContext
+
 
 # Assumption:
 # 1. All hosts has oneCCL installed
@@ -37,8 +37,9 @@ class MPIRunner:
             def get_ip(iter):
                 yield get_node_ip()
 
+            from zoo.orca import OrcaContext
             sc = OrcaContext.get_spark_context()
-            num_executors = sc.getConf().get("spark.executor.instances")
+            num_executors = int(sc.getConf().get("spark.executor.instances"))
             self.hosts = list(set(sc.range(0, num_executors, numSlices=num_executors).barrier()
                                   .mapPartitions(get_ip).collect()))
         else:  # User specified hosts, assumed to be non-duplicate
@@ -95,6 +96,8 @@ class MPIRunner:
         process.wait()
 
     def launch_plasma(self, object_store_memory="2g"):
+        import atexit
+        atexit.register(self.shutdown_plasma)
         # TODO: Or can use spark to launch plasma
         from zoo.ray.utils import resource_to_bytes
         self.plasma_path = "/".join(sys.executable.split("/")[:-1] + ["plasma_store"])
