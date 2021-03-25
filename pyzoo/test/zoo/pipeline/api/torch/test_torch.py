@@ -225,7 +225,7 @@ class TestPytorch(TestCase):
             loaded_torchModel = TorchModel.from_value(loaded_model.value)
             dummy_input = torch.ones(16, 2)
             loaded_torchModel.forward(dummy_input.numpy())
-            loaded_torchModel.toPytorch()
+            loaded_torchModel.to_pytorch()
 
 
 if __name__ == "__main__":
