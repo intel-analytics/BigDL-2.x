@@ -55,7 +55,7 @@ class OpenvinoEstimator(SparkEstimator):
         self.model = InferenceModel(supported_concurrent_num=self.core_num)
         self.model.load_openvino(model_path=model_path,
                                  weight_path=model_path[:model_path.rindex(".")] + ".bin",
-                                 batch_size=batch_size)
+                                 batch_size=self.batch_size)
 
     def fit(self, data, epochs, batch_size=32, feature_cols=None, label_cols=None,
             validation_data=None, checkpoint_trigger=None):
