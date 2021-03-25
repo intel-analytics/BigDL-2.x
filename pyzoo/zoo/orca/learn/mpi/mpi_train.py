@@ -14,12 +14,16 @@
 # limitations under the License.
 #
 
+import os
 import argparse
 import cloudpickle
 from zoo.util.utils import get_node_ip
 
+print("Worker on {} with global rank {}".format(get_node_ip(), os.environ.get("PMI_RANK", 0)))
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--pkl_path', type=str, default="", help='The directory of the pkl files for mpi training.')
+parser.add_argument('--pkl_path', type=str, default="",
+                    help='The directory of the pkl files for mpi training.')
 args = parser.parse_args()
 pkl_path = args.pkl_path
 
@@ -30,7 +34,7 @@ with open("{}/mpi_train_data.pkl".format(pkl_path), "rb") as f:
     train_data_creator, epochs, validation_data_creator, train_func, validate_func, train_steps, validate_steps = cloudpickle.load(f)
 
 if init_func:
-    print("Initializing distributed environment on ", get_node_ip())
+    print("Initializing distributed environment")
     init_func()
 
 # Wrap DDP should be done by users in model_creator
