@@ -1,7 +1,7 @@
 ## PPML (Privacy Preserving Machine Learning) 
 Artificial intelligence on big data is increasingly important to many real-world applications. Many machine learning and data analytics applications are benefiting from the private data in different domains. Most of these applications leverage the private data to offer certain valuable services to the users. But the private data could be repurposed to infer sensitive information, which would jeopardize the privacy of individuals. Privacy-Preserving Machine Learning (PPML) helps address these risks. Using techniques such as cryptography differential privacy, and hardware technologies, PPML aims to protect the privacy of sensitive user data and of the trained model as it performs ML tasks.
 
-Analytics Zoo helps to build PPML applications on top of Intel® SGX Software Guard Extensions (Intel® SGX) and library OS such as Graphene and Occlum. Analytics Zoo supports big data analytics, machine learning and cluster serving as PPML applications on top of Intel® SGX and Graphene/Occlum.
+Analytics Zoo helps to build PPML applications on top of Intel® SGX Software Guard Extensions (Intel® SGX) and library OSes such as Graphene and Occlum. Analytics Zoo supports big data analytics, machine learning and cluster serving as PPML applications on top of Intel® SGX and Graphene/Occlum.
 
 ### [Intel® SGX](https://software.intel.com/content/www/us/en/develop/topics/software-guard-extensions.html)
 Intel® SGX runs on Intel’s Trusted Execution Environment (TEE), offering hardwarebased memory encryption that isolates specific application code and data in memory. Intel® SGX enables user-level code to allocate private regions of memory, called enclaves, which are designed to be protected from processes running at higher privilege levels. 
@@ -15,3 +15,11 @@ Occlum is a memory-safe, multi-process library OS (LibOS) for Intel SGX. As a Li
 ### Analytics-Zoo PPML(Privacy Preserving Machine Learning) Platform for E2E Big Data and AI using SGX
 1. SGX-based Trusted Big Data ML
 2. SGX-based Trusted Cluster Serving
+
+#### SGX-based Trusted Big Data ML
+SGX-based Trusted Big Data ML allows user to run end to end big data analytics application and Intel Analytics Zoo and BigDL model training with spark local and distributed cluster on Graphene-SGX.
+
+#### SGX-based Trusted Cluster Serving
+SGX-based Trusted Cluster Serving allows user to run end to end Intel Analytics Zoo cluster serving pipeline on both Graphene-SGX and Occlum.
+
+
