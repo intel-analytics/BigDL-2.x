@@ -24,7 +24,8 @@ from zoo.orca.data.ray_xshards import RayXShards
 from zoo.orca.learn.tf2.tf_runner import TFRunner
 from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
 from zoo.orca.learn.utils import maybe_dataframe_to_xshards, dataframe_to_xshards, \
-    convert_predict_rdd_to_dataframe, convert_predict_xshards_to_dataframe, update_predict_xshards
+    convert_predict_xshards_to_dataframe, update_predict_xshards, \
+    process_xshards_of_pandas_dataframe
 from zoo.ray import RayContext
 
 logger = logging.getLogger(__name__)
@@ -44,17 +45,17 @@ class Estimator(object):
         Create an Estimator for tensorflow 2.
 
         :param model_creator: (dict -> Model) This function takes in the `config`
-                dict and returns a compiled TF model.
+               dict and returns a compiled TF model.
         :param config: (dict) configuration passed to 'model_creator',
-                'data_creator'. Also contains `fit_config`, which is passed
-                into `model.fit(data, **fit_config)` and
-                `evaluate_config` which is passed into `model.evaluate`.
+               'data_creator'. Also contains `fit_config`, which is passed
+               into `model.fit(data, **fit_config)` and
+               `evaluate_config` which is passed into `model.evaluate`.
         :param verbose: (bool) Prints output of one model if true.
         :param workers_per_node: (Int) worker number on each node. default: 1.
         :param compile_args_creator: (dict -> dict of loss, optimizer and metrics) Only used when
-                the backend="horovod". This function takes in the `config` dict and returns a
-                dictionary like {"optimizer": tf.keras.optimizers.SGD(lr), "loss":
-                "mean_squared_error", "metrics": ["mean_squared_error"]}
+               the backend="horovod". This function takes in the `config` dict and returns a
+               dictionary like {"optimizer": tf.keras.optimizers.SGD(lr), "loss":
+               "mean_squared_error", "metrics": ["mean_squared_error"]}
         :param backend: (string) You can choose "horovod" or "tf2" as backend. Default: `tf2`.
         """
         return TensorFlow2Estimator(model_creator=model_creator, config=config,
@@ -62,9 +63,9 @@ class Estimator(object):
                                     backend=backend, compile_args_creator=compile_args_creator)
 
 
-def shards_ref_to_creator(shards_ref):
+def make_data_creator(refs):
     def data_creator(config, batch_size):
-        return shards_ref
+        return refs
 
     return data_creator
 
@@ -171,35 +172,37 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         Train this tensorflow model with train data.
 
         :param data: train data. It can be XShards, Spark DataFrame or creator function which
-        returns Iter or DataLoader.
-        If data is XShards, each partition is a dictionary of  {'x': feature,
-        'y': label}, where feature(label) is a numpy array or a tuple of numpy arrays.
+               returns Iter or DataLoader.
+               If data is XShards, each partition can be a Pandas DataFrame or a dictionary of
+               {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
+               numpy arrays.
         :param epochs: Number of epochs to train the model. Default: 1.
         :param batch_size: Batch size used for training. Default: 32.
         :param verbose: Prints output of one model if true.
         :param callbacks: List of Keras compatible callbacks to apply during training.
-        :param validation_data_creator: validation data. Validation data type should be the same
-        as train data.
+        :param validation_data: validation data. Validation data type should be the same
+               as train data.
         :param class_weight: Optional dictionary mapping class indices (integers) to a weight
-        (float) value, used for weighting the loss function. This can be useful to tell the model
-        to "pay more attention" to samples from an under-represented class.
+               (float) value, used for weighting the loss function. This can be useful to tell
+               the model to "pay more attention" to samples from an under-represented class.
         :param steps_per_epoch: Total number of steps (batches of samples) before declaring one
-        epoch finished and starting the next epoch. If `steps_pre_epoch` is `None`, the epoch will
-        run until the input dataset is exhausted. When passing an infinitely repeating dataset, you
-        must specify the `step_per_epoch` argument.
+               epoch finished and starting the next epoch. If `steps_pre_epoch` is `None`, the
+               epoch will run until the input dataset is exhausted. When passing an infinitely
+               repeating dataset, you must specify the `step_per_epoch` argument.
         :param validation_steps: Total number of steps (batches of samples) to draw before stopping
-        when performing validation at the end of every epoch. Default: None.
+               when performing validation at the end of every epoch. Default: None.
         :param validation_freq: Only relevant if validation data is provided. Integer of
-        `collections_abc.Container` instance (e.g. list, tuple, etc.). If an integer, specifies how
-        many training epochs to run before a new validation run is performed, e.g.
-        `validation_freq=2` runs validation every 2 epochs. If a Container, specifies the epochs on
-        which to run validation, e.g. `validation_freq=[1, 2, 10]` runs validation at the end of
-        the 1st, 2nd, and 10th epochs.
+               `collections_abc.Container` instance (e.g. list, tuple, etc.). If an integer,
+               specifies how many training epochs to run before a new validation run is performed,
+               e.g. `validation_freq=2` runs validation every 2 epochs. If a Container, specifies
+               the epochs on which to run validation, e.g. `validation_freq=[1, 2, 10]` runs
+               validation at the end of the 1st, 2nd, and 10th epochs.
         :param data_config: An optional dictionary that can be passed to data creator function.
         :param feature_cols: Feature column name(s) of data. Only used when data is a Spark
-        DataFrame. Default: None.
-        :param label_cols: Label column name(s) of data. Only used when data is a Spark DataFrame.
-        Default: None.
+               DataFrame or an XShards of Pandas DataFrame. Default: None.
+        :param label_cols: Label column name(s) of data. Only used when data is a Spark DataFrame or
+               an XShards of Pandas DataFrame.
+               Default: None.
         :return:
         """
         params = dict(
@@ -220,31 +223,33 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                                                            mode="fit")
 
         if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                data, validation_data = process_xshards_of_pandas_dataframe(data, feature_cols,
+                                                                            label_cols,
+                                                                            validation_data, "fit")
+
             max_length, ray_xshards = process_spark_xshards(data, self.num_workers)
 
             if validation_data is None:
-                def transform_func(worker, shards_ref):
-                    params["data_creator"] = shards_ref_to_creator(shards_ref)
+                def transform_func(worker, partition_refs):
+                    params["data_creator"] = make_data_creator(partition_refs)
                     return worker.step.remote(**params)
 
-                stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                                        transform_func,
-                                                                        gang_scheduling=True)
+                worker_stats = ray_xshards.reduce_partitions_for_actors(self.remote_workers,
+                                                                        transform_func)
             else:
                 val_max_length, val_ray_xshards = process_spark_xshards(validation_data,
                                                                         self.num_workers)
 
-                def zip_func(worker, this_shards_ref, that_shards_ref):
-                    params["data_creator"] = shards_ref_to_creator(this_shards_ref)
+                def zip_func(worker, this_partition_refs, that_partition_refs):
+                    params["data_creator"] = make_data_creator(this_partition_refs)
                     params["validation_data_creator"] = \
-                        shards_ref_to_creator(that_shards_ref)
+                        make_data_creator(that_partition_refs)
                     return worker.step.remote(**params)
 
-                stats_shards = ray_xshards.zip_shards_with_actors(val_ray_xshards,
-                                                                  self.remote_workers,
-                                                                  zip_func,
-                                                                  gang_scheduling=True)
-            worker_stats = stats_shards.collect()
+                worker_stats = ray_xshards.zip_reduce_shards_with_actors(val_ray_xshards,
+                                                                         self.remote_workers,
+                                                                         zip_func)
         else:
             params["data_creator"] = data
             params["validation_data_creator"] = validation_data
@@ -263,24 +268,26 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         Evaluates the model on the validation data set.
 
         :param data: evaluate data. It can be XShards, Spark DataFrame or creator function which
-        returns Iter or DataLoader.
-        If data is XShards, each partition is a dictionary of  {'x': feature,
-        'y': label}, where feature(label) is a numpy array or a tuple of numpy arrays.
+               returns Iter or DataLoader.
+               If data is XShards, each partition can be a Pandas DataFrame or a dictionary of
+               {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
+               numpy arrays.
         :param batch_size: Batch size used for evaluation. Default: 32.
         :param num_steps: Total number of steps (batches of samples) before declaring the evaluation
-        round finished. Ignored with the default value of `None`.
+               round finished. Ignored with the default value of `None`.
         :param verbose: Prints output of one model if true.
         :param sample_weight: Optional Numpy array of weights for the training samples, used for
-        weighting the loss function. You can either pass a flat (1D) Numpy array with the same
-        length as the input samples (1:1 mapping between weights and samples), or in the case of
-        temporal data, you can pass a 2D array with shape (samples, sequence_length), to apply a
-        different weight to every timestep of every sample.
+               weighting the loss function. You can either pass a flat (1D) Numpy array with the
+               same length as the input samples (1:1 mapping between weights and samples), or in
+               the case of temporal data, you can pass a 2D array with shape (samples,
+               sequence_length), to apply a different weight to every timestep of every sample.
         :param callbacks: List of Keras compatible callbacks to apply during evaluation.
         :param data_config: An optional dictionary that can be passed to data creator function.
         :param feature_cols: Feature column name(s) of data. Only used when data is a Spark
-        DataFrame. Default: None.
-        :param label_cols: Label column name(s) of data. Only used when data is a Spark DataFrame.
-        Default: None.
+               DataFrame or an XShards of Pandas DataFrame. Default: None.
+        :param label_cols: Label column name(s) of data. Only used when data is a Spark DataFrame or
+               an XShards of Pandas DataFrame.
+               Default: None.
         :return: validation result
         """
         logger.info("Starting validation step.")
@@ -301,21 +308,21 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                                              mode="evaluate")
 
         if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                data = process_xshards_of_pandas_dataframe(data, feature_cols, label_cols)
+
             data = data
             if data.num_partitions() != self.num_workers:
                 data = data.repartition(self.num_workers)
 
             ray_xshards = RayXShards.from_spark_xshards(data)
 
-            def transform_func(worker, shards_ref):
-                params["data_creator"] = shards_ref_to_creator(shards_ref)
+            def transform_func(worker, partition_refs):
+                params["data_creator"] = make_data_creator(partition_refs)
                 return worker.validate.remote(**params)
 
-            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                                    transform_func,
-                                                                    gang_scheduling=True)
-            worker_stats = stats_shards.collect()
-
+            worker_stats = ray_xshards.reduce_partitions_for_actors(self.remote_workers,
+                                                                    transform_func)
         else:  # data_creator functions; should return Iter or DataLoader
             params["data_creator"] = data
             params_list = [params] * self.num_workers
@@ -330,12 +337,11 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         ray_xshards = RayXShards.from_spark_xshards(xshards)
 
         def transform_func(worker, shards_ref):
-            params["data_creator"] = shards_ref_to_creator(shards_ref)
+            params["data_creator"] = make_data_creator(shards_ref)
             return worker.predict.remote(**params)
 
         pred_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                               transform_func,
-                                                               gang_scheduling=False)
+                                                               transform_func)
         spark_xshards = pred_shards.to_spark_xshards()
         return spark_xshards
 
@@ -346,16 +352,16 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         Predict the input data
 
         :param data: predict input data.  It can be XShards or Spark DataFrame.
-        If data is XShards, each partition is a dictionary of  {'x': feature}, where feature is a
-        numpy array or a tuple of numpy arrays.
+               If data is XShards, each partition can be a Pandas DataFrame or a dictionary of
+               {'x': feature}, where feature is a numpy array or a tuple of numpy arrays.
         :param batch_size: Batch size used for inference. Default: None.
         :param verbose: Prints output of one model if true.
         :param steps: Total number of steps (batches of samples) before declaring the prediction
-        round finished. Ignored with the default value of None.
+               round finished. Ignored with the default value of None.
         :param callbacks: List of Keras compatible callbacks to apply during prediction.
         :param data_config: An optional dictionary that can be passed to data creator function.
         :param feature_cols: Feature column name(s) of data. Only used when data is a Spark
-        DataFrame. Default: None.
+               DataFrame or an XShards of Pandas DataFrame. Default: None.
         :return:
         """
         logger.info("Starting predict step.")
@@ -378,6 +384,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
             pred_shards = self._predict_spark_xshards(xshards, params)
             result = convert_predict_xshards_to_dataframe(data, pred_shards)
         elif isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                data = process_xshards_of_pandas_dataframe(data, feature_cols)
             pred_shards = self._predict_spark_xshards(data, params)
             result = update_predict_xshards(data, pred_shards)
         else:

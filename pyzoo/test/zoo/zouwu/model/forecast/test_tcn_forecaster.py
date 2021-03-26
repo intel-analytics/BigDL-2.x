@@ -58,12 +58,35 @@ class TestZouwuModelTCNForecaster(TestCase):
                                    future_seq_len=5,
                                    input_feature_num=1,
                                    output_feature_num=1,
-                                   kernel_size=3,
+                                   kernel_size=4,
+                                   num_channels=[16, 16],
                                    lr=0.01)
         train_mse = forecaster.fit(train_data[0], train_data[1], epochs=2)
         test_pred = forecaster.predict(test_data[0])
         assert test_pred.shape == test_data[1].shape
         test_mse = forecaster.evaluate(test_data[0], test_data[1])
+
+    def test_tcn_forecaster_onnx_methods(self):
+        train_data, val_data, test_data = create_data()
+        forecaster = TCNForecaster(past_seq_len=24,
+                                   future_seq_len=5,
+                                   input_feature_num=1,
+                                   output_feature_num=1,
+                                   kernel_size=4,
+                                   num_channels=[16, 16],
+                                   lr=0.01)
+        forecaster.fit(train_data[0], train_data[1], epochs=2)
+        try:
+            import onnx
+            import onnxruntime
+            pred = forecaster.predict(test_data[0])
+            pred_onnx = forecaster.predict_with_onnx(test_data[0])
+            np.testing.assert_almost_equal(pred, pred_onnx, decimal=5)
+            mse = forecaster.evaluate(test_data[0], test_data[1])
+            mse_onnx = forecaster.evaluate(test_data[0], test_data[1])
+            np.testing.assert_almost_equal(mse, mse_onnx, decimal=5)
+        except ImportError:
+            pass
 
     def test_tcn_forecaster_save_restore(self):
         train_data, val_data, test_data = create_data()
@@ -71,7 +94,8 @@ class TestZouwuModelTCNForecaster(TestCase):
                                    future_seq_len=5,
                                    input_feature_num=1,
                                    output_feature_num=1,
-                                   kernel_size=3,
+                                   kernel_size=4,
+                                   num_channels=[16, 16],
                                    lr=0.01)
         train_mse = forecaster.fit(train_data[0], train_data[1], epochs=2)
         with tempfile.TemporaryDirectory() as tmp_dir_name:

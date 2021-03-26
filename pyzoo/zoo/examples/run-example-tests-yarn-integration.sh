@@ -57,31 +57,31 @@ fi
 now=$(date "+%s")
 time3=$((now - start))
 
-echo "#4 start test for orca bigdl resnet-finetune"
-#timer
-start=$(date "+%s")
-hadoop fs -test -e dogs_cats
-if [ $? -ne 0 ]; then
-  echo "dogs_cats not exists"
-  #prepare dataset
-  wget $FTP_URI/analytics-zoo-data/data/cats_and_dogs_filtered.zip -P analytics-zoo-data/data
-  unzip -q analytics-zoo-data/data/cats_and_dogs_filtered.zip -d analytics-zoo-data/data
-  mkdir analytics-zoo-data/data/cats_and_dogs_filtered/samples
-  cp analytics-zoo-data/data/cats_and_dogs_filtered/train/cats/cat.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
-  cp analytics-zoo-data/data/cats_and_dogs_filtered/train/dogs/dog.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
-  hdfs dfs -put analytics-zoo-data/data/cats_and_dogs_filtered/samples dogs_cats
-fi
-#run the example
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/bigdl/resnet_finetune/resnet_finetune.py \
-  --cluster_mode yarn --imagePath dogs_cats
-exit_status=$?
-if [ $exit_status -ne 0 ]; then
-  clear_up
-  echo "orca bigdl resnet-finetune"
-  exit $exit_status
-fi
-now=$(date "+%s")
-time4=$((now - start))
+# echo "#4 start test for orca bigdl resnet-finetune"
+# #timer
+# start=$(date "+%s")
+# hadoop fs -test -e dogs_cats
+# if [ $? -ne 0 ]; then
+#   echo "dogs_cats not exists"
+#   #prepare dataset
+#   wget $FTP_URI/analytics-zoo-data/data/cats_and_dogs_filtered.zip -P analytics-zoo-data/data
+#   unzip -q analytics-zoo-data/data/cats_and_dogs_filtered.zip -d analytics-zoo-data/data
+#   mkdir analytics-zoo-data/data/cats_and_dogs_filtered/samples
+#   cp analytics-zoo-data/data/cats_and_dogs_filtered/train/cats/cat.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
+#   cp analytics-zoo-data/data/cats_and_dogs_filtered/train/dogs/dog.7* analytics-zoo-data/data/cats_and_dogs_filtered/samples
+#   hdfs dfs -put analytics-zoo-data/data/cats_and_dogs_filtered/samples dogs_cats
+# fi
+# #run the example
+# python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/bigdl/resnet_finetune/resnet_finetune.py \
+#   --cluster_mode yarn --imagePath dogs_cats
+# exit_status=$?
+# if [ $exit_status -ne 0 ]; then
+#   clear_up
+#   echo "orca bigdl resnet-finetune"
+#   exit $exit_status
+# fi
+# now=$(date "+%s")
+# time4=$((now - start))
 
 echo "#5 start test for orca bigdl imageInference"
 #timer
@@ -110,13 +110,13 @@ echo "#start orca ray example tests"
 
 echo "#6 Start rl_pong example"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/rl_pong/rl_pong.py --iterations 10 --cluster_mode yarn
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/rl_pong/rl_pong.py --iterations 10 --cluster_mode yarn
 now=$(date "+%s")
 time6=$((now-start))
 
 echo "#7 Start multiagent example"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/rllib/multiagent_two_trainers.py --iterations 5 --cluster_mode yarn
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/rllib/multiagent_two_trainers.py --iterations 5 --cluster_mode yarn
 now=$(date "+%s")
 time7=$((now-start))
 
@@ -125,13 +125,13 @@ if [ ! -f MNIST_data.zip ]; then
   wget $FTP_URI/analytics-zoo-data/MNIST_data.zip
 fi
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/parameter_server/async_parameter_server.py --iterations 10 --num_workers 2 --cluster_mode yarn
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/parameter_server/async_parameter_server.py --iterations 10 --num_workers 2 --cluster_mode yarn
 now=$(date "+%s")
 time8=$((now-start))
 
 echo "#9 Start sync_parameter example"
 start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/ray_on_spark/parameter_server/sync_parameter_server.py --iterations 10 --num_workers 2 --cluster_mode yarn
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/parameter_server/sync_parameter_server.py --iterations 10 --num_workers 2 --cluster_mode yarn
 now=$(date "+%s")
 time9=$((now-start))
 clear_up
@@ -139,7 +139,7 @@ clear_up
 echo "#1 orca tf transfer_learning time used:$time1 seconds"
 echo "#2 orca tf basic_text_classification time used:$time2 seconds"
 echo "#3 orca bigdl attention time used:$time3 seconds"
-echo "#4 orca bigdl resnet-finetune time used:$time4 seconds"
+# echo "#4 orca bigdl resnet-finetune time used:$time4 seconds"
 echo "#5 orca bigdl imageInference time used:$time5 seconds"
 echo "#6 orca rl_pong time used:$time6 seconds"
 echo "#7 orca multiagent time used:$time7 seconds"

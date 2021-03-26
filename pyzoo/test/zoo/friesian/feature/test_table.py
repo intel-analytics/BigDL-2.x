@@ -22,7 +22,7 @@ import tempfile
 from unittest import TestCase
 
 from zoo.common.nncontext import *
-from zoo.friesian.feature import FeatureTable
+from zoo.friesian.feature import FeatureTable, StringIndex
 
 
 class TestTable(TestCase):
@@ -33,6 +33,9 @@ class TestTable(TestCase):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
         filled_tbl = feature_tbl.fillna(0, ["col_2", "col_3"])
+        assert isinstance(filled_tbl, FeatureTable), "filled_tbl should be a FeatureTable"
+        assert feature_tbl.df.filter("col_2 is null").count() != 0 and feature_tbl\
+            .df.filter("col_3 is null").count() != 0, "feature_tbl should not be changed"
         assert filled_tbl.df.filter("col_2 is null").count() == 0, "col_2 null values should be " \
                                                                    "filled"
         assert filled_tbl.df.filter("col_3 is null").count() == 0, "col_3 null values should be " \
@@ -42,6 +45,9 @@ class TestTable(TestCase):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
         filled_tbl = feature_tbl.fillna(3.2, ["col_2", "col_3"])
+        assert isinstance(filled_tbl, FeatureTable), "filled_tbl should be a FeatureTable"
+        assert feature_tbl.df.filter("col_2 is null").count() != 0 and feature_tbl \
+            .df.filter("col_3 is null").count() != 0, "feature_tbl should not be changed"
         assert filled_tbl.df.filter("col_2 is null").count() == 0, "col_2 null values should be " \
                                                                    "filled"
         assert filled_tbl.df.filter("col_3 is null").count() == 0, "col_3 null values should be " \
@@ -55,6 +61,7 @@ class TestTable(TestCase):
         self.assertTrue('numeric does not match the type of column col_4' in str(context.exception))
 
         filled_tbl = feature_tbl.fillna("bb", ["col_4", "col_5"])
+        assert isinstance(filled_tbl, FeatureTable), "filled_tbl should be a FeatureTable"
         assert filled_tbl.df.filter("col_4 is null").count() == 0, "col_4 null values should be " \
                                                                    "filled"
         assert filled_tbl.df.filter("col_5 is null").count() == 0, "col_5 null values should be " \
@@ -69,25 +76,27 @@ class TestTable(TestCase):
         with tempfile.TemporaryDirectory() as local_path:
             for str_idx in string_idx_list:
                 str_idx.write_parquet(local_path)
+                str_idx_log = str_idx.log(["id"])
+                assert str_idx_log.df.filter("id == 1").count() == 0, "id in str_idx_log should " \
+                                                                      "!= 1"
             assert os.path.isdir(local_path + "/col_4.parquet")
             assert os.path.isdir(local_path + "/col_5.parquet")
+            new_col_4_idx = StringIndex.read_parquet(local_path + "/col_4.parquet")
+            assert "col_4" in new_col_4_idx.df.columns, "col_4 should be a column of new_col_4_idx"
+            with self.assertRaises(Exception) as context:
+                StringIndex.read_parquet(local_path + "/col_5.parquet", "col_4")
+            self.assertTrue('col_4 should be a column of the DataFrame' in str(context.exception))
 
     def test_clip(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
         clip_tbl = feature_tbl.clip(["col_1", "col_2", "col_3"], 2)
+        assert isinstance(clip_tbl, FeatureTable), "clip_tbl should be a FeatureTable"
+        assert feature_tbl.df.filter("col_1 < 2").count() != 0 and feature_tbl \
+            .df.filter("col_2 < 2").count() != 0, "feature_tbl should not be changed"
         assert clip_tbl.df.filter("col_1 < 2").count() == 0, "col_1 should >= 2"
         assert clip_tbl.df.filter("col_2 < 2").count() == 0, "col_2 should >= 2"
         assert clip_tbl.df.filter("col_3 < 2").count() == 0, "col_3 should >= 2"
-
-    def test_fillna_int_2(self):
-        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
-        feature_tbl = FeatureTable.read_parquet(file_path)
-        filled_tbl = feature_tbl.fillna_int(3, ["col_2", "col_3"])
-        assert filled_tbl.df.filter("col_2 is null").count() == 0, "col_2 null values should be " \
-                                                                   "filled"
-        assert filled_tbl.df.filter("col_3 is null").count() == 0, "col_3 null values should be " \
-                                                                   "filled"
 
     def test_rename(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
@@ -95,6 +104,8 @@ class TestTable(TestCase):
         name_dict = {"col_1": "new_col1", "col_4": "new_col4"}
         rename_tbl = feature_tbl.rename(name_dict)
         cols = rename_tbl.df.columns
+        assert isinstance(rename_tbl, FeatureTable), "rename_tbl should be a FeatureTable"
+        assert "col_1" in feature_tbl.df.columns, "feature_tbl should not be changed"
         assert "new_col1" in cols, "new_col1 should be a column of the renamed tbl."
         assert "new_col4" in cols, "new_col4 should be a column of the renamed tbl."
 
@@ -102,6 +113,9 @@ class TestTable(TestCase):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
         log_tbl = feature_tbl.log(["col_1", "col_2", "col_3"])
+        assert isinstance(log_tbl, FeatureTable), "log_tbl should be a FeatureTable"
+        assert feature_tbl.df.filter("col_1 == 1").count() != 0 and feature_tbl \
+            .df.filter("col_2 == 1").count() != 0, "feature_tbl should not be changed"
         assert log_tbl.df.filter("col_1 == 1").count() == 0, "col_1 should != 1"
         assert log_tbl.df.filter("col_2 == 1").count() == 0, "col_2 should != 1"
         assert log_tbl.df.filter("col_3 == 1").count() == 0, "col_3 should != 1"

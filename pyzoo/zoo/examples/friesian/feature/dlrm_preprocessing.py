@@ -96,11 +96,10 @@ if __name__ == '__main__':
     time_start = time()
     paths = [os.path.join(args.input_folder, 'day_%d.parquet' % i) for i in args.day_range]
     tbl = FeatureTable.read_parquet(paths)
-    schema = tbl.df.schema
     idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
     tbl_all_data = FeatureTable.read_parquet(paths[:-1])
     tbl_all_data = tbl_all_data.encode_string(CAT_COLS, idx_list)\
-        .fillna_int(0, INT_COLS + CAT_COLS).log(INT_COLS)
+        .fillna(0, INT_COLS + CAT_COLS).log(INT_COLS)
     tbl_all_data = tbl_all_data.merge(INT_COLS, "X_int").merge(CAT_COLS, "X_cat")
     tbl_all_data.compute()
     time_end = time()

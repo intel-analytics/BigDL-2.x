@@ -68,12 +68,24 @@ class FriesianSpec extends ZooSpecHelper {
     }
   }
 
+  "Fill NAInt" should "work properly" in {
+    val path = resource.getFile + "/data1.parquet"
+    val df = sqlContext.read.parquet(path)
+    val friesian = PythonFriesian.ofFloat()
+    val dfFilled = friesian.fillNaInt(df, 3)
+    assert(dfFilled.filter(dfFilled("col_2").isNull).count == 0)
+    assert(dfFilled.filter(dfFilled("col_3").isNull).count == 0)
+    val dfFilled2 = friesian.fillNaInt(df, 4, List("col_3").asJava)
+    assert(dfFilled2.filter(dfFilled2("col_2").isNull).count == 1)
+    assert(dfFilled2.filter(dfFilled2("col_3").isNull).count == 0)
+  }
+
   "Clip" should "work properly" in {
     val path = resource.getFile + "/data1.parquet"
     val df = sqlContext.read.parquet(path)
     val friesian = PythonFriesian.ofFloat()
     val cols = Array("col_2", "col_3")
-    val dfClip = friesian.friesianClip(df, cols.toList.asJava, 2)
+    val dfClip = friesian.clipMin(df, cols.toList.asJava, 2)
     dfClip.show()
   }
 
@@ -82,7 +94,7 @@ class FriesianSpec extends ZooSpecHelper {
     val df = sqlContext.read.parquet(path)
     val friesian = PythonFriesian.ofFloat()
     val cols = Array("col_4", "col_5")
-    val stringIdxList = friesian.assignStringIdx(df, cols.toList.asJava, null)
+    val stringIdxList = friesian.generateStringIdx(df, cols.toList.asJava, null)
     assert(stringIdxList.get(0).count == 3)
     assert(stringIdxList.get(1).count == 2)
   }
@@ -92,7 +104,7 @@ class FriesianSpec extends ZooSpecHelper {
     val df = sqlContext.read.parquet(path)
     val friesian = PythonFriesian.ofFloat()
     val cols = Array("col_4", "col_5")
-    val stringIdxList = friesian.assignStringIdx(df, cols.toList.asJava, "2")
+    val stringIdxList = friesian.generateStringIdx(df, cols.toList.asJava, "2")
     assert(stringIdxList.get(0).count == 1)
     assert(stringIdxList.get(1).count == 1)
   }
@@ -102,7 +114,7 @@ class FriesianSpec extends ZooSpecHelper {
     val df = sqlContext.read.parquet(path)
     val friesian = PythonFriesian.ofFloat()
     val cols = Array("col_4", "col_5")
-    val stringIdxList = friesian.assignStringIdx(df, cols.toList.asJava, "col_4:1,col_5:3")
+    val stringIdxList = friesian.generateStringIdx(df, cols.toList.asJava, "col_4:1,col_5:3")
     assert(stringIdxList.get(0).count == 3)
     assert(stringIdxList.get(1).count == 1)
   }

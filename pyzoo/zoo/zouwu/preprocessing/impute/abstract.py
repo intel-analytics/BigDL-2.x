@@ -20,6 +20,43 @@ import sklearn.metrics as metrics
 from abc import ABC, abstractmethod
 
 
+# migrate from automl/input
+class BaseImputation(ABC):
+    """
+    Abstract Base class for imputation.
+    """
+
+    @abstractmethod
+    def impute(self, input_df):
+        """
+        fill na value
+        :param input_df: input dataframe
+        :return:
+        """
+        pass
+
+    def save(self, file_path):
+        """
+        save the feature tools internal variables.
+        Some of the variables are derived after fit_transform, so only saving config is not enough.
+        :param: file_path : the file to be saved
+        :param: config: the trial config
+        :return:
+        """
+        pass
+
+    def restore(self, **config):
+        """
+        Restore variables from file
+        :param file_path: file contain saved parameters.
+                          i.e. some parameters are obtained during training,
+                          not in trial config, e.g. scaler fit params)
+        :param config: the trial config
+        :return:
+        """
+        pass
+
+
 class BaseImpute(ABC):
     """
     base model for data imputation

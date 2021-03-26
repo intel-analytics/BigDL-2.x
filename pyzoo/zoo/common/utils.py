@@ -137,13 +137,13 @@ def callZooFunc(bigdl_type, name, *args):
 
 # TODO: change to bigdl's _java2py when update to bigdl 0.12.2
 def _java2py(gateway, r, encoding="bytes"):
-    from bigdl.util.common import get_spark_context, get_spark_sql_context, _picklable_classes
-    from pyspark import RDD
-    from pyspark.serializers import PickleSerializer
     from py4j.protocol import Py4JJavaError
     from py4j.java_gateway import JavaObject
     from py4j.java_collections import JavaArray, JavaList, JavaMap
+    from pyspark import RDD
+    from pyspark.serializers import PickleSerializer
     from pyspark.sql import DataFrame
+    from bigdl.util.common import get_spark_context, _picklable_classes, get_spark_sql_context
 
     if isinstance(r, JavaObject):
         clsName = r.getClass().getSimpleName()

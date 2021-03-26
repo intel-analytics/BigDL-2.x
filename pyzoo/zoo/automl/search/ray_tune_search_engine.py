@@ -17,19 +17,19 @@
 import ray
 from ray import tune
 from copy import deepcopy
-import os
 
 from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.impute.impute import *
 from ray.tune import Trainable
 import ray.tune.track
 from zoo.automl.logger import TensorboardXLogger
-from zoo.automl.model.model_builder import ModelBuilder
-from zoo.automl.feature.identity_transformer import IdentityTransformer
+from zoo.zouwu.model.forecast.model import ModelBuilder
+from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 from zoo.automl.search.tune_utils import (create_searcher,
                                           create_scheduler)
+from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
+import pandas as pd
 
 SEARCH_ALG_ALLOWED = ("variant_generator", "skopt", "bayesopt")
 
@@ -389,16 +389,19 @@ class RayTuneSearchEngine(SearchEngine):
                                               # verbose=1,
                                               **config)
                 reward_m = result if Evaluator.get_metric_mode(metric) == "max" else -result
-                ckpt_name = "best.ckpt"
-                if best_reward_m is None or reward_m > best_reward_m:
-                    best_reward_m = reward_m
-                    save_zip(ckpt_name, trial_ft, trial_model, config)
-                    if remote_dir is not None:
-                        upload_ppl_hdfs(remote_dir, ckpt_name)
+                checkpoint_filename = "best.ckpt"
+                if isinstance(model_create_func, ModelBuilder):
+                    trial_model.save(checkpoint_filename)
+                else:
+                    if best_reward_m is None or reward_m > best_reward_m:
+                        best_reward_m = reward_m
+                        save_zip(checkpoint_filename, trial_ft, trial_model, config)
+                        if remote_dir is not None:
+                            upload_ppl_hdfs(remote_dir, checkpoint_filename)
 
                 tune.track.log(training_iteration=i,
                                reward_metric=reward_m,
-                               checkpoint="best.ckpt")
+                               checkpoint=checkpoint_filename)
 
         return train_func
 

@@ -58,24 +58,26 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def fillNaInt(df: DataFrame, fillVal: Int = 0, columns: JList[String] = null): DataFrame = {
-    val cols = if (columns == null) {
-      df.columns
-    } else {
-      columns.asScala.toArray
-    }
-
     val schema = df.schema
+    val allColumns = df.columns
 
-    val cols_idx = cols.map(col_n => {
-      val idx = df.columns.indexOf(col_n)
-      if (idx == -1) {
-        throw new IllegalArgumentException(s"The column name ${col_n} does not exist")
-      }
-      if (schema(idx).dataType.typeName != "integer") {
-        throw new IllegalArgumentException(s"Only columns of IntegerType are supported")
-      }
-      idx
-    })
+    val cols_idx = if (columns == null) {
+      schema.zipWithIndex.filter(pair => pair._1.dataType.typeName == "integer")
+        .map(pair => pair._2)
+    } else{
+      val cols = columns.asScala.toList
+      cols.map(col_n => {
+        val idx = allColumns.indexOf(col_n)
+        if (idx == -1) {
+          throw new IllegalArgumentException(s"The column name ${col_n} does not exist")
+        }
+        if (schema(idx).dataType.typeName != "integer") {
+          throw new IllegalArgumentException(s"Only columns of IntegerType are supported, but " +
+            s"the type of column ${col_n} is ${schema(idx).dataType.typeName}")
+        }
+        idx
+      })
+    }
 
     val dfUpdated = df.rdd.map(row => {
       val origin = row.toSeq.toArray
@@ -91,7 +93,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     spark.createDataFrame(dfUpdated, schema)
   }
 
-  def assignStringIdx(df: DataFrame, columns: JList[String], frequencyLimit: String = null)
+  def generateStringIdx(df: DataFrame, columns: JList[String], frequencyLimit: String = null)
   : JList[DataFrame] = {
     var default_limit: Option[Int] = None
     val freq_map = scala.collection.mutable.Map[String, Int]()
@@ -148,7 +150,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     df.rdd.count()
   }
 
-  def log(df: DataFrame, columns: JList[String], clip: Boolean = true): DataFrame = {
+  def log(df: DataFrame, columns: JList[String], clipping: Boolean = true): DataFrame = {
     var resultDF = df
     val zeroThreshold = (value: Int) => {
       if (value < 0) 0 else value
@@ -157,7 +159,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     val zeroThresholdUDF = udf(zeroThreshold)
     for(i <- 0 until columns.size()) {
       val colName = columns.get(i)
-      if (clip) {
+      if (clipping) {
         resultDF = resultDF.withColumn(colName, sqllog(zeroThresholdUDF(col(colName)) + 1))
       } else {
         resultDF = resultDF.withColumn(colName, sqllog(col(colName)))
@@ -166,7 +168,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     resultDF
   }
 
-  def friesianClip(df: DataFrame, columns: JList[String], min: Int): DataFrame = {
+  def clipMin(df: DataFrame, columns: JList[String], min: Int): DataFrame = {
     var resultDF = df
     val clipFunc = (value: Int) => {
       if (value < min) min else value
