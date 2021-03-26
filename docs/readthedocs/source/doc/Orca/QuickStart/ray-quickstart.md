@@ -49,7 +49,7 @@ redis_address = ray_ctx.redis_address  # The redis address of the ray cluster.
 
 ### **Step 2: Run Ray Applications**
 
-After the initialization, you can directly run Ray applications on the underlying cluster. Ray [tasks](https://docs.ray.io/en/master/walkthrough.html#remote-functions-tasks) and [actors](https://docs.ray.io/en/master/actors.html) would be launched across the cluster.
+After the initialization, you can directly write Ray code inline with your Spark code, and run Ray programs on the underlying existing Big Data clusters. Ray [tasks](https://docs.ray.io/en/master/walkthrough.html#remote-functions-tasks) and [actors](https://docs.ray.io/en/master/actors.html) would be launched across the cluster.
 
 The following example uses actor handles to implement a parameter server example for distributed asynchronous stochastic gradient descent. 
 
