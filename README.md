@@ -82,7 +82,7 @@ See [TensorFlow](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickSt
 
 ## Getting Started with RayOnSpark
 
-Ray is an open source distributed framework for emerging AI applications. _**RayOnSpark**_ allows users to directly run Ray programs on existing Big Data clusters, and direcly write Ray code inline with their Spark code (so as to process the in-memory Spark RDDs or DataFrames).
+Ray is an open source distributed framework for emerging AI applications. _**RayOnSpark**_ allows users to directly run Ray programs on existing Big Data clusters, and directly write Ray code inline with their Spark code (so as to process the in-memory Spark RDDs or DataFrames).
 
 ```python
 from zoo.orca import init_orca_context
