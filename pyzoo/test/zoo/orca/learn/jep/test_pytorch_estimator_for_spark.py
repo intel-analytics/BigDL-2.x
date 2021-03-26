@@ -133,7 +133,7 @@ class TestEstimatorForSpark(TestCase):
                           checkpoint_trigger=EveryEpoch())
             estimator.evaluate(data_shard, batch_size=4, feature_cols=['feature'],
                                label_cols=['label'])
-            est2 = Estimator.from_torch(model=model, loss=nn.BCELoss(),
+            est2 = Estimator.from_torch(model=model, loss=loss_func,
                                         metrics=[Accuracy()],
                                         optimizer=None)
             est2.load_orca_checkpoint(temp_dir_name)
