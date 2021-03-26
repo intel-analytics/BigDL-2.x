@@ -49,7 +49,7 @@ class TestEstimatorForOpenVINO(TestCase):
             tar.close()
             model_path = os.path.join(local_path, "openvino2020_resnet50/resnet_v1_50.xml")
             self.est = Estimator.from_openvino(model_path=model_path)
-    
+
     def test_openvino_predict_ndarray(self):
         input_data = np.random.random([20, 4, 3, 224, 224])
         result = self.est.predict(input_data)
@@ -78,12 +78,12 @@ class TestEstimatorForOpenVINO(TestCase):
 
         sc = init_nncontext()
         spark = SparkSession(sc)
-        rdd = sc.range(0, 4)
+        rdd = sc.range(0, 20, numSlices=2)
         input_df = rdd.map(lambda x: (np.random.random([1, 4, 3, 224, 224]).tolist())
                            ).toDF(["feature"])
         result_df = self.est.predict(input_df, feature_cols=["feature"])
-        assert np.array(result_df.select("prediction").first()[0]).shape == (1, 4, 1000)
-        assert result_df.count() == 4
+        assert np.array(result_df.select("prediction").first()).shape == (1, 4, 1000)
+        assert result_df.count() == 20
 
 
 if __name__ == "__main__":

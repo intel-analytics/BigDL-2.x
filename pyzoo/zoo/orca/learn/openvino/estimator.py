@@ -69,9 +69,9 @@ class OpenvinoEstimator(SparkEstimator):
         Predict input data
 
         :param data: data to be predicted. XShards, Spark DataFrame, numpy array and list of numpy
-               arrays are supported. If data is XShards, each partition is a dictionary of  {'x': 
+               arrays are supported. If data is XShards, each partition is a dictionary of  {'x':
                feature}, where feature(label) is a numpy array or a list of numpy arrays.
-        :param feature_cols: Feature column name(s) of data. Only used when data is a Spark 
+        :param feature_cols: Feature column name(s) of data. Only used when data is a Spark
                DataFrame. Default: None.
         :return: predicted result.
                  If the input data is XShards, the predict result is a XShards, each partition
@@ -104,9 +104,8 @@ class OpenvinoEstimator(SparkEstimator):
             return dict_data["x"]
 
         sc = init_nncontext()
-        
+
         if isinstance(data, DataFrame):
-            assert sc is not None, "You should pass sc(spark context) if data is a Spark DataFrame."
             from zoo.orca.learn.utils import dataframe_to_xshards, convert_predict_rdd_to_dataframe
             xshards, _ = dataframe_to_xshards(data,
                                               validation_data=None,
@@ -115,9 +114,8 @@ class OpenvinoEstimator(SparkEstimator):
                                               mode="predict")
             transformed_data = xshards.transform_shard(predict_transform, self.batch_size)
             result_rdd = self.model.distributed_predict(transformed_data.rdd, sc)
-            return convert_predict_rdd_to_dataframe(data, result_rdd)
+            return convert_predict_rdd_to_dataframe(data, result_rdd.flatMap(lambda data: data))
         elif isinstance(data, SparkXShards):
-            assert sc is not None, "You should pass sc(spark context) if data is a XShards."
             from zoo.orca.learn.utils import convert_predict_rdd_to_xshard
             transformed_data = data.transform_shard(predict_transform, self.batch_size)
             result_rdd = self.model.distributed_predict(transformed_data.rdd, sc)
@@ -167,8 +165,8 @@ class OpenvinoEstimator(SparkEstimator):
             result_arr = np.concatenate(result_arr_list, axis=0)
             return result_arr
         else:
-            raise ValueError("Only XShards, Spark DataFrame, a numpy array and a list of numpy "
-                             "arrays are supported as input data, but get " + data.__class__.__name__)
+            raise ValueError("Only XShards, Spark DataFrame, a numpy array and a list of numpy arr"
+                             "ays are supported as input data, but get " + data.__class__.__name__)
 
     def evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None):
         """
