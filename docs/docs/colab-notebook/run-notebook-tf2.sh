@@ -1,3 +1,11 @@
+#!/usr/bin/env bash
+clear_up() {
+  echo "Clearing up environment. Uninstalling analytics-zoo"
+  pip uninstall -y analytics-zoo
+  pip uninstall -y bigdl
+  pip uninstall -y pyspark
+}
+
 set -e
 
 echo "#1 start test for tf2_lenet_mnist.ipynb"
@@ -6,6 +14,14 @@ start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/tf2_keras_lenet_mnist
 sed -i "s/get_ipython()/#/g" $ANALYTICS_ZOO_HOME/docs/docs/colab-notebook/orca/quickstart/tf2_keras_lenet_mnist.py
 python ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/tf2_keras_lenet_mnist.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ]; then
+  clear_up
+  echo "tf2_lenet_mnist failed"
+  exit $exit_status
+fi
+
 now=$(date "+%s")
 time1=$((now - start))
 
@@ -14,6 +30,14 @@ start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/ncf_dataframe
 sed -i "s/get_ipython()/#/g" ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/ncf_dataframe.py
 python ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/ncf_dataframe.py
+
+exit_status=$?
+if [ $exit_status -ne 0 ]; then
+  clear_up
+  echo "ncf_dataframe failed"
+  exit $exit_status
+fi
+
 now=$(date "+%s")
 time2=$((now - start))
 
