@@ -83,7 +83,8 @@ def save_file(save_func, path, **kwargs):
 
         try:
             save_func(temp_path, **kwargs)
-            put_local_file_to_remote(temp_path, path)
+            if "over_write" in kwargs:
+                put_local_file_to_remote(temp_path, path, over_write=kwargs['over_write'])
         finally:
             os.remove(temp_path)
 
