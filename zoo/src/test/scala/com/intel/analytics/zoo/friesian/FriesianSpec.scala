@@ -38,6 +38,12 @@ class FriesianSpec extends ZooSpecHelper {
     sqlContext = SQLContext.getOrCreate(sc)
   }
 
+  override def doAfter(): Unit = {
+    if (sc != null) {
+      sc.stop()
+    }
+  }
+
   "Fill NA int" should "work properly" in {
     val path = resource.getFile + "/data1.parquet"
     val df = sqlContext.read.parquet(path)
