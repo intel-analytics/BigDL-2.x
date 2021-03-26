@@ -91,7 +91,7 @@ stats = est.fit(train_data,
                 label_cols=['label'], # specifies which column(s) to be used as labels
                 steps_per_epoch=800000 // batch_size,
                 validation_data=test_data,
-                validation_steps = 200000 // batch_size)
+                validation_steps=200000 // batch_size)
 
 checkpoint_path = os.path.join(model_dir, "NCF.ckpt")
 est.save(checkpoint_path)
