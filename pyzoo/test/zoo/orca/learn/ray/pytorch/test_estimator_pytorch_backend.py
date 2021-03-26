@@ -111,7 +111,7 @@ class SimpleModel(nn.Module):
     def forward(self, input1, input2):
         x = torch.stack((input1, input2), dim=1)
         x = self.fc(x)
-        x = self.out_act(x)
+        x = self.out_act(x).flatten()
         return x
 
 
