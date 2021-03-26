@@ -12,7 +12,7 @@ echo "#1 start test for tf2_lenet_mnist.ipynb"
 #replace '!pip install --pre' to '#pip install --pre', here we test pr with built whl package. In nightly-build job, we test only use "ipython notebook" for pre-release Analytics Zoo
 start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/tf2_keras_lenet_mnist
-sed -i "s/get_ipython()/#/g" $ANALYTICS_ZOO_HOME/docs/docs/colab-notebook/orca/quickstart/tf2_keras_lenet_mnist.py
+sed -i '/get_ipython/s/^/#/' $ANALYTICS_ZOO_HOME/docs/docs/colab-notebook/orca/quickstart/tf2_keras_lenet_mnist.py
 python ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/tf2_keras_lenet_mnist.py
 
 exit_status=$?
@@ -28,7 +28,7 @@ time1=$((now - start))
 echo "#2 start test for ncf_dataframe.ipynb"
 start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/ncf_dataframe
-sed -i "s/get_ipython()/#/g" ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/ncf_dataframe.py
+sed -i '/get_ipython/s/^/#/' ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/ncf_dataframe.py
 python ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart/ncf_dataframe.py
 
 exit_status=$?
