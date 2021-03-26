@@ -64,7 +64,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     val cols_idx = if (columns == null) {
       schema.zipWithIndex.filter(pair => pair._1.dataType.typeName == "integer")
         .map(pair => pair._2)
-    } else{
+    } else {
       val cols = columns.asScala.toList
       cols.map(col_n => {
         val idx = allColumns.indexOf(col_n)
