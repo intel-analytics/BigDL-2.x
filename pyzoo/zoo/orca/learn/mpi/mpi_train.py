@@ -51,11 +51,13 @@ if validation_data_creator:
     valid_ld = validation_data_creator(config)
     validate_batches = validate_batches if validate_batches else len(valid_ld)
     print("Batches to test: ", validate_batches)
+else:
+    valid_ld = None
+    validate_batches = None
 
 for i in range(epochs):
-    train_func(model, train_ld, train_batches, optimizer, loss, scheduler, config)
-    if validation_data_creator:
-        validate_func(model, valid_ld, validate_batches, config)
+    train_func(config, model, train_ld, train_batches, optimizer, loss, scheduler,
+               validate_func, valid_ld, validate_batches, validate_steps)
 
 # train_ld = train_data_creator(config)
 # train_batches = train_batches if train_batches else len(train_ld)

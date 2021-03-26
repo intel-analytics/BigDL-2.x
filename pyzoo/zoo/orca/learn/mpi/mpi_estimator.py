@@ -262,18 +262,6 @@ class PlasmaNDArrayDataset(Dataset):
         y_np = np.concatenate(y_list)
         # Can put collate_fn into train_func if necessary.
         return x_np, y_np
-        # assert X_int_np.shape == (self.batch_size, 13)
-        # assert X_cat_np.shape == (self.batch_size, 26)
-        # assert y_np.shape == (self.batch_size,)
-        # X_int = torch.tensor(X_int_np, dtype=torch.float)
-        # X_cat = torch.tensor(X_cat_np, dtype=torch.long)
-        # T = torch.tensor(y_np, dtype=torch.float32).view(-1, 1)
-        #
-        # batch_size = X_cat.shape[0]
-        # feature_count = X_cat.shape[1]
-        # lS_i = X_cat.t()
-        # lS_o = torch.arange(batch_size).reshape(1, -1).repeat(feature_count, 1)
-        # return X_int, lS_o, lS_i, T
 
 
 def plasma_data_creator(meta_data, object_store_address,
