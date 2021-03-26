@@ -25,12 +25,15 @@ We recommend using `init_orca_context` to initiate and run Analytics Zoo on the 
 ```python
 from zoo.orca import init_orca_context
 
-# For local machine
-sc = init_orca_context(cluster_mode="local", cores=4, memory="10g", init_ray_on_spark=True)
-# For K8s cluster
-sc = init_orca_context(cluster_mode="k8s", num_nodes=2, cores=2, memory="10g", init_ray_on_spark=True)
-# For Hadoop/YARN cluster
-sc = init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, memory="10g", init_ray_on_spark=True)
+if args.cluster_mode == "local":
+    # For local machine
+    sc = init_orca_context(cluster_mode="local", cores=4, memory="10g", init_ray_on_spark=True)
+elif args.cluster_mode == "k8s":
+    # For K8s cluster
+    sc = init_orca_context(cluster_mode="k8s", num_nodes=2, cores=2, memory="10g", init_ray_on_spark=True)
+elif args.cluster_mode == "yarn":
+    # For Hadoop/YARN cluster
+    sc = init_orca_context(cluster_mode="yarn", num_nodes=2, cores=2, memory="10g", init_ray_on_spark=True)
 ```
 
 This is the only place where you need to specify local or distributed mode. View [Orca Context](./../Overview/orca-context.md) for more details.
