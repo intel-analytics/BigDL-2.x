@@ -22,7 +22,7 @@ df = spark.read.csv(new_rating_files, sep=':', inferSchema=True).toDF(
   "user", "item", "label", "timestamp")
 ```
 
-### **2. Process data using Spark Dataframe operations**
+### **2. Process data using Spark Dataframe**
 
 Next, process the data using Spark Dataframe operations.
 
@@ -75,7 +75,7 @@ def model_creator(config):
     return model
 ```
 
-### **4. Use Spark DataFrame in distributed training**
+### **4. Fit with Orca Estimator**
 
 Finally, run distributed model training/inference on the Spark Dataframes directly.
 
