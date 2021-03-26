@@ -486,7 +486,8 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         optim_path = self._get_optimizer_path(model_path)
         torch.save(self.get_model().state_dict(), model_path)
-        self.optimizer.save(path=optim_path, overWrite=True)
+        if self.optimizer is not None:
+            self.optimizer.save(path=optim_path, overWrite=True)
 
         return model_path
 
