@@ -105,11 +105,11 @@ class MultiInputNet(nn.Module):
 class SimpleModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.fc = nn.Linear(4, 2)
+        self.fc = nn.Linear(2, 1)
         self.out_act = nn.Sigmoid()
 
     def forward(self, input1, input2):
-        x = torch.cat((input1, input2), -1)
+        x = torch.stack((input1, input2), dim=1)
         x = self.fc(x)
         x = self.out_act(x)
         return x
