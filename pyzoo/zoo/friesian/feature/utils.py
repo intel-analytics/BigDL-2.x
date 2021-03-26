@@ -25,7 +25,7 @@ def log_with_clip(df, columns, clip=True):
     return callZooFunc("float", "log", df, columns, clip)
 
 
-def assign_string_idx(df, columns, freq_limit):
+def generate_string_idx(df, columns, freq_limit):
     return callZooFunc("float", "generateStringIdx", df, columns, freq_limit)
 
 

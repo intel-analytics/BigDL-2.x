@@ -18,7 +18,7 @@ import os
 
 from pyspark.sql.functions import col, array, broadcast
 from zoo.orca import OrcaContext
-from zoo.friesian.feature.utils import assign_string_idx, fill_na, \
+from zoo.friesian.feature.utils import generate_string_idx, fill_na, \
     fill_na_int, compute, log_with_clip, clip_min
 
 JAVA_INT_MIN = -2147483648
@@ -122,7 +122,7 @@ class FeatureTable(Table):
         return FeatureTable(data_df)
 
     def gen_string_idx(self, columns, freq_limit):
-        df_id_list = assign_string_idx(self.df, columns, freq_limit)
+        df_id_list = generate_string_idx(self.df, columns, freq_limit)
         string_idx_list = list(map(lambda x: StringIndex(x[0], x[1]),
                                    zip(df_id_list, columns)))
         return string_idx_list
