@@ -41,10 +41,12 @@ class MPIEstimator:
         with open("saved_mpi_estimator.pkl", "wb") as f:
             cloudpickle.dump((model_creator, optimizer_creator, loss_creator,
                               scheduler_creator, config, init_func), f)
-        for host in self.mpi_runner.remote_hosts:
-            p = subprocess.Popen(["scp", "saved_mpi_estimator.pkl",
-                                  "root@{}:{}/".format(host, self.dir)])
-            os.waitpid(p.pid, 0)
+        self.mpi_runner.scp_file("saved_mpi_estimator.pkl", self.dir)
+        # Need to put mpi_train.py in the current directory so that the PYTHONPATH is the same.
+        train_file = os.path.abspath(__file__ + "/../mpi_train.py")
+        p = subprocess.Popen(["cp", train_file, self.dir])
+        os.waitpid(p.pid, 0)
+        self.mpi_runner.scp_file(train_file, self.dir)
 
     # Specify feature_cols and label_cols for Spark DataFrame data.
     # Specify train_func or validate_func for customized training and validation logic.
@@ -111,11 +113,8 @@ class MPIEstimator:
             cloudpickle.dump((data_creator, epochs, validation_data_creator,
                               train_func, validate_func, train_batches,
                               validate_batches, validate_steps), f)
-        for host in self.mpi_runner.remote_hosts:
-            p = subprocess.Popen(["scp", "mpi_train_data.pkl",
-                                  "root@{}:{}/".format(host, self.dir)])
-            os.waitpid(p.pid, 0)
-        self.mpi_runner.run(os.path.abspath(__file__ + "/../mpi_train.py"), pkl_path=self.dir)
+        self.mpi_runner.scp_file("mpi_train_data.pkl", self.dir)
+        self.mpi_runner.run("{}/mpi_train.py".format(self.dir), pkl_path=self.dir)
         self.mpi_runner.shutdown_plasma()
 
     def shutdown(self):
@@ -295,7 +294,7 @@ def plasma_data_creator(meta_data, object_store_address,
     return create_plasma_dataloader
 
 
-def train_epoch(model, train_ld, train_batches, optimizer, loss, scheduler):
+def train_epoch(model, train_ld, train_batches, optimizer, loss, scheduler, config):
     train_iter = iter(train_ld)
     for j in range(train_batches):
         if j > 0 and j % len(train_ld) == 0:  # For the case where there are not enough batches.
@@ -310,7 +309,7 @@ def train_epoch(model, train_ld, train_batches, optimizer, loss, scheduler):
             scheduler.step()
 
 
-def validate(model, valid_ld, validate_batches):
+def validate(model, valid_ld, validate_batches, config):
     valid_iter = iter(valid_ld)
     for j in range(validate_batches):
         # Iterate again from the beginning if running out of batches.

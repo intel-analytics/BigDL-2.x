@@ -65,10 +65,8 @@ class MPIRunner:
         file_path = os.path.abspath(file)
         assert os.path.exists(file_path)
         file_dir = "/".join(file_path.split("/")[:-1])
-        for host in self.remote_hosts:
-            p = subprocess.Popen(["scp", file_path,
-                                  "root@{}:{}".format(host, file_dir)])
-            os.waitpid(p.pid, 0)
+        self.scp_file(file_path, file_dir)
+
         # cmd = ["mpiexec.openmpi"]
         cmd = ["mpiexec.hydra"]
         # -l would label the output with process rank. -l/-ppn not available for openmpi.
@@ -100,6 +98,12 @@ class MPIRunner:
         # print(mpi_env)
         process = subprocess.Popen(cmd, env=mpi_env)
         process.wait()
+
+    def scp_file(self, file, remote_dir):
+        for host in self.remote_hosts:
+            p = subprocess.Popen(["scp", file,
+                                  "root@{}:{}/".format(host, remote_dir)])
+            os.waitpid(p.pid, 0)
 
     def launch_plasma(self, object_store_memory="2g"):
         import atexit

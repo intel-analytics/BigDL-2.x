@@ -40,31 +40,31 @@ if init_func:
     init_func()
 
 # Wrap DDP should be done by users in model_creator
-# model = model_creator(config)
-# optimizer = optimizer_creator(model, config)
-# loss = loss_creator  # assume it is an instance
-# scheduler = scheduler_creator(optimizer, config)
-# train_ld = train_data_creator(config)
-# train_batches = train_steps if train_steps else len(train_ld)
-# print("Batches to train: ", train_batches)
-# if validation_data_creator:
-#     valid_ld = validation_data_creator(config)
-#     validate_batches = validate_batches if validate_batches else len(valid_ld)
-#     print("Batches to test: ", validate_batches)
-#
-# for i in range(epochs):
-#     train_func(model, train_ld, train_batches, optimizer, loss, scheduler)
-#     if validation_data_creator:
-#         validate_func(model, valid_ld, validate_batches)
-
+model = model_creator(config)
+optimizer = optimizer_creator(model, config)
+loss = loss_creator  # assume it is an instance
+scheduler = scheduler_creator(optimizer, config)
 train_ld = train_data_creator(config)
 train_batches = train_batches if train_batches else len(train_ld)
 print("Batches to train: ", train_batches)
-train_iter = iter(train_ld)
-for j in range(train_batches):
-    if j > 0 and j % len(train_ld) == 0:  # For the case where there are not enough batches.
-        train_iter = iter(train_ld)
-    x, y = next(train_iter)
+if validation_data_creator:
+    valid_ld = validation_data_creator(config)
+    validate_batches = validate_batches if validate_batches else len(valid_ld)
+    print("Batches to test: ", validate_batches)
+
+for i in range(epochs):
+    train_func(model, train_ld, train_batches, optimizer, loss, scheduler, config)
+    if validation_data_creator:
+        validate_func(model, valid_ld, validate_batches, config)
+
+# train_ld = train_data_creator(config)
+# train_batches = train_batches if train_batches else len(train_ld)
+# print("Batches to train: ", train_batches)
+# train_iter = iter(train_ld)
+# for j in range(train_batches):
+#     if j > 0 and j % len(train_ld) == 0:  # For the case where there are not enough batches.
+#         train_iter = iter(train_ld)
+#     x, y = next(train_iter)
     # print("X_int ", x[0].shape)
     # print("X_cat ", x[1].shape)
     # print("y ", y.shape)
