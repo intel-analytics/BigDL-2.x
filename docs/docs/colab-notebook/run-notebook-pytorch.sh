@@ -36,6 +36,6 @@ do
 
 	now=$(date "+%s")
 	time=$((now-start))
-	index=$((index+1))
 	echo "Complete #${index} with time ${time} seconds"	
+	index=$((index+1))
 done
