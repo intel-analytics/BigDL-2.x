@@ -76,10 +76,10 @@ class TestTable(TestCase):
         with tempfile.TemporaryDirectory() as local_path:
             for str_idx in string_idx_list:
                 str_idx.write_parquet(local_path)
-                str_idx_drop = str_idx.drop("id")
-                assert "id" in str_idx.df.columns, "id should be a column of str_idx"
-                assert "id" not in str_idx_drop.df.columns, "id shouldn't be a column of " \
-                                                            "str_idx_drop"
+                str_idx_log = str_idx.log(["id"])
+                assert str_idx.df.filter("id == 1").count() == 1, "id in str_idx should = 1"
+                assert str_idx_log.df.filter("id == 1").count() == 0, "id in str_idx_log should " \
+                                                                      "!= 1"
             assert os.path.isdir(local_path + "/col_4.parquet")
             assert os.path.isdir(local_path + "/col_5.parquet")
             new_col_4_idx = StringIndex.read_parquet(local_path + "/col_4.parquet")

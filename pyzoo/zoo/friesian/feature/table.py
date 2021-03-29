@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import copy
 import os
 
 from pyspark.sql.functions import col, array, broadcast
@@ -38,9 +37,7 @@ class Table:
         return df
 
     def _clone(self, df):
-        copy_tbl = copy.copy(self)
-        copy_tbl.df = df
-        return copy_tbl
+        return Table(df)
 
     def compute(self):
         compute(self.df)
@@ -58,6 +55,35 @@ class Table:
 
     def drop(self, *cols):
         return self._clone(self.df.drop(*cols))
+
+    def fillna(self, value, columns):
+        if isinstance(value, int) and JAVA_INT_MIN <= value <= JAVA_INT_MAX:
+            return self._clone(fill_na_int(self.df, value, columns))
+        else:
+            return self._clone(fill_na(self.df, value, columns))
+
+    def clip(self, columns, min=0):
+        if not isinstance(columns, list):
+            columns = [columns]
+        return self._clone(clip_min(self.df, columns, min))
+
+    def log(self, columns, clipping=True):
+        if not isinstance(columns, list):
+            columns = [columns]
+        return self._clone(log_with_clip(self.df, columns, clipping))
+
+    # Merge column values as a list to a new col
+    def merge_cols(self, columns, target):
+        assert isinstance(columns, list)
+        return self._clone(self.df.withColumn(target, array(columns)).drop(*columns))
+
+    def rename(self, columns):
+        assert isinstance(columns, dict), "columns should be a dictionary of {'old_name1': " \
+                                          "'new_name1', 'old_name2': 'new_name2'}"
+        new_df = self.df
+        for old_name, new_name in columns.items():
+            new_df = new_df.withColumnRenamed(old_name, new_name)
+        return self._clone(new_df)
 
     def show(self, n=20, truncate=True):
         self.df.show(n, truncate)
@@ -89,34 +115,8 @@ class FeatureTable(Table):
                                    zip(df_id_list, columns)))
         return string_idx_list
 
-    def fillna(self, value, columns):
-        if isinstance(value, int) and JAVA_INT_MIN <= value <= JAVA_INT_MAX:
-            return FeatureTable(fill_na_int(self.df, value, columns))
-        else:
-            return FeatureTable(fill_na(self.df, value, columns))
-
-    def clip(self, columns, min=0):
-        if not isinstance(columns, list):
-            columns = [columns]
-        return FeatureTable(clip_min(self.df, columns, min))
-
-    def log(self, columns, clipping=True):
-        if not isinstance(columns, list):
-            columns = [columns]
-        return FeatureTable(log_with_clip(self.df, columns, clipping))
-
-    # Merge column values as a list to a new col
-    def merge_cols(self, columns, target):
-        assert isinstance(columns, list)
-        return FeatureTable(self.df.withColumn(target, array(columns)).drop(*columns))
-
-    def rename(self, columns):
-        assert isinstance(columns, dict), "columns should be a dictionary of {'old_name1': " \
-                                          "'new_name1', 'old_name2': 'new_name2'}"
-        new_df = self.df
-        for old_name, new_name in columns.items():
-            new_df = new_df.withColumnRenamed(old_name, new_name)
-        return FeatureTable(new_df)
+    def _clone(self, df):
+        return FeatureTable(df)
 
 
 # Assume this table only has two columns: col_name and id
@@ -137,6 +137,9 @@ class StringIndex(Table):
         if col_name is None and len(paths) >= 1:
             col_name = os.path.basename(paths[0]).split(".")[0]
         return cls(Table._read_parquet(paths), col_name)
+
+    def _clone(self, df):
+        return StringIndex(df, self.col_name)
 
     def write_parquet(self, path, mode="overwrite"):
         path = path + "/" + self.col_name + ".parquet"
