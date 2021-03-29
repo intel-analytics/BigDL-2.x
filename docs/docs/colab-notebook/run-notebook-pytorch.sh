@@ -26,12 +26,6 @@ do
 	sed -i 's/version_info/#version_info/g' ${filename}.py
 	sed -i 's/python_version/#python_version/g' ${filename}.py
 
-
-	#wget -nv $FTP_URI/analytics-zoo-data/mnist/train-labels-idx1-ubyte.gz -P ./dataset
-	#wget -nv $FTP_URI/analytics-zoo-data/mnist/train-images-idx3-ubyte.gz -P ./dataset
-	#wget -nv $FTP_URI/analytics-zoo-data/mnist/t10k-labels-idx1-ubyte.gz -P ./dataset
-	#wget -nv $FTP_URI/analytics-zoo-data/mnist/t10k-images-idx3-ubyte.gz -P ./dataset
-
 	python ${filename}.py
 
 	now=$(date "+%s")
