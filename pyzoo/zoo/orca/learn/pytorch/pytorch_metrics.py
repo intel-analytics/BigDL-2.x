@@ -204,7 +204,7 @@ class Top5Accuracy(PytorchMetric):
         preds = preds.type_as(targets).t()
         targets = targets.view(1, -1).expand_as(preds)
 
-        self.correct += preds.eq(targets).view(-1).sum()
+        self.correct += preds.eq(targets).contiguous().view(-1).sum()
         self.total += batch_size
 
     def compute(self):
