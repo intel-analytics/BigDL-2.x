@@ -52,8 +52,16 @@ if [[ $py_version == *"Python 2.7"* ]]; then
         exit $exit_status_2
     fi
 
-    echo "Running Orca TF estimator tests"
+    echo "Running Orca estimator tests"
     python -m pytest -v ../test/zoo/orca/learn/spark/
+    exit_status_2=$?
+    if [ $exit_status_2 -ne 0 ];
+    then
+        exit $exit_status_2
+    fi
+
+    echo "Running Friesian feature tests"
+    python -m pytest -v ../test/zoo/friesian/feature/
     exit_status_2=$?
     if [ $exit_status_2 -ne 0 ];
     then
@@ -73,6 +81,7 @@ if [[ $py_version == *"Python 2.7"* ]]; then
        --ignore=../test/zoo/pipeline/api/torch/ \
        --ignore=../test/zoo/orca/ \
        --ignore=../zoo/models/recommendation/txt.py \
+       --ignore=../test/zoo/friesian/ \
        --ignore=../test/zoo/automl/model/test_xgbregressor.py
     exit_status_2=$?
     if [ $exit_status_2 -ne 0 ];
@@ -90,8 +99,16 @@ else
         exit $exit_status_3
     fi
 
-    echo "Running Orca TF estimator tests"
+    echo "Running Orca estimator tests"
     python -m pytest -v ../test/zoo/orca/learn/spark/
+    exit_status_3=$?
+    if [ $exit_status_3 -ne 0 ];
+    then
+        exit $exit_status_3
+    fi
+
+    echo "Running Friesian feature tests"
+    python -m pytest -v ../test/zoo/friesian/feature/
     exit_status_3=$?
     if [ $exit_status_3 -ne 0 ];
     then
@@ -109,6 +126,7 @@ else
        --ignore=../test/zoo/zouwu/ \
        --ignore=../test/zoo/pipeline/api/torch/ \
        --ignore=../test/zoo/orca/ \
+       --ignore=../test/zoo/friesian/ \
        --ignore=../zoo/models/recommendation/txt.py \
        --ignore=../test/zoo/automl/model/test_xgbregressor.py
     exit_status_3=$?
