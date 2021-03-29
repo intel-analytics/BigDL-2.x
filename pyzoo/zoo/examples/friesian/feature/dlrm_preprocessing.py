@@ -100,7 +100,7 @@ if __name__ == '__main__':
     tbl_all_data = FeatureTable.read_parquet(paths[:-1])
     tbl_all_data = tbl_all_data.encode_string(CAT_COLS, idx_list)\
         .fillna(0, INT_COLS + CAT_COLS).log(INT_COLS)
-    tbl_all_data = tbl_all_data.merge(INT_COLS, "X_int").merge(CAT_COLS, "X_cat")
+    tbl_all_data = tbl_all_data.merge_cols(INT_COLS, "X_int").merge_cols(CAT_COLS, "X_cat")
     tbl_all_data.compute()
     time_end = time()
     print("Train data loading and preprocessing time: ", time_end - time_start)

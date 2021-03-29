@@ -76,9 +76,10 @@ class TestTable(TestCase):
         with tempfile.TemporaryDirectory() as local_path:
             for str_idx in string_idx_list:
                 str_idx.write_parquet(local_path)
-                str_idx_log = str_idx.log(["id"])
-                assert str_idx_log.df.filter("id == 1").count() == 0, "id in str_idx_log should " \
-                                                                      "!= 1"
+                str_idx_drop = str_idx.drop("id")
+                assert "id" in str_idx.df.columns, "id should be a column of str_idx"
+                assert "id" not in str_idx_drop.df.columns, "id shouldn't be a column of " \
+                                                            "str_idx_drop"
             assert os.path.isdir(local_path + "/col_4.parquet")
             assert os.path.isdir(local_path + "/col_5.parquet")
             new_col_4_idx = StringIndex.read_parquet(local_path + "/col_4.parquet")
@@ -119,3 +120,11 @@ class TestTable(TestCase):
         assert log_tbl.df.filter("col_1 == 1").count() == 0, "col_1 should != 1"
         assert log_tbl.df.filter("col_2 == 1").count() == 0, "col_2 should != 1"
         assert log_tbl.df.filter("col_3 == 1").count() == 0, "col_3 should != 1"
+
+    def test_merge(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        merged_tbl = feature_tbl.merge_cols(["col_1", "col_2", "col_3"], "int_cols")
+        assert "col_1" not in merged_tbl.df.columns, "col_1 shouldn't be a column of merged_tbl"
+        assert "int_cols" in merged_tbl.df.columns, "int_cols should be a column of merged_tbl"
+        assert "col_1" in feature_tbl.df.columns, "col_1 should be a column of feature_tbl"

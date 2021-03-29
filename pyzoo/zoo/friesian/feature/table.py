@@ -37,6 +37,11 @@ class Table:
         df = spark.read.parquet(*paths)
         return df
 
+    def _clone(self, df):
+        copy_tbl = copy.copy(self)
+        copy_tbl.df = df
+        return copy_tbl
+
     def compute(self):
         compute(self.df)
         return self
@@ -51,51 +56,8 @@ class Table:
     def broadcast(self):
         self.df = broadcast(self.df)
 
-    def fillna(self, value, columns):
-        copy_tbl = copy.copy(self)
-        if isinstance(value, int) and JAVA_INT_MIN <= value <= JAVA_INT_MAX:
-            copy_tbl.df = fill_na_int(self.df, value, columns)
-        else:
-            copy_tbl.df = fill_na(self.df, value, columns)
-        return copy_tbl
-
-    def clip(self, columns, min=0):
-        if not isinstance(columns, list):
-            columns = [columns]
-        copy_tbl = copy.copy(self)
-        copy_tbl.df = clip_min(self.df, columns, min)
-        return copy_tbl
-
-    def log(self, columns, clipping=True):
-        if not isinstance(columns, list):
-            columns = [columns]
-        copy_tbl = copy.copy(self)
-        copy_tbl.df = log_with_clip(self.df, columns, clipping)
-        return copy_tbl
-
-    # Merge column values as a list to a new col
-    def merge(self, merge_cols, merged_col_name):
-        copy_tbl = copy.copy(self)
-        assert isinstance(merge_cols, list)
-        copy_tbl.df = self.df.withColumn(merged_col_name, array(merge_cols)).drop(*merge_cols)
-        return copy_tbl
-
-    # May not need the below methods if IndexTable only has two columns with the desired names:
-    # col_name and id.
     def drop(self, *cols):
-        copy_tbl = copy.copy(self)
-        copy_tbl.df = self.df.drop(*cols)
-        return copy_tbl
-
-    def rename(self, columns):
-        assert isinstance(columns, dict), "columns should be a dictionary of {'old_name1': " \
-                                          "'new_name1', 'old_name2': 'new_name2'}"
-        copy_tbl = copy.copy(self)
-        new_df = self.df
-        for old_name, new_name in columns.items():
-            new_df = new_df.withColumnRenamed(old_name, new_name)
-        copy_tbl.df = new_df
-        return copy_tbl
+        return self._clone(self.df.drop(*cols))
 
     def show(self, n=20, truncate=True):
         self.df.show(n, truncate)
@@ -126,6 +88,35 @@ class FeatureTable(Table):
         string_idx_list = list(map(lambda x: StringIndex(x[0], x[1]),
                                    zip(df_id_list, columns)))
         return string_idx_list
+
+    def fillna(self, value, columns):
+        if isinstance(value, int) and JAVA_INT_MIN <= value <= JAVA_INT_MAX:
+            return FeatureTable(fill_na_int(self.df, value, columns))
+        else:
+            return FeatureTable(fill_na(self.df, value, columns))
+
+    def clip(self, columns, min=0):
+        if not isinstance(columns, list):
+            columns = [columns]
+        return FeatureTable(clip_min(self.df, columns, min))
+
+    def log(self, columns, clipping=True):
+        if not isinstance(columns, list):
+            columns = [columns]
+        return FeatureTable(log_with_clip(self.df, columns, clipping))
+
+    # Merge column values as a list to a new col
+    def merge_cols(self, columns, target):
+        assert isinstance(columns, list)
+        return FeatureTable(self.df.withColumn(target, array(columns)).drop(*columns))
+
+    def rename(self, columns):
+        assert isinstance(columns, dict), "columns should be a dictionary of {'old_name1': " \
+                                          "'new_name1', 'old_name2': 'new_name2'}"
+        new_df = self.df
+        for old_name, new_name in columns.items():
+            new_df = new_df.withColumnRenamed(old_name, new_name)
+        return FeatureTable(new_df)
 
 
 # Assume this table only has two columns: col_name and id
