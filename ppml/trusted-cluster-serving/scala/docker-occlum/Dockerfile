@@ -112,32 +112,3 @@ RUN apt-get update --fix-missing && \
     apt-get install -y openssl libssl-dev pkg-config && \
     apt-get install -y netcat
 
-RUN mkdir -p /ppml/trusted-cluster-serving/redis/src && \
-    tar -C /ppml/trusted-cluster-serving/redis/src --strip-components=1 -xf /ppml/trusted-cluster-serving/redis/redis.tar.gz && \
-    make BUILD_TLS=yes -C /ppml/trusted-cluster-serving/redis/src && \
-    cp /ppml/trusted-cluster-serving/redis/src/src/redis-server /ppml/trusted-cluster-serving/redis/redis-server
-
-ADD ./redis.Makefile /ppml/trusted-cluster-serving/redis/Makefile
-ADD ./redis-server.manifest.template /ppml/trusted-cluster-serving/redis/redis-server.manifest.template
-ADD ./init-redis.sh /ppml/trusted-cluster-serving/redis/init-redis.sh
-ADD ./start-redis.sh /ppml/trusted-cluster-serving/redis/start-redis.sh
-ADD ./java.Makefile /ppml/trusted-cluster-serving/java/Makefile
-ADD ./java.manifest.template /ppml/trusted-cluster-serving/java/java.manifest.template
-ADD ./init-java.sh /ppml/trusted-cluster-serving/java/init-java.sh
-ADD ./start-flink-jobmanager.sh /ppml/trusted-cluster-serving/java/start-flink-jobmanager.sh
-ADD ./start-flink-taskmanager.sh /ppml/trusted-cluster-serving/java/start-flink-taskmanager.sh
-ADD ./start-http-frontend.sh /ppml/trusted-cluster-serving/java/start-http-frontend.sh
-ADD ./cluster-serving-config.yaml /ppml/trusted-cluster-serving/java/config.yaml
-ADD ./init-cluster-serving.sh /ppml/trusted-cluster-serving/java/init-cluster-serving.sh
-ADD ./start-cluster-serving-job.sh /ppml/trusted-cluster-serving/java/start-cluster-serving-job.sh
-ADD ./start-all.sh /ppml/trusted-cluster-serving/start-all.sh
-
-RUN chmod a+x /ppml/trusted-cluster-serving/redis/init-redis.sh && \
-    chmod a+x /ppml/trusted-cluster-serving/redis/start-redis.sh && \
-    chmod a+x /ppml/trusted-cluster-serving/java/init-java.sh && \
-    chmod a+x /ppml/trusted-cluster-serving/java/start-flink-jobmanager.sh && \
-    chmod a+x /ppml/trusted-cluster-serving/java/start-flink-taskmanager.sh && \
-    chmod a+x /ppml/trusted-cluster-serving/java/start-http-frontend.sh && \
-    chmod a+x /ppml/trusted-cluster-serving/java/init-cluster-serving.sh && \
-    chmod a+x /ppml/trusted-cluster-serving/java/start-cluster-serving-job.sh && \
-    chmod a+x /ppml/trusted-cluster-serving/start-all.sh
