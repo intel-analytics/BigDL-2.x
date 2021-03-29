@@ -41,7 +41,7 @@ This script is also in /analytics-zoo/ppml/scripts:
 ### Run the PPML as Docker containers
 
 #### In spark local mode
-##### Start the containerto run spark applications in ppml
+##### Start the container to run spark applications in ppml
 Before you run the following command to start container, you need to modify the paths in the start-local-big-data-ml.sh. <br>
 Then run the following command: <br>
 ```bash
