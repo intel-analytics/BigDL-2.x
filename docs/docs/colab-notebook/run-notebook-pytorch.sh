@@ -6,7 +6,7 @@ index=1
 
 set -e
 
-for f in $pytorchFiles
+for f in "${pytorchFiles[@]}"
 do
    
 	filename="${dir}/${f}"
@@ -27,10 +27,10 @@ do
 	sed -i 's/python_version/#python_version/g' ${filename}.py
 
 
-	wget -nv $FTP_URI/analytics-zoo-data/mnist/train-labels-idx1-ubyte.gz -P ./dataset
-	wget -nv $FTP_URI/analytics-zoo-data/mnist/train-images-idx3-ubyte.gz -P ./dataset
-	wget -nv $FTP_URI/analytics-zoo-data/mnist/t10k-labels-idx1-ubyte.gz -P ./dataset
-	wget -nv $FTP_URI/analytics-zoo-data/mnist/t10k-images-idx3-ubyte.gz -P ./dataset
+	#wget -nv $FTP_URI/analytics-zoo-data/mnist/train-labels-idx1-ubyte.gz -P ./dataset
+	#wget -nv $FTP_URI/analytics-zoo-data/mnist/train-images-idx3-ubyte.gz -P ./dataset
+	#wget -nv $FTP_URI/analytics-zoo-data/mnist/t10k-labels-idx1-ubyte.gz -P ./dataset
+	#wget -nv $FTP_URI/analytics-zoo-data/mnist/t10k-images-idx3-ubyte.gz -P ./dataset
 
 	python ${filename}.py
 
