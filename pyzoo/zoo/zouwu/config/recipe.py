@@ -706,4 +706,3 @@ class XgbRegressorSkOptRecipe(Recipe):
                                       self.max_depth_range[1]),
         }
         return space
-
