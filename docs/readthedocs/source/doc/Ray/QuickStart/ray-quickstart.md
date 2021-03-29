@@ -25,18 +25,15 @@ We recommend using `init_orca_context` to initiate and run Analytics Zoo on the 
 ```python
 from zoo.orca import init_orca_context
 
-if cluster_mode == "local":
-    # For local machine
+if cluster_mode == "local":  # For local machine
     sc = init_orca_context(cluster_mode="local", cores=4, memory="10g", init_ray_on_spark=True)
-elif cluster_mode == "k8s":
-    # For K8s cluster
+elif cluster_mode == "k8s":  # For K8s cluster
     sc = init_orca_context(cluster_mode="k8s", num_nodes=2, cores=2, memory="10g", init_ray_on_spark=True)
-elif cluster_mode == "yarn":
-    # For Hadoop/YARN cluster
+elif cluster_mode == "yarn":  # For Hadoop/YARN cluster
     sc = init_orca_context(cluster_mode="yarn", num_nodes=2, cores=2, memory="10g", init_ray_on_spark=True)
 ```
 
-This is the only place where you need to specify local or distributed mode. View [Orca Context](./../Overview/orca-context.md) for more details.
+This is the only place where you need to specify local or distributed mode. View [Orca Context](./../../Orca/Overview/orca-context.md) for more details.
 
 **Note:** You should `export HADOOP_CONF_DIR=/path/to/hadoop/conf/dir` when running on Hadoop YARN cluster. View [Hadoop User Guide](./../../UserGuide/hadoop.md) for more details.
 
@@ -54,7 +51,7 @@ redis_address = ray_ctx.redis_address  # The redis address of the ray cluster.
 
 After the initialization, you can directly write Ray code inline with your Spark code, and run Ray programs on the underlying existing Big Data clusters. Ray [tasks](https://docs.ray.io/en/master/walkthrough.html#remote-functions-tasks) and [actors](https://docs.ray.io/en/master/actors.html) would be launched across the cluster.
 
-The following example uses actor handles to implement a parameter server example for distributed asynchronous stochastic gradient descent. 
+The following example uses actor handles to implement a parameter server example for distributed asynchronous stochastic gradient descent. This is a simple Ray example for demonstration purpose. Similarly, you can write other Ray applications as you wish.
 
 A parameter server is simply an object that stores the parameters (or "weights") of a machine learning model (this could be a neural network, a linear model, or something else). It exposes two methods: one for getting the parameters and one for updating the parameters.
 
