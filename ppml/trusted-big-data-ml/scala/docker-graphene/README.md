@@ -18,7 +18,7 @@ chmod a+x Dockerfile
 ### Prerequisite
 To launch Trusted Big Data ML applications on Graphene-SGX, you need to install graphene-sgx-driver:
 ```bash
-../../../scripts/install-graphene-driver.sh
+sh ../../../scripts/install-graphene-driver.sh
 ```
 
 ### Prepare the data
