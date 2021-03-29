@@ -4,30 +4,34 @@ FROM ubuntu:18.04 as redis-tls
 WORKDIR /opt
 
 RUN apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
-        git build-essential \
+        git build-essential coreutils \
         && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get clean
 
-RUN git clone https://github.com/openssl/openssl \ 
-        && git checkout tags/OpenSSL_1_1_1 -b OpenSSL_1_1_1
-RUN ./config \
-        --openssldir=/usr/local/occlum/ssl \
+RUN apt-get install -y ca-certificates
+
+RUN git clone https://github.com/openssl/openssl.git 
+
+RUN cd openssl && \
+        git checkout tags/OpenSSL_1_1_1 -b OpenSSL_1_1_1 && \
+        ./config \
+        --openssldir=/opt/ssl \
         --with-rand-seed=rdcpu \
-        no-zlib no-async no-tests
-RUN make -j `getconf _NPROCESSORS_ONLN` && make install
+        no-zlib no-async no-tests && \
+        make -j `getconf _NPROCESSORS_ONLN` && make install
 
-RUN git clone https://github.com/redis/redis.git && git checkout 6.0.6
-RUN make -j `getconf _NPROCESSORS_ONLN` BUILD_TLS=yes && make PREFIX=/opt/redis install
+RUN git clone https://github.com/redis/redis.git && \
+    cd redis && \
+    git checkout 6.0.6 && \
+    make -j `getconf _NPROCESSORS_ONLN` BUILD_TLS=yes && make PREFIX=/opt/redis install
 
 # stage. 2 Flink jobmanager
 FROM ubuntu:18.04 as jobmanager
 
 RUN apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
-        openjdk-11-jdk aria2 \
+        openjdk-11-jdk wget \
         && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get clean
 
 ARG FLINK_VERSION=1.10.1
 ENV FLINK_VERSION ${FLINK_VERSION}
@@ -52,13 +56,12 @@ ARG SPARK_MAJOR_VERSION=2.4
 ENV ANALYTICS_ZOO_VERSION	${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION		${SPARK_VERSION}
 ENV BIGDL_VERSION		${BIGDL_VERSION}
-ENV JAVA_HOME			/opt/jdk8
+ENV JAVA_HOME			/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH			${JAVA_HOME}/bin:${PATH}
 
-COPY --from=flink /opt/jdk  /opt/jdk8
 
 RUN apt-get update --fix-missing && \
-    apt-get install -y apt-utils curl wget unzip git maven
+    apt-get install -y apt-utils curl wget unzip git maven openjdk-11-jdk
 RUN git clone https://github.com/intel-analytics/analytics-zoo.git && \
     cd analytics-zoo && \
     export MAVEN_OPTS="-XX:ReservedCodeCacheSize=512m -XX:MaxPermSize=3G \
@@ -81,7 +84,7 @@ ARG BIGDL_VERSION=0.12.1
 ARG SPARK_VERSION=2.4.3
 ARG FLINK_VERSION=1.10.1
 ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
-ENV JAVA_HOME				/opt/jdk8
+ENV JAVA_HOME				/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH				${JAVA_HOME}/bin:${PATH}
 ENV LOCAL_IP				127.0.0.1
 ENV SGX_MEM_SIZE			64G
@@ -97,29 +100,6 @@ ENV FLINK_TASK_MANAGER_RPC_PORT		6125
 ENV FLINK_TASK_MANAGER_TASKSLOTS_NUM	1
 ENV CORE_NUM                            2
 
-RUN mkdir -p /graphene && \
-    mkdir -p /graphene/Runtime && \
-    mkdir -p /graphene/python && \
-    mkdir -p /graphene/Tools && \
-    mkdir -p /graphene/Pal/src && \
-    mkdir -p /ppml/trusted-cluster-serving/redis && \
-    mkdir -p /ppml/trusted-cluster-serving/redis/work/keys && \
-    mkdir -p /ppml/trusted-cluster-serving/redis/work/passowrd && \
-    mkdir -p /ppml/trusted-cluster-serving/java/work && \
-    mkdir -p /ppml/trusted-cluster-serving/java/work/keys && \
-    mkdir -p /ppml/trusted-cluster-serving/java/work/passowrd && \
-    mkdir -p /ppml/trusted-cluster-serving/java/work/data && \
-    mkdir -p /ppml/trusted-cluster-serving/java/work/models
-
-COPY --from=graphene /graphene/Scripts /graphene/Scripts
-COPY --from=graphene /graphene/Runtime/ /graphene/Runtime
-COPY --from=graphene /graphene/python /graphene/python
-COPY --from=graphene /graphene/Pal /graphene/Pal
-COPY --from=graphene /graphene/Pal/src/host/Linux-SGX/generated_offsets.py /graphene/python/
-COPY --from=graphene /graphene/Examples/common_tools/get_deps.sh /graphene/get_deps.sh
-COPY --from=graphene /graphene/Tools/argv_serializer /graphene/Tools
-COPY --from=graphene /redis.tar.gz /ppml/trusted-cluster-serving/redis
-COPY --from=flink /opt/jdk  /opt/jdk8
 COPY --from=flink /opt/flink-${FLINK_VERSION} /ppml/trusted-cluster-serving/java/work/flink-${FLINK_VERSION}
 COPY --from=analytics-zoo /analytics-zoo/zoo/target/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar /ppml/trusted-cluster-serving/java/work/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar
 COPY --from=analytics-zoo /analytics-zoo/zoo/target/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-http.jar /ppml/trusted-cluster-serving/java/work/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-http.jar
@@ -130,10 +110,8 @@ RUN apt-get update --fix-missing && \
     apt-get install -y libsm6 make build-essential && \
     apt-get install -y autoconf gawk bison libcurl4-openssl-dev python3-protobuf libprotobuf-c-dev protobuf-c-compiler && \
     apt-get install -y openssl libssl-dev pkg-config && \
-    apt-get install -y netcat && \
-    mkdir -p /graphene/Pal/src/host/Linux-SGX/signer && \
-    cd /graphene/Pal/src/host/Linux-SGX/signer && \
-    openssl genrsa -3 -out enclave-key.pem 3072
+    apt-get install -y netcat
+
 RUN mkdir -p /ppml/trusted-cluster-serving/redis/src && \
     tar -C /ppml/trusted-cluster-serving/redis/src --strip-components=1 -xf /ppml/trusted-cluster-serving/redis/redis.tar.gz && \
     make BUILD_TLS=yes -C /ppml/trusted-cluster-serving/redis/src && \
