@@ -3,6 +3,7 @@
 ---
 
 ![](../../../image/colab_logo_32px.png)[Run in Google Colab](https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/ncf_dataframe.ipynb) &nbsp;![](../../../image/GitHub-Mark-32px.png)[View source on GitHub](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/ncf_dataframe.ipynb)
+
 ---
 
 **In this guide we will describe how to use Spark Dataframes to scale-out data processing for distribtued deep learning.**
@@ -39,8 +40,9 @@ train_data, test_data = df.randomSplit([0.8, 0.2], 100)
 This example defines NCF model in the _Creator Function_ using TensroFlow 2 APIs as follows.
 
 ```python
-import tensorflow as tf
 from tensorflow import keras
+import tensorflow as tf
+
 def model_creator(config):
     embedding_size=16
     user = keras.layers.Input(dtype=tf.int32, shape=(None,))
@@ -69,8 +71,8 @@ def model_creator(config):
         outputs = keras.layers.Dense(units=5, activation='softmax')(concatenation)
 
     model = keras.Model(inputs=[user, item], outputs=outputs)
-    model.compile(optimizer= "adam",
-                  loss= "sparse_categorical_crossentropy",
+    model.compile(optimizer="adam",
+                  loss="sparse_categorical_crossentropy",
                   metrics=['accuracy'])
     return model
 ```
@@ -81,7 +83,7 @@ Finally, run distributed model training/inference on the Spark Dataframes direct
 
 ```python
 # create an Estimator
-est = Estimator.from_keras(model_creator=model_creator, workers_per_node=1) # the model accept two inputs and one label
+est = Estimator.from_keras(model_creator=model_creator) # the model accept two inputs and one label
 
 # fit with Estimator
 stats = est.fit(train_data,
