@@ -21,7 +21,11 @@ do
 	sed -i 's/^[^#].*environ*/#&/g' ${filename}.py
 	sed -i 's/^[^#].*__future__ */#&/g' ${filename}.py
 	sed -i "s/_ = (sys.path/#_ = (sys.path/g" ${filename}.py
+	sed -i "s/.append/#.append/g" ${filename}.py
 	sed -i 's/^[^#].*site-packages*/#&/g' ${filename}.py
+	sed -i 's/version_info/#version_info/g' ${filename}.py
+	sed -i 's/python_version/#python_version/g' ${filename}.py
+
 
 	wget -nv $FTP_URI/analytics-zoo-data/mnist/train-labels-idx1-ubyte.gz -P ./dataset
 	wget -nv $FTP_URI/analytics-zoo-data/mnist/train-images-idx3-ubyte.gz -P ./dataset
