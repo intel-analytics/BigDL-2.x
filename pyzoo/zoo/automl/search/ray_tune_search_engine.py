@@ -26,8 +26,6 @@ import ray.tune.track
 from zoo.automl.logger import TensorboardXLogger
 from zoo.zouwu.model.forecast.model import ModelBuilder
 from zoo.zouwu.feature.identity_transformer import IdentityTransformer
-from zoo.automl.search.tune_utils import (create_searcher,
-                                          create_scheduler)
 from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
 import pandas as pd
 
@@ -200,7 +198,7 @@ class RayTuneSearchEngine(SearchEngine):
                 metric="reward_metric",
                 mode="max",
             ))
-            scheduler = create_scheduler(scheduler, **scheduler_params)
+            scheduler = tune.create_scheduler(scheduler, **scheduler_params)
         return scheduler
 
     def run(self):
