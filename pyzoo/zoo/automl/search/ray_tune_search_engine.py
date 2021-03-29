@@ -177,14 +177,6 @@ class RayTuneSearchEngine(SearchEngine):
             if search_alg not in SEARCH_ALG_ALLOWED:
                 raise ValueError(f"search_alg must be one of {SEARCH_ALG_ALLOWED}. "
                                  f"Got: {search_alg}")
-            if search_alg == "skopt":
-                from skopt import Optimizer
-                opt_params = recipe.opt_params()
-                optimizer = Optimizer(opt_params)
-                search_alg_params.update(dict(
-                    optimizer=optimizer,
-                    parameter_names=list(search_space.keys()),
-                ))
             elif search_alg == "bayesopt":
                 search_alg_params.update({"space": recipe.manual_search_space()})
 
@@ -192,8 +184,7 @@ class RayTuneSearchEngine(SearchEngine):
                 metric="reward_metric",
                 mode="max",
             ))
-            search_alg = create_searcher(search_alg,
-                                         **search_alg_params)
+            search_alg = tune.create_searcher(search_alg, **search_alg_params)
         return search_alg
 
     @staticmethod

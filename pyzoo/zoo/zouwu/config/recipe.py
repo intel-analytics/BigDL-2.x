@@ -707,10 +707,3 @@ class XgbRegressorSkOptRecipe(Recipe):
         }
         return space
 
-    def opt_params(self):
-        from skopt.space import Integer
-        params = [
-            Integer(self.n_estimators_range[0], self.n_estimators_range[1]),
-            Integer(self.max_depth_range[0], self.max_depth_range[1]),
-        ]
-        return params
