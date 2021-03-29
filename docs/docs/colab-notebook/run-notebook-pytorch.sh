@@ -3,6 +3,9 @@
 dir=${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart
 pytorchFiles=("pytorch_lenet_mnist_data_creator_func" "pytorch_lenet_mnist" "pytorch_distributed_lenet_mnist")
 index=1
+
+set -e
+
 for f in $pytorchFiles
 do
    
