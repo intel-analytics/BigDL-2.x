@@ -157,7 +157,6 @@ class CorrectnessSpec extends FlatSpec with Matchers {
 
   }
 
- 
   "Cluster Serving batch inference result" should "be correct" in {
 
     ("wget -O /tmp/serving_val.tar http://10.239.45.10:8081" +
@@ -206,7 +205,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
         val bInput = clusterServingInference.batchInput(batchInputs, 4, true, false)
         val result = model.doPredict(bInput)
         var i = 0
-        for ( i <- 1 to 4){
+        for ( i <- 1 to 4) {
           val value = PostProcessing(result.toTensor[Float]
             .squeeze(1).apply(i), "topN(1)", 1)
           val clz = value.split(",")(0).stripPrefix("[[")
