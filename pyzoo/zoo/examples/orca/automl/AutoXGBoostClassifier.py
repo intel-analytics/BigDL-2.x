@@ -126,10 +126,15 @@ if __name__ == '__main__':
 
     import time
     start = time.time()
-    pipeline = estimator.fit(train_df,
-                             validation_df=val_df,
-                             metric="error",
-                             recipe=XgbRegressorSkOptRecipe(num_rand_samples=3))
+    pipeline = estimator.fit(vtrain_df,
+			     validation_df=val_df,
+			     metric="error",
+			     recipe=XgbRegressorSkOptRecipe(
+				num_rand_samples=3,
+				n_estimators_range = n_estimators_range,
+				max_depth_range = max_depth_range,
+		            ),
+			    )
     end = time.time()
     print("elapse: ", (end-start))
     accuracy = pipeline.evaluate(val_df, metrics=["accuracy"])
