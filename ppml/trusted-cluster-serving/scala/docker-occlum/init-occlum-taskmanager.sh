@@ -26,8 +26,9 @@ build_flink() {
     cp $occlum_glibc/librt.so.1 image/$occlum_glibc
     cp $occlum_glibc/libm.so.6 image/$occlum_glibc
     cp $occlum_glibc/libnss_files.so.2 image/$occlum_glibc
-    cp -rf /opt/keys image/bin/
-    cp -rf ../flink-1.10.1/* image/bin/
+    cp -rf /opt/keys image/opt/
+    cp -rf ./flink-1.10.1/* image/bin/
+    cp -rf /flink-1.10.1/conf image/opt/
     cp -rf /etc/java-11-openjdk image/etc/
     cp -rf ../hosts image/etc/
     occlum build

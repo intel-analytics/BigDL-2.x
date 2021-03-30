@@ -26,7 +26,4 @@ java \
     --parallelism 30 \
     --httpsEnabled true \
     --httpsKeyStorePath "/opt/keys/keystore.pkcs12" \
-    --httpsKeyStoreToken "${https_secure_password}" \
-    --redisSecureEnabled true \
-    --redissTrustStorePath "/opt/keys/keystore.jks" \
-    --redissTrustStoreToken "${redis_secure_password}" | tee ./http-frontend-sgx.log
+    --httpsKeyStoreToken "${https_secure_password}" | tee ./http-frontend-sgx.log
