@@ -187,10 +187,10 @@ nano environments.sh
 ```
 ##### start the distributed bigdata ml
 ```bash
-./start-distributed-big-data-ml.sh
+sudo bash start-distributed-big-data-ml.sh
 ```
 ##### stop the distributed bigdata ml
 ```bash
-./stop-distributed-big-data-ml.sh
+sudo bash stop-distributed-big-data-ml.sh
 ```
 ##### Other Spark workloads are also supported, please follow the 3 examples to submit your workload with spark on Graphene-SGX
