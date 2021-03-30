@@ -15,7 +15,7 @@
 #
 
 from zoo.automl.config.base import Recipe
-from zoo.automl.search.abstract import *
+from zoo.automl.search.base import *
 import numpy as np
 from ray import tune
 import json

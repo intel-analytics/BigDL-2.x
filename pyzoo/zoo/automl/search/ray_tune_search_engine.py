@@ -18,7 +18,7 @@ import ray
 from ray import tune
 from copy import deepcopy
 
-from zoo.automl.search.abstract import *
+from zoo.automl.search.base import *
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 from ray.tune import Trainable
