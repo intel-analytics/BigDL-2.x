@@ -26,7 +26,6 @@ pip install jep==3.9.0
 ```python
 from zoo.orca import init_orca_context, stop_orca_context
 
-
 if cluster_mode == "local":  # For local machine
     init_orca_context(cores=1, memory="2g")
 elif cluster_mode == "k8s":  # For K8s cluster

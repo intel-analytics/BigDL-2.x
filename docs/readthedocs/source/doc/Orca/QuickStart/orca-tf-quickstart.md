@@ -24,7 +24,7 @@ pip install psutil
 
 ### **Step 1: Init Orca Context**
 ```python
-from zoo.orca import init_orca_context
+from zoo.orca import init_orca_context, stop_orca_context
 
 if cluster_mode == "local":  # For local machine
     init_orca_context(cluster_mode="local", cores=4)
