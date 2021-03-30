@@ -72,6 +72,16 @@ fi
 execute_ray_test super_resolution_BSDS3000 ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py
 time7=$?
 
+if [ -f ${ANALYTICS_ZOO_ROOT}/data/airline_14col.data ]
+then
+    echo "airline_14col.data already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/airline_14col.data -P ${ANALYTICS_ZOO_ROOT}/data/
+fi
+
+execute_ray_test auto-xgboost-classifier ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/AutoXGBoostClassifier.py
+time8=$?
+
 echo "#1 rl_pong time used:$time1 seconds"
 echo "#2 sync_parameter_server time used:$time2 seconds"
 echo "#3 async_parameter_server time used:$time3 seconds"
@@ -79,5 +89,6 @@ echo "#4 multiagent_two_trainers time used:$time4 seconds"
 echo "#5 mxnet_lenet time used:$time5 seconds"
 echo "#6 fashion-mnist time used:$time6 seconds"
 echo "#7 super-resolution time used:$time7 seconds"
+echo "#8 auto-xgboost-classifier time used:$time8 seconds"
 
 clear_up
