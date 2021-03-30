@@ -76,7 +76,7 @@ class FlinkRedisSource(params: ClusterServingHelper)
     .SourceContext[List[(String, String)]]): Unit = while (isRunning) {
     val groupName = "serving"
     val consumerName = "consumer-" + UUID.randomUUID().toString
-    val readNumPerTime = if (params.modelType == "openvino") params.coreNum else 4
+    val readNumPerTime = if (params.modelType == "openvino") params.thrdPerModel else 4
 
     val response = jedis.xreadGroup(
       groupName,

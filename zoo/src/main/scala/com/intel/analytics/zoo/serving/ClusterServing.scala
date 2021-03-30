@@ -42,7 +42,8 @@ object ClusterServing {
       .text("Config Path of Cluster Serving")
       .action((x, params) => params.copy(configPath = x))
     opt[Int]('t', "testMode")
-      .text("Text Mode of Parallelism 1")
+      .text("Text Mode controlling Flink parallelism, this should not be controlled by user" +
+        "unless in performance test")
       .action((x, params) => params.copy(testMode = x))
     opt[Boolean]("timerMode")
       .text("Whether to open timer mode")
@@ -53,17 +54,23 @@ object ClusterServing {
     streamingEnv.registerCachedFile(helper.modelDir, Conventions.SERVING_MODEL_TMP_DIR)
   }
   def executeJob(): Unit = {
+    /**
+     * Flink environment parallelism depends on model parallelism
+     */
     if (argv.testMode > 0) {
       Logger.getLogger("org").setLevel(Level.INFO)
       Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
-      streamingEnv.addSource(new FlinkRedisSource(helper)).setParallelism(argv.testMode)
-        .map(new FlinkInference(helper)).setParallelism(argv.testMode)
-        .addSink(new FlinkRedisSink(helper)).setParallelism(argv.testMode)
+      streamingEnv.setParallelism(argv.testMode)
+      streamingEnv.addSource(new FlinkRedisSource(helper))
+        .map(new FlinkInference(helper))
+        .addSink(new FlinkRedisSink(helper))
     } else {
+      streamingEnv.setParallelism(helper.modelPar)
       streamingEnv.addSource(new FlinkRedisSource(helper))
         .map(new FlinkInference(helper))
         .addSink(new FlinkRedisSink(helper))
     }
+    logger.info(s"Cluster Serving Flink job graph details \n${streamingEnv.getExecutionPlan}")
     streamingEnv.executeAsync()
   }
 

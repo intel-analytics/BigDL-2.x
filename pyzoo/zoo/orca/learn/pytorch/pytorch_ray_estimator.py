@@ -21,11 +21,12 @@ import numbers
 import torch
 import numpy as np
 
-from zoo.orca.data.shard import RayXShards
+from zoo.orca.data.ray_xshards import RayXShards
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch.torch_runner import TorchRunner
 from zoo.orca.learn.utils import maybe_dataframe_to_xshards, dataframe_to_xshards, \
-    convert_predict_xshards_to_dataframe, update_predict_xshards
+    convert_predict_xshards_to_dataframe, update_predict_xshards, \
+    process_xshards_of_pandas_dataframe
 from zoo.ray import RayContext
 
 import ray
@@ -52,10 +53,10 @@ def check_for_failure(remote_values):
     return False
 
 
-def shards_ref_to_creator(shards_ref):
+def partition_refs_to_creator(partition_refs):
 
-    def data_creator(config):
-        from zoo.orca.data.utils import ray_partition_get_data_label, index_data, get_size
+    def data_creator(config, batch_size):
+        from zoo.orca.data.utils import ray_partitions_get_data_label, index_data, get_size
         from torch.utils.data import Dataset, DataLoader
 
         class NDArrayDataset(Dataset):
@@ -69,16 +70,15 @@ def shards_ref_to_creator(shards_ref):
             def __getitem__(self, i):
                 return index_data(self.x, i), index_data(self.y, i)
 
-        assert "batch_size" in config, "batch_size must be set in config"
-        params = {"batch_size": config["batch_size"], "shuffle": True}
+        params = {"batch_size": batch_size, "shuffle": True}
         for arg in ["shuffle", "sampler", "batch_sampler", "num_workers", "collate_fn",
                     "pin_memory", "drop_last", "timeout", "worker_init_fn",
                     "multiprocessing_context"]:
             if arg in config:
                 params[arg] = config[arg]
-        data, label = ray_partition_get_data_label(ray.get(shards_ref),
-                                                   allow_tuple=False,
-                                                   allow_list=False)
+        data, label = ray_partitions_get_data_label(ray.get(partition_refs),
+                                                    allow_tuple=False,
+                                                    allow_list=False)
         print("Data size on worker: ", len(label))
         dataset = NDArrayDataset(data, label)
         data_loader = DataLoader(dataset, **params)
@@ -94,6 +94,7 @@ class PyTorchRayEstimator:
             model_creator,
             optimizer_creator,
             loss_creator=None,
+            metrics=None,
             scheduler_creator=None,
             training_operator_cls=TrainingOperator,
             initialization_hook=None,
@@ -133,7 +134,9 @@ class PyTorchRayEstimator:
             training_operator_cls=self.training_operator_cls,
             scheduler_step_freq=self.scheduler_step_freq,
             use_tqdm=self.use_tqdm,
-            config=worker_config)
+            config=worker_config,
+            metrics=metrics
+        )
 
         if backend == "torch_distributed":
             cores_per_node = ray_ctx.ray_node_cpu_cores // workers_per_node
@@ -201,19 +204,19 @@ class PyTorchRayEstimator:
                                              mode="fit")
 
         if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                data = process_xshards_of_pandas_dataframe(data, feature_cols, label_cols)
             from zoo.orca.data.utils import process_spark_xshards
             ray_xshards = process_spark_xshards(data, self.num_workers)
 
-            def transform_func(worker, shards_ref):
-                data_creator = shards_ref_to_creator(shards_ref)
+            def transform_func(worker, partition_refs):
+                data_creator = partition_refs_to_creator(partition_refs)
                 # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
                 return worker.train_epochs.remote(
                     data_creator, epochs, batch_size, profile, info, False)
 
-            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                                    transform_func,
-                                                                    gang_scheduling=True)
-            worker_stats = stats_shards.collect_partitions()
+            worker_stats = ray_xshards.reduce_partitions_for_actors(self.remote_workers,
+                                                                    transform_func)
         else:
             assert isinstance(data, types.FunctionType), \
                 "data should be either an instance of SparkXShards or a callable function, but " \
@@ -280,19 +283,19 @@ class PyTorchRayEstimator:
                                              label_cols=label_cols,
                                              mode="evaluate")
         if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                data = process_xshards_of_pandas_dataframe(data, feature_cols, label_cols)
             from zoo.orca.data.utils import process_spark_xshards
             ray_xshards = process_spark_xshards(data, self.num_workers)
 
-            def transform_func(worker, shards_ref):
-                data_creator = shards_ref_to_creator(shards_ref)
+            def transform_func(worker, partition_refs):
+                data_creator = partition_refs_to_creator(partition_refs)
                 # Should not wrap DistributedSampler on DataLoader for SparkXShards input.
                 return worker.validate.remote(
                     data_creator, batch_size, num_steps, profile, info, False)
 
-            stats_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                                    transform_func,
-                                                                    gang_scheduling=True)
-            worker_stats = stats_shards.collect_partitions()
+            worker_stats = ray_xshards.reduce_partitions_for_actors(self.remote_workers,
+                                                                    transform_func)
         else:
             assert isinstance(data, types.FunctionType), \
                 "data should be either an instance of SparkXShards or a callable function, but " \
@@ -308,13 +311,12 @@ class PyTorchRayEstimator:
         ray_xshards = RayXShards.from_spark_xshards(xshards)
 
         def transform_func(worker, shards_ref):
-            data_creator = lambda config: shards_ref
+            data_creator = lambda config, batch_size: shards_ref
             return worker.predict.remote(
                 data_creator, **param)
 
         pred_shards = ray_xshards.transform_shards_with_actors(self.remote_workers,
-                                                               transform_func,
-                                                               gang_scheduling=False)
+                                                               transform_func)
         spark_xshards = pred_shards.to_spark_xshards()
         return spark_xshards
 
@@ -338,6 +340,8 @@ class PyTorchRayEstimator:
             pred_shards = self._predict_spark_xshards(xshards, param)
             result = convert_predict_xshards_to_dataframe(data, pred_shards)
         elif isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                data = process_xshards_of_pandas_dataframe(data, feature_cols)
             pred_shards = self._predict_spark_xshards(data, param)
             result = update_predict_xshards(data, pred_shards)
         else:
@@ -353,14 +357,14 @@ class PyTorchRayEstimator:
         model.load_state_dict(model_state)
         return model.module if hasattr(model, "module") else model
 
-    def save(self, checkpoint):
-        """Saves the Estimator state to the provided checkpoint path.
+    def save(self, model_path):
+        """Saves the Estimator state to the provided model_path.
 
-        :param checkpoint: (str) Path to target checkpoint file.
+        :param model_path: (str) Path to save the model.
         """
         state_dict = self.get_state_dict()
-        torch.save(state_dict, checkpoint)
-        return checkpoint
+        torch.save(state_dict, model_path)
+        return model_path
 
     def get_state_dict(self):
         stream_ids = [
@@ -376,12 +380,12 @@ class PyTorchRayEstimator:
             map_location="cpu")
         return state_dict
 
-    def load(self, checkpoint):
-        """Loads the Estimator and all workers from the provided checkpoint.
+    def load(self, model_path):
+        """Loads the Estimator and all workers from the provided model_path.
 
-        :param checkpoint: (str) Path to target checkpoint file.
+        :param model_path: (str) Path to the existing model.
         """
-        state_dict = torch.load(checkpoint)
+        state_dict = torch.load(model_path)
         self.load_state_dict(state_dict)
 
     def load_state_dict(self, state_dict, blocking=True):

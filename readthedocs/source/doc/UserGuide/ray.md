@@ -1,3 +1,0 @@
-# Ray User Guide
-
----

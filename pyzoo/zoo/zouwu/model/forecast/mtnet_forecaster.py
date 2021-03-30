@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.automl.model.MTNet_keras import MTNetKeras as MTNetKerasModel
+from zoo.zouwu.model.forecast.model.MTNet_keras import MTNetKeras as MTNetKerasModel
 from zoo.zouwu.model.forecast.tfpark_forecaster import TFParkForecaster
 
 

@@ -97,10 +97,10 @@ object MockSinglePipelineBaseline extends Supportive {
       s"with input ${param.testNum.toString}") {
       var a = Seq[(String, String)]()
       val pre = new PreProcessing(true)
-      (0 until helper.coreNum).foreach( i =>
+      (0 until helper.thrdPerModel).foreach(i =>
         a = a :+ (i.toString(), b64string)
       )
-      (0 until param.testNum).grouped(helper.coreNum).flatMap(batch => {
+      (0 until param.testNum).grouped(helper.thrdPerModel).flatMap(batch => {
         val preprocessed = timer.timing("Preprocess", batch.size) {
           (0 until batch.size).toParArray.map(i => {
             val deserializer = new ArrowDeserializer()
@@ -111,7 +111,7 @@ object MockSinglePipelineBaseline extends Supportive {
         }
         preprocessed.grouped(batch.size).flatMap(b => {
           val t = timer.timing("Batch input", batch.size) {
-            clusterServingInference.batchInput(b, helper.coreNum, true, helper.resize)
+            clusterServingInference.batchInput(b, helper.thrdPerModel, true, helper.resize)
           }
           clusterServingInference.dimCheck(t, "add", helper.modelType)
           val result = timer.timing("Inference", batch.size) {
@@ -120,7 +120,7 @@ object MockSinglePipelineBaseline extends Supportive {
           clusterServingInference.dimCheck(t, "remove", helper.modelType)
           clusterServingInference.dimCheck(result, "remove", helper.modelType)
           val postprocessed = timer.timing("Postprocess", batch.size) {
-            (0 until helper.coreNum).map(i => {
+            (0 until helper.thrdPerModel).map(i => {
               ArrowSerializer.activityBatchToByte(result, i + 1)
             })
           }

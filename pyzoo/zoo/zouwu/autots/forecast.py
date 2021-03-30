@@ -14,9 +14,9 @@
 # limitations under the License.
 #
 
-from zoo.automl.regression.time_sequence_predictor import TimeSequencePredictor
-from zoo.automl.config.recipe import *
-from zoo.automl.pipeline.time_sequence import load_ts_pipeline
+from zoo.zouwu.regression.time_sequence_predictor import TimeSequencePredictor
+from zoo.zouwu.config.recipe import *
+from zoo.zouwu.pipeline.time_sequence import load_ts_pipeline
 
 
 class AutoTSTrainer:
@@ -34,6 +34,7 @@ class AutoTSTrainer:
                  search_alg_params=None,
                  scheduler=None,
                  scheduler_params=None,
+                 name="automl"
                  ):
         """
         Initialize the AutoTS Trainer.
@@ -55,7 +56,8 @@ class AutoTSTrainer:
             search_alg=search_alg,
             search_alg_params=search_alg_params,
             scheduler=scheduler,
-            scheduler_params=scheduler_params
+            scheduler_params=scheduler_params,
+            name=name
         )
 
     def fit(self,

@@ -102,12 +102,12 @@ object InferenceBaseline extends Supportive {
       s"with input ${param.testNum.toString}") {
       var a = Seq[(String, Table)]()
       val pre = new PreProcessing(true)
-      (0 until helper.coreNum).foreach( i =>
+      (0 until helper.thrdPerModel).foreach(i =>
         a = a :+ (i.toString(), T(warmT))
       )
-      (0 until param.testNum).grouped(helper.coreNum).flatMap(batch => {
+      (0 until param.testNum).grouped(helper.thrdPerModel).flatMap(batch => {
           val t = timer.timing("Batch input", batch.size) {
-            clusterServingInference.batchInput(a, helper.coreNum, true, helper.resize)
+            clusterServingInference.batchInput(a, helper.thrdPerModel, true, helper.resize)
           }
           clusterServingInference.dimCheck(t, "add", helper.modelType)
           val result = timer.timing("Inference", batch.size) {

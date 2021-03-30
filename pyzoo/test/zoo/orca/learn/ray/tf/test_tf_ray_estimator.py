@@ -47,9 +47,8 @@ def linear_dataset(a=2, size=1000):
     return x, y
 
 
-def create_train_datasets(config):
+def create_train_datasets(config, batch_size):
     import tensorflow as tf
-    batch_size = config["batch_size"]
     x_train, y_train = linear_dataset(size=NUM_TRAIN_SAMPLES)
 
     train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
@@ -59,9 +58,8 @@ def create_train_datasets(config):
     return train_dataset
 
 
-def create_test_dataset(config):
+def create_test_dataset(config, batch_size):
     import tensorflow as tf
-    batch_size = config["batch_size"]
     x_test, y_test = linear_dataset(size=NUM_TEST_SAMPLES)
 
     test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
@@ -106,14 +104,14 @@ def identity_model_creator(config):
     return model
 
 
-def create_auto_shard_datasets(config):
+def create_auto_shard_datasets(config, batch_size):
     import tensorflow as tf
     data_path = os.path.join(resource_path, "orca/learn/test_auto_shard/*.csv")
     dataset = tf.data.Dataset.list_files(data_path)
     dataset = dataset.interleave(lambda x: tf.data.TextLineDataset(x))
     dataset = dataset.map(lambda x: tf.strings.to_number(x))
     dataset = dataset.map(lambda x: (x, x))
-    dataset = dataset.batch(config["batch_size"])
+    dataset = dataset.batch(batch_size)
     return dataset
 
 
@@ -349,6 +347,64 @@ class TestTFRayEstimator(TestCase):
                          label_cols=["label"])
         trainer.predict(df, feature_cols=["feature"]).collect()
 
+    def test_pandas_dataframe(self):
+        def model_creator(config):
+            import tensorflow as tf
+            input1 = tf.keras.layers.Input(shape=(1,))
+            input2 = tf.keras.layers.Input(shape=(1,))
+            concatenation = tf.concat([input1, input2], axis=-1)
+            outputs = tf.keras.layers.Dense(units=1, activation='softmax')(concatenation)
+            model = tf.keras.Model(inputs=[input1, input2], outputs=outputs)
+            model.compile(**compile_args(config))
+            return model
+
+        file_path = os.path.join(resource_path, "orca/learn/ncf2.csv")
+        train_data_shard = zoo.orca.data.pandas.read_csv(file_path)
+
+        config = {
+            "lr": 0.8
+        }
+
+        trainer = Estimator.from_keras(
+            model_creator=model_creator,
+            verbose=True,
+            config=config,
+            workers_per_node=1)
+
+        trainer.fit(train_data_shard, epochs=1, batch_size=4, steps_per_epoch=25,
+                    feature_cols=["user", "item"],
+                    label_cols=["label"])
+        trainer.evaluate(train_data_shard, batch_size=4, num_steps=25,
+                         feature_cols=["user", "item"], label_cols=["label"])
+        trainer.predict(train_data_shard, feature_cols=["user", "item"]).collect()
+
+    def test_dataframe_shard_size(self):
+        from zoo.orca import OrcaContext
+        OrcaContext._shard_size = 3
+        sc = init_nncontext()
+        rdd = sc.range(0, 10)
+        from pyspark.sql import SparkSession
+        spark = SparkSession(sc)
+        from pyspark.ml.linalg import DenseVector
+        df = rdd.map(lambda x: (DenseVector(np.random.randn(1,).astype(np.float)),
+                                int(np.random.randint(0, 1, size=())))).toDF(["feature", "label"])
+
+        config = {
+            "lr": 0.8
+        }
+        trainer = Estimator.from_keras(
+            model_creator=model_creator,
+            verbose=True,
+            config=config,
+            workers_per_node=2)
+
+        trainer.fit(df, epochs=1, batch_size=4, steps_per_epoch=25,
+                    feature_cols=["feature"],
+                    label_cols=["label"])
+        trainer.evaluate(df, batch_size=4, num_steps=25, feature_cols=["feature"],
+                         label_cols=["label"])
+        trainer.predict(df, feature_cols=["feature"]).collect()
+
     def test_dataframe_predict(self):
         sc = init_nncontext()
         rdd = sc.parallelize(range(20))
@@ -441,24 +497,21 @@ class TestTFRayEstimator(TestCase):
                           metrics=['accuracy'])
             return model
 
-        def train_data_creator(config):
+        def train_data_creator(config, batch_size):
             dataset = tf.data.Dataset.from_tensor_slices((np.random.randn(100, 28, 28, 3),
                                                           np.random.randint(0, 10, (100, 1))))
             dataset = dataset.repeat()
             dataset = dataset.shuffle(1000)
-            dataset = dataset.batch(config["batch_size"])
+            dataset = dataset.batch(batch_size)
             return dataset
 
         batch_size = 320
-        config = {
-            "batch_size": batch_size
-        }
         try:
-            est = Estimator.from_keras(model_creator=model_creator,
-                                       config=config, workers_per_node=2)
+            est = Estimator.from_keras(model_creator=model_creator, workers_per_node=2)
 
             history = est.fit(train_data_creator,
                               epochs=1,
+                              batch_size=batch_size,
                               steps_per_epoch=5)
             print("start saving")
             est.save("/tmp/cifar10_keras.ckpt")
@@ -466,3 +519,7 @@ class TestTFRayEstimator(TestCase):
             print("save success")
         finally:
             os.remove("/tmp/cifar10_keras.ckpt")
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

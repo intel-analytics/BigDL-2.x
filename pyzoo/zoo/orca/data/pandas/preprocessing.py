@@ -23,6 +23,7 @@ from zoo.orca.data.utils import *
 
 def read_csv(file_path, **kwargs):
     """
+
     Read csv files to SparkXShards of pandas DataFrames.
 
     :param file_path: A csv file path, a list of multiple csv file paths, or a directory
@@ -35,6 +36,7 @@ def read_csv(file_path, **kwargs):
 
 def read_json(file_path, **kwargs):
     """
+
     Read json files to SparkXShards of pandas DataFrames.
 
     :param file_path: A json file path, a list of multiple json file paths, or a directory
@@ -87,9 +89,7 @@ def read_file_spark(file_path, file_type, **kwargs):
     else:  # Spark backend; spark.read.csv/json accepts a folder path as input
         assert file_type == "json" or file_type == "csv", \
             "Unsupported file type: %s. Only csv and json files are supported for now" % file_type
-        from pyspark.sql import SQLContext
-        sqlContext = SQLContext.getOrCreate(sc)
-        spark = sqlContext.sparkSession
+        spark = OrcaContext.get_spark_session()
         # TODO: add S3 confidentials
 
         # The following implementation is adapted from
@@ -270,6 +270,7 @@ def read_file_spark(file_path, file_type, **kwargs):
 
 def read_parquet(file_path, columns=None, schema=None, **options):
     """
+
     Read parquet files to SparkXShards of pandas DataFrames.
 
     :param file_path: Parquet file path, a list of multiple parquet file paths, or a directory
@@ -282,9 +283,7 @@ def read_parquet(file_path, columns=None, schema=None, **options):
     :return: An instance of SparkXShards.
     """
     sc = init_nncontext()
-    from pyspark.sql import SQLContext
-    sqlContext = SQLContext.getOrCreate(sc)
-    spark = sqlContext.sparkSession
+    spark = OrcaContext.get_spark_session()
     # df = spark.read.parquet(file_path)
     df = spark.read.load(file_path, "parquet", schema=schema, **options)
 

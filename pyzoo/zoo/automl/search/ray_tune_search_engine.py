@@ -17,19 +17,17 @@
 import ray
 from ray import tune
 from copy import deepcopy
-import os
 
 from zoo.automl.search.abstract import *
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.impute.impute import *
 from ray.tune import Trainable
 import ray.tune.track
 from zoo.automl.logger import TensorboardXLogger
-from zoo.automl.model.model_builder import ModelBuilder
-from zoo.automl.feature.identity_transformer import IdentityTransformer
-from zoo.automl.search.tune_utils import (create_searcher,
-                                          create_scheduler)
+from zoo.zouwu.model.forecast.model import ModelBuilder
+from zoo.zouwu.feature.identity_transformer import IdentityTransformer
+from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
+import pandas as pd
 
 SEARCH_ALG_ALLOWED = ("variant_generator", "skopt", "bayesopt")
 
@@ -177,14 +175,6 @@ class RayTuneSearchEngine(SearchEngine):
             if search_alg not in SEARCH_ALG_ALLOWED:
                 raise ValueError(f"search_alg must be one of {SEARCH_ALG_ALLOWED}. "
                                  f"Got: {search_alg}")
-            if search_alg == "skopt":
-                from skopt import Optimizer
-                opt_params = recipe.opt_params()
-                optimizer = Optimizer(opt_params)
-                search_alg_params.update(dict(
-                    optimizer=optimizer,
-                    parameter_names=list(search_space.keys()),
-                ))
             elif search_alg == "bayesopt":
                 search_alg_params.update({"space": recipe.manual_search_space()})
 
@@ -192,8 +182,7 @@ class RayTuneSearchEngine(SearchEngine):
                 metric="reward_metric",
                 mode="max",
             ))
-            search_alg = create_searcher(search_alg,
-                                         **search_alg_params)
+            search_alg = tune.create_searcher(search_alg, **search_alg_params)
         return search_alg
 
     @staticmethod
@@ -209,7 +198,7 @@ class RayTuneSearchEngine(SearchEngine):
                 metric="reward_metric",
                 mode="max",
             ))
-            scheduler = create_scheduler(scheduler, **scheduler_params)
+            scheduler = tune.create_scheduler(scheduler, **scheduler_params)
         return scheduler
 
     def run(self):
@@ -235,14 +224,10 @@ class RayTuneSearchEngine(SearchEngine):
         # Visualization code for ray (leaderboard)
         # catch the ImportError Since it has been processed in TensorboardXLogger
         tf_config, tf_metric = self._log_adapt(analysis)
-        try:
-            self.logger = TensorboardXLogger(os.path.join(self.logs_dir, self.name+"_leaderboard"))
-            self.logger.run(tf_config, tf_metric)
-            self.logger.close()
-        except ImportError:
-            pass
-        except:
-            raise
+
+        self.logger = TensorboardXLogger(os.path.join(self.logs_dir, self.name+"_leaderboard"))
+        self.logger.run(tf_config, tf_metric)
+        self.logger.close()
 
         return analysis
 
@@ -393,16 +378,19 @@ class RayTuneSearchEngine(SearchEngine):
                                               # verbose=1,
                                               **config)
                 reward_m = result if Evaluator.get_metric_mode(metric) == "max" else -result
-                ckpt_name = "best.ckpt"
-                if best_reward_m is None or reward_m > best_reward_m:
-                    best_reward_m = reward_m
-                    save_zip(ckpt_name, trial_ft, trial_model, config)
-                    if remote_dir is not None:
-                        upload_ppl_hdfs(remote_dir, ckpt_name)
+                checkpoint_filename = "best.ckpt"
+                if isinstance(model_create_func, ModelBuilder):
+                    trial_model.save(checkpoint_filename)
+                else:
+                    if best_reward_m is None or reward_m > best_reward_m:
+                        best_reward_m = reward_m
+                        save_zip(checkpoint_filename, trial_ft, trial_model, config)
+                        if remote_dir is not None:
+                            upload_ppl_hdfs(remote_dir, checkpoint_filename)
 
                 tune.track.log(training_iteration=i,
                                reward_metric=reward_m,
-                               checkpoint="best.ckpt")
+                               checkpoint=checkpoint_filename)
 
         return train_func
 
@@ -529,5 +517,6 @@ class RayTuneSearchEngine(SearchEngine):
         metric_raw = analysis.fetch_trial_dataframes()
         metric = {}
         for key, value in metric_raw.items():
-                metric[key] = dict(zip(list(value.columns), list(value.iloc[-1].values)))
+            metric[key] = dict(zip(list(value.columns), list(map(list, value.values.T))))
+            config[key]["address"] = key
         return config, metric

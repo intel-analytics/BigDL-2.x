@@ -96,7 +96,7 @@ object OpenVINOBaseline extends Supportive {
 
       (0 until param.parNum).indices.toParArray.foreach(_ => {
         val model = OpenVinoInferenceSupportive.loadOpenVinoIR(
-          helper.defPath, helper.weightPath, DeviceType.CPU, helper.coreNum)
+          helper.defPath, helper.weightPath, DeviceType.CPU, helper.thrdPerModel)
         val t = warmT
         model.predict(t)
 //        val model = TFNet(helper.weightPath)
@@ -109,12 +109,12 @@ object OpenVINOBaseline extends Supportive {
         val timer = new Timer()
         var a = Seq[(String, String)]()
         val pre = new PreProcessing(true)
-        (0 until helper.coreNum).foreach( i =>
+        (0 until helper.thrdPerModel).foreach(i =>
           a = a :+ (i.toString(), b64string)
         )
-        (0 until param.testNum).grouped(helper.coreNum).flatMap(i => {
+        (0 until param.testNum).grouped(helper.thrdPerModel).flatMap(i => {
           val preprocessed = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Preprocess", helper.coreNum) {
+            s"Thread ${Thread.currentThread().getId} Preprocess", helper.thrdPerModel) {
             a.map(item => {
               val deserializer = new ArrowDeserializer()
               val arr = deserializer.create(b64string)
@@ -125,21 +125,21 @@ object OpenVINOBaseline extends Supportive {
             })
           }
           val t = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Batch input", helper.coreNum) {
+            s"Thread ${Thread.currentThread().getId} Batch input", helper.thrdPerModel) {
             clusterServingInference.batchInput(
-              preprocessed, helper.coreNum, false, helper.resize)
+              preprocessed, helper.thrdPerModel, false, helper.resize)
           }
           clusterServingInference.dimCheck(t, "add", helper.modelType)
           val result = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Inference", helper.coreNum) {
+            s"Thread ${Thread.currentThread().getId} Inference", helper.thrdPerModel) {
             model.predict(t)
 //              model.forward(t)
           }
           clusterServingInference.dimCheck(t, "remove", helper.modelType)
           clusterServingInference.dimCheck(result, "remove", helper.modelType)
           val postprocessed = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Postprocess", helper.coreNum) {
-            (0 until helper.coreNum).map(i => {
+            s"Thread ${Thread.currentThread().getId} Postprocess", helper.thrdPerModel) {
+            (0 until helper.thrdPerModel).map(i => {
               ArrowSerializer.activityBatchToByte(result, i + 1)
             })
           }

@@ -20,9 +20,9 @@ It can support various data types, like XShards, Spark DataFrame, tf.data.Datase
 
 It supports both native Tensorflow Graph model and Tensorflow Keras model in the unified APIs. 
 
-For native Tensorflow Graph model, you can reference our [graph model example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/examples/orca/learn/tf/lenet_mnist_graph.py).
+For native Tensorflow Graph model, you can reference our [graph model example](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/tf_lenet_mnist.ipynb).
 
-For Tensorflow Keras model, you can reference our [keras model example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/examples/orca/learn/tf/lenet_mnist_keras.py).
+For Tensorflow Keras model, you can reference our [keras model example](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/keras_lenet_mnist.ipynb).
 
 #### **Create Estimator with graph model**
 
@@ -90,7 +90,6 @@ fit(data,
     feature_cols=None,
     label_cols=None,
     validation_data=None,
-    hard_code_batch_size=False,
     session_config=None,
     feed_dict=None,
     checkpoint_trigger=None
@@ -98,7 +97,7 @@ fit(data,
 ```
 * `data`: train data. It can be XShards, Spark DataFrame, tf.data.Dataset.
         
-   If `data` is XShards, each element needs to be {'x': a feature numpy array
+   If `data` is XShards, each element can be Pandas Dataframe or {'x': a feature numpy array
          or a tuple of feature numpy arrays, 'y': a label numpy array or a tuple of
          label numpy arrays}
    
@@ -109,7 +108,6 @@ fit(data,
 * `feature_cols`: feature column names if train data is Spark DataFrame.
 * `label_cols`: label column names if train data is Spark DataFrame.
 * `validation_data`: validation data. Validation data type should be the same as train data.
-* `hard_code_batch_size`: whether hard code batch size for training. Default is False.
 * `session_config`: tensorflow session configuration for training. Should be object of tf.ConfigProto
 * `feed_dict`: a dictionary. The key is TensorFlow tensor, usually a placeholder, the value of the dictionary is a tuple of two elements. 
   
@@ -202,7 +200,6 @@ fit(data,
     feature_cols=None,
     label_cols=None,
     validation_data=None,
-    hard_code_batch_size=False,
     session_config=None,
     checkpoint_trigger=None
     )
@@ -220,7 +217,6 @@ fit(data,
 * `feature_cols`: feature column names if train data is Spark DataFrame.
 * `label_cols`: label column names if train data is Spark DataFrame.
 * `validation_data`: validation data. Validation data type should be the same as train data.
-* `hard_code_batch_size`: whether hard code batch size for training. Default is False.
 * `session_config`: tensorflow session configuration for training. Should be object of tf.ConfigProto
 * `checkpoint_trigger`: when to trigger checkpoint during training. Should be bigdl optimzer trigger, like EveryEpoch(), SeveralIteration(num_iterations),etc.
 
@@ -277,7 +273,6 @@ You can call estimator's API to evaluate Tensorflow graph model or keras model.
 evaluate(data, batch_size=4,
          feature_cols=None,
          label_cols=None,
-         hard_code_batch_size=False
         )
 ```
 * `data`: evaluation data. It can be XShards, Spark DataFrame, tf.data.Dataset.
@@ -289,7 +284,6 @@ evaluate(data, batch_size=4,
 * `batch_size`: batch size per thread.
 * `feature_cols`: feature_cols: feature column names if train data is Spark DataFrame.
 * `label_cols`: label column names if train data is Spark DataFrame.
-* `hard_code_batch_size`: whether to hard code batch size for evaluation.
 
 This method returns evaluation result as a dictionary in the format of {'metric name': metric value}
 
@@ -299,7 +293,6 @@ You can call estimator's such APIs to predict with trained model.
 ```
 predict(data, batch_size=4,
         feature_cols=None,
-        hard_code_batch_size=False
         ):
 ```
 * `data`: data to be predicted. It can be XShards, Spark DataFrame, or tf.data.Dataset.        
@@ -311,7 +304,6 @@ predict(data, batch_size=4,
 
 * `batch_size`: batch size per thread
 * `feature_cols`: list of feature column names if input data is Spark DataFrame.
-* `hard_code_batch_size`: if require hard code batch size for prediction. The default value is False.
 
 This method returns a predicted result.
 
@@ -358,16 +350,16 @@ assert 'prediction' in predictions[0]
 During training, Orca TF Estimator would save Orca checkpoint every epoch. You can also specify `checkpoint_trigger` in fit() to set checkpoint interval. The Orca checckpoints are saved in `model_dir` which is specified when you create estimator. You can load previous Orca checkpoint and resume train with it with such APIs:
  
 ```
-load_latest_orca_checkpoint(path)
+load_orca_checkpoint(path, version=None)
 ``` 
 * path: directory containing Orca checkpoint files.
 
-This method load latest checkpoint under specified directory.
+With `version=None`, this method load latest checkpoint under specified directory.
 
 E.g.
 ```
 est = Estimator.from_keras(keras_model=model, model_dir=model_dir)
-est.load_latest_orca_checkpoint(model_dir)
+est.load_orca_checkpoint(model_dir, version=None)
 est.fit(data=data_shard,
         batch_size=8,
         epochs=10,

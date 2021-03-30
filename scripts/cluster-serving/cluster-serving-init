@@ -3,24 +3,23 @@
 
 # try call py script
 # pip install will add following script to path, but no pip would not
-if cluster-serving-py-setup.py ; then
-  echo "You are installing Cluster Serving by pip, downloading..."
-else
-  if [ -f config.yaml ]; then
-    echo "Cluster Serving config file prepared."
-  else
-    echo "Failed to find config file. Initialization failed."
-  fi
+cluster-serving-py-setup.py &&
 
-  if mv *-serving.jar zoo.jar ; then
-      echo "Cluster Serving environment set up. Initialization success."
+if [ -f config.yaml ]; then
+  echo "Cluster Serving config file prepared."
+else
+  echo "Failed to find config file. Initialization failed."
+fi
+
+if mv *-serving.jar zoo.jar ; then
+    echo "Cluster Serving environment set up. Initialization success."
+else
+  if [ -f zoo.jar ]; then
+    echo "Cluster Serving environment already set up. Initialization success."
   else
-    if [ -f zoo.jar ]; then
-      echo "Cluster Serving environment already set up. Initialization success."
-    else
-      echo "Failed to find *-serving jar in current directory, please make sure this is the directory you unzip the cluster-serving-all.zip package."
-      exit 1
-    fi
+    echo "Failed to find *-serving jar or zoo.jar in current directory, will download it... If this is too slow, please go to Analytics Zoo repo to download it manually."
+    download-serving-jar.sh
   fi
 fi
+
 
