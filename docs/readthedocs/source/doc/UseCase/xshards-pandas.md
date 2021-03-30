@@ -59,14 +59,18 @@ class NCF(object):
         self.label = tf.placeholder(dtype=tf.int32, shape=(None,))
 
         with tf.name_scope("GMF"):
-            user_embed_GMF = tf.contrib.layers.embed_sequence(self.user, vocab_size=user_size + 1, embed_dim=embed_size)
-            item_embed_GMF = tf.contrib.layers.embed_sequence(self.item, vocab_size=item_size + 1, embed_dim=embed_size)
+            user_embed_GMF = tf.contrib.layers.embed_sequence(self.user, vocab_size=user_size + 1,
+                                                              embed_dim=embed_size)
+            item_embed_GMF = tf.contrib.layers.embed_sequence(self.item, vocab_size=item_size + 1,
+                                                              embed_dim=embed_size)
             GMF = tf.multiply(user_embed_GMF, item_embed_GMF)
 
         # MLP part starts
         with tf.name_scope("MLP"):
-            user_embed_MLP = tf.contrib.layers.embed_sequence(self.user, vocab_size=user_size + 1, embed_dim=embed_size)
-            item_embed_MLP = tf.contrib.layers.embed_sequence(self.item, vocab_size=item_size + 1, embed_dim=embed_size)
+            user_embed_MLP = tf.contrib.layers.embed_sequence(self.user, vocab_size=user_size + 1,
+                                                              embed_dim=embed_size)
+            item_embed_MLP = tf.contrib.layers.embed_sequence(self.item, vocab_size=item_size + 1,
+                                                              embed_dim=embed_size)
             interaction = tf.concat([user_embed_MLP, item_embed_MLP], axis=-1)
             layer1_MLP = tf.layers.dense(inputs=interaction, units=embed_size * 2)
             layer1_MLP = tf.layers.dropout(layer1_MLP, rate=0.2)
