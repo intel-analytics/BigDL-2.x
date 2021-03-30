@@ -89,6 +89,6 @@ RUN mkdir -p /opt/analytics-zoo && \
     wget -c "https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.12.1-spark_2.4.3/0.10.0-SNAPSHOT/analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.10.0-20210322.210553-65-cluster-serving-all.zip" && \
     unzip analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.10.0-20210322.210553-65-cluster-serving-all.zip && \
     cp cluster-serving/*.jar . && \
-    cp cluster-serving/config.yaml && \
+    cp cluster-serving/config.yaml . && \
     rm -rf cluster-serving && \
     rm analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.10.0-20210322.210553-65-cluster-serving-all.zip
