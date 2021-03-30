@@ -44,6 +44,7 @@ import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.http.{Instances, JsonUtil}
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 
 import sys.env
 
@@ -149,6 +150,92 @@ class CorrectnessSpec extends FlatSpec with Matchers {
      catch {
        case _ => None
      }
+    }
+    val acc = cN / tN
+    logger.info(s"Top 1 Accuracy of serving, Openvino ResNet50 Model on ImageNet is ${acc}")
+    assert(acc > 0.71)
+
+  }
+
+ 
+  "Cluster Serving batch inference result" should "be correct" in {
+
+    ("wget -O /tmp/serving_val.tar http://10.239.45.10:8081" +
+      "/repository/raw/analytics-zoo-data/imagenet_1k.tar").!
+    "tar -xvf /tmp/serving_val.tar -C /tmp/".!
+    val helper = new ClusterServingHelper(configPath)
+    helper.loadConfig()
+    //    helper.dataShape = Array(Array(3, 224, 224))
+    val model = helper.loadInferenceModel()
+    val imagePath = "/tmp/imagenet_1k"
+    val lsCmd = "ls " + imagePath
+
+    val totalNum = (lsCmd #| "wc").!!.split(" +").filter(_ != "").head.toInt
+
+    // enqueue image
+    val f = new File(imagePath)
+    val fileList = f.listFiles
+    logger.info(s"${fileList.size} images about to enqueue...")
+
+    val pre = new PreProcessing(helper.chwFlag)
+    val clusterServingInference = new ClusterServingInference(pre, helper.modelType)
+    var predictMap = Map[String, String]()
+
+    var batchInputs = Seq[(String, Activity)]()
+
+    for (file <- fileList) {
+      val dataStr = getBase64FromPath(file.getAbsolutePath)
+      val instancesJson =
+        s"""{
+           |"instances": [
+           |   {
+           |     "img": "${dataStr}"
+           |   }
+           |]
+           |}
+           |""".stripMargin
+      val instances = JsonUtil.fromJson(classOf[Instances], instancesJson)
+      val inputBase64 = new String(java.util.Base64.getEncoder
+        .encode(instances.toArrow()))
+      val input = pre.decodeArrowBase64("", inputBase64)
+
+      if (batchInputs.length < 4) {
+        batchInputs = batchInputs :+ (file.getName(), input)
+      }
+      if (batchInputs.length == 4) {
+        val bInput = clusterServingInference.batchInput(batchInputs, 4, true, false)
+        val result = model.doPredict(bInput)
+        var i = 0
+        for ( i <- 1 to 4){
+          val value = PostProcessing(result.toTensor[Float]
+            .squeeze(1).apply(i), "topN(1)", 1)
+          val clz = value.split(",")(0).stripPrefix("[[")
+          predictMap = predictMap + (batchInputs(i-1)._1 -> clz)
+        }
+
+        batchInputs = Seq[(String, Activity)]()
+      }
+    }
+    ("rm -rf /tmp/" + imagePath + "*").!
+    "rm -rf /tmp/serving_val_*".!
+    "rm -rf /tmp/config.yaml".!
+
+    // start check with txt file
+
+    var cN = 0f
+    var tN = 0f
+    for (line <- Source.fromFile(imagePath + ".txt").getLines()) {
+      val key = line.split(" ").head
+      val cls = line.split(" ").tail(0)
+      try {
+        if (predictMap(key) == cls) {
+          cN += 1
+        }
+        tN += 1
+      }
+      catch {
+        case _ => None
+      }
     }
     val acc = cN / tN
     logger.info(s"Top 1 Accuracy of serving, Openvino ResNet50 Model on ImageNet is ${acc}")
