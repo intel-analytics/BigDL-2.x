@@ -148,9 +148,11 @@ def optimizer_creator(model, config):
 
 def loss_creator(config):
     loss_name = config.get("loss", "mse")
-    if not PYTORCH_REGRESSION_LOSS_MAP.has_key(loss_name):
+    if loss_name in PYTORCH_REGRESSION_LOSS_MAP:
+        loss_name = PYTORCH_REGRESSION_LOSS_MAP[loss_name]
+    else:
         raise RuntimeError("You need to provide valid loss name within mse, mae and huber_loss")
-    return getattr(torch.nn, loss_name)
+    return getattr(torch.nn, loss_name)()
 
 
 class TCNPytorch(PytorchBaseModel):
