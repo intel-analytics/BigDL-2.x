@@ -128,8 +128,8 @@ class MPIEstimator:
                 validate_func = validate
 
         with open("mpi_train_data.pkl", "wb") as f:
-            cloudpickle.dump((data_creator, epochs, validation_data_creator,
-                              train_func, validate_func, train_batches,
+            cloudpickle.dump((data_creator, epochs, batch_size, validation_data_creator,
+                              validate_batch_size, train_func, validate_func, train_batches,
                               validate_batches, validate_steps), f)
         self.mpi_runner.scp_file("mpi_train_data.pkl", self.dir)
         self.mpi_runner.run("{}/mpi_train.py".format(self.dir), pkl_path=self.dir)
