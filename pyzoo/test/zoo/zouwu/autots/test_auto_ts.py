@@ -18,7 +18,7 @@ import pytest
 import numpy as np
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
-from zoo.automl.config.recipe import LSTMGridRandomRecipe, MTNetGridRandomRecipe
+from zoo.zouwu.config.recipe import LSTMGridRandomRecipe, MTNetGridRandomRecipe
 from zoo.zouwu.autots.forecast import AutoTSTrainer
 from zoo.zouwu.autots.forecast import TSPipeline
 

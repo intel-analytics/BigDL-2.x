@@ -10,7 +10,8 @@
 
 ### **Step 0: Prepare Environment**
 
-[conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) is needed to prepare the Python environment for running this example. Please refer to the [install guide](../../UserGuide/python.md) for more details.
+[Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) is needed to prepare the Python environment for running this example. Please refer to the [install guide](../../UserGuide/python.md) for more details.
+
 
 ```bash
 conda create -n zoo python=3.7 # zoo is conda environment name, you can use any name you like.
@@ -27,7 +28,7 @@ from zoo.orca import init_orca_context, stop_orca_context
 
 
 if args.cluster_mode == "local":
-    init_orca_context(cores=1, memory="2g")   # run in local mode
+    init_orca_context(cores=1, memory="2g") # run in local mode
 elif args.cluster_mode == "k8s":
     init_orca_context(cluster_mode="k8s", num_nodes=2, cores=4) # run on K8s cluster
 elif args.cluster_mode == "yarn":
@@ -36,7 +37,7 @@ elif args.cluster_mode == "yarn":
     driver_memory="10g", driver_cores=1,
     conf={"spark.rpc.message.maxSize": "1024",
         "spark.task.maxFailures": "1",
-        "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"})   # run on Hadoop YARN cluster
+        "spark.driver.extraJavaOptions": "-Dbigdl.failure.retryTimes=1"}) # run on Hadoop YARN cluster
 ```
 
 This is the only place where you need to specify local or distributed mode. View [Orca Context](./../Overview/orca-context.md) for more details.
@@ -78,14 +79,15 @@ adam = torch.optim.Adam(model.parameters(), 0.001)
 
 ### **Step 3: Define Train Dataset**
 
-You can define the dataset using standard [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html). Orca also supports a data creator function or [Orca XShards](../Overview/data-parallel-processing.md).
+You can define the dataset using standard [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html). 
 
 ```python
 import torch
 from torchvision import datasets, transforms
 
 torch.manual_seed(0)
-dir='./dataset'
+dir='./'
+
 batch_size=64
 test_batch_size=64
 train_loader = torch.utils.data.DataLoader(
@@ -101,8 +103,10 @@ test_loader = torch.utils.data.DataLoader(
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
                    ])),
-    batch_size=test_batch_size, shuffle=False) 
+    batch_size=test_batch_size, shuffle=False)
 ```
+
+Alternatively, we can also use a [Data Creator Function](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist_data_creator_func.ipynb) or [Orca XShards](../Overview/data-parallel-processing) as the input data, especially when the data size is very large)
 
 ### **Step 4: Fit with Orca Estimator**
 
@@ -125,7 +129,7 @@ est.fit(data=train_loader, epochs=10, validation_data=test_loader,
 
 result = est.evaluate(data=test_loader)
 for r in result:
-    print(str(r))
+    print(r, ":", result[r])
 ```
 
 **Note:** You should call `stop_orca_context()` when your application finishes.
