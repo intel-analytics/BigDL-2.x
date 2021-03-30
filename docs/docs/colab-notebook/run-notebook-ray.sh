@@ -8,32 +8,37 @@ clear_up() {
 
 set -e
 
-names=(ray/quickstart/ray_sharded_parameter_server)
-len=${#names[@]}
-runtime=()
-for (( i=0; i<$len; ++i));
-do
-	name=${names[$i]}
-	echo "#$((i+1)) start test for $name.ipynb"
+runtime=0  # global variable that will be changed in run(); records temporary runtime
+
+# the first argument is the number of ipynb, the second argument is the name of ipynb
+run(){
+	echo "#$1 start test for $2.ipynb"
 	start=$(date "+%s")
-	${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/$name
-	sed -i '/get_ipython/s/^/#/' ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/$name.py
-	python ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/$name.py
+	${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/$2
+	sed -i '/get_ipython/s/^/#/' ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/$2.py
+	python ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/$2.py
 
 	exit_status=$?
 	if [ $exit_status -ne 0 ]; then
 	  clear_up
-	  echo "$name failed"
+	  echo "$2 failed"
 	  exit $exit_status
 	fi
 
 	now=$(date "+%s")
-	runtime+=$((now - start))
+	runtime=$((now - start))
 
-	rm ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/$name.py
-done
+	rm ${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/$2.py
+}
 
-for (( i=0; i<$len; ++i));
-do
-	echo "#$((i+1)) ${names[$i]} time used: ${runtime[$i]} seconds"
-done	
+# the first argument is the number of ipynb, the second argument is the name of ipynb,
+# the third argument is the runtime used by this notebook
+echo_time(){
+	echo "#$1 $2 time used: $3 seconds"
+}
+
+name1="ray/quickstart/ray_sharded_parameter_server"
+run 1 $name1
+runtime1=$runtime
+
+echo_time 1 $name1 $runtime1
