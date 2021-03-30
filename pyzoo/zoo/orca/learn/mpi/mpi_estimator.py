@@ -30,6 +30,7 @@ class MPIEstimator:
                  model_creator,
                  optimizer_creator,
                  loss_creator,
+                 metrics=None,
                  scheduler_creator=None,
                  config=None,
                  init_func=None,  # Init the distributed environment for MPI if any
@@ -39,7 +40,7 @@ class MPIEstimator:
         self.dir = os.getcwd()
         self.mpi_runner = MPIRunner(hosts=hosts, processes_per_node=workers_per_node, env=env)
         with open("saved_mpi_estimator.pkl", "wb") as f:
-            cloudpickle.dump((model_creator, optimizer_creator, loss_creator,
+            cloudpickle.dump((model_creator, optimizer_creator, loss_creator, metrics,
                               scheduler_creator, config, init_func), f)
         self.mpi_runner.scp_file("saved_mpi_estimator.pkl", self.dir)
         # Need to put mpi_train.py in the current directory so that the PYTHONPATH is the same.
@@ -65,6 +66,7 @@ class MPIEstimator:
             # partition_id, subpartition_id, subpartition_size, object_id, node_ip
             plasma_meta = data.mapPartitionsWithIndex(
                 put_to_plasma(object_store_address)).collect()
+            # Can remove the following. Debug and confirmation purpose only.
             train_size_map = {}
             for partition_id, subpartition_id, subpartition_size, object_id, ip in plasma_meta:
                 if ip not in train_size_map:
@@ -89,6 +91,22 @@ class MPIEstimator:
                 validation_data = validation_data.rdd.map(convert_row(feature_cols, label_cols))
                 validate_plasma_meta = validation_data.mapPartitionsWithIndex(
                     put_to_plasma(object_store_address)).collect()
+                validate_size_map = {}
+                for partition_id, subpartition_id, subpartition_size, object_id, ip in validate_plasma_meta:
+                    if ip not in validate_size_map:
+                        validate_size_map[ip] = {}
+                    if partition_id not in validate_size_map[ip]:
+                        validate_size_map[ip][partition_id] = []
+                        validate_size_map[ip][partition_id].append(subpartition_size)
+                size = 0
+                count = 0
+                for node, meta in validate_size_map.items():
+                    for partition_id, subpartition_size in meta.items():
+                        size += sum(subpartition_size)
+                        count += len(subpartition_size)
+                    print("Node {} has {} subpartitions and {} test records".format(node, count, size))
+                    size = 0
+                    count = 0
                 validation_data_creator = plasma_data_creator(
                     validate_plasma_meta, object_store_address,
                     self.mpi_runner.processes_per_node, validate_batch_size)
@@ -151,7 +169,7 @@ def put_to_plasma(address):
         for record in iterator:
             if len(buffer) == part_size:
                 res_buffer = process_records(buffer)
-                object_id = client.put(res_buffer)  # TODO: check memory usage
+                object_id = client.put(res_buffer)
                 buffer = [record]
                 yield index, sub_index, part_size, object_id, get_node_ip()
                 sub_index += 1
@@ -208,7 +226,7 @@ class PlasmaNDArrayDataset(Dataset):
         self.load_from_plasma(self.current_index)
 
     def load_from_plasma(self, index):
-        print("Loading {}".format(self.object_ids[index]))
+        print("Loading {} of size {}".format(self.object_ids[index], self.sizes[index]))
         current_data = self.client.get(self.object_ids[index], timeout_ms=0)
         self.current_x = current_data["x"]
         self.current_y = current_data["y"]
@@ -284,34 +302,83 @@ def plasma_data_creator(meta_data, object_store_address,
 
 
 def train_epoch(config, model, train_ld, train_batches, optimizer, loss, scheduler,
-                validate_func, valid_ld, validate_batches, validate_steps):
+                validate_func, valid_ld, metrics, validate_batches, validate_steps):
+    import time
+    total_loss = 0
+    total_samp = 0
+    total_iter = 0
+    total_time = 0
+    previous_iteration_time = None
     train_iter = iter(train_ld)
     for j in range(train_batches):
         # Iterate again from the beginning if running out of batches.
         if j > 0 and j % len(train_ld) == 0:
             train_iter = iter(train_ld)
+        current_time = time.time()
+        if previous_iteration_time:
+            iteration_time = current_time - previous_iteration_time
+        else:
+            iteration_time = 0
+        previous_iteration_time = current_time
         x, y = next(train_iter)
         o = model(x, y)
         l = loss(o, y)
+        l_np = l.detach().cpu().numpy()
+        y_np = y.detach().cpu().numpy()
         optimizer.zero_grad()
         l.backward()
         optimizer.step()
         if scheduler:
             scheduler.step()
 
-        should_validate = valid_ld and ((j + 1) % validate_steps == 0 or (j + 1 == train_batches))
+        batch_samples = y_np.shape[0]
+        total_time += iteration_time
+        total_loss += l_np * batch_samples
+        total_iter += 1
+        total_samp += batch_samples
+
+        should_print = ("print_freq" in config and ((j + 1) % config["print_freq"] == 0)) \
+            or (j + 1 == train_batches)
+        if should_print:
+            average_batch_time = 1000.0 * total_time / total_iter
+            total_time = 0
+            average_loss = total_loss / total_samp
+            total_loss = 0
+
+            print(
+                "Finished training it {}/{} of epoch {}, {:.2f} ms/it, ".format(
+                    j + 1, train_batches, config["epoch"], average_batch_time)
+                + "loss {:.6f}, ".format(average_loss)
+            )
+            total_iter = 0
+            total_samp = 0
+
+        should_validate = valid_ld and ((validate_steps > 0 and (j + 1) % validate_steps == 0)
+                                        or (j + 1 == train_batches))
         if should_validate:
-            validate_func(config, model, valid_ld, validate_batches)
-    # TODO: add print
+            validate_func(config, model, valid_ld, metrics, validate_batches)
 
 
-def validate(config, model, valid_ld, validate_batches):
+# TODO: add loss
+def validate(config, model, valid_ld, metrics, validate_batches):
+    import torch
+    from zoo.orca.learn.metrics import Metric
+
+    model.eval()
+    metrics = Metric.convert_metrics_dict(metrics, backend="pytorch")
     valid_iter = iter(valid_ld)
-    for j in range(validate_batches):
-        # Iterate again from the beginning if running out of batches.
-        if j > 0 and j % len(validate_batches) == 0:
-            valid_iter = iter(valid_ld)
-        x, y = next(valid_iter)
-        o = model(x, y)
-        # TODO: Compute accuracy or add metrics
-        return
+    with torch.no_grad():
+        for j in range(validate_batches):
+            # Iterate again from the beginning if running out of batches.
+            if j > 0 and j % len(validate_batches) == 0:
+                valid_iter = iter(valid_ld)
+            x, y = next(valid_iter)
+            o = model(x, y)
+            for metric in metrics.values():
+                metric(o, y)
+    result = {name: metric.compute() for name, metric in metrics.items()}
+    output = "Validation results: "
+    for metric, value in result.items():
+        output += "{}:{} ".format(metric, value)
+    print(output)
+    return result

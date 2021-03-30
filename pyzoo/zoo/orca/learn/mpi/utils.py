@@ -47,20 +47,34 @@ def process_records(buffer):
     import random
     random.shuffle(buffer)  # TODO: Make shuffle configurable?
     buffer_x = [record[0] for record in buffer]
-    buffer_y = [record[1] for record in buffer]
+    if len(buffer[0]) > 1:
+        buffer_y = [record[1] for record in buffer]
+    else:
+        buffer_y = None
     res_buffer = dict()
     if isinstance(buffer_x[0], list):
         res_x = []
         for i in range(len(buffer_x[0])):
-            res_x.append(np.array([record[i] for record in buffer_x]))
+            res_x.append(cast_ndarray_type(np.array([record[i] for record in buffer_x])))
         res_buffer["x"] = res_x
     else:
-        res_buffer["x"] = np.array(buffer_x)
-    if isinstance(buffer_y[0], list):
-        res_y = []
-        for i in range(len(buffer_x[0])):
-            res_y.append(np.array([record[i] for record in buffer_y]))
-        res_buffer["y"] = res_y
-    else:  # TODO: int features and label of type int32?
-        res_buffer["y"] = np.array(buffer_y)
+        res_buffer["x"] = cast_ndarray_type(np.array(buffer_x))
+    if buffer_y:
+        if isinstance(buffer_y[0], list):
+            res_y = []
+            for i in range(len(buffer_x[0])):
+                res_y.append(cast_ndarray_type(np.array([record[i] for record in buffer_y])))
+            res_buffer["y"] = res_y
+        else:
+            res_buffer["y"] = cast_ndarray_type(np.array(buffer_y))
     return res_buffer
+
+
+# To save some memory when putting into plasma
+def cast_ndarray_type(x):
+    if x.dtype == np.int64:
+        return x.astype(np.int32)
+    elif x.dtype == np.float64:
+        return x.astype(np.float32)
+    else:
+        return x

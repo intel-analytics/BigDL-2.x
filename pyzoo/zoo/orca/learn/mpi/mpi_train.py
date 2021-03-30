@@ -28,7 +28,7 @@ args = parser.parse_args()
 pkl_path = args.pkl_path
 
 with open("{}/saved_mpi_estimator.pkl".format(pkl_path), "rb") as f:
-    model_creator, optimizer_creator, loss_creator, \
+    model_creator, optimizer_creator, loss_creator, metrics, \
         scheduler_creator, config, init_func = cloudpickle.load(f)
 
 with open("{}/mpi_train_data.pkl".format(pkl_path), "rb") as f:
@@ -59,8 +59,9 @@ else:
     validate_batches = None
 
 for i in range(epochs):
+    config["epoch"] = i
     train_func(config, model, train_ld, train_batches, optimizer, loss, scheduler,
-               validate_func, valid_ld, validate_batches, validate_steps)
+               validate_func, valid_ld, metrics, validate_batches, validate_steps)
 
 # train_ld = train_data_creator(config)
 # train_batches = train_batches if train_batches else len(train_ld)
