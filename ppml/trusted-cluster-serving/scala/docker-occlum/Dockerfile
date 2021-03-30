@@ -6,7 +6,8 @@ WORKDIR /opt
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
         git build-essential coreutils ca-certificates && \
-    apt-get clean
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/openssl/openssl.git && \
     cd openssl && \
@@ -26,12 +27,13 @@ RUN git clone https://github.com/redis/redis.git && \
 FROM occlum/occlum:0.21.0-ubuntu18.04 as flink-jobmanager
 
 # Add key for SGX repo
-RUN wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
+# RUN wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
 
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
         openjdk-11-jdk wget unzip && \
-    apt-get clean
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 ARG FLINK_VERSION=1.10.1
 ENV FLINK_VERSION ${FLINK_VERSION}
@@ -82,7 +84,7 @@ RUN cd /opt && \
     wget -c "https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/openvino/2018_R5/resnet_v1_50.xml/download" -O resnet_v1_50.xml
 
 RUN mkdir -p /opt/analytics-zoo && \
-    cd analytics-zoo && \
+    cd /opt/analytics-zoo && \
     wget -c "https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.12.1-spark_2.4.3/0.10.0-SNAPSHOT/analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.10.0-20210322.210553-65-cluster-serving-all.zip" && \
     unzip analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.10.0-20210322.210553-65-cluster-serving-all.zip && \
     cp cluster-serving/*.jar . && \
