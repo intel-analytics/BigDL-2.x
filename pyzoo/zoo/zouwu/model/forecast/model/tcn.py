@@ -42,7 +42,8 @@
 import torch
 import torch.nn as nn
 from torch.nn.utils import weight_norm
-from zoo.zouwu.model.forecast.model.base_pytorch_model import PytorchBaseModel
+from zoo.zouwu.model.forecast.model.base_pytorch_model import PytorchBaseModel, \
+                                                              PYTORCH_REGRESSION_LOSS_MAP
 
 
 class Chomp1d(nn.Module):
@@ -146,7 +147,10 @@ def optimizer_creator(model, config):
 
 
 def loss_creator(config):
-    return nn.MSELoss()
+    loss_name = config.get("loss", "mse")
+    if not PYTORCH_REGRESSION_LOSS_MAP.has_key(loss_name):
+        raise RuntimeError("You need to provide valid loss name within mse, mae and huber_loss")
+    return getattr(torch.nn, loss_name)
 
 
 class TCNPytorch(PytorchBaseModel):

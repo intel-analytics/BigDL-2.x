@@ -22,6 +22,10 @@ from zoo.automl.common.metrics import Evaluator
 import pandas as pd
 
 
+PYTORCH_REGRESSION_LOSS_MAP = {"mse": "MSELoss", 
+                               "mae": "L1Loss",
+                               "huber_loss": "SmoothL1Loss"}
+
 class PytorchBaseModel(BaseModel):
     def __init__(self, model_creator, optimizer_creator, loss_creator,
                  check_optional_config=False):
