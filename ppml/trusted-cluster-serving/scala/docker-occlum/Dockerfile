@@ -25,9 +25,12 @@ RUN git clone https://github.com/redis/redis.git && \
 # stage. 2 Flink
 FROM occlum/occlum:0.21.0-ubuntu18.04 as flink-jobmanager
 
+# Add key for SGX repo
+RUN wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
+
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
-        openjdk-11-jdk wget && \
+        openjdk-11-jdk wget unzip && \
     apt-get clean
 
 ARG FLINK_VERSION=1.10.1
@@ -81,7 +84,8 @@ RUN cd /opt && \
 RUN mkdir -p /opt/analytics-zoo && \
     cd analytics-zoo && \
     wget -c "https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.12.1-spark_2.4.3/0.10.0-SNAPSHOT/analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.10.0-20210322.210553-65-cluster-serving-all.zip" && \
-    tar -zxvf analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.10.0-20210322.210553-65-cluster-serving-all.zip && \
+    unzip analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.10.0-20210322.210553-65-cluster-serving-all.zip && \
+    cp cluster-serving/*.jar . && \
+    cp cluster-serving/config.yaml && \
+    rm -rf cluster-serving && \
     rm analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.10.0-20210322.210553-65-cluster-serving-all.zip
-
-
