@@ -164,10 +164,21 @@ def convert_predict_rdd_to_dataframe(df, prediction_rdd):
         elif len(pair[1].shape) == 0:
             row = Row(*([pair[0][col] for col in pair[0].__fields__] + [float(pair[1].item(0))]))
             return row, FloatType()
-        # np array
+        # np ndarray
         else:
-            row = Row(*([pair[0][col] for col in pair[0].__fields__] + [Vectors.dense(pair[1])]))
-            return row, VectorUDT()
+            dim = len(pair[1].shape)
+            if dim == 1:
+                # np 1-D array
+                row = Row(*([pair[0][col] for col in pair[0].__fields__] +
+                            [Vectors.dense(pair[1])]))
+                return row, VectorUDT()
+            else:
+                # multi-dimensional array
+                structType = FloatType()
+                for _ in range(dim):
+                    structType = ArrayType(structType)
+                row = Row(*([pair[0][col] for col in pair[0].__fields__] + [pair[1].tolist()]))
+                return row, structType
 
     combined_rdd = df.rdd.zip(prediction_rdd).map(combine)
     type = combined_rdd.map(lambda data: data[1]).first()
@@ -231,7 +242,7 @@ def arrays2dict(iter, feature_cols, label_cols, shard_size=None):
 def transform_to_shard_dict(data, feature_cols, label_cols=None):
     def to_shard_dict(df):
         result = dict()
-        result["x"] = tuple([df[feature_col].to_numpy() for feature_col in feature_cols])
+        result["x"] = [df[feature_col].to_numpy() for feature_col in feature_cols]
         if label_cols:
             result["y"] = df[label_cols[0]].to_numpy()
         return result
