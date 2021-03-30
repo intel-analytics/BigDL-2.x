@@ -37,7 +37,7 @@ echo_time(){
 	echo "#$1 $2 time used: $3 seconds"
 }
 
-name1="ray/quickstart/ray_sharded_parameter_server"
+name1="ray/quickstart/ray_parameter_server"
 run 1 $name1
 runtime1=$runtime
 
