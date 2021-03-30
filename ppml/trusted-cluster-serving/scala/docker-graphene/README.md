@@ -39,6 +39,17 @@ Then run the example with docker: <br>
 ```bash
 ./start-local-cluster-serving.sh
 ```
+##### Troubleshooting
+You can run the script `check-status.sh` in the docker container to check whether the components have been correctly started. 
+To test a specific component, pass one or more argument to it among the following:
+"redis", "flinkjm", "flinktm", "frontend", and "cluster". To test all components, you can either pass no argument or pass the "all" argument.
+
+It is suggested to run this script once after starting local cluster serving to verify that all components are up and running.
+```bash
+docker exec -it flink-local bash check-status.sh
+```
+
+
 
 #### In distributed mode
 *Please setup passwordless ssh login to all the nodes first.*
