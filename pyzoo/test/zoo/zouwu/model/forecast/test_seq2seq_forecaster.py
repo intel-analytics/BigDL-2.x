@@ -93,6 +93,6 @@ class TestZouwuModelSeq2SeqForecaster(TestCase):
         train_data, val_data, test_data = create_data()
         forecaster = Seq2SeqForecaster(future_seq_len=5,
                                        input_feature_num=2,
-                                       output_feature_num=2)
+                                       output_feature_num=4)
         with pytest.raises(AssertionError):
             forecaster.fit(train_data[0], train_data[1], epochs=2)
