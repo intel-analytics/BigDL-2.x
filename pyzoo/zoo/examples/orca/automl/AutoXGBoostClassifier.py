@@ -16,20 +16,19 @@
 
 import argparse
 
-import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray import RayContext
-from zoo.automl.model.XGBoost import XGBoost
 from zoo.orca.automl.AutoXGBoost import AutoXGBoost
-from zoo.automl.config.recipe import *
+from zoo.zouwu.config.recipe import *
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='AutoXGBRegressor example')
     parser.add_argument('-p', '--path', type=str,
+                        default="./data/airline_14col.data",
                         help='Training data path')
     parser.add_argument('--hadoop_conf', type=str,
                         help='The path to the hadoop configuration folder. Required if you '
