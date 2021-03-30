@@ -41,14 +41,36 @@ Then run the example with docker: <br>
 ```
 ##### Troubleshooting
 You can run the script `check-status.sh` in the docker container to check whether the components have been correctly started. 
-To test a specific component, pass one or more argument to it among the following:
-"redis", "flinkjm", "flinktm", "frontend", and "cluster". To test all components, you can either pass no argument or pass the "all" argument.
+Note that this only works for local cluster serving (for now).
 
-It is suggested to run this script once after starting local cluster serving to verify that all components are up and running.
+To test a specific component, pass one or more argument to it among the following:
+"redis", "flinkjm", "flinktm", "frontend", and "cluster". For example, run the following command to check the status of the Flink job master.
+
+```bash
+docker exec -it flink-local bash check-status.sh flinkjm
+```
+
+To test all components, you can either pass no argument or pass the "all" argument.
+
 ```bash
 docker exec -it flink-local bash check-status.sh
 ```
+If all is well, the following results should be displayed:
 
+```
+(1/5) Detecting redis state...
+Redis initilization successful.
+(2/5) Detecting Flink job manager state...
+Flink job manager initilization successful.
+(3/5) Detecting Flink task manager state...
+Flink task manager initilization successful.
+(4/5) Detecting http frontend state. This may take a while.
+Http frontend initilization successful.
+(5/5) Detecting cluster-serving-job state...
+cluster-serving-job initilization successful.
+```
+
+It is suggested to run this script once after starting local cluster serving to verify that all components are up and running.
 
 
 #### In distributed mode
