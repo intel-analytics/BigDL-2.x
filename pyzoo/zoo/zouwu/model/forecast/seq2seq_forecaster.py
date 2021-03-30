@@ -74,7 +74,7 @@ class Seq2SeqForecaster(Forecaster):
                                       validation_data=(x, y),
                                       epochs=epochs,
                                       metric=metric,
-                                      **self.config)
+                                      **self.model_config)
     
     def predict(self, x):
         if not self.internal.model_built:
