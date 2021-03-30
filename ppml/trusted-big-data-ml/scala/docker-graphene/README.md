@@ -171,8 +171,12 @@ sh /start-spark-local-tpc-h-sgx.sh
 
 Open another terminal and check the log: <br>
 ```bash
-sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.tpc.h.sgx.log | egrep "###|INFO"
+sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.tpc.h.sgx.log | egrep "###|INFO|finished"
 ```
+
+The result should look like: <br>
+>   ----------------22 finished--------------------
+
 ##### Other Spark workloads are also supported, please follow the 3 examples to submit your workload with spark on Graphene-SGX
 
 
