@@ -33,7 +33,7 @@ if cluster_mode == "local":  # For local machine
 elif cluster_mode == "k8s":  # For K8s cluster
     init_orca_context(cluster_mode="k8s", num_nodes=2, cores=2)
 elif cluster_mode == "yarn":  # For Hadoop/YARN cluster
-    init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, driver_memory="6g")
+    init_orca_context(cluster_mode="yarn", num_nodes=2, cores=2, driver_memory="6g")
 ```
 
 This is the only place where you need to specify local or distributed mode. View [Orca Context](./../Overview/orca-context.md) for more details.

@@ -27,12 +27,12 @@ pip install jep==3.9.0
 from zoo.orca import init_orca_context, stop_orca_context
 
 if cluster_mode == "local":  # For local machine
-    init_orca_context(cores=1, memory="2g")
+    init_orca_context(cores=4, memory="2g")
 elif cluster_mode == "k8s":  # For K8s cluster
-    init_orca_context(cluster_mode="k8s", num_nodes=2, cores=4)
+    init_orca_context(cluster_mode="k8s", num_nodes=2, cores=2)
 elif cluster_mode == "yarn":  # For Hadoop/YARN cluster
     init_orca_context(
-    cluster_mode="yarn-client", cores=4, num_nodes=2, memory="2g",
+    cluster_mode="yarn", cores=2, num_nodes=2, memory="2g",
     driver_memory="10g", driver_cores=1,
     conf={"spark.rpc.message.maxSize": "1024",
         "spark.task.maxFailures": "1",
