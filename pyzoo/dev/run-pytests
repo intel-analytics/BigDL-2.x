@@ -125,7 +125,10 @@ else
        --ignore=../test/zoo/ray/ \
        --ignore=../test/zoo/zouwu/ \
        --ignore=../test/zoo/pipeline/api/torch/ \
-       --ignore=../test/zoo/orca/ \
+       --ignore=../test/zoo/orca/data \
+       --ignore=../test/zoo/orca/learn/spark \
+       --ignore=../test/zoo/orca/learn/ray \
+       --ignore=../test/zoo/orca/learn/jep \
        --ignore=../test/zoo/friesian/ \
        --ignore=../zoo/models/recommendation/txt.py \
        --ignore=../test/zoo/automl/model/test_xgbregressor.py
