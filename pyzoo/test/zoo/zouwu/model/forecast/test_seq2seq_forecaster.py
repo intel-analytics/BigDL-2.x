@@ -53,10 +53,9 @@ class TestZouwuModelSeq2SeqForecaster(TestCase):
 
     def test_s2s_forecaster_fit_eva_pred(self):
         train_data, val_data, test_data = create_data()
-        forecaster = Seq2SeqForecaster(past_seq_len=24,
-                                  future_seq_len=5,
-                                  feature_num=2,
-                                  target_col_num=2)
+        forecaster = Seq2SeqForecaster(future_seq_len=5,
+                                       input_feature_num=2,
+                                       output_feature_num=2)
         train_mse = forecaster.fit(train_data[0], train_data[1], epochs=10)
         test_pred = forecaster.predict(test_data[0])
         assert test_pred.shape == test_data[1].shape
@@ -64,15 +63,15 @@ class TestZouwuModelSeq2SeqForecaster(TestCase):
     
     def test_s2s_forecaster_save_restore(self):
         train_data, val_data, test_data = create_data()
-        forecaster = Seq2SeqForecaster(past_seq_len=24,
-                                  future_seq_len=5,
-                                  feature_num=2,
-                                  target_col_num=2)
+        forecaster = Seq2SeqForecaster(future_seq_len=5,
+                                       input_feature_num=2,
+                                       output_feature_num=2)
         train_mse = forecaster.fit(train_data[0], train_data[1], epochs=10)
         with tempfile.TemporaryDirectory() as tmp_dir_name:
+            ckpt_name = os.path.join(tmp_dir_name, "ckpt")
             test_pred_save = forecaster.predict(test_data[0])
-            forecaster.save(tmp_dir_name)
-            forecaster.restore(tmp_dir_name)
+            forecaster.save(ckpt_name)
+            forecaster.restore(ckpt_name)
             test_pred_restore = forecaster.predict(test_data[0])
         np.testing.assert_almost_equal(test_pred_save, test_pred_restore)
     

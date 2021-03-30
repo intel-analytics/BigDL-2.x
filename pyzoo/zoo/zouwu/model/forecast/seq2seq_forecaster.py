@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.automl.model.Seq2Seq import LSTMSeq2Seq as Seq2SeqKerasModel
+from zoo.zouwu.model.forecast.model.Seq2Seq_pytorch import LSTMSeq2Seq
 from zoo.zouwu.model.forecast.abstract import Forecaster
 from zoo.automl.common.util import load_config
 
@@ -22,82 +22,74 @@ import os
 
 
 class Seq2SeqForecaster(Forecaster):
-    """
-    Seq2Seq Forecaster
-    """
 
     def __init__(self,
-                 past_seq_len,
+                 input_feature_num,
                  future_seq_len,
-                 feature_num,
-                 target_col_num,
-                 latent_dim=128,
-                 dropout=0.2,
+                 output_feature_num,
+                 lstm_hidden_dim=128,
+                 lstm_layer_num=1,
+                 fc_hidden_dim=128,
+                 fc_layer_num=2,
+                 dropout=0.25,
                  lr=0.001,
-                 loss='mse',
-                 metric="mean_squared_error",
+                 loss="mse",
+                 optimizer="Adam",
                  ):
         self.check_optional_config = False
         self.model_config = {
-            "past_seq_len": past_seq_len,
+            "input_feature_num": input_feature_num,
             "future_seq_len": future_seq_len,
-            "feature_num": feature_num,
-            "target_col_num": target_col_num,
-            "latent_dim": latent_dim,
+            "output_feature_num": output_feature_num,
+            "lstm_hidden_dim": lstm_hidden_dim,
+            "lstm_layer_num": lstm_layer_num,
+            "fc_hidden_dim": fc_hidden_dim,
+            "fc_layer_num": fc_layer_num,
             "dropout": dropout,
             "lr": lr,
             "loss": loss,
-            "metric": metric
+            "optimizer": optimizer,
         }
-        self.internal = Seq2SeqKerasModel(check_optional_config=False,
-                                   future_seq_len=self.model_config["future_seq_len"])
+        self.internal = LSTMSeq2Seq(check_optional_config=False)
 
     def _check_data(self, x, y):
-        assert self.model_config["past_seq_len"] == x.shape[-2], \
-            "The x shape should be (batch_size, past_seq_len, feature_num), \
-            Got past_seq_len of {} in config while x input shape of {}."\
-            .format(self.model_config["past_seq_len"], x.shape[-2])
         assert self.model_config["future_seq_len"] == y.shape[-2], \
             "The y shape should be (batch_size, future_seq_len, target_col_num), \
             Got future_seq_len of {} in config while y input shape of {}."\
             .format(self.model_config["future_seq_len"], y.shape[-2])
-        assert self.model_config["feature_num"] == x.shape[-1],\
-            "The x shape should be (batch_size, past_seq_len, feature_num), \
-            Got feature_num of {} in config while x input shape of {}."\
+        assert self.model_config["input_feature_num"] == x.shape[-1],\
+            "The x shape should be (batch_size, past_seq_len, input_feature_num), \
+            Got input_feature_num of {} in config while x input shape of {}."\
             .format(self.model_config["input_feature_num"], x.shape[-1])
-        assert self.model_config["target_col_num"] == y.shape[-1], \
-            "The y shape should be (batch_size, future_seq_len, target_col_num), \
-            Got target_col_num of {} in config while y input shape of {}."\
-            .format(self.model_config["target_col_num"], y.shape[-1])
+        assert self.model_config["output_feature_num"] == y.shape[-1], \
+            "The y shape should be (batch_size, future_seq_len, output_feature_num), \
+            Got output_feature_num of {} in config while y input shape of {}."\
+            .format(self.model_config["output_feature_num"], y.shape[-1])
 
-    def fit(self, x, y, epochs=1, batch_size=32):
+    def fit(self, x, y, epochs=1, metric="mse", batch_size=32):
         self.model_config["batch_size"] = batch_size
         self._check_data(x, y)
         return self.internal.fit_eval(x,
                                       y,
                                       validation_data=(x, y),
                                       epochs=epochs,
-                                      **self.model_config)
+                                      metric=metric,
+                                      **self.config)
     
     def predict(self, x):
-        if not self.internal.model:
+        if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling predict!")
         return self.internal.predict(x)
 
     def evaluate(self, x, y, metrics=['mse']):
-        if not self.internal.model:
+        if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
         return self.internal.evaluate(x, y, metric=metrics)
     
-    def save(self, checkpoint_dir):
-        if not self.internal.model:
+    def save(self, checkpoint_file):
+        if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling save!")
-        model_path = os.path.join(checkpoint_dir, "seq2seqforecaster.model")
-        config_path = os.path.join(checkpoint_dir, "seq2seqforecaster.config")
-        self.internal.save(model_path, config_path)
+        self.internal.save(checkpoint_file)
 
-    def restore(self, checkpoint_dir):
-        model_path = os.path.join(checkpoint_dir, "seq2seqforecaster.model")
-        config_path = os.path.join(checkpoint_dir, "seq2seqforecaster.config")
-        config = load_config(config_path)
-        self.internal.restore(model_path, **config)
+    def restore(self, checkpoint_file):
+        self.internal.restore(checkpoint_file)
