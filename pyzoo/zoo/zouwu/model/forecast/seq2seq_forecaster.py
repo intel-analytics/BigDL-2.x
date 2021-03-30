@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.zouwu.model.forecast.model.Seq2Seq_pytorch import LSTMSeq2Seq
+from zoo.zouwu.model.forecast.model.Seq2Seq_pytorch import Seq2SeqPytorch
 from zoo.zouwu.model.forecast.abstract import Forecaster
 from zoo.automl.common.util import load_config
 
@@ -50,7 +50,7 @@ class Seq2SeqForecaster(Forecaster):
             "loss": loss,
             "optimizer": optimizer,
         }
-        self.internal = LSTMSeq2Seq(check_optional_config=False)
+        self.internal = Seq2SeqPytorch(check_optional_config=False)
 
     def _check_data(self, x, y):
         assert self.model_config["future_seq_len"] == y.shape[-2], \
