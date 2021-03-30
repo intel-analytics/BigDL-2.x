@@ -47,7 +47,7 @@ class TCNForecaster(Forecaster):
         :param optimizer: Specify the optimizer used for training. This value
                defaults to "Adam".
         :param loss: Specify the loss function used for training. This value
-               defaults to "mse". You can choose from "mse", "mae" and 
+               defaults to "mse". You can choose from "mse", "mae" and
                "huber_loss".
         :param lr: Specify the learning rate. This value defaults to 0.001.
         """

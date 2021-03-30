@@ -43,7 +43,7 @@ import torch
 import torch.nn as nn
 from torch.nn.utils import weight_norm
 from zoo.zouwu.model.forecast.model.base_pytorch_model import PytorchBaseModel, \
-                                                              PYTORCH_REGRESSION_LOSS_MAP
+    PYTORCH_REGRESSION_LOSS_MAP
 
 
 class Chomp1d(nn.Module):
