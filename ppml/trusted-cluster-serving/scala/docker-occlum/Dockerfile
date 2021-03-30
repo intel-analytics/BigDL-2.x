@@ -1,61 +1,6 @@
 # stage.1 Redis
 FROM occlum/occlum:0.21.0-ubuntu18.04 as redis-tls
 
-WORKDIR /opt
-
-RUN apt-get update && \
-    DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
-        git build-essential coreutils ca-certificates && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN git clone https://github.com/openssl/openssl.git && \
-    cd openssl && \
-    git checkout tags/OpenSSL_1_1_1 -b OpenSSL_1_1_1 && \
-    ./config \
-    --openssldir=/opt/ssl \
-    --with-rand-seed=rdcpu \
-    no-zlib no-async no-tests && \
-    make -j `getconf _NPROCESSORS_ONLN` && make install
-
-RUN git clone https://github.com/redis/redis.git && \
-    cd redis && \
-    git checkout 6.0.6 && \
-    make -j `getconf _NPROCESSORS_ONLN` BUILD_TLS=yes && make PREFIX=/opt/redis install
-
-# stage. 2 Flink
-FROM occlum/occlum:0.21.0-ubuntu18.04 as flink-jobmanager
-
-# Add key for SGX repo
-# RUN wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
-
-RUN apt-get update && \
-    DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
-        openjdk-11-jdk wget unzip && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-ARG FLINK_VERSION=1.10.1
-ENV FLINK_VERSION ${FLINK_VERSION}
-
-# Download flink
-RUN cd /opt && \
-    wget https://archive.apache.org/dist/flink/flink-${FLINK_VERSION}/flink-${FLINK_VERSION}-bin-scala_2.11.tgz && \
-    tar -zxvf flink-${FLINK_VERSION}-bin-scala_2.11.tgz && \
-    rm flink-${FLINK_VERSION}-bin-scala_2.11.tgz
-
-# stage.3 analytics-zoo
-ADD ./init-occlum-taskmanager.sh /opt/init-occlum-taskmanager.sh
-ADD ./start-redis.sh /opt/start-redis.sh
-ADD ./start-flink-jobmanager.sh /opt/start-flink-jobmanager.sh
-ADD ./start-flink-taskmanager.sh /opt/start-flink-taskmanager.sh
-ADD ./start-http-frontend.sh /opt/start-http-frontend.sh
-ADD ./start-local-cluster-serving.sh /opt/start-local-cluster-serving.sh
-ADD ./start-all.sh /opt/start-all.sh
-ADD ./start-distributed-cluster-serving.sh /opt/start-distributed-cluster-serving.sh
-
-# stage.4 az ppml occlum
-FROM occlum/occlum:0.21.0-ubuntu18.04
 ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
 ARG BIGDL_VERSION=0.12.1
 ARG SPARK_VERSION=2.4.3
@@ -76,6 +21,53 @@ ENV FLINK_TASK_MANAGER_DATA_PORT	6124
 ENV FLINK_TASK_MANAGER_RPC_PORT		6125
 ENV FLINK_TASK_MANAGER_TASKSLOTS_NUM	1
 ENV CORE_NUM                            2
+
+WORKDIR /opt
+
+RUN wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
+        git build-essential coreutils ca-certificates openjdk-11-jdk wget unzip
+
+RUN git clone https://github.com/openssl/openssl.git && \
+    cd openssl && \
+    git checkout tags/OpenSSL_1_1_1 -b OpenSSL_1_1_1 && \
+    ./config \
+    --openssldir=/opt/ssl \
+    --with-rand-seed=rdcpu \
+    no-zlib no-async no-tests && \
+    make -j `getconf _NPROCESSORS_ONLN` && make install
+
+RUN git clone https://github.com/redis/redis.git && \
+    cd redis && \
+    git checkout 6.0.6 && \
+    make -j `getconf _NPROCESSORS_ONLN` BUILD_TLS=yes && make PREFIX=/opt/redis install
+
+# stage. 2 Flink
+# FROM occlum/occlum:0.21.0-ubuntu18.04 as flink-jobmanager
+
+# Add key for SGX repo
+# RUN wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
+
+# Download flink
+RUN cd /opt && \
+    wget https://archive.apache.org/dist/flink/flink-${FLINK_VERSION}/flink-${FLINK_VERSION}-bin-scala_2.11.tgz && \
+    tar -zxvf flink-${FLINK_VERSION}-bin-scala_2.11.tgz && \
+    rm flink-${FLINK_VERSION}-bin-scala_2.11.tgz
+
+# stage.3 analytics-zoo
+ADD ./init-occlum-taskmanager.sh /opt/init-occlum-taskmanager.sh
+ADD ./start-redis.sh /opt/start-redis.sh
+ADD ./start-flink-jobmanager.sh /opt/start-flink-jobmanager.sh
+ADD ./start-flink-taskmanager.sh /opt/start-flink-taskmanager.sh
+ADD ./start-http-frontend.sh /opt/start-http-frontend.sh
+ADD ./start-local-cluster-serving.sh /opt/start-local-cluster-serving.sh
+ADD ./start-all.sh /opt/start-all.sh
+ADD ./start-distributed-cluster-serving.sh /opt/start-distributed-cluster-serving.sh
+
+# stage.4 az ppml occlum
+# FROM occlum/occlum:0.21.0-ubuntu18.04
 
 RUN cd /opt && \
     mkdir resnet50 && \
