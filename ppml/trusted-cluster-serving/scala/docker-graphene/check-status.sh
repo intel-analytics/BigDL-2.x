@@ -1,12 +1,12 @@
 #!/bin/bash
-# Acceptable arguments: redis, flinkjm, flinktm, frontend, cluster, all
+# Acceptable arguments: redis, flinkjm, flinktm, frontend, serving, all
 
 REDISLOG="/ppml/trusted-cluster-serving/redis/redis-sgx.log"
 JMSGXLOG="/ppml/trusted-cluster-serving/java/flink-jobmanager-sgx.log"
 STANDALONELOG="/ppml/trusted-cluster-serving/java/work/flink-1.10.1/log/flink-sgx-standalonesession-*.log"
 TMSGXLOG="/ppml/trusted-cluster-serving/java/work/flink-1.10.1/log/flink-sgx-taskexecutor-*.log"
 FRONTENDLOG="/ppml/trusted-cluster-serving/java/http-frontend-sgx.log"
-CLUSTERLOG="/ppml/trusted-cluster-serving/java/cluster-serving-job-sgx.log"
+SERVINGLOG="/ppml/trusted-cluster-serving/java/cluster-serving-job-sgx.log"
 
 redis () {
     echo "(1/5) Detecting redis state..."
@@ -86,7 +86,6 @@ flinktm () {
 
 frontend () {
     echo "(4/5) Detecting http frontend state. This may take a while."
-    FRONTENDSUCCESS=""
     test -f "$FRONTENDLOG"
     if [ $? -eq 1 ] ; then
         echo "Cannot find http frontend log at path" $FRONTENDLOG 
@@ -101,16 +100,15 @@ frontend () {
     fi
 }
 
-cluster () {
+serving () {
     echo "(5/5) Detecting cluster-serving-job state..."
-    CLUSTERSUCCESS=""
-    test -f "$CLUSTERLOG" 
+    test -f "$SERVINGLOG" 
     if [ $? -eq 1 ] ; then
-        echo "Cannot find cluster-serving-job log at path" $CLUSTERLOG 
+        echo "Cannot find cluster-serving-job log at path" $SERVINGLOG 
     else 
-        CLUSTERSUCCESS=$(cat $CLUSTERLOG | grep "Job has been submitted with JobID")
-        if [ -z "$CLUSTERSUCCESS" ] ; then
-            echo "cluster-serving-job initilization failed. See" $CLUSTERLOG "for details."
+        SERVINGSUCCESS=$(cat $SERVINGLOG | grep "Job has been submitted with JobID")
+        if [ -z "$SERVINGSUCCESS" ] ; then
+            echo "cluster-serving-job initilization failed. See" $SERVINGLOG "for details."
             echo "To restart cluster-serving-job, run ./start-cluster-serving-job.sh in the docker container."
         else 
             echo "cluster-serving-job initilization successful."
@@ -135,13 +133,13 @@ fi
 
 
 if [ "$#" -gt 5 ]; then
-    echo "Acceptable arguments: \"all\", or one or more among \"redis\", \"flinkjm\", \"flinktm\", \"frontend\", \"cluster\""
+    echo "Acceptable arguments: \"all\", or one or more among \"redis\", \"flinkjm\", \"flinktm\", \"frontend\", \"serving\""
 elif [ "$all" -eq 1 ]; then 
     redis
     flinkjm
     flinktm
     frontend
-    cluster
+    serving
 else 
     for arg in "$@"
     do
@@ -153,10 +151,10 @@ else
             flinktm
         elif [ "$arg" == frontend ]; then
             frontend
-        elif [ "$arg" == cluster ]; then
-            cluster
+        elif [ "$arg" == serving ]; then
+            serving
         else 
-            echo "Acceptable arguments: \"all\", or one or more among \"redis\", \"flinkjm\", \"flinktm\", \"frontend\", \"cluster\""
+            echo "Acceptable arguments: \"all\", or one or more among \"redis\", \"flinkjm\", \"flinktm\", \"frontend\", \"serving\""
         fi
     done
 fi

@@ -44,7 +44,7 @@ You can run the script `check-status.sh` in the docker container to check whethe
 Note that this only works for local cluster serving (for now).
 
 To test a specific component, pass one or more argument to it among the following:
-"redis", "flinkjm", "flinktm", "frontend", and "cluster". For example, run the following command to check the status of the Flink job master.
+"redis", "flinkjm", "flinktm", "frontend", and "serving". For example, run the following command to check the status of the Flink job master.
 
 ```bash
 docker exec -it flink-local bash check-status.sh flinkjm
