@@ -31,13 +31,13 @@ After you uncompress the gzip files, these files may be renamed by some uncompre
 The ppml in analytics zoo needs secured keys to enable spark security such as Authentication, RPC Encryption, Local Storage Encryption and TLS, you need to prepare the secure keys and keystores.
 This script is in /analytics-zoo/ppml/scripts:
 ```bash
-../../../scripts/generate-keys.sh
+sh ../../../scripts/generate-keys.sh
 ```
 ### Prepare the password
 You also need to store the password you used in previous step in a secured file:
 This script is also in /analytics-zoo/ppml/scripts:
 ```bash
-../../../scripts/generate-password.sh used_password_when_generate_keys
+sh ../../../scripts/generate-password.sh used_password_when_generate_keys
 ```
 
 ### Run the PPML as Docker containers
@@ -47,7 +47,7 @@ This script is also in /analytics-zoo/ppml/scripts:
 Before you run the following command to start container, you need to modify the paths in the start-local-big-data-ml.sh. <br>
 Then run the following command: <br>
 ```bash
-./start-local-big-data-ml.sh
+sh start-local-big-data-ml.sh
 sudo docker exec -it spark-local bash
 cd /ppml/trusted-big-data-ml
 ```
@@ -88,8 +88,7 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
 
 Then run the script to run pi test in spark: <br>
 ```bash
-chmod a+x start-spark-local-pi-sgx.sh
-./start-spark-local-pi-sgx.sh
+sh start-spark-local-pi-sgx.sh
 ```
 
 Open another terminal and check the log:
@@ -155,18 +154,18 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
         --conf spark.driver.host=127.0.0.1 \
         --conf spark.driver.blockManager.port=10026 \
         --conf spark.io.compression.codec=lz4 \
+        --conf spark.sql.shuffle.partitions=8 \
         --class main.scala.TpchQuery \
         --executor-cores 4 \
         --total-executor-cores 4 \
         --executor-memory 10G \
         /ppml/trusted-big-data-ml/work/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar \
-        /ppml/trusted-big-data-ml/work/tpch-spark/dbgen | tee spark.local.tpc.h.sgx.log
+         hdfs://HADOOP_LOCAL_IP:8020/dbgen hdfs://HADOOP_LOCAL_IP:8020/tmp/output | tee spark.local.tpc.h.sgx.log
 ```
 
 Then run the script to run TPC-H test in spark: <br>
 ```bash
-chmod a+x start-spark-local-tpc-h-sgx.sh
-./start-spark-local-tpc-h-sgx.sh
+sh /start-spark-local-tpc-h-sgx.sh
 ```
 
 Open another terminal and check the log: <br>
