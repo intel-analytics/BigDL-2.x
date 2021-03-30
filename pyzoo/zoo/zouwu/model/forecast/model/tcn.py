@@ -151,7 +151,8 @@ def loss_creator(config):
     if loss_name in PYTORCH_REGRESSION_LOSS_MAP:
         loss_name = PYTORCH_REGRESSION_LOSS_MAP[loss_name]
     else:
-        raise RuntimeError("You need to provide valid loss name within mse, mae and huber_loss")
+        raise RuntimeError(f"Got \"{loss_name}\" for loss name,\
+                           where \"mse\", \"mae\" or \"huber_loss\" is expected")
     return getattr(torch.nn, loss_name)()
 
 
