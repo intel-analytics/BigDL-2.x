@@ -26,7 +26,7 @@ RUN git clone https://github.com/redis/redis.git && \
     make -j `getconf _NPROCESSORS_ONLN` BUILD_TLS=yes && make PREFIX=/opt/redis install
 
 # stage. 2 Flink jobmanager
-FROM ubuntu:18.04 as jobmanager
+FROM ubuntu:18.04 as flink-jobmanager
 
 RUN apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
         openjdk-11-jdk wget \
@@ -43,39 +43,23 @@ RUN cd /opt && \
     rm flink-${FLINK_VERSION}-bin-scala_2.11.tgz
 RUN ls -al /opt
 
+# stage. 3 Flink taskmanager
+FROM FROM occlum/occlum:0.21.0-ubuntu18.04 as flink-taskmanager-occlum
+ARG FLINK_VERSION=1.10.1
+ENV FLINK_VERSION ${FLINK_VERSION}
+
+RUN apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
+        openjdk-11-jdk wget \
+        && \
+    apt-get clean
+
+# copy flink
+COPY --from=flink-jobmanager /opt/flink-${FLINK_VERSION} /opt/
+
+ADD ./build_occlum_taskmanager.sh /opt/build_occlum_taskmanager.sh
+ADD ./run_occlum_taskmanager.sh /opt/run_occlum_taskmanager.sh
+
 # stage.3 analytics-zoo
-FROM ubuntu:18.04 as analytics-zoo
-ARG HTTP_PROXY_HOST
-ARG HTTP_PROXY_PORT
-ARG HTTPS_PROXY_HOST
-ARG HTTPS_PROXY_PORT
-ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.1
-ARG SPARK_VERSION=2.4.3
-ARG SPARK_MAJOR_VERSION=2.4
-ENV ANALYTICS_ZOO_VERSION	${ANALYTICS_ZOO_VERSION}
-ENV SPARK_VERSION		${SPARK_VERSION}
-ENV BIGDL_VERSION		${BIGDL_VERSION}
-ENV JAVA_HOME			/usr/lib/jvm/java-11-openjdk-amd64
-ENV PATH			${JAVA_HOME}/bin:${PATH}
-
-
-RUN apt-get update --fix-missing && \
-    apt-get install -y apt-utils curl wget unzip git maven openjdk-11-jdk
-RUN git clone https://github.com/intel-analytics/analytics-zoo.git && \
-    cd analytics-zoo && \
-    export MAVEN_OPTS="-XX:ReservedCodeCacheSize=512m -XX:MaxPermSize=3G \
-        -Dhttp.proxyHost=$HTTP_PROXY_HOST \
-        -Dhttp.proxyPort=$HTTP_PROXY_PORT \
-        -Dhttps.proxyHost=$HTTPS_PROXY_HOST \
-        -Dhttps.proxyPort=$HTTPS_PROXY_PORT" && \
-    mvn clean package -DskipTests -Dspark.version=${SPARK_VERSION} \
-        -Dbigdl.artifactId=bigdl-SPARK_$SPARK_MAJOR_VERSION -P spark_2.4+ -Dbigdl.version=${BIGDL_VERSION}
-RUN cd /opt && \
-    mkdir resnet50 && \
-    cd resnet50 && \
-    wget -c "https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/openvino/2018_R5/resnet_v1_50.bin/download" -O resnet_v1_50.bin && \
-    wget -c "https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/openvino/2018_R5/resnet_v1_50.xml/download" -O resnet_v1_50.xml
 
 # stage.4 az ppml occlum
 FROM ubuntu:18.04
@@ -100,9 +84,6 @@ ENV FLINK_TASK_MANAGER_RPC_PORT		6125
 ENV FLINK_TASK_MANAGER_TASKSLOTS_NUM	1
 ENV CORE_NUM                            2
 
-COPY --from=flink /opt/flink-${FLINK_VERSION} /ppml/trusted-cluster-serving/java/work/flink-${FLINK_VERSION}
-COPY --from=analytics-zoo /analytics-zoo/zoo/target/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar /ppml/trusted-cluster-serving/java/work/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar
-COPY --from=analytics-zoo /analytics-zoo/zoo/target/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-http.jar /ppml/trusted-cluster-serving/java/work/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-http.jar
 COPY --from=analytics-zoo /opt/resnet50/ /ppml/trusted-cluster-serving/java/work/models/resnet50
 
 RUN apt-get update --fix-missing && \
