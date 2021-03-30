@@ -9,7 +9,6 @@ Before run the following command, please modify the pathes in the build-docker-i
 Then build docker image by running this command: <br>
 ```bash
 chmod a+x build-docker-image.sh
-chmod a+x Dockerfile
 ./build-docker-image.sh
 ```
 
