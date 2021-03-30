@@ -30,7 +30,7 @@ class MPIEstimator:
                  model_creator,
                  optimizer_creator,
                  loss_creator,
-                 scheduler_creator,
+                 scheduler_creator=None,
                  config=None,
                  init_func=None,  # Init the distributed environment for MPI if any
                  hosts=None,
@@ -179,6 +179,7 @@ class PlasmaNDArrayDataset(Dataset):
         # All the subpartitions on this node
         all_data = [subpartition for subpartition in meta_data if subpartition[4] == get_node_ip()]
         rank = int(os.environ.get("PMI_RANK", 0))
+        print("Global rank: ", rank)
         # rank = int(os.environ.get("PMIX_RANK", 0))  # For OpenMPI
         local_rank = rank % workers_per_node
         print("Local rank: ", local_rank)
@@ -282,10 +283,12 @@ def plasma_data_creator(meta_data, object_store_address,
     return create_plasma_dataloader
 
 
-def train_epoch(model, train_ld, train_batches, optimizer, loss, scheduler, config):
+def train_epoch(config, model, train_ld, train_batches, optimizer, loss, scheduler,
+                validate_func, valid_ld, validate_batches, validate_steps):
     train_iter = iter(train_ld)
     for j in range(train_batches):
-        if j > 0 and j % len(train_ld) == 0:  # For the case where there are not enough batches.
+        # Iterate again from the beginning if running out of batches.
+        if j > 0 and j % len(train_ld) == 0:
             train_iter = iter(train_ld)
         x, y = next(train_iter)
         o = model(x, y)
@@ -296,8 +299,13 @@ def train_epoch(model, train_ld, train_batches, optimizer, loss, scheduler, conf
         if scheduler:
             scheduler.step()
 
+        should_validate = valid_ld and ((j + 1) % validate_steps == 0 or (j + 1 == train_batches))
+        if should_validate:
+            validate_func(config, model, valid_ld, validate_batches)
+    # TODO: add print
 
-def validate(model, valid_ld, validate_batches, config):
+
+def validate(config, model, valid_ld, validate_batches):
     valid_iter = iter(valid_ld)
     for j in range(validate_batches):
         # Iterate again from the beginning if running out of batches.

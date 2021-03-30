@@ -43,7 +43,10 @@ if init_func:
 model = model_creator(config)
 optimizer = optimizer_creator(model, config)
 loss = loss_creator  # assume it is an instance
-scheduler = scheduler_creator(optimizer, config)
+if scheduler_creator:
+    scheduler = scheduler_creator(optimizer, config)
+else:
+    scheduler = None
 train_ld = train_data_creator(config)
 train_batches = train_batches if train_batches else len(train_ld)
 print("Batches to train: ", train_batches)
