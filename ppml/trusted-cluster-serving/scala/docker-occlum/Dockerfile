@@ -40,10 +40,13 @@ RUN cd /opt && \
     rm flink-${FLINK_VERSION}-bin-scala_2.11.tgz
 
 # stage.3 analytics-zoo
-ADD ./build-occlum-taskmanager.sh /opt/build-occlum-taskmanager.sh
-ADD ./start-occlum-taskmanager.sh /opt/start-occlum-taskmanager.sh
-ADD ./start-jobmanager.sh /opt/start-occlum-taskmanager.sh
+ADD ./init-occlum-taskmanager.sh /opt/init-occlum-taskmanager.sh
+ADD ./start-redis.sh /opt/start-redis.sh
+ADD ./start-flink-jobmanager.sh /opt/start-flink-jobmanager.sh
+ADD ./start-flink-taskmanager.sh /opt/start-flink-taskmanager.sh
+ADD ./start-http-frontend.sh /opt/start-http-frontend.sh
 ADD ./start-local-cluster-serving.sh /opt/start-local-cluster-serving.sh
+ADD ./start-all.sh /opt/start-all.sh
 ADD ./start-distributed-cluster-serving.sh /opt/start-distributed-cluster-serving.sh
 
 # stage.4 az ppml occlum
