@@ -83,6 +83,7 @@ RUN cd /opt && \
     wget -c "https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/openvino/2018_R5/resnet_v1_50.bin/download" -O resnet_v1_50.bin && \
     wget -c "https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-models/openvino/2018_R5/resnet_v1_50.xml/download" -O resnet_v1_50.xml
 
+# TODO will be replace with release url
 RUN mkdir -p /opt/analytics-zoo && \
     cd /opt/analytics-zoo && \
     wget -c "https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.12.1-spark_2.4.3/0.10.0-SNAPSHOT/analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.10.0-20210322.210553-65-cluster-serving-all.zip" && \
