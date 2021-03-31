@@ -501,7 +501,7 @@ class BigDLEstimator(OrcaSparkEstimator):
    * - 'StatelessMetric'
      - '${name}'
      
- :param tag: The string variable represents the scalar wanted
+   :param tag: The string variable represents the scalar wanted
         """
         if self.is_nnframe_fit:
             assert tag is not None, "You should provide tag which should match the name of " \
