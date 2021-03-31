@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.zouwu.regression.xgb_predictor import XgbPredictor
+from zoo.orca.automl.xgboost import XgbPredictor
 
 
 class AutoXGBoost(object):
