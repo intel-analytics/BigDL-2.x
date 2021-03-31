@@ -581,24 +581,43 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         Please look up following form to pass tag parameter.
         Left side is your metric during compile.
         Right side is the tag you should pass.
-
-        >>> 'Accuracy'                  |   'Top1Accuracy'
-        >>> 'BinaryAccuracy'            |   'Top1Accuracy'
-        >>> 'CategoricalAccuracy'       |   'Top1Accuracy'
-        >>> 'SparseCategoricalAccuracy' |   'Top1Accuracy'
-        >>> 'AUC'                       |   'AucScore'
-        >>> 'HitRatio'                  |   'HitRate@k' (k is Top-k)
-        >>> 'Loss'                      |   'Loss'
-        >>> 'MAE'                       |   'MAE'
-        >>> 'NDCG'                      |   'NDCG'
-        >>> 'TFValidationMethod'        |   '${name + " " + valMethod.toString()}'
-        >>> 'Top5Accuracy'              |   'Top5Accuracy'
-        >>> 'TreeNNAccuracy'            |   'TreeNNAccuracy()'
-        >>> 'MeanAveragePrecision'      |   'MAP@k' (k is Top-k) (BigDL)
-        >>> 'MeanAveragePrecision'      |   'PascalMeanAveragePrecision' (Zoo)
-        >>> 'StatelessMetric'           |   '${name}'
-
-        :param tag: The string variable represents the scalar wanted
+       
+.. list-table::
+   :widths: 50 50
+   :header-rows: 1
+   
+   * - your metric during compile
+     - the tag you should pass
+   * - 'Accuracy'
+     - 'Top1Accuracy'
+   * - 'BinaryAccuracy' 
+     - 'Top1Accuracy'
+   * - 'CategoricalAccuracy' 
+     - 'Top1Accuracy'
+   * - SparseCategoricalAccuracy'
+     - 'Top1Accuracy'
+   * - 'AUC'
+     - 'AucScore'
+   * - 'HitRatio' 
+     - 'HitRate@k' (k is Top-k)
+   * - 'Loss' 
+     - 'Loss'
+   * - 'MAE'
+     - 'MAE'
+   * - 'NDCG' 
+     - 'NDCG' 
+   * - 'TFValidationMethod'
+     - '${name + " " + valMethod.toString()}'
+   * - 'Top5Accuracy'
+     - 'Top5Accuracy'
+   * - 'TreeNNAccuracy' 
+     - 'TreeNNAccuracy()'
+   * - 'MeanAveragePrecision' 
+     - 'MAP@k' (k is Top-k) (BigDL)
+   * - 'StatelessMetric'
+     - '${name}'
+     
+:param tag: The string variable represents the scalar wanted
         """
         return self.estimator.get_validation_summary(tag=tag)
 
