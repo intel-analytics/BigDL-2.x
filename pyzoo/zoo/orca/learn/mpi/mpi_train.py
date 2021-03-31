@@ -64,15 +64,3 @@ for i in range(epochs):
     config["epoch"] = i
     train_func(config, model, train_ld, train_batches, optimizer, loss, scheduler,
                validate_func, valid_ld, metrics, validate_batches, validate_steps)
-
-# train_ld = train_data_creator(config)
-# train_batches = train_batches if train_batches else len(train_ld)
-# print("Batches to train: ", train_batches)
-# train_iter = iter(train_ld)
-# for j in range(train_batches):
-#     if j > 0 and j % len(train_ld) == 0:  # For the case where there are not enough batches.
-#         train_iter = iter(train_ld)
-#     x, y = next(train_iter)
-    # print("X_int ", x[0].shape)
-    # print("X_cat ", x[1].shape)
-    # print("y ", y.shape)
