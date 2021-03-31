@@ -14,5 +14,4 @@
 # limitations under the License.
 #
 from .AutoXGBoost import AutoXGBoost
-from .XGBoost import XGBoost
 from .xgb_predictor import XgbPredictor

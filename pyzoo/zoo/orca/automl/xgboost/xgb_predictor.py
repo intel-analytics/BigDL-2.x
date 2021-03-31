@@ -17,7 +17,7 @@
 from zoo.automl.regression.base_predictor import BasePredictor
 from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 
-from zoo.orca.automl.xgboost import XGBoost
+from zoo.orca.automl.xgboost.XGBoost import XGBoost
 
 
 class XgbPredictor(BasePredictor):

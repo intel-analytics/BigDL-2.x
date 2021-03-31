@@ -222,7 +222,7 @@ def load_ts_pipeline(file):
 
 def load_xgboost_pipeline(file, model_type="regressor"):
     from zoo.zouwu.feature.identity_transformer import IdentityTransformer
-    from zoo.orca.automl.xgboost import XGBoost
+    from zoo.orca.automl.xgboost.XGBoost import XGBoost
 
     feature_transformers = IdentityTransformer()
     model = XGBoost(model_type=model_type)
