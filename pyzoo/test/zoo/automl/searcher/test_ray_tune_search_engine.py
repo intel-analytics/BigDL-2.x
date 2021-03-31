@@ -20,7 +20,7 @@ from zoo.zouwu.model.forecast.model import ModelBuilder
 from zoo.zouwu.model.forecast.model.VanillaLSTM_pytorch import model_creator as LSTM_model_creator
 import torch
 import torch.nn as nn
-from zoo.zouwu.config.recipe import Recipe
+from zoo.automl.config.base import Recipe
 from ray import tune
 import pandas as pd
 import numpy as np
