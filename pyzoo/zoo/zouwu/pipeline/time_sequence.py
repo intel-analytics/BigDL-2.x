@@ -20,7 +20,6 @@ from zoo.automl.pipeline.base import Pipeline
 from zoo.automl.common.util import *
 from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 from zoo.zouwu.model.forecast.model.time_sequence import TimeSequenceModel
-from zoo.zouwu.model.forecast.model.XGBoost import XGBoost
 from zoo.automl.common.parameters import *
 import pandas as pd
 
@@ -223,6 +222,8 @@ def load_ts_pipeline(file):
 
 def load_xgboost_pipeline(file, model_type="regressor"):
     from zoo.zouwu.feature.identity_transformer import IdentityTransformer
+    from zoo.orca.automl.xgboost import XGBoost
+
     feature_transformers = IdentityTransformer()
     model = XGBoost(model_type=model_type)
 
