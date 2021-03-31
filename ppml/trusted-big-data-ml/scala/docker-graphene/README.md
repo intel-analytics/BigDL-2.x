@@ -8,7 +8,7 @@ SGX-based Trusted Big Data ML allows user to run end to end big data analytics a
 Before run the following command, please modify the pathes in the build-docker-image.sh file at first. <br>
 Then build docker image by running this command: <br>
 ```bash
-sh build-docker-image.sh
+sudo bash build-docker-image.sh
 ```
 
 ## How to Run
@@ -16,7 +16,7 @@ sh build-docker-image.sh
 ### Prerequisite
 To launch Trusted Big Data ML applications on Graphene-SGX, you need to install graphene-sgx-driver:
 ```bash
-sh ../../../scripts/install-graphene-driver.sh
+sudo bash ../../../scripts/install-graphene-driver.sh
 ```
 
 ### Prepare the data
@@ -29,13 +29,13 @@ After you uncompress the gzip files, these files may be renamed by some uncompre
 The ppml in analytics zoo needs secured keys to enable spark security such as Authentication, RPC Encryption, Local Storage Encryption and TLS, you need to prepare the secure keys and keystores.
 This script is in /analytics-zoo/ppml/scripts:
 ```bash
-sh ../../../scripts/generate-keys.sh
+sudo bash ../../../scripts/generate-keys.sh
 ```
 ### Prepare the password
 You also need to store the password you used in previous step in a secured file:
 This script is also in /analytics-zoo/ppml/scripts:
 ```bash
-sh ../../../scripts/generate-password.sh used_password_when_generate_keys
+sudo bash ../../../scripts/generate-password.sh used_password_when_generate_keys
 ```
 
 ### Run the PPML as Docker containers
@@ -45,7 +45,7 @@ sh ../../../scripts/generate-password.sh used_password_when_generate_keys
 Before you run the following command to start container, you need to modify the paths in the start-local-big-data-ml.sh. <br>
 Then run the following command: <br>
 ```bash
-sh start-local-big-data-ml.sh
+sudo bash start-local-big-data-ml.sh
 sudo docker exec -it spark-local bash
 cd /ppml/trusted-big-data-ml
 ```
@@ -86,7 +86,7 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
 
 Then run the script to run pi test in spark: <br>
 ```bash
-sh start-spark-local-pi-sgx.sh
+sudo bash start-spark-local-pi-sgx.sh
 ```
 
 Open another terminal and check the log:
@@ -164,7 +164,7 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
 
 Then run the script to run TPC-H test in spark: <br>
 ```bash
-sh /start-spark-local-tpc-h-sgx.sh
+sudo bash /start-spark-local-tpc-h-sgx.sh
 ```
 
 Open another terminal and check the log: <br>
