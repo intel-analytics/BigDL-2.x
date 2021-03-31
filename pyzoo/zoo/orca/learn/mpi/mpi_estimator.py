@@ -370,7 +370,7 @@ def validate(config, model, valid_ld, metrics, validate_batches):
     with torch.no_grad():
         for j in range(validate_batches):
             # Iterate again from the beginning if running out of batches.
-            if j > 0 and j % len(validate_batches) == 0:
+            if j > 0 and j % len(valid_ld) == 0:
                 valid_iter = iter(valid_ld)
             x, y = next(valid_iter)
             o = model(x, y)
