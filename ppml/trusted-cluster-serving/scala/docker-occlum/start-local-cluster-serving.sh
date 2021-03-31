@@ -9,7 +9,7 @@ sudo docker run -itd \
     --device=/dev/sgx \
     -v $KEYS_PATH:/opt/keys \
     -v $PWD/conf:/opt/conf \
-    -v $SECURE_PASSWORD_PATH:/opt/passowrd \
+    -v $SECURE_PASSWORD_PATH:/opt/password \
     --name=trusted-cluster-servinglocal \
     -e LOCAL_IP=$LOCAL_IP \
     -e CORE_NUM=30 \
