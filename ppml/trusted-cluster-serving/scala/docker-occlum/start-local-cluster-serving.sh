@@ -13,5 +13,5 @@ sudo docker run -itd \
     --name=trusted-cluster-servinglocal \
     -e LOCAL_IP=$LOCAL_IP \
     -e CORE_NUM=30 \
-    intelanalyticszoo/analytics-zoo-ppml-trusted-big-data-ml-scala-occlum:0.10-SNAPSHOT \
+    intelanalytics/analytics-zoo-ppml-trusted-cluster-serving-scala-occlum:0.10-SNAPSHOT \
     bash  -c "cd /opt/ && ./start-all.sh"
