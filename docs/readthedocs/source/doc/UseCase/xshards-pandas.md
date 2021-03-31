@@ -57,7 +57,8 @@ class NCF(object):
         self.user = tf.placeholder(dtype=tf.int32, shape=(None,))
         self.item = tf.placeholder(dtype=tf.int32, shape=(None,))
         self.label = tf.placeholder(dtype=tf.int32, shape=(None,))
-
+        
+        # GMF part starts
         with tf.name_scope("GMF"):
             user_embed_GMF = tf.contrib.layers.embed_sequence(self.user, vocab_size=user_size + 1, embed_dim=embed_size)
             item_embed_GMF = tf.contrib.layers.embed_sequence(self.item, vocab_size=item_size + 1, embed_dim=embed_size)
@@ -98,6 +99,8 @@ model = NCF(embedding_size, max_user_id, max_item_id)
 Finally, run distributed model training/inference on the XShards of Pandas DataFrames directly.
 
 ```python
+from zoo.orca.learn.tf.estimator import Estimator
+
 # create an Estimator.
 estimator = Estimator.from_graph(
             inputs=[model.user, model.item], # the model accept two inputs and one label
