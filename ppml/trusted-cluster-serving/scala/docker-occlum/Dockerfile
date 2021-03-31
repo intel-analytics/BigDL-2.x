@@ -31,7 +31,7 @@ ARG SPARK_VERSION=2.4.3
 ARG SPARK_MAJOR_VERSION=2.4
 ARG FLINK_VERSION=1.10.1
 ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
-ENV JAVA_HOME				/usr/lib/jvm/java-11-openjdk-amd64
+ENV JAVA_HOME				/usr/lib/jvm/java-8-openjdk-amd64
 ENV FLINK_VERSION			${FLINK_VERSION}
 ENV FLINK_HOME				/opt/flink-${FLINK_VERSION}
 ARG HTTP_PROXY_HOST
@@ -41,7 +41,7 @@ ARG HTTPS_PROXY_PORT
 
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
-        git build-essential coreutils ca-certificates openjdk-11-jdk wget unzip apt-utils curl maven && \
+        git build-essential coreutils ca-certificates openjdk-8-jdk wget unzip apt-utils curl maven && \
     apt-get clean
 
 # Download flink
