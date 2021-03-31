@@ -9,7 +9,13 @@ id=$([ -f "$pid" ] && echo $(wc -l < "$pid") || echo "0")
 FLINK_LOG_PREFIX="/host/flink--$postfix-${id}"
 log="${FLINK_LOG_PREFIX}.log"
 
+core_num=$CORE_NUM
+job_manager_host=$FLINK_JOB_MANAGER_IP
+job_manager_rest_port=$FLINK_JOB_MANAGER_REST_PORT
+job_manager_rpc_port=$FLINK_JOB_MANAGER_RPC_PORT
 secure_passowrd=`openssl rsautl -inkey /opt/passowrd/key.txt -decrypt </opt/passowrd/output.bin`
+flink_home=$FLINK_HOME
+flink_version=$FLINK_VERSION
 
 run_taskmanager() {
     # enter occlum image
