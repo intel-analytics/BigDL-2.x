@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from unittest import TestCase
-from zoo.zouwu.model.forecast.model import ModelBuilder
+from zoo.automl.model import ModelBuilder
 import numpy as np
 import tensorflow as tf
 
