@@ -66,7 +66,7 @@ class MPIEstimator:
             # partition_id, subpartition_id, subpartition_size, object_id, node_ip
             plasma_meta = data.mapPartitionsWithIndex(
                 put_to_plasma(object_store_address)).collect()
-            # Can remove the following. Debug and confirmation purpose only.
+            # The following is mainly for debugging and confirmation purpose.
             train_size_map = {}
             for partition_id, subpartition_id, subpartition_size, object_id, ip in plasma_meta:
                 if ip not in train_size_map:
@@ -92,7 +92,8 @@ class MPIEstimator:
                 validate_plasma_meta = validation_data.mapPartitionsWithIndex(
                     put_to_plasma(object_store_address)).collect()
                 validate_size_map = {}
-                for partition_id, subpartition_id, subpartition_size, object_id, ip in validate_plasma_meta:
+                for partition_id, subpartition_id, subpartition_size, object_id, ip \
+                        in validate_plasma_meta:
                     if ip not in validate_size_map:
                         validate_size_map[ip] = {}
                     if partition_id not in validate_size_map[ip]:
@@ -104,7 +105,8 @@ class MPIEstimator:
                     for partition_id, subpartition_size in meta.items():
                         size += sum(subpartition_size)
                         count += len(subpartition_size)
-                    print("Node {} has {} subpartitions and {} test records".format(node, count, size))
+                    print("Node {} has {} subpartitions and {} test records"
+                          .format(node, count, size))
                     size = 0
                     count = 0
                 validation_data_creator = plasma_data_creator(
