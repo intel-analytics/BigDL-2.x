@@ -28,7 +28,8 @@ RUN wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.k
 
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
-        git build-essential coreutils ca-certificates openjdk-11-jdk wget unzip
+        git build-essential coreutils ca-certificates openjdk-11-jdk wget unzip && \
+    apt-get clean
 
 RUN git clone https://github.com/openssl/openssl.git && \
     cd openssl && \
