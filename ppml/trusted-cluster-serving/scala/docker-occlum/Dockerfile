@@ -121,4 +121,5 @@ ADD ./start-http-frontend.sh /opt/start-http-frontend.sh
 ADD ./start-local-cluster-serving.sh /opt/start-local-cluster-serving.sh
 ADD ./start-all.sh /opt/start-all.sh
 ADD ./start-distributed-cluster-serving.sh /opt/start-distributed-cluster-serving.sh
+ADD ./stop-distributed-cluster-serving.sh /opt/stop-distributed-cluster-serving.sh
 
