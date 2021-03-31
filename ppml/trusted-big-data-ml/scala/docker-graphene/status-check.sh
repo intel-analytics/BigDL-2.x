@@ -1,5 +1,5 @@
 #!/bin/bash
-# Acceptable arguments: redis, flinkjm, flinktm, frontend, serving, all
+# Acceptable arguments: master, worker, all
 
 MASTERLOG="/ppml/trusted-big-data-ml/scala/docker-graphene/spark-master-sgx.log"
 WORKERLOG="/ppml/trusted-big-data-ml/scala/docker-graphene/spark-worker-sgx.log"
