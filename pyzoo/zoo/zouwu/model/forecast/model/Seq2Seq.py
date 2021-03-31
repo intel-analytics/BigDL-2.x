@@ -18,7 +18,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, LSTM, Dense
 import tensorflow.keras as keras
 
-from zoo.zouwu.model.forecast.model.abstract import BaseModel
+from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 

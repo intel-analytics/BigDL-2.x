@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .abstract import BaseModel
+from zoo.automl.model.abstract import BaseModel
 from .VanillaLSTM import VanillaLSTM
 from .Seq2Seq import LSTMSeq2Seq
 from .MTNet_keras import MTNetKeras
