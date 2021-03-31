@@ -25,13 +25,14 @@ def create_data():
     num_val_samples = 400
     num_test_samples = 400
     input_time_steps = 24
-    input_feature_dim = 4
-    output_time_steps = np.random.randint(1, 5)
-    output_feature_dim = np.random.randint(1, 4)
+    input_feature_dim = 2
+    output_time_steps = 5
+    output_feature_dim = 2
 
     def get_x_y(num_samples):
         x = np.random.rand(num_samples, input_time_steps, input_feature_dim)
-        y = np.random.randn(num_samples, output_time_steps, output_feature_dim)
+        y = x[:, -output_time_steps:, :]*2 + \
+            np.random.rand(num_samples, output_time_steps, output_feature_dim)
         return x, y
 
     train_data = get_x_y(num_train_samples)
