@@ -60,8 +60,9 @@ class TestZouwuModelTCNForecaster(TestCase):
                                    output_feature_num=1,
                                    kernel_size=4,
                                    num_channels=[16, 16],
+                                   loss="mae",
                                    lr=0.01)
-        train_mse = forecaster.fit(train_data[0], train_data[1], epochs=2)
+        train_loss = forecaster.fit(train_data[0], train_data[1], epochs=2)
         test_pred = forecaster.predict(test_data[0])
         assert test_pred.shape == test_data[1].shape
         test_mse = forecaster.evaluate(test_data[0], test_data[1])

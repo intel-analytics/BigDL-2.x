@@ -29,6 +29,7 @@ class TCNForecaster(Forecaster):
                  kernel_size=7,
                  dropout=0.2,
                  optimizer="Adam",
+                 loss="mse",
                  lr=0.001):
         """
         Build a TCN Forecast Model.
@@ -45,6 +46,9 @@ class TCNForecaster(Forecaster):
                possibility to a neuron). This value defaults to 0.2.
         :param optimizer: Specify the optimizer used for training. This value
                defaults to "Adam".
+        :param loss: Specify the loss function used for training. This value
+               defaults to "mse". You can choose from "mse", "mae" and
+               "huber_loss".
         :param lr: Specify the learning rate. This value defaults to 0.001.
         """
         self.internal = TCNPytorch(check_optional_config=False)
@@ -56,6 +60,7 @@ class TCNForecaster(Forecaster):
         }
         self.config = {
             "lr": lr,
+            "loss": loss,
             "num_channels": num_channels,
             "kernel_size": kernel_size,
             "optim": optimizer,
