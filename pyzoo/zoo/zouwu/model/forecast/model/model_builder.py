@@ -45,7 +45,7 @@ class ModelBuilder:
             return mapping[class_name]
 
         if dev_option == 'pytorch':
-            from zoo.zouwu.model.forecast.model.base_pytorch_model import PytorchBaseModel
+            from zoo.automl.model.base_pytorch_model import PytorchBaseModel
             return cls(cls=get_class(PytorchBaseModel))
 
         elif dev_option == 'tf.keras':
@@ -59,7 +59,7 @@ class ModelBuilder:
     def build_from_ckpt(self, checkpoint_filename):
         '''Restore from a saved model'''
         if self.backend == "pytorch":
-            from zoo.zouwu.model.forecast.model.base_pytorch_model import PytorchBaseModel
+            from zoo.automl.model.base_pytorch_model import PytorchBaseModel
             model = PytorchBaseModel(**self.params)
             model.restore(checkpoint_filename)
             return model
@@ -73,7 +73,7 @@ class ModelBuilder:
     def build(self, config):
         '''Build a new model'''
         if self.backend == "pytorch":
-            from zoo.zouwu.model.forecast.model.base_pytorch_model import PytorchBaseModel
+            from zoo.automl.model.base_pytorch_model import PytorchBaseModel
             model = PytorchBaseModel(**self.params)
             model.build(config)
             return model

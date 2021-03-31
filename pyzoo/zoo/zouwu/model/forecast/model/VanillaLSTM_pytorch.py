@@ -16,7 +16,7 @@
 
 import torch
 import torch.nn as nn
-from zoo.zouwu.model.forecast.model.base_pytorch_model import PytorchBaseModel
+from zoo.automl.model.base_pytorch_model import PytorchBaseModel
 
 
 class LSTMModel(nn.Module):
