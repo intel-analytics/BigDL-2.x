@@ -26,9 +26,9 @@ class LSTMSeq2Seq(nn.Module):
                  future_seq_len,
                  output_feature_num,
                  lstm_hidden_dim=128,
+                 lstm_layer_num=1,
                  fc_hidden_dim=128,
                  fc_layer_num=2,
-                 lstm_layer_num=1,
                  dropout=0.25):
         super(LSTMSeq2Seq, self).__init__()
         self.lstm_encoder = nn.LSTM(input_feature_num,
@@ -78,7 +78,13 @@ def optimizer_creator(model, config):
 
 
 def loss_creator(config):
-    return nn.MSELoss()
+    loss_name = config.get("loss", "mse")
+    if loss_name in PYTORCH_REGRESSION_LOSS_MAP:
+        loss_name = PYTORCH_REGRESSION_LOSS_MAP[loss_name]
+    else:
+        raise RuntimeError(f"Got \"{loss_name}\" for loss name,\
+                           where \"mse\", \"mae\" or \"huber_loss\" is expected")
+    return getattr(torch.nn, loss_name)()
 
 
 class Seq2SeqPytorch(PytorchBaseModel):
