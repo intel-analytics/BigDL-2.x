@@ -28,7 +28,7 @@ class LSTMSeq2Seq(nn.Module):
                  future_seq_len,
                  output_feature_num,
                  lstm_hidden_dim=128,
-                 lstm_layer_num=1,
+                 lstm_layer_num=2,
                  fc_hidden_dim=128,
                  fc_layer_num=2,
                  dropout=0.25):
