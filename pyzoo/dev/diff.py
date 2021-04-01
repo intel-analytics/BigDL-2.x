@@ -38,7 +38,7 @@ def extract_scala_class(class_path):
                          "InternalLocalOptimizer", "InternalDistriOptimizer",
                          "EmbeddingMatrixHolder", "InternalParameter", "KerasParameter",
                          "InternalCAddTable", "InternalGetShape",
-                         "EmbeddingMatrixHolder", "Pooling2D", "InternalSplitTensor",
+                         "Pooling2D", "InternalSplitTensor",
                          "SplitTensor", "Expand", "InternalMax", "InternalConvLSTM3D",
                          "InternalConvLSTM2D", "InternalCMulTable", "SoftMax",
                          "KerasConstant", "InternalConstant", "InternalERF", "InternalSoftMax",

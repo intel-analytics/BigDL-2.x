@@ -84,6 +84,5 @@ class VanillaLSTMPytorch(PytorchBaseModel):
     def _get_optional_parameters(self):
         return {
             'hidden_dim',
-            'layer_num',
-            'hidden_dim',
+            'layer_num'
         } | super()._get_optional_parameters()

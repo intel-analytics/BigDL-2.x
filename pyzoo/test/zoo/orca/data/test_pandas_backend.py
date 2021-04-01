@@ -261,7 +261,7 @@ class TestSparkXShards(TestCase):
         data = zipped_shard.collect()
         assert data[0][0]["value"].values[0] + data[0][1]["value"].values[0] == -2, \
             "value should be -2"
-        list1 = list([1, 2, 3])
+        list1 = [1, 2, 3]
         with self.assertRaises(Exception) as context:
             data_shard.zip(list1)
         self.assertTrue('other should be a SparkXShards' in str(context.exception))

@@ -343,7 +343,7 @@ class TorchRunner:
                 params[arg] = config[arg]
 
         def predict_fn(shard):
-            if isinstance(shard["x"], tuple) or isinstance(shard["x"], list):
+            if isinstance(shard["x"], (tuple, list)):
                 tensors = [torch.from_numpy(arr) for arr in shard["x"]]
             else:
                 tensors = [torch.from_numpy(shard["x"])]

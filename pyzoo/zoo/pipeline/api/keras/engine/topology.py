@@ -226,7 +226,7 @@ class KerasNet(ZooKerasLayer):
                     x, y = x[:split_index], y[:split_index]
                     validation_data = to_sample_rdd(*validation_data)
                 training_data = to_sample_rdd(x, y)
-            elif (isinstance(x, RDD) or isinstance(x, ImageSet) or isinstance(x, TextSet)) \
+            elif isinstance(x, (RDD, ImageSet, TextSet)) \
                     or isinstance(x, FeatureSet) and not y:
                 training_data = x
             else:
@@ -264,7 +264,7 @@ class KerasNet(ZooKerasLayer):
         """
         if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
             data = to_sample_rdd(x, y)
-        elif (isinstance(x, RDD) or isinstance(x, ImageSet) or isinstance(x, TextSet)) and not y:
+        elif isinstance(x, (RDD, ImageSet, TextSet)) and not y:
             data = x
         else:
             raise TypeError("Unsupported evaluation data type: %s" % type(x))
@@ -311,7 +311,7 @@ class KerasNet(ZooKerasLayer):
         distributed: Boolean. Whether to do prediction in distributed mode or local mode.
                      Default is True. In local mode, x must be a Numpy array.
         """
-        if isinstance(x, ImageSet) or isinstance(x, TextSet):
+        if isinstance(x, (ImageSet, TextSet)):
             results = callZooFunc(self.bigdl_type, "zooPredict",
                                   self.value,
                                   x,
@@ -330,7 +330,7 @@ class KerasNet(ZooKerasLayer):
                                   batch_per_thread)
             return results.map(lambda result: Layer.convert_output(result))
         else:
-            if isinstance(x, np.ndarray) or isinstance(x, list):
+            if isinstance(x, (np.ndarray, list)):
                 results = callZooFunc(self.bigdl_type, "zooPredict",
                                       self.value,
                                       self._to_jtensors(x),

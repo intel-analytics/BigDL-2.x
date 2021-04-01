@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import sys
 import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
@@ -50,7 +51,7 @@ if __name__ == '__main__':
     if len(sys.argv) != 2:
         print(sys.argv)
         print("Need parameters: <imagePath>")
-        exit(-1)
+        sys.exit(-1)
 
     hadoop_conf_dir = os.environ.get('HADOOP_CONF_DIR')
 

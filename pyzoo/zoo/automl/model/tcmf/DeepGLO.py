@@ -79,7 +79,7 @@ def get_model(A, y, lamb=0):
     )
 
 
-class DeepGLO(object):
+class DeepGLO:
     def __init__(
         self,
         vbsize=150,

@@ -120,7 +120,7 @@ class TCNSmokeRecipe(Recipe):
         }
 
 
-class PastSeqParamHandler(object):
+class PastSeqParamHandler:
     """
     Utility to handle PastSeq Param
     """

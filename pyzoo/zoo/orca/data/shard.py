@@ -337,8 +337,7 @@ class SparkXShards(XShards):
                 list or tuple, return list of input SparkDataShards.
         """
         # get number of splits
-        list_split_length = self.rdd.map(lambda data: len(data) if isinstance(data, list) or
-                                         isinstance(data, tuple) else 1).collect()
+        list_split_length = self.rdd.map(lambda data: len(data) if isinstance(data, (list, tuple)) else 1).collect()
         # check if each element has same splits
         if list_split_length.count(list_split_length[0]) != len(list_split_length):
             raise Exception("Cannot split this XShards because its partitions "

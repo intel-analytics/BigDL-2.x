@@ -150,7 +150,7 @@ def combine(data_list):
         res = {}
         for k, v in item.items():
             res[k] = np.concatenate([data[k] for data in data_list], axis=0)
-    elif isinstance(item, list) or isinstance(item, tuple):
+    elif isinstance(item, (list, tuple)):
         res = []
         for i in range(len(data_list[0])):
             res.append(np.concatenate([data[i] for data in data_list], axis=0))
@@ -315,7 +315,7 @@ def get_size(x):
     elif isinstance(x, dict):
         for k, v in x.items():
             return len(v)
-    elif isinstance(x, tuple) or isinstance(x, list):
+    elif isinstance(x, (tuple, list)):
         return len(x[0])
     else:
         raise ValueError(

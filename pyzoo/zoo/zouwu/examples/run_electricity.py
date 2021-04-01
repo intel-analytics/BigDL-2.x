@@ -131,7 +131,7 @@ if __name__ == "__main__":
                          if args.predict_local else args.num_workers)
     logger.info("Prediction ends")
     yhat = yhat["prediction"]
-    target_value = dict({"y": target_data})
+    target_value = {"y": target_data}
 
     # evaluate with prediction results
     from zoo.automl.common.metrics import Evaluator
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     logger.info("Start fit incremental")
     model.fit_incremental({'y': target_data})
     logger.info("Start evaluation after fit incremental")
-    incr_target_value = dict({"y": incr_target_data})
+    incr_target_value = {"y": incr_target_data}
     mse, smape = model.evaluate(target_value=incr_target_value, metric=['mse', 'smape'],
                                 num_workers=args.num_predict_workers
                                 if args.predict_local else args.num_workers)
