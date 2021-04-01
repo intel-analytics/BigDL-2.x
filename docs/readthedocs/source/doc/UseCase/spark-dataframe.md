@@ -8,11 +8,11 @@
 
 **In this guide we will describe how to use Spark Dataframes to scale-out data processing for distribtued deep learning.**
 
-The dataset in this guide we used is [movielens-1M](https://grouplens.org/datasets/movielens/1m/), which contains 1 million ratings of 5 levels from 6000 users on 4000 movies. We will read the data into Spark Dataframe and directly use the Spark Dataframe as the input to the distributed training.
+The dataset used in this guide is [movielens-1M](https://grouplens.org/datasets/movielens/1m/), which contains 1 million ratings of 5 levels from 6000 users on 4000 movies. We will read the data into Spark Dataframe and directly use the Spark Dataframe as the input to the distributed training.
 
 ### **1. Read input data into Spark DataFrame**
 
-First, read the input data into Spark Dataframes. Spark supports to read files in CSV, JSON, TEXT, Parquet, and many more file formats into Spark DataFrame. Spark SQL provides `spark.read.csv("path")` to read a CSV file into Spark DataFrame.
+First, read the input data into Spark Dataframes.
 
 ```python
 from zoo.orca import OrcaContext
@@ -82,6 +82,8 @@ def model_creator(config):
 Finally, run distributed model training/inference on the Spark Dataframes directly.
 
 ```python
+from zoo.orca.learn.tf2 import Estimator
+
 # create an Estimator
 est = Estimator.from_keras(model_creator=model_creator) # the model accept two inputs and one label
 
