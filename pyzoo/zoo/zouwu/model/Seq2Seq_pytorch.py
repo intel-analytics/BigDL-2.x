@@ -46,32 +46,30 @@ class LSTMSeq2Seq(nn.Module):
         self.output_feature_num = output_feature_num
 
     def forward(self, input_seq, target_seq=None):
-        x, (hid, cta) = self.lstm_encoder(input_seq)
-        h, c = hid[-1], cta[-1]
+        x, (hidden, cell) = self.lstm_encoder(input_seq)
+        decoder_input = input_seq[:, -1, :] # last value
+        decoder_input = decoder_input.unsqueeze(1)
 
-        decoder_input = source[:, -1, :] # last value
-        decoder_output = torch.zeros(input_seq.shape[0], self.future_seq_len, output_feature_num)
+        decoder_output = torch.zeros(input_seq.shape[0], self.future_seq_len, self.output_feature_num)
         for i in range(self.future_seq_len):
-            decoder_output_step, hidden, cell = self.lstm_decoder(decoder_input, hidden, cell)
-            decoder_output[:,-1,:] = decoder_output_step
+            decoder_output_step, (hidden, cell) = self.lstm_decoder(decoder_input, (hidden, cell))
+            out_step = self.fc(decoder_output_step)
+            decoder_output[:,i:i+1,:] = out_step
             if target_seq is None:
                 # no teaching force
-                decoder_input = decoder_output_step
+                decoder_input = out_step
             else:
                 # with teaching force
                 decoder_input = target_seq[:, i]
-
-        out = self.fc(decoder_output)
-
-        return out
+        return decoder_output
 
 
 def model_creator(config):
     return LSTMSeq2Seq(input_feature_num=config["input_feature_num"],
                        output_feature_num=config["output_feature_num"],
-                       future_seq_len=config["future_seq_len"]
+                       future_seq_len=config["future_seq_len"],
                        lstm_hidden_dim=config.get("lstm_hidden_dim", 128),
-                       lstm_layer_num=config.get("lstm_layer_num", 2),
+                       lstm_layer_num=config.get("lstm_layer_num", 4),
                        dropout=config.get("dropout", 0.25))
 
 
