@@ -16,7 +16,7 @@
 #
 
 from zoo.automl.search import SearchEngineFactory
-from zoo.zouwu.model.forecast.model import ModelBuilder
+from zoo.automl.model import ModelBuilder
 import torch
 import tensorflow as tf
 import torch.nn as nn

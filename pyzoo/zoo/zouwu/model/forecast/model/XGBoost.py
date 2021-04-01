@@ -19,7 +19,7 @@ from xgboost.sklearn import XGBRegressor
 
 from xgboost.sklearn import XGBClassifier
 from zoo.automl.common.metrics import Evaluator
-from zoo.zouwu.model.forecast.model.abstract import BaseModel
+from zoo.automl.model.abstract import BaseModel
 
 
 class XGBoost(BaseModel):
