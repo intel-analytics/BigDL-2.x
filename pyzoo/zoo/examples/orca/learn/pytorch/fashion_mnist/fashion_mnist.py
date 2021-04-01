@@ -110,7 +110,7 @@ def main():
     parser.add_argument('--cluster_mode', type=str, default="local",
                         help='The cluster mode, such as local, yarn or k8s.')
     parser.add_argument('--backend', type=str, default="bigdl",
-                        help='The backend of torch Estimator, such as bigdl, torch-distributed or horovod')
+                        help='The backend of PyTorch Estimator; bigdl and torch-distributed are supported.')
     args = parser.parse_args()
 
     if args.cluster_mode == "local":
@@ -179,8 +179,7 @@ def main():
         print("Validation stats: {}".format(val_stats))
         orca_estimator.shutdown()
     else:
-        print("Training failed. backend should be either 'bigdl' or 'torch_distributed' for now but got "
-              + args.backend)
+        print("Only bigdl and torch_distributed are supported as the backend, but got {}".format(args.backend))
 
     stop_orca_context()
 

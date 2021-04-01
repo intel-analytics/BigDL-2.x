@@ -1,5 +1,5 @@
 # PyTorch Fashion-MNIST example with Tensorboard visualization
-We demonstrate how to easily show the graphical results of running synchronous distributed PyTorch training using PyTorch Estimator of Project Orca in Analytics Zoo. We use a simple convolutional nueral network model to train on fashion-MNIST dataset. See [here](https://pytorch.org/tutorials/intermediate/tensorboard_tutorial.html) for the original single-node version of this example provided by PyTorch.
+We demonstrate how to easily show the graphical results of running synchronous distributed PyTorch training using PyTorch Estimator of Project Orca in Analytics Zoo. We use a simple convolutional nueral network model to train on fashion-MNIST dataset. See [here](https://pytorch.org/tutorials/intermediate/tensorboard_tutorial.html) for the original single-node version of this example provided by PyTorch. We demonstrate two distributed PyTorch training backends for this example, namely "bigdl" and "torch_distributed". You can run with either backend as you wish.
 
 ## Prepare the environment
 
@@ -8,15 +8,16 @@ We recommend you to use Anaconda to prepare the environment, especially if you w
 ```
 conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
-pip install analytics-zoo  # 0.10.0.dev3 or above
 pip install torch
 pip install torchvision
 pip install matplotlib
-# for bigdl:
+
+# For bigdl backend
+pip install analytics-zoo  # 0.10.0.dev3 or above
 pip install jep==3.9.0
 pip install six cloudpickle
-# for torch_distributed:
-pip install ray==1.2.0
+# For torch_distributed backend:
+pip install analytics-zoo[ray]  # 0.10.0.dev3 or above
 ```
 
 ## Run on local after pip install
@@ -27,7 +28,7 @@ The default backend is `bigdl`.
 python fashion_mnist.py
 ```
 
-You can also run with `torch_distributed` backend:
+You can also run with `torch_distributed` backend via:
 
 ```
 python fashion_mnist.py --backend torch_distributed
@@ -52,7 +53,7 @@ Then open `https://localhost:6006` on the local client machine to see the result
 
 ## Results
 
-### With bigdl backend
+**For "bigdl" backend**
 
 You can find the logs for training as follows:
 
@@ -66,7 +67,7 @@ Final test results will be printed at the end:
 2021-03-24 14:39:43 INFO  DistriOptimizer$:1759 - Top1Accuracy is Accuracy(correct: 8851, count: 10000, accuracy: 0.8851)
 ```
 
-### With torch_distributed backend
+**For "torch_distributed" backend**
 
 You can find the results of training and validation as follows:
 
