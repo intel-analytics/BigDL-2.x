@@ -76,7 +76,7 @@ class ArrowDeserializer {
     val strArr = arr.map(dataAndShape => {
       val dataStr = dataAndShape._1.mkString("[", ",", "]")
       val shapeStr = dataAndShape._2.mkString("[", ",", "]")
-      "{data:" + dataStr + ",shape:" + shapeStr + "}"
+      s"""{"data":$dataStr,"shape":$shapeStr}"""
     })
     var str = ""
     strArr.foreach(s => str += s)

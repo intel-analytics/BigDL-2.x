@@ -16,7 +16,7 @@
 
 import pytest
 from unittest import TestCase
-from zoo.zouwu.model.forecast.model.VanillaLSTM import VanillaLSTM
+from zoo.zouwu.model.VanillaLSTM import VanillaLSTM
 import numpy as np
 import tempfile
 import os

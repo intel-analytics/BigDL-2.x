@@ -15,7 +15,7 @@
 #
 
 from unittest import TestCase
-from zoo.zouwu.model.forecast.model.tcn import TCNPytorch
+from zoo.zouwu.model.tcn import TCNPytorch
 import numpy as np
 import tempfile
 import os

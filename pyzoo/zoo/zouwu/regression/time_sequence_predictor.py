@@ -17,7 +17,7 @@
 from zoo.automl.regression.base_predictor import BasePredictor
 from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 
-from zoo.zouwu.model.forecast.model.time_sequence import TimeSequenceModel
+from zoo.zouwu.model.time_sequence import TimeSequenceModel
 
 
 class TimeSequencePredictor(BasePredictor):

@@ -130,11 +130,11 @@ class ClusterServingInference(preProcessing: PreProcessing,
          * original Tensor, thus if reuse of Tensor is needed,
          * have to squeeze it back.
          */
-        dimCheck(t, "add", modelType)
+        // dimCheck(t, "add", modelType)
         val result =
           ClusterServing.model.doPredict(t)
         dimCheck(result, "remove", modelType)
-        dimCheck(t, "remove", modelType)
+        // dimCheck(t, "remove", modelType)
         val kvResult =
           (0 until size).toParArray.map(i => {
             val value = PostProcessing(result, filterType, i + 1)
