@@ -29,49 +29,50 @@ class LSTMSeq2Seq(nn.Module):
                  output_feature_num,
                  lstm_hidden_dim=128,
                  lstm_layer_num=2,
-                 fc_hidden_dim=128,
-                 fc_layer_num=2,
                  dropout=0.25):
         super(LSTMSeq2Seq, self).__init__()
-        self.lstm_encoder = nn.LSTM(input_feature_num,
-                                    lstm_hidden_dim,
-                                    lstm_layer_num,
+        self.lstm_encoder = nn.LSTM(input_size=input_feature_num,
+                                    hidden_size=lstm_hidden_dim,
+                                    num_layers=lstm_layer_num,
                                     dropout=dropout,
                                     batch_first=True)
-        self.lstm_decoder = nn.LSTMCell(lstm_hidden_dim, lstm_hidden_dim)
-        fc_layers = [lstm_hidden_dim] + [fc_hidden_dim]*(fc_layer_num-1) + [output_feature_num]
-        layers = []
-        for i in range(fc_layer_num):
-            if i != 0:
-                layers += [nn.Dropout(p=dropout)]
-            layers += [nn.Linear(fc_layers[i], fc_layers[i+1])]
-        self.fc = nn.Sequential(*layers)
-        self.output_step = future_seq_len
+        self.lstm_decoder = nn.LSTM(input_size=input_feature_num,
+                                    hidden_size=lstm_hidden_dim,
+                                    num_layers=lstm_layer_num,
+                                    dropout=dropout,
+                                    batch_first=True)
+        self.fc = nn.Linear(in_features=lstm_hidden_dim, out_features=output_feature_num)
+        self.future_seq_len = future_seq_len
+        self.output_feature_num = output_feature_num
 
-    def forward(self, input_seq):
+    def forward(self, input_seq, target_seq=None):
         x, (hid, cta) = self.lstm_encoder(input_seq)
         h, c = hid[-1], cta[-1]
 
-        decode_list = []
-        for i in range(self.output_step):
-            h, c = self.lstm_decoder(h, (h, c))
-            decode_list.append(h)
+        decoder_input = source[:, -1, :] # last value
+        decoder_output = torch.zeros(input_seq.shape[0], self.future_seq_len, output_feature_num)
+        for i in range(self.future_seq_len):
+            decoder_output_step, hidden, cell = self.lstm_decoder(decoder_input, hidden, cell)
+            decoder_output[:,-1,:] = decoder_output_step
+            if target_seq is None:
+                # no teaching force
+                decoder_input = decoder_output_step
+            else:
+                # with teaching force
+                decoder_input = target_seq[:, i]
 
-        decode = torch.stack(decode_list, dim=1)
-        out = self.fc(decode)
+        out = self.fc(decoder_output)
 
         return out
 
 
 def model_creator(config):
     return LSTMSeq2Seq(input_feature_num=config["input_feature_num"],
+                       output_feature_num=config["output_feature_num"],
+                       future_seq_len=config["future_seq_len"]
                        lstm_hidden_dim=config.get("lstm_hidden_dim", 128),
                        lstm_layer_num=config.get("lstm_layer_num", 2),
-                       dropout=config.get("dropout", 0.25),
-                       output_feature_num=config["output_feature_num"],
-                       future_seq_len=config["future_seq_len"],
-                       fc_layer_num=config.get("fc_layer_num", 2),
-                       fc_hidden_dim=config.get("fc_hidden_dim", 128))
+                       dropout=config.get("dropout", 0.25))
 
 
 def optimizer_creator(model, config):
@@ -106,7 +107,5 @@ class Seq2SeqPytorch(PytorchBaseModel):
     def _get_optional_parameters(self):
         return {
             "lstm_hidden_dim",
-            "lstm_layer_num",
-            "fc_layer_num",
-            "fc_hidden_dim"
+            "lstm_layer_num"
         } | super()._get_optional_parameters()
