@@ -79,7 +79,7 @@ else
     wget -nv $FTP_URI/analytics-zoo-data/airline_14col.data -P ${ANALYTICS_ZOO_ROOT}/data/
 fi
 
-execute_ray_test auto-xgboost-classifier ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/AutoXGBoostClassifier.py
+execute_ray_test auto-xgboost-classifier ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostClassifier.py
 time8=$?
 
 echo "#1 rl_pong time used:$time1 seconds"
