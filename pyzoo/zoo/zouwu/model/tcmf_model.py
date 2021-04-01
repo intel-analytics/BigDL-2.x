@@ -14,7 +14,7 @@
 #
 from abc import ABCMeta, abstractmethod
 
-from zoo.zouwu.model.forecast.model.tcmf import DeepGLO
+from zoo.zouwu.model.tcmf import DeepGLO
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.model.abstract import BaseModel
 from zoo.orca.data import SparkXShards, XShards

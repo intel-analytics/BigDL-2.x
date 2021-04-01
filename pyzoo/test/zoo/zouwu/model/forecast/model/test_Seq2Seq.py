@@ -20,7 +20,7 @@ import tempfile
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.zouwu.model.forecast.model.Seq2Seq import LSTMSeq2Seq
+from zoo.zouwu.model.Seq2Seq import LSTMSeq2Seq
 from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 from numpy.testing import assert_array_almost_equal
 import pandas as pd

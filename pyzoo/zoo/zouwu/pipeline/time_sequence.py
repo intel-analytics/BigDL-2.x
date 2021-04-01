@@ -19,7 +19,7 @@ from zoo.automl.common.metrics import Evaluator
 from zoo.automl.pipeline.base import Pipeline
 from zoo.automl.common.util import *
 from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
-from zoo.zouwu.model.forecast.model.time_sequence import TimeSequenceModel
+from zoo.zouwu.model.time_sequence import TimeSequenceModel
 from zoo.automl.common.parameters import *
 import pandas as pd
 

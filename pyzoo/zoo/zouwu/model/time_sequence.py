@@ -14,9 +14,9 @@
 # limitations under the License.
 #
 from zoo.automl.model.abstract import BaseModel
-from .VanillaLSTM import VanillaLSTM
-from .Seq2Seq import LSTMSeq2Seq
-from .MTNet_keras import MTNetKeras
+from zoo.zouwu.model.VanillaLSTM import VanillaLSTM
+from zoo.zouwu.model.Seq2Seq import LSTMSeq2Seq
+from zoo.zouwu.model.MTNet_keras import MTNetKeras
 from zoo.automl.common.util import *
 
 MODEL_MAP = {"LSTM": VanillaLSTM,

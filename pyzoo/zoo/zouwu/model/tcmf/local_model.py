@@ -54,8 +54,8 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.nn.utils import weight_norm
 
-from zoo.zouwu.model.forecast.model.tcmf.data_loader import TCMFDataLoader
-from zoo.zouwu.model.forecast.model.tcmf.time import TimeCovariates
+from zoo.zouwu.model.tcmf.data_loader import TCMFDataLoader
+from zoo.zouwu.model.tcmf import TimeCovariates
 
 import logging
 
@@ -405,7 +405,7 @@ class LocalModel(object):
                                           early_stop=early_stop,
                                           tenacity=tenacity)
         else:
-            from zoo.zouwu.model.forecast.model.tcmf.local_model_distributed_trainer import\
+            from zoo.zouwu.model.tcmf.local_model_distributed_trainer import\
                 train_yseq_hvd
             import ray
 

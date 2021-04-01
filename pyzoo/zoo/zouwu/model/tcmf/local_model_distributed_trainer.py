@@ -19,7 +19,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import torch.distributed as dist
 
-from zoo.zouwu.model.forecast.model.tcmf.local_model import TemporalConvNet
+from zoo.zouwu.model.tcmf.local_model import TemporalConvNet
 
 import ray
 import horovod.torch as hvd
@@ -27,7 +27,7 @@ import horovod.torch as hvd
 
 # build data creator
 def get_tcmf_data_loader(config):
-    from zoo.zouwu.model.forecast.model.tcmf.data_loader import TCMFDataLoader
+    from zoo.zouwu.model.tcmf.data_loader import TCMFDataLoader
     tcmf_data_loader = TCMFDataLoader(
         Ymat=ray.get(config["Ymat_id"]),
         vbsize=config["vbsize"],
