@@ -6,13 +6,11 @@
 
 ---
 
-**In this guide we will describe how to use XShards to scale-out Pandas data processing for distribtued deep learning.**
-
-We will introduce how to use `XShards` and *existing* python code to process [movielens-1M](https://grouplens.org/datasets/movielens/1m/) in a distributed and data-parallel fashion. 
+**In this guide we will describe how to use [XShards](../Orca/Overview/data-parallel-processing.md) to scale-out Pandas data processing for distribtued deep learning.** 
 
 ### **1. Read input data into XShards of Pandas DataFrame**
 
-First, read CVS, JSON or Parquet files (stored on local disk, HDFS, AWS S3, etc.) to obtain an `XShards` of Pandas Dataframe, as shown below:
+First, read CVS, JSON or Parquet files to to obtain an `XShards` of Pandas Dataframe (i.e., an distributed and sharded dataset where each partition contained a Pandas Dataframe), as shown below:
 
 ```python
 from zoo.orca.data.pandas import read_csv
@@ -23,7 +21,7 @@ full_data = read_csv(new_rating_files, sep=':', header=None,
 
 ### **2. Process Pandas Dataframes using XShards**
 
-Next, use XShards to efficiently process large-size Pandas Dataframes in a distributed and data-parallel fashion. Run Python codes on each partition in a data-parallel fashion using `XShards.transform_shard`, as shown below:
+Next, use XShards to efficiently process large-size Pandas Dataframes in a distributed and data-parallel fashion. You may run standard Python code on each partition in a data-parallel fashion using `XShards.transform_shard`, as shown below:
 
 ```python
 # update label starting from 0. That's because ratings go from 1 to 5, while the matrix columns go from 0 to 4
@@ -47,7 +45,7 @@ train_data, test_data = full_data.transform_shard(split_train_test).split()
 
 ### **3. Define NCF model**
 
-This example defines NCF model in a TensorFlow 1.15 program.
+Define the NCF model using TensorFlow 1.15 APIs:
 
 ```python
 import tensorflow as tf
@@ -58,7 +56,6 @@ class NCF(object):
         self.item = tf.placeholder(dtype=tf.int32, shape=(None,))
         self.label = tf.placeholder(dtype=tf.int32, shape=(None,))
         
-        # GMF part starts
         with tf.name_scope("GMF"):
             user_embed_GMF = tf.contrib.layers.embed_sequence(self.user, vocab_size=user_size + 1,
                                                               embed_dim=embed_size)
@@ -66,7 +63,6 @@ class NCF(object):
                                                               embed_dim=embed_size)
             GMF = tf.multiply(user_embed_GMF, item_embed_GMF)
 
-        # MLP part starts
         with tf.name_scope("MLP"):
             user_embed_MLP = tf.contrib.layers.embed_sequence(self.user, vocab_size=user_size + 1,
                                                               embed_dim=embed_size)
@@ -100,7 +96,7 @@ model = NCF(embedding_size, max_user_id, max_item_id)
 ```
 ### **4. Fit with Orca Estimator**
 
-Finally, run distributed model training/inference on the XShards of Pandas DataFrames directly.
+Finally, directly run distributed model training/inference on the XShards of Pandas DataFrames.
 
 ```python
 from zoo.orca.learn.tf.estimator import Estimator
