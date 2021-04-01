@@ -29,7 +29,8 @@ class LSTMSeq2Seq(nn.Module):
                  output_feature_num,
                  lstm_hidden_dim=128,
                  lstm_layer_num=2,
-                 dropout=0.25):
+                 dropout=0.25,
+                 teacher_forcing=False):
         super(LSTMSeq2Seq, self).__init__()
         self.lstm_encoder = nn.LSTM(input_size=input_feature_num,
                                     hidden_size=lstm_hidden_dim,
@@ -44,6 +45,7 @@ class LSTMSeq2Seq(nn.Module):
         self.fc = nn.Linear(in_features=lstm_hidden_dim, out_features=output_feature_num)
         self.future_seq_len = future_seq_len
         self.output_feature_num = output_feature_num
+        self.teacher_forcing = teacher_forcing
 
     def forward(self, input_seq, target_seq=None):
         x, (hidden, cell) = self.lstm_encoder(input_seq)
@@ -55,12 +57,12 @@ class LSTMSeq2Seq(nn.Module):
             decoder_output_step, (hidden, cell) = self.lstm_decoder(decoder_input, (hidden, cell))
             out_step = self.fc(decoder_output_step)
             decoder_output[:,i:i+1,:] = out_step
-            if target_seq is None:
+            if not self.teacher_forcing:
                 # no teaching force
                 decoder_input = out_step
             else:
                 # with teaching force
-                decoder_input = target_seq[:, i]
+                decoder_input = target_seq[:, i:i+1, :]
         return decoder_output
 
 
@@ -69,8 +71,9 @@ def model_creator(config):
                        output_feature_num=config["output_feature_num"],
                        future_seq_len=config["future_seq_len"],
                        lstm_hidden_dim=config.get("lstm_hidden_dim", 128),
-                       lstm_layer_num=config.get("lstm_layer_num", 4),
-                       dropout=config.get("dropout", 0.25))
+                       lstm_layer_num=config.get("lstm_layer_num", 2),
+                       dropout=config.get("dropout", 0.25),
+                       teacher_forcing=config.get("teacher_forcing", False))
 
 
 def optimizer_creator(model, config):
@@ -94,6 +97,9 @@ class Seq2SeqPytorch(PytorchBaseModel):
                          optimizer_creator=optimizer_creator,
                          loss_creator=loss_creator,
                          check_optional_config=check_optional_config)
+    
+    def _forward(self, x, y):
+        return self.model(x, y)
 
     def _get_required_parameters(self):
         return {
