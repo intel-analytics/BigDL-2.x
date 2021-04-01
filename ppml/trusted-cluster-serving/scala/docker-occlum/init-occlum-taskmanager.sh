@@ -4,8 +4,11 @@
 occlum_glibc=/opt/occlum/glibc/lib/
 init_instance() {
     # Init Occlum instance
+    cd /opt
+    # Remove older instance
     rm -rf flink && mkdir flink
     cd flink
+    # init occlum
     occlum init
     new_json="$(jq '.resource_limits.user_space_size = "62000MB" |
                 .resource_limits.kernel_space_heap_size="512MB" |
@@ -31,6 +34,7 @@ build_flink() {
     cp -rf /opt/flink-${FLINK_VERSION}/conf image/opt/
     cp -rf /etc/java-11-openjdk image/etc/
     cp -rf /opt/hosts image/etc/
+    # build occlum
     occlum build
 }
 
