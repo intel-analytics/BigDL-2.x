@@ -41,8 +41,6 @@ parser.add_argument('--cluster_mode', type=str, default="local",
                     help='The cluster mode, such as local, yarn or k8s.')
 parser.add_argument('--backend', type=str, default="bigdl",
                     help='The backend of PyTorch Estimator; bigdl and torch-distributed are supported')
-parser.add_argument('--root_dir', type=str, default="./data",
-                    help='The directory to store the training data')
 args = parser.parse_args()
 
 if args.cluster_mode == "local":
@@ -60,7 +58,7 @@ transform = transforms.Compose(
 
 
 def train_loader_creator(config, batch_size):
-    trainset = torchvision.datasets.CIFAR10(root=args.root_dir, train=True,
+    trainset = torchvision.datasets.CIFAR10(root=config.get("root", "./data"), train=True,
                                             download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                               shuffle=True, num_workers=2)
@@ -68,7 +66,7 @@ def train_loader_creator(config, batch_size):
 
 
 def test_loader_creator(config, batch_size):
-    testset = torchvision.datasets.CIFAR10(root=args.root_dir, train=False,
+    testset = torchvision.datasets.CIFAR10(root=config.get("root", "./data"), train=False,
                                            download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                              shuffle=False, num_workers=2)
@@ -120,9 +118,10 @@ def optim_creator(model, config):
 
 criterion = nn.CrossEntropyLoss()
 batch_size = 4
+root_dir = "./data"
 
-train_loader = train_loader_creator(config={}, batch_size=batch_size)
-test_loader = test_loader_creator(config={}, batch_size=batch_size)
+train_loader = train_loader_creator(config={"root": root_dir}, batch_size=batch_size)
+test_loader = test_loader_creator(config={"root": root_dir}, batch_size=batch_size)
 
 # plot some random images
 dataiter = iter(train_loader)
@@ -157,7 +156,8 @@ elif args.backend == "torch_distributed":
                                           loss=criterion,
                                           metrics=[Accuracy()],
                                           backend="torch_distributed",
-                                          config={"lr": 0.001})
+                                          config={"lr": 0.001,
+                                                  "root": root_dir})
 
     orca_estimator.fit(data=train_loader_creator, epochs=2, batch_size=batch_size)
 

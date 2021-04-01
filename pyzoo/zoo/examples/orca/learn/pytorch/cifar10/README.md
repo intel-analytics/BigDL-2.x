@@ -42,6 +42,8 @@ export HADOOP_CONF_DIR=the directory of the hadoop and yarn configurations
 python cifar10.py --cluster_mode yarn-client
 ```
 
+The default backend is `bigdl`. You can also run with `torch_distributed` by specifying the backend.
+
 ## Results
 
 **For "bigdl" backend**
