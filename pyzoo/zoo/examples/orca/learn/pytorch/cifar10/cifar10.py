@@ -40,7 +40,9 @@ parser = argparse.ArgumentParser(description='PyTorch Cifar10 Example')
 parser.add_argument('--cluster_mode', type=str, default="local",
                     help='The cluster mode, such as local, yarn or k8s.')
 parser.add_argument('--backend', type=str, default="bigdl",
-                    help='The backend of torch Estimator, such as bigdl, torch-distributed or horovod')
+                    help='The backend of PyTorch Estimator; bigdl and torch-distributed are supported')
+parser.add_argument('--root_dir', type=str, default="./data",
+                    help='The directory to store the training data')
 args = parser.parse_args()
 
 if args.cluster_mode == "local":
@@ -55,11 +57,10 @@ elif args.cluster_mode == "yarn":
 transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-root_dir = './data'
 
 
 def train_loader_creator(config, batch_size):
-    trainset = torchvision.datasets.CIFAR10(root=root_dir, train=True,
+    trainset = torchvision.datasets.CIFAR10(root=args.root_dir, train=True,
                                             download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                               shuffle=True, num_workers=2)
@@ -67,7 +68,7 @@ def train_loader_creator(config, batch_size):
 
 
 def test_loader_creator(config, batch_size):
-    testset = torchvision.datasets.CIFAR10(root=root_dir, train=False,
+    testset = torchvision.datasets.CIFAR10(root=args.root_dir, train=False,
                                            download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                              shuffle=False, num_workers=2)
@@ -120,23 +121,23 @@ def optim_creator(model, config):
 criterion = nn.CrossEntropyLoss()
 batch_size = 4
 
+train_loader = train_loader_creator(config={}, batch_size=batch_size)
+test_loader = test_loader_creator(config={}, batch_size=batch_size)
+
 # plot some random images
-dataiter = iter(train_loader_creator(config={}, batch_size=batch_size))
+dataiter = iter(train_loader)
 images, labels = dataiter.next()
 # show images
 imshow(torchvision.utils.make_grid(images))
 # print labels
 print(' '.join('%5s' % classes[labels[j]] for j in range(batch_size)))
 
-dataiter = iter(test_loader_creator(config={}, batch_size=batch_size))
+dataiter = iter(test_loader)
 images, labels = dataiter.next()
 imshow(torchvision.utils.make_grid(images))
 print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(batch_size))) 
 
 if args.backend == "bigdl":
-    train_loader = train_loader_creator(config={}, batch_size=batch_size)
-    test_loader = test_loader_creator(config={}, batch_size=batch_size)
-
     net = model_creator(config={})
     optimizer = optim_creator(model=net, config={"lr": 0.001})
     orca_estimator = Estimator.from_torch(model=net, 
@@ -163,5 +164,7 @@ elif args.backend == "torch_distributed":
     res = orca_estimator.evaluate(data=test_loader_creator)
     for r in res:
         print(r, ":", res[r])
+else:
+    print("Only bigdl and torch_distributed are supported as the backend, but got {}".format(args.backend))
 
 stop_orca_context()
