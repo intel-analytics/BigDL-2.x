@@ -55,7 +55,7 @@ from torch.autograd import Variable
 from torch.nn.utils import weight_norm
 
 from zoo.zouwu.model.tcmf.data_loader import TCMFDataLoader
-from zoo.zouwu.model.tcmf import TimeCovariates
+from zoo.zouwu.model.tcmf.time import TimeCovariates
 
 import logging
 

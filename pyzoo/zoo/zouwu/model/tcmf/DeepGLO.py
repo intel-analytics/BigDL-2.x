@@ -56,7 +56,7 @@ from torch.autograd import Variable
 
 from zoo.zouwu.model.tcmf.data_loader import TCMFDataLoader
 from zoo.zouwu.model.tcmf.local_model import TemporalConvNet, LocalModel
-from zoo.zouwu.model.tcmf import TimeCovariates
+from zoo.zouwu.model.tcmf.time import TimeCovariates
 
 import copy
 
