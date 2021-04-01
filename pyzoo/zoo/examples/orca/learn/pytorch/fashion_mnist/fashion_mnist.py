@@ -179,7 +179,7 @@ def main():
         print("Validation stats: {}".format(val_stats))
         orca_estimator.shutdown()
     else:
-        print("Only bigdl and torch_distributed are supported as the backend, but got {}".format(args.backend))
+        raise NotImplementedError("Only bigdl and torch_distributed are supported as the backend, but got {}".format(args.backend))
 
     stop_orca_context()
 
