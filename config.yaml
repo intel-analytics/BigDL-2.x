@@ -1,0 +1,34 @@
+## Analytics-zoo Cluster Serving
+
+model:
+  # model path must be provided
+  path: /path/to/model
+  # name, default is serving_stream, you need to specify if running multiple servings
+  name:
+data:
+  # default, localhost:6379
+  src:
+  # default, None
+  filter:
+params:
+  # default, number of cores per model in serving
+  core_number:
+  # default: number of models in serving
+  model_number:
+  # default: OFF
+  performance_mode:
+flink:
+  rest:
+redis:
+  # default, 4g
+  maxmem:
+  timeout: 5000
+secure:
+  # default: false
+  secure_enabled:
+  # default:
+  secure_trust_store_path:
+  # default:
+  secure_struct_store_password:
+  # default: false
+  model_encrypted:
