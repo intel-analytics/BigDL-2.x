@@ -24,15 +24,15 @@ for worker in ${WORKERS[@]}
   done
 echo "### phase.1 distribute the keys and password finished successfully"
 
-#echo "### phase.2 pull the docker image"
-#echo ">>> $MASTER"
-#ssh root@$MASTER "docker pull $TRUSTED_CLUSTER_SERVING_DOCKER"
-#for worker in ${WORKERS[@]}
-#  do
-#    echo ">>> $worker"
-#    ssh root@$worker "docker pull $TRUSTED_CLUSTER_SERVING_DOCKER"
-#  done
-#echo "### phase.2 pull the docker image finished successfully"
+echo "### phase.2 pull the docker image"
+echo ">>> $MASTER"
+ssh root@$MASTER "docker pull $TRUSTED_CLUSTER_SERVING_DOCKER"
+for worker in ${WORKERS[@]}
+  do
+    echo ">>> $worker"
+    ssh root@$worker "docker pull $TRUSTED_CLUSTER_SERVING_DOCKER"
+  done
+echo "### phase.2 pull the docker image finished successfully"
 
 
 echo "### phase.3 deploy the cluster serving components"
