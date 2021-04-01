@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from unittest import TestCase
-from zoo.zouwu.model.forecast.model.Seq2Seq_pytorch import Seq2SeqPytorch
+from zoo.zouwu.model.Seq2Seq_pytorch import Seq2SeqPytorch
 import numpy as np
 import tempfile
 import os
