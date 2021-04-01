@@ -31,7 +31,7 @@ from zoo.tfpark import TFOptimizer, TFNet, ZooOptimizer
 from zoo.tfpark.tf_optimizer import StatelessMetric
 from zoo.tfpark.utils import evaluate_metrics
 from zoo.util import nest
-from zoo.util.tf import save_tf_checkpoint
+from zoo.util.tf import save_tf_checkpoint, load_tf_checkpoint
 from zoo.orca.learn.spark_estimator import Estimator as SparkEstimator
 
 
@@ -125,14 +125,14 @@ class Estimator(SparkEstimator):
         """
         raise NotImplementedError
 
-    def load(self, checkpoint, **kwargs):
+    def load(self, model_path):
         """
-        Load existing checkpoint
+        Load existing model
 
-        :param checkpoint: Path to the existing checkpoint.
+        :param model_path: Path to the existing model.
         :return:
         """
-        self.load_latest_orca_checkpoint(checkpoint)
+        raise NotImplementedError
 
     def clear_gradient_clipping(self):
         """
@@ -166,8 +166,10 @@ class Estimator(SparkEstimator):
 
     def get_train_summary(self, tag=None):
         """
-        Get the scalar from model train summary
-        Return list of summary data of [iteration_number, scalar_value, timestamp]
+        Get the scalar from model train summary.
+
+        This method will return a list of summary data of
+        [iteration_number, scalar_value, timestamp].
 
         :param tag: The string variable represents the scalar wanted
         """
@@ -178,27 +180,30 @@ class Estimator(SparkEstimator):
 
     def get_validation_summary(self, tag=None):
         """
-        Get the scalar from model validation summary
-        Return list of summary data of [iteration_number, scalar_value, timestamp]
-        Note: The metric and tag may not be consistent
-        Please look up following form to pass tag parameter
-        Left side is your metric during compile
-        Right side is the tag you should pass
-        'Accuracy'                  |   'Top1Accuracy'
-        'BinaryAccuracy'            |   'Top1Accuracy'
-        'CategoricalAccuracy'       |   'Top1Accuracy'
-        'SparseCategoricalAccuracy' |   'Top1Accuracy'
-        'AUC'                       |   'AucScore'
-        'HitRatio'                  |   'HitRate@k' (k is Top-k)
-        'Loss'                      |   'Loss'
-        'MAE'                       |   'MAE'
-        'NDCG'                      |   'NDCG'
-        'TFValidationMethod'        |   '${name + " " + valMethod.toString()}'
-        'Top5Accuracy'              |   'Top5Accuracy'
-        'TreeNNAccuracy'            |   'TreeNNAccuracy()'
-        'MeanAveragePrecision'      |   'MAP@k' (k is Top-k) (BigDL)
-        'MeanAveragePrecision'      |   'PascalMeanAveragePrecision' (Zoo)
-        'StatelessMetric'           |   '${name}'
+        Get the scalar from model validation summary.
+
+        This method will return a list of summary data of
+        [iteration_number, scalar_value, timestamp].
+        Note that the metric and tag may not be consistent.
+        Please look up following form to pass tag parameter.
+        Left side is your metric during compile.
+        Right side is the tag you should pass.
+
+        >>> 'Accuracy'                  |   'Top1Accuracy'
+        >>> 'BinaryAccuracy'            |   'Top1Accuracy'
+        >>> 'CategoricalAccuracy'       |   'Top1Accuracy'
+        >>> 'SparseCategoricalAccuracy' |   'Top1Accuracy'
+        >>> 'AUC'                       |   'AucScore'
+        >>> 'HitRatio'                  |   'HitRate@k' (k is Top-k)
+        >>> 'Loss'                      |   'Loss'
+        >>> 'MAE'                       |   'MAE'
+        >>> 'NDCG'                      |   'NDCG'
+        >>> 'TFValidationMethod'        |   '${name + " " + valMethod.toString()}'
+        >>> 'Top5Accuracy'              |   'Top5Accuracy'
+        >>> 'TreeNNAccuracy'            |   'TreeNNAccuracy()'
+        >>> 'MeanAveragePrecision'      |   'MAP@k' (k is Top-k) (BigDL)
+        >>> 'MeanAveragePrecision'      |   'PascalMeanAveragePrecision' (Zoo)
+        >>> 'StatelessMetric'           |   '${name}'
 
         :param tag: The string variable represents the scalar wanted
         """
@@ -217,6 +222,14 @@ class Estimator(SparkEstimator):
     def save_tf_checkpoint(self, path):
         """
         Save tensorflow checkpoint in this estimator.
+
+        :param path: tensorflow checkpoint path.
+        """
+        raise NotImplementedError
+
+    def load_tf_checkpoint(self, path):
+        """
+        Load tensorflow checkpoint to this estimator.
 
         :param path: tensorflow checkpoint path.
         """
@@ -254,29 +267,25 @@ class Estimator(SparkEstimator):
         """
         raise NotImplementedError
 
-    def load_orca_checkpoint(self, path, version):
+    def load_orca_checkpoint(self, path, version=None):
         """
-        Load specified Orca checkpoint.
+        Load Orca checkpoint. To load a specific checkpoint, please provide a `version`.
+        If `version` is None, then the latest checkpoint will be loaded.
 
         :param path: checkpoint directory which contains model.* and
                optimMethod-TFParkTraining.* files.
         :param version: checkpoint version, which is the suffix of model.* file,
                i.e., for modle.4 file, the version is 4.
         """
+        if version is None:
+            path, _, version = find_latest_checkpoint(path, model_type="tf")
+            if path is None:
+                raise ValueError("Cannot find tf checkpoint, please check your checkpoint"
+                                 " path.")
+
         self.load_checkpoint = True
         self.checkpoint_path = path
         self.checkpoint_version = version
-
-    def load_latest_orca_checkpoint(self, path):
-        """
-        Load latest Orca checkpoint under specified directory.
-
-        :param path: directory containing Orca checkpoint files.
-        """
-        ckpt_path, _, version = find_latest_checkpoint(path, model_type="tf")
-        if ckpt_path is None:
-            raise Exception("Cannot find checkpoint")
-        self.load_orca_checkpoint(ckpt_path, version)
 
     @staticmethod
     def from_graph(*, inputs, outputs=None,
@@ -708,6 +717,13 @@ class TensorFlowEstimator(Estimator):
         """
         save_tf_checkpoint(self.sess, path)
 
+    def load_tf_checkpoint(self, path):
+        """
+        Load tensorflow checkpoint to this estimator.
+        :param path: tensorflow checkpoint path.
+        """
+        load_tf_checkpoint(self.sess, path)
+
     def get_model(self):
         """
         Get_model is not supported in tensorflow graph estimator
@@ -716,12 +732,20 @@ class TensorFlowEstimator(Estimator):
 
     def save(self, model_path):
         """
-        Save model to model_path
+        Save model (tensorflow checkpoint) to model_path
 
         :param model_path: path to save the trained model.
         :return:
         """
         self.save_tf_checkpoint(model_path)
+
+    def load(self, model_path):
+        """
+        Load existing model (tensorflow checkpoint) from model_path
+        :param model_path: Path to the existing tensorflow checkpoint.
+        :return:
+        """
+        self.load_tf_checkpoint(model_path)
 
     def clear_gradient_clipping(self):
         """
@@ -1000,6 +1024,15 @@ class KerasEstimator(Estimator):
         :return:
         """
         self.save_keras_model(model_path, overwrite=overwrite)
+
+    def load(self, model_path):
+        """
+        Load existing keras model
+
+        :param model_path: Path to the existing keras model.
+        :return:
+        """
+        self.model = KerasModel.load_model(model_path)
 
     def clear_gradient_clipping(self):
         """

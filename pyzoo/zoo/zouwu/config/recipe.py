@@ -14,39 +14,11 @@
 # limitations under the License.
 #
 
-from abc import ABCMeta, abstractmethod
-from zoo.automl.search.abstract import *
+from zoo.automl.config.base import Recipe
+from zoo.automl.search.base import *
 import numpy as np
 from ray import tune
 import json
-
-
-class Recipe(metaclass=ABCMeta):
-    """
-    Recipe
-    """
-
-    def __init__(self):
-        # ----- runtime parameters
-        self.training_iteration = 1
-        self.num_samples = 1
-        self.reward_metric = None
-
-    @abstractmethod
-    def search_space(self, all_available_features):
-        pass
-
-    def runtime_params(self):
-        runtime_config = {
-            "training_iteration": self.training_iteration,
-            "num_samples": self.num_samples,
-        }
-        if self.reward_metric is not None:
-            runtime_config["reward_metric"] = self.reward_metric
-        return runtime_config
-
-    def manual_search_space(self):
-        return None
 
 
 class SmokeRecipe(Recipe):
@@ -706,11 +678,3 @@ class XgbRegressorSkOptRecipe(Recipe):
                                       self.max_depth_range[1]),
         }
         return space
-
-    def opt_params(self):
-        from skopt.space import Integer
-        params = [
-            Integer(self.n_estimators_range[0], self.n_estimators_range[1]),
-            Integer(self.max_depth_range[0], self.max_depth_range[1]),
-        ]
-        return params

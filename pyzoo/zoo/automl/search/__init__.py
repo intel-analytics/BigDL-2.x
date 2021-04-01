@@ -14,12 +14,12 @@
 # limitations under the License.
 #
 
-from .abstract import *
-from .ray_tune_search_engine import RayTuneSearchEngine
+from .base import *
 
 
 class SearchEngineFactory:
     @staticmethod
     def create_engine(backend="ray", *args, **kwargs):
         if backend == "ray":
+            from .ray_tune_search_engine import RayTuneSearchEngine
             return RayTuneSearchEngine(*args, **kwargs)
