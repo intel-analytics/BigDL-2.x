@@ -25,7 +25,8 @@ from zoo.orca.data.ray_xshards import RayXShards
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.pytorch.torch_runner import TorchRunner
 from zoo.orca.learn.utils import maybe_dataframe_to_xshards, dataframe_to_xshards, \
-    convert_predict_xshards_to_dataframe, update_predict_xshards
+    convert_predict_xshards_to_dataframe, update_predict_xshards, \
+    process_xshards_of_pandas_dataframe
 from zoo.ray import RayContext
 
 import ray
@@ -203,6 +204,8 @@ class PyTorchRayEstimator:
                                              mode="fit")
 
         if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                data = process_xshards_of_pandas_dataframe(data, feature_cols, label_cols)
             from zoo.orca.data.utils import process_spark_xshards
             ray_xshards = process_spark_xshards(data, self.num_workers)
 
@@ -280,6 +283,8 @@ class PyTorchRayEstimator:
                                              label_cols=label_cols,
                                              mode="evaluate")
         if isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                data = process_xshards_of_pandas_dataframe(data, feature_cols, label_cols)
             from zoo.orca.data.utils import process_spark_xshards
             ray_xshards = process_spark_xshards(data, self.num_workers)
 
@@ -335,6 +340,8 @@ class PyTorchRayEstimator:
             pred_shards = self._predict_spark_xshards(xshards, param)
             result = convert_predict_xshards_to_dataframe(data, pred_shards)
         elif isinstance(data, SparkXShards):
+            if data._get_class_name() == 'pandas.core.frame.DataFrame':
+                data = process_xshards_of_pandas_dataframe(data, feature_cols)
             pred_shards = self._predict_spark_xshards(data, param)
             result = update_predict_xshards(data, pred_shards)
         else:
@@ -350,14 +357,14 @@ class PyTorchRayEstimator:
         model.load_state_dict(model_state)
         return model.module if hasattr(model, "module") else model
 
-    def save(self, checkpoint):
-        """Saves the Estimator state to the provided checkpoint path.
+    def save(self, model_path):
+        """Saves the Estimator state to the provided model_path.
 
-        :param checkpoint: (str) Path to target checkpoint file.
+        :param model_path: (str) Path to save the model.
         """
         state_dict = self.get_state_dict()
-        torch.save(state_dict, checkpoint)
-        return checkpoint
+        torch.save(state_dict, model_path)
+        return model_path
 
     def get_state_dict(self):
         stream_ids = [
@@ -373,12 +380,12 @@ class PyTorchRayEstimator:
             map_location="cpu")
         return state_dict
 
-    def load(self, checkpoint):
-        """Loads the Estimator and all workers from the provided checkpoint.
+    def load(self, model_path):
+        """Loads the Estimator and all workers from the provided model_path.
 
-        :param checkpoint: (str) Path to target checkpoint file.
+        :param model_path: (str) Path to the existing model.
         """
-        state_dict = torch.load(checkpoint)
+        state_dict = torch.load(model_path)
         self.load_state_dict(state_dict)
 
     def load_state_dict(self, state_dict, blocking=True):

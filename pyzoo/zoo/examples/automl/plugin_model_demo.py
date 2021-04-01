@@ -20,9 +20,8 @@ from zoo.automl.model import ModelBuilder
 import torch
 import tensorflow as tf
 import torch.nn as nn
-from zoo.automl.config.recipe import Recipe
+from zoo.automl.recipe.base import Recipe
 from ray import tune
-import pandas as pd
 import numpy as np
 from zoo.orca import init_orca_context
 

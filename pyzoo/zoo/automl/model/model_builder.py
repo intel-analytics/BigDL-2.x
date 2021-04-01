@@ -46,16 +46,10 @@ class ModelBuilder:
 
         if dev_option == 'pytorch':
             from zoo.automl.model.base_pytorch_model import PytorchBaseModel
-            from zoo.automl.model.Seq2Seq_pytorch import Seq2SeqPytorch
-            from zoo.automl.model.VanillaLSTM_pytorch import VanillaLSTMPytorch
-            from zoo.automl.model.tcn import TCNPytorch
             return cls(cls=get_class(PytorchBaseModel))
 
         elif dev_option == 'tf.keras':
             from zoo.automl.model.base_keras_model import KerasBaseModel
-            from zoo.automl.model.VanillaLSTM import VanillaLSTM
-            from zoo.automl.model.MTNet_keras import MTNetKeras
-            from zoo.automl.model.Seq2Seq import LSTMSeq2Seq
             return cls(cls=get_class(KerasBaseModel))
 
     @classmethod
