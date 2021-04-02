@@ -165,6 +165,7 @@ elif args.backend == "torch_distributed":
     for r in res:
         print(r, ":", res[r])
 else:
-    raise NotImplementedError("Only bigdl and torch_distributed are supported as the backend, but got {}".format(args.backend))
+    raise NotImplementedError("Only bigdl and torch_distributed are supported as the backend, but got {}"
+                              .format(args.backend))
 
 stop_orca_context()
