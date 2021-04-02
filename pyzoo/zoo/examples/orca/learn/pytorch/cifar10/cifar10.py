@@ -111,7 +111,7 @@ def model_creator(config):
 
 
 def optim_creator(model, config):
-    optimizer = optim.SGD(model.parameters(), 
+    optimizer = optim.SGD(model.parameters(),
                           lr=config.get("lr", 0.001),
                           momentum=config.get("momentum", 0.9))
     return optimizer
@@ -135,17 +135,17 @@ print(' '.join('%5s' % classes[labels[j]] for j in range(batch_size)))
 dataiter = iter(test_loader)
 images, labels = dataiter.next()
 imshow(torchvision.utils.make_grid(images))
-print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(batch_size))) 
+print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(batch_size)))
 
 if args.backend == "bigdl":
     net = model_creator(config={})
     optimizer = optim_creator(model=net, config={"lr": 0.001})
-    orca_estimator = Estimator.from_torch(model=net, 
-                                          optimizer=optimizer, 
+    orca_estimator = Estimator.from_torch(model=net,
+                                          optimizer=optimizer,
                                           loss=criterion,
                                           metrics=[Accuracy()],
                                           backend="bigdl")
- 
+
     orca_estimator.fit(data=train_loader, epochs=2, validation_data=test_loader,
                        checkpoint_trigger=EveryEpoch())
 
