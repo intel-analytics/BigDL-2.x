@@ -10,7 +10,7 @@
 
 ### **1. Read input data into XShards of Pandas DataFrame**
 
-First, read CVS, JSON or Parquet files to to obtain an `XShards` of Pandas Dataframe (i.e., an distributed and sharded dataset where each partition contained a Pandas Dataframe), as shown below:
+First, read CVS, JSON or Parquet files into an `XShards` of Pandas Dataframe (i.e., a distributed and sharded dataset where each partition contained a Pandas Dataframe), as shown below:
 
 ```python
 from zoo.orca.data.pandas import read_csv
