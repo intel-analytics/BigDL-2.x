@@ -152,8 +152,8 @@ def main():
     
         net = model_creator(config={})
         optimizer = optimizer_creator(model=net, config={"lr": 0.001})
-        orca_estimator = Estimator.from_torch(model=net, 
-                                              optimizer=optimizer, 
+        orca_estimator = Estimator.from_torch(model=net,
+                                              optimizer=optimizer,
                                               loss=criterion,
                                               metrics=[Accuracy()],
                                               backend="bigdl")
@@ -162,9 +162,9 @@ def main():
 
         orca_estimator.fit(data=train_loader, epochs=epochs, validation_data=test_loader,
                            checkpoint_trigger=EveryEpoch())
-    
+
         res = orca_estimator.evaluate(data=test_loader)
-        print("Accuracy of the network on the test images: %s" % res) 
+        print("Accuracy of the network on the test images: %s" % res)
     elif args.backend == "torch_distributed":
         orca_estimator = Estimator.from_torch(model=model_creator,
                                               optimizer=optimizer_creator,
