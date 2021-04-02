@@ -82,6 +82,16 @@ fi
 execute_ray_test auto-xgboost-classifier ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostClassifier.py
 time8=$?
 
+if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/data ]; then
+  echo "Cifar10 already exists"
+else
+  wget -nv $FTP_URI/analytics-zoo-data/cifar10.zip -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10
+  unzip ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/cifar10.zip
+fi
+
+execute_ray_test cifar10 "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/cifar10.py --backend torch_distributed"
+time9=$?
+
 echo "#1 rl_pong time used:$time1 seconds"
 echo "#2 sync_parameter_server time used:$time2 seconds"
 echo "#3 async_parameter_server time used:$time3 seconds"
@@ -90,5 +100,6 @@ echo "#5 mxnet_lenet time used:$time5 seconds"
 echo "#6 fashion-mnist time used:$time6 seconds"
 echo "#7 super-resolution time used:$time7 seconds"
 echo "#8 auto-xgboost-classifier time used:$time8 seconds"
+echo "#9 cifar10 time used:$time9 seconds"
 
 clear_up
