@@ -204,4 +204,34 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     })
   }
 
+
+  "OpenVINO face_detection_0100" should "work" in {
+    ("wget -O /tmp/openvino_face_detection_0100.tar http://10.239.45.10:8081" +
+      "/repository/raw/analytics-zoo-data/openvino_face_detection_0100.tar").!
+    "tar -xvf /tmp/openvino_face_detection_0100.tar -C /tmp/".!
+    val resource = getClass().getClassLoader().getResource("serving")
+    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val b64string = scala.io.Source.fromFile(dataPath).mkString
+
+    val helper = new ClusterServingHelper()
+    helper.modelType = "openvino"
+    helper.weightPath = "/tmp/openvino_face_detection_0100/face-detection-0100.bin"
+    helper.defPath = "/tmp/openvino_face_detection_0100/face-detection-0100.xml"
+
+    ClusterServing.model = helper.loadInferenceModel()
+
+    Seq("sh", "-c", "rm -rf /tmp/openvino_face_detection_0100*").!
+
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper.modelType, "", helper.thrdPerModel, helper.resize)
+    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val postProcessed = inference.multiThreadPipeline(in)
+
+    postProcessed.foreach(x => {
+      val result = ArrowDeserializer.getArray(x._2)
+      require(result(0)._1.length == 1400, "result length wrong")
+      require(result(0)._2.length == 3, "result shape wrong")
+    })
+  }
+
 }

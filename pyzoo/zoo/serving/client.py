@@ -24,6 +24,16 @@ import uuid
 RESULT_PREFIX = "cluster-serving_"
 
 
+def http_response_to_ndarray(response_str):
+    # currently there is no http user use batch predict, so batch is not implemented here
+    # to add batch predict, replace 0 index to [0, batch_size)
+    res_dict = json.loads(json.loads(json.loads(response_str)["predictions"][0])['value'])
+    data, shape = res_dict['data'], res_dict['shape']
+    array = np.array(data)
+    array = array.reshape(shape)
+    return array
+
+
 def perdict(frontend_url, request_str):
     httpx.post(frontend_url + "/predict", data=request_str)
 

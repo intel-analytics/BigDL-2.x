@@ -36,7 +36,9 @@ RUN cd /opt && \
     wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     tar -zxvf spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     mv spark-${SPARK_VERSION}-bin-hadoop2.7 spark-${SPARK_VERSION} && \
-    rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz
+    rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
+    wget -O spark-network-common_2.11-${SPARK_VERSION}.jar https://master.dl.sourceforge.net/project/analytics-zoo/analytics-zoo-data/spark-network-common_2.11-${SPARK_VERSION}.jar && \
+    mv spark-network-common_2.11-${SPARK_VERSION}.jar spark-${SPARK_VERSION}/jars
 
 # stage.3 bigdl
 FROM ubuntu:18.04 AS bigdl
@@ -131,6 +133,7 @@ RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils vim curl nano wget unzip maven git tree && \
     apt-get install -y libsm6 make build-essential && \
     apt-get install -y autoconf gawk bison libcurl4-openssl-dev python3-protobuf libprotobuf-c-dev protobuf-c-compiler && \
+    apt-get install -y netcat net-tools && \
     mkdir -p /graphene/Pal/src/host/Linux-SGX/signer && \
     cd /graphene/Pal/src/host/Linux-SGX/signer && \
     openssl genrsa -3 -out enclave-key.pem 3072
