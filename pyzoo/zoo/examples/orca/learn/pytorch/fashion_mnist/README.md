@@ -52,6 +52,8 @@ python fashion_mnist.py --cluster_mode yarn
 
 Then open `https://localhost:6006` on the local client machine to see the result figures.
 
+The default backend is `bigdl`. You can also run with `torch_distributed` by specifying the backend.
+
 ## Results
 
 **For "bigdl" backend**
