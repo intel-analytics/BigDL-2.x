@@ -29,6 +29,11 @@ import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Supportive}
 import scopt.OptionParser
 
+
+/**
+ * This is OpenVINO model baseline, only OpenVINO model could run this baseline
+ * This baseline do inference without wrapped by InferenceModel
+ */
 object OpenVINOBaseline extends Supportive {
   case class Params(configPath: String = "config.yaml",
                     testNum: Int = 1000,

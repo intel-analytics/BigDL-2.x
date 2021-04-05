@@ -27,7 +27,13 @@ import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Supportive}
 import scopt.OptionParser
 
-object InferenceBaseline extends Supportive {
+
+/**
+ * This is InferenceModel baseline, will run only predict() method
+ * Any model supported by InferenceModel could run this baseline
+ * Model would be wrapped as InferenceModel and do inference
+ */
+object InferenceModelBaseline extends Supportive {
   case class Params(configPath: String = "config.yaml",
                     testNum: Int = 1000,
                     parNum: Int = 1,

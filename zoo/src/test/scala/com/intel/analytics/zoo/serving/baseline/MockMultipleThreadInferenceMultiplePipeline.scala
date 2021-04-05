@@ -27,7 +27,7 @@ import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Supportive}
 import scopt.OptionParser
 
-object MockSinglePipelineBaseline extends Supportive {
+object MockMultipleThreadInferenceMultiplePipeline extends Supportive {
   case class Params(configPath: String = "config.yaml",
                     testNum: Int = 1000,
                     parNum: Int = 1,
@@ -75,7 +75,7 @@ object MockSinglePipelineBaseline extends Supportive {
   }
   def main(args: Array[String]): Unit = {
     val param = parser.parse(args, Params()).head
-    val helper = new ClusterServingHelper()
+    val helper = new ClusterServingHelper(_configPath = param.configPath)
     helper.loadConfig()
 
     val model = helper.loadInferenceModel()
