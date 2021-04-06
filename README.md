@@ -2,7 +2,7 @@
 
 <p align="center"> <img src="docs/docs/Image/logo.jpg" height="140px"><br></p>
 
-**Distributed TensorFlow, PyTorch, keras and BigDL on Apache Spark & Ray**
+**Distributed TensorFlow, PyTorch, Keras and BigDL on Apache Spark & Ray**
 
 </div>
 
