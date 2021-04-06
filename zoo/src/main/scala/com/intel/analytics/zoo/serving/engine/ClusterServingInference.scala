@@ -67,7 +67,8 @@ class ClusterServingInference(preProcessing: PreProcessing,
         val t = typeCheck(pathByte._2)
         val result = ClusterServing.model.doPredict(t)
         dimCheck(result, "remove", helper.modelType)
-        val value = PostProcessing(result.toTensor[Float], helper.filter, 1)
+        val resultIndex = if (helper.inputAlreadyBatched) -1 else 1
+        val value = PostProcessing(result.toTensor[Float], helper.filter, resultIndex)
         (pathByte._1, value)
       } catch {
         case e: Exception =>
