@@ -37,7 +37,7 @@ class LSTMSeq2Seq(nn.Module):
                                     num_layers=lstm_layer_num,
                                     dropout=dropout,
                                     batch_first=True)
-        self.lstm_decoder = nn.LSTM(input_size=input_feature_num,
+        self.lstm_decoder = nn.LSTM(input_size=output_feature_num,
                                     hidden_size=lstm_hidden_dim,
                                     num_layers=lstm_layer_num,
                                     dropout=dropout,
@@ -49,7 +49,7 @@ class LSTMSeq2Seq(nn.Module):
 
     def forward(self, input_seq, target_seq=None):
         x, (hidden, cell) = self.lstm_encoder(input_seq)
-        decoder_input = input_seq[:, -1, :] # last value
+        decoder_input = input_seq[:, -1, :self.output_feature_num] # last value
         decoder_input = decoder_input.unsqueeze(1)
 
         decoder_output = torch.zeros(input_seq.shape[0], self.future_seq_len, self.output_feature_num)
@@ -57,7 +57,7 @@ class LSTMSeq2Seq(nn.Module):
             decoder_output_step, (hidden, cell) = self.lstm_decoder(decoder_input, (hidden, cell))
             out_step = self.fc(decoder_output_step)
             decoder_output[:,i:i+1,:] = out_step
-            if not self.teacher_forcing:
+            if not self.teacher_forcing or target_seq is None:
                 # no teaching force
                 decoder_input = out_step
             else:

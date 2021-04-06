@@ -25,14 +25,13 @@ def create_data():
     num_val_samples = 400
     num_test_samples = 400
     input_time_steps = 24
-    input_feature_dim = 2
+    input_feature_dim = 3
     output_time_steps = 5
     output_feature_dim = 2
 
     def get_x_y(num_samples):
         x = np.random.rand(num_samples, input_time_steps, input_feature_dim)
-        y = x[:, -output_time_steps:, :]*2 + \
-            np.random.rand(num_samples, output_time_steps, output_feature_dim)
+        y = np.random.rand(num_samples, output_time_steps, output_feature_dim)
         return x, y
 
     train_data = get_x_y(num_train_samples)
@@ -43,32 +42,36 @@ def create_data():
 
 class TestSeq2SeqPytorch(TestCase):
     train_data, val_data, test_data = create_data()
-    model = Seq2SeqPytorch()
 
     def test_s2s_fit_evaluate(self):
-        config = {"batch_size": 128}
-        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
-        mse, smape = self.model.evaluate(self.val_data[0],
+        model = Seq2SeqPytorch()
+        config = {"batch_size": 128, "teacher_forcing": False}
+        model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        mse, smape = model.evaluate(self.val_data[0],
+                                         self.val_data[1],
+                                         metrics=["mse", "smape"])
+        assert len(mse) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
+        assert len(smape) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
+    
+    def test_s2s_teacher_forcing_fit_evaluate(self):
+        model = Seq2SeqPytorch()
+        config = {"batch_size": 128, "teacher_forcing": True}
+        model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        mse, smape = model.evaluate(self.val_data[0],
                                          self.val_data[1],
                                          metrics=["mse", "smape"])
         assert len(mse) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
         assert len(smape) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
 
-    def test_s2s_teacher_forcing(self):
-        config = {"batch_size": 128, "teacher_forcing": True}
-        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
-        mse, smape = self.model.evaluate(self.val_data[0],
-                                         self.val_data[1],
-                                         metrics=["mse", "smape"])
-
     def test_s2s_predict_save_restore(self):
+        model = Seq2SeqPytorch()
         config = {"batch_size": 128}
-        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
-        pred = self.model.predict(self.test_data[0])
+        model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        pred = model.predict(self.test_data[0])
         assert pred.shape == self.test_data[1].shape
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             ckpt_name = os.path.join(tmp_dir_name, "ckpt")
-            self.model.save(ckpt_name)
+            model.save(ckpt_name)
             model_1 = Seq2SeqPytorch()
             model_1.restore(ckpt_name)
             pred_1 = model_1.predict(self.test_data[0])
