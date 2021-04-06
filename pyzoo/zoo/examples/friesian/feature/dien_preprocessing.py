@@ -24,9 +24,9 @@ from pyspark.sql.types import StringType, IntegerType, ArrayType, FloatType
 
 if __name__ == "__main__":
     parser = OptionParser()
-    parser.add_option("--meta", dest="meta_file")
-    parser.add_option("--review", dest="review_file")
-    parser.add_option("--output", dest="output")
+    parser.add_option("--meta", dest="meta_file", default='/Users/guoqiong/intelWork/git/friesian/data/book_review/meta_Books.json')
+    parser.add_option("--review", dest="review_file",default="/Users/guoqiong/intelWork/git/friesian/data/book_review/reviews_Books.json")
+    parser.add_option("--output", dest="output", default='/Users/guoqiong/intelWork/git/friesian/data/book_review/reprocessed_small')
     (options, args) = parser.parse_args(sys.argv)
 
     sc = init_nncontext()
@@ -38,7 +38,7 @@ if __name__ == "__main__":
         .withColumnRenamed('reviewerID', 'user') \
         .withColumnRenamed('asin', 'item') \
         .withColumnRenamed('unixReviewTime', 'time')\
-        .dropna("any").persist(storageLevel=StorageLevel.DISK_ONLY)
+        .dropna("any").sample(0.0001).persist(storageLevel=StorageLevel.DISK_ONLY)
 
     # read meta data
     def get_category(x):
@@ -51,25 +51,27 @@ if __name__ == "__main__":
         .withColumnRenamed("asin", "item").drop("categories").persist(storageLevel=StorageLevel.DISK_ONLY)
 
     full_df = review_df.join(meta_df, on="item", how="left").fillna("default", ["item"])
+
+    full_df.printSchema()
+    sys.exit()
+
     item_size = full_df.select("item").distinct().count()
 
     full_df.persist(StorageLevel.DISK_ONLY)
-    full_tbl = FeatureTable.from_spark_df(full_df)
-    user_index = full_tbl.gen_string2ind('user')
-    item_index = full_tbl.gen_string2ind('item')
-    cat_index = full_tbl.gen_string2ind('category')
-    item2cat = full_tbl.gen_ind2ind(['item', 'category'], [item_index, cat_index])
-    user_index.write_parquet(options.output + "user_index")
-    item_index.write_parquet(options.output + "item_index")
-    cat_index.write_parquet(options.output + "cat_index")
+    full_tbl = FeatureTable(full_df)
+    indices = full_tbl.gen_string_idx(['user', 'item', 'category'], '1')
+    item2cat = full_tbl.gen_ind2ind(['item', 'category'], [indices[1], indices[2]])
+
+    for i in range(len(indices)):
+        indices[i].write_parquet(options.output)
     item2cat.write_parquet(options.output+"item2cat")
 
     get_length = udf(lambda x: len(x), IntegerType())
     get_label = udf(lambda x: [float(x), 1 - float(x)], ArrayType(FloatType()))
 
     full_tbl = full_tbl\
-        .encode_string(['user', 'item', 'category'], [user_index, item_index, cat_index])\
-        .gen_his_seq(cols=['item', 'category'], sort_col='time', min_len=1, max_len=100)\
+        .encode_string(['user', 'item', 'category'], [indices[0], indices[1], indices[2]])\
+        .gen_his_seq(user_col="user", cols=['item', 'category'], sort_col='time', min_len=1, max_len=100)\
         .transform_python_udf("item_history", "length", get_length)\
         .add_negtive_samples(item_size, item_col='item', neg_num=1) \
         .gen_neg_hist_seq(item_size, item2cat, neg_num=5)\

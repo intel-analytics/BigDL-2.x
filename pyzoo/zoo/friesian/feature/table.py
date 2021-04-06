@@ -65,9 +65,6 @@ class Table:
     def to_spark_df(self):
         return self.df
 
-    def from_spark_df(self, df):
-        return self(df)
-
     def count(self):
         cnt = self.df.count()
         return cnt
@@ -110,6 +107,8 @@ class Table:
     def show(self, n=20, truncate=True):
         self.df.show(n, truncate)
 
+    def write_parquet(self, path, mode="overwrite"):
+        self.df.write.mode(mode).parquet(path)
 
 class FeatureTable(Table):
     @classmethod
@@ -140,6 +139,10 @@ class FeatureTable(Table):
         string_idx_list = list(map(lambda x: StringIndex(x[0], x[1]),
                                    zip(df_id_list, columns)))
         return string_idx_list
+
+    def gen_ind2ind(self, cols, indices):
+        df = self.encode_string(cols, indices).df.select(*cols).distinct()
+        return FeatureTable(df)
 
     def _clone(self, df):
         return FeatureTable(df)
