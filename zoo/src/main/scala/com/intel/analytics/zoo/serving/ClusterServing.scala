@@ -29,7 +29,7 @@ import scopt.OptionParser
 
 
 object ClusterServing {
-  case class ServingParams(configPath: String = "config.yaml", testMode: Int = -1,
+  case class ServingParams(configPath: String = "config.yaml",
                            timerMode: Boolean = false)
   val logger = Logger.getLogger(getClass)
   var argv: ServingParams = _
@@ -41,10 +41,6 @@ object ClusterServing {
     opt[String]('c', "configPath")
       .text("Config Path of Cluster Serving")
       .action((x, params) => params.copy(configPath = x))
-    opt[Int]('t', "testMode")
-      .text("Text Mode controlling Flink parallelism, this should not be controlled by user" +
-        "unless in performance test")
-      .action((x, params) => params.copy(testMode = x))
     opt[Boolean]("timerMode")
       .text("Whether to open timer mode")
       .action((x, params) => params.copy(timerMode = x))
@@ -57,19 +53,13 @@ object ClusterServing {
     /**
      * Flink environment parallelism depends on model parallelism
      */
-    if (argv.testMode > 0) {
-      Logger.getLogger("org").setLevel(Level.INFO)
-      Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
-      streamingEnv.setParallelism(argv.testMode)
-      streamingEnv.addSource(new FlinkRedisSource(helper))
-        .map(new FlinkInference(helper))
-        .addSink(new FlinkRedisSink(helper))
-    } else {
-      streamingEnv.setParallelism(helper.modelPar)
-      streamingEnv.addSource(new FlinkRedisSource(helper))
-        .map(new FlinkInference(helper))
-        .addSink(new FlinkRedisSink(helper))
-    }
+    // Uncomment this line if you need to check predict time in debug
+    Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
+    streamingEnv.setParallelism(helper.modelPar)
+    streamingEnv.addSource(new FlinkRedisSource(helper))
+      .map(new FlinkInference(helper))
+      .addSink(new FlinkRedisSink(helper))
+
     logger.info(s"Cluster Serving Flink job graph details \n${streamingEnv.getExecutionPlan}")
     streamingEnv.executeAsync()
   }
