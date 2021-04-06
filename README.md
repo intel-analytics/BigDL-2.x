@@ -140,7 +140,7 @@ val pipeline = new Pipeline().setStages(Array(scaler, estimator))
 val pipelineModel = pipeline.fit(trainingDF)  
 val predictions = pipelineModel.transform(validationDF)
 ```
-See the [Scala](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/scala.html) , [NNframes]() and [Keras API]()  user guides for more details.
+See the [Scala](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/scala.html) , [NNframes](https://analytics-zoo.readthedocs.io/en/latest/doc/UseCase/nnframes.html) and [Keras API](https://analytics-zoo.readthedocs.io/en/latest/doc/UseCase/keras-api.html)  user guides for more details.
 
 ## Getting Started with Zouwu
 
