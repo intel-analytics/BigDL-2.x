@@ -22,6 +22,7 @@ from zoo.ray import RayContext
 from zoo.orca.automl.xgboost.AutoXGBoost import AutoXGBoost
 from zoo.zouwu.config.recipe import *
 
+
 class XgbSigOptRecipe(Recipe):
     def __init__(
             self,
@@ -35,6 +36,7 @@ class XgbSigOptRecipe(Recipe):
 
     def search_space(self, all_available_features):
         return dict()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -110,7 +112,7 @@ if __name__ == '__main__':
         },
 
     ]
-    
+
     search_alg_params = dict(space=space, name="AutoXGBoost SigOpt Experiment", max_concurrent=1,
                              project="autoxgboost_sigopt")
 
@@ -135,10 +137,7 @@ if __name__ == '__main__':
                              )
     print("Training completed.")
 
-
     pred_df = pipeline.predict(val_df)
-  
-
     rmse = pipeline.evaluate(val_df, metrics=["rmse"])
     print("Evaluate: the square root of mean square error is", rmse)
 

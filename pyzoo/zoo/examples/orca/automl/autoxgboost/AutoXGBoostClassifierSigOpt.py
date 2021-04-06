@@ -24,6 +24,7 @@ from zoo.ray import RayContext
 from zoo.orca.automl.AutoXGBoost import AutoXGBoost
 from zoo.zouwu.config.recipe import *
 
+
 class XgbSigOptRecipe(Recipe):
     def __init__(
             self,
@@ -144,7 +145,7 @@ if __name__ == '__main__':
         },
 
     ]
-    
+
     search_alg_params = dict(space=space, name="AutoXGBoost SigOpt Experiment", max_concurrent=1,
                              project="autoxgboost_sigopt")
 

@@ -27,6 +27,7 @@ from zoo.zouwu.config.recipe import *
 # for loguniform & choice
 from ray import tune
 
+
 class XgbRegressorSkOptRecipeNew(Recipe):
     def __init__(
             self,
@@ -46,7 +47,6 @@ class XgbRegressorSkOptRecipeNew(Recipe):
         self.max_depth_range = max_depth_range
         self.lr = tune.loguniform(lr[0], lr[1])
         self.min_child_weight = tune.choice(min_child_weight)
-
 
     def search_space(self, all_available_features):
         space = {
@@ -97,25 +97,25 @@ if __name__ == '__main__':
     n_estimators_range = (800, 1000)
     max_depth_range = (10, 15)
     lr = (1e-4, 1e-1)
-    min_child_weight=[1, 2, 3]
+    min_child_weight = [1, 2, 3]
 
     config = {'random_state': 2,
               'min_child_weight': 3,
               'n_jobs': 2}
-   
+
     estimator = AutoXGBoost().regressor(feature_cols=feature_cols,
-                                         target_col=target_col,
-                                         config=config,
-                                         search_alg="skopt",
-                                         search_alg_params=None,
-                                         scheduler="AsyncHyperBand",
-                                         scheduler_params=dict(
-                                             max_t=50,
-                                             grace_period=1,
-                                             reduction_factor=3,
-                                             brackets=3,
-                                         ),
-                                         )
+                                        target_col=target_col,
+                                        config=config,
+                                        search_alg="skopt",
+                                        search_alg_params=None,
+                                        scheduler="AsyncHyperBand",
+                                        scheduler_params=dict(
+                                            max_t=50,
+                                            grace_period=1,
+                                            reduction_factor=3,
+                                            brackets=3,
+                                        ),
+                                        )
 
     pipeline = estimator.fit(train_df,
                              validation_df=val_df,
@@ -128,7 +128,7 @@ if __name__ == '__main__':
                                  min_child_weight=min_child_weight
                              ),
                              )
-    
+
     print("Training completed.")
 
     pred_df = pipeline.predict(val_df)
@@ -140,4 +140,3 @@ if __name__ == '__main__':
 
     ray_ctx.stop()
     sc.stop()
-
