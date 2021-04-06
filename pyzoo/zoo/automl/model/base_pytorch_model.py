@@ -242,7 +242,7 @@ class PytorchBaseModel(BaseModel):
             import onnx
             import onnxruntime
         except:
-            print("You should install onnx and onnxruntime to use onnx based method.")
+            raise RuntimeError("You should install onnx and onnxruntime to use onnx based method.")
         if dirname is None:
             dirname = tempfile.mkdtemp(prefix="onnx_cache_")
         # code adapted from
