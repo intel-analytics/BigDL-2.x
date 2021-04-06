@@ -91,7 +91,8 @@ class ClusterServingInference(preProcessing: PreProcessing,
     val postProcessed = in.grouped(helper.thrdPerModel).flatMap(pathByte => {
       try {
         val thisBatchSize = pathByte.size
-        val t = batchInput(pathByte, helper.thrdPerModel, useMultiThreading = false, resizeFlag = false)
+        val t = batchInput(pathByte, helper.thrdPerModel,
+          useMultiThreading = false, resizeFlag = false)
         dimCheck(t, "add", helper.modelType)
         val result =
           ClusterServing.model.doPredict(t)
