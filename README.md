@@ -146,7 +146,7 @@ See the [Scala](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/sca
 
 Time series prediction takes observations from previous time steps as input and predicts the values at future time steps. The _**Zouwu**_ library makes it easy to build end-to-end time series analysis by applying AutoML to extremely large-scale time series prediction.
 
-To train a time series model with AutoML, first initialize [Orca Context]():
+To train a time series model with AutoML, first initialize [Orca Context](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html):
 
 ```python
 from zoo.orca import init_orca_context
@@ -173,7 +173,7 @@ ts_pipeline = trainer.fit(train_df, validation_df)
 ts_pipeline.predict(test_df)
 ```
 
-See the Zouwu [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/Zouwu/Overview/zouwu.html) and [examples](https://analytics-zoo.readthedocs.io/en/latest/doc/Zouwu/QuickStart/zouwu-autots-quickstart.html) for more details.
+See the Zouwu [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/Zouwu/Overview/zouwu.html) and [example](https://analytics-zoo.readthedocs.io/en/latest/doc/Zouwu/QuickStart/zouwu-autots-quickstart.html) for more details.
 
 ## More information
 
