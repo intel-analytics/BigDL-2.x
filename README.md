@@ -105,7 +105,7 @@ counters = [Counter.remote() for i in range(5)]
 print(ray.get([c.increment.remote() for c in counters]))
 ```
 
-See the RayOnSpark [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/ray.html) and [examples]() for more details.
+See the RayOnSpark [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/Ray/Overview/ray.html) and [quickstart](https://analytics-zoo.readthedocs.io/en/latest/doc/Ray/QuickStart/ray-quickstart.html) for more details.
 
 ## Getting Started with BigDL Extensions
 
