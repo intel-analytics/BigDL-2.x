@@ -10,6 +10,8 @@ data:
   src:
   # default, None
   filter:
+  # default, false, if input is already batched NdArray, set true
+  batched:
 params:
   # default, number of cores (or threads) used per model in serving
   core_number:

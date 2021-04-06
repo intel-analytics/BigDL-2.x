@@ -22,17 +22,14 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
-import com.intel.analytics.zoo.serving.utils.Conventions
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.log4j.Logger
 
 /**
  * Inference Logic of Cluster Serving
  */
 class ClusterServingInference(preProcessing: PreProcessing,
-                              modelType: String,
-                              filterType: String = "",
-                              batchSize: Int = 4,
-                              resizeFlag: Boolean = true,
+                              helper: ClusterServingHelper,
                               recordEncrypted: Boolean = false) {
   val logger = Logger.getLogger(getClass)
 
@@ -68,10 +65,9 @@ class ClusterServingInference(preProcessing: PreProcessing,
     val postProcessed = in.map(pathByte => {
       try {
         val t = typeCheck(pathByte._2)
-        dimCheck(t, "add", modelType)
         val result = ClusterServing.model.doPredict(t)
-        dimCheck(result, "remove", modelType)
-        val value = PostProcessing(result.toTensor[Float], filterType, 1)
+        dimCheck(result, "remove", helper.modelType)
+        val value = PostProcessing(result.toTensor[Float], helper.filter, 1)
         (pathByte._1, value)
       } catch {
         case e: Exception =>
@@ -92,18 +88,18 @@ class ClusterServingInference(preProcessing: PreProcessing,
    */
   def singleThreadBatchInference(in: List[(String, Activity)]): List[(String, String)] = {
 
-    val postProcessed = in.grouped(batchSize).flatMap(pathByte => {
+    val postProcessed = in.grouped(helper.thrdPerModel).flatMap(pathByte => {
       try {
         val thisBatchSize = pathByte.size
-        val t = batchInput(pathByte, batchSize, useMultiThreading = false, resizeFlag = false)
-        dimCheck(t, "add", modelType)
+        val t = batchInput(pathByte, helper.thrdPerModel, useMultiThreading = false, resizeFlag = false)
+        dimCheck(t, "add", helper.modelType)
         val result =
           ClusterServing.model.doPredict(t)
-        dimCheck(result, "remove", modelType)
-        dimCheck(t, "remove", modelType)
+        dimCheck(result, "remove", helper.modelType)
+        dimCheck(t, "remove", helper.modelType)
         val kvResult =
           (0 until thisBatchSize).map(i => {
-            val value = PostProcessing(result, filterType, i + 1)
+            val value = PostProcessing(result, helper.filter, i + 1)
             (pathByte(i)._1, value)
           })
         kvResult
@@ -119,11 +115,11 @@ class ClusterServingInference(preProcessing: PreProcessing,
 
   def multiThreadInference(in: List[(String, Activity)]): List[(String, String)] = {
 
-    val postProcessed = in.grouped(batchSize).flatMap(itemBatch => {
+    val postProcessed = in.grouped(helper.thrdPerModel).flatMap(itemBatch => {
       try {
         val size = itemBatch.size
         val t =
-          batchInput(itemBatch, batchSize, true, resizeFlag)
+          batchInput(itemBatch, helper.thrdPerModel, true, helper.resize)
 
         /**
          * addSingletonDimension method will modify the
@@ -133,11 +129,11 @@ class ClusterServingInference(preProcessing: PreProcessing,
         // dimCheck(t, "add", modelType)
         val result =
           ClusterServing.model.doPredict(t)
-        dimCheck(result, "remove", modelType)
+        dimCheck(result, "remove", helper.modelType)
         // dimCheck(t, "remove", modelType)
         val kvResult =
           (0 until size).toParArray.map(i => {
-            val value = PostProcessing(result, filterType, i + 1)
+            val value = PostProcessing(result, helper.filter, i + 1)
             (itemBatch(i)._1, value)
           })
         kvResult
@@ -237,6 +233,9 @@ class ClusterServingInference(preProcessing: PreProcessing,
    * @return input with single element batch constructed
    */
   def typeCheck(input: Activity): Activity = {
+    if (helper.inputAlreadyBatched) {
+      return input
+    }
     if (input.isTable) {
       if (input.toTable.keySet.size == 1) {
         input.toTable.keySet.foreach(key => {

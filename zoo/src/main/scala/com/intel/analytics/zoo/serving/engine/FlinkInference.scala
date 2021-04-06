@@ -53,7 +53,7 @@ class FlinkInference(helper: ClusterServingHelper)
       inference = new ClusterServingInference(new PreProcessing(
         helper.chwFlag, helper.redisHost, helper.redisPort,
         Conventions.SERVING_STREAM_DEFAULT_NAME, helper.recordEncrypted),
-        helper.modelType, helper.filter, helper.thrdPerModel, helper.resize,
+        helper,
         helper.recordEncrypted)
     }
 
