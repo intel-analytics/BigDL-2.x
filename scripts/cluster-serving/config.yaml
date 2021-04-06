@@ -11,9 +11,9 @@ data:
   # default, None
   filter:
 params:
-  # default, number of cores per model in serving
+  # default, number of cores (or threads) used per model in serving
   core_number:
-  # default: number of models in serving
+  # default: number of models used in serving
   model_number:
   # default: OFF
   performance_mode:
