@@ -173,7 +173,7 @@ ts_pipeline = trainer.fit(train_df, validation_df)
 ts_pipeline.predict(test_df)
 ```
 
-See the Zouwu [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/zouwu.html) and [examples](pyzoo/zoo/zouwu/use-case/) for more details.
+See the Zouwu [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/Zouwu/Overview/zouwu.html) and [examples](https://analytics-zoo.readthedocs.io/en/latest/doc/Zouwu/QuickStart/zouwu-autots-quickstart.html) for more details.
 
 ## More information
 
