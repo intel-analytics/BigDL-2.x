@@ -30,7 +30,7 @@ conda activate my_env
 pip install analytics-zoo 
 ```
 
-To install latest nightly build, use ```pip install --pre analytics-zoo```; see [Python](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/python.html)  and [Scala](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/scala.html) user guide for more details.
+To install latest nightly build, use ```pip install --pre --upgrade analytics-zoo```; see [Python](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/python.html)  and [Scala](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/scala.html) user guide for more details.
 
 ## Getting Started with Orca
 
