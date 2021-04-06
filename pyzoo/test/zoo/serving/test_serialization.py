@@ -17,11 +17,24 @@
 
 import numpy as np
 import base64
-from zoo.serving.client import InputQueue, OutputQueue
+from zoo.serving.client import InputQueue, OutputQueue, http_response_to_ndarray
+import os
+
+
+resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
 
 
 class TestSerialization:
+
     def test_encode(self):
         input_api = InputQueue()
         b64 = input_api.data_to_b64(t1=np.array([1, 2]), t2=np.array([3, 4]))
         byte = base64.b64decode(b64)
+
+    def test_http_response_to_ndarray(self):
+        with open(os.path.join(resource_path, "serving/http_response")) as f:
+            data = f.read()
+            arr = http_response_to_ndarray(data)
+            assert isinstance(arr, np.ndarray)
+            assert len(arr.shape) == 1
+            assert arr.shape[0] == 128

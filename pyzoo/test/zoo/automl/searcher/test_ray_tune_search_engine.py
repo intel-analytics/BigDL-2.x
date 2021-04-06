@@ -13,20 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.search import SearchEngineFactory
 from zoo.automl.model import ModelBuilder
-from zoo.automl.model.VanillaLSTM_pytorch import model_creator as LSTM_model_creator
+from zoo.zouwu.model.VanillaLSTM_pytorch import model_creator as LSTM_model_creator
 import torch
 import torch.nn as nn
-from zoo.automl.config.recipe import Recipe
+from zoo.automl.recipe.base import Recipe
 from ray import tune
 import pandas as pd
 import numpy as np
 from zoo.orca import init_orca_context, stop_orca_context
-from zoo.automl.feature.time_sequence import TimeSequenceFeatureTransformer
+from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 import json
 
 

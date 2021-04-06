@@ -18,7 +18,6 @@ from zoo.automl.model import ModelBuilder
 import numpy as np
 import torch
 import torch.nn as nn
-import math
 
 
 def get_data():

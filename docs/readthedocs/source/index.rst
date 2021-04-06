@@ -23,6 +23,7 @@ Analytics Zoo includes the **Orca** library that seamlessly scale out your singl
    doc/Orca/QuickStart/orca-pytorch-quickstart.md
    doc/Orca/QuickStart/orca-mxnet-quickstart.md
    doc/Orca/QuickStart/orca-horovod-quickstart.md
+   doc/Ray/QuickStart/ray-quickstart.md
 
 .. toctree::
    :maxdepth: 1
@@ -36,8 +37,8 @@ Analytics Zoo includes the **Orca** library that seamlessly scale out your singl
    doc/UserGuide/amazon.md
    doc/UserGuide/databricks.md
    doc/UserGuide/scala.md
-   doc/UserGuide/ray.md
-   doc/UserGuide/zouwu.md
+   doc/Ray/Overview/ray.md
+   doc/Zouwu/Overview/zouwu.md
    doc/UserGuide/develop.md
    
 .. toctree::
@@ -52,7 +53,7 @@ Analytics Zoo includes the **Orca** library that seamlessly scale out your singl
    :maxdepth: 1
    :caption: Python API
    
-   doc/PythonAPI/Orca/zoo.orca.rst
+   doc/PythonAPI/Orca/orca.rst
    
 .. toctree::
    :maxdepth: 1

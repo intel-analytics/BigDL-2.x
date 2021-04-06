@@ -15,7 +15,7 @@
 #
 
 from zoo.zouwu.model.forecast.abstract import Forecaster
-from zoo.automl.model.tcn import TCNPytorch
+from zoo.zouwu.model.tcn import TCNPytorch
 
 
 class TCNForecaster(Forecaster):
@@ -29,7 +29,28 @@ class TCNForecaster(Forecaster):
                  kernel_size=7,
                  dropout=0.2,
                  optimizer="Adam",
+                 loss="mse",
                  lr=0.001):
+        """
+        Build a TCN Forecast Model.
+
+        :param past_seq_len: Specify the history time steps (i.e. lookback).
+        :param future_seq_len: Specify the output time steps (i.e. horizon).
+        :param input_feature_num: Specify the feature dimension.
+        :param output_feature_num: Specify the output dimension.
+        :param num_channels: Specify the convolutional layer filter number in
+               TCN's encoder. This value defaults to [30]*8.
+        :param kernel_size: Specify convolutional layer filter height in TCN's
+               encoder. This value defaults to 7.
+        :param dropout: Specify the dropout close possibility (i.e. the close
+               possibility to a neuron). This value defaults to 0.2.
+        :param optimizer: Specify the optimizer used for training. This value
+               defaults to "Adam".
+        :param loss: Specify the loss function used for training. This value
+               defaults to "mse". You can choose from "mse", "mae" and
+               "huber_loss".
+        :param lr: Specify the learning rate. This value defaults to 0.001.
+        """
         self.internal = TCNPytorch(check_optional_config=False)
         self.data_config = {
             "past_seq_len": past_seq_len,
@@ -39,6 +60,7 @@ class TCNForecaster(Forecaster):
         }
         self.config = {
             "lr": lr,
+            "loss": loss,
             "num_channels": num_channels,
             "kernel_size": kernel_size,
             "optim": optimizer,
@@ -46,6 +68,17 @@ class TCNForecaster(Forecaster):
         }
 
     def fit(self, x, y, epochs=1, metric="mse", batch_size=32):
+        """
+        Fit(Train) the forecaster.
+
+        :param x: A numpy array with shape (num_samples, lookback, feature_dim).
+               lookback and feature_dim should be the same as past_seq_len and input_feature_num.
+        :param y: A numpy array with shape (num_samples, horizon, target_dim).
+               horizon and target_dim should be the same as future_seq_len and output_feature_num.
+        :param epochs: Number of epochs you want to train.
+        :param metric: The metric for training data.
+        :param batch_size: Number of batch size you want to train.
+        """
         self.config["batch_size"] = batch_size
         self._check_data(x, y)
         return self.internal.fit_eval(x,
@@ -74,29 +107,67 @@ class TCNForecaster(Forecaster):
             .format(self.data_config["output_feature_num"], y.shape[-1])
 
     def predict(self, x):
+        """
+        Predict using a trained forecaster.
+
+        :param x: A numpy array with shape (num_samples, lookback, feature_dim).
+        """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling predict!")
         return self.internal.predict(x)
 
     def predict_with_onnx(self, x, dirname=None):
+        """
+        Predict using a trained forecaster with onnxruntime.
+
+        :param x: A numpy array with shape (num_samples, lookback, feature_dim).
+        :param dirname: The directory to save onnx model file. This value defaults
+               to None for no saving file.
+        """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling predict!")
         return self.internal.predict_with_onnx(x, dirname=dirname)
 
     def evaluate(self, x, y, metrics=['mse']):
+        """
+        Evaluate using a trained forecaster.
+
+        :param x: A numpy array with shape (num_samples, lookback, feature_dim).
+        :param y: A numpy array with shape (num_samples, horizon, target_dim).
+        :param metrics: A list contains metrics for test/valid data.
+        """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
         return self.internal.evaluate(x, y, metrics=metrics)
 
     def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None):
+        """
+        Evaluate using a trained forecaster with onnxruntime.
+
+        :param x: A numpy array with shape (num_samples, lookback, feature_dim).
+        :param y: A numpy array with shape (num_samples, horizon, target_dim).
+        :param metrics: A list contains metrics for test/valid data.
+        :param dirname: The directory to save onnx model file. This value defaults
+               to None for no saving file.
+        """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
         return self.internal.evaluate_with_onnx(x, y, metrics=metrics, dirname=dirname)
 
     def save(self, checkpoint_file):
+        """
+        Save the forecaster.
+
+        :param checkpoint_file: The location you want to save the forecaster.
+        """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling save!")
         self.internal.save(checkpoint_file)
 
     def restore(self, checkpoint_file):
+        """
+        restore the forecaster.
+
+        :param checkpoint_file: The checkpoint file location you want to load the forecaster.
+        """
         self.internal.restore(checkpoint_file)

@@ -1,29 +1,23 @@
-# trusted-big-data-ml
-Please mind the ip and file path settings, they should be changed to the ip/path of your own sgx server on which you are running the programs.
+# Trusted Big Data ML
+SGX-based Trusted Big Data ML allows user to run end to end big data analytics application and Intel Analytics Zoo and BigDL model training with spark local and distributed cluster on Graphene-SGX.
+
+*Please mind the ip and file path settings, they should be changed to the ip/path of your own sgx server on which you are running the programs.*
 
 
 ## How To Build 
-
+Before run the following command, please modify the pathes in the build-docker-image.sh file at first. <br>
+Then build docker image by running this command: <br>
 ```bash
-export HTTP_PROXY_HOST=your_http_proxy_host
-export HTTP_PROXY_PORT=your_http_proxy_port
-export HTTPS_PROXY_HOST=your_https_proxy_host
-export HTTPS_PROXY_PORT=your_https_proxy_port
-export JDK_URL=http://your-http-url-to-download-jdk
-sudo docker build \
-    --build-arg http_proxy=http://$HTTP_PROXY_HOST:$HTTP_PROXY_PORT \
-    --build-arg https_proxy=http://$HTTPS_PROXY_HOST:$HTTPS_PROXY_PORT \
-    --build-arg HTTP_PROXY_HOST=$HTTP_PROXY_HOST \
-    --build-arg HTTP_PROXY_PORT=$HTTP_PROXY_PORT \
-    --build-arg HTTPS_PROXY_HOST=$HTTPS_PROXY_HOST \
-    --build-arg HTTPS_PROXY_PORT=$HTTPS_PROXY_PORT \
-    --build-arg JDK_VERSION=8u192 \
-    --build-arg JDK_URL=$JDK_URL \
-    --build-arg no_proxy=x.x.x.x \
-    -t intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:0.10-SNAPSHOT -f ./Dockerfile .
+./build-docker-image.sh
 ```
 
 ## How to Run
+
+### Prerequisite
+To launch Trusted Big Data ML applications on Graphene-SGX, you need to install graphene-sgx-driver:
+```bash
+../../../scripts/install-graphene-driver.sh
+```
 
 ### Prepare the data
 To train a model with ppml in analytics zoo and bigdl, you need to prepare the data first. The Docker image is taking lenet and mnist as example. <br>
@@ -32,53 +26,31 @@ There're four files. **train-images-idx3-ubyte** contains train images, **train-
 After you uncompress the gzip files, these files may be renamed by some uncompress tools, e.g. **train-images-idx3-ubyte** is renamed to **train-images.idx3-ubyte**. Please change the name back before you run the example.  <br>
 
 ### Prepare the keys
-The ppml in analytics zoo need secured keys to enable spark security such as AUTHENTICATION, RPC Encryption, Local Storage Encryption and TLS, you need to prepare the secure keys and keystores.
+The ppml in analytics zoo needs secured keys to enable spark security such as Authentication, RPC Encryption, Local Storage Encryption and TLS, you need to prepare the secure keys and keystores.
+This script is in /analytics-zoo/ppml/scripts:
 ```bash
-    mkdir keys && cd keys
-    openssl genrsa -des3 -out server.key 2048
-    openssl req -new -key server.key -out server.csr
-    openssl x509 -req -days 9999 -in server.csr -signkey server.key -out server.crt
-    cat server.key > server.pem
-    cat server.crt >> server.pem
-    openssl pkcs12 -export -in server.pem -out keystore.pkcs12
-    keytool -importkeystore -srckeystore keystore.pkcs12 -destkeystore keystore.jks -srcstoretype PKCS12 -deststoretype JKS
-    openssl pkcs12 -in keystore.pkcs12 -nodes -out server.pem
-    openssl rsa -in server.pem -out server.key
-    openssl x509 -in server.pem -out server.crt
+../../../scripts/generate-keys.sh
+```
+### Prepare the password
+You also need to store the password you used in previous step in a secured file:
+This script is also in /analytics-zoo/ppml/scripts:
+```bash
+../../../scripts/generate-password.sh used_password_when_generate_keys
 ```
 
-### Run PPML Docker image
+### Run the PPML as Docker containers
 
 #### In spark local mode
-##### Start container to run tests in ppml
+##### Start the container to run spark applications in ppml
+Before you run the following command to start container, you need to modify the paths in the start-local-big-data-ml.sh. <br>
+Then run the following command: <br>
 ```bash
-export DATA_PATH=the_dir_path_of_your_prepared_data
-export KEYS_PATH=the_dir_path_of_your_prepared_keys
-export LOCAL_IP=your_local_ip_of_the_sgx_server
-
-sudo docker pull 10.239.45.10/arda/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:0.10-SNAPSHOT
-
-sudo docker run -itd \
-    --privileged \
-    --net=host \
-    --cpuset-cpus="0-5" \
-    --oom-kill-disable \
-    --device=/dev/gsgx \
-    --device=/dev/sgx/enclave \
-    --device=/dev/sgx/provision \
-    -v /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket \
-    -v $DATA_PATH:/ppml/trusted-big-data-ml/work/data \
-    -v $KEYS_PATH:/ppml/trusted-big-data-ml/work/keys \
-    --name=spark-local \
-    -e LOCAL_IP=$LOCAL_IP \
-    -e SGX_MEM_SIZE=64G \
-    intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:0.10-SNAPSHOT
-    
+./start-local-big-data-ml.sh
 sudo docker exec -it spark-local bash
-cd ppml/trusted-bid-data-ml
+cd /ppml/trusted-big-data-ml
 ```
 
-##### Example Test 1 
+##### Example 1: Spark PI on Graphene-SGX
 ```bash
 ./init.sh
 vim start-spark-local-pi-sgx.sh
@@ -114,6 +86,7 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
 
 Then run the script to run pi test in spark: <br>
 ```bash
+chmod a+x start-spark-local-pi-sgx.sh
 ./start-spark-local-pi-sgx.sh
 ```
 
@@ -125,7 +98,7 @@ sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.pi.sg
 The result should look like: <br>
 >   Pi is roughly 3.1422957114785572
 
-##### Example Test 2
+##### Example 2: Analytics Zoo model training on Graphene-SGX
 ```bash
 ./init.sh
 ./start-spark-local-train-sgx.sh
@@ -147,7 +120,8 @@ The result should look like: <br>
 >   ############# model saved[P1182:T2:java] ---- end time: 1985297 ms return from shim_write(...) = 0x19 <br>
 
 ##### Example Test 3
-Before run TPC-H test in container we created, we should download and install [SBT](https://www.scala-sbt.org/download.html), then build and package TPC-H dataset according to [TPC-H](https://github.com/qiuxin2012/tpch-spark) with your needs. After packaged, check if we have `spark-tpc-h-queries_2.11-1.0.jar ` under `/tpch-spark/target/scala-2.11`, if have, we package successfully.
+Before run TPC-H test in container we created, we should download and install [SBT](https://www.scala-sbt.org/download.html) and deploy a [HDFS](https://hadoop.apache.org/docs/r1.2.1/) for TPC-H output, then build and package TPC-H dataset according to [TPC-H](https://github.com/qiuxin2012/tpch-spark) with your needs. After packaged, check if we have `spark-tpc-h-queries_2.11-1.0.jar ` under `/tpch-spark/target/scala-2.11`, if have, we package successfully.
+
 
 Copy TPC-H to container: <br>
 ```bash
@@ -158,7 +132,7 @@ cd ppml/trusted-big-data-ml/
 vim start-spark-local-tpc-h-sgx.sh
 ```
 
-Add these code in the `start-spark-local-tpc-h-sgx.sh` file: <br>
+Please modify HDFS_NAMENODE_IP in this script and then add these code in the `start-spark-local-tpc-h-sgx.sh` file: <br>
 ```bash
 #!/bin/bash
 
@@ -185,11 +159,12 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
         --total-executor-cores 4 \
         --executor-memory 10G \
         /ppml/trusted-big-data-ml/work/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar \
-        /ppml/trusted-big-data-ml/work/tpch-spark/dbgen | tee spark.local.tpc.h.sgx.log
+        hdfs://HDFS_NAMENODE_IP:8020/dbgen hdfs://HDFS_NAMENODE_IP:8020/tmp/output | tee spark.local.tpc.h.sgx.log
 ```
 
 Then run the script to run TPC-H test in spark: <br>
 ```bash
+chmod a+x start-spark-local-tpc-h-sgx.sh
 ./start-spark-local-tpc-h-sgx.sh
 ```
 
@@ -197,18 +172,21 @@ Open another terminal and check the log: <br>
 ```bash
 sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.tpc.h.sgx.log | egrep "###|INFO"
 ```
+##### Other Spark workloads are also supported, please follow the 3 examples to submit your workload with spark on Graphene-SGX
+
 
 #### In spark standalone cluster mode
 ##### setup passwordless ssh login to all the nodes.
-##### config the environments for master, workers, docker image, security keys/passowrd files and data path.
+##### config the environments for master, workers, docker image, security keys/password files and data path.
 ```bash
 nano environments.sh
 ```
-##### start the distributed cluster serving
+##### start the distributed bigdata ml
 ```bash
 ./start-distributed-big-data-ml.sh
 ```
-##### stop the distributed cluster serving 
+##### stop the distributed bigdata ml
 ```bash
 ./stop-distributed-big-data-ml.sh
 ```
+##### Other Spark workloads are also supported, please follow the 3 examples to submit your workload with spark on Graphene-SGX

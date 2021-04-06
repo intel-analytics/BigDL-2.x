@@ -13,14 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-import tempfile
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
 from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
+import pandas as pd
+
+
+PYTORCH_REGRESSION_LOSS_MAP = {"mse": "MSELoss",
+                               "mae": "L1Loss",
+                               "huber_loss": "SmoothL1Loss"}
 
 
 class PytorchBaseModel(BaseModel):
