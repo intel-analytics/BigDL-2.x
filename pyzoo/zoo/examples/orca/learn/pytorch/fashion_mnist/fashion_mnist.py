@@ -111,7 +111,7 @@ def main():
                         help='The cluster mode, such as local, yarn or k8s.')
     parser.add_argument('--backend', type=str, default="bigdl",
                         help='The backend of PyTorch Estimator; '
-                             'bigdl and torch-distributed are supported.')
+                             'bigdl and torch_distributed are supported.')
     args = parser.parse_args()
 
     if args.cluster_mode == "local":
@@ -149,7 +149,7 @@ def main():
     if args.backend == "bigdl":
         train_loader = train_data_creator(config={}, batch_size=batch_size)
         test_loader = validation_data_creator(config={}, batch_size=batch_size)
-    
+
         net = model_creator(config={})
         optimizer = optimizer_creator(model=net, config={"lr": 0.001})
         orca_estimator = Estimator.from_torch(model=net,
@@ -157,7 +157,7 @@ def main():
                                               loss=criterion,
                                               metrics=[Accuracy()],
                                               backend="bigdl")
-        
+
         orca_estimator.set_tensorboard(tensorboard_dir, "bigdl")
 
         orca_estimator.fit(data=train_loader, epochs=epochs, validation_data=test_loader,
