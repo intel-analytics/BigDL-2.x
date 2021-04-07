@@ -474,13 +474,13 @@ object Instances {
             }
             val data = dataDataVector.getMinorType match {
               case MinorType.INT =>
-                val data = new ArrayBuffer[Int]()
+                val data = new ArrayBuffer[Float]()
                 val dataIntVector = dataDataVector.asInstanceOf[IntVector]
                 for(i <- 0 until dataIntVector.getValueCount) {
-                  data.append(dataIntVector.getObject(i).asInstanceOf[Int])
+                  data.append(dataIntVector.getObject(i).toFloat)
                 }
                 data
-              case MinorType.FLOAT4 =>
+              case MinorType.FLOAT4=>
                 val data = new ArrayBuffer[Float]()
                 val dataFloatVector = dataDataVector.asInstanceOf[Float4Vector]
                 for(i <- 0 until dataFloatVector.getValueCount) {
