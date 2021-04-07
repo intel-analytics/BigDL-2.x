@@ -49,14 +49,15 @@ class LSTMSeq2Seq(nn.Module):
 
     def forward(self, input_seq, target_seq=None):
         x, (hidden, cell) = self.lstm_encoder(input_seq)
-        decoder_input = input_seq[:, -1, :self.output_feature_num] # last value
+        decoder_input = input_seq[:, -1, :self.output_feature_num]  # last value
         decoder_input = decoder_input.unsqueeze(1)
-
-        decoder_output = torch.zeros(input_seq.shape[0], self.future_seq_len, self.output_feature_num)
+        decoder_output = torch.zeros(input_seq.shape[0],
+                                     self.future_seq_len,
+                                     self.output_feature_num)
         for i in range(self.future_seq_len):
             decoder_output_step, (hidden, cell) = self.lstm_decoder(decoder_input, (hidden, cell))
             out_step = self.fc(decoder_output_step)
-            decoder_output[:,i:i+1,:] = out_step
+            decoder_output[:, i:i+1, :] = out_step
             if not self.teacher_forcing or target_seq is None:
                 # no teaching force
                 decoder_input = out_step
@@ -97,7 +98,7 @@ class Seq2SeqPytorch(PytorchBaseModel):
                          optimizer_creator=optimizer_creator,
                          loss_creator=loss_creator,
                          check_optional_config=check_optional_config)
-    
+
     def _forward(self, x, y):
         return self.model(x, y)
 

@@ -48,18 +48,18 @@ class TestSeq2SeqPytorch(TestCase):
         config = {"batch_size": 128, "teacher_forcing": False}
         model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
         mse, smape = model.evaluate(self.val_data[0],
-                                         self.val_data[1],
-                                         metrics=["mse", "smape"])
+                                    self.val_data[1],
+                                    metrics=["mse", "smape"])
         assert len(mse) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
         assert len(smape) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
-    
+
     def test_s2s_teacher_forcing_fit_evaluate(self):
         model = Seq2SeqPytorch()
         config = {"batch_size": 128, "teacher_forcing": True}
         model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
         mse, smape = model.evaluate(self.val_data[0],
-                                         self.val_data[1],
-                                         metrics=["mse", "smape"])
+                                    self.val_data[1],
+                                    metrics=["mse", "smape"])
         assert len(mse) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
         assert len(smape) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
 
