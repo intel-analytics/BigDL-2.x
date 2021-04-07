@@ -43,7 +43,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     Seq("sh", "-c", "rm -rf /tmp/openvino_inception_v1*").!
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper.modelType, "", helper.thrdPerModel, helper.resize)
+      helper)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -72,7 +72,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     Seq("sh", "-c", "rm -rf /tmp/openvino_mobilenet_v1*").!
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper.modelType, "", helper.thrdPerModel, helper.resize)
+      helper)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -102,7 +102,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     Seq("sh", "-c", "rm -rf /tmp/openvino_mobilenet_v2*").!
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper.modelType, "", helper.thrdPerModel, helper.resize)
+      helper)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -132,7 +132,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     Seq("sh", "-c", "rm -rf /tmp/openvino2020_resnet50*").!
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper.modelType, "", helper.thrdPerModel, helper.resize)
+      helper)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -162,7 +162,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     Seq("sh", "-c", "rm -rf /tmp/openvino_resnet50*").!
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper.modelType, "", helper.thrdPerModel, helper.resize)
+      helper)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -193,7 +193,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     Seq("sh", "-c", "rm -rf /tmp/openvino_vgg16*").!
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper.modelType, "", helper.thrdPerModel, helper.resize)
+      helper)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -223,7 +223,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     Seq("sh", "-c", "rm -rf /tmp/openvino_face_detection_0100*").!
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper.modelType, "", helper.thrdPerModel, helper.resize)
+      helper)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
