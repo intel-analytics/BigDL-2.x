@@ -203,6 +203,7 @@ class QueryActor(redisGetActor: ActorRef) extends JedisEnabledActor {
   val system = context.system
   implicit val executionContext = system.dispatcher
   implicit val timeout: Timeout = Timeout(100, TimeUnit.SECONDS)
+  var queryDelay: Int = 1
 
   override def receive: Receive = {
     case query: PredictionQueryMessage =>
@@ -215,12 +216,15 @@ class QueryActor(redisGetActor: ActorRef) extends JedisEnabledActor {
         Await.result(redisGetActor ? message.query, timeout.duration)
           .asInstanceOf[Seq[(String, util.Map[String, String])]]
       }
+      Thread.sleep(1)
       println(System.currentTimeMillis(), message.query.ids, results)
       if(results.size == 0) {
-        Thread.sleep(1)
+        queryDelay += 1
+        Thread.sleep(queryDelay)
         self ! message
 //        context.system.scheduler.scheduleOnce(1 milliseconds, self, message)
       } else {
+        queryDelay = 1
         message.target ! results
       }
   }
