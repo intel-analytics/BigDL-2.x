@@ -78,7 +78,7 @@ def model_creator(config):
 
 def optimizer_creator(model, config):
     return getattr(torch.optim, config.get("optim", "Adam"))(model.parameters(),
-                                                             lr=config.get("lr", 4e-3))
+                                                             lr=config.get("lr", 0.001))
 
 
 def loss_creator(config):
@@ -111,5 +111,6 @@ class Seq2SeqPytorch(PytorchBaseModel):
     def _get_optional_parameters(self):
         return {
             "lstm_hidden_dim",
-            "lstm_layer_num"
+            "lstm_layer_num",
+            "teacher_forcing"
         } | super()._get_optional_parameters()
