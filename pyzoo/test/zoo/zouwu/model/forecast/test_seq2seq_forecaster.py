@@ -28,14 +28,13 @@ def create_data():
     num_val_samples = 400
     num_test_samples = 400
     input_time_steps = 24
-    input_feature_dim = 2
+    input_feature_dim = 3
     output_time_steps = 5
     output_feature_dim = 2
 
     def get_x_y(num_samples):
         x = np.random.rand(num_samples, input_time_steps, input_feature_dim)
-        y = x[:, -output_time_steps:, :]*2 + \
-            np.random.rand(num_samples, output_time_steps, output_feature_dim)
+        y = np.random.rand(num_samples, output_time_steps, output_feature_dim)
         return x, y
 
     train_data = get_x_y(num_train_samples)
@@ -46,7 +45,7 @@ def create_data():
 class TestZouwuModelSeq2SeqForecaster(TestCase):
 
     def setUp(self):
-        tf.keras.backend.clear_session()
+        pass
 
     def tearDown(self):
         pass
@@ -54,7 +53,7 @@ class TestZouwuModelSeq2SeqForecaster(TestCase):
     def test_s2s_forecaster_fit_eva_pred(self):
         train_data, val_data, test_data = create_data()
         forecaster = Seq2SeqForecaster(future_seq_len=5,
-                                       input_feature_num=2,
+                                       input_feature_num=3,
                                        output_feature_num=2)
         train_mse = forecaster.fit(train_data[0], train_data[1], epochs=10)
         test_pred = forecaster.predict(test_data[0])
@@ -64,7 +63,7 @@ class TestZouwuModelSeq2SeqForecaster(TestCase):
     def test_s2s_forecaster_save_restore(self):
         train_data, val_data, test_data = create_data()
         forecaster = Seq2SeqForecaster(future_seq_len=5,
-                                       input_feature_num=2,
+                                       input_feature_num=3,
                                        output_feature_num=2)
         train_mse = forecaster.fit(train_data[0], train_data[1], epochs=10)
         with tempfile.TemporaryDirectory() as tmp_dir_name:
@@ -74,11 +73,31 @@ class TestZouwuModelSeq2SeqForecaster(TestCase):
             forecaster.restore(ckpt_name)
             test_pred_restore = forecaster.predict(test_data[0])
         np.testing.assert_almost_equal(test_pred_save, test_pred_restore)
-    
+
+    def test_tcn_forecaster_onnx_methods(self):
+        train_data, val_data, test_data = create_data()
+        forecaster = Seq2SeqForecaster(past_seq_len=24,
+                                   future_seq_len=5,
+                                   input_feature_num=3,
+                                   output_feature_num=2,
+                                   teacher_forcing=True)
+        forecaster.fit(train_data[0], train_data[1], epochs=2)
+        try:
+            import onnx
+            import onnxruntime
+            pred = forecaster.predict(test_data[0])
+            pred_onnx = forecaster.predict_with_onnx(test_data[0])
+            np.testing.assert_almost_equal(pred, pred_onnx, decimal=5)
+            mse = forecaster.evaluate(test_data[0], test_data[1])
+            mse_onnx = forecaster.evaluate_with_onnx(test_data[0], test_data[1])
+            np.testing.assert_almost_equal(mse, mse_onnx, decimal=5)
+        except ImportError:
+            pass
+
     def test_tcn_forecaster_runtime_error(self):
         train_data, val_data, test_data = create_data()
         forecaster = Seq2SeqForecaster(future_seq_len=5,
-                                       input_feature_num=2,
+                                       input_feature_num=3,
                                        output_feature_num=2)
         with pytest.raises(RuntimeError):
             with tempfile.TemporaryDirectory() as tmp_dir_name:
