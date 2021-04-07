@@ -16,8 +16,6 @@
 
 package com.intel.analytics.zoo.friesian.python
 
-import java.util
-
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.friesian.feature.Utils
@@ -29,6 +27,7 @@ import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
+import scala.util.Random
 
 object PythonFriesian {
   def ofFloat(): PythonFriesian[Float] = new PythonFriesian[Float]()
@@ -179,5 +178,19 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       resultDF = resultDF.withColumn(colName, clipFuncUDF(col(colName)))
     }
     resultDF
+  }
+
+  def shufflePartition(df: DataFrame): DataFrame = {
+    val spark = df.sparkSession
+    val rdd = df.rdd
+    val schema = df.schema
+    val shuffledRDD = rdd.mapPartitions(iter => {
+      Random.shuffle(iter.toList).toIterator
+    })
+    spark.createDataFrame(shuffledRDD, schema)
+  }
+
+  def dfWriteParquet(df: DataFrame, path: String, mode: String = "overwrite"): Unit = {
+    df.write.mode(mode).parquet(path)
   }
 }

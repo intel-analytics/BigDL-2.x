@@ -39,3 +39,11 @@ def fill_na_int(df, fill_val, columns):
 
 def clip_min(df, columns, min):
     return callZooFunc("float", "clipMin", df, columns, min)
+
+
+def shuffle_partition(df):
+    return callZooFunc("float", "shufflePartition", df)
+
+
+def write_parquet(df, path, mode):
+    return callZooFunc("float", "dfWriteParquet", df, path, mode)

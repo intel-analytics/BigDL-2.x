@@ -97,11 +97,12 @@ if __name__ == '__main__':
     paths = [os.path.join(args.input_folder, 'day_%d.parquet' % i) for i in args.day_range]
     tbl = FeatureTable.read_parquet(paths)
     idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
-    tbl_all_data = FeatureTable.read_parquet(paths[:-1])
+    tbl_all_data = FeatureTable.read_parquet(paths)
     tbl_all_data = tbl_all_data.encode_string(CAT_COLS, idx_list)\
         .fillna(0, INT_COLS + CAT_COLS).log(INT_COLS)
     tbl_all_data = tbl_all_data.merge_cols(INT_COLS, "X_int").merge_cols(CAT_COLS, "X_cat")
-    tbl_all_data.compute()
+    tbl_all_data.shuffle_partition().write_parquet("/home/kai/Downloads/dlrm_saved")
+    # tbl_all_data.compute()
     time_end = time()
     print("Train data loading and preprocessing time: ", time_end - time_start)
     tbl_all_data.show(5)

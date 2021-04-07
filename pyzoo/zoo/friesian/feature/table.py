@@ -17,8 +17,7 @@ import os
 
 from pyspark.sql.functions import col, array, broadcast
 from zoo.orca import OrcaContext
-from zoo.friesian.feature.utils import generate_string_idx, fill_na, \
-    fill_na_int, compute, log_with_clip, clip_min
+from zoo.friesian.feature.utils import *
 
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
@@ -88,6 +87,12 @@ class Table:
     def show(self, n=20, truncate=True):
         self.df.show(n, truncate)
 
+    def shuffle_partition(self):
+        return self._clone(shuffle_partition(self.df))
+
+    def write_parquet(self, path, mode="overwrite"):
+        write_parquet(self.df, path, mode)
+
 
 class FeatureTable(Table):
     @classmethod
@@ -143,4 +148,4 @@ class StringIndex(Table):
 
     def write_parquet(self, path, mode="overwrite"):
         path = path + "/" + self.col_name + ".parquet"
-        self.df.write.parquet(path, mode=mode)
+        write_parquet(self.df, path, mode)
