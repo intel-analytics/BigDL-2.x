@@ -43,7 +43,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     Seq("sh", "-c", "rm -rf /tmp/openvino_inception_v1*").!
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper.modelType, "", helper.thrdPerModel, helper.resize)
+      helper)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -72,7 +72,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     Seq("sh", "-c", "rm -rf /tmp/openvino_mobilenet_v1*").!
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper.modelType, "", helper.thrdPerModel, helper.resize)
+      helper)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -102,7 +102,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     Seq("sh", "-c", "rm -rf /tmp/openvino_mobilenet_v2*").!
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper.modelType, "", helper.thrdPerModel, helper.resize)
+      helper)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -132,7 +132,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     Seq("sh", "-c", "rm -rf /tmp/openvino2020_resnet50*").!
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper.modelType, "", helper.thrdPerModel, helper.resize)
+      helper)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -162,7 +162,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     Seq("sh", "-c", "rm -rf /tmp/openvino_resnet50*").!
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper.modelType, "", helper.thrdPerModel, helper.resize)
+      helper)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -193,7 +193,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     Seq("sh", "-c", "rm -rf /tmp/openvino_vgg16*").!
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper.modelType, "", helper.thrdPerModel, helper.resize)
+      helper)
     val in = List(("1", b64string), ("2", b64string), ("3", b64string))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -201,6 +201,36 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
       val result = ArrowDeserializer.getArray(x._2)
       require(result(0)._1.length == 1000, "result length wrong")
       require(result(0)._2.length == 1, "result shape wrong")
+    })
+  }
+
+
+  "OpenVINO face_detection_0100" should "work" in {
+    ("wget -O /tmp/openvino_face_detection_0100.tar http://10.239.45.10:8081" +
+      "/repository/raw/analytics-zoo-data/openvino_face_detection_0100.tar").!
+    "tar -xvf /tmp/openvino_face_detection_0100.tar -C /tmp/".!
+    val resource = getClass().getClassLoader().getResource("serving")
+    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val b64string = scala.io.Source.fromFile(dataPath).mkString
+
+    val helper = new ClusterServingHelper()
+    helper.modelType = "openvino"
+    helper.weightPath = "/tmp/openvino_face_detection_0100/face-detection-0100.bin"
+    helper.defPath = "/tmp/openvino_face_detection_0100/face-detection-0100.xml"
+
+    ClusterServing.model = helper.loadInferenceModel()
+
+    Seq("sh", "-c", "rm -rf /tmp/openvino_face_detection_0100*").!
+
+    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
+      helper)
+    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val postProcessed = inference.multiThreadPipeline(in)
+
+    postProcessed.foreach(x => {
+      val result = ArrowDeserializer.getArray(x._2)
+      require(result(0)._1.length == 1400, "result length wrong")
+      require(result(0)._2.length == 3, "result shape wrong")
     })
   }
 

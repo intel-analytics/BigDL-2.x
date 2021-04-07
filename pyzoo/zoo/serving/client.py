@@ -24,6 +24,16 @@ import uuid
 RESULT_PREFIX = "cluster-serving_"
 
 
+def http_response_to_ndarray(response_str):
+    # currently there is no http user use batch predict, so batch is not implemented here
+    # to add batch predict, replace 0 index to [0, batch_size)
+    res_dict = json.loads(json.loads(json.loads(response_str)["predictions"][0])['value'])
+    data, shape = res_dict['data'], res_dict['shape']
+    array = np.array(data)
+    array = array.reshape(shape)
+    return array
+
+
 def perdict(frontend_url, request_str):
     httpx.post(frontend_url + "/predict", data=request_str)
 
@@ -212,7 +222,10 @@ class OutputQueue(API):
             res_dict = self.db.hgetall(res.decode('utf-8'))
             res_id = res.decode('utf-8').split(":")[1]
             res_value = res_dict[b'value'].decode('utf-8')
-            decoded[res_id] = self.get_ndarray_from_b64(res_value)
+            if res_value == "NaN":
+                decoded[res_id] = "NaN"
+            else:
+                decoded[res_id] = self.get_ndarray_from_b64(res_value)
             self.db.delete(res)
         return decoded
 

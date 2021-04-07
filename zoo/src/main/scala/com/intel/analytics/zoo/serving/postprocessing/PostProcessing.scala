@@ -145,10 +145,15 @@ class PostProcessing(tensor: Tensor[Float], filter: String = "") {
   }
 }
 object PostProcessing {
-
+  /**
+   *
+   * @param t the result of prediction
+   * @param filter custom postprocessing
+   * @param index index of tensor to select, -1 means return tensor directly without select
+   * @return
+   */
   def apply(t: Activity, filter: String = "", index: Int = -1): String = {
     if (filter == "") {
-      require(index > 0, "index must > 0")
       val byteArr = ArrowSerializer.activityBatchToByte(t, index)
       Base64.getEncoder.encodeToString(byteArr)
     }

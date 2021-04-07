@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.zouwu.model.forecast.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
+from zoo.zouwu.model.VanillaLSTM import VanillaLSTM as LSTMKerasModel
 from zoo.zouwu.model.forecast.tfpark_forecaster import TFParkForecaster
 
 
