@@ -22,7 +22,7 @@ run_taskmanager() {
     cd /opt/flink
 
     #if conf_dir exists, use the new configurations.
-    if [[ -d $conf_dir && "$(ls -A /opt/conf)" ]]; then
+    if [[ -d $conf_dir && "$(ls -A $conf_dir)" ]]; then
         cp -r $conf_dir/* image/opt/conf/
         occlum build
     fi
