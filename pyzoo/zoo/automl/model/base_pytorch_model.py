@@ -40,6 +40,19 @@ class PytorchBaseModel(BaseModel):
         self.onnx_model = None
         self.onnx_model_built = False
 
+    def _create_loss(self):
+        if isinstance(self.loss_creator, torch.nn.modules.loss._Loss):
+            self.criterion = self.loss_creator
+        else:
+            self.criterion = self.loss_creator(self.config)
+
+    def _create_optimizer(self):
+        if issubclass(self.optimizer_creator, torch.optim.Optimizer):
+            # use torch default parameter values if user pass optimizer name or optimizer class.
+            self.optimizer = self.optimizer_creator(self.model.parameters())
+        else:
+            self.optimizer = self.optimizer_creator(self.model, self.config)
+
     def build(self, config):
         # check config and update
         self._check_config(**config)
@@ -47,8 +60,8 @@ class PytorchBaseModel(BaseModel):
         # build model
         self.model = self.model_creator(config)
         self.model_built = True
-        self.optimizer = self.optimizer_creator(self.model, self.config)
-        self.criterion = self.loss_creator(self.config)
+        self._create_loss()
+        self._create_optimizer()
 
     def _reshape_input(self, x):
         if x.ndim == 1:

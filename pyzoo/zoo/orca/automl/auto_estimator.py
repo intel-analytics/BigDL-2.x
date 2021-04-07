@@ -21,18 +21,37 @@ class AutoEstimator:
     @staticmethod
     def from_torch(*,
                    model_creator,
-                   optimizer_creator,
-                   loss_creator,
+                   optimizer,
+                   loss,
                    ):
+        """
+        Create an AutoEstimator for torch.
+
+        :param model_creator: PyTorch model creator function.
+        :param optimizer: PyTorch optimizer creator function or pytorch optimizer name (string).
+        :param loss: PyTorch loss instance or PyTorch loss creator function
+            or pytorch loss name (string).
+        :return: an AutoEstimator object.
+        """
+        from zoo.orca.automl.pytorch_model_utils import validate_pytorch_loss, \
+            validate_pytorch_optim
         from zoo.automl.model import ModelBuilder
+        loss = validate_pytorch_loss(loss)
+        optimizer = validate_pytorch_optim(optimizer)
         estimator = ModelBuilder.from_pytorch(model_creator=model_creator,
-                                              optimizer_creator=optimizer_creator,
-                                              loss_creator=loss_creator)
+                                              optimizer_creator=optimizer,
+                                              loss_creator=loss)
         return AutoEstimator(estimator=estimator)
 
     @staticmethod
     def from_keras(*,
                    model_creator):
+        """
+        Create an AutoEstimator for tensorflow keras.
+
+        :param model_creator: Tensorflow keras model creator function.
+        :return: an AutoEstimator object.
+        """
         from zoo.automl.model import ModelBuilder
         estimator = ModelBuilder.from_tfkeras(model_creator=model_creator)
         return AutoEstimator(estimator=estimator)
