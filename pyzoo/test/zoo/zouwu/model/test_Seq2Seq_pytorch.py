@@ -18,6 +18,7 @@ from zoo.zouwu.model.Seq2Seq_pytorch import Seq2SeqPytorch
 import numpy as np
 import tempfile
 import os
+import random
 
 
 def create_data():
@@ -25,9 +26,9 @@ def create_data():
     num_val_samples = 400
     num_test_samples = 400
     input_time_steps = 24
-    input_feature_dim = 3
+    input_feature_dim = random.randint(4, 5)
     output_time_steps = 5
-    output_feature_dim = 2
+    output_feature_dim = random.randint(1, 3)
 
     def get_x_y(num_samples):
         x = np.random.rand(num_samples, input_time_steps, input_feature_dim)

@@ -49,7 +49,8 @@ class LSTMSeq2Seq(nn.Module):
 
     def forward(self, input_seq, target_seq=None):
         x, (hidden, cell) = self.lstm_encoder(input_seq)
-        decoder_input = input_seq[:, -1, :self.output_feature_num]  # last value
+        # input feature order should have target dimensions in the first
+        decoder_input = input_seq[:, -1, :self.output_feature_num]
         decoder_input = decoder_input.unsqueeze(1)
         decoder_output = torch.zeros(input_seq.shape[0],
                                      self.future_seq_len,
@@ -99,7 +100,17 @@ class Seq2SeqPytorch(PytorchBaseModel):
                          loss_creator=loss_creator,
                          check_optional_config=check_optional_config)
 
+    def _input_check(self, x, y):
+        if len(x.shape) < 3:
+            raise RuntimeError(f"Invalid data x with {len(x.shape)} dim where 3 dim is required.")
+        if len(y.shape) < 3:
+            raise RuntimeError(f"Invalid data y with {len(y.shape)} dim where 3 dim is required.")
+        if y.shape[-1] > x.shape[-1]:
+            raise RuntimeError(f"output dim should not larger than input dim,\
+                                while we get {y.shape[-1]} > {x.shape[-1]}.")
+
     def _forward(self, x, y):
+        self._input_check(x, y)
         return self.model(x, y)
 
     def _get_required_parameters(self):
