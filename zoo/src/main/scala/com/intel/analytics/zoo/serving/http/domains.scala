@@ -480,7 +480,7 @@ object Instances {
                   data.append(dataIntVector.getObject(i).toFloat)
                 }
                 data
-              case MinorType.FLOAT4=>
+              case MinorType.FLOAT4 =>
                 val data = new ArrayBuffer[Float]()
                 val dataFloatVector = dataDataVector.asInstanceOf[Float4Vector]
                 for(i <- 0 until dataFloatVector.getValueCount) {
