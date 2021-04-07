@@ -80,7 +80,7 @@ object OpenVINOBaseline extends Supportive {
     val helper = new ClusterServingHelper()
     helper.loadConfig()
     val warmT = makeTensorFromShape(param.inputShape)
-    val clusterServingInference = new ClusterServingInference(null, helper)
+    val clusterServingInference = new ClusterServingInference(null, helper.modelType)
     clusterServingInference.typeCheck(warmT)
     clusterServingInference.dimCheck(warmT, "add", helper.modelType)
 

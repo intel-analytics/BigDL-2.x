@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory
 class ClusterServingFunction()
   extends ScalarFunction {
   val clusterServingParams = new ClusterServingParams()
-  val clusterServingHelper = new ClusterServingHelper()
   var inference: ClusterServingInference = null
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -55,11 +54,10 @@ class ClusterServingFunction()
             .loadModelfromDir(modelLocalPath, clusterServingParams._modelConcurrent)
           ClusterServing.model = info._1
           clusterServingParams._modelType = info._2
-          clusterServingHelper.modelType = clusterServingParams._modelType
         }
       }
     }
-    inference = new ClusterServingInference(null, clusterServingHelper)
+    inference = new ClusterServingInference(null, clusterServingParams._modelType)
 
   }
 
