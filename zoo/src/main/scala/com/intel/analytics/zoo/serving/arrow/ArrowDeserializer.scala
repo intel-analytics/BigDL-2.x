@@ -72,11 +72,11 @@ class ArrowDeserializer {
     reader.close()
     result
   }
-  def getString(arr: Array[(Array[Float], Array[Int])]): String = {
+  def getJsonString(arr: Array[(Array[Float], Array[Int])]): String = {
     val strArr = arr.map(dataAndShape => {
       val dataStr = dataAndShape._1.mkString("[", ",", "]")
       val shapeStr = dataAndShape._2.mkString("[", ",", "]")
-      "data=" + dataStr + ",shape=" + shapeStr + ";"
+      s"""{"data":$dataStr,"shape":$shapeStr}"""
     })
     var str = ""
     strArr.foreach(s => str += s)
@@ -92,7 +92,7 @@ object ArrowDeserializer {
   def apply(b64string: String): String = {
     val deserializer = new ArrowDeserializer()
     val arr = deserializer.create(b64string)
-    deserializer.getString(arr)
+    deserializer.getJsonString(arr)
   }
   def getArray(b64string: String): Array[(Array[Float], Array[Int])] = {
     val deserializer = new ArrowDeserializer()
