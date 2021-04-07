@@ -8,14 +8,20 @@ Based on Intel SGX (Software Guard Extensions) and LibOS projects, this framewor
 
 Note: Intel SGX requires hardware support, please [check if your CPU has this feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html).
 
+Key features:
+
 - Protecting Data and model confidentiality
-- Trusted Big Data AI Platform
+- Trusted Big Data AI Platform based on Intel SGX
     - Overview
     - Architecture/Technology 
 
 ## Trusted Big Data Analytics and ML
 
 - Scenario
+
+
+
+
 - Get started 
  
 ```bash
