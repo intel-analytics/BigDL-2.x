@@ -222,10 +222,7 @@ class OutputQueue(API):
             res_dict = self.db.hgetall(res.decode('utf-8'))
             res_id = res.decode('utf-8').split(":")[1]
             res_value = res_dict[b'value'].decode('utf-8')
-            if res_value == "NaN":
-                decoded[res_id] = "NaN"
-            else:
-                decoded[res_id] = self.get_ndarray_from_b64(res_value)
+            decoded[res_id] = self.get_ndarray_from_b64(res_value)
             self.db.delete(res)
         return decoded
 

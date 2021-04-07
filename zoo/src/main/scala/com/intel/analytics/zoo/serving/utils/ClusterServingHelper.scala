@@ -59,11 +59,10 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
   var redisTimeout: Int = 5000
   var thrdPerModel: Int = 1
   var modelPar: Int = 1
-  var inputAlreadyBatched: Boolean = false
   var blasFlag: Boolean = false
   var chwFlag: Boolean = true
 
-  var filter: String = ""
+  var filter: String = null
   var resize: Boolean = false
 
   /**
@@ -140,7 +139,6 @@ class ClusterServingHelper(_configPath: String = "config.yaml", _modelDir: Strin
 
     filter = getYaml(dataConfig, "filter", "").asInstanceOf[String]
     resize = getYaml(dataConfig, "resize", true).asInstanceOf[Boolean]
-    inputAlreadyBatched = getYaml(dataConfig, "batched", false).asInstanceOf[Boolean]
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
     thrdPerModel = getYaml(paramsConfig, "core_number", 4).asInstanceOf[Int]
