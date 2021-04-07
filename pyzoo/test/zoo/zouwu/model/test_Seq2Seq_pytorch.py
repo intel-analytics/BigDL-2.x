@@ -25,9 +25,9 @@ def create_data():
     num_train_samples = 1000
     num_val_samples = 400
     num_test_samples = 400
-    input_time_steps = 24
+    input_time_steps = random.randint(20, 30)
     input_feature_dim = random.randint(4, 5)
-    output_time_steps = 5
+    output_time_steps = random.randint(10, 30)
     output_feature_dim = random.randint(1, 3)
 
     def get_x_y(num_samples):
