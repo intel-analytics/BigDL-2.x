@@ -29,6 +29,7 @@ class ClusterServingInferenceOperator(var params: ClusterServingParams = new Clu
   extends RichMapFunction[List[(String, Activity)], List[(String, String)]] {
   var logger: Logger = null
   var inference: ClusterServingInference = null
+  val clusterServingHelper = new ClusterServingHelper()
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
@@ -45,10 +46,11 @@ class ClusterServingInferenceOperator(var params: ClusterServingParams = new Clu
             .loadModelfromDir(localModelDir, params._modelConcurrent)
           ClusterServing.model = info._1
           params._modelType = info._2
+          clusterServingHelper.modelType = info._2
         }
       }
     }
-    inference = new ClusterServingInference(null, params._modelType)
+    inference = new ClusterServingInference(null, clusterServingHelper)
   }
 
   /**
