@@ -15,8 +15,8 @@
 #
 
 class AutoEstimator:
-    def __init__(self, estimator, searcher):
-        self.estimator = estimator
+    def __init__(self, model_builder, searcher):
+        self.model_builder = model_builder
         self.searcher = searcher
 
     @staticmethod
@@ -46,14 +46,14 @@ class AutoEstimator:
         from zoo.automl.search import SearchEngineFactory
         loss = validate_pytorch_loss(loss)
         optimizer = validate_pytorch_optim(optimizer)
-        estimator = ModelBuilder.from_pytorch(model_creator=model_creator,
-                                              optimizer_creator=optimizer,
-                                              loss_creator=loss)
+        model_builder = ModelBuilder.from_pytorch(model_creator=model_creator,
+                                                  optimizer_creator=optimizer,
+                                                  loss_creator=loss)
         searcher = SearchEngineFactory.create_engine(backend="ray",
                                                      logs_dir=logs_dir,
                                                      resources_per_trial=resources_per_trial,
                                                      name=name)
-        return AutoEstimator(estimator=estimator, searcher=searcher)
+        return AutoEstimator(model_builder=model_builder, searcher=searcher)
 
     @staticmethod
     def from_keras(*,
@@ -73,12 +73,12 @@ class AutoEstimator:
         """
         from zoo.automl.model import ModelBuilder
         from zoo.automl.search import SearchEngineFactory
-        estimator = ModelBuilder.from_tfkeras(model_creator=model_creator)
+        model_builder = ModelBuilder.from_tfkeras(model_creator=model_creator)
         searcher = SearchEngineFactory.create_engine(backend="ray",
                                                      logs_dir=logs_dir,
                                                      resources_per_trial=resources_per_trial,
                                                      name=name)
-        return AutoEstimator(estimator=estimator, searcher=searcher)
+        return AutoEstimator(model_builder=model_builder, searcher=searcher)
 
     def fit(self,
             data,
@@ -91,7 +91,7 @@ class AutoEstimator:
             ):
 
         self.searcher.compile(data=data,
-                              model_create_func=self.estimator,
+                              model_create_func=self.model_builder,
                               recipe=recipe,
                               metric=metric,
                               search_alg=search_alg,
