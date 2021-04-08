@@ -35,6 +35,24 @@ class Seq2SeqForecaster(Forecaster):
                  loss="mse",
                  optimizer="Adam",
                  ):
+        """
+        Build a LSTM Sequence to Sequence Forecast Model.
+
+        :param future_seq_len: Specify the output time steps (i.e. horizon).
+        :param input_feature_num: Specify the feature dimension.
+        :param output_feature_num: Specify the output dimension.
+        :param lstm_hidden_dim: LSTM hidden channel for decoder and encoder.
+        :param lstm_layer_num: LSTM layer number for decoder and encoder.
+        :param teacher_forcing: If use teacher forcing in training.
+        :param dropout: Specify the dropout close possibility (i.e. the close
+               possibility to a neuron). This value defaults to 0.25.
+        :param optimizer: Specify the optimizer used for training. This value
+               defaults to "Adam".
+        :param loss: Specify the loss function used for training. This value
+               defaults to "mse". You can choose from "mse", "mae" and
+               "huber_loss".
+        :param lr: Specify the learning rate. This value defaults to 0.001.
+        """
         self.check_optional_config = False
         self.model_config = {
             "input_feature_num": input_feature_num,
@@ -65,6 +83,18 @@ class Seq2SeqForecaster(Forecaster):
             .format(self.model_config["output_feature_num"], y.shape[-1])
 
     def fit(self, x, y, validation_data=None, epochs=1, metric="mse", batch_size=32):
+        """
+        Fit(Train) the forecaster.
+
+        :param x: A numpy array with shape (num_samples, lookback, feature_dim).
+               lookback and feature_dim should be the same as past_seq_len and input_feature_num.
+        :param y: A numpy array with shape (num_samples, horizon, target_dim).
+               horizon and target_dim should be the same as future_seq_len and output_feature_num.
+        :param validation_data: A tuple (x_valid, y_valid) as validation data. Default to None.
+        :param epochs: Number of epochs you want to train.
+        :param metric: The metric for training data.
+        :param batch_size: Number of batch size you want to train.
+        """
         if validation_data is None:
             validation_data = (x, y)
         self.model_config["batch_size"] = batch_size

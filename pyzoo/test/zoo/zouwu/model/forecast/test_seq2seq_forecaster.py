@@ -54,7 +54,8 @@ class TestZouwuModelSeq2SeqForecaster(TestCase):
         train_data, val_data, test_data = create_data()
         forecaster = Seq2SeqForecaster(future_seq_len=5,
                                        input_feature_num=3,
-                                       output_feature_num=2)
+                                       output_feature_num=2,
+                                       lstm_layer_num=1)
         train_mse = forecaster.fit(train_data[0], train_data[1], epochs=10)
         test_pred = forecaster.predict(test_data[0])
         assert test_pred.shape == test_data[1].shape
@@ -76,11 +77,10 @@ class TestZouwuModelSeq2SeqForecaster(TestCase):
 
     def test_tcn_forecaster_onnx_methods(self):
         train_data, val_data, test_data = create_data()
-        forecaster = Seq2SeqForecaster(past_seq_len=24,
-                                   future_seq_len=5,
-                                   input_feature_num=3,
-                                   output_feature_num=2,
-                                   teacher_forcing=True)
+        forecaster = Seq2SeqForecaster(future_seq_len=5,
+                                       input_feature_num=3,
+                                       output_feature_num=2,
+                                       teacher_forcing=True)
         forecaster.fit(train_data[0], train_data[1], epochs=2)
         try:
             import onnx
