@@ -105,7 +105,7 @@ class Seq2SeqForecaster(Forecaster):
                                       epochs=epochs,
                                       metric=metric,
                                       **self.model_config)
-    
+
     def predict(self, x):
         """
         Predict using a trained forecaster.
@@ -139,7 +139,7 @@ class Seq2SeqForecaster(Forecaster):
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
         return self.internal.evaluate(x, y, metrics=metrics)
-    
+
     def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None):
         """
         Evaluate using a trained forecaster with onnxruntime.

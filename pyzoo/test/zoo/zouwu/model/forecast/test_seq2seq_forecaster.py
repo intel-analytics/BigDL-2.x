@@ -23,6 +23,7 @@ import tensorflow as tf
 from zoo.zouwu.model.forecast.seq2seq_forecaster import Seq2SeqForecaster
 from unittest import TestCase
 
+
 def create_data():
     num_train_samples = 1000
     num_val_samples = 400
@@ -42,6 +43,7 @@ def create_data():
     test_data = get_x_y(num_test_samples)
     return train_data, val_data, test_data
 
+
 class TestZouwuModelSeq2SeqForecaster(TestCase):
 
     def setUp(self):
@@ -60,7 +62,7 @@ class TestZouwuModelSeq2SeqForecaster(TestCase):
         test_pred = forecaster.predict(test_data[0])
         assert test_pred.shape == test_data[1].shape
         test_mse = forecaster.evaluate(test_data[0], test_data[1])
-    
+
     def test_s2s_forecaster_save_restore(self):
         train_data, val_data, test_data = create_data()
         forecaster = Seq2SeqForecaster(future_seq_len=5,
