@@ -42,31 +42,34 @@ class PreProcessing(chwFlag: Boolean = true,
   val logger = Logger.getLogger(getClass)
 
   var byteBuffer: Array[Byte] = null
+  def getInputFromInstance(instance: Instances): Seq[Activity] = {
+    instance.instances.flatMap(insMap => {
+      val oneInsMap = insMap.map(kv =>
+        if (kv._2.isInstanceOf[String]) {
+          if (kv._2.asInstanceOf[String].contains("|")) {
+            (kv._1, decodeString(kv._2.asInstanceOf[String]))
+          }
+          else {
+            (kv._1, decodeImage(kv._2.asInstanceOf[String]))
+
+          }
+        }
+        else {
+          (kv._1, decodeTensor(kv._2.asInstanceOf[(
+            ArrayBuffer[Int], ArrayBuffer[Float], ArrayBuffer[Int], ArrayBuffer[Int])]))
+        }
+      ).toList
+      val arr = oneInsMap.map(x => x._2)
+      Seq(T.array(arr.toArray))
+    })
+  }
+
   def decodeArrowBase64(key: String, s: String): Activity = {
     try {
       byteBuffer = java.util.Base64.getDecoder.decode(s)
       val instance = Instances.fromArrow(byteBuffer)
 
-      val kvMap = instance.instances.flatMap(insMap => {
-        val oneInsMap = insMap.map(kv =>
-          if (kv._2.isInstanceOf[String]) {
-            if (kv._2.asInstanceOf[String].contains("|")) {
-              (kv._1, decodeString(kv._2.asInstanceOf[String]))
-            }
-            else {
-              (kv._1, decodeImage(kv._2.asInstanceOf[String]))
-
-            }
-          }
-          else {
-            (kv._1, decodeTensor(kv._2.asInstanceOf[(
-              ArrayBuffer[Int], ArrayBuffer[Float], ArrayBuffer[Int], ArrayBuffer[Int])]))
-          }
-        ).toList
-        //      Seq(T(oneInsMap.head, oneInsMap.tail: _*))
-        val arr = oneInsMap.map(x => x._2)
-        Seq(T.array(arr.toArray))
-      })
+      val kvMap = getInputFromInstance(instance)
       kvMap.head
     } catch {
       case e: Exception =>
