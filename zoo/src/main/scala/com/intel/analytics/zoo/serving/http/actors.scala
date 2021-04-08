@@ -89,7 +89,7 @@ class RedisPutActor(
         val predictionInputs = message.inputs
         predictionInputs.foreach(x => {
           put(redisInputQueue, x)
-          println("Input enqueue", System.currentTimeMillis(), x)
+          logger.debug(s"Input enqueue $x at time ${System.currentTimeMillis()}")
         })
 
 //        predictionInputs.foreach(cache.add(_))
