@@ -36,7 +36,9 @@ RUN cd /opt && \
     wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     tar -zxvf spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     mv spark-${SPARK_VERSION}-bin-hadoop2.7 spark-${SPARK_VERSION} && \
-    rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz
+    rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
+    wget -O spark-network-common_2.11-${SPARK_VERSION}.jar https://master.dl.sourceforge.net/project/analytics-zoo/analytics-zoo-data/spark-network-common_2.11-${SPARK_VERSION}.jar && \
+    mv spark-network-common_2.11-${SPARK_VERSION}.jar spark-${SPARK_VERSION}/jars
 
 # stage.3 bigdl
 FROM ubuntu:18.04 AS bigdl
@@ -110,7 +112,7 @@ RUN mkdir -p /graphene && \
     mkdir -p /graphene/Pal/src && \
     mkdir -p /ppml/trusted-big-data-ml/work && \
     mkdir -p /ppml/trusted-big-data-ml/work/keys && \
-    mkdir -p /ppml/trusted-big-data-ml/work/passowrd && \
+    mkdir -p /ppml/trusted-big-data-ml/work/password && \
     mkdir -p /ppml/trusted-big-data-ml/work/data && \
     mkdir -p /ppml/trusted-big-data-ml/work/models && \
     mkdir -p /ppml/trusted-big-data-ml/work/apps

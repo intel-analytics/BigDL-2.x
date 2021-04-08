@@ -72,7 +72,7 @@ sed "s/epochs=5/epochs=1/g;s/batch_size=4/batch_size=256/g" \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/fashion_mnist.py \
     > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/fashion_mnist_tmp.py
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/fashion_mnist_tmp.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/fashion_mnist_tmp.py --backend torch_distributed
 now=$(date "+%s")
 time6=$((now-start))
 
@@ -88,10 +88,26 @@ if [ ! -d dataset/BSDS300/images ]; then
   tar -xzf BSDS300-images.tgz -C dataset
 fi
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py --backend torch_distributed
 
 now=$(date "+%s")
 time7=$((now-start))
+
+
+echo "#8 start example for orca cifar10"
+start=$(date "+%s")
+
+if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/data ]; then
+  echo "Cifar10 already exists"
+else
+  wget -nv $FTP_URI/analytics-zoo-data/cifar10.zip -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10
+  unzip ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/cifar10.zip
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/cifar10.py --backend torch_distributed
+
+now=$(date "+%s")
+time8=$((now-start))
 
 
 echo "Ray example tests finished"
@@ -102,3 +118,4 @@ echo "#4 orca multiagent_two_trainers time used:$time4 seconds"
 echo "#5 mxnet_lenet time used:$time5 seconds"
 echo "#6 fashion-mnist time used:$time6 seconds"
 echo "#7 orca super-resolution example time used:$time7 seconds"
+echo "#8 orca cifar10 example time used:$time8 seconds"

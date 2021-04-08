@@ -15,7 +15,7 @@
 #
 
 from zoo.zouwu.model.forecast.abstract import Forecaster
-from zoo.zouwu.model.forecast.model.tcn import TCNPytorch
+from zoo.zouwu.model.tcn import TCNPytorch
 
 
 class TCNForecaster(Forecaster):
@@ -67,7 +67,7 @@ class TCNForecaster(Forecaster):
             "dropout": dropout
         }
 
-    def fit(self, x, y, epochs=1, metric="mse", batch_size=32):
+    def fit(self, x, y, validation_data=None, epochs=1, metric="mse", batch_size=32):
         """
         Fit(Train) the forecaster.
 
@@ -75,15 +75,18 @@ class TCNForecaster(Forecaster):
                lookback and feature_dim should be the same as past_seq_len and input_feature_num.
         :param y: A numpy array with shape (num_samples, horizon, target_dim).
                horizon and target_dim should be the same as future_seq_len and output_feature_num.
+        :param validation_data: A tuple (x_valid, y_valid) as validation data. Default to None.
         :param epochs: Number of epochs you want to train.
         :param metric: The metric for training data.
         :param batch_size: Number of batch size you want to train.
         """
+        if validation_data is None:
+            validation_data = (x, y)
         self.config["batch_size"] = batch_size
         self._check_data(x, y)
         return self.internal.fit_eval(x,
                                       y,
-                                      validation_data=(x, y),
+                                      validation_data=validation_data,
                                       epochs=epochs,
                                       metric=metric,
                                       **self.config)

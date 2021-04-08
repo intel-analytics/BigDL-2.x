@@ -90,7 +90,7 @@ object InferenceModelBaseline extends Supportive {
 
     val model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
-    val clusterServingInference = new ClusterServingInference(null, "openvino")
+    val clusterServingInference = new ClusterServingInference(null, helper)
     clusterServingInference.typeCheck(warmT)
     clusterServingInference.dimCheck(warmT, "add", helper.modelType)
     (0 until 10).foreach(_ => {

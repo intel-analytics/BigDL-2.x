@@ -32,6 +32,7 @@ import com.codahale.metrics.MetricRegistry
 import com.google.common.util.concurrent.RateLimiter
 import com.intel.analytics.zoo.pipeline.inference.EncryptSupportive
 import com.intel.analytics.zoo.serving.utils.Conventions
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
@@ -118,7 +119,11 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           timing("querier back")() {
             querierQueue.offer(querier)
           }
-          results.map(r => PredictionOutput(r._1, r._2.toString))
+          val objectMapper = new ObjectMapper()
+          results.map(r => {
+            val resultStr = objectMapper.writeValueAsString(r._2)
+            PredictionOutput(r._1, resultStr)
+          })
         }
         result
       }

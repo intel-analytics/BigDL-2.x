@@ -16,8 +16,9 @@
 
 package com.intel.analytics.zoo.serving
 
+import com.intel.analytics.zoo.serving.http.{Instances, JsonUtil}
 import org.scalatest.{FlatSpec, Matchers}
-
+import com.intel.analytics.zoo.serving.PreProcessing
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
@@ -57,5 +58,26 @@ class PreProcessingSpec extends FlatSpec with Matchers {
     assert(tensor.valueAt(1) == "abc")
     assert(tensor.valueAt(2) == "dff")
     assert(tensor.valueAt(3) == "aoa")
+  }
+  "parse json to tensor" should "work" in {
+    val instancesJson =
+      """{
+        |"instances": [
+        |   {
+        |     "tag": "foo",
+        |     "signal": [1, 2, 3, 4, 5],
+        |     "sensor": [[1, 2], [3, 4]]
+        |   }
+        |]
+        |}
+        |""".stripMargin
+
+    val instances = JsonUtil.fromJson(classOf[Instances], instancesJson)
+    val arrowBytes = instances.toArrow()
+    val arrowInstance = Instances.fromArrow(arrowBytes)
+    val pre = new PreProcessing()
+    val t = pre.getInputFromInstance(arrowInstance)
+    assert(t.head.toTable.keySet.size == 3)
+
   }
 }

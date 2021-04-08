@@ -21,13 +21,13 @@ execute_ray_test(){
     return $((now-start))
 }
 
-execute_ray_test rl_pong ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/rl_pong/rl_pong.py  --iterations 10
+execute_ray_test rl_pong "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/rl_pong/rl_pong.py  --iterations 10"
 time1=$?
 
-execute_ray_test sync_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/parameter_server/sync_parameter_server.py  --iterations 10
-time2=$?
+#execute_ray_test sync_parameter_server "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/parameter_server/sync_parameter_server.py  --iterations 10"
+#time2=$?
 
-execute_ray_test async_parameter_server ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/parameter_server/async_parameter_server.py  --iterations 10
+execute_ray_test async_parameter_server "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/parameter_server/async_parameter_server.py  --iterations 10"
 time3=$?
 
 execute_ray_test multiagent_two_trainers ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/rllib/multiagent_two_trainers.py
@@ -43,7 +43,7 @@ else
 fi
 unzip -q ${ANALYTICS_ZOO_ROOT}/data/mnist.zip -d ${ANALYTICS_ZOO_ROOT}/data
 
-execute_ray_test lenet_mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/mxnet/lenet_mnist.py -e 1 -b 256
+execute_ray_test lenet_mnist "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/mxnet/lenet_mnist.py -e 1 -b 256"
 time5=$?
 
 if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/data ]
@@ -58,7 +58,7 @@ sed "s/epochs=5/epochs=1/g;s/batch_size=4/batch_size=256/g" \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/fashion_mnist.py \
     > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/fashion_mnist_tmp.py
 
-execute_ray_test fashion_mnist ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/fashion_mnist_tmp.py
+execute_ray_test fashion_mnist "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/fashion_mnist/fashion_mnist_tmp.py --backend torch_distributed"
 time6=$?
 
 if [ ! -f BSDS300-images.tgz ]; then
@@ -69,7 +69,7 @@ if [ ! -d dataset/BSDS300/images ]; then
   tar -xzf BSDS300-images.tgz -C dataset
 fi
 
-execute_ray_test super_resolution_BSDS3000 ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py
+execute_ray_test super_resolution_BSDS3000 "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py --backend torch_distributed"
 time7=$?
 
 if [ -f ${ANALYTICS_ZOO_ROOT}/data/airline_14col.data ]
@@ -79,8 +79,18 @@ else
     wget -nv $FTP_URI/analytics-zoo-data/airline_14col.data -P ${ANALYTICS_ZOO_ROOT}/data/
 fi
 
-execute_ray_test auto-xgboost-classifier ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/AutoXGBoostClassifier.py
+execute_ray_test auto-xgboost-classifier ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostClassifier.py
 time8=$?
+
+if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/data ]; then
+  echo "Cifar10 already exists"
+else
+  wget -nv $FTP_URI/analytics-zoo-data/cifar10.zip -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10
+  unzip ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/cifar10.zip
+fi
+
+execute_ray_test cifar10 "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/cifar10.py --backend torch_distributed"
+time9=$?
 
 echo "#1 rl_pong time used:$time1 seconds"
 echo "#2 sync_parameter_server time used:$time2 seconds"
@@ -90,5 +100,6 @@ echo "#5 mxnet_lenet time used:$time5 seconds"
 echo "#6 fashion-mnist time used:$time6 seconds"
 echo "#7 super-resolution time used:$time7 seconds"
 echo "#8 auto-xgboost-classifier time used:$time8 seconds"
+echo "#9 cifar10 time used:$time9 seconds"
 
 clear_up
