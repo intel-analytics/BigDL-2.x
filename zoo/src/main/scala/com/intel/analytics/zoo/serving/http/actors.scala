@@ -196,7 +196,7 @@ class QueryActor(redisGetActor: ActorRef) extends JedisEnabledActor {
   override val logger = LoggerFactory.getLogger(classOf[RedisPutActor])
   val system = context.system
   implicit val executionContext = system.dispatcher
-  implicit val timeout: Timeout = Timeout(100, TimeUnit.SECONDS)
+  implicit val timeout: Timeout = Timeout(30, TimeUnit.SECONDS)
 
   override def receive: Receive = {
     case query: PredictionQueryMessage =>
