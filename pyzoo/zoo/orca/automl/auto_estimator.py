@@ -15,14 +15,18 @@
 #
 
 class AutoEstimator:
-    def __init__(self, estimator):
+    def __init__(self, estimator, searcher):
         self.estimator = estimator
+        self.searcher = searcher
 
     @staticmethod
     def from_torch(*,
                    model_creator,
                    optimizer,
                    loss,
+                   logs_dir,
+                   resources_per_trial,
+                   name,
                    ):
         """
         Create an AutoEstimator for torch.
@@ -31,58 +35,70 @@ class AutoEstimator:
         :param optimizer: PyTorch optimizer creator function or pytorch optimizer name (string).
         :param loss: PyTorch loss instance or PyTorch loss creator function
             or pytorch loss name (string).
+        :param logs_dir: Local directory to save logs and results.
+        :param resources_per_trial: Dict. resources for each trial. e.g. {"cpu": 2}.
+        :param name: Name of the auto estimator.
         :return: an AutoEstimator object.
         """
         from zoo.orca.automl.pytorch_model_utils import validate_pytorch_loss, \
             validate_pytorch_optim
         from zoo.automl.model import ModelBuilder
+        from zoo.automl.search import SearchEngineFactory
         loss = validate_pytorch_loss(loss)
         optimizer = validate_pytorch_optim(optimizer)
         estimator = ModelBuilder.from_pytorch(model_creator=model_creator,
                                               optimizer_creator=optimizer,
                                               loss_creator=loss)
-        return AutoEstimator(estimator=estimator)
+        searcher = SearchEngineFactory.create_engine(backend="ray",
+                                                     logs_dir=logs_dir,
+                                                     resources_per_trial=resources_per_trial,
+                                                     name=name)
+        return AutoEstimator(estimator=estimator, searcher=searcher)
 
     @staticmethod
     def from_keras(*,
-                   model_creator):
+                   model_creator,
+                   logs_dir,
+                   resources_per_trial,
+                   name,
+                   ):
         """
         Create an AutoEstimator for tensorflow keras.
 
         :param model_creator: Tensorflow keras model creator function.
+        :param logs_dir: Local directory to save logs and results.
+        :param resources_per_trial: Dict. resources for each trial. e.g. {"cpu": 2}.
+        :param name: Name of the auto estimator.
         :return: an AutoEstimator object.
         """
         from zoo.automl.model import ModelBuilder
+        from zoo.automl.search import SearchEngineFactory
         estimator = ModelBuilder.from_tfkeras(model_creator=model_creator)
-        return AutoEstimator(estimator=estimator)
+        searcher = SearchEngineFactory.create_engine(backend="ray",
+                                                     logs_dir=logs_dir,
+                                                     resources_per_trial=resources_per_trial,
+                                                     name=name)
+        return AutoEstimator(estimator=estimator, searcher=searcher)
 
     def fit(self,
             data,
             recipe=None,
             metric=None,
-            resources_per_trial=None,
-            name=None,
-            logs_dir=None,
             search_alg=None,
             search_alg_params=None,
             scheduler=None,
             scheduler_params=None,
             ):
-        from zoo.automl.search import SearchEngineFactory
-        # logs_dir and name should be put in constructor
-        searcher = SearchEngineFactory.create_engine(backend="ray",
-                                                     logs_dir=logs_dir,
-                                                     resources_per_trial=resources_per_trial,
-                                                     name=name)
-        searcher.compile(data=data,
-                         model_create_func=self.estimator,
-                         recipe=recipe,
-                         metric=metric,
-                         search_alg=search_alg,
-                         search_alg_params=search_alg_params,
-                         scheduler=scheduler,
-                         scheduler_params=scheduler_params)
-        analysis = searcher.run()
+
+        self.searcher.compile(data=data,
+                              model_create_func=self.estimator,
+                              recipe=recipe,
+                              metric=metric,
+                              search_alg=search_alg,
+                              search_alg_params=search_alg_params,
+                              scheduler=scheduler,
+                              scheduler_params=scheduler_params)
+        analysis = self.searcher.run()
         return analysis
 
 
