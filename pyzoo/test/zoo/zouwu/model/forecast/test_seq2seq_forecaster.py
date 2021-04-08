@@ -55,7 +55,7 @@ class TestZouwuModelSeq2SeqForecaster(TestCase):
         forecaster = Seq2SeqForecaster(future_seq_len=5,
                                        input_feature_num=3,
                                        output_feature_num=2,
-                                       lstm_layer_num=1)
+                                       lstm_layer_num=2)
         train_mse = forecaster.fit(train_data[0], train_data[1], epochs=10)
         test_pred = forecaster.predict(test_data[0])
         assert test_pred.shape == test_data[1].shape
