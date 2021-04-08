@@ -76,8 +76,7 @@ object MockSingleThreadInferenceMultiplePipeline extends Supportive {
       val clusterServingInference = new ClusterServingInference(new PreProcessing(
         helper.chwFlag, helper.redisHost, helper.redisPort,
         Conventions.SERVING_STREAM_DEFAULT_NAME, helper.recordEncrypted),
-        helper.modelType, helper.filter, helper.thrdPerModel, helper.resize,
-        helper.recordEncrypted)
+        helper)
       clusterServingInference.typeCheck(warmT)
       clusterServingInference.dimCheck(warmT, "add", helper.modelType)
       (0 until 10).foreach(_ => {
