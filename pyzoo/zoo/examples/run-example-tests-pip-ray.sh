@@ -24,8 +24,8 @@ execute_ray_test(){
 execute_ray_test rl_pong "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/rl_pong/rl_pong.py  --iterations 10"
 time1=$?
 
-execute_ray_test sync_parameter_server "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/parameter_server/sync_parameter_server.py  --iterations 10"
-time2=$?
+#execute_ray_test sync_parameter_server "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/parameter_server/sync_parameter_server.py  --iterations 10"
+#time2=$?
 
 execute_ray_test async_parameter_server "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/ray_on_spark/parameter_server/async_parameter_server.py  --iterations 10"
 time3=$?
