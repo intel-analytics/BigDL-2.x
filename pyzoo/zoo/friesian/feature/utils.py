@@ -37,5 +37,13 @@ def fill_na_int(df, fill_val, columns):
     return callZooFunc("float", "fillNaInt", df, fill_val, columns)
 
 
-def clip_min(df, columns, min):
-    return callZooFunc("float", "clipMin", df, columns, min)
+def clip(df, columns, min, max):
+    return callZooFunc("float", "clip", df, columns, min, max)
+
+
+def fill_median(df, columns):
+    return callZooFunc("float", "fillMedian", df, columns)
+
+
+def median(df, columns, relative_error=0.001):
+    return callZooFunc("float", "median", df, columns, relative_error)

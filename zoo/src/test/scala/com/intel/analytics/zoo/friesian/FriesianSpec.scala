@@ -93,7 +93,7 @@ class FriesianSpec extends ZooSpecHelper {
     val path = resource.getFile + "/data1.parquet"
     val df = sqlContext.read.parquet(path)
     val cols = Array("col_2", "col_3")
-    val dfClip = friesian.clipMin(df, cols.toList.asJava, 2)
+    val dfClip = friesian.clip(df, cols.toList.asJava, 1, 2)
     dfClip.show()
   }
 
