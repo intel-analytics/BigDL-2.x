@@ -44,7 +44,7 @@ class FlinkRedisSink(params: ClusterServingHelper)
     if (ClusterServing.jedisPool == null) {
       ClusterServing.synchronized {
         if (ClusterServing.jedisPool == null) {
-          ClusterServing.jedisPool = new JedisPool(new JedisPoolConfig(),
+          ClusterServing.jedisPool = new JedisPool(ClusterServing.jedisPoolConfig,
             params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
         }
       }

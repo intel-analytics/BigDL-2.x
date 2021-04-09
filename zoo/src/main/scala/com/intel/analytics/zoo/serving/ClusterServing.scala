@@ -24,7 +24,7 @@ import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.core.execution.JobClient
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
-import redis.clients.jedis.JedisPool
+import redis.clients.jedis.{JedisPool, JedisPoolConfig}
 import scopt.OptionParser
 
 
@@ -37,6 +37,8 @@ object ClusterServing {
   var streamingEnv: StreamExecutionEnvironment = _
   var model: InferenceModel = _
   var jedisPool: JedisPool = _
+  val jedisPoolConfig = new JedisPoolConfig()
+  jedisPoolConfig.setMaxTotal(256)
   val parser = new OptionParser[ServingParams]("Text Classification Example") {
     opt[String]('c', "configPath")
       .text("Config Path of Cluster Serving")
