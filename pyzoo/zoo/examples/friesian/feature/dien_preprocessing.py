@@ -2,7 +2,7 @@ import json
 import random
 import sys
 import os
-
+import time
 from pyspark import StorageLevel
 
 try:
@@ -53,8 +53,7 @@ if __name__ == "__main__":
     full_df = review_df.join(meta_df, on="item", how="left").fillna("default", ["item"])
 
     full_df.printSchema()
-    sys.exit()
-
+    print("full_df count after join", full_df.count())
     item_size = full_df.select("item").distinct().count()
 
     full_df.persist(StorageLevel.DISK_ONLY)
@@ -70,15 +69,27 @@ if __name__ == "__main__":
     get_label = udf(lambda x: [float(x), 1 - float(x)], ArrayType(FloatType()))
 
     full_tbl = full_tbl\
-        .encode_string(['user', 'item', 'category'], [indices[0], indices[1], indices[2]])\
+        .encode_string(['user', 'item', 'category'], [indices[0], indices[1], indices[2]]) \
         .gen_his_seq(user_col="user", cols=['item', 'category'], sort_col='time', min_len=1, max_len=100)\
         .transform_python_udf("item_history", "length", get_length)\
-        .add_negtive_samples(item_size, item_col='item', neg_num=1) \
-        .gen_neg_hist_seq(item_size, item2cat, neg_num=5)\
-        .mask_pad(
-            padding_cols=['item_history', 'category_history', 'noclk_item_list', 'noclk_cat_list'],
-            mask_cols=['item_history'],
-            seq_len=100)\
-        .transform_python_udf("label", "label", get_label)
-    full_tbl.write_parquet(options.output + "data")
+        .add_negtive_samples(item_size, item_col='item', neg_num=1)
+    begin = time.time()
+    full_tbl.df.cache()
+    for i in range(10):
+        full_tbl= full_tbl.gen_neg_hist_seq(item_size, item2cat, neg_num=5)
+        print(full_tbl.df.count())
+    end = time.time()
+    print(end-begin)
+
+    #     \
+    #     .mask_pad(
+    #         padding_cols=['item_history', 'category_history', 'noclk_item_list', 'noclk_cat_list'],
+    #         mask_cols=['item_history'],
+    #         seq_len=10)\
+    #     .transform_python_udf("label", "label", get_label)
+    # full_tbl.write_parquet(options.output + "data")
+    #
+    # full_tbl.df.show(10, False)
+
+    print("final output count:", full_tbl.df.count())
     sc.stop()

@@ -264,7 +264,7 @@ class FeatureTable(Table):
             df = df.withColumn(c, pad_udf(col(c)))
         return FeatureTable(df)
 
-    def mask(self, mask_cols=None, seq_len=100):
+    def mask(self, mask_cols, seq_len=100):
         def add_mask(seq):
             length = len(seq)
             if len(seq) < seq_len:
@@ -278,7 +278,7 @@ class FeatureTable(Table):
             df = df.withColumn(c + "_mask", mask_udf(col(c)))
         return FeatureTable(df)
 
-    def mask_pad(self, padding_cols, mask_cols=None, seq_len=100):
+    def mask_pad(self, padding_cols, mask_cols, seq_len=100):
         table = self.mask(mask_cols, seq_len)
         return table.pad(padding_cols, seq_len)
 
