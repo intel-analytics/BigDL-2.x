@@ -129,8 +129,8 @@ class FriesianSpec extends ZooSpecHelper {
       Row("alice", Seq(4, 5, 6, 7, 8)),
       Row("rose", Seq(1, 2))))
     val schema = StructType( Array(
-      StructField("name", StringType,true),
-      StructField("history", ArrayType(IntegerType),true)
+      StructField("name", StringType, true),
+      StructField("history", ArrayType(IntegerType), true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
     val dfmasked = friesian.mask(df, Array("history").toList.asJava, 4)
@@ -141,20 +141,21 @@ class FriesianSpec extends ZooSpecHelper {
 
   "postpad" should "work properly" in {
     val data = sc.parallelize(Seq(
-      Row("jack", Seq(1, 2, 3, 4, 5), Seq(Seq(1,2,3),Seq(1,2,3))),
-      Row("alice", Seq(4, 5, 6, 7, 8), Seq(Seq(1,2,3),Seq(1,2,3))),
-      Row("rose", Seq(1, 2), Seq(Seq(1,2,3),Seq(1,2,3)))))
+      Row("jack", Seq(1, 2, 3, 4, 5), Seq(Seq(1, 2, 3), Seq(1, 2, 3))),
+      Row("alice", Seq(4, 5, 6, 7, 8), Seq(Seq(1, 2, 3), Seq(1, 2, 3))),
+      Row("rose", Seq(1, 2), Seq(Seq(1, 2, 3), Seq(1, 2, 3)))))
     val schema = StructType( Array(
-      StructField("name", StringType,true),
-      StructField("history", ArrayType(IntegerType),true),
-      StructField("history_list", ArrayType(ArrayType(IntegerType)),true)
+      StructField("name", StringType, true),
+      StructField("history", ArrayType(IntegerType), true),
+      StructField("history_list", ArrayType(ArrayType(IntegerType)), true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
     val dft = friesian.postPad(df, Array("history", "history_list").toList.asJava, 4)
     dft.show(10, false)
     assert(dft.filter("size(history) = 4").count() == 3)
     assert(dft.filter("size(history_list) = 4").count() == 3)
-    assert(dft.filter(dft("name") === "rose").select("history").collect()(0)(0).toString() == "WrappedArray(1, 2, 0, 0)")
+    assert(dft.filter(dft("name") === "rose").select("history").collect()(0)(0).toString()
+      == "WrappedArray(1, 2, 0, 0)")
   }
 
 
@@ -172,18 +173,17 @@ class FriesianSpec extends ZooSpecHelper {
       Row("alice", 5, "2019-10-01 12:01:19.000"),
       Row("alice", 6, "2019-11-01 12:01:19.000")))
     val schema = StructType(Array(
-      StructField("name", StringType,true),
-      StructField("item", IntegerType,true),
-      StructField("time", StringType,true)
+      StructField("name", StringType, true),
+      StructField("item", IntegerType, true),
+      StructField("time", StringType, true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
            .withColumn("ts", col("time").cast("timestamp").cast("long"))
     df.show()
     val dft = friesian.genHisSeq(df, "name", Array("item").toList.asJava, "ts", 4)
     assert(dft.count() == 8)
-    assert(dft.filter(df("name")==="alice") == 2)
-    assert(dft.filter(df("name")==="jack") == 6)
-
+    assert(dft.filter(df("name") === "alice") == 2)
+    assert(dft.filter(df("name") === "jack") == 6)
   }
 
   "genNegSamples" should "work properly" in {
@@ -195,14 +195,14 @@ class FriesianSpec extends ZooSpecHelper {
       Row("alice", 5, "2019-10-01 12:01:19.000"),
       Row("alice", 6, "2019-11-01 12:01:19.000")))
     val schema = StructType(Array(
-      StructField("name", StringType,true),
-      StructField("item", IntegerType,true),
-      StructField("time", StringType,true)
+      StructField("name", StringType, true),
+      StructField("item", IntegerType, true),
+      StructField("time", StringType, true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
     val dft = friesian.genNegSamples(df, 10)
-    assert(dft.filter(df("label")===1).count() == 6)
-    assert(dft.filter(df("label")===0).count() == 6)
+    assert(dft.filter(df("label") === 1).count() == 6)
+    assert(dft.filter(df("label") === 0).count() == 6)
   }
 
   "genNegHisSeq" should "work properly" in {
@@ -215,20 +215,38 @@ class FriesianSpec extends ZooSpecHelper {
       ++ (0  to 2).map(i => Row(i + 3, 1)) ++  (0  to 2).map(i => Row(i + 6, 2)))
 
     val schema = StructType( Array(
-    StructField("name", StringType,true),
-    StructField("history", ArrayType(IntegerType),true)
+    StructField("name", StringType, true),
+    StructField("history", ArrayType(IntegerType), true)
     ))
     val schema2 = StructType(Array(
-    StructField("item", IntegerType,true),
-    StructField("category", IntegerType,true)
+    StructField("item", IntegerType, true),
+    StructField("category", IntegerType, true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
     val df2 = sqlContext.createDataFrame(items, schema2)
     val dft = friesian.genNegHisSeq(df, 9, df2, "history", 4)
     assert(dft.select("noclk_item_list").collect().length == 3)
     assert(dft.select("noclk_cat_list").collect().length == 3)
-    assert(dft.select("noclk_item_list").rdd.map(r => r.getAs[mutable.WrappedArray[mutable.WrappedArray[Int]]](0)).collect()(0).length == 5)
-    assert(dft.select("noclk_cat_list").rdd.map(r => r.getAs[mutable.WrappedArray[mutable.WrappedArray[Int]]](0)).collect()(0).length == 5)
+    assert(dft.select("noclk_item_list").rdd.map(r =>
+      r.getAs[mutable.WrappedArray[mutable.WrappedArray[Int]]](0)).collect()(0).length == 5)
+    assert(dft.select("noclk_cat_list").rdd.map(r =>
+      r.getAs[mutable.WrappedArray[mutable.WrappedArray[Int]]](0)).collect()(0).length == 5)
+  }
+
+  "addLength" should "work properly" in {
+    val r = scala.util.Random
+    val data: RDD[Row] = sc.parallelize(Seq(
+      Row("jack", Seq(1, 2, 3, 4, 5)),
+      Row("alice", Seq(4, 5, 6, 7, 8)),
+      Row("rose", Seq(1, 2))))
+    val schema = StructType(Array(
+      StructField("name", StringType, true),
+      StructField("history", ArrayType(IntegerType), true)
+    ))
+    val df = sqlContext.createDataFrame(data, schema)
+    val dft = friesian.addLength(df, "history")
+    assert(dft.filter("history_length = 2") == 1)
+    assert(dft.filter("history_length = 5") == 2)
   }
 
 }

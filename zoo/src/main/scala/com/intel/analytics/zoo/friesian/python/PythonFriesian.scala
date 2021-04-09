@@ -189,17 +189,15 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
                 colNamesin: JList[String],
                 sortCol: String,
                 maxLength: Int): DataFrame = {
-
     val colNames: Array[String] = colNamesin.asScala.toArray
-
     val schema = ArrayType(StructType(colNames.flatMap(c =>
       Seq(StructField(c, IntegerType), StructField(c + "_history", ArrayType(IntegerType))))))
 
     val genHisUDF = udf(f = (his_collect: Seq[Row]) => {
       val full_rows = his_collect.sortBy(x => x.getAs[Long](sortCol)).toArray
       val n = full_rows.length
-      val result: Seq[Row] = (0 to n - 1).map(i =>{
-        val lowerBound = if( i < maxLength ){
+      val result: Seq[Row] = (0 to n - 1).map(i => {
+        val lowerBound = if (i < maxLength){
           0
         } else {
           i - maxLength
@@ -215,19 +213,17 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       colNames.flatMap(c =>
         Seq(col("history." + c).as(c),
           col("history." + c + "_history").as(c + "_history")))
-    val collectColumns = colNames.map( c=> col(c)) ++ Seq(col(sortCol))
-    val filterCondition = colNames.map( c=> s"size(" + c + "_history) > 0").mkString(" and ")
+    val collectColumns = colNames.map(c => col(c)) ++ Seq(col(sortCol))
+    val filterCondition = colNames.map(c => s"size(" + c + "_history) > 0").mkString(" and ")
 
-    val historyDf = df.groupBy(userCol)
+    df.groupBy(userCol)
       .agg(collect_list(struct(collectColumns: _*)).as("his_collect"))
       .filter(size(col("his_collect")) >= 1)
       .withColumn("history", genHisUDF(col("his_collect")))
-      .withColumn("history",explode(col("history")))
+      .withColumn("history", explode(col("history")))
       .drop("his_collect")
-      .select(selectColumns:_*)
+      .select(selectColumns: _*)
       .filter(filterCondition)
-
-    historyDf
   }
 
   def mask(df: DataFrame, colNames: JList[String], maxLength: Int): DataFrame = {
@@ -251,9 +247,9 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
                    item2catdf: DataFrame,
                    item_history_col: String = "item_history",
                    negNum: Int = 5): DataFrame = {
-    val item2cat = item2catdf.rdd.map(r=> (r.getAs[Int](0), r.getAs[Int](1))).collectAsMap()
-
+    val item2cat = item2catdf.rdd.map(r => (r.getAs[Int](0), r.getAs[Int](1))).collectAsMap()
     val sqlContext = df.sqlContext
+
     val combinedRDD = df.rdd.map(row => {
       val item_history = row.getAs[WrappedArray[Int]](item_history_col)
       val r = new Random()
@@ -271,14 +267,13 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       }
       val result = Row.fromSeq(row.toSeq ++ Array[Any](negItemSeq, negCatSeq))
       result
-
     })
+
     val newSchema = StructType(df.schema.fields ++ Array(
       StructField("noclk_item_list", ArrayType(ArrayType(IntegerType))),
       StructField("noclk_cat_list", ArrayType(ArrayType(IntegerType)))))
 
-    val combinedDF = sqlContext.createDataFrame(combinedRDD, newSchema)
-    combinedDF
+   sqlContext.createDataFrame(combinedRDD, newSchema)
   }
 
 
@@ -306,10 +301,8 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     negativedf.createOrReplaceTempView("tmp")
 
-    val out = df.sqlContext
+    df.sqlContext
       .sql(s"select $columns , negative._1 as item, negative._2 as $labelCol from tmp")
-    out.show(10)
-    out
   }
 
   def postPad(df: DataFrame, colNames: JList[String], maxLength: Int = 100): DataFrame = {
@@ -326,7 +319,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     val padMaxtrixUdf = udf((history: WrappedArray[WrappedArray[Int]]) => {
       val n = history.length
-      val result:Seq[Seq[Int]] = if (maxLength > n) {
+      val result: Seq[Seq[Int]] = if (maxLength > n) {
         val hishead = history(0)
         val padArray: Seq[Seq[Int]] =
           (0 to maxLength - n - 1).map(_ => (0 to hishead.length - 1).map(_ => 0))
@@ -350,12 +343,13 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         s"post_pad_matrix($c) as $c"
       }
     }).mkString(",")
-    val leftCols = df.columns.filter(x=> !colNames.contains(x)).mkString(",")
+    val leftCols = df.columns.filter(x => !colNames.contains(x)).mkString(",")
 
     df.sqlContext.sql(s"select $leftCols, $selectStatement from tmp")
-
   }
 
-
+  def addLength(df: DataFrame, colName: String): DataFrame = {
+    df.withColumn(colName + "_length", size(col(colName)))
+  }
 
 }
