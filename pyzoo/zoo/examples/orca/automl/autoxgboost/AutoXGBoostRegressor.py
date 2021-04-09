@@ -126,41 +126,41 @@ if __name__ == '__main__':
         if "SIGOPT_KEY" not in os.environ:
             raise RunTimeError('''Environment Variable 'SIGOPT_KEY' not set''')
         space = [
-                  {
-                      "name": "n_estimators",
-                      "type": "int",
-                      "bounds": {
-                          "min": n_estimators_range[0],
-                          "max": n_estimators_range[1]
-                      },
-                  },
-                  {
-                      "name": "max_depth",
-                      "type": "int",
-                      "bounds": {
-                          "min": max_depth_range[0],
-                          "max": max_depth_range[1]
-                      },
-                  },
-                  {
-                      "name": "lr",
-                      "type": "double",
-                      "bounds": {
-                          "min": lr[0],
-                          "max": lr[1]
-                      },
-                  },
-                  {
-                      "name": "min_child_weight",
-                      "type": "int",
-                      "bounds": {
-                          "min": min_child_weight[0],
-                          "max": min_child_weight[-1]
-                      },
-                  },
+            {
+                "name": "n_estimators",
+                "type": "int",
+                "bounds": {
+                    "min": n_estimators_range[0],
+                    "max": n_estimators_range[1]
+                },
+            },
+            {
+                "name": "max_depth",
+                "type": "int",
+                "bounds": {
+                    "min": max_depth_range[0],
+                    "max": max_depth_range[1]
+                },
+            },
+            {
+                "name": "lr",
+                "type": "double",
+                "bounds": {
+                    "min": lr[0],
+                    "max": lr[1]
+                },
+            },
+            {
+                "name": "min_child_weight",
+                "type": "int",
+                "bounds": {
+                    "min": min_child_weight[0],
+                    "max": min_child_weight[-1]
+                },
+            },
 
-                 ]
- 
+        ]
+
         # could customize by yourselves, make sure project_id exists
         experiment_name = "AutoXGBoost SigOpt Experiment"
         project_id = "autoxgboost_sigopt"

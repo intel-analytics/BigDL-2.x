@@ -670,7 +670,7 @@ class XgbRegressorSkOptRecipe(Recipe):
         self.num_samples = num_rand_samples
 
         self.n_estimators_range = n_estimators_range
-        self.max_depth_range = max_depth_range        
+        self.max_depth_range = max_depth_range
         self.lr = tune.loguniform(lr[0], lr[1])
         self.min_child_weight = tune.choice(min_child_weight)
 
