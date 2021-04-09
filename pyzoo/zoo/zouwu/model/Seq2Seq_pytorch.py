@@ -16,124 +16,65 @@
 
 import torch
 import torch.nn as nn
-from zoo.automl.model.base_pytorch_model import PytorchBaseModel
+
+from zoo.automl.model.base_pytorch_model import PytorchBaseModel, \
+    PYTORCH_REGRESSION_LOSS_MAP
 import numpy as np
 
 
-class Encoder(nn.Module):
-    def __init__(self, input_dim, hidden_dim, layer_num, dropout):
-        super().__init__()
-
-        self.hidden_dim = hidden_dim
-        self.layer_num = layer_num
-
-        self.rnn = nn.LSTM(input_dim, hidden_dim, layer_num, dropout=dropout, batch_first=True)
-
-        for name, param in self.rnn.named_parameters():
-            if 'bias' in name:
-                nn.init.constant_(param, 0.0)
-            elif 'weight_ih' in name:
-                nn.init.xavier_normal_(param)
-            elif 'weight_hh' in name:
-                nn.init.orthogonal_(param)
-
-    def forward(self, input_seq):
-        # input_seq = [batch_size, seq_len, feature_num]
-        outputs, (hidden, cell) = self.rnn(input_seq)
-        # outputs = [batch size, seq len, hidden dim]
-        # hidden = [batch size, layer num, hidden dim]
-        # cell = [batch size, layer num, hidden dim]
-
-        # outputs are always from the top hidden layer
-        return hidden, cell
-
-
-class Decoder(nn.Module):
-    def __init__(self, output_dim, hidden_dim, layer_num, dropout):
-        super().__init__()
-
-        self.output_dim = output_dim
-        self.hidden_dim = hidden_dim
-        self.layer_num = layer_num
-
-        self.rnn = nn.LSTM(output_dim, hidden_dim, layer_num, dropout=dropout, batch_first=True)
-
-        self.fc_out = nn.Linear(hidden_dim, output_dim)
-        for name, param in self.rnn.named_parameters():
-            if 'bias' in name:
-                nn.init.constant_(param, 0.0)
-            elif 'weight_ih' in name:
-                nn.init.xavier_normal_(param)
-            elif 'weight_hh' in name:
-                nn.init.orthogonal_(param)
-
-    def forward(self, decoder_input, hidden, cell):
-        # input = [batch size]
-        # hidden = [batch size, layer num, hidden dim]
-        # cell = [batch size, layer num, hidden dim]
-
-        # input = decoder_input.view(-1, 1)
-        # decoder_input = [batch size, 1], since output_dim is 1
-        decoder_input = decoder_input.unsqueeze(1)
-        # decoder_input = [batch_size, 1, 1]
-
-        output, (hidden, cell) = self.rnn(decoder_input, (hidden, cell))
-
-        # output = [batch size, seq len, hidden dim]
-        # hidden = [batch size, layer num, hidden dim]
-        # cell = [batch size, layer num, hidden dim]
-
-        # seq len will always be 1 in the decoder, therefore:
-        # output = [batch size, 1, hidden dim]
-        # hidden = [batch size, layer num, hidden dim]
-        # cell = [batch size, layer num, hidden dim]
-        prediction = self.fc_out(output.squeeze())
-        # prediction = [batch size, output dim]
-
-        return prediction, hidden, cell
-
-
-class Seq2Seq(nn.Module):
-    def __init__(self, input_dim, hidden_dim, layer_num, dropout, output_dim, future_seq_len=1):
-        super().__init__()
-        self.encoder = Encoder(input_dim, hidden_dim, layer_num, dropout)
-        self.decoder = Decoder(output_dim, hidden_dim, layer_num, dropout)
+class LSTMSeq2Seq(nn.Module):
+    def __init__(self,
+                 input_feature_num,
+                 future_seq_len,
+                 output_feature_num,
+                 lstm_hidden_dim=128,
+                 lstm_layer_num=2,
+                 dropout=0.25,
+                 teacher_forcing=False):
+        super(LSTMSeq2Seq, self).__init__()
+        self.lstm_encoder = nn.LSTM(input_size=input_feature_num,
+                                    hidden_size=lstm_hidden_dim,
+                                    num_layers=lstm_layer_num,
+                                    dropout=dropout,
+                                    batch_first=True)
+        self.lstm_decoder = nn.LSTM(input_size=output_feature_num,
+                                    hidden_size=lstm_hidden_dim,
+                                    num_layers=lstm_layer_num,
+                                    dropout=dropout,
+                                    batch_first=True)
+        self.fc = nn.Linear(in_features=lstm_hidden_dim, out_features=output_feature_num)
         self.future_seq_len = future_seq_len
+        self.output_feature_num = output_feature_num
+        self.teacher_forcing = teacher_forcing
 
-    def forward(self, source, target=None):
-        # past_seq_len
-        batch_size = source.shape[0]
-
-        output_dim = self.decoder.output_dim
-
-        # tensor to store the predicted outputs
-        target_seq = torch.zeros(batch_size, self.future_seq_len, output_dim)
-
-        # last hidden state of the encoder is used as the initial hidden state of the decoder
-        hidden, cell = self.encoder(source)
-
-        # Populate the first target sequence with end of encoding series value
-        # decoder_input : [batch_size, output_dim]
-        decoder_input = source[:, -1, :output_dim]
-
+    def forward(self, input_seq, target_seq=None):
+        x, (hidden, cell) = self.lstm_encoder(input_seq)
+        # input feature order should have target dimensions in the first
+        decoder_input = input_seq[:, -1, :self.output_feature_num]
+        decoder_input = decoder_input.unsqueeze(1)
+        decoder_output = []
         for i in range(self.future_seq_len):
-            decoder_output, hidden, cell = self.decoder(decoder_input, hidden, cell)
-            target_seq[:, i] = decoder_output
-            if target is None:
-                # in test mode
-                decoder_input = decoder_output
+            decoder_output_step, (hidden, cell) = self.lstm_decoder(decoder_input, (hidden, cell))
+            out_step = self.fc(decoder_output_step)
+            decoder_output.append(out_step)
+            if not self.teacher_forcing or target_seq is None:
+                # no teaching force
+                decoder_input = out_step
             else:
-                decoder_input = target[:, i]
-        return target_seq
+                # with teaching force
+                decoder_input = target_seq[:, i:i+1, :]
+        decoder_output = torch.cat(decoder_output, dim=1)
+        return decoder_output
 
 
 def model_creator(config):
-    return Seq2Seq(input_dim=config["input_dim"],
-                   hidden_dim=config.get("hidden_dim", 32),
-                   layer_num=config.get("layer_num", 2),
-                   dropout=config.get("dropout", 0.2),
-                   output_dim=config["output_dim"],
-                   future_seq_len=config["future_seq_len"])
+    return LSTMSeq2Seq(input_feature_num=config["input_feature_num"],
+                       output_feature_num=config["output_feature_num"],
+                       future_seq_len=config["future_seq_len"],
+                       lstm_hidden_dim=config.get("lstm_hidden_dim", 128),
+                       lstm_layer_num=config.get("lstm_layer_num", 2),
+                       dropout=config.get("dropout", 0.25),
+                       teacher_forcing=config.get("teacher_forcing", False))
 
 
 def optimizer_creator(model, config):
@@ -142,61 +83,45 @@ def optimizer_creator(model, config):
 
 
 def loss_creator(config):
-    return nn.MSELoss()
+    loss_name = config.get("loss", "mse")
+    if loss_name in PYTORCH_REGRESSION_LOSS_MAP:
+        loss_name = PYTORCH_REGRESSION_LOSS_MAP[loss_name]
+    else:
+        raise RuntimeError(f"Got \"{loss_name}\" for loss name,\
+                           where \"mse\", \"mae\" or \"huber_loss\" is expected")
+    return getattr(torch.nn, loss_name)()
 
 
 class Seq2SeqPytorch(PytorchBaseModel):
-
-    def __init__(self, config, check_optional_config=True, future_seq_len=1):
-        """
-        Constructor of Vanilla LSTM model
-        """
+    def __init__(self, check_optional_config=False):
         super().__init__(model_creator=model_creator,
                          optimizer_creator=optimizer_creator,
                          loss_creator=loss_creator,
-                         config=config.update({"future_seq_len": future_seq_len}),
                          check_optional_config=check_optional_config)
 
+    def _input_check(self, x, y):
+        if len(x.shape) < 3:
+            raise RuntimeError(f"Invalid data x with {len(x.shape)} dim where 3 dim is required.")
+        if len(y.shape) < 3:
+            raise RuntimeError(f"Invalid data y with {len(y.shape)} dim where 3 dim is required.")
+        if y.shape[-1] > x.shape[-1]:
+            raise RuntimeError(f"output dim should not larger than input dim,\
+                                while we get {y.shape[-1]} > {x.shape[-1]}.")
+
     def _forward(self, x, y):
-        yhat = self.model(x, y)
-        return yhat
-
-    def _pre_processing(self, x, y, validation_data):
-        """
-        pre_process input data
-        1. expand dims for y and vay_y
-        2. get input lengths
-        :param x:
-        :param y:
-        :param validation_data:
-        :return:
-        """
-        def expand_y(y):
-            while len(y.shape) < 3:
-                y = np.expand_dims(y, axis=2)
-            return y
-        y = expand_y(y)
-        self.feature_num = x.shape[2]
-        self.output_dim = y.shape[2]
-        if validation_data is not None:
-            val_x, val_y = validation_data
-            val_y = expand_y(val_y)
-            validation_data = (val_x, val_y)
-        return x, y, validation_data
-
-    def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, **config):
-        x, y, validation_data = self._pre_processing(x, y, validation_data)
-        return super().fit_eval(x, y, validation_data, mc, verbose, **config)
+        self._input_check(x, y)
+        return self.model(x, y)
 
     def _get_required_parameters(self):
         return {
-            "input_dim"
-            "ouput_dim"
+            "input_feature_num",
+            "future_seq_len",
+            "output_feature_num"
         }
 
     def _get_optional_parameters(self):
         return {
-            'hidden_dim',
-            'layer_num',
-            'hidden_dim',
+            "lstm_hidden_dim",
+            "lstm_layer_num",
+            "teacher_forcing"
         } | super()._get_optional_parameters()

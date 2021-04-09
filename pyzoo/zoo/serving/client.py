@@ -24,14 +24,36 @@ import uuid
 RESULT_PREFIX = "cluster-serving_"
 
 
-def http_response_to_ndarray(response_str):
+def http_json_to_ndarray(json_str):
     # currently there is no http user use batch predict, so batch is not implemented here
     # to add batch predict, replace 0 index to [0, batch_size)
-    res_dict = json.loads(json.loads(json.loads(response_str)["predictions"][0])['value'])
+    res_dict = json.loads(json.loads(json.loads(json_str)["predictions"][0])['value'])
     data, shape = res_dict['data'], res_dict['shape']
     array = np.array(data)
     array = array.reshape(shape)
     return array
+
+
+def http_response_to_ndarray(response):
+    if response.status_code == 200:
+        response_str = response.text
+        return http_json_to_ndarray(response_str)
+    elif response.status_code == 400:
+        print("Invalid input format, valid example:")
+        print("""{
+"instances": [
+   {
+     "tag": "foo",
+     "signal": [1, 2, 3, 4, 5],
+     "sensor": [[1, 2], [3, 4]]
+   }
+]
+}
+""")
+    else:
+        print("Error when calling Cluster Serving Http server, error code:", response.status_code)
+    print("WARNING: Server returns invalid response, so you will get []")
+    return "[]"
 
 
 def perdict(frontend_url, request_str):

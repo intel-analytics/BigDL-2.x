@@ -284,5 +284,6 @@ class PytorchBaseModel(BaseModel):
         return {"batch_size",
                 'lr',
                 "dropout",
-                "optim"
+                "optim",
+                "loss"
                 }
