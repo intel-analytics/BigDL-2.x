@@ -15,7 +15,7 @@
 #
 
 import argparse
-
+import os
 from sklearn.model_selection import train_test_split
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray import RayContext
@@ -122,6 +122,8 @@ if __name__ == '__main__':
                                             ),
                                             )
     elif opt.mode == 'sigopt':
+        if "SIGOPT_KEY" not in os.environ:
+            raise RunTimeError('''Environment Variable 'SIGOPT_KEY' not set''')
         space = [
         {
             "name": "n_estimators",
