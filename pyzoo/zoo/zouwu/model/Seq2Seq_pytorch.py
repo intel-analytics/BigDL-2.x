@@ -52,19 +52,18 @@ class LSTMSeq2Seq(nn.Module):
         # input feature order should have target dimensions in the first
         decoder_input = input_seq[:, -1, :self.output_feature_num]
         decoder_input = decoder_input.unsqueeze(1)
-        decoder_output = torch.zeros(input_seq.shape[0],
-                                     self.future_seq_len,
-                                     self.output_feature_num)
+        decoder_output = []
         for i in range(self.future_seq_len):
             decoder_output_step, (hidden, cell) = self.lstm_decoder(decoder_input, (hidden, cell))
             out_step = self.fc(decoder_output_step)
-            decoder_output[:, i:i+1, :] = out_step
+            decoder_output.append(out_step)
             if not self.teacher_forcing or target_seq is None:
                 # no teaching force
                 decoder_input = out_step
             else:
                 # with teaching force
                 decoder_input = target_seq[:, i:i+1, :]
+        decoder_output = torch.cat(decoder_output, dim=1)
         return decoder_output
 
 
