@@ -134,9 +134,9 @@ class FriesianSpec extends ZooSpecHelper {
     ))
     val df = sqlContext.createDataFrame(data, schema)
     val dfmasked = friesian.mask(df, Array("history").toList.asJava, 4)
-    dfmasked.filter("name like '%jack%'")
-    assert(dfmasked.filter("size(history_mask) = 4").count() == 1)
-    assert(dfmasked.filter("size(history_mask) = 5").count() == 2)
+    assert(dfmasked.columns.contains("history_mask"))
+    assert(dfmasked.filter("size(history_mask) = 4").count() == 3)
+    assert(dfmasked.filter("size(history_mask) = 2").count() == 0)
   }
 
   "postpad" should "work properly" in {
@@ -160,7 +160,6 @@ class FriesianSpec extends ZooSpecHelper {
 
 
   "genHisSeq" should "work properly" in {
-    val time1 = System.currentTimeMillis
     val data = sc.parallelize(Seq(
       Row("jack", 1, "2019-07-01 12:01:19.000"),
       Row("jack", 2, "2019-08-01 12:01:19.000"),
@@ -179,11 +178,11 @@ class FriesianSpec extends ZooSpecHelper {
     ))
     val df = sqlContext.createDataFrame(data, schema)
            .withColumn("ts", col("time").cast("timestamp").cast("long"))
-    df.show()
-    val dft = friesian.genHisSeq(df, "name", Array("item").toList.asJava, "ts", 4)
+    val dft = friesian.genHistSeq(df, "name", Array("item").toList.asJava, "ts",1, 4)
     assert(dft.count() == 8)
-    assert(dft.filter(df("name") === "alice") == 2)
-    assert(dft.filter(df("name") === "jack") == 6)
+    assert(dft.filter(df("name") === "alice").count() == 2)
+    assert(dft.filter(df("name") === "jack").count() == 6)
+    assert(dft.columns.contains("item_history"))
   }
 
   "genNegSamples" should "work properly" in {
@@ -206,7 +205,6 @@ class FriesianSpec extends ZooSpecHelper {
   }
 
   "genNegHisSeq" should "work properly" in {
-    val r = scala.util.Random
     val data: RDD[Row] = sc.parallelize(Seq(
       Row("jack", Seq(1, 2, 3, 4, 5)),
       Row("alice", Seq(4, 5, 6, 7, 8)),
@@ -244,7 +242,8 @@ class FriesianSpec extends ZooSpecHelper {
       StructField("history", ArrayType(IntegerType), true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
-    val dft = friesian.addLength(df, "history")
+    val dft = friesian.genLength(df, "history")
+    assert(dft.columns.contains("history_length"))
     assert(dft.filter("history_length = 2") == 1)
     assert(dft.filter("history_length = 5") == 2)
   }

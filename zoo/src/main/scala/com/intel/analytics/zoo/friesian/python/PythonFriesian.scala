@@ -184,10 +184,11 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     resultDF
   }
 
-  def genHisSeq(df: DataFrame,
+  def genHistSeq(df: DataFrame,
                 userCol: String,
                 colNamesin: JList[String],
                 sortCol: String,
+                minLength: Int,
                 maxLength: Int): DataFrame = {
     val colNames: Array[String] = colNamesin.asScala.toArray
     val schema = ArrayType(StructType(colNames.flatMap(c =>
@@ -214,7 +215,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         Seq(col("history." + c).as(c),
           col("history." + c + "_history").as(c + "_history")))
     val collectColumns = colNames.map(c => col(c)) ++ Seq(col(sortCol))
-    val filterCondition = colNames.map(c => s"size(" + c + "_history) > 0").mkString(" and ")
+    val filterCondition = colNames.map(c => "size(" + c +  s"_history) >= $minLength").mkString(" and ")
 
     df.groupBy(userCol)
       .agg(collect_list(struct(collectColumns: _*)).as("his_collect"))
@@ -245,7 +246,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def genNegHisSeq(df: DataFrame, itemSize: Int,
                    item2catdf: DataFrame,
-                   item_history_col: String = "item_history",
+                   item_history_col: String,
                    negNum: Int = 5): DataFrame = {
     val item2cat = item2catdf.rdd.map(r => (r.getAs[Int](0), r.getAs[Int](1))).collectAsMap()
     val sqlContext = df.sqlContext
@@ -348,7 +349,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     df.sqlContext.sql(s"select $leftCols, $selectStatement from tmp")
   }
 
-  def addLength(df: DataFrame, colName: String): DataFrame = {
+  def genLength(df: DataFrame, colName: String): DataFrame = {
     df.withColumn(colName + "_length", size(col(colName)))
   }
 

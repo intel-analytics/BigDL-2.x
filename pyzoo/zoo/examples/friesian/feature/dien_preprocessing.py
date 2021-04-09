@@ -1,5 +1,3 @@
-import json
-import random
 import sys
 import os
 import time
@@ -11,26 +9,20 @@ except ModuleNotFoundError:
     import pickle as pkl
 
 from optparse import OptionParser
-
-import numpy as np
-import pandas as pd
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import udf, col
-from zoo import init_nncontext
-from zoo.orca.data.pandas import read_json
-from zoo.orca.data.shard import SharedValue
+from zoo.orca import init_orca_context, stop_orca_context, OrcaContext
+from pyspark.sql.functions import udf
 from zoo.friesian.feature import FeatureTable
 from pyspark.sql.types import StringType, IntegerType, ArrayType, FloatType
 
 if __name__ == "__main__":
     parser = OptionParser()
-    parser.add_option("--meta", dest="meta_file", default='/Users/guoqiong/intelWork/git/friesian/data/book_review/meta_Books.json')
-    parser.add_option("--review", dest="review_file",default="/Users/guoqiong/intelWork/git/friesian/data/book_review/reviews_Books.json")
-    parser.add_option("--output", dest="output", default='/Users/guoqiong/intelWork/git/friesian/data/book_review/reprocessed_small')
+    parser.add_option("--meta", dest="meta_file")
+    parser.add_option("--review", dest="review_file")
+    parser.add_option("--output", dest="output")
     (options, args) = parser.parse_args(sys.argv)
-
-    sc = init_nncontext()
-    spark = SparkSession(sc)
+    sc = init_orca_context("local")
+    spark = OrcaContext.get_spark_session()
+    begin = time.time()
 
     # read review datavi run.sh
     review_df = spark.read.json(options.review_file).select(
@@ -48,15 +40,13 @@ if __name__ == "__main__":
     meta_df = spark.read.json(options.meta_file).select(['asin', 'categories'])\
         .dropna(subset=['asin', 'categories']) \
         .selectExpr("*", "get_category(categories) as category") \
-        .withColumnRenamed("asin", "item").drop("categories").persist(storageLevel=StorageLevel.DISK_ONLY)
+        .withColumnRenamed("asin", "item").drop("categories").distinct()\
+        .persist(storageLevel=StorageLevel.DISK_ONLY)
 
-    full_df = review_df.join(meta_df, on="item", how="left").fillna("default", ["item"])
-
-    full_df.printSchema()
-    print("full_df count after join", full_df.count())
+    full_df = review_df.join(meta_df, on="item", how="left").fillna("default", ["category"]) \
+        .persist(StorageLevel.DISK_ONLY)
     item_size = full_df.select("item").distinct().count()
 
-    full_df.persist(StorageLevel.DISK_ONLY)
     full_tbl = FeatureTable(full_df)
     indices = full_tbl.gen_string_idx(['user', 'item', 'category'], '1')
     item2cat = full_tbl.gen_ind2ind(['item', 'category'], [indices[1], indices[2]])
@@ -70,26 +60,18 @@ if __name__ == "__main__":
 
     full_tbl = full_tbl\
         .encode_string(['user', 'item', 'category'], [indices[0], indices[1], indices[2]]) \
-        .gen_his_seq(user_col="user", cols=['item', 'category'], sort_col='time', min_len=1, max_len=100)\
-        .transform_python_udf("item_history", "length", get_length)\
-        .add_negtive_samples(item_size, item_col='item', neg_num=1)
-    begin = time.time()
-    full_tbl.df.cache()
-    for i in range(10):
-        full_tbl= full_tbl.gen_neg_hist_seq(item_size, item2cat, neg_num=5)
-        print(full_tbl.df.count())
+        .gen_hist_seq(user_col="user", cols=['item', 'category'], sort_col='time', min_len=1, max_len=100)\
+        .gen_length("item_history")\
+        .gen_negtive_samples(item_size, item_col='item', neg_num=1) \
+        .gen_neg_hist_seq(item_size, item2cat.df, 'item_history', neg_num=5) \
+        .mask_pad(
+            padding_cols=['item_history', 'category_history', 'noclk_item_list', 'noclk_cat_list'],
+            mask_cols=['item_history'],
+            seq_len=10)\
+        .transform_python_udf("label", "label", get_label)
+    full_tbl.write_parquet(options.output + "data")
+
     end = time.time()
-    print(end-begin)
-
-    #     \
-    #     .mask_pad(
-    #         padding_cols=['item_history', 'category_history', 'noclk_item_list', 'noclk_cat_list'],
-    #         mask_cols=['item_history'],
-    #         seq_len=10)\
-    #     .transform_python_udf("label", "label", get_label)
-    # full_tbl.write_parquet(options.output + "data")
-    #
-    # full_tbl.df.show(10, False)
-
-    print("final output count:", full_tbl.df.count())
-    sc.stop()
+    print("final output count:", full_tbl.count())
+    print(f"perf training time: {(end - begin):.2f}s")
+    stop_orca_context()
