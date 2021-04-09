@@ -101,5 +101,8 @@ class AutoEstimator:
         analysis = self.searcher.run()
         return analysis
 
-
-
+    def get_best_model(self):
+        best_trial = self.searcher.get_best_trials(k=1)[0]
+        best_model_path = best_trial.model_path
+        best_model = self.model_builder.build_from_ckpt(best_model_path)
+        return best_model
