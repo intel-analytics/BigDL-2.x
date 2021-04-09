@@ -1,9 +1,8 @@
 #!/bin/bash
 # Acceptable arguments: master, worker, all
 
-MASTERLOG="/ppml/trusted-big-data-ml/scala/docker-graphene/spark-master-sgx.log"
-WORKERLOG="/ppml/trusted-big-data-ml/scala/docker-graphene/spark-worker-sgx.log"
-# DRIVERLOG="/ppml/trusted-big-data-ml/scala/docker-graphene/spark-driver-sgx.log"
+MASTERLOG="/ppml/trusted-big-data-ml/spark-master-sgx.log"
+WORKERLOG="/ppml/trusted-big-data-ml/spark-worker-sgx.log"
 
 master () {
     echo "(1/2) Detecting master state..."
