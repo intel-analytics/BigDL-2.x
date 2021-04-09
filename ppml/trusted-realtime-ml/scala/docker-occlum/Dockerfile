@@ -1,5 +1,5 @@
 # stage.1 Redis
-FROM ubuntu:18.04 as redis-tls
+FROM occlum/occlum:0.21.0-ubuntu18.04 as redis-tls
 
 WORKDIR /opt
 
@@ -98,6 +98,7 @@ RUN mkdir -p /opt/analytics-zoo
 
 COPY --from=redis-tls /opt/ssl /opt/ssl
 COPY --from=redis-tls /opt/redis /opt/redis
+COPY --from=redis-tls /opt/occlum/glibc /opt/occlum/glibc
 
 COPY --from=analytics-zoo /opt/flink-${FLINK_VERSION} /opt/flink-${FLINK_VERSION}
 COPY --from=analytics-zoo /opt/resnet50 /opt/resnet50
