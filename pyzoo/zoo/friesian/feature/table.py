@@ -176,6 +176,10 @@ class FeatureTable(Table):
         table = self.mask(mask_cols, seq_len)
         return table.pad(padding_cols, seq_len)
 
+    def transform_python_udf(self, in_col, out_col, udf_func):
+        df = self.df.withColumn(out_col, udf_func(col(in_col)))
+        return FeatureTable(df)
+
 # Assume this table only has two columns: col_name and id
 class StringIndex(Table):
     def __init__(self, df, col_name):

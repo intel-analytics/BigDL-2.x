@@ -20,9 +20,9 @@ if __name__ == "__main__":
     parser.add_option("--review", dest="review_file")
     parser.add_option("--output", dest="output")
     (options, args) = parser.parse_args(sys.argv)
+    begin = time.time()
     sc = init_orca_context("local")
     spark = OrcaContext.get_spark_session()
-    begin = time.time()
 
     # read review datavi run.sh
     review_df = spark.read.json(options.review_file).select(
@@ -31,6 +31,7 @@ if __name__ == "__main__":
         .withColumnRenamed('asin', 'item') \
         .withColumnRenamed('unixReviewTime', 'time')\
         .dropna("any").sample(0.0001).persist(storageLevel=StorageLevel.DISK_ONLY)
+    print("review_df, ", review_df.count())
 
     # read meta data
     def get_category(x):
@@ -42,11 +43,13 @@ if __name__ == "__main__":
         .selectExpr("*", "get_category(categories) as category") \
         .withColumnRenamed("asin", "item").drop("categories").distinct()\
         .persist(storageLevel=StorageLevel.DISK_ONLY)
+    print("meta_data, ", meta_df.count())
 
     full_df = review_df.join(meta_df, on="item", how="left").fillna("default", ["category"]) \
         .persist(StorageLevel.DISK_ONLY)
     item_size = full_df.select("item").distinct().count()
 
+    print("full data after join,", full_df.count())
     full_tbl = FeatureTable(full_df)
     indices = full_tbl.gen_string_idx(['user', 'item', 'category'], '1')
     item2cat = full_tbl.gen_ind2ind(['item', 'category'], [indices[1], indices[2]])
@@ -67,11 +70,11 @@ if __name__ == "__main__":
         .mask_pad(
             padding_cols=['item_history', 'category_history', 'noclk_item_list', 'noclk_cat_list'],
             mask_cols=['item_history'],
-            seq_len=10)\
+            seq_len=100)\
         .transform_python_udf("label", "label", get_label)
     full_tbl.write_parquet(options.output + "data")
 
-    end = time.time()
-    print("final output count:", full_tbl.count())
-    print(f"perf training time: {(end - begin):.2f}s")
+    print("final output count, ", full_tbl.count())
     stop_orca_context()
+    end = time.time()
+    print(f"perf preprocessing time: {(end - begin):.2f}s")
