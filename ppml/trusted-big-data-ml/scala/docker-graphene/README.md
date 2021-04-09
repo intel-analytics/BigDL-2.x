@@ -192,4 +192,28 @@ sudo bash start-distributed-big-data-ml.sh
 ```bash
 sudo bash stop-distributed-big-data-ml.sh
 ```
-##### Other Spark workloads are also supported, please follow the 3 examples to submit your workload with spark on Graphene-SGX
+##### Troubleshooting
+You can run the script `sudo bash distributed-check-status.sh` after starting distributed cluster serving to check whether the components have been correctly started. 
+
+To test a specific component, pass one or more argument to it among the following:
+"master", and "worker". For example, run the following command to check the status of the Spark job master.
+
+```bash
+sudo bash distributed-check-status.sh master
+```
+
+To test all components, you can either pass no argument or pass the "all" argument.
+
+```bash
+sudo bash distributed-check-status.sh
+```
+If all is well, the following results should be displayed:
+
+```
+(1/2) Detecting Master state...
+Master initilization successful.
+(2/2) Detecting Worker state...
+Worker initilization successful.
+```
+
+It is suggested to run this script once after starting distributed cluster serving to verify that all components are up and running.
