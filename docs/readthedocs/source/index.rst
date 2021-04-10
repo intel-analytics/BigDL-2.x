@@ -28,13 +28,12 @@ Analytics Zoo includes the **Orca** library that seamlessly scale out your singl
    :caption: User Guide
 
    doc/UserGuide/python.md
+   doc/UserGuide/scala.md
    doc/UserGuide/colab.md
    doc/UserGuide/docker.md
-   doc/UserGuide/k8s.md
    doc/UserGuide/hadoop.md
-   doc/UserGuide/amazon.md
+   doc/UserGuide/k8s.md
    doc/UserGuide/databricks.md
-   doc/UserGuide/scala.md
    doc/Ray/Overview/ray.md
    doc/Zouwu/Overview/zouwu.md
    doc/UserGuide/develop.md
