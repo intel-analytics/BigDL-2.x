@@ -44,5 +44,5 @@ est.fit(data=df,
         label_cols=['label'])
 ```
 
-See [TensorFlow](../QuickStart/orca-tf-quickstart.md) and [PyTorch](../Orca/QuickStart/orca-pytorch-quickstart.md) quickstart for more details.
+See [TensorFlow](../QuickStart/orca-tf-quickstart.md) and [PyTorch](../QuickStart/orca-pytorch-quickstart.md) quickstart for more details.
 
