@@ -68,7 +68,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
         val result = ClusterServing.model.doPredict(t)
         dimCheck(result, "remove", helper.modelType)
         val resultIndex = if (helper.inputAlreadyBatched) -1 else 1
-        val value = PostProcessing(result.toTensor[Float], helper.filter, resultIndex)
+        val value = PostProcessing(result.toTensor[Float], helper.postProcessing, resultIndex)
         (pathByte._1, value)
       } catch {
         case e: Exception =>
@@ -89,10 +89,10 @@ class ClusterServingInference(preProcessing: PreProcessing,
    */
   def singleThreadBatchInference(in: List[(String, Activity)]): List[(String, String)] = {
 
-    val postProcessed = in.grouped(helper.thrdPerModel).flatMap(pathByte => {
+    val postProcessed = in.grouped(helper.threadPerModel).flatMap(pathByte => {
       try {
         val thisBatchSize = pathByte.size
-        val t = batchInput(pathByte, helper.thrdPerModel,
+        val t = batchInput(pathByte, helper.threadPerModel,
           useMultiThreading = false, resizeFlag = false)
         dimCheck(t, "add", helper.modelType)
         val result =
@@ -101,7 +101,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
         dimCheck(t, "remove", helper.modelType)
         val kvResult =
           (0 until thisBatchSize).map(i => {
-            val value = PostProcessing(result, helper.filter, i + 1)
+            val value = PostProcessing(result, helper.postProcessing, i + 1)
             (pathByte(i)._1, value)
           })
         kvResult
@@ -117,11 +117,11 @@ class ClusterServingInference(preProcessing: PreProcessing,
 
   def multiThreadInference(in: List[(String, Activity)]): List[(String, String)] = {
 
-    val postProcessed = in.grouped(helper.thrdPerModel).flatMap(itemBatch => {
+    val postProcessed = in.grouped(helper.threadPerModel).flatMap(itemBatch => {
       try {
         val size = itemBatch.size
         val t =
-          batchInput(itemBatch, helper.thrdPerModel, true, helper.resize)
+          batchInput(itemBatch, helper.threadPerModel, true, helper.resize)
 
         /**
          * addSingletonDimension method will modify the
@@ -135,7 +135,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
         // dimCheck(t, "remove", modelType)
         val kvResult =
           (0 until size).toParArray.map(i => {
-            val value = PostProcessing(result, helper.filter, i + 1)
+            val value = PostProcessing(result, helper.postProcessing, i + 1)
             (itemBatch(i)._1, value)
           })
         kvResult
