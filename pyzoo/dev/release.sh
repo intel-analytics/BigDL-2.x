@@ -58,7 +58,7 @@ else
     echo "Unsupported platform. Only linux and mac are supported for now."
 fi
 
-build_command="${ANALYTICS_ZOO_HOME}/make-dist.sh ${dist_profile}"
+build_command="${ANALYTICS_ZOO_HOME}/zoo/make-dist.sh ${dist_profile}"
 if [ "$quick" == "true" ]; then
     echo "Skipping rebuilding the jar for Analytics Zoo"
 else
