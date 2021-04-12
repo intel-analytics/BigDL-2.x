@@ -103,8 +103,7 @@ class AutoEstimator:
                               search_alg_params=search_alg_params,
                               scheduler=scheduler,
                               scheduler_params=scheduler_params)
-        analysis = self.searcher.run()
-        return analysis
+        self.searcher.run()
 
     def get_best_model(self):
         best_trial = self.searcher.get_best_trials(k=1)[0]
