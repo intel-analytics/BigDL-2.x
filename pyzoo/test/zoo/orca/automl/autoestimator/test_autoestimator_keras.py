@@ -61,7 +61,7 @@ class LinearRecipe(Recipe):
         }
 
 
-class TestPyTorchAutoEstimator(TestCase):
+class TestTFKerasAutoEstimator(TestCase):
     def setUp(self) -> None:
         from zoo.orca import init_orca_context
         init_orca_context(cores=8, init_ray_on_spark=True)
