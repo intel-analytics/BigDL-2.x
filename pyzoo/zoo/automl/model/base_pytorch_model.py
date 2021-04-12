@@ -47,11 +47,12 @@ class PytorchBaseModel(BaseModel):
             self.criterion = self.loss_creator(self.config)
 
     def _create_optimizer(self):
-        if issubclass(self.optimizer_creator, torch.optim.Optimizer):
+        import types
+        if isinstance(self.optimizer_creator, types.FunctionType):
+            self.optimizer = self.optimizer_creator(self.model, self.config)
+        else:
             # use torch default parameter values if user pass optimizer name or optimizer class.
             self.optimizer = self.optimizer_creator(self.model.parameters())
-        else:
-            self.optimizer = self.optimizer_creator(self.model, self.config)
 
     def build(self, config):
         # check config and update
