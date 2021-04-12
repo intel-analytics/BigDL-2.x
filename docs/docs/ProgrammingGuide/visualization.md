@@ -117,7 +117,7 @@ After that, navigate to the TensorBoard dashboard using a browser. You can find 
 If the logdir is a HDFS folder, you need to configure the HDFS environment before running `tensorboard`.  
 Prerequisites:
 1. JDK >= 1.8, Orcale JDK recommended 
-2. Hadoop >= 2.7
+2. Hadoop >= 2.7, Hadoop 3.X is not recommended
 
 Set env before running `tensorboard`:
 ```
