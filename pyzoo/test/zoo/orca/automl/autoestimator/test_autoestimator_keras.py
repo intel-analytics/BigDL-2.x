@@ -82,6 +82,21 @@ class TestTFKerasAutoEstimator(TestCase):
         best_model = auto_est.get_best_model()
         assert "hidden_size" in best_model.config
 
+    def test_fit_multiple_times(self):
+        auto_est = AutoEstimator.from_keras(model_creator=model_creator,
+                                            logs_dir="/tmp/zoo_automl_logs",
+                                            resources_per_trial={"cpu": 2},
+                                            name="test_fit")
+        data = get_train_val_data()
+        auto_est.fit(data,
+                     recipe=LinearRecipe(),
+                     metric="mse")
+        with pytest.raises(RuntimeError) as excinfo:
+            auto_est.fit(data,
+                         recipe=LinearRecipe(),
+                         metric="mse")
+        assert "multiple times" in str(excinfo)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

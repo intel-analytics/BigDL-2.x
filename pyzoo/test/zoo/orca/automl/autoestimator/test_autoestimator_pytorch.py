@@ -182,6 +182,23 @@ class TestPyTorchAutoEstimator(TestCase):
                                                 name="test_fit")
         assert "valid torch loss name" in str(excinfo)
 
+    def test_fit_multiple_times(self):
+        auto_est = AutoEstimator.from_torch(model_creator=model_creator,
+                                            optimizer="SGD",
+                                            loss="BCELoss",
+                                            logs_dir="/tmp/zoo_automl_logs",
+                                            resources_per_trial={"cpu": 2},
+                                            name="test_fit")
+        data = get_train_val_data()
+        auto_est.fit(data,
+                     recipe=LinearRecipe(),
+                     metric="accuracy")
+        with pytest.raises(RuntimeError) as excinfo:
+            auto_est.fit(data,
+                         recipe=LinearRecipe(),
+                         metric="accuracy")
+        assert "multiple times" in str(excinfo)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

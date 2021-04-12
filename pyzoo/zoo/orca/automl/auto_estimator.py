@@ -19,6 +19,7 @@ class AutoEstimator:
     def __init__(self, model_builder, searcher):
         self.model_builder = model_builder
         self.searcher = searcher
+        self._fitted = False
 
     @staticmethod
     def from_torch(*,
@@ -94,7 +95,8 @@ class AutoEstimator:
             scheduler=None,
             scheduler_params=None,
             ):
-
+        if self._fitted:
+            raise RuntimeError("auto_estimator.fit is not expected to be called multiple times.")
         self.searcher.compile(data=data,
                               model_create_func=self.model_builder,
                               recipe=recipe,
@@ -104,6 +106,7 @@ class AutoEstimator:
                               scheduler=scheduler,
                               scheduler_params=scheduler_params)
         self.searcher.run()
+        self._fitted = True
 
     def get_best_model(self):
         best_trial = self.searcher.get_best_trials(k=1)[0]
