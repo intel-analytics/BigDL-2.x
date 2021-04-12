@@ -24,6 +24,8 @@ import torch.nn as nn
 from zoo.orca.automl.auto_estimator import AutoEstimator
 from zoo.automl.recipe.base import Recipe
 
+os.environ["KMP_SETTINGS"] = "0"
+
 
 class Net(nn.Module):
     def __init__(self, dropout, fc1_size, fc2_size):
@@ -54,7 +56,7 @@ def model_creator(config):
 
 
 def get_optimizer(model, config):
-    return torch.optim.SGD(model.parameters(), lr=config.get("lr", 1e-2))
+    return torch.optim.SGD(model.parameters(), lr=config["lr"])
 
 
 def get_train_val_data():
@@ -63,8 +65,8 @@ def get_train_val_data():
         x1 = np.random.randn(size // 2, input_size)
         x2 = np.random.randn(size // 2, input_size) + 1.5
         x = np.concatenate([x1, x2], axis=0)
-        y1 = np.zeros(size // 2, 1)
-        y2 = torch.ones(size // 2, 1)
+        y1 = np.zeros((size // 2, 1))
+        y2 = np.ones((size // 2, 1))
         y = np.concatenate([y1, y2], axis=0)
         return x, y
     train_x, train_y = get_x_y(size=1000)
@@ -74,13 +76,14 @@ def get_train_val_data():
 
 
 class LinearRecipe(Recipe):
-    # todo: refactor recipe
     def search_space(self, all_available_features):
         from ray import tune
         return {
             "dropout": tune.uniform(0.2, 0.3),
             "fc1_size": tune.choice([50, 64]),
             "fc2_size": tune.choice([100, 128]),
+            "lr": tune.choice([0.001, 0.003, 0.01]),
+            "batch_size": tune.choice([32, 64])
         }
 
     def runtime_params(self):
@@ -110,3 +113,53 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data,
                      recipe=LinearRecipe(),
                      metric="accuracy")
+
+    def test_fit_loss_name(self):
+        auto_est = AutoEstimator.from_torch(model_creator=model_creator,
+                                            optimizer=get_optimizer,
+                                            loss="BCELoss",
+                                            logs_dir="/tmp/zoo_automl_logs",
+                                            resources_per_trial={"cpu": 2},
+                                            name="test_fit")
+        data = get_train_val_data()
+        auto_est.fit(data,
+                     recipe=LinearRecipe(),
+                     metric="accuracy")
+
+    def test_fit_optimizer_name(self):
+        auto_est = AutoEstimator.from_torch(model_creator=model_creator,
+                                            optimizer="SGD",
+                                            loss="BCELoss",
+                                            logs_dir="/tmp/zoo_automl_logs",
+                                            resources_per_trial={"cpu": 2},
+                                            name="test_fit")
+        data = get_train_val_data()
+        auto_est.fit(data,
+                     recipe=LinearRecipe(),
+                     metric="accuracy")
+
+    def test_fit_invalid_optimizer_name(self):
+        invalid_optimizer_name = "ADAM"
+        with pytest.raises(ValueError) as excinfo:
+            auto_est = AutoEstimator.from_torch(model_creator=model_creator,
+                                                optimizer=invalid_optimizer_name,
+                                                loss="BCELoss",
+                                                logs_dir="/tmp/zoo_automl_logs",
+                                                resources_per_trial={"cpu": 2},
+                                                name="test_fit")
+        assert "valid torch optimizer name" in str(excinfo)
+
+    def test_fit_invalid_loss_name(self):
+        invalid_loss_name = "MAELoss"
+        with pytest.raises(ValueError) as excinfo:
+            auto_est = AutoEstimator.from_torch(model_creator=model_creator,
+                                                optimizer="SGD",
+                                                loss=invalid_loss_name,
+                                                logs_dir="/tmp/zoo_automl_logs",
+                                                resources_per_trial={"cpu": 2},
+                                                name="test_fit")
+        assert "valid torch loss name" in str(excinfo)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])
