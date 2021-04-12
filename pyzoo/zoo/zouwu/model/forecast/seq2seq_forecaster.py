@@ -142,7 +142,10 @@ class Seq2SeqForecaster(Forecaster):
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
         return self.internal.evaluate(x, y, metrics=metrics, multioutput=multioutput)
 
-    def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None, multioutput="uniform_average"):
+    def evaluate_with_onnx(self, x, y,
+                           metrics=['mse'],
+                           dirname=None,
+                           multioutput="uniform_average"):
         """
         Evaluate using a trained forecaster with onnxruntime.
 
@@ -156,7 +159,10 @@ class Seq2SeqForecaster(Forecaster):
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate_with_onnx(x, y, metrics=metrics, dirname=dirname, multioutput=multioutput)
+        return self.internal.evaluate_with_onnx(x, y,
+                                                metrics=metrics,
+                                                dirname=dirname,
+                                                multioutput=multioutput)
 
     def save(self, checkpoint_file):
         """

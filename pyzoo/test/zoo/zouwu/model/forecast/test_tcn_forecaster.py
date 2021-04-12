@@ -84,7 +84,8 @@ class TestZouwuModelTCNForecaster(TestCase):
             pred_onnx = forecaster.predict_with_onnx(test_data[0])
             np.testing.assert_almost_equal(pred, pred_onnx, decimal=5)
             mse = forecaster.evaluate(test_data[0], test_data[1], multioutput="raw_values")
-            mse_onnx = forecaster.evaluate_with_onnx(test_data[0], test_data[1], multioutput="raw_values")
+            mse_onnx = forecaster.evaluate_with_onnx(test_data[0], test_data[1],
+                                                     multioutput="raw_values")
             np.testing.assert_almost_equal(mse, mse_onnx, decimal=5)
             mse = forecaster.evaluate(test_data[0], test_data[1])
             mse_onnx = forecaster.evaluate_with_onnx(test_data[0], test_data[1])
