@@ -47,8 +47,8 @@ def validate_pytorch_optim(optim):
             return getattr(torch.optim, optim)
         raise ValueError(f'Must provide a valid torch optimizer name among {PYTORCH_OPTIM_NAMES}')
 
-    if isinstance(optim, types.FunctionType) or issubclass(optim, torch.optim.Optimizer):
+    if isinstance(optim, types.FunctionType):
         return optim
 
-    raise ValueError("Must provide a valid pytorch optimizer name or a pytorch optimizer class"
+    raise ValueError("Must provide a valid pytorch optimizer name "
                      "or a pytorch optimizer creator function.")
