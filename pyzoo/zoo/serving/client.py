@@ -82,7 +82,7 @@ class API:
 class InputQueue(API):
     def __init__(self, frontend_url=None, **kwargs):
         super().__init__(**kwargs)
-        self.frontend_url = None
+        self.frontend_url = frontend_url
         if self.frontend_url:
             # frontend_url is provided, using frontend
             try:
