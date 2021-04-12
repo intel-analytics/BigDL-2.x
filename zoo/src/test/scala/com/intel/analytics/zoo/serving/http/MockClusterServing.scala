@@ -5,6 +5,7 @@ import java.util.{AbstractMap, Base64, UUID}
 
 import com.intel.analytics.zoo.serving.utils.Conventions
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
+import scala.collection.JavaConverters._
 
 object MockClusterServing extends App with Supportive {
   val redisHost = "localhost"
