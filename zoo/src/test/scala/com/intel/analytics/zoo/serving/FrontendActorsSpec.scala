@@ -63,7 +63,7 @@ class FrontendActorsSpec extends FlatSpec with Matchers with BeforeAndAfter with
     system = ActorSystem("zoo-serving-frontend-system")
     materializer = ActorMaterializer()
     executionContext = system.dispatcher
-    timeout = Timeout(10, TimeUnit.SECONDS)
+    timeout = Timeout(20, TimeUnit.SECONDS)
   }
 
   after {
