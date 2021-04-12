@@ -24,7 +24,7 @@ import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.{ConnectionContext, Http}
-import akka.http.scaladsl.server.Directives.{complete, path, _}
+import akka.http.scaladsl.server.Directives.{complete, extract, path, _}
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.intel.analytics.zoo.serving.http.FrontEndApp.{defineServerContext, logger, overallRequestTimer, predictRequestTimer, silent, system, timing}
 import com.intel.analytics.zoo.serving.http.{Instances, InstancesPredictionInput, Predictions}
 import org.slf4j.LoggerFactory
+import com.intel.analytics.zoo.serving.http.Supportive
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
@@ -60,7 +61,9 @@ object FrontEndApp extends Supportive with EncryptSupportive {
       }
 
       val servableManager = new ServableManager
-      servableManager.load(arguments.servableManagerPath)
+      timing("load servable manager")(){
+        servableManager.load(arguments.servableManagerPath)
+      }
       logger.info("Servable Manager Load Finished")
 
       val route = timing("initialize http route")() {
@@ -68,6 +71,26 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           timing("welcome")(overallRequestTimer) {
             complete("welcome to " + name)
           }
+        }~pathPrefix("models"){
+          concat(
+            (get & path(Segments)){
+              (segs) => {
+                timing("welcome")(overallRequestTimer) {
+                  complete("get Model Info Port")
+                }
+              }}~(post & path(Segments) & extract(_.request.entity.contentType) & entity(as[String])) {
+              (segs, contentType, content) => {
+              timing("welcome")(overallRequestTimer) {
+                if (segs.length != 4 || segs(1) != "versions" || segs(3) != "predict"){
+                  throw ServingRuntimeException ("parameter not macth", null)
+                }
+                val modelName = segs(0); val modelVersion = segs(2)
+
+
+                complete("get Model Info Port")
+              }}
+            }
+          )
         }
       }
 

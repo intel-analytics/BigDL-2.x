@@ -61,27 +61,10 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData) ext
 
 class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) extends Servable(clusterServingMetaData) {
   var redisPutter: ActorRef = _
+  var redisGetter: ActorRef = _
+  var querierQueue: LinkedBlockingQueue[ActorRef] = _
 
-  val redisGetterName = s"redis-getter"
-  val redisGetter = timing(s"$redisGetterName initialized.")() {
-    val redisGetterProps = Props(new RedisPutActor(
-      clusterServingMetaData.redisHost, clusterServingMetaData.redisPort.toInt,
-      clusterServingMetaData.redisInputQueue, clusterServingMetaData.redisOutputQueue,
-      0, 56, false, null, "1234qwer"))
-    system.actorOf(redisGetterProps, name = redisGetterName)
-  }
 
-  val querierNum = 1000
-  val querierQueue = timing(s"queriers initialized.")() {
-    val querierQueue = new LinkedBlockingQueue[ActorRef](querierNum)
-    val querierProps = Props(new QueryActor(redisGetter))
-    List.range(0, querierNum).map(index => {
-      val querierName = s"querier-$index"
-      val querier = system.actorOf(querierProps, name = querierName)
-      querierQueue.put(querier)
-    })
-    querierQueue
-  }
 
   def load(): Unit = {
     val redisPutterName = s"redis-putter"
@@ -97,6 +80,33 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
         null,
         "1234qwer"))
       system.actorOf(redisPutterProps, name = redisPutterName)
+    }
+
+    val redisGetterName = s"redis-getter"
+    redisGetter = timing(s"$redisGetterName initialized.")() {
+      val redisGetterProps = Props(new RedisPutActor(
+        clusterServingMetaData.redisHost,
+        clusterServingMetaData.redisPort.toInt,
+        clusterServingMetaData.redisInputQueue,
+        clusterServingMetaData.redisOutputQueue,
+        0,
+        56,
+        false,
+        null,
+        "1234qwer"))
+      system.actorOf(redisGetterProps, name = redisGetterName)
+    }
+
+    val querierNum = 1000
+    querierQueue = timing(s"queriers initialized.")() {
+      val querierQueue = new LinkedBlockingQueue[ActorRef](querierNum)
+      val querierProps = Props(new QueryActor(redisGetter))
+      List.range(0, querierNum).map(index => {
+        val querierName = s"querier-$index"
+        val querier = system.actorOf(querierProps, name = querierName)
+        querierQueue.put(querier)
+      })
+      querierQueue
     }
 
   }
