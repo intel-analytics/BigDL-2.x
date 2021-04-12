@@ -37,7 +37,7 @@ def validate_pytorch_loss(loss):
         return loss
 
     raise ValueError("Must provide a valid pytorch loss name or a pytorch loss instance"
-                     "or a pytorch loss creator function ")
+                     "or a pytorch loss creator function.")
 
 
 def validate_pytorch_optim(optim):
@@ -50,5 +50,5 @@ def validate_pytorch_optim(optim):
     if isinstance(optim, types.FunctionType) or issubclass(optim, torch.optim.Optimizer):
         return optim
 
-    raise ValueError("Must provide a valid pytorch optimizer name or a pytorch optimizer class" 
-                     "or a pytorch optimizer creator function ")
+    raise ValueError("Must provide a valid pytorch optimizer name or a pytorch optimizer class"
+                     "or a pytorch optimizer creator function.")
