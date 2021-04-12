@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving
+package com.intel.analytics.zoo.serving.http
 
 import java.util
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
@@ -24,7 +24,6 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.github.fppt.jedismock.RedisServer
-import com.intel.analytics.zoo.serving.http.{PredictionInputMessage, _}
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import redis.clients.jedis.Jedis
