@@ -179,11 +179,10 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data,
                      recipe=LinearRecipe(),
                      metric="accuracy")
-        with pytest.raises(RuntimeError) as excinfo:
+        with pytest.raises(RuntimeError):
             auto_est.fit(data,
                          recipe=LinearRecipe(),
                          metric="accuracy")
-        assert "multiple times" in str(excinfo)
 
 
 if __name__ == "__main__":

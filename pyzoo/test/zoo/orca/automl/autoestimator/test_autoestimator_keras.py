@@ -91,11 +91,10 @@ class TestTFKerasAutoEstimator(TestCase):
         auto_est.fit(data,
                      recipe=LinearRecipe(),
                      metric="mse")
-        with pytest.raises(RuntimeError) as excinfo:
+        with pytest.raises(RuntimeError):
             auto_est.fit(data,
                          recipe=LinearRecipe(),
                          metric="mse")
-        assert "multiple times" in str(excinfo)
 
 
 if __name__ == "__main__":

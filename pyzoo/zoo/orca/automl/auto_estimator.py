@@ -96,7 +96,7 @@ class AutoEstimator:
             scheduler_params=None,
             ):
         if self._fitted:
-            raise RuntimeError("auto_estimator.fit is not expected to be called multiple times.")
+            raise RuntimeError("This AutoEstimator has already been fitted and cannot fit again.")
         self.searcher.compile(data=data,
                               model_create_func=self.model_builder,
                               recipe=recipe,
