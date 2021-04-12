@@ -33,6 +33,10 @@ class AutoEstimator:
 
         :param model_creator: PyTorch model creator function.
         :param optimizer: PyTorch optimizer creator function or pytorch optimizer name (string).
+            Note that you should specify learning rate search space with key as "lr" or LR_NAME
+            (from zoo.orca.automl.pytorch_utils import LR_NAME) if input optimizer name.
+            Without learning rate search space specified, the default learning rate value of 1e-3
+            will be used for all estimators.
         :param loss: PyTorch loss instance or PyTorch loss creator function
             or pytorch loss name (string).
         :param logs_dir: Local directory to save logs and results.
