@@ -23,6 +23,7 @@ import torch
 import torch.nn as nn
 from zoo.orca.automl.auto_estimator import AutoEstimator
 from zoo.automl.recipe.base import Recipe
+from zoo.orca.automl.pytorch_utils import LR_NAME
 
 os.environ["KMP_SETTINGS"] = "0"
 
@@ -82,7 +83,7 @@ class LinearRecipe(Recipe):
             "dropout": tune.uniform(0.2, 0.3),
             "fc1_size": tune.choice([50, 64]),
             "fc2_size": tune.choice([100, 128]),
-            "lr": tune.choice([0.001, 0.003, 0.01]),
+            LR_NAME: tune.choice([0.001, 0.003, 0.01]),
             "batch_size": tune.choice([32, 64])
         }
 

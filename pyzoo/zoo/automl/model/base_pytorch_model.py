@@ -21,6 +21,8 @@ from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 import pandas as pd
 
+from zoo.orca.automl.pytorch_utils import LR_NAME, DEFAULT_LR
+
 
 PYTORCH_REGRESSION_LOSS_MAP = {"mse": "MSELoss",
                                "mae": "L1Loss",
@@ -52,7 +54,12 @@ class PytorchBaseModel(BaseModel):
             self.optimizer = self.optimizer_creator(self.model, self.config)
         else:
             # use torch default parameter values if user pass optimizer name or optimizer class.
-            self.optimizer = self.optimizer_creator(self.model.parameters())
+            try:
+                self.optimizer = self.optimizer_creator(self.model.parameters(),
+                                                        lr=self.config.get(LR_NAME, DEFAULT_LR))
+            except:
+                raise ValueError("We failed to generate an optimizer with specified optim "
+                                 "class/name. You need to pass an optimizer creator function.")
 
     def build(self, config):
         # check config and update
@@ -296,7 +303,7 @@ class PytorchBaseModel(BaseModel):
 
     def _get_optional_parameters(self):
         return {"batch_size",
-                'lr',
+                LR_NAME,
                 "dropout",
                 "optim"
                 }

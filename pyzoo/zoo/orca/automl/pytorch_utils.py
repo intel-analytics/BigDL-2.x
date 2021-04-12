@@ -19,6 +19,9 @@ import torch
 PYTORCH_LOSS_NAMES = {s for s in dir(torch.nn.modules) if s.endswith("Loss")}
 PYTORCH_OPTIM_NAMES = {s for s in dir(torch.optim) if any(c.isupper() for c in s)} - {'Optimizer'}
 
+LR_NAME = "lr"
+DEFAULT_LR = 1e-3
+
 
 def validate_pytorch_loss(loss):
     import types
