@@ -58,7 +58,8 @@ object DeprecatedUtils {
     clusterServingHelper.redisPort = redis.split(":").last.trim.toInt
 
     val secureConfig = configList.get("secure").asInstanceOf[HM]
-    clusterServingHelper.redisSecureEnabled = getYaml(secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
+    clusterServingHelper.redisSecureEnabled = getYaml(
+      secureConfig, "secure_enabled", false).asInstanceOf[Boolean]
 
     val defaultPath = try {
       getClass.getClassLoader.getResource("keys/keystore.jks").getPath
@@ -70,20 +71,25 @@ object DeprecatedUtils {
       .asInstanceOf[String]
     clusterServingHelper.redisSecureTrustStoreToken = getYaml(
       secureConfig, "secure_struct_store_password", "1234qwer").asInstanceOf[String]
-    clusterServingHelper.modelEncrypted = getYaml(secureConfig, "model_encrypted", false).asInstanceOf[Boolean]
-    clusterServingHelper.recordEncrypted = getYaml(secureConfig, "record_encrypted", false).asInstanceOf[Boolean]
+    clusterServingHelper.modelEncrypted = getYaml(
+      secureConfig, "model_encrypted", false).asInstanceOf[Boolean]
+    clusterServingHelper.recordEncrypted = getYaml(
+      secureConfig, "record_encrypted", false).asInstanceOf[Boolean]
 
     val typeStr = getYaml(dataConfig, "type", "image")
     require(typeStr != null, "data type in config must be specified.")
 
     clusterServingHelper.postProcessing = getYaml(dataConfig, "filter", "").asInstanceOf[String]
     clusterServingHelper.resize = getYaml(dataConfig, "resize", true).asInstanceOf[Boolean]
-    clusterServingHelper.inputAlreadyBatched = getYaml(dataConfig, "batched", false).asInstanceOf[Boolean]
+    clusterServingHelper.inputAlreadyBatched = getYaml(
+      dataConfig, "batched", false).asInstanceOf[Boolean]
 
     val paramsConfig = configList.get("params").asInstanceOf[HM]
-    clusterServingHelper.threadPerModel = getYaml(paramsConfig, "core_number", 4).asInstanceOf[Int]
+    clusterServingHelper.threadPerModel = getYaml(
+      paramsConfig, "core_number", 4).asInstanceOf[Int]
 
-    clusterServingHelper.modelParallelism = getYaml(paramsConfig, "model_number", default = 1).asInstanceOf[Int]
+    clusterServingHelper.modelParallelism = getYaml(
+      paramsConfig, "model_number", default = 1).asInstanceOf[Int]
 
     clusterServingHelper.parseModelType(clusterServingHelper.modelPath)
     if (clusterServingHelper.modelType == "caffe" || clusterServingHelper.modelType == "bigdl") {

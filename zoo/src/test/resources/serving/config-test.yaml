@@ -1,8 +1,9 @@
 ## Analytics-zoo Cluster Serving
 
-modelPath: 1234
-modelParallelism:
+modelPath: /path
+modelParallelism: 1
 inputAlreadyBatched: true
+
 # test int password should be parsed as string
 secureStructStorePassword: 123456
 

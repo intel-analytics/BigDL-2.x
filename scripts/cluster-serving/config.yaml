@@ -14,11 +14,16 @@
 # dataAlreadyBatched:
 
 ######## Performance Configuration
-# default, number of cores (or threads) used per model in serving
-# core_number:
+# default, number of cores per machine
+# if you set coreNumberPerMachine, Cluster Serving will auto config modelParallelism and threadPerModel
+# if you need to set modelParallelism and threadPerModel manually, do not set coreNumberPerMachine
+# coreNumberPerMachine:
 
 # default: number of models used in serving
-# model_number:
+# modelParallelism:
+
+# default: number of cores (or threads) used per model in serving
+# threadPerModel
 
 # default: OFF
 # performance_mode:

@@ -86,7 +86,8 @@ class ClusterServingHelper
     if (concurrentNum > 0) {
       modelParallelism = concurrentNum
     }
-    ClusterServing.logger.info(s"Cluster Serving load Inference Model with Parallelism $modelParallelism")
+    ClusterServing.logger.info(
+      s"Cluster Serving load Inference Model with Parallelism $modelParallelism")
     val model = new InferenceModel(modelParallelism)
 
     // Used for Tensorflow Model, it could not have intraThreadNum > 2^8
@@ -118,7 +119,8 @@ class ClusterServingHelper
       case "keras" => logError("Keras currently not supported in Cluster Serving," +
         "consider transform it to Tensorflow")
       case "openvino" => modelEncrypted match {
-        case true => model.doLoadEncryptedOpenVINO(defPath, weightPath, secret, salt, threadPerModel)
+        case true => model.doLoadEncryptedOpenVINO(
+          defPath, weightPath, secret, salt, threadPerModel)
         case false => model.doLoadOpenVINO(defPath, weightPath, threadPerModel)
       }
       case _ => logError("Invalid model type, please check your model directory")
