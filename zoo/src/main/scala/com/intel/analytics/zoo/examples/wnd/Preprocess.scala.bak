@@ -1,0 +1,161 @@
+package com.intel.analytics.zoo.examples.wnd
+
+import com.intel.analytics.zoo.common.NNContext.initNNContext
+import com.intel.analytics.zoo.examples.dien.Preprocess.read_json
+import org.apache.spark.ml.feature.{MinMaxScaler, StringIndexer, VectorAssembler}
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.mllib.linalg.VectorUDT
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.IntegerType
+
+import scala.collection.mutable.WrappedArray
+import scala.util.Random
+
+object Preprocess {
+
+  def read_csv(spark: SparkSession, path: String, cols: Array[String] = null): DataFrame = {
+
+    var df = spark.read.csv(path)
+    if (cols != null)
+      df = df.select(cols.map(name => col(name)): _*)
+    df
+  }
+
+  def normalize(df: DataFrame, colName: String): DataFrame = {
+    val sqlContext = df.sqlContext
+    import sqlContext.implicits._
+    val assembler = new VectorAssembler()
+      .setInputCols(Array(colName))
+      .setOutputCol(colName + "_vect")
+
+    // MinMaxScaler Transformation
+    val scaler = new MinMaxScaler().setInputCol(colName + "_vect").setOutputCol(colName + "_scaled")
+
+    // Pipeline of VectorAssembler and MinMaxScaler
+    val pipeline = new Pipeline().setStages(Array(assembler, scaler))
+
+    val unlist = udf((x: VectorUDT) => {
+      x(0)
+    })
+
+    // Fitting pipeline on dataframe
+    val normalizedDF = pipeline.fit(df).transform(df)
+      .withColumn(colName + "_scaled", unlist(col(colName + "_scaled"))).drop(colName + "_vect")
+
+    normalizedDF
+  }
+
+  def hashBucket(content: Any, bucketSize: Int = 1000, start: Int = 0): Int = {
+    content.hashCode() % bucketSize + start
+  }
+
+
+  def crossColumns(df: DataFrame, crossCols: Array[Array[String]], crossSizes: Array[Int]): DataFrame = {
+    def crossColumns(cross_size: Int) = udf((cols: Array[Int]) => {
+      hashBucket(cols.mkString("_"), bucketSize = cross_size)
+    })
+
+    var resultDF = df
+    for (i <- 0 until crossCols.length) {
+      resultDF = resultDF.withColumn(crossCols(i).mkString("_"),
+        crossColumns(crossSizes(i))(array(crossCols(i).map(x => col(x)): _*)))
+    }
+    resultDF
+  }
+
+  def addNegExcludeClickedItemList(df: DataFrame, itemSize: Int,
+                                   userID: String = "uid", itemID: String = "item_id", label: String = "label",
+                                   negNum: Int = 1): DataFrame = {
+    val sqlContext = df.sqlContext
+    import sqlContext.implicits._
+
+    val negItemUdf = udf((itemList: Seq[Int]) => {
+      itemList.flatMap(item => {
+        val result = new Array[Tuple2[Int, Int]](negNum + 1)
+        val r = new Random()
+        for (i <- 0 until negNum) {
+          var neg = 0
+          do {
+            neg = r.nextInt(itemSize)
+          } while (itemList.contains((neg)))
+
+          result(i) = (neg, 0)
+        }
+        result(negNum) = (item, 1)
+        result
+      })
+    })
+
+    df.groupBy(userID)
+      .agg(collect_list(col(itemID)).as("item_collect"))
+      .withColumn("item_label", negItemUdf(col("item_collect")))
+      .withColumn("item_label", explode(col("item_label")))
+      .drop("item_collect", itemID)
+      .select(col(userID),
+        col("item_label._1").as(itemID),
+        col("item_label._2").as(label))
+  }
+
+  def main(args: Array[String]): Unit = {
+    val sc = initNNContext("test")
+    val spark = SparkSession.builder().getOrCreate()
+
+    // read user data
+    val user_path = "/data/movie-len/ml-1m/users.dat"
+    var meta_df = read_csv(spark, user_path, Array("asin", "categories")).na.drop("any", Seq("asin", "categories"))
+    val getCategory = udf((categories: WrappedArray[WrappedArray[String]]) => {
+      categories(0).last
+    })
+
+    meta_df = meta_df.withColumn("category", getCategory(col("categories"))).drop("categories")
+    meta_df.show()
+
+    // generate string index of item
+    val itemIndexer = new StringIndexer()
+      .setInputCol("asin")
+      .setOutputCol("item_id")
+      .setHandleInvalid("keep")
+
+    val itemModel = itemIndexer.fit(meta_df)
+
+    meta_df = itemModel.transform(meta_df)
+    meta_df = meta_df.withColumn("item_id", col("item_id").cast(IntegerType)).drop("asin")
+
+    // generate string index of category
+    val categoryIndexer = new StringIndexer()
+      .setInputCol("category")
+      .setOutputCol("cat_id")
+    meta_df = categoryIndexer.fit(meta_df).transform(meta_df).drop("category")
+      .withColumn("cat_id", col("cat_id").cast(IntegerType))
+
+    val itemCatMap = meta_df.select("item_id", "cat_id").distinct().rdd
+      .collect().map(row => (row(0), row(1))).toMap.asInstanceOf[Map[Int, Int]]
+
+    val invalidCatID = meta_df.select("cat_id").distinct().count().toInt
+
+    val itemSize = meta_df.select("item_id").distinct().count().toInt
+    println(s"item size is: ${itemSize}")
+
+    // read review data
+    val review_path = "/home/jwang/git/recommendation_jennie/public_dien/reviews_10000_lines.json"
+    var review_df = read_json(spark, review_path, Array[String]("reviewerID", "asin", "unixReviewTime"))
+      .na.drop("any", Seq("reviewerID", "asin", "unixReviewTime"))
+
+    review_df = review_df.withColumn("time", col("unixReviewTime").cast(IntegerType)).drop("unixReviewTime")
+
+    // generate string indexer of user
+    val userIndexer = new StringIndexer()
+      .setInputCol("reviewerID")
+      .setOutputCol("uid")
+
+    review_df = userIndexer.fit(review_df).transform(review_df).drop("reviewerID")
+    review_df = review_df.withColumn("uid", col("uid").cast(IntegerType))
+
+    val userSize = review_df.select("uid").distinct().count()
+    println(s"user size is: ${userSize}")
+
+    // change item in review df to item id
+    review_df = itemModel.transform(review_df).withColumn("item_id", col("item_id").cast(IntegerType)).drop("asin")
+  }
+}
