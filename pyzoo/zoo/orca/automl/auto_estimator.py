@@ -40,7 +40,7 @@ class AutoEstimator:
         :param name: Name of the auto estimator.
         :return: an AutoEstimator object.
         """
-        from zoo.orca.automl.pytorch_model_utils import validate_pytorch_loss, \
+        from zoo.orca.automl.pytorch_utils import validate_pytorch_loss, \
             validate_pytorch_optim
         from zoo.automl.model import ModelBuilder
         from zoo.automl.search import SearchEngineFactory
