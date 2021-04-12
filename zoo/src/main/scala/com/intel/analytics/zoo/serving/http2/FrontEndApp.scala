@@ -58,7 +58,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           case None => argumentsParser.failure("miss args, please see the usage info"); null
         }
       }
-      //TODO: May add a route path to start server with specific address?
+
       val servableManager = new ServableManager
       servableManager.load(arguments.servableManagerPath)
       logger.info("Servable Manager Load Finished")
