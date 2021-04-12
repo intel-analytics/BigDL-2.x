@@ -114,6 +114,9 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data,
                      recipe=LinearRecipe(),
                      metric="accuracy")
+        best_model = auto_est.get_best_model()
+        assert best_model.optimizer.__class__.__name__ == "SGD"
+        assert isinstance(best_model.loss_creator, nn.BCELoss)
 
     def test_fit_loss_name(self):
         auto_est = AutoEstimator.from_torch(model_creator=model_creator,
@@ -126,6 +129,8 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data,
                      recipe=LinearRecipe(),
                      metric="accuracy")
+        best_model = auto_est.get_best_model()
+        assert isinstance(best_model.loss_creator, nn.BCELoss)
 
     def test_fit_optimizer_name(self):
         auto_est = AutoEstimator.from_torch(model_creator=model_creator,
@@ -138,6 +143,22 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data,
                      recipe=LinearRecipe(),
                      metric="accuracy")
+        best_model = auto_est.get_best_model()
+        assert best_model.optimizer.__class__.__name__ == "SGD"
+
+    def test_fit_optimizer_class(self):
+        auto_est = AutoEstimator.from_torch(model_creator=model_creator,
+                                            optimizer=torch.optim.SGD,
+                                            loss=nn.BCELoss(),
+                                            logs_dir="/tmp/zoo_automl_logs",
+                                            resources_per_trial={"cpu": 2},
+                                            name="test_fit")
+        data = get_train_val_data()
+        auto_est.fit(data,
+                     recipe=LinearRecipe(),
+                     metric="accuracy")
+        best_model = auto_est.get_best_model()
+        assert best_model.optimizer.__class__.__name__ == "SGD"
 
     def test_fit_invalid_optimizer_name(self):
         invalid_optimizer_name = "ADAM"

@@ -21,6 +21,8 @@ PYTORCH_OPTIM_NAMES = {s for s in dir(torch.optim) if any(c.isupper() for c in s
 
 LR_NAME = "lr"
 DEFAULT_LR = 1e-3
+BATCH_SIZE_NAME = "batch_size"
+DEFAULT_BATCH_SIZE = 32
 
 
 def validate_pytorch_loss(loss):

@@ -231,9 +231,9 @@ class PytorchBaseModel(BaseModel):
         self.model = self.model_creator(self.config)
         self.model.load_state_dict(state["model"])
         self.model_built = True
-        self.optimizer = self.optimizer_creator(self.model, self.config)
+        self._create_optimizer()
         self.optimizer.load_state_dict(state["optimizer"])
-        self.criterion = self.loss_creator(self.config)
+        self._create_loss()
 
     def save(self, checkpoint_file, config_path=None):
         if not self.model_built:
