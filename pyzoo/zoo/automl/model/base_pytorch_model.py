@@ -92,6 +92,7 @@ class PytorchBaseModel(BaseModel):
         # todo: support input validation data None
         assert validation_data is not None, "You must input validation data!"
         val_stats = self._validate(validation_data[0], validation_data[1], metric=metric)
+        self.onnx_model_built = False
         return val_stats[metric]
 
     @staticmethod
