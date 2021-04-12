@@ -17,24 +17,12 @@
 
 package com.intel.analytics.zoo.serving.utils
 
-import java.io.{File, FileInputStream, FileWriter}
+
 import java.nio.file.{Files, Path, Paths}
-
-import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import java.util.{LinkedHashMap, UUID}
-
-import org.yaml.snakeyaml.Yaml
-import java.util
-
 import com.intel.analytics.zoo.serving.ClusterServing
-import org.apache.flink.core.execution.JobClient
 import redis.clients.jedis.Jedis
-
 import scala.beans.BeanProperty
-import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
 
 /**
  * The helper of Cluster Serving
@@ -45,6 +33,7 @@ import scala.reflect.ClassTag
  */
 class ClusterServingHelper
   extends Serializable {
+  // BeanProperty store attributes read from config file
   @BeanProperty var modelPath = ""
   @BeanProperty var jobName = "serving_stream"
   @BeanProperty var postProcessing = ""
@@ -73,10 +62,6 @@ class ClusterServingHelper
   var blasFlag: Boolean = false
   var chwFlag: Boolean = true
   var resize: Boolean = false
-
-  /**
-   * model related
-   */
   var modelType: String = _
   var weightPath: String = _
   var defPath: String = _
