@@ -21,37 +21,36 @@ class ServableManager {
   def load(servableConfigDir: String): Unit = {
     val servableManagerConfYaml = scala.io.Source.fromFile(servableConfigDir).mkString
     val modelInfoList = YamlUtil.fromYaml(classOf[ServableManagerConf], servableManagerConfYaml).modelMetaDataList
-    for (modelInfo <- modelInfoList){
-      if (!modelVersionMap.contains(modelInfo.getModelName)){
-        val versionMaper = new mutable.HashMap[String, Servable]
-        modelVersionMap(modelInfo.getModelName) = versionMaper
+    for (modelInfo <- modelInfoList) {
+      if (!modelVersionMap.contains(modelInfo.getModelName)) {
+        val versionMapper = new mutable.HashMap[String, Servable]
+        modelVersionMap(modelInfo.getModelName) = versionMapper
       }
-      if (modelVersionMap(modelInfo.getModelName).contains(modelInfo.getModelVersion)){
+      if (modelVersionMap(modelInfo.getModelName).contains(modelInfo.getModelVersion)) {
         throw ServingRuntimeException("duplicated model info", null)
       }
-      modelInfo match{
+      modelInfo match {
         case ClusterServingMetaData(
-          modelName: String,
-          modelVersion: String,
-          redisHost: String,
-          redisPort: String,
-          redisInputQueue: String,
-          redisOutputQueue: String,
-          timeWindow: Int,
-          countWindow: Int,
-          redisSecureEnabled: Boolean,
-          redisTrustStorePath: String,
-          redisTrustStoreToken: String) =>
-          var cluseterServingModelInfo = modelInfo.asInstanceOf[ClusterServingMetaData]
-          val servable = new ClusterServingServable(cluseterServingModelInfo)
+        modelName: String,
+        modelVersion: String,
+        redisHost: String,
+        redisPort: String,
+        redisInputQueue: String,
+        redisOutputQueue: String,
+        timeWindow: Int,
+        countWindow: Int,
+        redisSecureEnabled: Boolean,
+        redisTrustStorePath,
+        redisTrustStoreToken) =>
+          var clusterServingModelInfo = modelInfo.asInstanceOf[ClusterServingMetaData]
+          val servable = new ClusterServingServable(clusterServingModelInfo)
           modelVersionMap(modelInfo.getModelName)(modelInfo.getModelVersion) = servable
         case InferenceModelMetaData(
-          modelName: String,
-          modelVersion: String,
-          modelPath: String,
-          weightPath: String,
-          modelType: String,
-        ) =>
+        modelName: String,
+        modelVersion: String,
+        modelPath: String,
+        weightPath: String,
+        modelType: String) =>
           var inferenceModelInfo = modelInfo.asInstanceOf[InferenceModelMetaData]
           val servable = new InferenceModelServable(inferenceModelInfo)
           modelVersionMap(modelInfo.getModelName)(modelInfo.getModelVersion) = servable
@@ -91,7 +90,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData) ext
   }
 
   def predict(inputs: Seq[PredictionInput]):
-  Seq[PredictionOutput[String]]  = {
+  Seq[PredictionOutput[String]] = {
     null
   }
 }
@@ -100,7 +99,6 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
   var redisPutter: ActorRef = _
   var redisGetter: ActorRef = _
   var querierQueue: LinkedBlockingQueue[ActorRef] = _
-
 
 
   def load(): Unit = {
@@ -189,11 +187,12 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
   new Type(value = classOf[InferenceModelMetaData], name = "InferenceModelMetaData"),
   new Type(value = classOf[ClusterServingMetaData], name = "ClusterServingMetaData")
 ))
-abstract class ModelMetaData(modelName: String, modelVersion: String){
-  def getModelName:String = {
+abstract class ModelMetaData(modelName: String, modelVersion: String) {
+  def getModelName: String = {
     modelName
   }
-  def getModelVersion:String = {
+
+  def getModelVersion: String = {
     modelVersion
   }
 }
