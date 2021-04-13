@@ -22,4 +22,6 @@ object test{
     data.add(util.Arrays.asList({testTensor}))
     print(model.doPredict(inputs = data))
   }
+
+
 }

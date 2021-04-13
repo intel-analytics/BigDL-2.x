@@ -63,6 +63,7 @@ trait JedisEnabledActor extends Actor with Supportive {
       }
       jedisPool.getResource()
     }
+
 }
 
 
@@ -79,6 +80,7 @@ class RedisPutActor(
   override val logger = LoggerFactory.getLogger(classOf[RedisPutActor])
   val jedis = retrieveJedis(redisHost, redisPort,
     redisSecureEnabled, redissTrustStorePath, redissTrustStoreToken)
+
 
   var start = System.currentTimeMillis()
   val cache = MutableSet[PredictionInput]()
@@ -229,3 +231,4 @@ class QueryActor(redisGetActor: ActorRef) extends JedisEnabledActor {
       }
   }
 }
+
