@@ -30,7 +30,7 @@ if __name__ == "__main__":
         .withColumnRenamed('reviewerID', 'user') \
         .withColumnRenamed('asin', 'item') \
         .withColumnRenamed('unixReviewTime', 'time')\
-        .dropna("any").sample(0.0001).persist(storageLevel=StorageLevel.DISK_ONLY)
+        .dropna("any").persist(storageLevel=StorageLevel.DISK_ONLY)
     print("review_df, ", review_df.count())
 
     # read meta data
@@ -66,7 +66,7 @@ if __name__ == "__main__":
         .encode_string(['user', 'item', 'category'], [indices[0], indices[1], indices[2]]) \
         .gen_hist_seq(user_col="user", cols=['item', 'category'], sort_col='time', min_len=1, max_len=100)\
         .gen_length("item_history")\
-        .gen_negtive_samples(item_size, item_col='item', neg_num=1) \
+        .gen_negative_samples(item_size, item_col='item', neg_num=1) \
         .transform_python_udf("item", "category", reset_cat) \
         .gen_neg_hist_seq(item_size, item2cat.df, 'item_history', neg_num=5) \
         .mask_pad(
