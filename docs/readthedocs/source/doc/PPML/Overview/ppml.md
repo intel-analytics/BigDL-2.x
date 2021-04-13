@@ -20,7 +20,6 @@ Note: Intel SGX requires hardware support, please [check if your CPU has this fe
 - Protecting sensitive input/output data (computation, training and inference) in data application, e.g.,data analysis or machine learning on healthcare dataset.
 - Protecting propretary model, e.g., model trained on self-owned data or sensitive data.
 
-
 ## Trusted Big Data Analytics and ML
 
 - Scenario
@@ -31,23 +30,20 @@ Note: Intel SGX requires hardware support, please [check if your CPU has this fe
 ```
 
 ## Trusted Realtime Compute and ML
+
 - Scenario
-- Get started 
+- Get started
 
 ```bash
 ```
 
-
-## (Incoming) Federated Machine Learning
-
 ## Reference
 
-1. [Intel SGX (Software Guard Extensions)]()
-2. [Grapehene-SGX]()
-3. [Occlum]()
-4. [Federated Leraning]()
-5. Homomorphic Encryption
-6. MPC (Multi-Party Computation) or SMC (Secure Multi-Party Computation)
-7. Differential Privacy)
-8. Trusted Execution Environment
-9. 
+1. [Intel SGX (Software Guard Extensions)](https://software.intel.com/content/www/us/en/develop/topics/software-guard-extensions.html)
+2. [Grapehene](https://grapheneproject.io/)
+3. [Occlum](https://occlum.io/)
+4. [Federated Leraning](https://en.wikipedia.org/wiki/Federated_learning)
+5. [Homomorphic Encryption](https://en.wikipedia.org/wiki/Homomorphic_encryption)
+6. [MPC (Multi-Party Computation) or SMC (Secure Multi-Party Computation)](https://en.wikipedia.org/wiki/Secure_multi-party_computation)
+7. [Differential Privacy](https://en.wikipedia.org/wiki/Differential_privacy)
+8. [Trusted Execution Environment](https://en.wikipedia.org/wiki/Trusted_execution_environment)
