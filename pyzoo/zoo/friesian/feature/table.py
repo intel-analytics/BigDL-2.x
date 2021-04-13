@@ -147,7 +147,7 @@ class FeatureTable(Table):
     def _clone(self, df):
         return FeatureTable(df)
 
-    def gen_negtive_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
+    def gen_negative_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
         df = callZooFunc("float", "genNegSamples", self.df, item_size, item_col, label_col, neg_num)
         return FeatureTable(df)
 
