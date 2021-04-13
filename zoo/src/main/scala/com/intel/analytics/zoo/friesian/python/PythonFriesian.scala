@@ -198,7 +198,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       val full_rows = his_collect.sortBy(x => x.getAs[Long](sortCol)).toArray
       val n = full_rows.length
       val result: Seq[Row] = (0 to n - 1).map(i => {
-        val lowerBound = if (i < maxLength){
+        val lowerBound = if (i < maxLength) {
           0
         } else {
           i - maxLength
@@ -215,7 +215,8 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         Seq(col("history." + c).as(c),
           col("history." + c + "_history").as(c + "_history")))
     val collectColumns = colNames.map(c => col(c)) ++ Seq(col(sortCol))
-    val filterCondition = colNames.map(c => "size(" + c +  s"_history) >= $minLength").mkString(" and ")
+    val filterCondition = colNames.map(c =>
+      "size(" + c +  s"_history) >= $minLength").mkString(" and ")
 
     df.groupBy(userCol)
       .agg(collect_list(struct(collectColumns: _*)).as("his_collect"))
@@ -338,7 +339,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     val selectStatement = df.schema.fields
       .filter(x => colNames.contains(x.name)).map(x => {
       val c = x.name
-      if(x.dataType == ArrayType(IntegerType)){
+      if(x.dataType == ArrayType(IntegerType)) {
         s"post_pad_array($c) as $c"
       } else {
         s"post_pad_matrix($c) as $c"

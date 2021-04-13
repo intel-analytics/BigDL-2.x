@@ -28,6 +28,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.sql.functions._
 
+
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
@@ -243,9 +244,10 @@ class FriesianSpec extends ZooSpecHelper {
     ))
     val df = sqlContext.createDataFrame(data, schema)
     val dft = friesian.genLength(df, "history")
+
     assert(dft.columns.contains("history_length"))
-    assert(dft.filter("history_length = 2") == 1)
-    assert(dft.filter("history_length = 5") == 2)
+    assert(dft.filter("history_length = 2").count() == 1)
+    assert(dft.filter("history_length = 5").count() == 2)
   }
 
 }
