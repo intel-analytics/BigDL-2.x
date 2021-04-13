@@ -36,7 +36,8 @@ class TestClient:
         assert not input_api.frontend_url
 
     def test_input_queue_with_frontend(self):
-        input_api = InputQueue(host="1.1.1.1", port="1111", name="my-test", frontend_url="1.1.1.1:1")
+        input_api = InputQueue(
+            host="1.1.1.1", port="1111", name="my-test", frontend_url="1.1.1.1:1")
         input_api2 = InputQueue(frontend_url="1.1.1.1:1")
         assert input_api.name == "my-test"
         assert input_api.host == "1.1.1.1"
