@@ -1,6 +1,6 @@
 # PPML (Privacy Preserving Machine Learning)
 
-Analtyics-Zoo PPML is an end to end framework for building privacy presrving maching leanrnig applications on top of large scale dataset.
+Analytics Zoo provides an end-to-end PPML platform for Big Data AI.
 
 ## PPML for Big Data AI
 
@@ -37,13 +37,3 @@ Note: Intel SGX requires hardware support, please [check if your CPU has this fe
 ```bash
 ```
 
-## Reference
-
-1. [Intel SGX (Software Guard Extensions)](https://software.intel.com/content/www/us/en/develop/topics/software-guard-extensions.html)
-2. [Grapehene](https://grapheneproject.io/)
-3. [Occlum](https://occlum.io/)
-4. [Federated Leraning](https://en.wikipedia.org/wiki/Federated_learning)
-5. [Homomorphic Encryption](https://en.wikipedia.org/wiki/Homomorphic_encryption)
-6. [MPC (Multi-Party Computation) or SMC (Secure Multi-Party Computation)](https://en.wikipedia.org/wiki/Secure_multi-party_computation)
-7. [Differential Privacy](https://en.wikipedia.org/wiki/Differential_privacy)
-8. [Trusted Execution Environment](https://en.wikipedia.org/wiki/Trusted_execution_environment)
