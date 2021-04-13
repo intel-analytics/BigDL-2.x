@@ -72,7 +72,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
         (pathByte._1, value)
       } catch {
         case e: Exception =>
-          logger.info(s"${e.printStackTrace()}, " +
+          logger.error(s"${e.printStackTrace()}, " +
             s"Your input ${pathByte._1} format is invalid to your model, this record is skipped")
           (pathByte._1, "NaN")
       }
@@ -107,7 +107,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
         kvResult
       } catch {
         case e: Exception =>
-          logger.info(s"${e.printStackTrace()}, " +
+          logger.error(s"${e.printStackTrace()}, " +
             s"Your input format is invalid to your model, this batch is skipped")
           pathByte.map(x => (x._1, "NaN"))
       }
@@ -141,7 +141,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
         kvResult
       } catch {
         case e: Exception =>
-          logger.info(s"${e.printStackTrace()}, " +
+          logger.error(s"${e.printStackTrace()}, " +
             s"Your input format is invalid to your model, this batch is skipped")
           itemBatch.toParArray.map(x => (x._1, "NaN"))
       }
