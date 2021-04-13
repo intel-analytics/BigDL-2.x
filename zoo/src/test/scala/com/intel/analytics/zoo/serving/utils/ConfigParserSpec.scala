@@ -22,11 +22,18 @@ class ConfigParserSpec extends FlatSpec with Matchers {
   val configPath = getClass.getClassLoader.getResource("serving").getPath + "/config-test.yaml"
 
   val configParser = new ConfigParser(configPath)
-  "snakeyaml load config" should "work" in {
+  "load set config" should "work" in {
     val conf = configParser.loadConfig()
     assert(conf.modelPath.isInstanceOf[String])
+    assert(conf.modelPath == "/path")
+    assert(conf.modelParallelism == 10)
     assert(conf.inputAlreadyBatched.isInstanceOf[Boolean])
+    assert(conf.inputAlreadyBatched == true)
     assert(conf.redisSecureStructStorePassword.isInstanceOf[String])
   }
-
+  "load default config" should "work" in {
+    val conf = configParser.loadConfig()
+    assert(conf.threadPerModel == 1)
+    assert(conf.postProcessing == "")
+  }
 }

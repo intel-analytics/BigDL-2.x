@@ -2,7 +2,7 @@
 
 modelPath: /path
 jobName:
-modelParallelism: 1
+modelParallelism: 10
 inputAlreadyBatched: true
 wrong_config: 123
 # test int password should be parsed as string
