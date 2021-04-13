@@ -106,7 +106,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                 }
                 catch{
                   case e =>
-                    complete(405, "Input Not Allowed. Err:" + e)
+                    complete(405, "Input Not Allowed. Err: " + e)
                 }
               }}
             }

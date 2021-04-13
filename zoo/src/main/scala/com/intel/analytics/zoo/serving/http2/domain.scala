@@ -100,7 +100,6 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
   var redisGetter: ActorRef = _
   var querierQueue: LinkedBlockingQueue[ActorRef] = _
 
-
   def load(): Unit = {
     val redisPutterName = s"redis-putter"
     redisPutter = timing(s"$redisPutterName initialized.")() {
@@ -163,7 +162,7 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
         Await.result(querier ? queryMessage, timeout.duration)
           .asInstanceOf[Seq[(String, util.Map[String, String])]]
       }
-      silent("querier back")() {
+      timing("querier back")() {
         querierQueue.offer(querier)
       }
       val objectMapper = new ObjectMapper()
@@ -206,7 +205,7 @@ case class InferenceModelMetaData(modelName: String,
   extends ModelMetaData(modelName, modelVersion)
 
 case class ClusterServingMetaData(modelName: String,
-                                  modelVersion: String = "1.1",
+                                  modelVersion: String,
                                   redisHost: String,
                                   redisPort: String,
                                   redisInputQueue: String,
