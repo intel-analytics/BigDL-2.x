@@ -82,12 +82,14 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               (segs, contentType, content) => {
               timing("welcome")(overallRequestTimer) {
                 try {
+                  //TODO Only Cluster Serving Now
                   if (segs.length != 4 || segs(1) != "versions" || segs(3) != "predict") {
                     throw ServingRuntimeException("parameter not macth", null)
                   }
                   val modelName = segs(0); val modelVersion = segs(2)
                   logger.info("model name: " + modelName + "\nmodel version: " + modelVersion)
                   val model = servableManager.retriveModel(modelName, modelVersion)
+                  model.load()
                   val result = timing("predict")(overallRequestTimer, predictRequestTimer) {
                     val instances = timing("json deserialization")() {
                       JsonUtil.fromJson(classOf[Instances], content)

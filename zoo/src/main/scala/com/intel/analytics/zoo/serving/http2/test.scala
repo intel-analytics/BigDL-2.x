@@ -1,12 +1,12 @@
 package com.intel.analytics.zoo.serving.http2
 
 import com.intel.analytics.zoo.serving.http.FrontEndApp.timing
-import com.intel.analytics.zoo.serving.http.{Instances, InstancesPredictionInput, JsonUtil, PredictionInput}
+import com.intel.analytics.zoo.serving.http._
 
 
 object test {
   def main(args: Array[String]) {
-
+      redisTest()
     val content =
       """{
   "instances" : [ {
@@ -29,6 +29,7 @@ object test {
 }"""
 
     try {
+
       val servableManager = new ServableManager
       servableManager.load("/home/yansu/projects/test.yaml")
       val clusterServingServable = servableManager.retriveModel("second-model", "1.0")
@@ -42,5 +43,9 @@ object test {
       case e =>
         println(e)
     }
+  }
+
+  def redisTest(): Unit ={
+
   }
 }

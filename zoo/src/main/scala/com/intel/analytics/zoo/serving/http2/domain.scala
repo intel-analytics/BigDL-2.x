@@ -206,7 +206,7 @@ case class InferenceModelMetaData(modelName: String,
   extends ModelMetaData(modelName, modelVersion)
 
 case class ClusterServingMetaData(modelName: String,
-                                  modelVersion: String,
+                                  modelVersion: String = "1.1",
                                   redisHost: String,
                                   redisPort: String,
                                   redisInputQueue: String,
