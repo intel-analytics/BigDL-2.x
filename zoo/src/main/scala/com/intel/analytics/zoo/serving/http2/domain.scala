@@ -18,8 +18,45 @@ import scala.concurrent.Await
 class ServableManager {
   private var modelVersionMap = new mutable.HashMap[String, mutable.HashMap[String, Servable]]
 
-  def load(dir: String) = {
-
+  def load(servableConfigDir: String): Unit = {
+    val servableManagerConfYaml = scala.io.Source.fromFile(servableConfigDir).mkString
+    val modelInfoList = YamlUtil.fromYaml(classOf[ServableManagerConf], servableManagerConfYaml).modelMetaDataList
+    for (modelInfo <- modelInfoList){
+      if (!modelVersionMap.contains(modelInfo.getModelName)){
+        val versionMaper = new mutable.HashMap[String, Servable]
+        modelVersionMap(modelInfo.getModelName) = versionMaper
+      }
+      if (modelVersionMap(modelInfo.getModelName).contains(modelInfo.getModelVersion)){
+        throw ServingRuntimeException("duplicated model info", null)
+      }
+      modelInfo match{
+        case ClusterServingMetaData(
+          modelName: String,
+          modelVersion: String,
+          redisHost: String,
+          redisPort: String,
+          redisInputQueue: String,
+          redisOutputQueue: String,
+          timeWindow: Int,
+          countWindow: Int,
+          redisSecureEnabled: Boolean,
+          redisTrustStorePath: String,
+          redisTrustStoreToken: String) =>
+          var cluseterServingModelInfo = modelInfo.asInstanceOf[ClusterServingMetaData]
+          val servable = new ClusterServingServable(cluseterServingModelInfo)
+          modelVersionMap(modelInfo.getModelName)(modelInfo.getModelVersion) = servable
+        case InferenceModelMetaData(
+          modelName: String,
+          modelVersion: String,
+          modelPath: String,
+          weightPath: String,
+          modelType: String,
+        ) =>
+          var inferenceModelInfo = modelInfo.asInstanceOf[InferenceModelMetaData]
+          val servable = new InferenceModelServable(inferenceModelInfo)
+          modelVersionMap(modelInfo.getModelName)(modelInfo.getModelVersion) = servable
+      }
+    }
   }
 
   def retriveModels(modelName: String): List[Servable] = {
@@ -113,14 +150,14 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
 
   def predict(inputs: Seq[PredictionInput]):
   Seq[PredictionOutput[String]] = {
-    silent("put message send")() {
+    timing("put message send")() {
       val message = PredictionInputMessage(inputs)
       redisPutter ! message
     }
-    val result = silent("response waiting")() {
+    val result = timing("response waiting")() {
       val ids = inputs.map(_.getId())
       val queryMessage = PredictionQueryMessage(ids)
-      val querier = silent("querier take")() {
+      val querier = timing("querier take")() {
         querierQueue.take()
       }
       val results = timing(s"query message wait for key $ids")(
@@ -152,8 +189,13 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
   new Type(value = classOf[InferenceModelMetaData], name = "InferenceModelMetaData"),
   new Type(value = classOf[ClusterServingMetaData], name = "ClusterServingMetaData")
 ))
-abstract class ModelMetaData(modelName: String, modelVersion: String) {
-
+abstract class ModelMetaData(modelName: String, modelVersion: String){
+  def getModelName:String = {
+    modelName
+  }
+  def getModelVersion:String = {
+    modelVersion
+  }
 }
 
 
@@ -174,7 +216,8 @@ case class ClusterServingMetaData(modelName: String,
                                   countWindow: Int = 56,
                                   redisSecureEnabled: Boolean = false,
                                   redisTrustStorePath: String = null,
-                                  redisTrustStoreToken: String = "1234qwer") extends ModelMetaData(modelName, modelVersion)
+                                  redisTrustStoreToken: String = "1234qwer")
+  extends ModelMetaData(modelName, modelVersion)
 
 
 case class ServableManagerConf(modelMetaDataList: List[ModelMetaData])

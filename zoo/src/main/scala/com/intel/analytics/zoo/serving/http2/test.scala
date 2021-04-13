@@ -7,17 +7,17 @@ import com.intel.analytics.zoo.serving.http.{Instances, InstancesPredictionInput
 object test {
   def main(args: Array[String]) {
 
-    val influenceModelMetaData = InferenceModelMetaData("first-model", "1.0", s"/home/yansu/projects/model/resnet_v1_50.xml", s"/home/yansu/projects/model/resnet_v1_50.bin", "OpenVINO")
-    val clusterServingMetaData = ClusterServingMetaData("first-model", "1.0", "localhost", "6379", "serving_stream", "cluster-serving_serving_stream:")
-    val modelMetaDataList = List(influenceModelMetaData, clusterServingMetaData)
-    val conf = ServableManagerConf(modelMetaDataList)
-    val yaml = YamlUtil.toYaml(conf)
-    println(yaml)
-    val instancesYaml = scala.io.Source.fromFile("/home/yansu/projects/test.yaml").mkString
-    val modelInfoList = YamlUtil.fromYaml(classOf[ServableManagerConf], instancesYaml)
-    println(modelInfoList)
-  }
-}
+//    val influenceModelMetaData = InferenceModelMetaData("first-model", "1.0", s"/home/yansu/projects/model/resnet_v1_50.xml", s"/home/yansu/projects/model/resnet_v1_50.bin", "OpenVINO")
+//    val clusterServingMetaData = ClusterServingMetaData("first-model", "1.0", "localhost", "6379", "serving_stream", "cluster-serving_serving_stream:")
+//    val modelMetaDataList = List(influenceModelMetaData, clusterServingMetaData)
+//    val conf = ServableManagerConf(modelMetaDataList)
+//    val yaml = YamlUtil.toYaml(conf)
+//    println(yaml)
+//    val instancesYaml = scala.io.Source.fromFile("/home/yansu/projects/test.yaml").mkString
+//    val modelInfoList = YamlUtil.fromYaml(classOf[ServableManagerConf], instancesYaml)
+//    println(modelInfoList)
+      val servableManager = new ServableManager
+      servableManager.load("/home/yansu/projects/test.yaml")
 
 //val content =
 //"""{
@@ -40,10 +40,13 @@ object test {
 //  } ]
 //}"""
 //    val clusterServingServable =  new ClusterServingServable(clusterServingMetaData)
+//    clusterServingServable.load()
 //    val instances = JsonUtil.fromJson(classOf[Instances], content)
 //    val inputs = instances.instances.map(instance => {
 //      InstancesPredictionInput(Instances(instance))
 //    })
 //    print(clusterServingServable.predict(inputs))
-//
-//  }
+
+
+  }
+}
