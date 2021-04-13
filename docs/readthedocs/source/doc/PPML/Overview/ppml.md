@@ -10,11 +10,11 @@ Among most commonly used PPML technologies, i.e., HE (Homomorphic Encryption), M
    <p align="center"> <img src="docs/docs/Images/PPML/ppml_tech.png" height=360px; weight=800px;"><br></p>
 </div>
 
+![PPML Technologies](../../../../../docs/docs/Images/PPML/ppml_tech.png)
+
 Based on Intel SGX (Software Guard Extensions) and LibOS projects, this framework empowers data scientists and big data developers to build PPML applications on top of large scale dataset without impacting existing applications.
 
-<div align="center">
-   <p align="center"> <img src="docs/docs/Images/PPML/ppml_arch.png" height=360px; weight=800px;"><br></p>
-</div>
+![PPML Architecture](../../../../../docs/docs/Images/PPML/ppml_arch.png)
 
 **Key features:**
 
