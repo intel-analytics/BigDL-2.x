@@ -16,29 +16,31 @@ Based on Intel SGX (Software Guard Extensions) and LibOS projects ([Graphene](ht
 
 Note: Intel SGX requires hardware support, please [check if your CPU has this feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). In [3rd Gen Intel Xeon Scalable Processors](https://newsroom.intel.com/press-kits/3rd-gen-intel-xeon-scalable/), SGX allows up to 1TB of data to be included in secure enclaves.
 
-**Key features**
+### Key features
 
 - Protecting data and model confidentiality
+- Seamless migrate existing big data applications into privacy preserving applications
 - Trusted big data & AI Platform based on Intel SGX
 
-**Scenario**
+### Scenario
 
 - Protecting sensitive input/output data (computation, training and inference) in big data applications, e.g.,data analysis or machine learning on healthcare dataset
 - Protecting propretary model in training and inference, e.g., secured model inference with self-owned model
 
 ## Trusted Big Data Analytics and ML
 
+Spark
 
-
-**Scenario**
+### Scenario
 
 - Batch computation/analytics on senstive data, e.g., privacy preserved Spark jobs on sensitive data
 - Interactive computation/analytics on sensitive data, e.g., privacy preserved SparkSQL on sensitive data
 - Distributed machine learning & deep Learning on sensitive data
 
-**Get started**
+### Get started
 
 - Env setup (DockFIle)
+
 - Spark example (pi)
 - SparkSQL
 - TPC-H
@@ -49,12 +51,15 @@ Note: Intel SGX requires hardware support, please [check if your CPU has this fe
 
 ## Trusted Realtime Compute and ML
 
-**Scenario**
+Flink
+
+### Scenario
 
 - Real time data computation/analytics on sensitive data, e.g., privacy preserved Flink jobs on sensitive data
 - Privacy preserved distributed model inference with propretary model on sensitive data
 
-**Get started**
+## Get started
+
 - Env setup (DockFIle)
 - Flink example (word count)
 - Cluster serving
