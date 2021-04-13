@@ -34,6 +34,7 @@ class ConfigParser(configPath: String) {
       mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
       mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
       val helper = mapper.readValue[ClusterServingHelper](configStr, classOf[ClusterServingHelper])
+      helper.parseModelType(helper.modelPath)
       parseConfigStrings(helper)
     }
     catch {
@@ -46,6 +47,9 @@ class ConfigParser(configPath: String) {
   def parseConfigStrings(clusterServingHelper: ClusterServingHelper): ClusterServingHelper = {
     clusterServingHelper.redisHost = clusterServingHelper.redisUrl.split(":").head.trim
     clusterServingHelper.redisPort = clusterServingHelper.redisUrl.split(":").last.trim.toInt
+    if (clusterServingHelper.coreNumberPerMachine > 0) {
+      if (clusterServingHelper.)
+    }
     clusterServingHelper
   }
 

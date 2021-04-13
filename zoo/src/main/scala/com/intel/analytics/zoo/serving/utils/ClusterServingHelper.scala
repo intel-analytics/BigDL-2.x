@@ -40,7 +40,7 @@ class ClusterServingHelper
 
   // performance attributes
   @BeanProperty var inputAlreadyBatched = false
-  @BeanProperty var coreNumberPerMachine = 4
+  @BeanProperty var coreNumberPerMachine = -1
   @BeanProperty var modelParallelism = 1
   @BeanProperty var threadPerModel = 1
 
@@ -257,7 +257,16 @@ class ClusterServingHelper
     else {
       modelType = modelType.toLowerCase
     }
-
+    // auto set parallelism if coreNumberPerMachine is set
+    if (coreNumberPerMachine > 0) {
+      if (modelType == "openvino") {
+        threadPerModel = coreNumberPerMachine
+        modelParallelism = 1
+      } else {
+        threadPerModel = 1
+        modelParallelism = coreNumberPerMachine
+      }
+    }
   }
 
 }
