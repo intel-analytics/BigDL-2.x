@@ -186,7 +186,7 @@ class PytorchBaseModel(BaseModel):
         for i in range(len(list(self.model.parameters()))):
             print(list(self.model.parameters())[i].size())
 
-    def evaluate(self, x, y, metrics=['mse'], multioutput="raw_values"):
+    def evaluate(self, x, y, metrics=['mse'], multioutput="uniform_average"):
         # reshape 1dim input
         x = self._reshape_input(x)
         y = self._reshape_input(y)
