@@ -241,9 +241,10 @@ def MSE(y_true, y_pred, multioutput='uniform_average'):
         array of floating point values, one for each individual target.
     """
     y_true, y_pred, original_shape = _standardize_input(y_true, y_pred, multioutput)
+    result = mean_squared_error(y_true, y_pred, multioutput=multioutput)
     if multioutput == 'raw_values':
-        return mean_squared_error(y_true, y_pred, multioutput=multioutput).reshape(original_shape)
-    return mean_squared_error(y_true, y_pred, multioutput=multioutput)
+        return result.reshape(original_shape)
+    return result
 
 
 def Accuracy(y_true, y_pred, multioutput=None):
