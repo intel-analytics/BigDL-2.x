@@ -22,7 +22,7 @@ class ConfigParserSpec extends FlatSpec with Matchers {
   val configPath = getClass.getClassLoader.getResource("serving").getPath + "/config-test.yaml"
 
   val configParser = new ConfigParser(configPath)
-  "load config" should "work" in {
+  "snakeyaml load config" should "work" in {
     val conf = configParser.loadConfig()
     assert(conf.modelPath.isInstanceOf[String])
     assert(conf.inputAlreadyBatched.isInstanceOf[Boolean])

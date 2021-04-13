@@ -18,6 +18,8 @@ package com.intel.analytics.zoo.serving.utils
 
 import java.io.{File, FileInputStream}
 
+import com.fasterxml.jackson.databind.{DeserializationFeature, MapperFeature, ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 
@@ -25,10 +27,13 @@ import org.yaml.snakeyaml.constructor.Constructor
 class ConfigParser(configPath: String) {
 
   def loadConfig(): ClusterServingHelper = {
-    val yamlParser = new Yaml(new Constructor(classOf[ClusterServingHelper]))
-    val input = new FileInputStream(new File(configPath))
     try {
-      val helper = yamlParser.load(input).asInstanceOf[ClusterServingHelper]
+      val configStr = scala.io.Source.fromFile(configPath).mkString
+      val mapper = new ObjectMapper(new YAMLFactory())
+      mapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+      mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+      mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+      val helper = mapper.readValue[ClusterServingHelper](configStr, classOf[ClusterServingHelper])
       parseConfigStrings(helper)
     }
     catch {
@@ -43,4 +48,6 @@ class ConfigParser(configPath: String) {
     clusterServingHelper.redisPort = clusterServingHelper.redisUrl.split(":").last.trim.toInt
     clusterServingHelper
   }
+
 }
+
