@@ -56,7 +56,7 @@ evaluate(x, y, metrics=['mse'], multioutput="uniform_average")
 - **`x`**: A numpy array with shape (num_samples, lookback, feature_dim).
 - **`y`**: A numpy array with shape (num_samples, horizon, target_dim).
 - **`metrics`**: A list contains metrics for test/valid data.
-- **`multioutput`**: Defines aggregating of multiple output values. String in ['raw_values', 'uniform_average']
+- **`multioutput`**: Defines aggregating of multiple output values. String in ['raw_values', 'uniform_average']. The value defaults to 'uniform_average'.
 ### evaluate_with_onnx
 
 ```python
@@ -67,7 +67,7 @@ evaluate_with_onnx(x, y, metrics=['mse'], dirname=None, multioutput="uniform_ave
 - **`y`**: A numpy array with shape (num_samples, horizon, target_dim).
 - **`metrics`**: A list contains metrics for test/valid data.
 - **`dirname`**: The directory to save onnx model file. This value defaults to None for no saving file.
-- **`multioutput`**: Defines aggregating of multiple output values. String in ['raw_values', 'uniform_average']
+- **`multioutput`**: Defines aggregating of multiple output values. String in ['raw_values', 'uniform_average']. The value defaults to 'uniform_average'.
 
 ### predict
 

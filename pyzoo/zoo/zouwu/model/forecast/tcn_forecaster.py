@@ -139,7 +139,8 @@ class TCNForecaster(Forecaster):
         :param y: A numpy array with shape (num_samples, horizon, target_dim).
         :param metrics: A list contains metrics for test/valid data.
         :param multioutput: Defines aggregating of multiple output values.
-               String in ['raw_values', 'uniform_average']
+               String in ['raw_values', 'uniform_average']. The value defaults to
+               'uniform_average'.
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
@@ -158,7 +159,8 @@ class TCNForecaster(Forecaster):
         :param dirname: The directory to save onnx model file. This value defaults
                to None for no saving file.
         :param multioutput: Defines aggregating of multiple output values.
-               String in ['raw_values', 'uniform_average']
+               String in ['raw_values', 'uniform_average']. The value defaults to
+               'uniform_average'.
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
