@@ -125,6 +125,7 @@ else
        --ignore=../test/zoo/ray/ \
        --ignore=../test/zoo/zouwu/ \
        --ignore=../test/zoo/pipeline/api/torch/ \
+       --ignore=../test/zoo/orca/automl/autoestimator/ \
        --ignore=../test/zoo/orca/data \
        --ignore=../test/zoo/orca/learn/spark \
        --ignore=../test/zoo/orca/learn/ray \

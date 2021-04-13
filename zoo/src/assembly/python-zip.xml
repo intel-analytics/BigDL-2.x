@@ -16,7 +16,7 @@
                 <exclude>docs/**/*</exclude>
             </excludes>
             <outputDirectory>/..</outputDirectory>
-            <directory>${project.parent.basedir}/pyzoo</directory>
+            <directory>../${project.basedir}/pyzoo</directory>
         </fileSet>
 
         <fileSet>
@@ -28,7 +28,7 @@
                 <exclude>docs/**/*</exclude>
             </excludes>
             <outputDirectory>/..</outputDirectory>
-            <directory>${project.parent.basedir}/zoo/python_packages/sources</directory>
+            <directory>../${project.basedir}/zoo/python_packages/sources</directory>
         </fileSet>
 
         <fileSet>
@@ -36,7 +36,7 @@
                 <include>**/spark-analytics-zoo.conf</include>
             </includes>
             <outputDirectory>/..</outputDirectory>
-            <directory>${project.parent.basedir}/zoo/src/main/resources</directory>
+            <directory>../${project.basedir}/zoo/src/main/resources</directory>
         </fileSet>
 
         <fileSet>

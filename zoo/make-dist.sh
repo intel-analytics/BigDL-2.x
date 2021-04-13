@@ -22,7 +22,10 @@
 
 set -e
 
-BASEDIR=$(dirname "$0")
+RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
+echo $RUN_SCRIPT_DIR
+export ANALYTICS_ZOO_HOME="$(cd ${RUN_SCRIPT_DIR}/../; pwd)"
+echo $ANALYTICS_ZOO_HOME
 
 # Check java
 if type -p java>/dev/null; then
@@ -55,11 +58,11 @@ if [ $MVN_INSTALL -eq 0 ]; then
   exit 1
 fi
 
-mvn clean package -DskipTests $*
+mvn -f $RUN_SCRIPT_DIR clean package -DskipTests $*
 
-DIST_DIR=$BASEDIR/dist
+DIST_DIR=$ANALYTICS_ZOO_HOME/dist
 
 # Clean dist folder
 rm -rf $DIST_DIR
-cp -r $BASEDIR/zoo/target/analytics-zoo-*-dist-all $DIST_DIR
+cp -r $ANALYTICS_ZOO_HOME/zoo/target/analytics-zoo-*-dist-all $DIST_DIR
 

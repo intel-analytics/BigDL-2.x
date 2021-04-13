@@ -4,14 +4,52 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <artifactId>zoo-parent</artifactId>
-        <groupId>com.intel.analytics.zoo</groupId>
-        <version>0.10.0-SNAPSHOT</version>
-    </parent>
-
+    <groupId>com.intel.analytics.zoo</groupId>
     <artifactId>analytics-zoo-bigdl_${bigdl.version}-spark_${spark.version}</artifactId>
     <packaging>jar</packaging>
+    <version>0.10.0-SNAPSHOT</version>
+    
+    <description>Big Data AI platform for distributed TensorFlow and PyTorch on Apache Spark.</description>
+    <url>https://github.com/intel-analytics/analytics-zoo</url>
+
+    <developers>
+        <developer>
+            <name>Jason Dai</name>
+            <email>jason.dai@intel.com</email>
+            <organization>Intel</organization>
+            <organizationUrl>http://www.intel.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:intel-analytics/analytics-zoo.git</connection>
+        <url>https://github.com/intel-analytics/analytics-zoo/tree/master</url>
+    </scm>
+    
+    <properties>
+        <java.version>1.7</java.version>
+        <javac.version>1.7</javac.version>
+        <scala-library-scope>compile</scala-library-scope>
+        <scala.major.version>2.11</scala.major.version>
+        <scala.version>2.11.8</scala.version>
+        <scala.macros.version>2.1.0</scala.macros.version>
+        <scalatest.version>3.0.7</scalatest.version>
+        <spark.version>2.4.3</spark.version>
+        <bigdl.version>0.12.1</bigdl.version>
+        <bigdl.artifactId>bigdl-SPARK_2.4</bigdl.artifactId>
+        <maven-site-plugin.version>3.4</maven-site-plugin.version>
+        <wagon-ssh.version>1.0</wagon-ssh.version>
+        <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
+        <exec-maven-plugin.version>1.2.1</exec-maven-plugin.version>
+        <scala-maven-plugin.version>3.4.2</scala-maven-plugin.version>
+        <spark-scope>provided</spark-scope>
+        <bigdl-scope>compile</bigdl-scope>
+        <core.artifactId>zoo-core-dist-all</core.artifactId>
+        <core.dependencyType>jar</core.dependencyType>
+        <data-store-url>http://download.tensorflow.org</data-store-url>
+        <inner-ftp-uri>http://10.239.45.10:8081/repository/raw</inner-ftp-uri>
+        <tf-shade>bushade</tf-shade>
+    </properties>
 
     <distributionManagement>
         <snapshotRepository>
@@ -19,6 +57,192 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
+
+    <profiles>
+        <profile>
+            <id>spark_2.x</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/com/intel/analytics/zoo/examples/serving/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/serving/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/pipeline/nnframes/XgboostTrainSpec.scala</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <java.version>1.8</java.version>
+                <javac.version>1.8</javac.version>
+                <spark-version.project>2.1</spark-version.project>
+                <spark.version>2.1.0</spark.version>
+                <scala.major.version>2.11</scala.major.version>
+                <scala.version>2.11.8</scala.version>
+                <scala.macros.version>2.1.0</scala.macros.version>
+                <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>spark_2.4+</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <java.version>1.8</java.version>
+                <javac.version>1.8</javac.version>
+                <spark-version.project>2.4</spark-version.project>
+                <spark.version>2.4.3</spark.version>
+                <scala.major.version>2.11</scala.major.version>
+                <scala.version>2.11.8</scala.version>
+                <scala.macros.version>2.1.0</scala.macros.version>
+                <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-all</artifactId>
+                    <version>4.1.48.Final</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                    <version>1.7.5</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>spark_3.x</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+            <properties>
+                <java.version>1.8</java.version>
+                <javac.version>1.8</javac.version>
+                <spark-version.project>3.0</spark-version.project>
+                <spark.version>3.0.0</spark.version>
+                <scala.major.version>2.12</scala.major.version>
+                <scala.version>2.12.10</scala.version>
+                <scala.macros.version>2.1.0</scala.macros.version>
+                <maven.compiler.source>${java.version}</maven.compiler.source>
+                <maven.compiler.target>${java.version}</maven.compiler.target>
+                <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-all</artifactId>
+                    <version>4.1.48.Final</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                    <version>1.7.5</version>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>without_bigdl</id>
+            <properties>
+                <bigdl-scope>provided</bigdl-scope>
+                <tf-shade>org.tensorflow</tf-shade>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>scala_2.12</id>
+            <properties>
+                <scala.major.version>2.12</scala.major.version>
+                <scala.version>2.12.10</scala.version>
+                <scala.macros.version>2.1.0</scala.macros.version>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>scala_2.11</id>
+            <properties>
+                <scala.major.version>2.11</scala.major.version>
+                <scala.version>2.11.8</scala.version>
+                <scala.macros.version>2.1.0</scala.macros.version>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>all-in-one</id>
+            <properties>
+                <spark-scope>compile</spark-scope>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>linux</id>
+            <properties>
+                <core.artifactId>zoo-core-dist-linux64</core.artifactId>
+                <core.dependencyType>pom</core.dependencyType>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>mac</id>
+            <properties>
+                <core.artifactId>zoo-core-dist-mac</core.artifactId>
+                <core.dependencyType>pom</core.dependencyType>
+            </properties>
+            <!--these are not supported right now, added to make the project compiles-->
+            <dependencies>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-mkl-linux</artifactId>
+                    <version>0.10.0-SNAPSHOT</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.intel.analytics.zoo</groupId>
+                    <artifactId>zoo-core-pmem-java-linux</artifactId>
+                    <version>0.10.0-SNAPSHOT</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>sign</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <repositories>
         <repository>
@@ -52,6 +276,17 @@
             </releases>
             <snapshots>
                 <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>sonatype</id>
+            <name>sonatype repository</name>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
             </snapshots>
         </repository>
     </repositories>
@@ -370,6 +605,16 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <version>${maven-enforcer-plugin.version}</version>
+                    <configuration>
+                        <rules>
+                            <requireMavenVersion>
+                                <version>[3.0.2,)</version>
+                            </requireMavenVersion>
+                            <requireJavaVersion>
+                                <version>[1.7,)</version>
+                            </requireJavaVersion>
+                        </rules>
+                    </configuration>
                     <executions>
                         <execution>
                             <id>enforce-versions</id>
@@ -389,9 +634,74 @@
                         </execution>
                     </executions>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>${maven-site-plugin.version}</version>
+                    <dependencies>
+                        <dependency><!-- add support for ssh/scp -->
+                            <groupId>org.apache.maven.wagon</groupId>
+                            <artifactId>wagon-ssh</artifactId>
+                            <version>1.0</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <id>clean</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <phase>pre-clean</phase>
+                    </execution>
+                    <execution>
+                        <id>default</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <phase>validate</phase>
+                    </execution>
+                    <execution>
+                        <id>site</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <phase>pre-site</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-site-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-descriptor</id>
+                        <goals>
+                            <goal>attach-descriptor</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -601,6 +911,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.4</version>
                 <executions>
                     <execution>
                         <id>with-spark</id>
@@ -716,7 +1027,7 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>${scala-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>eclipse-add-source</id>
