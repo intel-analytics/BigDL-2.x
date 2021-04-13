@@ -244,7 +244,7 @@ class StringIndex(Table):
     @classmethod
     def read_parquet(cls, paths, col_name=None):
         """
-        Loads Parquet files, returning the result as a `FeatureTable`.
+        Loads Parquet files, returning the result as a `StringIndex`.
 
         :param paths: str or a list of str. The path/paths to Parquet file(s).
         :param col_name: str. The column name of the corresponding categorical column. If
