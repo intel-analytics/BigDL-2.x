@@ -37,7 +37,7 @@ object DeprecatedUtils {
 
     // parse model field
     val modelConfig = configList.get("model").asInstanceOf[HM]
-    clusterServingHelper.modelPath = if (clusterServingHelper.modelPath == null) {
+    clusterServingHelper.modelPath = if (clusterServingHelper.modelPath == "") {
       getYaml(modelConfig, "path", null).asInstanceOf[String]
     } else {
       clusterServingHelper.modelPath

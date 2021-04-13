@@ -35,7 +35,7 @@ class ClusterServingHelper
   extends Serializable {
   // BeanProperty store attributes read from config file
   @BeanProperty var modelPath = ""
-  @BeanProperty var jobName = "serving_stream"
+  @BeanProperty var jobName = Conventions.SERVING_STREAM_DEFAULT_NAME
   @BeanProperty var postProcessing = ""
 
   // performance attributes
