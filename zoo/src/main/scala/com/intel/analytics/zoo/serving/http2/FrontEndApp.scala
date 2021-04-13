@@ -81,13 +81,31 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               }}~(post & path(Segments) & extract(_.request.entity.contentType) & entity(as[String])) {
               (segs, contentType, content) => {
               timing("welcome")(overallRequestTimer) {
-                if (segs.length != 4 || segs(1) != "versions" || segs(3) != "predict"){
-                  throw ServingRuntimeException ("parameter not macth", null)
+                try {
+                  if (segs.length != 4 || segs(1) != "versions" || segs(3) != "predict") {
+                    throw ServingRuntimeException("parameter not macth", null)
+                  }
+                  val modelName = segs(0); val modelVersion = segs(2)
+                  logger.info("model name: " + modelName + "\nmodel version: " + modelVersion)
+                  val model = servableManager.retriveModel(modelName, modelVersion)
+                  val result = timing("predict")(overallRequestTimer, predictRequestTimer) {
+                    val instances = timing("json deserialization")() {
+                      JsonUtil.fromJson(classOf[Instances], content)
+                    }
+                    val inputs = instances.instances.map(instance => {
+                      InstancesPredictionInput(Instances(instance))
+                    })
+                    val outputs = model.predict(inputs)
+                    Predictions(outputs)
+                  }
+                  timing("response complete")() {
+                    complete(200, result.toString)
+                  }
                 }
-                val modelName = segs(0); val modelVersion = segs(2)
-
-
-                complete("get Model Info Port")
+                catch{
+                  case e =>
+                    complete(405, "Input Not Allowed. Err:" + e)
+                }
               }}
             }
           )

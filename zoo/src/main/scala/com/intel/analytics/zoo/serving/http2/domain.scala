@@ -74,11 +74,11 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
         clusterServingMetaData.redisPort.toInt,
         clusterServingMetaData.redisInputQueue,
         clusterServingMetaData.redisOutputQueue,
-        0, //TODO:
-        56,
-        false,
-        null,
-        "1234qwer"))
+        clusterServingMetaData.timeWindow,
+        clusterServingMetaData.countWindow,
+        clusterServingMetaData.redisSecureEnabled,
+        clusterServingMetaData.redisTrustStorePath,
+        clusterServingMetaData.redisTrustStoreToken))
       system.actorOf(redisPutterProps, name = redisPutterName)
     }
 
@@ -89,11 +89,11 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
         clusterServingMetaData.redisPort.toInt,
         clusterServingMetaData.redisInputQueue,
         clusterServingMetaData.redisOutputQueue,
-        0,
-        56,
-        false,
-        null,
-        "1234qwer"))
+        clusterServingMetaData.timeWindow,
+        clusterServingMetaData.countWindow,
+        clusterServingMetaData.redisSecureEnabled,
+        clusterServingMetaData.redisTrustStorePath,
+        clusterServingMetaData.redisTrustStoreToken))
       system.actorOf(redisGetterProps, name = redisGetterName)
     }
 
@@ -169,7 +169,12 @@ case class ClusterServingMetaData(modelName: String,
                                   redisHost: String,
                                   redisPort: String,
                                   redisInputQueue: String,
-                                  redisOutputQueue: String) extends ModelMetaData(modelName, modelVersion)
+                                  redisOutputQueue: String,
+                                  timeWindow: Int = 0,
+                                  countWindow: Int = 56,
+                                  redisSecureEnabled: Boolean = false,
+                                  redisTrustStorePath: String = null,
+                                  redisTrustStoreToken: String = "1234qwer") extends ModelMetaData(modelName, modelVersion)
 
 
 case class ServableManagerConf(modelMetaDataList: List[ModelMetaData])
