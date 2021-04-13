@@ -82,6 +82,19 @@ class TestBasePytorchModel(TestCase):
             np.testing.assert_almost_equal(mse_eval, mse_eval_onnx)
         except ImportError:
             pass
+        # incremental training test
+        model.fit_eval(x=self.data["x"],
+                       y=self.data["y"],
+                       validation_data=(self.data["val_x"], self.data["val_y"]),
+                       epochs=20)
+        mse_eval = model.evaluate(x=self.data["val_x"], y=self.data["val_y"])
+        try:
+            import onnx
+            import onnxruntime
+            mse_eval_onnx = model.evaluate_with_onnx(x=self.data["val_x"], y=self.data["val_y"])
+            np.testing.assert_almost_equal(mse_eval, mse_eval_onnx)
+        except ImportError:
+            pass
 
     def test_predict(self):
         modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator_pytorch,

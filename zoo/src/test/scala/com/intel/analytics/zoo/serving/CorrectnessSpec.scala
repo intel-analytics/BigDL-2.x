@@ -105,7 +105,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     logger.info(s"${fileList.size} images about to enqueue...")
 
     val pre = new PreProcessing(helper.chwFlag)
-    val clusterServingInference = new ClusterServingInference(pre, helper.modelType)
+    val clusterServingInference = new ClusterServingInference(pre, helper)
     var predictMap = Map[String, String]()
 
     for (file <- fileList) {
@@ -177,7 +177,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     logger.info(s"${fileList.size} images about to enqueue...")
 
     val pre = new PreProcessing(helper.chwFlag)
-    val clusterServingInference = new ClusterServingInference(pre, helper.modelType)
+    val clusterServingInference = new ClusterServingInference(pre, helper)
     var predictMap = Map[String, String]()
 
     var batchInputs = Seq[(String, Activity)]()
