@@ -68,7 +68,10 @@ class ClusterServingHelper
   var redisSecureTrustStoreToken: String = ""
   var recordEncrypted: Boolean = false
 
-
+  def parseConfigStrings(): Unit = {
+    redisHost = redisUrl.split(":").head.trim
+    redisPort = redisUrl.split(":").last.trim.toInt
+  }
   /**
    * Load inference model
    * The concurrent number of inference model depends on
