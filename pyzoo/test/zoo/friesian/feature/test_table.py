@@ -44,7 +44,7 @@ class TestTable(TestCase):
         feature_tbl = FeatureTable.read_parquet(file_path)
         filled_tbl = feature_tbl.fillna(0, ["col_2", "col_3"])
         assert isinstance(filled_tbl, FeatureTable), "filled_tbl should be a FeatureTable"
-        assert feature_tbl.df.filter("col_2 is null").count() != 0 and feature_tbl\
+        assert feature_tbl.df.filter("col_2 is null").count() != 0 and feature_tbl \
             .df.filter("col_3 is null").count() != 0, "feature_tbl should not be changed"
         assert filled_tbl.df.filter("col_2 is null").count() == 0, "col_2 null values should be " \
                                                                    "filled"
@@ -159,12 +159,12 @@ class TestTable(TestCase):
         assert "col_1" in feature_tbl.df.columns, "col_1 should be a column of feature_tbl"
 
     def test_gen_negative_samples(self):
-        data = self.sc.parallelize( [("jack", 1, "2019-07-01 12:01:19.000"),
-            ("jack", 2, "2019-08-01 12:01:19.000"),
-            ("jack", 3, "2019-09-01 12:01:19.000"),
-            ("alice", 4, "2019-09-01 12:01:19.000"),
-            ("alice", 5, "2019-10-01 12:01:19.000"),
-            ("alice", 6, "2019-11-01 12:01:19.000")])
+        data = self.sc.parallelize([("jack", 1, "2019-07-01 12:01:19.000"),
+                                    ("jack", 2, "2019-08-01 12:01:19.000"),
+                                    ("jack", 3, "2019-09-01 12:01:19.000"),
+                                    ("alice", 4, "2019-09-01 12:01:19.000"),
+                                    ("alice", 5, "2019-10-01 12:01:19.000"),
+                                    ("alice", 6, "2019-11-01 12:01:19.000")])
         schema = StructType([
             StructField("name", StringType(), True),
             StructField("item", IntegerType(), True),
@@ -188,14 +188,13 @@ class TestTable(TestCase):
                                     ("alice", 4, "2019-09-01 12:01:19.000"),
                                     ("alice", 5, "2019-10-01 12:01:19.000"),
                                     ("alice", 6, "2019-11-01 12:01:19.000")])
-        schema = StructType([
-            StructField("name", StringType(), True),
-            StructField("item", IntegerType(), True),
-            StructField("time", StringType(), True)
-            ])
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("item", IntegerType(), True),
+                             StructField("time", StringType(), True)])
         df = self.spark.createDataFrame(data=data, schema=schema)
         df = df.withColumn("ts", col("time").cast("timestamp").cast("long"))
-        tbl = FeatureTable(df.select("name", "item", "ts")).gen_hist_seq("name", ["item"], "ts", 1, 4)
+        tbl = FeatureTable(df.select("name", "item", "ts"))\
+            .gen_hist_seq("name", ["item"], "ts", 1, 4)
         assert tbl.count() == 8
         assert tbl.df.filter(col("name") == "alice").count() == 2
         assert tbl.df.filter("name like '%jack'").count() == 6
@@ -210,9 +209,10 @@ class TestTable(TestCase):
             StructField("name", StringType(), True),
             StructField("history", ArrayType(IntegerType()), True)])
 
-        df =  self.spark.createDataFrame(data, schema)
-        df2 = self.sc.parallelize([(1, 0), (2, 0), (3, 0), (4, 1), (5, 1), (6, 1), (7, 2), (8, 2), (9, 2)])\
-            .toDF(["item", "category"]).withColumn("item", col("item").cast("Integer"))\
+        df = self.spark.createDataFrame(data, schema)
+        df2 = self.sc\
+            .parallelize([(1, 0), (2, 0), (3, 0), (4, 1), (5, 1), (6, 1), (7, 2), (8, 2), (9, 2)]) \
+            .toDF(["item", "category"]).withColumn("item", col("item").cast("Integer")) \
             .withColumn("category", col("category").cast("Integer"))
         df.printSchema()
         df2.printSchema()
@@ -229,14 +229,12 @@ class TestTable(TestCase):
             ("jack", [1, 2, 3, 4, 5], [[1, 2, 3], [1, 2, 3]]),
             ("alice", [4, 5, 6, 7, 8], [[1, 2, 3], [1, 2, 3]]),
             ("rose", [1, 2], [[1, 2, 3]])]
-        schema = StructType([
-            StructField("name", StringType(), True),
-            StructField("list", ArrayType(IntegerType()), True),
-        StructField("matrix", ArrayType(ArrayType(IntegerType())))])
-        df =  self.spark.createDataFrame(data, schema)
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("list", ArrayType(IntegerType()), True),
+                             StructField("matrix", ArrayType(ArrayType(IntegerType())))])
+        df = self.spark.createDataFrame(data, schema)
         tbl = FeatureTable(df).pad(["list", "matrix"], 4)
         dft = tbl.df
-        tbl.df.show(100, False)
         assert dft.filter("size(matrix) = 4").count() == 3
         assert dft.filter("size(list) = 4").count() == 3
 
@@ -249,20 +247,18 @@ class TestTable(TestCase):
             StructField("name", StringType(), True),
             StructField("history", ArrayType(IntegerType()), True)])
 
-        df =  self.spark.createDataFrame(data, schema)
+        df = self.spark.createDataFrame(data, schema)
         tbl = FeatureTable(df).mask(["history"], 4)
         assert "history_mask" in tbl.df.columns
         assert tbl.df.filter("size(history_mask) = 4").count() == 3
         assert tbl.df.filter("size(history_mask) = 2").count() == 0
 
     def gen_length(self):
-        data = [
-            ("jack", [1, 2, 3, 4, 5]),
-            ("alice", [4, 5, 6, 7, 8]),
-            ("rose", [1, 2])]
-        schema = StructType([
-            StructField("name", StringType(), True),
-            StructField("history", ArrayType(IntegerType()), True)])
+        data = [("jack", [1, 2, 3, 4, 5]),
+                ("alice", [4, 5, 6, 7, 8]),
+                ("rose", [1, 2])]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("history", ArrayType(IntegerType()), True)])
 
         df = self.spark.createDataFrame(data, schema)
         tbl = FeatureTable(df)
@@ -270,6 +266,7 @@ class TestTable(TestCase):
         assert "history_length" in tbl.df.columns
         assert tbl.df.filter("history_length = 5").count() == 2
         assert tbl.df.filter("history_length = 2").count() == 1
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

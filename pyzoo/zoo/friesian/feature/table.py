@@ -190,6 +190,7 @@ class Table:
     def write_parquet(self, path, mode="overwrite"):
         self.df.write.mode(mode).parquet(path)
 
+
 class FeatureTable(Table):
     @classmethod
     def read_parquet(cls, paths):
@@ -274,9 +275,9 @@ class FeatureTable(Table):
         return FeatureTable(df)
 
     def gen_neg_hist_seq(self, item_size, item2cat, item_history_col, neg_num):
-        df = callZooFunc("float", "genNegHisSeq", self.df, item_size, item2cat, item_history_col,
-                           neg_num)
-        return  FeatureTable(df)
+        df = callZooFunc("float", "genNegHisSeq", self.df, item_size, item2cat, item_history_col, \
+                         neg_num)
+        return FeatureTable(df)
 
     def pad(self, padding_cols, seq_len=100):
         df = callZooFunc("float", "postPad", self.df, padding_cols, seq_len)
@@ -297,6 +298,7 @@ class FeatureTable(Table):
     def transform_python_udf(self, in_col, out_col, udf_func):
         df = self.df.withColumn(out_col, udf_func(col(in_col)))
         return FeatureTable(df)
+
 
 class StringIndex(Table):
     def __init__(self, df, col_name):

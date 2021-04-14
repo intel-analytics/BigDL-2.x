@@ -229,14 +229,14 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def mask(df: DataFrame, colNames: JList[String], maxLength: Int): DataFrame = {
-    val maskUdf = udf((history: WrappedArray[Int]) => {
+    val maskUdf = (history: WrappedArray[Int]) => {
       val n = history.length
       if (maxLength > n) {
         (0 to n - 1).map(_ => 1) ++ (0 to (maxLength - n - 1)).map(_ => 0)
       } else {
         (0 to maxLength - 1).map(_ => 1)
       }
-    })
+    }
 
     df.createOrReplaceTempView("tmp")
     df.sqlContext.udf.register("mask", maskUdf)

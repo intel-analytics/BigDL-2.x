@@ -80,7 +80,8 @@ if __name__ == "__main__":
 
     full_tbl = full_tbl\
         .encode_string(['user', 'item', 'category'], [indices[0], indices[1], indices[2]]) \
-        .gen_hist_seq(user_col="user", cols=['item', 'category'], sort_col='time', min_len=1, max_len=100)\
+        .gen_hist_seq(user_col="user", cols=['item', 'category'], \
+                      sort_col='time', min_len=1, max_len=100)\
         .gen_length("item_history")\
         .gen_negative_samples(item_size, item_col='item', neg_num=1) \
         .transform_python_udf("item", "category", reset_cat) \
