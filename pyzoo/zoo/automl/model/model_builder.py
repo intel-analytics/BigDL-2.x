@@ -17,16 +17,9 @@
 
 class ModelBuilder:
 
-    @classmethod
-    def from_pytorch(cls, model_creator, optimizer_creator, loss_creator):
-
-        return PytorchModelBuilder(model_creator=model_creator,
-                                   optimizer_creator=optimizer_creator,
-                                   loss_creator=loss_creator)
-
-    @classmethod
-    def from_tfkeras(cls, model_creator):
-        return KerasModelBuilder(model_creator=model_creator)
+    @abstractmethod
+    def build(config):
+        pass
 
 
 class KerasModelBuilder(ModelBuilder):
