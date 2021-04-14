@@ -177,6 +177,7 @@ class RedisGetActor(
             case _: Exception =>
           }
         })
+
         sender() ! results
         // result get, remove in redis here
         message.ids.foreach(id =>
