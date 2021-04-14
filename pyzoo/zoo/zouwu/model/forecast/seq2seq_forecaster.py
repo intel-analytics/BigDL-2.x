@@ -128,7 +128,7 @@ class Seq2SeqForecaster(Forecaster):
             raise RuntimeError("You must call fit or restore first before calling predict!")
         return self.internal.predict_with_onnx(x, dirname=dirname)
 
-    def evaluate(self, x, y, metrics=['mse'], multioutput="uniform_average"):
+    def evaluate(self, x, y, metrics=['mse'], multioutput="raw_values"):
         """
         Evaluate using a trained forecaster.
 
@@ -137,7 +137,7 @@ class Seq2SeqForecaster(Forecaster):
         :param metrics: A list contains metrics for test/valid data.
         :param multioutput: Defines aggregating of multiple output values.
                String in ['raw_values', 'uniform_average']. The value defaults to
-               'uniform_average'.
+               'raw_values'.
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
@@ -146,7 +146,7 @@ class Seq2SeqForecaster(Forecaster):
     def evaluate_with_onnx(self, x, y,
                            metrics=['mse'],
                            dirname=None,
-                           multioutput="uniform_average"):
+                           multioutput="raw_values"):
         """
         Evaluate using a trained forecaster with onnxruntime.
 
@@ -157,7 +157,7 @@ class Seq2SeqForecaster(Forecaster):
                to None for no saving file.
         :param multioutput: Defines aggregating of multiple output values.
                String in ['raw_values', 'uniform_average']. The value defaults to
-               'uniform_average'.
+               'raw_values'.
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
