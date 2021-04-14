@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving
+package com.intel.analytics.zoo.serving.utils
 
 import org.scalatest.{FlatSpec, Matchers}
 
-class UtilsSpec extends FlatSpec with Matchers {
-  "s3, hdfs, remote model read" should "work" in {
+class ClusterServingHelperSpec extends FlatSpec with Matchers {
 
-  }
 }
