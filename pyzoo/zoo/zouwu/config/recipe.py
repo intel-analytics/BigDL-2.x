@@ -17,7 +17,7 @@
 from zoo.automl.recipe.base import Recipe
 from zoo.automl.search.base import *
 import numpy as np
-from zoo.automl.recipe import hp 
+from zoo.orca.automl import hp 
 import json
 
 

@@ -21,7 +21,7 @@ from zoo.zouwu.model.VanillaLSTM_pytorch import model_creator as LSTM_model_crea
 import torch
 import torch.nn as nn
 from zoo.automl.recipe.base import Recipe
-from zoo.automl.recipe import hp
+from zoo.orca.automl import hp
 import pandas as pd
 import numpy as np
 from zoo.orca import init_orca_context, stop_orca_context

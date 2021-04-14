@@ -21,7 +21,7 @@ import torch
 import tensorflow as tf
 import torch.nn as nn
 from zoo.automl.recipe.base import Recipe
-from zoo.automl.recipe import hp
+from zoo.orca.automl import hp
 import numpy as np
 from zoo.orca import init_orca_context
 
