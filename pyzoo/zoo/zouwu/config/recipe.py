@@ -17,7 +17,7 @@
 from zoo.automl.recipe.base import Recipe
 from zoo.automl.search.base import *
 import numpy as np
-from zoo.orca.automl import hp 
+from zoo.orca.automl import hp
 import json
 
 
@@ -68,7 +68,7 @@ class MTNetSmokeRecipe(Recipe):
             "long_num": hp.choice([3, 4]),
             "ar_size": hp.choice([2, 3]),
             "past_seq_len": hp.sample_from(lambda spec:
-                                             (spec.config.long_num + 1) * spec.config.time_step),
+                                           (spec.config.long_num + 1) * spec.config.time_step),
         }
 
 
@@ -169,13 +169,13 @@ class GridRandomRecipe(Recipe):
         return {
             # -------- feature related parameters
             "selected_features": hp.sample_from(lambda spec:
-                                                  json.dumps(
-                                                      list(np.random.choice(
-                                                          all_available_features,
-                                                          size=np.random.randint(
-                                                              low=3,
-                                                              high=len(all_available_features)),
-                                                          replace=False)))),
+                                                json.dumps(
+                                                    list(np.random.choice(
+                                                        all_available_features,
+                                                        size=np.random.randint(
+                                                            low=3,
+                                                            high=len(all_available_features)),
+                                                        replace=False)))),
 
             # -------- model selection TODO add MTNet
             "model": hp.choice(["LSTM", "Seq2seq"]),
@@ -246,13 +246,13 @@ class LSTMGridRandomRecipe(Recipe):
         return {
             # -------- feature related parameters
             "selected_features": hp.sample_from(lambda spec:
-                                                  json.dumps(
-                                                      list(np.random.choice(
-                                                          all_available_features,
-                                                          size=np.random.randint(
-                                                              low=3,
-                                                              high=len(all_available_features) + 1),
-                                                          replace=False)))),
+                                                json.dumps(
+                                                    list(np.random.choice(
+                                                        all_available_features,
+                                                        size=np.random.randint(
+                                                            low=3,
+                                                            high=len(all_available_features) + 1),
+                                                        replace=False)))),
 
             "model": "LSTM",
 
@@ -316,13 +316,13 @@ class Seq2SeqRandomRecipe(Recipe):
         return {
             # -------- feature related parameters
             "selected_features": hp.sample_from(lambda spec:
-                                                  json.dumps(
-                                                      list(np.random.choice(
-                                                          all_available_features,
-                                                          size=np.random.randint(
-                                                              low=3,
-                                                              high=len(all_available_features) + 1),
-                                                          replace=False)))),
+                                                json.dumps(
+                                                    list(np.random.choice(
+                                                        all_available_features,
+                                                        size=np.random.randint(
+                                                            low=3,
+                                                            high=len(all_available_features) + 1),
+                                                        replace=False)))),
 
             "model": "Seq2Seq",
             "latent_dim": self.latent_dim,
@@ -388,13 +388,13 @@ class MTNetGridRandomRecipe(Recipe):
     def search_space(self, all_available_features):
         return {
             "selected_features": hp.sample_from(lambda spec:
-                                                  json.dumps(
-                                                      list(np.random.choice(
-                                                          all_available_features,
-                                                          size=np.random.randint(
-                                                              low=3,
-                                                              high=len(all_available_features)),
-                                                          replace=False)))),
+                                                json.dumps(
+                                                    list(np.random.choice(
+                                                        all_available_features,
+                                                        size=np.random.randint(
+                                                            low=3,
+                                                            high=len(all_available_features)),
+                                                        replace=False)))),
 
             "model": "MTNet",
             "lr": self.lr,
@@ -499,13 +499,13 @@ class RandomRecipe(Recipe):
         return {
             # -------- feature related parameters
             "selected_features": hp.sample_from(lambda spec:
-                                                  json.dumps(
-                                                      list(np.random.choice(
-                                                          all_available_features,
-                                                          size=np.random.randint(
-                                                              low=3,
-                                                              high=len(all_available_features)),
-                                                          replace=False)))),
+                                                json.dumps(
+                                                    list(np.random.choice(
+                                                        all_available_features,
+                                                        size=np.random.randint(
+                                                            low=3,
+                                                            high=len(all_available_features)),
+                                                        replace=False)))),
 
             "model": hp.choice(["LSTM", "Seq2seq"]),
             # --------- Vanilla LSTM model parameters
@@ -673,8 +673,8 @@ class XgbRegressorSkOptRecipe(Recipe):
     def search_space(self, all_available_features):
         space = {
             "n_estimators": hp.randint(self.n_estimators_range[0],
-                                         self.n_estimators_range[1]),
+                                       self.n_estimators_range[1]),
             "max_depth": hp.randint(self.max_depth_range[0],
-                                      self.max_depth_range[1]),
+                                    self.max_depth_range[1]),
         }
         return space

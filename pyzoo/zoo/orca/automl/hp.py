@@ -16,6 +16,7 @@
 
 import ray.tune as tune
 
+
 def uniform(lower, upper):
     '''
     Sample a float uniformly between lower and upper.
@@ -23,6 +24,7 @@ def uniform(lower, upper):
     :param upper: Upper bound of the sampling range.
     '''
     return tune.uniform(lower, upper)
+
 
 def quniform(lower, upper, q):
     '''
@@ -34,6 +36,7 @@ def quniform(lower, upper, q):
     '''
     return tune.quniform(lower, upper, q)
 
+
 def loguniform(lower, upper, base=10):
     '''
     Sample a float between lower and upper.
@@ -43,6 +46,7 @@ def loguniform(lower, upper, base=10):
     :param base: Log base for distribution. Default to 10.
     '''
     return tune.loguniform(lower, upper, base)
+
 
 def qloguniform(lower, upper, q, base=10):
     '''
@@ -56,6 +60,7 @@ def qloguniform(lower, upper, q, base=10):
     '''
     return tune.qloguniform(lower, upper, q, base)
 
+
 def randn(mean=0.0, std=1.0):
     '''
     Sample a float from normal distribution.
@@ -63,6 +68,7 @@ def randn(mean=0.0, std=1.0):
     :param std: Std of the normal distribution. Default to 1.0.
     '''
     return tune.randn(mean, std)
+
 
 def qrandn(mean, std, q):
     '''
@@ -74,6 +80,7 @@ def qrandn(mean, std, q):
     '''
     return tune.randn(mean, std, q)
 
+
 def randint(lower, upper):
     '''
     Uniformly sample integer between lower and upper. (Both inclusive)
@@ -81,6 +88,7 @@ def randint(lower, upper):
     :param upper: Upper bound of the sampling range.
     '''
     return tune.randint(lower, upper)
+
 
 def qrandint(lower, upper, q=1):
     '''
@@ -92,12 +100,14 @@ def qrandint(lower, upper, q=1):
     '''
     return tune.randint(lower, upper, q)
 
+
 def choice(categories):
     '''
     Uniformly sample from a list
     :param categories: A list to be sampled.
     '''
     return tune.choice(categories)
+
 
 def sample_from(func):
     '''
@@ -106,10 +116,10 @@ def sample_from(func):
     '''
     return tune.sample_from(func)
 
+
 def grid_search(values):
     '''
     Specifying grid search over a list.
     :param values: A list to be grid searched.
     '''
     return tune.grid_search(values)
-
