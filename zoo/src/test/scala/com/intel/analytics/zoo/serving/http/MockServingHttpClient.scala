@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving
 
-import java.util.concurrent.{CountDownLatch, Executors, TimeUnit}
+package com.intel.analytics.zoo.serving.http
+
+import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -24,14 +25,10 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.codahale.metrics.MetricRegistry
-import com.intel.analytics.zoo.serving.http.FrontEndApp.metrics
-import com.intel.analytics.zoo.serving.http.{JsonUtil, ServingTimerMetrics, Supportive}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.io.Source
 
 object MockServingHttpClient extends App with Supportive {
 

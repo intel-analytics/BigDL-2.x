@@ -30,17 +30,17 @@ object RedisUtils {
         redisInfo = RedisUtils.getMapFromInfo(db.info())
         if (redisInfo("maxmemory").toLong > 0 && redisInfo("used_memory").toLong >=
           redisInfo("maxmemory").toLong * inputThreshold) {
-          ClusterServing.logger.info(s"Used memory ${redisInfo("used_memory")}, " +
+          ClusterServing.logger.warn(s"Used memory ${redisInfo("used_memory")}, " +
             s"Max memory ${redisInfo("maxmemory")}. Your input data length is " +
             s"${db.xlen(Conventions.SERVING_STREAM_DEFAULT_NAME)}. Removing old data...")
           db.xtrim(Conventions.SERVING_STREAM_DEFAULT_NAME,
             (db.xlen(Conventions.SERVING_STREAM_DEFAULT_NAME) * cutRatio).toLong, true)
-          ClusterServing.logger.info(s"Trimmed stream, now your serving stream length is " +
+          ClusterServing.logger.warn(s"Trimmed stream, now your serving stream length is " +
             s"${db.xlen(Conventions.SERVING_STREAM_DEFAULT_NAME)}")
           var cuttedRedisInfo = RedisUtils.getMapFromInfo(db.info())
           while (cuttedRedisInfo("used_memory").toLong >=
             cuttedRedisInfo("maxmemory").toLong * inputThreshold) {
-            ClusterServing.logger.info(s"Used memory ${redisInfo("used_memory")}, " +
+            ClusterServing.logger.error(s"Used memory ${redisInfo("used_memory")}, " +
               s"Max memory ${redisInfo("maxmemory")}. " +
               s"Your result field has exceeded the limit, please dequeue. Will retry in 10 sec..")
             cuttedRedisInfo = RedisUtils.getMapFromInfo(db.info())
