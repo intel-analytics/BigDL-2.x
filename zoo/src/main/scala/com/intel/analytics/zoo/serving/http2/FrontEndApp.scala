@@ -33,10 +33,9 @@ import com.google.common.util.concurrent.RateLimiter
 import com.intel.analytics.zoo.pipeline.inference.EncryptSupportive
 import com.intel.analytics.zoo.serving.utils.Conventions
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.intel.analytics.zoo.serving.http.FrontEndApp.{defineServerContext, logger, overallRequestTimer, predictRequestTimer, silent, system, timing}
-import com.intel.analytics.zoo.serving.http.{Instances, InstancesPredictionInput, Predictions}
+
 import org.slf4j.LoggerFactory
-import com.intel.analytics.zoo.serving.http.Supportive
+import com.intel.analytics.zoo.serving.http2.Supportive
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
@@ -75,12 +74,12 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           concat(
             (get & path(Segments)){
               (segs) => {
-                timing("welcome")(overallRequestTimer) {
+                timing("")(overallRequestTimer) {
                   complete("get Model Info Port")
                 }
               }}~(post & path(Segments) & extract(_.request.entity.contentType) & entity(as[String])) {
               (segs, contentType, content) => {
-              timing("welcome")(overallRequestTimer) {
+              timing("")(overallRequestTimer) {
                 try {
                   //TODO Only Cluster Serving Now
                   if (segs.length != 4 || segs(1) != "versions" || segs(3) != "predict") {
@@ -89,7 +88,6 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                   val modelName = segs(0); val modelVersion = segs(2)
                   logger.info("model name: " + modelName + "\nmodel version: " + modelVersion)
                   val model = servableManager.retriveModel(modelName, modelVersion)
-                  model.load()
                   val result = timing("predict")(overallRequestTimer, predictRequestTimer) {
                     val instances = timing("json deserialization")() {
                       JsonUtil.fromJson(classOf[Instances], content)
@@ -118,6 +116,13 @@ object FrontEndApp extends Supportive with EncryptSupportive {
       logger.info(s"http started at http://${arguments.interface}:${arguments.port}")
     }
   }
+  val metrics = new MetricRegistry
+  val overallRequestTimer = metrics.timer("zoo.serving.request.overall")
+  val predictRequestTimer = metrics.timer("zoo.serving.request.predict")
+  val putRedisTimer = metrics.timer("zoo.serving.redis.put")
+  val getRedisTimer = metrics.timer("zoo.serving.redis.get")
+  val waitRedisTimer = metrics.timer("zoo.serving.redis.wait")
+  val metricsRequestTimer = metrics.timer("zoo.serving.request.metrics")
 
   val argumentsParser = new scopt.OptionParser[FrontEndAppArguments]("AZ Serving") {
     head("Analytics Zoo Serving Frontend")
