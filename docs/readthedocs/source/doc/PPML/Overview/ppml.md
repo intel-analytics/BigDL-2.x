@@ -8,7 +8,7 @@ To take full advantage of the value of big data, especially the value of private
 
 To reslove this problem, Analytics-Zoo chooses [Intel SGX (Software Guard Extensions)](https://software.intel.com/content/www/us/en/develop/topics/software-guard-extensions.html), a widely used [TEE (Trusted Execution Environment)](https://en.wikipedia.org/wiki/Trusted_execution_environment) technology, as main security building block for this PPML platforms. Different from other PPML technologies, e.g., [HE (Homomorphic Encryption)](https://en.wikipedia.org/wiki/Homomorphic_encryption), [MPC (Multi-Party Computation) or SMC (Secure Multi-Party Computation)](https://en.wikipedia.org/wiki/Secure_multi-party_computation) and [DP (Differential Privacy)](https://en.wikipedia.org/wiki/Differential_privacy), Intel SGX performs well on all measures (security, performance and utility).
 
-<p align="center"><img src="../../../../../docs/Image/PPML/ppml_tech.png" height="180px"><br></p>
+<p align="center"><img src="../../../../../docs/Image/PPML/ppml_tech.png" height="220px"><br></p>
 
 Based on Intel SGX (Software Guard Extensions) and LibOS projects ([Graphene](https://grapheneproject.io/) and [Occlum](https://occlum.io/)), Analytics-Zoo empowers our customers (e.g., data scientists and big data developers) to build PPML applications on top of large scale dataset without impacting existing applications.
 
@@ -19,16 +19,13 @@ Note: Intel SGX requires hardware support, please [check if your CPU has this fe
 ### Key features
 
 - Protecting data and model confidentiality
+  - Sensitive input/output data (computation, training and inference), e.g., healthcare data
+  - Propretary model, e.g., model trained with self-owned or sensitive data
 - Seamless migrate existing big data applications into privacy preserving applications
 - Trusted big data & AI Platform based on Intel SGX
   - Trusted Big Data Analytics and ML
   - Trusted Realtime Compute and ML
   - Trusted Federated Learning (incoming)
-
-### Data Protected
-
-- Sensitive input/output data (computation, training and inference) during big data applications, e.g., healthcare data
-- Propretary model in training and inference, e.g., model trained with self-owned or sensitive data
 
 ## Trusted Big Data Analytics and ML
 
@@ -136,7 +133,7 @@ This example is a simple Spark local PI example, if you want to run application 
 
 ## Trusted Realtime Compute and ML
 
-In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Flink in SGX, then run real-time model serving in safe way. For more examples, please refer to [trusted-big-data-ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-big-data-ml/scala/docker-graphene).
+In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Flink in SGX, then run real-time model serving in safe way. For more examples, please refer to [trusted-realtime-ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-realtime-ml/scala/docker-graphene).
 
 ### Scenario
 
