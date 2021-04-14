@@ -21,11 +21,14 @@ Note: Intel SGX requires hardware support, please [check if your CPU has this fe
 - Protecting data and model confidentiality
 - Seamless migrate existing big data applications into privacy preserving applications
 - Trusted big data & AI Platform based on Intel SGX
+    - Trusted Big Data Analytics and ML
+    - Trusted Realtime Compute and ML
+    - Trusted Federated Learning (incoming)
 
-### Scenario
+### Data Protected
 
-- Protecting sensitive input/output data (computation, training and inference) in big data applications, e.g.,data analysis or machine learning on healthcare dataset
-- Protecting propretary model in training and inference, e.g., secured model inference with self-owned model
+-  Sensitive input/output data (computation, training and inference) in big data applications, e.g., healthcare data
+- Propretary model in training and inference, e.g., model trained with self-owned or sensitive data
 
 ## Trusted Big Data Analytics and ML
 
@@ -65,6 +68,8 @@ sudo docker exec -it spark-local bash
 ```
 
 ##### Step 2: Submit jobs to Spark
+
+Modify `init.sh`, which is task/env related.
 
 ```bash
 ./init.sh
