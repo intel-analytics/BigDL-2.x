@@ -15,10 +15,10 @@ Test template    Zoo Test
 *** Keywords ***
 Build SparkJar
    [Arguments]       ${spark_profile}
-   ${build}=         Catenate                        SEPARATOR=/    ${curdir}    /zoo/make-dist.sh
+   ${build}=         Catenate                        SEPARATOR=/    ${curdir}    make-dist.sh
    Log To Console    ${spark_profile}
    Log To Console    start to build jar
-   Log To Console    /zoo/make-dist.sh -P ${spark_profile} -Dbigdl.version=${bigdl_version}...
+   Log To Console    make-dist.sh -P ${spark_profile} -Dbigdl.version=${bigdl_version}...
    Run               ${build} -P ${spark_profile} -Dbigdl.version=${bigdl_version}
    Remove File       ${jar_path}
    Move File         zoo/target/analytics-zoo-bigdl_${bigdl_version}-spark_${spark_version}-${version}-jar-with-dependencies.jar    ${jar_path}
