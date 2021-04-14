@@ -29,34 +29,101 @@ Note: Intel SGX requires hardware support, please [check if your CPU has this fe
 
 ## Trusted Big Data Analytics and ML
 
-Spark
+In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Spark in SGX, then run applications in safe way.
 
 ### Scenario
 
-- Batch computation/analytics on senstive data, e.g., privacy preserved Spark jobs on sensitive data
-- Interactive computation/analytics on sensitive data, e.g., privacy preserved SparkSQL on sensitive data
-- Distributed machine learning & deep Learning on sensitive data
+- Batch computation/analytics, i.e., privacy preserved Spark jobs
+- Interactive computation/analytics, i.e., privacy preserved SparkSQL
+- Large scale Spark related workload, e.g., TPC-H Benchmark
+- Distributed machine learning & deep Learning with BigDL 
 
 ### Get started
 
-- Env setup (DockFIle)
+#### Setp 0: Prepare Environment
 
-- Spark example (pi)
-- SparkSQL
-- TPC-H
-- BigDL Training
+Please clone or download Analytics-Zoo source code, then enter `analytics-zoo/ppml`.
+
+If SGX driver is not installed, please install SGX driver with this command
 
 ```bash
+./scripts/install-graphene-driver.sh
 ```
+
+```bash
+cd trusted-big-data-ml/scala/docker-graphene
+./build-docker-image.sh
+```
+
+#### Step 1: Start Spark in SGX
+
+Enter `analytics-zoo/ppmltrusted-big-data-ml/scala/docker-graphene` dir.
+
+```bash
+./start-local-big-data-ml.sh
+sudo docker exec -it spark-local bash
+```
+
+##### Step 2: Submit jobs to Spark
+
+```bash
+./init.sh
+vim start-spark-local-pi-sgx.sh
+```
+Add these code in the `start-spark-local-pi-sgx.sh` file: <br>
+```bash
+#!/bin/bash
+
+set -x
+
+SGX=1 ./pal_loader /opt/jdk8/bin/java \
+        -cp '/ppml/trusted-big-data-ml/work/spark-2.4.3/examples/jars/spark-examples_2.11-2.4.3.jar:/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+        -Xmx10g \
+        -Dbigdl.mklNumThreads=1 \
+        -XX:ActiveProcessorCount=24 \
+        org.apache.spark.deploy.SparkSubmit \
+        --master 'local[4]' \
+        --conf spark.driver.port=10027 \
+        --conf spark.scheduler.maxRegisteredResourcesWaitingTime=5000000 \
+        --conf spark.worker.timeout=600 \
+        --conf spark.starvation.timeout=250000 \
+        --conf spark.rpc.askTimeout=600 \
+        --conf spark.blockManager.port=10025 \
+        --conf spark.driver.host=127.0.0.1 \
+        --conf spark.driver.blockManager.port=10026 \
+        --conf spark.io.compression.codec=lz4 \
+        --class org.apache.spark.examples.SparkPi \
+        --executor-cores 4 \
+        --total-executor-cores 4 \
+        --executor-memory 10G \
+        /ppml/trusted-big-data-ml/work/spark-2.4.3/examples/jars/spark-examples_2.11-2.4.3.jar | tee spark.local.pi.sgx.log
+```
+
+Then run the script to run pi test in spark: <br>
+```bash
+chmod a+x start-spark-local-pi-sgx.sh
+./start-spark-local-pi-sgx.sh
+```
+
+Open another terminal and check the log:
+```bash
+sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.pi.sgx.log | egrep "###|INFO|Pi"
+```
+
+The result should look like: <br>
+>   Pi is roughly 3.1422957114785572
+
+
+For more examples, please refer to [trusted-big-data-ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-big-data-ml/scala/docker-graphene).
 
 ## Trusted Realtime Compute and ML
 
-Flink
+In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Flink in SGX, then run real-time applications or model serving in safe way.
 
 ### Scenario
 
-- Real time data computation/analytics on sensitive data, e.g., privacy preserved Flink jobs on sensitive data
-- Privacy preserved distributed model inference with propretary model on sensitive data
+- Real time data computation/analytics, e.g., privacy preserved Flink jobs
+- Privacy preserved distributed model inference with propretary model
 
 ## Get started
 
