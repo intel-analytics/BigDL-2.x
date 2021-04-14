@@ -10,10 +10,13 @@
 
 Analytics Zoo is an open source _**Big Data AI**_ platform, and includes the following features for scaling end-to-end AI to distributed Big Data: 
 
- - [Orca](#getting-started-with-orca): seamlessly scale out TensorFlow, PyTorch and Keras programs for Big Data (using Spark & Ray)
- - [RayOnSpark](#getting-started-with-rayonspark): run Ray programs directly on Big Data clusters
- - [BigDL Extensions](#getting-started-with-bigdl-extensions): high-level Spark ML pipeline and Keras-like APIs for BigDL 
- - [Zouwu](#getting-started-with-zouwu): scalable time series analysis using AutoML
+ * [Orca](#getting-started-with-orca): seamlessly scale out TensorFlow and PyTorch for Big Data (using Spark & Ray)
+ 
+ * [RayOnSpark](#getting-started-with-rayonspark): run Ray programs directly on Big Data clusters
+ 
+ * [BigDL Extensions](#getting-started-with-bigdl-extensions): high-level Spark ML pipeline and Keras-like APIs for BigDL
+ 
+ * [Zouwu](#getting-started-with-zouwu): scalable time series analysis using AutoML
 
 For more information, you may [read the docs](https://analytics-zoo.readthedocs.io/).
 
@@ -130,7 +133,7 @@ val model = Model(input, output)
 After that, use `NNEstimator` to train/predict/evaluate the model using Spark Dataframes and ML pipelines:
 
 ```scala
-val trainingDF = spark.read.parquet("train_daia")
+val trainingDF = spark.read.parquet("train_data")
 val validationDF = spark.read.parquet("val_data")
 val scaler = new MinMaxScaler().setInputCol("in").setOutputCol("value")
 val estimator = NNEstimator(model, CrossEntropyCriterion())  

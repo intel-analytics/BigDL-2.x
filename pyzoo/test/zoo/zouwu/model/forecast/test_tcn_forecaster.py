@@ -96,8 +96,10 @@ class TestZouwuModelTCNForecaster(TestCase):
                                    num_channels=[4, 4],
                                    loss="mae",
                                    lr=0.01)
-        train_loss = forecaster.fit(data=train_data, epochs=1, distributed=True)
-        test_mse = forecaster.evaluate(val_data=val_data, metrics="mse", distributed=True)
+        train_loss = forecaster.fit(data=train_data, epochs=1,
+                                   distributed=True)
+        test_mse = forecaster.evaluate(val_data=val_data, metrics="mse",
+                                   distributed=True)
 
     def test_tcn_forecaster_onnx_methods(self):
         train_data, val_data, test_data = create_data()

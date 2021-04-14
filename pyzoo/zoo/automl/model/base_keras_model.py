@@ -143,7 +143,7 @@ class KerasBaseModel(BaseModel):
         self.load_state_dict(state_dict)
 
     def _get_required_parameters(self):
-        return {"metric"}
+        return set()
 
     def _get_optional_parameters(self):
         return {"batch_size"}

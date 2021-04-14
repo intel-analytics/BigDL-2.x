@@ -87,22 +87,27 @@ class RedisPutActor(
     case message: PredictionInputMessage =>
       silent(s"$actorName input message process, ${cache.size}")() {
         val predictionInputs = message.inputs
-        predictionInputs.foreach(cache.add(_))
+        predictionInputs.foreach(x => {
+          put(redisInputQueue, x)
+          logger.debug(s"Input enqueue $x at time ${System.currentTimeMillis()}")
+        })
+
+//        predictionInputs.foreach(cache.add(_))
       }
     case mesage: PredictionInputFlushMessage =>
       silent(s"$actorName flush message process, ${cache.size}")() {
-        val now = System.currentTimeMillis()
-        val interval = now - start
-        val setSize = cache.size
-        if (setSize != 0) {
-          logger.info(s"$actorName flush inpus with interval:$interval, size:$setSize")
-          if (interval >= timeWindow || setSize >= countWindow) {
-            timing(s"$actorName put message process")() {
-              putInTransaction(redisInputQueue, cache)
-            }
-            start = System.currentTimeMillis()
-          }
-        }
+//        val now = System.currentTimeMillis()
+//        val interval = now - start
+//        val setSize = cache.size
+//        if (setSize != 0) {
+//          logger.info(s"$actorName flush inpus with interval:$interval, size:$setSize")
+//          if (interval >= timeWindow || setSize >= countWindow) {
+//            timing(s"$actorName put message process")() {
+//              putInTransaction(redisInputQueue, cache)
+//            }
+//            start = System.currentTimeMillis()
+//          }
+//        }
       }
     case message: SecuredModelSecretSaltMessage =>
       silent(s"$actorName put secret and salt in redis")() {
@@ -139,6 +144,7 @@ class RedisPutActor(
       inputs.map(input => {
         val hash = input.toHash()
         t.xadd(queue, null, hash)
+        println("put input", System.currentTimeMillis(), input)
       })
       t.exec()
       logger.info(s"${System.currentTimeMillis}, ${inputs.map(_.getId).mkString(",")}")
@@ -196,7 +202,8 @@ class QueryActor(redisGetActor: ActorRef) extends JedisEnabledActor {
   override val logger = LoggerFactory.getLogger(classOf[RedisPutActor])
   val system = context.system
   implicit val executionContext = system.dispatcher
-  implicit val timeout: Timeout = Timeout(30, TimeUnit.SECONDS)
+  implicit val timeout: Timeout = Timeout(100, TimeUnit.SECONDS)
+  var queryDelay: Int = 1
 
   override def receive: Receive = {
     case query: PredictionQueryMessage =>
@@ -209,10 +216,15 @@ class QueryActor(redisGetActor: ActorRef) extends JedisEnabledActor {
         Await.result(redisGetActor ? message.query, timeout.duration)
           .asInstanceOf[Seq[(String, util.Map[String, String])]]
       }
-      // println(System.currentTimeMillis(), message.query.id, result)
+      Thread.sleep(1)
+      println(System.currentTimeMillis(), message.query.ids, results)
       if(results.size == 0) {
-        context.system.scheduler.scheduleOnce(1 milliseconds, self, message)
+        queryDelay += 1
+        Thread.sleep(queryDelay)
+        self ! message
+//        context.system.scheduler.scheduleOnce(1 milliseconds, self, message)
       } else {
+        queryDelay = 1
         message.target ! results
       }
   }

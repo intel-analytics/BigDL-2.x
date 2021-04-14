@@ -14,41 +14,39 @@
 # limitations under the License.
 #
 
+from zoo.zouwu.model.Seq2Seq_pytorch import Seq2SeqPytorch
 from zoo.zouwu.model.forecast.abstract import Forecaster
 from zoo.zouwu.model.forecast.utils import *
-from zoo.zouwu.model.tcn import TCNPytorch
 
 from zoo.orca import init_orca_context
 from zoo.orca.learn.pytorch import Estimator
-from zoo.orca.learn.metrics import *
 
 
-class TCNForecaster(Forecaster):
+class Seq2SeqForecaster(Forecaster):
 
     def __init__(self,
-                 past_seq_len,
-                 future_seq_len,
                  input_feature_num,
+                 future_seq_len,
                  output_feature_num,
-                 num_channels=[30]*8,
-                 kernel_size=7,
-                 dropout=0.2,
-                 optimizer="Adam",
+                 lstm_hidden_dim=128,
+                 lstm_layer_num=1,
+                 teacher_forcing=False,
+                 dropout=0.25,
+                 lr=0.001,
                  loss="mse",
-                 lr=0.001):
+                 optimizer="Adam"
+                 ):
         """
-        Build a TCN Forecast Model.
+        Build a LSTM Sequence to Sequence Forecast Model.
 
-        :param past_seq_len: Specify the history time steps (i.e. lookback).
         :param future_seq_len: Specify the output time steps (i.e. horizon).
         :param input_feature_num: Specify the feature dimension.
         :param output_feature_num: Specify the output dimension.
-        :param num_channels: Specify the convolutional layer filter number in
-               TCN's encoder. This value defaults to [30]*8.
-        :param kernel_size: Specify convolutional layer filter height in TCN's
-               encoder. This value defaults to 7.
+        :param lstm_hidden_dim: LSTM hidden channel for decoder and encoder.
+        :param lstm_layer_num: LSTM layer number for decoder and encoder.
+        :param teacher_forcing: If use teacher forcing in training.
         :param dropout: Specify the dropout close possibility (i.e. the close
-               possibility to a neuron). This value defaults to 0.2.
+               possibility to a neuron). This value defaults to 0.25.
         :param optimizer: Specify the optimizer used for training. This value
                defaults to "Adam".
         :param loss: Specify the loss function used for training. This value
@@ -56,44 +54,54 @@ class TCNForecaster(Forecaster):
                "huber_loss".
         :param lr: Specify the learning rate. This value defaults to 0.001.
         """
-        self.internal = TCNPytorch(check_optional_config=False)
-        self.data_config = {
-            "past_seq_len": past_seq_len,
-            "future_seq_len": future_seq_len,
+        self.check_optional_config = False
+        self.model_config = {
             "input_feature_num": input_feature_num,
-            "output_feature_num": output_feature_num
-        }
-        self.config = {
+            "future_seq_len": future_seq_len,
+            "output_feature_num": output_feature_num,
+            "lstm_hidden_dim": lstm_hidden_dim,
+            "lstm_layer_num": lstm_layer_num,
+            "teacher_forcing": teacher_forcing,
+            "dropout": dropout,
             "lr": lr,
             "loss": loss,
-            "num_channels": num_channels,
-            "kernel_size": kernel_size,
-            "optim": optimizer,
-            "dropout": dropout
+            "optimizer": optimizer,
         }
+        self.internal = Seq2SeqPytorch(check_optional_config=False)
+
+    def _check_data(self, x, y):
+        assert self.model_config["future_seq_len"] == y.shape[-2], \
+            "The y shape should be (batch_size, future_seq_len, target_col_num), \
+            Got future_seq_len of {} in config while y input shape of {}."\
+            .format(self.model_config["future_seq_len"], y.shape[-2])
+        assert self.model_config["input_feature_num"] == x.shape[-1],\
+            "The x shape should be (batch_size, past_seq_len, input_feature_num), \
+            Got input_feature_num of {} in config while x input shape of {}."\
+            .format(self.model_config["input_feature_num"], x.shape[-1])
+        assert self.model_config["output_feature_num"] == y.shape[-1], \
+            "The y shape should be (batch_size, future_seq_len, output_feature_num), \
+            Got output_feature_num of {} in config while y input shape of {}."\
+            .format(self.model_config["output_feature_num"], y.shape[-1])
 
     def fit(self, data, validation_data=None, epochs=1, metric="mse", batch_size=32,
             distributed=False, **kwargs):
         """
         Fit(Train) the forecaster.
 
-        :param data: For single node training, it's a dictionary.
+        :param data: For single node training, it's a dictionary. 
         x: A numpy array with shape (num_samples, lookback, feature_dim).
         lookback and feature_dim should be the same as past_seq_len and input_feature_num.
         y: A numpy array with shape (num_samples, horizon, target_dim).
         horizon and target_dim should be the same as future_seq_len and output_feature_num.
         
         For distributed training, it can be an instance of SparkXShards, a Spark DataFrame
-        or a function that takes config and batch_size as argument and returns a PyTorch
-        DataLoader for training
+        or a function that takes config and batch_size as argument and returns a PyTorch DataLoader for training
         :param validation_data: validation data, similar to data
         :param epochs: Number of epochs you want to train.
         :param metric: The metric for training data.
         :param batch_size: Number of batch size you want to train.
-        :param distributed: whether train in ditributed.
         """
-        self.config["batch_size"] = batch_size
-
+        self.model_config["batch_size"] = batch_size
         if not distributed:
             x = data["x"]
             y = data["y"]
@@ -110,17 +118,16 @@ class TCNForecaster(Forecaster):
                                          validation_data=v_data,
                                          epochs=epochs,
                                          metric=metric,
-                                         **self.config)
+                                         **self.model_config)
         else:
             cluster_mode = kwargs.get("cluster_mode", "local")
             num_nodes = kwargs.get("num_nodes", 1)
             cores = kwargs.get("cores", 2)
             memory = kwargs.get("memory", "2g")
             init_orca_context(
-                cluster_mode=cluster_mode, num_nodes=num_nodes, cores=cores, memory=memory, **kwargs)
-
-            self.config.update(self.data_config)
-            self.internal.build(self.config)
+                cluster_mode=cluster_mode, num_nodes=num_nodes, cores=cores, memory=memory,
+                **kwargs)
+            self.internal.build(self.model_config)
 
             orca_metrics = convert_str_metric_to_orca_metric(metric)
             self.orca_estimator = Estimator.from_torch(model=self.internal.model,
@@ -132,30 +139,11 @@ class TCNForecaster(Forecaster):
 
         return res
 
-    def _check_data(self, x, y):
-        assert self.data_config["past_seq_len"] == x.shape[-2], \
-            "The x shape should be (batch_size, past_seq_len, input_feature_num), \
-            Got past_seq_len of {} in config while x input shape of {}."\
-            .format(self.data_config["past_seq_len"], x.shape[-2])
-        assert self.data_config["future_seq_len"] == y.shape[-2], \
-            "The y shape should be (batch_size, future_seq_len, output_feature_num), \
-            Got future_seq_len of {} in config while y input shape of {}."\
-            .format(self.data_config["future_seq_len"], y.shape[-2])
-        assert self.data_config["input_feature_num"] == x.shape[-1],\
-            "The x shape should be (batch_size, past_seq_len, input_feature_num), \
-            Got input_feature_num of {} in config while x input shape of {}."\
-            .format(self.data_config["input_feature_num"], x.shape[-1])
-        assert self.data_config["output_feature_num"] == y.shape[-1], \
-            "The y shape should be (batch_size, future_seq_len, output_feature_num), \
-            Got output_feature_num of {} in config while y input shape of {}."\
-            .format(self.data_config["output_feature_num"], y.shape[-1])
-
     def predict(self, x, distributed=False):
         """
         Predict using a trained forecaster.
 
-        :param x: for single mode: A numpy array with shape (num_samples, lookback, feature_dim).
-                  for distributed mode: An instance of SparkXShards or a Spark DataFrame
+        :param x: A numpy array with shape (num_samples, lookback, feature_dim).
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling predict!")
@@ -191,6 +179,7 @@ class TCNForecaster(Forecaster):
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
+
         if not distributed:
             x = val_data["x"]
             y = val_data["y"]

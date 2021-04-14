@@ -24,14 +24,36 @@ import uuid
 RESULT_PREFIX = "cluster-serving_"
 
 
-def http_response_to_ndarray(response_str):
+def http_json_to_ndarray(json_str):
     # currently there is no http user use batch predict, so batch is not implemented here
     # to add batch predict, replace 0 index to [0, batch_size)
-    res_dict = json.loads(json.loads(json.loads(response_str)["predictions"][0])['value'])
+    res_dict = json.loads(json.loads(json.loads(json_str)["predictions"][0])['value'])
     data, shape = res_dict['data'], res_dict['shape']
     array = np.array(data)
     array = array.reshape(shape)
     return array
+
+
+def http_response_to_ndarray(response):
+    if response.status_code == 200:
+        response_str = response.text
+        return http_json_to_ndarray(response_str)
+    elif response.status_code == 400:
+        print("Invalid input format, valid example:")
+        print("""{
+"instances": [
+   {
+     "tag": "foo",
+     "signal": [1, 2, 3, 4, 5],
+     "sensor": [[1, 2], [3, 4]]
+   }
+]
+}
+""")
+    else:
+        print("Error when calling Cluster Serving Http server, error code:", response.status_code)
+    print("WARNING: Server returns invalid response, so you will get []")
+    return "[]"
 
 
 def perdict(frontend_url, request_str):
@@ -46,13 +68,11 @@ class API:
     """
     def __init__(self, host=None, port=None, name="serving_stream"):
         self.name = name
-        if not host:
-            host = "localhost"
-        if not port:
-            port = "6379"
+        self.host = host if host else "localhost"
+        self.port = port if port else "6379"
 
-        self.db = redis.StrictRedis(host=host,
-                                    port=port, db=0)
+        self.db = redis.StrictRedis(host=self.host,
+                                    port=self.port, db=0)
         try:
             self.db.xgroup_create(name, "serving")
         except Exception:
@@ -60,9 +80,9 @@ class API:
 
 
 class InputQueue(API):
-    def __init__(self, host=None, port=None, sync=True, frontend_url=None):
-        super().__init__(host, port)
-        self.frontend_url = None
+    def __init__(self, frontend_url=None, **kwargs):
+        super().__init__(**kwargs)
+        self.frontend_url = frontend_url
         if self.frontend_url:
             # frontend_url is provided, using frontend
             try:
@@ -76,7 +96,7 @@ class InputQueue(API):
             except Exception as e:
                 print("Connection error, please check your HTTP server. Error msg is ", e)
         else:
-            self.output_queue = OutputQueue(host, port)
+            self.output_queue = OutputQueue(**kwargs)
 
         # TODO: these params can be read from config in future
         self.input_threshold = 0.6
@@ -212,8 +232,8 @@ class InputQueue(API):
 
 
 class OutputQueue(API):
-    def __init__(self, host=None, port=None):
-        super().__init__(host, port)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def dequeue(self):
         res_list = self.db.keys(RESULT_PREFIX + self.name + ':*')
