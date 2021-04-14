@@ -32,11 +32,11 @@ object test {
       servableManager.load("/home/yansu/projects/test.yaml")
       val servable = servableManager.retriveModel("second-model", "1.0")
       val clusterServingServable = servable.asInstanceOf[ClusterServingServable]
-//      val instances = JsonUtil.fromJson(classOf[Instances], content)
-//      val inputs = instances.instances.map(instance => {
-//            InstancesPredictionInput(Instances(instance))
-//      })
-//      print(clusterServingServable.predict(inputs))
+      val instances = JsonUtil.fromJson(classOf[Instances], content)
+      val inputs = instances.instances.map(instance => {
+            InstancesPredictionInput(Instances(instance))
+      })
+      print(clusterServingServable.predict(inputs))
     }catch {
       case e =>
         println(e)

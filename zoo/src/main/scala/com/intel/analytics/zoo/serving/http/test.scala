@@ -3,14 +3,15 @@ package com.intel.analytics.zoo.serving.http
 import java.util
 
 import com.intel.analytics.zoo.pipeline.inference.{InferenceModel, JTensor}
-import com.esotericsoftware.kryo.KryoSerializable
+
+
 import java.util.{List => JList}
 object test{
   def main(args: Array[String]) {
-    val model = new InferenceModel(1)
+    val model = new InferenceModel()
     model.doLoadOpenVINO(s"/home/yansu/projects/model/resnet_v1_50.xml",
       s"/home/yansu/projects/model/resnet_v1_50.bin")
-    print(model.toString)
+    print(model)
 //    val str : List[Float] = List[Float](1.1f, 2)
 //
 //

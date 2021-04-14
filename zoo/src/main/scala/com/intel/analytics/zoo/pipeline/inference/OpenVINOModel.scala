@@ -27,6 +27,7 @@ import com.intel.analytics.zoo.pipeline.inference.OpenVINOModel.OpenVINOModelHol
 import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 
+
 import scala.collection.JavaConverters._
 
 class OpenVINOModel(var modelHolder: OpenVINOModelHolder,

@@ -35,7 +35,7 @@ import com.intel.analytics.zoo.serving.utils.Conventions
 import com.fasterxml.jackson.databind.ObjectMapper
 
 import org.slf4j.LoggerFactory
-import com.intel.analytics.zoo.serving.http2.Supportive
+import com.intel.analytics.zoo.serving.http.{JsonUtil, ServableManager, Supportive, ServingRuntimeException, Instances, InstancesPredictionInput, Predictions}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
