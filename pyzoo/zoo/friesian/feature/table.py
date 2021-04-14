@@ -221,7 +221,7 @@ class FeatureTable(Table):
         """
         if not isinstance(columns, list):
             columns = [columns]
-        if freq_limit is not None:
+        if freq_limit:
             if isinstance(freq_limit, int):
                 freq_limit = str(freq_limit)
             elif isinstance(freq_limit, dict):
