@@ -41,9 +41,7 @@ class Table:
 
     def compute(self):
         """
-        Trigger computation of Table
-
-        :return:
+        Trigger computation of Table.
         """
         compute(self.df)
         return self
@@ -68,8 +66,6 @@ class Table:
     def broadcast(self):
         """
         Marks a Table as small enough for use in broadcast joins
-
-        :return:
         """
         self.df = broadcast(self.df)
 
@@ -80,6 +76,7 @@ class Table:
 
         :param cols: a string name of the column to drop, or a list of string name of the columns
         to drop.
+
         :return: A new Table that drops the specified column.
         """
         return self._clone(self.df.drop(*cols))
@@ -93,6 +90,7 @@ class Table:
         :param columns: list of str, the target columns to be filled.
         If columns=None and value is int, all columns of integer type will be filled.
         If columns=None and value is long, float, string or boolean, all columns will be filled.
+
         :return: A new Table that replaced the null values with specified value
         """
         if isinstance(value, int) and JAVA_INT_MIN <= value <= JAVA_INT_MAX:
@@ -108,6 +106,7 @@ class Table:
         :param columns: list of str, the target columns to be clipped.
         :param min: int, The mininum value to clip values to: values less than this will be
         replaced with this value.
+
         :return: A new Table that replaced the value less than `min` with specified `min`
         """
         if not isinstance(columns, list):
@@ -122,6 +121,7 @@ class Table:
         :param clipping: boolean, if clipping=True, the negative values in columns will be
         clipped to 0 and `log(x+1)` will be calculated. If clipping=False, `log(x)` will be
         calculated.
+
         :return: A new Table that replaced value in columns with logged value.
         """
         if not isinstance(columns, list):
@@ -135,6 +135,7 @@ class Table:
 
         :param columns: list of str, the target columns to be merged.
         :param target: str, the new column name of the merged column.
+
         :return: A new Table that replaced columns with a new target column of merged list value.
         """
         assert isinstance(columns, list)
@@ -146,6 +147,7 @@ class Table:
 
         :param columns: dict. Name pairs.
         For instance, {'old_name1': 'new_name1', 'old_name2': 'new_name2'}"
+
         :return: A new Table with new column names.
         """
         assert isinstance(columns, dict), "columns should be a dictionary of {'old_name1': " \
@@ -163,7 +165,6 @@ class Table:
         :param truncate: If set to True, truncate strings longer than 20 chars by default.
         If set to a number greater than one, truncates long strings to length `truncate` and
         align cells right.
-        :return:
         """
         self.df.show(n, truncate)
 
@@ -175,6 +176,7 @@ class FeatureTable(Table):
         Loads Parquet files, returning the result as a `FeatureTable`.
 
         :param paths: str or a list of str. The path/paths to Parquet file(s).
+
         :return: A FeatureTable
         """
         return cls(Table._read_parquet(paths))
@@ -187,6 +189,7 @@ class FeatureTable(Table):
         :param indices: StringIndex or a list of StringIndex, StringIndexes of target columns.
         The StringIndex should at least have two columns: id and the corresponding categorical
         column.
+
         :return: A new FeatureTable which transforms categorical features into unique integer
         values with provided StringIndexes.
         """
@@ -209,18 +212,23 @@ class FeatureTable(Table):
         Generate unique index value of categorical features
 
         :param columns: str or a list of str, target columns to generate StringIndex.
-        :param freq_limit: int, str, dict or None.
+        :param freq_limit: int, dict or None.
         Categories with a count/frequency below freq_limit will be ommited from the encoding.
-        Can be represented as both an integer, str, dict or None. For instance, 15, "15",
-        "col_4:1,col_5:3", {'col_4': 10, 'col_5': 2} etc.
+        Can be represented as both an integer, dict or None. For instance, 15,
+        {'col_4': 10, 'col_5': 2} etc.
+
         :return: List of StringIndex
         """
         if not isinstance(columns, list):
             columns = [columns]
-        if isinstance(freq_limit, int):
-            freq_limit = str(freq_limit)
-        if isinstance(freq_limit, dict):
-            freq_limit = ",".join(str(k) + ":" + str(v) for k, v in freq_limit.items())
+        if freq_limit is not None:
+            if isinstance(freq_limit, int):
+                freq_limit = str(freq_limit)
+            elif isinstance(freq_limit, dict):
+                freq_limit = ",".join(str(k) + ":" + str(v) for k, v in freq_limit.items())
+            else:
+                raise ValueError("freq_limit only supports int, dict or None, but get " +
+                                 freq_limit.__class__.__name__)
         df_id_list = generate_string_idx(self.df, columns, freq_limit)
         string_idx_list = list(map(lambda x: StringIndex(x[0], x[1]),
                                    zip(df_id_list, columns)))
@@ -230,7 +238,6 @@ class FeatureTable(Table):
         return FeatureTable(df)
 
 
-# Assume this table only has two columns: col_name and id
 class StringIndex(Table):
     def __init__(self, df, col_name):
         super().__init__(df)
@@ -249,6 +256,7 @@ class StringIndex(Table):
         :param paths: str or a list of str. The path/paths to Parquet file(s).
         :param col_name: str. The column name of the corresponding categorical column. If
         col_name is None, the file name will be used as col_name.
+
         :return: A StringIndex.
         """
         if not isinstance(paths, list):
@@ -271,7 +279,6 @@ class StringIndex(Table):
         `overwrite`: Overwrite existing data.
         `error`: Throw an exception if data already exists.
         `ignore`: Silently ignore this operation if data already exists.
-        :return:
         """
         path = path + "/" + self.col_name + ".parquet"
         self.df.write.parquet(path, mode=mode)
