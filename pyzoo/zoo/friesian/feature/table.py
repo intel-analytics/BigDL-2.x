@@ -87,9 +87,9 @@ class Table:
 
         :param value: int, long, float, string, or boolean.
             Value to replace null values with.
-        :param columns: list of str, the target columns to be filled.
-        If columns=None and value is int, all columns of integer type will be filled.
-        If columns=None and value is long, float, string or boolean, all columns will be filled.
+        :param columns: list of str, the target columns to be filled. If columns=None and value
+        is int, all columns of integer type will be filled. If columns=None and value is long,
+        float, string or boolean, all columns will be filled.
 
         :return: A new Table that replaced the null values with specified value
         """
@@ -145,8 +145,8 @@ class Table:
         """
         Rename columns with new column names
 
-        :param columns: dict. Name pairs.
-        For instance, {'old_name1': 'new_name1', 'old_name2': 'new_name2'}"
+        :param columns: dict. Name pairs. For instance, {'old_name1': 'new_name1', 'old_name2':
+        'new_name2'}"
 
         :return: A new Table with new column names.
         """
@@ -212,10 +212,9 @@ class FeatureTable(Table):
         Generate unique index value of categorical features
 
         :param columns: str or a list of str, target columns to generate StringIndex.
-        :param freq_limit: int, dict or None.
-        Categories with a count/frequency below freq_limit will be ommited from the encoding.
-        Can be represented as both an integer, dict or None. For instance, 15,
-        {'col_4': 10, 'col_5': 2} etc.
+        :param freq_limit: int, dict or None. Categories with a count/frequency below freq_limit
+        will be ommited from the encoding. Can be represented as both an integer, dict or None.
+        For instance, 15, {'col_4': 10, 'col_5': 2} etc.
 
         :return: List of StringIndex
         """
@@ -274,11 +273,10 @@ class StringIndex(Table):
 
         :param path: str. The path to the `folder` of the Parquet file. Note that the col_name
         will be used as basename of the Parquet file.
-        :param mode: str. `append`, `overwrite`, `error` or `ignore`.
-        `append`: Append contents of this StringIndex to existing data.
-        `overwrite`: Overwrite existing data.
-        `error`: Throw an exception if data already exists.
-        `ignore`: Silently ignore this operation if data already exists.
+        :param mode: str. `append`, `overwrite`, `error` or `ignore`. `append`: Append contents
+        of this StringIndex to existing data. `overwrite`: Overwrite existing data. `error`:
+        Throw an exception if data already exists. `ignore`: Silently ignore this operation if
+        data already exists.
         """
         path = path + "/" + self.col_name + ".parquet"
         self.df.write.parquet(path, mode=mode)
