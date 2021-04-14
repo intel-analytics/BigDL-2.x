@@ -17,14 +17,8 @@ object test {
     "stringTensor" : [ "come", "on", "united" ],
     "intTensor2" : [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ] ],
     "floatTensor2" : [ [ [ 0.2, 0.3 ], [ 0.5, 0.6 ] ], [ [ 0.2, 0.3 ], [ 0.5, 0.6 ] ] ],
-    "stringTensor2" : [ [ [ [ "come", "on", "united" ], [ "come", "on", "united" ] ] ] ],
-    "sparseTensor" : {
-      "shape" : [ 100, 10000, 10 ],
-      "data" : [ 0.2, 0.5, 3.45, 6.78 ],
-      "indices" : [ [ 1, 1, 1 ], [ 2, 2, 2 ], [ 3, 3, 3 ], [ 4, 4, 4 ] ]
-    },
-    "image": "/"
-  } ]
+    "stringTensor2" : [ [ [ [ "come", "on", "united" ], [ "come", "on", "united" ] ] ] ]
+   }]
 }"""
 
     try {

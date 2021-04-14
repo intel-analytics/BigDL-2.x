@@ -23,6 +23,7 @@ import com.fasterxml.jackson.module.scala.{DefaultScalaModule, ScalaObjectMapper
 
 trait SerializeSuported {
   def serialize(src: Object): String
+
   def deSerialize[T](clazz: Class[T], data: String): T
 }
 
@@ -64,11 +65,16 @@ class JacksonJsonSerializer extends SerializeSuported {
 
 object YamlUtil {
   val jacksonYamlSerializer = new JacksonYamlSerializer()
+
   def fromYaml[T](clazz: Class[T], data: String)(implicit m: Manifest[T]): T = jacksonYamlSerializer.deSerialize[T](clazz, data)
+
   def toYaml(value: Object): String = jacksonYamlSerializer.serialize(value)
 }
 
 object JsonUtil {
   val jacksonJsonSerializer = new JacksonJsonSerializer()
+
   def fromJson[T](clazz: Class[T], dest: String): T = jacksonJsonSerializer.deSerialize(clazz, dest)
+
   def toJson(value: Object): String = jacksonJsonSerializer.serialize(value)
+}

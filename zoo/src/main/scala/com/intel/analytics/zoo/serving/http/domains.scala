@@ -22,14 +22,15 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.{HashMap, UUID}
 
 import akka.actor.{ActorRef, Props}
+import akka.pattern.ask
 import com.codahale.metrics.Timer
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.ImmutableList
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import com.intel.analytics.zoo.serving.http2.FrontEndApp.{overallRequestTimer, system, timeout, timing, waitRedisTimer}
-import com.intel.analytics.zoo.serving.http2._
+import com.intel.analytics.zoo.serving.http.FrontEndApp.{overallRequestTimer, system, timeout, timing, waitRedisTimer}
+
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.complex._
@@ -724,46 +725,47 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
   var querierQueue: LinkedBlockingQueue[ActorRef] = _
 
   def load(): Unit = {
-    //TODO Actor Name not unique if multiple model
     val redisPutterName = s"redis-putter-${clusterServingMetaData.modelName}-${clusterServingMetaData.modelVersion}"
-    val redisPutterProps = Props(new RedisPutActor(
-      clusterServingMetaData.redisHost,
-      clusterServingMetaData.redisPort.toInt,
-      clusterServingMetaData.redisInputQueue,
-      clusterServingMetaData.redisOutputQueue,
-      clusterServingMetaData.timeWindow,
-      clusterServingMetaData.countWindow,
-      clusterServingMetaData.redisSecureEnabled,
-      clusterServingMetaData.redisTrustStorePath,
-      clusterServingMetaData.redisTrustStoreToken))
-    system.actorOf(redisPutterProps, name = redisPutterName)
-  }
+    redisPutter = timing(s"$redisPutterName initialized.")() {
+      val redisPutterProps = Props(new RedisPutActor(
+        clusterServingMetaData.redisHost,
+        clusterServingMetaData.redisPort.toInt,
+        clusterServingMetaData.redisInputQueue,
+        clusterServingMetaData.redisOutputQueue,
+        clusterServingMetaData.timeWindow,
+        clusterServingMetaData.countWindow,
+        clusterServingMetaData.redisSecureEnabled,
+        clusterServingMetaData.redisTrustStorePath,
+        clusterServingMetaData.redisTrustStoreToken))
+      system.actorOf(redisPutterProps, name = redisPutterName)
+    }
 
-  val redisGetterName = s"redis-getter-${clusterServingMetaData.modelName}-${clusterServingMetaData.modelVersion}"
-  redisGetter = timing(s"$redisGetterName initialized.")() {
-    val redisGetterProps = Props(new RedisPutActor(
-      clusterServingMetaData.redisHost,
-      clusterServingMetaData.redisPort.toInt,
-      clusterServingMetaData.redisInputQueue,
-      clusterServingMetaData.redisOutputQueue,
-      clusterServingMetaData.timeWindow,
-      clusterServingMetaData.countWindow,
-      clusterServingMetaData.redisSecureEnabled,
-      clusterServingMetaData.redisTrustStorePath,
-      clusterServingMetaData.redisTrustStoreToken))
-    system.actorOf(redisGetterProps, name = redisGetterName)
-  }
+    val redisGetterName = s"redis-getter-${clusterServingMetaData.modelName}-${clusterServingMetaData.modelVersion}"
+    redisGetter = timing(s"$redisGetterName initialized.")() {
+      val redisGetterProps = Props(new RedisPutActor(
+        clusterServingMetaData.redisHost,
+        clusterServingMetaData.redisPort.toInt,
+        clusterServingMetaData.redisInputQueue,
+        clusterServingMetaData.redisOutputQueue,
+        clusterServingMetaData.timeWindow,
+        clusterServingMetaData.countWindow,
+        clusterServingMetaData.redisSecureEnabled,
+        clusterServingMetaData.redisTrustStorePath,
+        clusterServingMetaData.redisTrustStoreToken))
+      system.actorOf(redisGetterProps, name = redisGetterName)
+    }
 
-  val querierNum = 1000
-  querierQueue = timing(s"queriers initialized.")() {
-    val querierQueue = new LinkedBlockingQueue[ActorRef](querierNum)
-    val querierProps = Props(new QueryActor(redisGetter))
-    List.range(0, querierNum).map(index => {
-      val querierName = s"querier-$index-${clusterServingMetaData.modelName}-${clusterServingMetaData.modelVersion}"
-      val querier = system.actorOf(querierProps, name = querierName)
-      querierQueue.put(querier)
-    })
-    querierQueue
+    val querierNum = 1000
+    querierQueue = timing(s"queriers initialized.")() {
+      val querierQueue = new LinkedBlockingQueue[ActorRef](querierNum)
+      val querierProps = Props(new QueryActor(redisGetter))
+      List.range(0, querierNum).map(index => {
+        val querierName = s"querier-$index-${clusterServingMetaData.modelName}-${clusterServingMetaData.modelVersion}"
+        val querier = system.actorOf(querierProps, name = querierName)
+        querierQueue.put(querier)
+      })
+      querierQueue
+    }
   }
 
 
