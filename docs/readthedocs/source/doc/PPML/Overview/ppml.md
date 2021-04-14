@@ -8,7 +8,7 @@ To take full advantage of the value of big data, especially the value of private
 
 To reslove this problem, Analytics-Zoo chooses [Intel SGX (Software Guard Extensions)](https://software.intel.com/content/www/us/en/develop/topics/software-guard-extensions.html), a widely used [TEE (Trusted Execution Environment)](https://en.wikipedia.org/wiki/Trusted_execution_environment) technology, as main security building block for this PPML platforms. Different from other PPML technologies, e.g., [HE (Homomorphic Encryption)](https://en.wikipedia.org/wiki/Homomorphic_encryption), [MPC (Multi-Party Computation) or SMC (Secure Multi-Party Computation)](https://en.wikipedia.org/wiki/Secure_multi-party_computation) and [DP (Differential Privacy)](https://en.wikipedia.org/wiki/Differential_privacy), Intel SGX performs well on all measures (security, performance and utility).
 
-![PPML Technologies](../../../../../docs/Image/PPML/ppml_tech.png)
+<p align="center"><img src="../../../../../docs/Image/PPML/ppml_tech.png" height="180px"><br></p>
 
 Based on Intel SGX (Software Guard Extensions) and LibOS projects ([Graphene](https://grapheneproject.io/) and [Occlum](https://occlum.io/)), Analytics-Zoo empowers our customers (e.g., data scientists and big data developers) to build PPML applications on top of large scale dataset without impacting existing applications.
 
