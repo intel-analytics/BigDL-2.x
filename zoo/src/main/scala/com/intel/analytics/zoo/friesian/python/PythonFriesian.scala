@@ -309,7 +309,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def postPad(df: DataFrame, colNames: JList[String], maxLength: Int = 100): DataFrame = {
 
-    val padArrayUdf = udf((history: WrappedArray[Int]) => {
+    val padArrayUdf = (history: WrappedArray[Int]) => {
       val n = history.length
 
       if (maxLength > n) {
@@ -317,9 +317,9 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       } else {
         history.slice(n - maxLength, n)
       }
-    })
+    }
 
-    val padMaxtrixUdf = udf((history: WrappedArray[WrappedArray[Int]]) => {
+    val padMaxtrixUdf = (history: WrappedArray[WrappedArray[Int]]) => {
       val n = history.length
       val result: Seq[Seq[Int]] = if (maxLength > n) {
         val hishead = history(0)
@@ -330,7 +330,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         history.slice(n - maxLength, n)
       }
       result
-    })
+    }
 
     df.createOrReplaceTempView("tmp")
     df.sqlContext.udf.register("post_pad_array", padArrayUdf)
