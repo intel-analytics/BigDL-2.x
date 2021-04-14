@@ -75,7 +75,7 @@ class Table:
         This is a no-op if schema doesn't contain the given column name(s).
 
         :param cols: a string name of the column to drop, or a list of string name of the columns
-        to drop.
+               to drop.
 
         :return: A new Table that drops the specified column.
         """
@@ -86,10 +86,10 @@ class Table:
         Replace null values.
 
         :param value: int, long, float, string, or boolean.
-            Value to replace null values with.
+               Value to replace null values with.
         :param columns: list of str, the target columns to be filled. If columns=None and value
-        is int, all columns of integer type will be filled. If columns=None and value is long,
-        float, string or boolean, all columns will be filled.
+               is int, all columns of integer type will be filled. If columns=None and value is
+               long, float, string or boolean, all columns will be filled.
 
         :return: A new Table that replaced the null values with specified value
         """
@@ -105,7 +105,7 @@ class Table:
 
         :param columns: list of str, the target columns to be clipped.
         :param min: int, The mininum value to clip values to: values less than this will be
-        replaced with this value.
+               replaced with this value.
 
         :return: A new Table that replaced the value less than `min` with specified `min`
         """
@@ -119,8 +119,8 @@ class Table:
 
         :param columns: list of str, the target columns to calculate log.
         :param clipping: boolean, if clipping=True, the negative values in columns will be
-        clipped to 0 and `log(x+1)` will be calculated. If clipping=False, `log(x)` will be
-        calculated.
+               clipped to 0 and `log(x+1)` will be calculated. If clipping=False, `log(x)` will be
+               calculated.
 
         :return: A new Table that replaced value in columns with logged value.
         """
@@ -146,7 +146,7 @@ class Table:
         Rename columns with new column names
 
         :param columns: dict. Name pairs. For instance, {'old_name1': 'new_name1', 'old_name2':
-        'new_name2'}"
+               'new_name2'}"
 
         :return: A new Table with new column names.
         """
@@ -163,8 +163,8 @@ class Table:
 
         :param n: int, number of rows to show.
         :param truncate: If set to True, truncate strings longer than 20 chars by default.
-        If set to a number greater than one, truncates long strings to length `truncate` and
-        align cells right.
+               If set to a number greater than one, truncates long strings to length `truncate` and
+               align cells right.
         """
         self.df.show(n, truncate)
 
@@ -187,11 +187,11 @@ class FeatureTable(Table):
 
         :param columns: str or a list of str, target columns to be encoded.
         :param indices: StringIndex or a list of StringIndex, StringIndexes of target columns.
-        The StringIndex should at least have two columns: id and the corresponding categorical
-        column.
+               The StringIndex should at least have two columns: id and the corresponding
+               categorical column.
 
         :return: A new FeatureTable which transforms categorical features into unique integer
-        values with provided StringIndexes.
+                 values with provided StringIndexes.
         """
         if not isinstance(columns, list):
             columns = [columns]
@@ -213,8 +213,8 @@ class FeatureTable(Table):
 
         :param columns: str or a list of str, target columns to generate StringIndex.
         :param freq_limit: int, dict or None. Categories with a count/frequency below freq_limit
-        will be ommited from the encoding. Can be represented as both an integer, dict or None.
-        For instance, 15, {'col_4': 10, 'col_5': 2} etc.
+               will be ommited from the encoding. Can be represented as both an integer,
+               dict or None. For instance, 15, {'col_4': 10, 'col_5': 2} etc.
 
         :return: List of StringIndex
         """
@@ -254,7 +254,7 @@ class StringIndex(Table):
 
         :param paths: str or a list of str. The path/paths to Parquet file(s).
         :param col_name: str. The column name of the corresponding categorical column. If
-        col_name is None, the file name will be used as col_name.
+               col_name is None, the file name will be used as col_name.
 
         :return: A StringIndex.
         """
@@ -272,11 +272,11 @@ class StringIndex(Table):
         Write StringIndex to Parquet file
 
         :param path: str. The path to the `folder` of the Parquet file. Note that the col_name
-        will be used as basename of the Parquet file.
+               will be used as basename of the Parquet file.
         :param mode: str. `append`, `overwrite`, `error` or `ignore`. `append`: Append contents
-        of this StringIndex to existing data. `overwrite`: Overwrite existing data. `error`:
-        Throw an exception if data already exists. `ignore`: Silently ignore this operation if
-        data already exists.
+               of this StringIndex to existing data. `overwrite`: Overwrite existing data.
+               `error`: Throw an exception if data already exists. `ignore`: Silently ignore this
+               operation if data already exists.
         """
         path = path + "/" + self.col_name + ".parquet"
         self.df.write.parquet(path, mode=mode)
