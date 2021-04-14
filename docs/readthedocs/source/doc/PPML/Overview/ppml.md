@@ -21,25 +21,25 @@ Note: Intel SGX requires hardware support, please [check if your CPU has this fe
 - Protecting data and model confidentiality
 - Seamless migrate existing big data applications into privacy preserving applications
 - Trusted big data & AI Platform based on Intel SGX
-    - Trusted Big Data Analytics and ML
-    - Trusted Realtime Compute and ML
-    - Trusted Federated Learning (incoming)
+  - Trusted Big Data Analytics and ML
+  - Trusted Realtime Compute and ML
+  - Trusted Federated Learning (incoming)
 
 ### Data Protected
 
--  Sensitive input/output data (computation, training and inference) in big data applications, e.g., healthcare data
+- Sensitive input/output data (computation, training and inference) during big data applications, e.g., healthcare data
 - Propretary model in training and inference, e.g., model trained with self-owned or sensitive data
 
 ## Trusted Big Data Analytics and ML
 
-In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Spark in SGX, then run applications in safe way.
+In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Spark in SGX, then run Spark PI example in safe way. For more examples, please refer to [trusted-big-data-ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-big-data-ml/scala/docker-graphene).
 
 ### Scenario
 
 - Batch computation/analytics, i.e., privacy preserved Spark jobs
 - Interactive computation/analytics, i.e., privacy preserved SparkSQL
 - Large scale Spark related workload, e.g., TPC-H Benchmark
-- Distributed machine learning & deep Learning with BigDL 
+- Distributed machine learning & deep Learning with BigDL
 
 ### Get started
 
@@ -53,14 +53,23 @@ If SGX driver is not installed, please install SGX driver with this command
 ./scripts/install-graphene-driver.sh
 ```
 
+Prepare the keys for TLS.
+
+```bash
+./scripts/generate-keys.sh
+```
+
+Build docker image from Dockerfile
+
 ```bash
 cd trusted-big-data-ml/scala/docker-graphene
+cp -r ../../keys .
 ./build-docker-image.sh
 ```
 
 #### Step 1: Start Spark in SGX
 
-Enter `analytics-zoo/ppmltrusted-big-data-ml/scala/docker-graphene` dir.
+Enter `analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene` dir. Start Spark service with this command
 
 ```bash
 ./start-local-big-data-ml.sh
@@ -75,7 +84,9 @@ Modify `init.sh`, which is task/env related.
 ./init.sh
 vim start-spark-local-pi-sgx.sh
 ```
-Add these code in the `start-spark-local-pi-sgx.sh` file: <br>
+
+Add these lines in the `start-spark-local-pi-sgx.sh` file:
+
 ```bash
 #!/bin/bash
 
@@ -104,37 +115,82 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
         /ppml/trusted-big-data-ml/work/spark-2.4.3/examples/jars/spark-examples_2.11-2.4.3.jar | tee spark.local.pi.sgx.log
 ```
 
-Then run the script to run pi test in spark: <br>
+Then run the script to run pi test in spark:
+
 ```bash
 chmod a+x start-spark-local-pi-sgx.sh
 ./start-spark-local-pi-sgx.sh
 ```
 
 Open another terminal and check the log:
+
 ```bash
 sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.pi.sgx.log | egrep "###|INFO|Pi"
 ```
 
-The result should look like: <br>
+The result should look like:
+
 >   Pi is roughly 3.1422957114785572
 
-
-For more examples, please refer to [trusted-big-data-ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-big-data-ml/scala/docker-graphene).
+This example is a simple Spark local PI example, if you want to run application in distributed Spark cluster protected by SGX, please refer to [distributed bigdata ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-big-data-ml/scala/docker-graphene#start-the-distributed-bigdata-ml).
 
 ## Trusted Realtime Compute and ML
 
-In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Flink in SGX, then run real-time applications or model serving in safe way.
+In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Flink in SGX, then run real-time model serving in safe way. For more examples, please refer to [trusted-big-data-ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-big-data-ml/scala/docker-graphene).
 
 ### Scenario
 
-- Real time data computation/analytics, e.g., privacy preserved Flink jobs
+- Real time data computation/analytics, i.e., privacy preserved Flink jobs or FlinkSQL
 - Privacy preserved distributed model inference with propretary model
 
-## Get started
+### Get started
 
-- Env setup (DockFIle)
-- Flink example (word count)
-- Cluster serving
+#### Setp 0: Prepare Environment
+
+Please clone or download Analytics-Zoo source code, then enter `analytics-zoo/ppml`. If SGX driver is not installed, please install SGX driver with this command.
 
 ```bash
+./scripts/install-graphene-driver.sh
+```
+
+Prepare the keys for TLS.
+
+```bash
+./scripts/generate-keys.sh
+```
+
+Build docker image from Dockerfile.
+
+```bash
+cd trusted-realtime-ml/scala/docker-graphene
+cp -r ../../keys .
+./build-docker-image.sh
+```
+
+#### Step 1: Start Cluster Serving Service
+
+Enter `analytics-zoo/ppml/trusted-realtime-ml/scala/docker-graphene` dir.
+
+Start cluster serving in single container
+
+```bash
+./start-local-cluster-serving.sh
+```
+
+#### Step 2: Inference with Cluster Serving
+
+After all services are ready, then you can directly push inference requests int queue with [Restful API](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide/#restful-api). Also, you can push image/input into queue with Python API
+
+```python
+from zoo.serving.client import InputQueue
+input_api = InputQueue()
+input_api.enqueue('my-image1', user_define_key={"path: 'path/to/image1'})
+```
+
+#### Step 3: Stop Cluster Serving Service
+
+Cluster Serving service is a long running service in container, you can stop it with
+
+```bash
+docker stop containerID
 ```
