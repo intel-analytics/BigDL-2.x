@@ -244,6 +244,15 @@ def MSE(y_true, y_pred, multioutput='uniform_average'):
 
 def Accuracy(y_true, y_pred, multioutput=None):
     from sklearn.metrics._classification import accuracy_score
+    y_true = np.squeeze(y_true)
+    y_pred = np.squeeze(y_pred)
+    if np.any(y_pred != y_pred.astype(int)):
+        # y_pred is probability
+        if y_pred.ndim == 1:
+            y_pred = np.where(y_pred > 0.5, 1, 0)
+        else:
+            y_pred = np.argmax(y_pred, axis=1)
+
     return accuracy_score(y_true, y_pred)
 
 

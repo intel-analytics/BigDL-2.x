@@ -155,8 +155,10 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   def doLoadTensorflow(modelPath: String,
                        modelType: String,
                        inputs: Array[String],
-                       outputs: Array[String]): Unit = {
-    doLoadTensorflowModel(modelPath, modelType, inputs, outputs, 1, 1, true)
+                       outputs: Array[String],
+                       intraOp: Int = 1,
+                       interOp: Int = 1): Unit = {
+    doLoadTensorflowModel(modelPath, modelType, inputs, outputs, intraOp, interOp, true)
   }
 
   /**
@@ -537,7 +539,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
 
       val latency = end - begin
       val name = s"Thread ${Thread.currentThread().getId} Inference"
-      InferenceSupportive.logger.debug(s"$name time [${latency/1e9} s, ${latency/1e6} ms].")
+      InferenceSupportive.logger.info(s"$name time [${latency/1e9} s, ${latency/1e6} ms].")
 
       result
     } finally {

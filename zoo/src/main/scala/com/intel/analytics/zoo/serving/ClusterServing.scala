@@ -20,16 +20,16 @@ package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Conventions, DeprecatedUtils}
 import org.apache.flink.core.execution.JobClient
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
-import redis.clients.jedis.JedisPool
+import redis.clients.jedis.{JedisPool, JedisPoolConfig}
 import scopt.OptionParser
 
 
 object ClusterServing {
-  case class ServingParams(configPath: String = "config.yaml", testMode: Int = -1,
+  case class ServingParams(configPath: String = "config.yaml",
                            timerMode: Boolean = false)
   val logger = Logger.getLogger(getClass)
   var argv: ServingParams = _
@@ -37,47 +37,39 @@ object ClusterServing {
   var streamingEnv: StreamExecutionEnvironment = _
   var model: InferenceModel = _
   var jedisPool: JedisPool = _
+  val jedisPoolConfig = new JedisPoolConfig()
+  jedisPoolConfig.setMaxTotal(256)
   val parser = new OptionParser[ServingParams]("Text Classification Example") {
     opt[String]('c', "configPath")
       .text("Config Path of Cluster Serving")
       .action((x, params) => params.copy(configPath = x))
-    opt[Int]('t', "testMode")
-      .text("Text Mode controlling Flink parallelism, this should not be controlled by user" +
-        "unless in performance test")
-      .action((x, params) => params.copy(testMode = x))
     opt[Boolean]("timerMode")
       .text("Whether to open timer mode")
       .action((x, params) => params.copy(timerMode = x))
   }
   def uploadModel(): Unit = {
     streamingEnv = StreamExecutionEnvironment.getExecutionEnvironment
-    streamingEnv.registerCachedFile(helper.modelDir, Conventions.SERVING_MODEL_TMP_DIR)
+    streamingEnv.registerCachedFile(helper.modelPath, Conventions.SERVING_MODEL_TMP_DIR)
   }
   def executeJob(): Unit = {
     /**
      * Flink environment parallelism depends on model parallelism
      */
-    if (argv.testMode > 0) {
-      Logger.getLogger("org").setLevel(Level.INFO)
-      Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
-      streamingEnv.setParallelism(argv.testMode)
-      streamingEnv.addSource(new FlinkRedisSource(helper))
-        .map(new FlinkInference(helper))
-        .addSink(new FlinkRedisSink(helper))
-    } else {
-      streamingEnv.setParallelism(helper.modelPar)
-      streamingEnv.addSource(new FlinkRedisSource(helper))
-        .map(new FlinkInference(helper))
-        .addSink(new FlinkRedisSink(helper))
-    }
+    // Uncomment this line if you need to check predict time in debug
+    // Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
+    streamingEnv.setParallelism(helper.modelParallelism)
+    streamingEnv.addSource(new FlinkRedisSource(helper))
+      .map(new FlinkInference(helper))
+      .addSink(new FlinkRedisSink(helper))
+
     logger.info(s"Cluster Serving Flink job graph details \n${streamingEnv.getExecutionPlan}")
     streamingEnv.executeAsync()
   }
 
   def main(args: Array[String]): Unit = {
     argv = parser.parse(args, ServingParams()).head
-    helper = new ClusterServingHelper()
-    helper.loadConfig()
+    val configParser = new ConfigParser(argv.configPath)
+    helper = configParser.loadConfig()
     uploadModel()
     executeJob()
   }

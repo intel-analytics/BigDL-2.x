@@ -1,4 +1,4 @@
-# Data-Parallel Pandas with XShards for Distribtued Deep Learning
+# Use Distribtued Pandas for Deep Learning
 
 ---
 

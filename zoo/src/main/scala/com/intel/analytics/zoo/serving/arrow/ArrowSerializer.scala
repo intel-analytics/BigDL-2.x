@@ -141,12 +141,20 @@ object ArrowSerializer {
     writer.start()
     if (t.isTable) {
       t.toTable.keySet.foreach(key => {
-        val tensor = t.toTable(key).asInstanceOf[Tensor[Float]].select(1, idx)
+        val tensor = if (idx > 0) {
+          t.toTable(key).asInstanceOf[Tensor[Float]].select(1, idx)
+        } else {
+          t.toTable(key).asInstanceOf[Tensor[Float]]
+        }
         writeTensor(tensor, vectorSchemaRoot, writer)
       })
 
     } else if (t.isTensor) {
-      val tensor = t.toTensor[Float].select(1, idx)
+      val tensor = if (idx > 0) {
+        t.toTensor[Float].select(1, idx)
+      } else {
+        t.toTensor[Float]
+      }
       writeTensor(tensor, vectorSchemaRoot, writer)
     } else {
       throw new Error("Your input for Post-processing is invalid, " +
