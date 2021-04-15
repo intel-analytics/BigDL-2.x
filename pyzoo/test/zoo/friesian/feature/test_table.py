@@ -35,12 +35,6 @@ class TestTable(TestCase):
         self.spark = SparkSession(self.sc)
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
 
-    def teardown_method(self, method):
-        """ teardown any state that was previously setup with a setup_method
-        call.
-        """
-        self.sc.stop()
-
     def test_fillna_int(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
@@ -268,6 +262,12 @@ class TestTable(TestCase):
         assert "history_length" in tbl.df.columns
         assert tbl.df.filter("history_length = 5").count() == 2
         assert tbl.df.filter("history_length = 2").count() == 1
+
+    def teardown_method(self, method):
+        """ teardown any state that was previously setup with a setup_method
+        call.
+        """
+        self.sc.stop()
 
 
 if __name__ == "__main__":
