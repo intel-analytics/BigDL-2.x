@@ -17,7 +17,7 @@
 from zoo.automl.recipe.base import Recipe
 from zoo.automl.search.base import *
 import numpy as np
-from ray import tune
+from zoo.orca.automl import hp
 import json
 
 
@@ -34,10 +34,10 @@ class SmokeRecipe(Recipe):
         return {
             "selected_features": json.dumps(all_available_features),
             "model": "LSTM",
-            "lstm_1_units": tune.choice([32, 64]),
-            "dropout_1": tune.uniform(0.2, 0.5),
-            "lstm_2_units": tune.choice([32, 64]),
-            "dropout_2": tune.uniform(0.2, 0.5),
+            "lstm_1_units": hp.choice([32, 64]),
+            "dropout_1": hp.uniform(0.2, 0.5),
+            "lstm_2_units": hp.choice([32, 64]),
+            "dropout_2": hp.uniform(0.2, 0.5),
             "lr": 0.001,
             "batch_size": 1024,
             "epochs": 1,
@@ -63,12 +63,12 @@ class MTNetSmokeRecipe(Recipe):
             "epochs": 1,
             "cnn_dropout": 0.2,
             "rnn_dropout": 0.2,
-            "time_step": tune.choice([3, 4]),
+            "time_step": hp.choice([3, 4]),
             "cnn_height": 2,
-            "long_num": tune.choice([3, 4]),
-            "ar_size": tune.choice([2, 3]),
-            "past_seq_len": tune.sample_from(lambda spec:
-                                             (spec.config.long_num + 1) * spec.config.time_step),
+            "long_num": hp.choice([3, 4]),
+            "ar_size": hp.choice([2, 3]),
+            "past_seq_len": hp.sample_from(lambda spec:
+                                           (spec.config.long_num + 1) * spec.config.time_step),
         }
 
 
@@ -122,7 +122,7 @@ class PastSeqParamHandler(object):
                     "The input min look back value is smaller than 2. "
                     "We sample from range (2, {}) instead.".format(
                         look_back[1]))
-            past_seq_config = tune.randint(look_back[0], look_back[1] + 1)
+            past_seq_config = hp.randint(look_back[0], look_back[1] + 1)
         elif isinstance(look_back, int):
             if look_back < 2:
                 raise ValueError(
@@ -168,31 +168,31 @@ class GridRandomRecipe(Recipe):
     def search_space(self, all_available_features):
         return {
             # -------- feature related parameters
-            "selected_features": tune.sample_from(lambda spec:
-                                                  json.dumps(
-                                                      list(np.random.choice(
-                                                          all_available_features,
-                                                          size=np.random.randint(
-                                                              low=3,
-                                                              high=len(all_available_features)),
-                                                          replace=False)))),
+            "selected_features": hp.sample_from(lambda spec:
+                                                json.dumps(
+                                                    list(np.random.choice(
+                                                        all_available_features,
+                                                        size=np.random.randint(
+                                                            low=3,
+                                                            high=len(all_available_features)),
+                                                        replace=False)))),
 
             # -------- model selection TODO add MTNet
-            "model": tune.choice(["LSTM", "Seq2seq"]),
+            "model": hp.choice(["LSTM", "Seq2seq"]),
 
             # --------- Vanilla LSTM model parameters
-            "lstm_1_units": tune.grid_search([16, 32]),
+            "lstm_1_units": hp.grid_search([16, 32]),
             "dropout_1": 0.2,
-            "lstm_2_units": tune.grid_search([16, 32]),
-            "dropout_2": tune.uniform(0.2, 0.5),
+            "lstm_2_units": hp.grid_search([16, 32]),
+            "dropout_2": hp.uniform(0.2, 0.5),
 
             # ----------- Seq2Seq model parameters
-            "latent_dim": tune.grid_search([32, 64]),
-            "dropout": tune.uniform(0.2, 0.5),
+            "latent_dim": hp.grid_search([32, 64]),
+            "dropout": hp.uniform(0.2, 0.5),
 
             # ----------- optimization parameters
-            "lr": tune.uniform(0.001, 0.01),
-            "batch_size": tune.choice([32, 64]),
+            "lr": hp.uniform(0.001, 0.01),
+            "batch_size": hp.choice([32, 64]),
             "epochs": self.epochs,
             "past_seq_len": self.past_seq_config,
         }
@@ -233,26 +233,26 @@ class LSTMGridRandomRecipe(Recipe):
         # -- model params
         self.past_seq_config = PastSeqParamHandler.get_past_seq_config(
             look_back)
-        self.lstm_1_units_config = tune.choice(lstm_1_units)
-        self.lstm_2_units_config = tune.grid_search(lstm_2_units)
-        self.dropout_2_config = tune.uniform(0.2, 0.5)
+        self.lstm_1_units_config = hp.choice(lstm_1_units)
+        self.lstm_2_units_config = hp.grid_search(lstm_2_units)
+        self.dropout_2_config = hp.uniform(0.2, 0.5)
 
         # -- optimization params
-        self.lr = tune.uniform(0.001, 0.01)
-        self.batch_size = tune.grid_search(batch_size)
+        self.lr = hp.uniform(0.001, 0.01)
+        self.batch_size = hp.grid_search(batch_size)
         self.epochs = epochs
 
     def search_space(self, all_available_features):
         return {
             # -------- feature related parameters
-            "selected_features": tune.sample_from(lambda spec:
-                                                  json.dumps(
-                                                      list(np.random.choice(
-                                                          all_available_features,
-                                                          size=np.random.randint(
-                                                              low=3,
-                                                              high=len(all_available_features) + 1),
-                                                          replace=False)))),
+            "selected_features": hp.sample_from(lambda spec:
+                                                json.dumps(
+                                                    list(np.random.choice(
+                                                        all_available_features,
+                                                        size=np.random.randint(
+                                                            low=3,
+                                                            high=len(all_available_features) + 1),
+                                                        replace=False)))),
 
             "model": "LSTM",
 
@@ -304,25 +304,25 @@ class Seq2SeqRandomRecipe(Recipe):
         # -- model params
         self.past_seq_config = PastSeqParamHandler.get_past_seq_config(
             look_back)
-        self.latent_dim = tune.choice(latent_dim)
-        self.dropout_config = tune.uniform(0.2, 0.5)
+        self.latent_dim = hp.choice(latent_dim)
+        self.dropout_config = hp.uniform(0.2, 0.5)
 
         # -- optimization params
-        self.lr = tune.uniform(0.001, 0.01)
-        self.batch_size = tune.grid_search(batch_size)
+        self.lr = hp.uniform(0.001, 0.01)
+        self.batch_size = hp.grid_search(batch_size)
         self.epochs = epochs
 
     def search_space(self, all_available_features):
         return {
             # -------- feature related parameters
-            "selected_features": tune.sample_from(lambda spec:
-                                                  json.dumps(
-                                                      list(np.random.choice(
-                                                          all_available_features,
-                                                          size=np.random.randint(
-                                                              low=3,
-                                                              high=len(all_available_features) + 1),
-                                                          replace=False)))),
+            "selected_features": hp.sample_from(lambda spec:
+                                                json.dumps(
+                                                    list(np.random.choice(
+                                                        all_available_features,
+                                                        size=np.random.randint(
+                                                            low=3,
+                                                            high=len(all_available_features) + 1),
+                                                        replace=False)))),
 
             "model": "Seq2Seq",
             "latent_dim": self.latent_dim,
@@ -369,32 +369,32 @@ class MTNetGridRandomRecipe(Recipe):
         self.training_iteration = training_iteration
 
         # -- optimization params
-        self.lr = tune.uniform(0.001, 0.01)
-        self.batch_size = tune.grid_search(batch_size)
+        self.lr = hp.uniform(0.001, 0.01)
+        self.batch_size = hp.grid_search(batch_size)
         self.epochs = epochs
 
         # ---- model params
-        self.cnn_dropout = tune.uniform(0.2, 0.5)
-        self.rnn_dropout = tune.uniform(0.2, 0.5)
-        self.time_step = tune.choice(time_step)
-        self.long_num = tune.choice(long_num,)
-        self.cnn_height = tune.choice(cnn_height)
-        self.cnn_hid_size = tune.choice(cnn_hid_size)
-        self.ar_size = tune.choice(ar_size)
-        self.past_seq_len = tune.sample_from(
+        self.cnn_dropout = hp.uniform(0.2, 0.5)
+        self.rnn_dropout = hp.uniform(0.2, 0.5)
+        self.time_step = hp.choice(time_step)
+        self.long_num = hp.choice(long_num,)
+        self.cnn_height = hp.choice(cnn_height)
+        self.cnn_hid_size = hp.choice(cnn_hid_size)
+        self.ar_size = hp.choice(ar_size)
+        self.past_seq_len = hp.sample_from(
             lambda spec: (
                 spec.config.long_num + 1) * spec.config.time_step)
 
     def search_space(self, all_available_features):
         return {
-            "selected_features": tune.sample_from(lambda spec:
-                                                  json.dumps(
-                                                      list(np.random.choice(
-                                                          all_available_features,
-                                                          size=np.random.randint(
-                                                              low=3,
-                                                              high=len(all_available_features)),
-                                                          replace=False)))),
+            "selected_features": hp.sample_from(lambda spec:
+                                                json.dumps(
+                                                    list(np.random.choice(
+                                                        all_available_features,
+                                                        size=np.random.randint(
+                                                            low=3,
+                                                            high=len(all_available_features)),
+                                                        replace=False)))),
 
             "model": "MTNet",
             "lr": self.lr,
@@ -444,14 +444,14 @@ class TCNGridRandomRecipe(Recipe):
         self.training_iteration = training_iteration
 
         # -- optimization params
-        self.lr = tune.choice(lr)
-        self.batch_size = tune.grid_search(batch_size)
+        self.lr = hp.choice(lr)
+        self.batch_size = hp.grid_search(batch_size)
 
         # ---- model params
-        self.hidden_size = tune.grid_search(hidden_size)
-        self.levels = tune.grid_search(levels)
-        self.kernel_size = tune.grid_search(kernel_size)
-        self.dropout = tune.choice(dropout)
+        self.hidden_size = hp.grid_search(hidden_size)
+        self.levels = hp.grid_search(levels)
+        self.kernel_size = hp.grid_search(kernel_size)
+        self.dropout = hp.choice(dropout)
 
     def search_space(self, all_available_features):
         return {
@@ -498,29 +498,29 @@ class RandomRecipe(Recipe):
         import random
         return {
             # -------- feature related parameters
-            "selected_features": tune.sample_from(lambda spec:
-                                                  json.dumps(
-                                                      list(np.random.choice(
-                                                          all_available_features,
-                                                          size=np.random.randint(
-                                                              low=3,
-                                                              high=len(all_available_features)),
-                                                          replace=False)))),
+            "selected_features": hp.sample_from(lambda spec:
+                                                json.dumps(
+                                                    list(np.random.choice(
+                                                        all_available_features,
+                                                        size=np.random.randint(
+                                                            low=3,
+                                                            high=len(all_available_features)),
+                                                        replace=False)))),
 
-            "model": tune.choice(["LSTM", "Seq2seq"]),
+            "model": hp.choice(["LSTM", "Seq2seq"]),
             # --------- Vanilla LSTM model parameters
-            "lstm_1_units": tune.choice([8, 16, 32, 64, 128]),
-            "dropout_1": tune.uniform(0.2, 0.5),
-            "lstm_2_units": tune.choice([8, 16, 32, 64, 128]),
-            "dropout_2": tune.uniform(0.2, 0.5),
+            "lstm_1_units": hp.choice([8, 16, 32, 64, 128]),
+            "dropout_1": hp.uniform(0.2, 0.5),
+            "lstm_2_units": hp.choice([8, 16, 32, 64, 128]),
+            "dropout_2": hp.uniform(0.2, 0.5),
 
             # ----------- Seq2Seq model parameters
-            "latent_dim": tune.choice([32, 64, 128, 256]),
-            "dropout": tune.uniform(0.2, 0.5),
+            "latent_dim": hp.choice([32, 64, 128, 256]),
+            "dropout": hp.uniform(0.2, 0.5),
 
             # ----------- optimization parameters
-            "lr": tune.uniform(0.001, 0.01),
-            "batch_size": tune.choice([32, 64, 1024]),
+            "lr": hp.uniform(0.001, 0.01),
+            "batch_size": hp.choice([32, 64, 1024]),
             "epochs": self.epochs,
             "past_seq_len": self.past_seq_config,
         }
@@ -635,18 +635,18 @@ class XgbRegressorGridRandomRecipe(Recipe):
         self.reg_alpha = reg_alpha
         self.reg_lambda = reg_lambda
 
-        self.n_estimators = tune.grid_search(n_estimators)
-        self.max_depth = tune.grid_search(max_depth)
-        self.lr = tune.loguniform(lr[0], lr[-1])
+        self.n_estimators = hp.grid_search(n_estimators)
+        self.max_depth = hp.grid_search(max_depth)
+        self.lr = hp.loguniform(lr[0], lr[-1])
         self.subsample = subsample
-        self.min_child_weight = tune.choice(min_child_weight)
+        self.min_child_weight = hp.choice(min_child_weight)
 
     def search_space(self, all_available_features):
         return {
             # -------- feature related parameters
             "model": "XGBRegressor",
 
-            "imputation": tune.choice(["LastFillImpute", "FillZeroImpute"]),
+            "imputation": hp.choice(["LastFillImpute", "FillZeroImpute"]),
             "n_estimators": self.n_estimators,
             "max_depth": self.max_depth,
             "min_child_weight": self.min_child_weight,
@@ -672,9 +672,9 @@ class XgbRegressorSkOptRecipe(Recipe):
 
     def search_space(self, all_available_features):
         space = {
-            "n_estimators": tune.randint(self.n_estimators_range[0],
-                                         self.n_estimators_range[1]),
-            "max_depth": tune.randint(self.max_depth_range[0],
-                                      self.max_depth_range[1]),
+            "n_estimators": hp.randint(self.n_estimators_range[0],
+                                       self.n_estimators_range[1]),
+            "max_depth": hp.randint(self.max_depth_range[0],
+                                    self.max_depth_range[1]),
         }
         return space

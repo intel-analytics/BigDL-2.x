@@ -20,7 +20,7 @@ package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Conventions, DeprecatedUtils}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.core.execution.JobClient
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
@@ -49,7 +49,7 @@ object ClusterServing {
   }
   def uploadModel(): Unit = {
     streamingEnv = StreamExecutionEnvironment.getExecutionEnvironment
-    streamingEnv.registerCachedFile(helper.modelPath, Conventions.SERVING_MODEL_TMP_DIR)
+    streamingEnv.registerCachedFile(helper.modelDir, Conventions.SERVING_MODEL_TMP_DIR)
   }
   def executeJob(): Unit = {
     /**
@@ -57,7 +57,7 @@ object ClusterServing {
      */
     // Uncomment this line if you need to check predict time in debug
     // Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
-    streamingEnv.setParallelism(helper.modelParallelism)
+    streamingEnv.setParallelism(helper.modelPar)
     streamingEnv.addSource(new FlinkRedisSource(helper))
       .map(new FlinkInference(helper))
       .addSink(new FlinkRedisSink(helper))
@@ -68,8 +68,8 @@ object ClusterServing {
 
   def main(args: Array[String]): Unit = {
     argv = parser.parse(args, ServingParams()).head
-    val configParser = new ConfigParser(argv.configPath)
-    helper = configParser.loadConfig()
+    helper = new ClusterServingHelper()
+    helper.loadConfig()
     uploadModel()
     executeJob()
   }
