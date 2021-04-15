@@ -1,10 +1,12 @@
 # PPML (Privacy Preserving Machine Learning)
 
-Analytics-Zoo provides an end-to-end PPML platform for Big Data AI.
+To preserving privacy during data application, especially in AI applications, Analytics-Zoo provides an end-to-end PPML platform for Big Data AI.
 
 ## PPML for Big Data AI
 
-To take full advantage of the value of big data, especially the value of private or sensitive data, customers need to build a trusted platform under the guidance of privacy laws or regulation, such as [GDPR](https://gdpr-info.eu/). This requirement raises a big challenge to customers who already have big data and big data applications, such as Spark/SparkSQL, Flink and AI applications. Migrating these applications into privacy preserving way requires lots of additional efforts.
+ Based on Intel SGX and other security technologies, Analytics-Zoo ensure the whole Big Data & AI pipeline are fully protected by secured enclave in hardware level, meanwhile exising Big Data & AI applications, such as Flink, Spark, SparkSQL and machine/deep learning, can be seamlessly migrated into this PPML platform without any code changes.
+
+To take full advantage of big data, especially the value of private or sensitive data, customers need to build a trusted platform under the guidance of privacy laws or regulation, such as [GDPR](https://gdpr-info.eu/). This requirement raises a big challenge to customers who already have big data and big data applications, such as Spark/SparkSQL, Flink and AI applications. Migrating these applications into privacy preserving way requires lots of additional efforts.
 
 To reslove this problem, Analytics-Zoo chooses [Intel SGX (Software Guard Extensions)](https://software.intel.com/content/www/us/en/develop/topics/software-guard-extensions.html), a widely used [TEE (Trusted Execution Environment)](https://en.wikipedia.org/wiki/Trusted_execution_environment) technology, as main security building block for this PPML platforms. Different from other PPML technologies, e.g., [HE (Homomorphic Encryption)](https://en.wikipedia.org/wiki/Homomorphic_encryption), [MPC (Multi-Party Computation) or SMC (Secure Multi-Party Computation)](https://en.wikipedia.org/wiki/Secure_multi-party_computation) and [DP (Differential Privacy)](https://en.wikipedia.org/wiki/Differential_privacy), Intel SGX performs well on all measures (security, performance and utility).
 
@@ -26,35 +28,38 @@ Note: Intel SGX requires hardware support, please [check if your CPU has this fe
 
 In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Spark in SGX, then run Spark PI example in safe way. For more examples, please refer to [trusted-big-data-ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-big-data-ml/scala/docker-graphene).
 
-### Scenario
+### Use cases
 
-- Batch computation/analytics, i.e., privacy preserved Spark jobs
-- Interactive computation/analytics, i.e., privacy preserved SparkSQL
-- Large scale Spark related workload, e.g., TPC-H Benchmark
-- Distributed machine learning & deep Learning with BigDL
+- Big Data analysis using Spark (Spark SQL, Dataframe, MLlib, etc.)
+- Distributed deep learning using BigDL
 
 ### Get started
 
-#### Setp 0: Prepare Environment
 
-Please clone or download Analytics-Zoo source code, then enter `analytics-zoo/ppml`.
+#### Prerequisite
 
-If SGX driver is not installed, please install SGX driver with this command
+Please check if current platform [has SGX feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). Then, enable SGX feature in BIOS. Note that after SGX is enabled, a protion of memory will be assigned to SGX, and cannot be used or seen by OS. 
+
+Download scripts and dockerfiles in [this link](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml).
+
+Check SGX driver with `ls /dev | grep sgx`. If SGX driver is not installed, run `install-graphene-driver.sh` and run it with root premission.
 
 ```bash
-./scripts/install-graphene-driver.sh
+./ppml/scripts/install-graphene-driver.sh
 ```
 
-Prepare the keys for TLS.
+#### Setp 0: Prepare Environment
+
+Prepare keys for TLS.
 
 ```bash
-./scripts/generate-keys.sh
+./ppml/scripts/generate-keys.sh
 ```
 
 Build docker image from Dockerfile
 
 ```bash
-cd trusted-big-data-ml/scala/docker-graphene
+cd ppml/trusted-big-data-ml/scala/docker-graphene
 cp -r ../../keys .
 ./build-docker-image.sh
 ```
