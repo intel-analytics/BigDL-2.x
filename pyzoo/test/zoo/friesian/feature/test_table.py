@@ -152,7 +152,7 @@ class TestTable(TestCase):
         assert "int_cols" in merged_tbl.df.columns, "int_cols should be a column of merged_tbl"
         assert "col_1" in feature_tbl.df.columns, "col_1 should be a column of feature_tbl"
 
-    def test_gen_negative_samples(self):
+    def test_gen_negative_items(self):
         spark = OrcaContext.get_spark_session()
         data = [("jack", 1, "2019-07-01 12:01:19.000"),
                 ("jack", 2, "2019-08-01 12:01:19.000"),
@@ -166,7 +166,7 @@ class TestTable(TestCase):
             StructField("time", StringType(), True)
         ])
         df = spark.createDataFrame(data=data, schema=schema)
-        tbl = FeatureTable(df).gen_negative_samples(10)
+        tbl = FeatureTable(df).gen_negative_items(10)
         dft = tbl.df
         assert tbl.count() == 12
         assert dft.filter("label == 1").count() == 6

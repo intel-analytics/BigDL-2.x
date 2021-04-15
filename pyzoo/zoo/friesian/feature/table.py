@@ -274,9 +274,9 @@ class FeatureTable(Table):
     def _clone(self, df):
         return FeatureTable(df)
 
-    def gen_negative_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
+    def gen_negative_items(self, item_size, item_col="item", label_col="label", neg_num=1):
         """
-        Generate a negative samples
+        Generate a negative item visits for each positive item visit
         
         :param item_size: integer, max of item.
         :param item_col:  string, name of item column
@@ -285,7 +285,23 @@ class FeatureTable(Table):
 
         :return: FeatureTable
         """
-        df = callZooFunc("float", "genNegSamples", self.df, item_size, item_col, label_col, neg_num)
+        df = callZooFunc("float", "genNegItems", self.df, item_size, item_col, label_col, neg_num)
+        return FeatureTable(df)
+
+    def gen_negative_cat(self, item2cat, item_col="item", cat_col="category"):
+        """
+        Generate a category for each negative item
+
+        :param item2cat:  FeatureTable with a dataframe of item to catgory mapping
+        :param item_col:  string, name of item column
+        :param cat_col:  string, name of category column
+
+        :return: FeatureTable
+        """
+        item2cat_map = dict(item2cat.df.rdd.map(lambda row: (row[0], row[1])).collect())
+        gen_neg_cat = udf(lambda item: item2cat_map[item], returnType=IntegerType())
+        df = self.df.withColumn(cat_col, gen_neg_cat(col(item_col)))
+
         return FeatureTable(df)
 
     def gen_hist_seq(self, user_col, cols, sort_col='time', min_len=1, max_len=100):

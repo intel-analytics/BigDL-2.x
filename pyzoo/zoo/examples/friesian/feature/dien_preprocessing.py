@@ -69,22 +69,20 @@ if __name__ == "__main__":
     print("full data after join,", full_tbl.count())
     indices = full_tbl.gen_string_idx(['user', 'item', 'category'], 1)
     item2cat = full_tbl.gen_ind2ind(['item', 'category'], [indices[1], indices[2]])
-    item2cat_map = dict(item2cat.df.rdd.map(lambda row: (row[0], row[1])).collect())
 
     for i in range(len(indices)):
         indices[i].write_parquet(options.output)
     item2cat.write_parquet(options.output+"item2cat")
 
     get_label = udf(lambda x: [float(x), 1 - float(x)], ArrayType(FloatType()))
-    reset_cat = udf(lambda item: item2cat_map[item], returnType=IntegerType())
 
     full_tbl = full_tbl\
         .encode_string(['user', 'item', 'category'], [indices[0], indices[1], indices[2]]) \
         .gen_hist_seq(user_col="user", cols=['item', 'category'],
                       sort_col='time', min_len=1, max_len=100)\
         .gen_length("item_history")\
-        .gen_negative_samples(item_size, item_col='item', neg_num=1) \
-        .transform_python_udf("item", "category", reset_cat) \
+        .gen_negative_items(item_size, item_col='item', neg_num=1) \
+        .gen_negative_cat(item2cat, "item", "category") \
         .gen_neg_hist_seq(item_size, item2cat.df, 'item_history', neg_num=5) \
         .mask_pad(
             padding_cols=['item_history', 'category_history', 'noclk_item_list', 'noclk_cat_list'],

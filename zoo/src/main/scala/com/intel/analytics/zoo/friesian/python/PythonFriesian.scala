@@ -279,11 +279,11 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
 
-  def genNegSamples(df: DataFrame,
-                    itemSize: Int,
-                    itemCol: String = "item",
-                    labelCol: String = "label",
-                    negNum: Int = 1): DataFrame = {
+  def genNegItems(df: DataFrame,
+                  itemSize: Int,
+                  itemCol: String = "item",
+                  labelCol: String = "label",
+                  negNum: Int = 1): DataFrame = {
 
     val r = new Random()
 

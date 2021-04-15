@@ -200,7 +200,7 @@ class FriesianSpec extends ZooSpecHelper {
       StructField("time", StringType, true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
-    val dft = friesian.genNegSamples(df, 10)
+    val dft = friesian.genNegItems(df, 10)
     assert(dft.filter(df("label") === 1).count() == 6)
     assert(dft.filter(df("label") === 0).count() == 6)
   }
