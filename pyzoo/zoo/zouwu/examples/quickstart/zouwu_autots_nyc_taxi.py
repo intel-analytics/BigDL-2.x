@@ -45,7 +45,7 @@ parser.add_argument("--data_dir", type=str,
                          "data/realKnownCase/nyc_taxi.csv")
 
 if __name__ == "__main__":
-    
+
     args = parser.parse_args()
 
     num_nodes = 1 if args.cluster_mode == "local" else args.num_workers
@@ -57,27 +57,26 @@ if __name__ == "__main__":
                       init_ray_on_spark=True
                       )
 
-
-    # recommended to set it to True when running Analytics Zoo in Jupyter notebook 
-    OrcaContext.log_output = True # (this will display terminal's stdout and stderr in the Jupyter notebook).
+    # recommended to set it to True when running Analytics Zoo in Jupyter notebook
+    OrcaContext.log_output = True
 
     # load the dataset. The downloaded dataframe contains two columns, "timestamp" and "value".
     df = pd.read_csv(args.data_dir, parse_dates=["timestamp"])
- 
+
     # split the dataframe into train/validation/test set.
     train_df, val_df, test_df = train_val_test_split(df, val_ratio=0.1, test_ratio=0.1)
 
     trainer = AutoTSTrainer(dt_col="timestamp",  # the column name specifying datetime
                             target_col="value",  # the column name to predict
                             horizon=1,           # number of steps to look forward
-                            extra_features_col=None # a list of column names which are also included in input as features except dt_col and target_col.
+                            extra_features_col=None  # list of column names as extra features
                             )
-    
-    ts_pipeline = trainer.fit(train_df, val_df, 
+
+    ts_pipeline = trainer.fit(train_df, val_df,
                               recipe=LSTMGridRandomRecipe(
                                   num_rand_samples=1,
                                   epochs=1,
-                                  look_back=6, 
+                                  look_back=6,
                                   batch_size=[64]),
                               metric="mse")
 
