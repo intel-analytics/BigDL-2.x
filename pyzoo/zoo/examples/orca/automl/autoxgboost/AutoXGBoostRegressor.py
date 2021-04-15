@@ -163,9 +163,7 @@ if __name__ == '__main__':
 
         # could customize by yourselves, make sure project_id exists
         experiment_name = "AutoXGBoost SigOpt Experiment"
-        project_id = "autoxgboost_sigopt"
-        search_alg_params = dict(space=space, name=experiment_name, max_concurrent=1,
-                                 project=project_id)
+        search_alg_params = dict(space=space, name=experiment_name, max_concurrent=1)
         recipe = XgbSigOptRecipe(num_rand_samples=num_rand_samples)
 
         estimator = AutoXGBoost().regressor(feature_cols=feature_cols,
