@@ -10,32 +10,32 @@
   <fileSets>
     <fileSet>
       <outputDirectory>/bin</outputDirectory>
-      <directory>${project.parent.basedir}/scripts</directory>
+      <directory>../${project.basedir}/scripts</directory>
     </fileSet>
     <fileSet>
       <outputDirectory>/lib</outputDirectory>
-      <directory>${project.parent.basedir}/zoo/target</directory>
+      <directory>../${project.basedir}/zoo/target</directory>
       <includes>
           <include>analytics-zoo-*-jar-with-dependencies.jar</include>
       </includes>
     </fileSet>
     <fileSet>
       <outputDirectory>/lib</outputDirectory>
-      <directory>${project.parent.basedir}/zoo/target</directory>
+      <directory>../${project.basedir}/zoo/target</directory>
       <includes>
           <include>analytics-zoo-*-python-api.zip</include>
       </includes>
     </fileSet>
     <fileSet>
       <outputDirectory>/extra-resources</outputDirectory>
-      <directory>${project.parent.basedir}/zoo/target/extra-resources</directory>
+      <directory>../${project.basedir}/zoo/target/extra-resources</directory>
       <includes>
           <include>zoo-version-info.properties</include>
       </includes>
     </fileSet>
     <fileSet>
       <outputDirectory>/conf</outputDirectory>
-      <directory>${project.parent.basedir}/zoo/src/main/resources</directory>
+      <directory>../${project.basedir}/zoo/src/main/resources</directory>
       <includes>
         <include>spark-analytics-zoo.conf</include>
       </includes>

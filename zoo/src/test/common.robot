@@ -60,7 +60,7 @@ Run Shell
    Should Be Equal As Integers      ${rc}          0
 
 Get Zoo Version
-   ${root}=               Parse XML           pom.xml
+   ${root}=               Parse XML           zoo/pom.xml
    ${version}=            Get Element Text    ${root}    version
    Log To Console         ${version}
    Set Global Variable    ${version}

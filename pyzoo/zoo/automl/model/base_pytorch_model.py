@@ -21,6 +21,8 @@ from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 import pandas as pd
 
+from zoo.orca.automl.pytorch_utils import LR_NAME, DEFAULT_LR
+
 
 PYTORCH_REGRESSION_LOSS_MAP = {"mse": "MSELoss",
                                "mae": "L1Loss",
@@ -40,6 +42,25 @@ class PytorchBaseModel(BaseModel):
         self.onnx_model = None
         self.onnx_model_built = False
 
+    def _create_loss(self):
+        if isinstance(self.loss_creator, torch.nn.modules.loss._Loss):
+            self.criterion = self.loss_creator
+        else:
+            self.criterion = self.loss_creator(self.config)
+
+    def _create_optimizer(self):
+        import types
+        if isinstance(self.optimizer_creator, types.FunctionType):
+            self.optimizer = self.optimizer_creator(self.model, self.config)
+        else:
+            # use torch default parameter values if user pass optimizer name or optimizer class.
+            try:
+                self.optimizer = self.optimizer_creator(self.model.parameters(),
+                                                        lr=self.config.get(LR_NAME, DEFAULT_LR))
+            except:
+                raise ValueError("We failed to generate an optimizer with specified optim "
+                                 "class/name. You need to pass an optimizer creator function.")
+
     def build(self, config):
         # check config and update
         self._check_config(**config)
@@ -47,8 +68,8 @@ class PytorchBaseModel(BaseModel):
         # build model
         self.model = self.model_creator(config)
         self.model_built = True
-        self.optimizer = self.optimizer_creator(self.model, self.config)
-        self.criterion = self.loss_creator(self.config)
+        self._create_loss()
+        self._create_optimizer()
 
     def _reshape_input(self, x):
         if x.ndim == 1:
@@ -92,6 +113,7 @@ class PytorchBaseModel(BaseModel):
         # todo: support input validation data None
         assert validation_data is not None, "You must input validation data!"
         val_stats = self._validate(validation_data[0], validation_data[1], metric=metric)
+        self.onnx_model_built = False
         return val_stats[metric]
 
     @staticmethod
@@ -164,13 +186,13 @@ class PytorchBaseModel(BaseModel):
         for i in range(len(list(self.model.parameters()))):
             print(list(self.model.parameters())[i].size())
 
-    def evaluate(self, x, y, metrics=['mse']):
+    def evaluate(self, x, y, metrics=['mse'], multioutput="raw_values"):
         # reshape 1dim input
         x = self._reshape_input(x)
         y = self._reshape_input(y)
 
         yhat = self.predict(x)
-        eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput="raw_values")
+        eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput=multioutput)
                        for m in metrics]
         return eval_result
 
@@ -210,9 +232,9 @@ class PytorchBaseModel(BaseModel):
         self.model = self.model_creator(self.config)
         self.model.load_state_dict(state["model"])
         self.model_built = True
-        self.optimizer = self.optimizer_creator(self.model, self.config)
+        self._create_optimizer()
         self.optimizer.load_state_dict(state["optimizer"])
-        self.criterion = self.loss_creator(self.config)
+        self._create_loss()
 
     def save(self, checkpoint_file, config_path=None):
         if not self.model_built:
@@ -224,13 +246,13 @@ class PytorchBaseModel(BaseModel):
         state_dict = torch.load(checkpoint_file)
         self.load_state_dict(state_dict)
 
-    def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None):
+    def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None, multioutput="raw_values"):
         # reshape 1dim input
         x = self._reshape_input(x)
         y = self._reshape_input(y)
 
         yhat = self.predict_with_onnx(x, dirname=dirname)
-        eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput="raw_values")
+        eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput=multioutput)
                        for m in metrics]
         return eval_result
 
@@ -282,7 +304,7 @@ class PytorchBaseModel(BaseModel):
 
     def _get_optional_parameters(self):
         return {"batch_size",
-                'lr',
+                LR_NAME,
                 "dropout",
                 "optim",
                 "loss"

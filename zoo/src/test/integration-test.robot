@@ -15,7 +15,7 @@ Test template    Zoo Test
 *** Keywords ***
 Build SparkJar
    [Arguments]       ${spark_profile}
-   ${build}=         Catenate                        SEPARATOR=/    ${curdir}    make-dist.sh
+   ${build}=         Catenate                        SEPARATOR=/    ${curdir}    zoo/make-dist.sh
    Log To Console    ${spark_profile}
    Log To Console    start to build jar
    Log To Console    make-dist.sh -P ${spark_profile} -Dbigdl.version=${bigdl_version}...

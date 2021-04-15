@@ -16,7 +16,7 @@
                 <exclude>docs/**/*</exclude>
             </excludes>
             <outputDirectory>/..</outputDirectory>
-            <directory>${project.parent.basedir}/pyzoo</directory>
+            <directory>../${project.basedir}/pyzoo</directory>
         </fileSet>
     </fileSets>
 </assembly>

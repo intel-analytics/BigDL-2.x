@@ -21,7 +21,7 @@ import torch
 import tensorflow as tf
 import torch.nn as nn
 from zoo.automl.recipe.base import Recipe
-from ray import tune
+from zoo.orca.automl import hp
 import numpy as np
 from zoo.orca import init_orca_context
 
@@ -59,8 +59,8 @@ class SimpleRecipe(Recipe):
 
     def search_space(self, all_available_features):
         return {
-            "lr": tune.uniform(0.01, 0.02),
-            "batch_size": tune.choice([16, 32, 64])
+            "lr": hp.uniform(0.01, 0.02),
+            "batch_size": hp.choice([16, 32, 64])
         }
 
 

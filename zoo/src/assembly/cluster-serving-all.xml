@@ -10,17 +10,17 @@
     <fileSets>
         <fileSet>
             <outputDirectory>/cluster-serving</outputDirectory>
-            <directory>${project.parent.basedir}/scripts/cluster-serving</directory>
+            <directory>../${project.basedir}/scripts/cluster-serving</directory>
         </fileSet>
 
         <fileSet>
             <outputDirectory>/test_image</outputDirectory>
-            <directory>${project.parent.basedir}/docker/cluster-serving/resources/test_image</directory>
+            <directory>../${project.basedir}/docker/cluster-serving/resources/test_image</directory>
         </fileSet>
 
         <fileSet>
             <outputDirectory>/cluster-serving</outputDirectory>
-            <directory>${project.parent.basedir}/zoo/target</directory>
+            <directory>../${project.basedir}/zoo/target</directory>
             <includes>
                 <include>analytics-zoo-*-serving.jar</include>
                 <include>analytics-zoo-*-http.jar</include>
@@ -30,7 +30,7 @@
 
         <fileSet>
             <outputDirectory>/cluster-serving</outputDirectory>
-            <directory>${project.parent.basedir}/pyzoo/zoo/serving</directory>
+            <directory>../${project.basedir}/pyzoo/zoo/serving</directory>
             <includes>
                 <include>quick_start.py</include>
             </includes>

@@ -128,19 +128,25 @@ class Seq2SeqForecaster(Forecaster):
             raise RuntimeError("You must call fit or restore first before calling predict!")
         return self.internal.predict_with_onnx(x, dirname=dirname)
 
-    def evaluate(self, x, y, metrics=['mse']):
+    def evaluate(self, x, y, metrics=['mse'], multioutput="raw_values"):
         """
         Evaluate using a trained forecaster.
 
         :param x: A numpy array with shape (num_samples, lookback, feature_dim).
         :param y: A numpy array with shape (num_samples, horizon, target_dim).
         :param metrics: A list contains metrics for test/valid data.
+        :param multioutput: Defines aggregating of multiple output values.
+               String in ['raw_values', 'uniform_average']. The value defaults to
+               'raw_values'.
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate(x, y, metrics=metrics)
+        return self.internal.evaluate(x, y, metrics=metrics, multioutput=multioutput)
 
-    def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None):
+    def evaluate_with_onnx(self, x, y,
+                           metrics=['mse'],
+                           dirname=None,
+                           multioutput="raw_values"):
         """
         Evaluate using a trained forecaster with onnxruntime.
 
@@ -149,10 +155,16 @@ class Seq2SeqForecaster(Forecaster):
         :param metrics: A list contains metrics for test/valid data.
         :param dirname: The directory to save onnx model file. This value defaults
                to None for no saving file.
+        :param multioutput: Defines aggregating of multiple output values.
+               String in ['raw_values', 'uniform_average']. The value defaults to
+               'raw_values'.
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate_with_onnx(x, y, metrics=metrics, dirname=dirname)
+        return self.internal.evaluate_with_onnx(x, y,
+                                                metrics=metrics,
+                                                dirname=dirname,
+                                                multioutput=multioutput)
 
     def save(self, checkpoint_file):
         """
