@@ -111,6 +111,7 @@ class BasePredictor(object):
         else:
             upload_dir = None
 
+        self.metric = metric
         self.pipeline = self._hp_search(
             input_df,
             validation_df=validation_df,
@@ -201,7 +202,7 @@ class BasePredictor(object):
 
     def _make_pipeline(self, analysis, feature_transformers, model,
                        remote_dir):
-        metric = "reward_metric"
+        metric = self.metric
         best_config = analysis.get_best_config(metric=metric, mode="max")
         best_logdir = analysis.get_best_logdir(metric=metric, mode="max")
         print("best log dir is ", best_logdir)
