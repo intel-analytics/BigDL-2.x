@@ -119,18 +119,29 @@ class RayTuneSearchEngine(SearchEngine):
                 validation_data = {"x": data["val_x"], "y": data["val_y"]}
             else:
                 validation_data = None
+        
+        # metric and metric's mode
+        self.metric = metric
+        self.mode = Evaluator.get_metric_mode(metric)
 
         # prepare parameters for search engine
         runtime_params = recipe.runtime_params()
         self.num_samples = runtime_params['num_samples']
         stop = dict(runtime_params)
         del stop['num_samples']
+
+        # temp operation for reward_metric
+        if "reward_metric" in stop.keys():
+            stop[self.metric] = stop["reward_metric"]
+            del stop["reward_metric"]
+
         self.stop_criteria = stop
+
         if search_space is None:
             search_space = recipe.search_space()
         self._search_alg = RayTuneSearchEngine._set_search_alg(search_alg, search_alg_params,
-                                                               recipe, search_space)
-        self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params)
+                                                               recipe, search_space, metric)
+        self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params, metric)
         self.search_space = self._prepare_tune_config(search_space)
 
         if feature_transformers is None and data_mode == 'dataframe':
@@ -165,7 +176,7 @@ class RayTuneSearchEngine(SearchEngine):
         #                                                      self.remote_dir)
 
     @staticmethod
-    def _set_search_alg(search_alg, search_alg_params, recipe, search_space):
+    def _set_search_alg(search_alg, search_alg_params, recipe, search_space, metric):
         if search_alg:
             if not isinstance(search_alg, str):
                 raise ValueError(f"search_alg should be of type str."
@@ -180,14 +191,14 @@ class RayTuneSearchEngine(SearchEngine):
                 search_alg_params.update({"space": recipe.manual_search_space()})
 
             search_alg_params.update(dict(
-                metric="reward_metric",
-                mode="max",
+                metric=metric,
+                mode=Evaluator.get_metric_mode(metric),
             ))
             search_alg = tune.create_searcher(search_alg, **search_alg_params)
         return search_alg
 
     @staticmethod
-    def _set_scheduler(scheduler, scheduler_params):
+    def _set_scheduler(scheduler, scheduler_params, metric):
         if scheduler:
             if not isinstance(scheduler, str):
                 raise ValueError(f"Scheduler should be of type str. "
@@ -196,8 +207,8 @@ class RayTuneSearchEngine(SearchEngine):
                 scheduler_params = dict()
             scheduler_params.update(dict(
                 time_attr="training_iteration",
-                metric="reward_metric",
-                mode="max",
+                metric=metric,
+                mode=Evaluator.get_metric_mode(metric),
             ))
             scheduler = tune.create_scheduler(scheduler, **scheduler_params)
         return scheduler
@@ -210,6 +221,8 @@ class RayTuneSearchEngine(SearchEngine):
         analysis = tune.run(
             self.train_func,
             local_dir=self.logs_dir,
+            metric=self.metric,
+            mode=self.mode,
             name=self.name,
             stop=self.stop_criteria,
             config=self.search_space,
@@ -233,7 +246,7 @@ class RayTuneSearchEngine(SearchEngine):
         return analysis
 
     def get_best_trials(self, k=1):
-        sorted_trials = RayTuneSearchEngine._get_sorted_trials(self.trials, metric="reward_metric")
+        sorted_trials = RayTuneSearchEngine._get_sorted_trials(self.trials, metric=self.metric)
         best_trials = sorted_trials[:k]
         return [self._make_trial_output(t) for t in best_trials]
 
@@ -260,7 +273,7 @@ class RayTuneSearchEngine(SearchEngine):
 
     def test_run(self):
         def mock_reporter(**kwargs):
-            assert "reward_metric" in kwargs, "Did not report proper metric"
+            assert self.metric in kwargs, "Did not report proper metric"
             assert "checkpoint" in kwargs, "Accidentally removed `checkpoint`?"
             raise GoodError("This works.")
 
@@ -378,20 +391,26 @@ class RayTuneSearchEngine(SearchEngine):
                                               metric=metric,
                                               # verbose=1,
                                               **config)
+                metric_value = result
                 reward_m = result if Evaluator.get_metric_mode(metric) == "max" else -result
                 checkpoint_filename = "best.ckpt"
-                if isinstance(model_create_func, ModelBuilder):
-                    trial_model.save(checkpoint_filename)
-                else:
-                    if best_reward_m is None or reward_m > best_reward_m:
-                        best_reward_m = reward_m
-                        save_zip(checkpoint_filename, trial_ft, trial_model, config)
-                        if remote_dir is not None:
-                            upload_ppl_hdfs(remote_dir, checkpoint_filename)
 
-                tune.track.log(training_iteration=i,
-                               reward_metric=reward_m,
-                               checkpoint=checkpoint_filename)
+                # Save best reward iteration
+                if best_reward_m is None or reward_m > best_reward_m:
+                    best_reward_m = reward_m
+                    if isinstance(model_create_func, ModelBuilder):
+                        trial_model.save(checkpoint_filename)
+                    else:
+                        save_zip(checkpoint_filename, trial_ft, trial_model, config)
+                    # Save to hdfs
+                    if remote_dir is not None:
+                        upload_ppl_hdfs(remote_dir, checkpoint_filename)
+
+                report_dict = {"training_iteration": i,
+                               metric: metric_value,
+                               "checkpoint": checkpoint_filename,
+                               "Best " + metric: best_reward_m if Evaluator.get_metric_mode(metric) == "max" else -best_reward_m}
+                tune.report(**report_dict)
 
         return train_func
 
@@ -465,7 +484,7 @@ class RayTuneSearchEngine(SearchEngine):
                                                    validation_data=self.validation_data,
                                                    # verbose=1,
                                                    **self.config)
-                self.reward_m = result if Evaluator.get_metric_mode(metric) == "max" else -result
+                # self.reward_m = result if Evaluator.get_metric_mode(metric) == "max" else -result
                 # if metric == "mean_squared_error":
                 #     self.reward_m = (-1) * result
                 #     # print("running iteration: ",i)
@@ -473,7 +492,7 @@ class RayTuneSearchEngine(SearchEngine):
                 #     self.reward_m = result
                 # else:
                 #     raise ValueError("metric can only be \"mean_squared_error\" or \"r_square\"")
-                return {"reward_metric": self.reward_m, "checkpoint": self.ckpt_name}
+                return {self.metric: result, "checkpoint": self.ckpt_name}
 
             def _save(self, checkpoint_dir):
                 # print("checkpoint dir is ", checkpoint_dir)
