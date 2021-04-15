@@ -183,7 +183,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     resultDF
   }
 
-  def crossColumn(df: DataFrame, crossCols: JList[JList[String]], crossSizes: JList[Int]): DataFrame = {
+  def crossColumns(df: DataFrame, crossCols: JList[JList[String]], crossSizes: JList[Int]): DataFrame = {
     def crossColumns(cross_size: Int) = udf((cols: WrappedArray[Int]) => {
       Utils.hashBucket(cols.mkString("_"), bucketSize = cross_size)
     })

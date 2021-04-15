@@ -95,6 +95,7 @@ if __name__ == '__main__':
                           num_nodes=args.num_executor, memory=args.executor_memory,
                           driver_cores=args.driver_cores, driver_memory=args.driver_memory,
                           conf=conf)
+    sc = init_nncontext("wnd")
     time_start = time()
     paths = [os.path.join(args.input_folder, 'day_%d.parquet' % i) for i in args.day_range]
     # paths = os.path.join(args.input_folder, 'sample_test_day_0.parquet')
