@@ -49,5 +49,5 @@ def write_parquet(df, path, mode):
     callZooFunc("float", "dfWriteParquet", df, path, mode)
 
 
-def save_parquet(df, path, mode):
-    return callZooFunc("float", "dfSaveParquet", df, path, mode)
+def save_parquet(df, path, mode, part_size=100000):
+    return callZooFunc("float", "dfSaveParquet", df, path, mode, part_size)

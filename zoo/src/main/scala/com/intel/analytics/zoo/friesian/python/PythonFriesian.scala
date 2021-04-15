@@ -31,6 +31,7 @@ import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 object PythonFriesian {
@@ -202,22 +203,43 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   // https://gist.github.com/yoyama/ce83f688717719fc8ca145c3b3ff43fd
   case class Record(y: Int, xInt: List[Double], xCat: List[Int])
 
-  def dfSaveParquet(df: DataFrame, path: String, mode: String = "overwrite"):
+  def dfSaveParquet(df: DataFrame, path: String, mode: String = "overwrite", partSize: Int = 100000):
   JList[JList[Any]] = {
     // TODO: handle mode
     val rdd = df.rdd
     val res = rdd.mapPartitionsWithIndex((idx, iter) => {
-      val records = Random.shuffle(iter.toList.map(row =>
-        Record(row.getInt(0), row.getList[Double](1).asScala.toList, row.getList[Int](2).asScala.toList)))
-      val fileName = "partition_" + idx
-      val writeOptions = ParquetWriter.Options(
-        writeMode = ParquetFileWriter.Mode.OVERWRITE
-      )
-      ParquetWriter.writeAndClose(path + fileName, records, options = writeOptions)
+      val meta = new ArrayBuffer[List[Any]]()
       val socket = new DatagramSocket()
       socket.connect(InetAddress.getByName("8.8.8.8"), 10002)
       val ip = socket.getLocalAddress.getHostAddress
-      Iterator.single(List(idx, records.size, fileName, ip).asJava)
+      var buffer = new ArrayBuffer[Row]()
+      var subIndex = 0
+      val writeOptions = ParquetWriter.Options(
+        writeMode = ParquetFileWriter.Mode.OVERWRITE
+      )
+      for (row <- iter) {
+        if (buffer.size == partSize) {
+          val records = Random.shuffle(buffer.toList.map(
+            row => Record(row.getInt(0), row.getList[Double](1).asScala.toList, row.getList[Int](2).asScala.toList)))
+          val fileName = "partition_" + idx + "_" + subIndex + "_" + buffer.size
+          ParquetWriter.writeAndClose(path + fileName, records, options = writeOptions)
+          meta.append(List(idx, subIndex, partSize, fileName, ip))
+          subIndex += 1
+          buffer = new ArrayBuffer[Row]()
+          buffer.append(row)
+        }
+        else {
+          buffer.append(row)
+        }
+      }
+      if (buffer.nonEmpty){
+        val records = Random.shuffle(buffer.toList.map(
+          row => Record(row.getInt(0), row.getList[Double](1).asScala.toList, row.getList[Int](2).asScala.toList)))
+        val fileName = "partition_" + idx + "_" + subIndex + "_" + buffer.size
+        ParquetWriter.writeAndClose(path + fileName, records, options = writeOptions)
+        meta.append(List(idx, subIndex, buffer.size, fileName, ip))
+      }
+      meta.map(_.asJava).toIterator
     }).collect().toList.asJava
     res
   }
