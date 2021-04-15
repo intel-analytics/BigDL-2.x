@@ -179,7 +179,7 @@ class FriesianSpec extends ZooSpecHelper {
     ))
     val df = sqlContext.createDataFrame(data, schema)
            .withColumn("ts", col("time").cast("timestamp").cast("long"))
-    val dft = friesian.genHistSeq(df, "name", Array("item").toList.asJava, "ts",1, 4)
+    val dft = friesian.genHistSeq(df, "name", Array("item").toList.asJava, "ts", 1, 4)
     assert(dft.count() == 8)
     assert(dft.filter(df("name") === "alice").count() == 2)
     assert(dft.filter(df("name") === "jack").count() == 6)

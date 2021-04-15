@@ -275,7 +275,7 @@ class FeatureTable(Table):
         return FeatureTable(df)
 
     def gen_neg_hist_seq(self, item_size, item2cat, item_history_col, neg_num):
-        df = callZooFunc("float", "genNegHisSeq", self.df, item_size, item2cat, item_history_col, \
+        df = callZooFunc("float", "genNegHisSeq", self.df, item_size, item2cat, item_history_col,
                          neg_num)
         return FeatureTable(df)
 
