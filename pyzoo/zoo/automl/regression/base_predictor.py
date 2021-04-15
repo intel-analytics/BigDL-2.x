@@ -203,10 +203,11 @@ class BasePredictor(object):
     def _make_pipeline(self, analysis, feature_transformers, model,
                        remote_dir):
         metric = self.metric
-        best_config = analysis.get_best_config(metric=metric, mode="max")
-        best_logdir = analysis.get_best_logdir(metric=metric, mode="max")
+        mode = Evaluator.get_metric_mode(metric)
+        best_config = analysis.get_best_config(metric=metric, mode=mode)
+        best_logdir = analysis.get_best_logdir(metric=metric, mode=mode)
         print("best log dir is ", best_logdir)
-        dataframe = analysis.dataframe(metric=metric, mode="max")
+        dataframe = analysis.dataframe(metric=metric, mode=mode)
         # print(dataframe)
         model_path = os.path.join(best_logdir, dataframe["checkpoint"].iloc[0])
         config = convert_bayes_configs(best_config).copy()
