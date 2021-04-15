@@ -25,8 +25,6 @@ import argparse
 import tempfile
 
 
-os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-8-openjdk-amd64"
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--cluster_mode', type=str, default="local",
                     help='The mode for the Spark cluster.')
@@ -56,9 +54,6 @@ if __name__ == "__main__":
                       memory=args.memory,
                       init_ray_on_spark=True
                       )
-
-    # recommended to set it to True when running Analytics Zoo in Jupyter notebook
-    OrcaContext.log_output = True
 
     # load the dataset. The downloaded dataframe contains two columns, "timestamp" and "value".
     df = pd.read_csv(args.data_dir, parse_dates=["timestamp"])
