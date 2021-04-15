@@ -18,10 +18,12 @@ import os.path
 import pytest
 import tempfile
 from unittest import TestCase
+
+from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, explode
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
 from zoo.friesian.feature import FeatureTable, StringIndex
-from zoo.orca import init_orca_context, stop_orca_context, OrcaContext
+from zoo.common.nncontext import *
 
 
 class TestTable(TestCase):
@@ -29,15 +31,15 @@ class TestTable(TestCase):
         """ setup any state tied to the execution of the given method in a
         class.  setup_method is invoked for every test method of a class.
         """
-        self.sc = init_orca_context("local")
-        self.spark = OrcaContext.get_spark_session()
+        self.sc = init_nncontext(init_spark_conf().setMaster("local[1]").setAppName("test feature"))
+        self.spark = SparkSession(self.sc)
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
 
     def teardown_method(self, method):
         """ teardown any state that was previously setup with a setup_method
         call.
         """
-        stop_orca_context()
+        self.sc.stop()
 
     def test_fillna_int(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
