@@ -21,7 +21,7 @@ from zoo.zouwu.model.VanillaLSTM_pytorch import model_creator as LSTM_model_crea
 import torch
 import torch.nn as nn
 from zoo.automl.recipe.base import Recipe
-from ray import tune
+from zoo.orca.automl import hp
 import pandas as pd
 import numpy as np
 from zoo.orca import init_orca_context, stop_orca_context
@@ -37,8 +37,8 @@ class SimpleRecipe(Recipe):
 
     def search_space(self, all_available_features):
         return {
-            "lr": tune.uniform(0.001, 0.01),
-            "batch_size": tune.choice([32, 64]),
+            "lr": hp.uniform(0.001, 0.01),
+            "batch_size": hp.choice([32, 64]),
             "selected_features": json.dumps(all_available_features),
             "input_dim": len(all_available_features)+1 if all_available_features else 1,
             "output_dim": 1

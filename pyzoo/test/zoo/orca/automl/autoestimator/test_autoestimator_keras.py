@@ -47,11 +47,11 @@ def get_train_val_data():
 
 class LinearRecipe(Recipe):
     def search_space(self, all_available_features):
-        from ray import tune
+        from zoo.orca.automl import hp
         return {
-            "hidden_size": tune.choice([5, 10]),
-            "lr": tune.choice([0.001, 0.003, 0.01]),
-            "batch_size": tune.choice([32, 64])
+            "hidden_size": hp.choice([5, 10]),
+            "lr": hp.choice([0.001, 0.003, 0.01]),
+            "batch_size": hp.choice([32, 64])
         }
 
     def runtime_params(self):
