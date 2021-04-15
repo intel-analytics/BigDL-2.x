@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.http
+package com.intel.analytics.zoo.serving
 
 import java.util
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
@@ -24,6 +24,7 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.github.fppt.jedismock.RedisServer
+import com.intel.analytics.zoo.serving.http.{PredictionInputMessage, _}
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import redis.clients.jedis.Jedis
@@ -62,7 +63,7 @@ class FrontendActorsSpec extends FlatSpec with Matchers with BeforeAndAfter with
     system = ActorSystem("zoo-serving-frontend-system")
     materializer = ActorMaterializer()
     executionContext = system.dispatcher
-    timeout = Timeout(20, TimeUnit.SECONDS)
+    timeout = Timeout(10, TimeUnit.SECONDS)
   }
 
   after {
