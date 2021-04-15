@@ -1,10 +1,14 @@
 # PPML (Privacy Preserving Machine Learning)
 
-To preserving privacy during data application, especially in AI applications, Analytics-Zoo provides an end-to-end PPML platform for Big Data AI.
+To fulfill the requirements of privacy regulation/laws (e.g., GDPR and CCPA), meanwhile take full advantage of big data, especially the value of private or sensitive data, more and more companies are 
+
+To preserving privacy during data application, especially in AI applications, Analytics-Zoo provides an end-to-end PPML platform for Big Data AI. 
 
 ## PPML for Big Data AI
 
- Based on Intel SGX and other security technologies, Analytics-Zoo ensure the whole Big Data & AI pipeline are fully protected by secured enclave in hardware level, meanwhile exising Big Data & AI applications, such as Flink, Spark, SparkSQL and machine/deep learning, can be seamlessly migrated into this PPML platform without any code changes.
+Based on Intel SGX and other security technologies, Analytics-Zoo ensure the whole Big Data & AI pipeline are fully protected by secured SGX enclave in hardware level, meanwhile exising Big Data & AI applications, such as Flink, Spark, SparkSQL and machine/deep learning, can be seamlessly migrated into this PPML platform without any code changes.
+
+One of the biggest challenge in PPML is migrating E2E
 
 To take full advantage of big data, especially the value of private or sensitive data, customers need to build a trusted platform under the guidance of privacy laws or regulation, such as [GDPR](https://gdpr-info.eu/). This requirement raises a big challenge to customers who already have big data and big data applications, such as Spark/SparkSQL, Flink and AI applications. Migrating these applications into privacy preserving way requires lots of additional efforts.
 
