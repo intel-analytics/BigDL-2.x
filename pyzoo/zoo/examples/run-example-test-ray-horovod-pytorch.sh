@@ -31,15 +31,5 @@ now=$(date "+%s")
 time2=$((now-start))
 echo "zouwu tcmf example tests finished"
 
-echo "Start zouwu autots tests"
-#start execute
-echo "#3 zouwu autots example"
-start=$(date "+%s")
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/zouwu/examples/quickstart/zouwu_autots_nyc_taxi.py
-now=$(date "+%s")
-time3=$((now-start))
-echo "zouwu autots example tests finished"
-
 echo "#1 pytorch estimator example time used:$time1 seconds"
 echo "#2 zouwu tcmf example time used:$time2 seconds"
-echo "#3 zouwu autots example time used:$time3 seconds"

@@ -21,8 +21,24 @@ fi
 now=$(date "+%s")
 time1=$((now-start))
 
+echo "#2 Start zouwu autots tests"
+start=$(date "+%s")
+# run example
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/zouwu/examples/quickstart/zouwu_autots_nyc_taxi.py
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    clear_up
+    echo "ray horovod pytorch failed"
+    exit $exit_status
+fi
+
+now=$(date "+%s")
+time2=$((now-start))
+
+
 # This should be done at the very end after all tests finish. Or put the uninstalling at jenkins configure.
 # clear_up
 
 echo "#1 pytorch estimator example time used:$time1 seconds"
-
+echo "#2 zouwu autots example time used:$time2 seconds"
