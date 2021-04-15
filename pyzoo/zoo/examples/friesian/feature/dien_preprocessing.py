@@ -61,13 +61,13 @@ if __name__ == "__main__":
         .persist(storageLevel=StorageLevel.DISK_ONLY)
     print("meta_data, ", meta_df.count())
 
-    full_df = review_df.join(meta_df, on="item", how="left").fillna("default", ["category"]) \
-        .persist(StorageLevel.DISK_ONLY)
-    item_size = full_df.select("item").distinct().count()
+    meta_tbl = FeatureTable(meta_df)
+    review_tbl = FeatureTable(review_df)
+    full_tbl = review_tbl.join(meta_tbl, on="item", how="left").fillna("default", ["category"])
+    item_size = full_tbl.df.select("item").distinct().count()
 
-    print("full data after join,", full_df.count())
-    full_tbl = FeatureTable(full_df)
-    indices = full_tbl.gen_string_idx(['user', 'item', 'category'], '1')
+    print("full data after join,", full_tbl.count())
+    indices = full_tbl.gen_string_idx(['user', 'item', 'category'], 1)
     item2cat = full_tbl.gen_ind2ind(['item', 'category'], [indices[1], indices[2]])
     item2cat_map = dict(item2cat.df.rdd.map(lambda row: (row[0], row[1])).collect())
 
