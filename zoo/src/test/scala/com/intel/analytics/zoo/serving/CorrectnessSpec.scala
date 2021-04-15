@@ -43,7 +43,7 @@ import com.intel.analytics.zoo.feature.image._
 import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.http.{Instances, JsonUtil}
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, DeprecatedUtils}
+import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 
 import sys.env
@@ -90,9 +90,8 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     ("wget -O /tmp/serving_val.tar http://10.239.45.10:8081" +
      "/repository/raw/analytics-zoo-data/imagenet_1k.tar").!
     "tar -xvf /tmp/serving_val.tar -C /tmp/".!
-    val helper = new ClusterServingHelper()
-    helper.configPath = configPath
-    DeprecatedUtils.loadConfig(helper)
+    val helper = new ClusterServingHelper(configPath)
+    helper.loadConfig()
 //    helper.dataShape = Array(Array(3, 224, 224))
     val model = helper.loadInferenceModel()
     val imagePath = "/tmp/imagenet_1k"
@@ -163,9 +162,8 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     ("wget -O /tmp/serving_val.tar http://10.239.45.10:8081" +
       "/repository/raw/analytics-zoo-data/imagenet_1k.tar").!
     "tar -xvf /tmp/serving_val.tar -C /tmp/".!
-    val helper = new ClusterServingHelper()
-    helper.configPath = configPath
-    DeprecatedUtils.loadConfig(helper)
+    val helper = new ClusterServingHelper(configPath)
+    helper.loadConfig()
     //    helper.dataShape = Array(Array(3, 224, 224))
     val model = helper.loadInferenceModel()
     val imagePath = "/tmp/imagenet_1k"

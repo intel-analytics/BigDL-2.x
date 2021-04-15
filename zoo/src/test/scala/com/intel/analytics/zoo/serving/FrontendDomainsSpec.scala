@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.http
+package com.intel.analytics.zoo.serving
 
 import java.nio.file.{Files, Paths}
 import java.util.{Base64, UUID}
 
+import com.intel.analytics.zoo.serving.http._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.collection.mutable

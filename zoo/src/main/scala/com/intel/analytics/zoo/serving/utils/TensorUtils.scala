@@ -18,9 +18,6 @@ package com.intel.analytics.zoo.serving.utils
 
 import com.intel.analytics.bigdl.tensor.Tensor
 
-/**
- * Tensor operations used in Cluster Serving
- */
 object TensorUtils {
   def getTotalSize(t: Tensor[Float]): Int = {
     var res: Int = 1
