@@ -39,7 +39,7 @@ parser.add_argument("--cores", type=int, default=4,
 parser.add_argument("--memory", type=str, default="10g",
                     help="The memory you want to use on each node. "
                          "You can change it depending on your own cluster setting.")
-parser.add_argument("--data_dir", type=str,
+parser.add_argument("--data_dir", type=str, default="./nyc_taxi.csv",
                     help="the directory of electricity data file, you can download by running "
                          "wget https://raw.githubusercontent.com/numenta/NAB/v1.0/"
                          "data/realKnownCase/nyc_taxi.csv")
