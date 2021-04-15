@@ -40,7 +40,7 @@ object RedisUtils {
           var cuttedRedisInfo = RedisUtils.getMapFromInfo(db.info())
           while (cuttedRedisInfo("used_memory").toLong >=
             cuttedRedisInfo("maxmemory").toLong * inputThreshold) {
-            ClusterServing.logger.info(s"Used memory ${redisInfo("used_memory")}, " +
+            ClusterServing.logger.warn(s"Used memory ${redisInfo("used_memory")}, " +
               s"Max memory ${redisInfo("maxmemory")}. " +
               s"Your result field has exceeded the limit, please dequeue. Will retry in 10 sec..")
             cuttedRedisInfo = RedisUtils.getMapFromInfo(db.info())
