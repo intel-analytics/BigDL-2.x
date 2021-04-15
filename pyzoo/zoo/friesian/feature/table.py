@@ -15,10 +15,14 @@
 #
 import os
 
-from pyspark.sql.functions import col, array, broadcast
+from pyspark.sql.functions import col, array, broadcast, udf
+from pyspark.sql.types import DoubleType
+from pyspark.ml import Pipeline
+from pyspark.ml.feature import MinMaxScaler
+from pyspark.ml.feature import VectorAssembler
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import generate_string_idx, fill_na, \
-    fill_na_int, compute, log_with_clip, clip_min
+    fill_na_int, compute, log_with_clip, clip_min, cross_columns
 
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
@@ -88,6 +92,9 @@ class Table:
     def show(self, n=20, truncate=True):
         self.df.show(n, truncate)
 
+    def write_parquet(self, path, mode="overwrite"):
+        self.df.write.mode(mode).parquet(path)
+
 
 class FeatureTable(Table):
     @classmethod
@@ -116,6 +123,27 @@ class FeatureTable(Table):
         return string_idx_list
 
     def _clone(self, df):
+        return FeatureTable(df)
+
+    def cross_columns(self, cross_column_list, cross_sizes):
+        df = cross_columns(self.df, cross_column_list, cross_sizes)
+        return FeatureTable(df)
+
+    def normalize(self, col_name):
+        assembler = VectorAssembler(inputCols=[col_name], outputCol=col_name + "_vect")
+
+        # MinMaxScaler Transformation
+        scaler = MinMaxScaler(inputCol=col_name + "_vect", outputCol=col_name + "_scaled")
+
+        # Pipeline of VectorAssembler and MinMaxScaler
+        pipeline = Pipeline(stages=[assembler, scaler])
+
+        unlist = udf(lambda x: float(list(x)[0]), DoubleType())
+
+        # Fitting pipeline on dataframe
+        df = pipeline.fit(self.df).transform(self.df) \
+            .withColumn(col_name, unlist(col_name + "_scaled"))\
+            .drop(col_name + "_vect").drop(col_name + "_scaled")
         return FeatureTable(df)
 
 

@@ -24,11 +24,13 @@ import com.intel.analytics.zoo.friesian.feature.Utils
 import java.util.{List => JList}
 
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{col, row_number, spark_partition_id, udf, log => sqllog}
+import org.apache.spark.sql.functions.{col, row_number, spark_partition_id, udf, log => sqllog, array, collect_list, explode}
 import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
+import scala.collection.mutable.WrappedArray
+import scala.util.Random
 
 object PythonFriesian {
   def ofFloat(): PythonFriesian[Float] = new PythonFriesian[Float]()
@@ -180,4 +182,18 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     }
     resultDF
   }
+
+  def crossColumn(df: DataFrame, crossCols: JList[JList[String]], crossSizes: JList[Int]): DataFrame = {
+    def crossColumns(cross_size: Int) = udf((cols: WrappedArray[Int]) => {
+      Utils.hashBucket(cols.mkString("_"), bucketSize = cross_size)
+    })
+
+    var resultDF = df
+    for (i <- 0 until crossCols.size()) {
+      resultDF = resultDF.withColumn(crossCols.get(i).asScala.toList.mkString("_"),
+        crossColumns(crossSizes.get(i))(array(crossCols.get(i).asScala.toArray.map(x => col(x)): _*)))
+    }
+    resultDF
+  }
+
 }
