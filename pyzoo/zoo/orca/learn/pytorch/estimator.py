@@ -20,6 +20,7 @@ from zoo.pipeline.estimator.estimator import Estimator as SparkEstimator
 from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
 from zoo.orca.learn.pytorch.training_operator import TrainingOperator
 from zoo.orca.learn.spark_estimator import Estimator as OrcaSparkEstimator
+from zoo.orca.learn.raw_estimator import Raw_Estimator as OrcaRawEstimator
 from zoo.orca.learn.optimizers import Optimizer as OrcaOptimizer, SGD
 from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.data import SparkXShards
@@ -99,6 +100,13 @@ class Estimator(object):
                                          metrics=metrics,
                                          model_dir=model_dir,
                                          bigdl_type="float")
+        elif backend == "pytorch":
+            return PyTorchEstimator(model=model,
+                                    loss=loss,
+                                    optimizer=optimizer,
+                                    metrics=metrics,
+                                    model_dir=model_dir,
+                                    bigdl_type="float")
         else:
             raise ValueError("Only horovod, torch_distributed and bigdl backends are supported"
                              f" for now, got backend: {backend}")
@@ -631,3 +639,16 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         :return:
         """
         self.estimator.set_l2_norm_gradient_clipping(clip_norm=clip_norm)
+
+
+class PyTorchEstimator(OrcaRawEstimator):
+    def __init__(self, model, loss, optimizer, metrics=None, model_dir=None,
+                 bigdl_type="float"):
+
+    def fit(self, data, epochs=1, batch_size=32, feature_cols=None, label_cols=None,
+            validation_data=None, checkpoint_trigger=None):
+
+
+
+
+
