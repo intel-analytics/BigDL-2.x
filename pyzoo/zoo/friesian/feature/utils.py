@@ -46,4 +46,8 @@ def shuffle_partition(df):
 
 
 def write_parquet(df, path, mode):
-    return callZooFunc("float", "dfWriteParquet", df, path, mode)
+    callZooFunc("float", "dfWriteParquet", df, path, mode)
+
+
+def save_parquet(df, path, mode):
+    return callZooFunc("float", "dfSaveParquet", df, path, mode)

@@ -93,6 +93,9 @@ class Table:
     def write_parquet(self, path, mode="overwrite"):
         write_parquet(self.df, path, mode)
 
+    def save_parquet(self, path, mode="overwrite"):
+        return save_parquet(self.df, path, mode)
+
 
 class FeatureTable(Table):
     @classmethod

@@ -16,11 +16,15 @@
 
 package com.intel.analytics.zoo.friesian.python
 
+import java.net.{DatagramSocket, InetAddress}
+
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.friesian.feature.Utils
 import java.util.{List => JList}
 
+import com.github.mjakubowski84.parquet4s.ParquetWriter
+import org.apache.parquet.hadoop.ParquetFileWriter
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.{col, row_number, spark_partition_id, udf, log => sqllog}
 import org.apache.spark.sql.{DataFrame, Row}
@@ -192,5 +196,29 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def dfWriteParquet(df: DataFrame, path: String, mode: String = "overwrite"): Unit = {
     df.write.mode(mode).parquet(path)
+  }
+
+  // TODO: can convert schema to case class.
+  // https://gist.github.com/yoyama/ce83f688717719fc8ca145c3b3ff43fd
+  case class Record(y: Int, xInt: List[Double], xCat: List[Int])
+
+  def dfSaveParquet(df: DataFrame, path: String, mode: String = "overwrite"):
+  JList[JList[Any]] = {
+    // TODO: handle mode
+    val rdd = df.rdd
+    val res = rdd.mapPartitionsWithIndex((idx, iter) => {
+      val records = Random.shuffle(iter.toList.map(row =>
+        Record(row.getInt(0), row.getList[Double](1).asScala.toList, row.getList[Int](2).asScala.toList)))
+      val fileName = "partition_" + idx
+      val writeOptions = ParquetWriter.Options(
+        writeMode = ParquetFileWriter.Mode.OVERWRITE
+      )
+      ParquetWriter.writeAndClose(path + fileName, records, options = writeOptions)
+      val socket = new DatagramSocket()
+      socket.connect(InetAddress.getByName("8.8.8.8"), 10002)
+      val ip = socket.getLocalAddress.getHostAddress
+      Iterator.single(List(idx, records.size, fileName, ip).asJava)
+    }).collect().toList.asJava
+    res
   }
 }
