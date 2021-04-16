@@ -96,6 +96,18 @@ RUN apt-get install -y python3-minimal && \
     pip install pyyaml && \
     pip install redis && \
     pip install keras && \
+    pip install pandas==0.24.2 && \
+    pip install Pillow==6.1.0 && \
+    pip install opencv-python==4.2.0.34 && \
+    pip install albumentations==0.4.2 && \
+    pip install tqdm==4.35.0 && \
+    pip install labelme==3.16.7 && \
+    pip install scikit-learn==0.22.1 && \
+    pip install networkx && \
+    pip install defusedxml && \
+    pip install --upgrade --pre analytics-zoo && \
+    pip install --upgrade ray && \
+    pip install tensorflow==2.3.0 && \
     pip install mxnet-mkl==1.6.0 && \
     pip install ray==1.2.0 && \
     pip install Pillow==6.1 && \
