@@ -413,7 +413,7 @@ class RayTuneSearchEngine(SearchEngine):
                 report_dict = {"training_iteration": i,
                                metric: metric_value,
                                "checkpoint": checkpoint_filename,
-                               "Best " + metric: best_reward_m if Evaluator.get_metric_mode(metric) == "max" else -best_reward_m}
+                               "best_" + metric: best_reward_m if Evaluator.get_metric_mode(metric) == "max" else -best_reward_m}
                 tune.report(**report_dict)
 
         return train_func
