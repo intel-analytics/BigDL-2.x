@@ -354,7 +354,11 @@
         <!--            <scope>${spark-scope}</scope>-->
         <!--        </dependency>-->
 
-
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-scala_${scala.major.version}</artifactId>
+            <version>2.10.2</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
@@ -483,17 +487,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.12.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
-            <version>2.12.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-scala_${scala.major.version}</artifactId>
-            <version>2.12.2</version>
+            <version>2.10.5.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
