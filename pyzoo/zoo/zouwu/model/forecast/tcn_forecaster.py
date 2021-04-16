@@ -19,7 +19,8 @@ from zoo.zouwu.model.forecast.utils import *
 from zoo.zouwu.model.tcn import TCNPytorch
 
 from zoo.orca import init_orca_context
-from zoo.orca.learn.pytorch import Estimator
+from zoo.orca.learn.pytorch.estimator import *
+
 from zoo.orca.learn.metrics import *
 
 
@@ -35,7 +36,10 @@ class TCNForecaster(Forecaster):
                  dropout=0.2,
                  optimizer="Adam",
                  loss="mse",
-                 lr=0.001):
+                 lr=0.001,
+                 distributed=False,
+                 **kwargs
+                 ):
         """
         Build a TCN Forecast Model.
 
@@ -71,9 +75,27 @@ class TCNForecaster(Forecaster):
             "optim": optimizer,
             "dropout": dropout
         }
+        if not distributed:
+            config = self.config.copy()
+            config.update(self.data_config)
+            self.orca_estimator = Estimator.from_torch(model=self.internal, optimizer=optimizer,
+                                                       config=config, backend="pytorch")
+        else:
+            cluster_mode = kwargs.get("cluster_mode", "local")
+            num_nodes = kwargs.get("num_nodes", 1)
+            cores = kwargs.get("cores", 2)
+            memory = kwargs.get("memory", "2g")
+            init_orca_context(
+                cluster_mode=cluster_mode, num_nodes=num_nodes, cores=cores, memory=memory, **kwargs)
+            self.config.update(self.data_config)
+            self.internal.build(self.config)
 
-    def fit(self, data, validation_data=None, epochs=1, metric="mse", batch_size=32,
-            distributed=False, **kwargs):
+            self.orca_estimator = Estimator.from_torch(model=self.internal.model,
+                                                  optimizer=self.internal.optimizer,
+                                                  loss=self.internal.criterion,
+                                                  backend="bigdl")
+
+    def fit(self, data, validation_data=None, epochs=1, metric="mse", batch_size=32):
         """
         Fit(Train) the forecaster.
 
@@ -92,44 +114,14 @@ class TCNForecaster(Forecaster):
         :param batch_size: Number of batch size you want to train.
         :param distributed: whether train in ditributed.
         """
-        self.config["batch_size"] = batch_size
-
-        if not distributed:
-            x = data["x"]
-            y = data["y"]
-
-            if validation_data:
-                val_x = validation_data["x"]
-                val_y = validation_data["y"]
-                v_data = (val_x, val_y)
-            else:
-                v_data = (x, y)
-            self._check_data(x, y)
-            res = self.internal.fit_eval(x,
-                                         y,
-                                         validation_data=v_data,
-                                         epochs=epochs,
-                                         metric=metric,
-                                         **self.config)
-        else:
-            cluster_mode = kwargs.get("cluster_mode", "local")
-            num_nodes = kwargs.get("num_nodes", 1)
-            cores = kwargs.get("cores", 2)
-            memory = kwargs.get("memory", "2g")
-            init_orca_context(
-                cluster_mode=cluster_mode, num_nodes=num_nodes, cores=cores, memory=memory, **kwargs)
-
-            self.config.update(self.data_config)
-            self.internal.build(self.config)
-
+        if not isinstance(self.orca_estimator, PyTorchEstimator):
             orca_metrics = convert_str_metric_to_orca_metric(metric)
-            self.orca_estimator = Estimator.from_torch(model=self.internal.model,
-                                                  optimizer=self.internal.optimizer,
-                                                  loss=self.internal.criterion,
-                                                  backend="bigdl",
-                                                  metrics=orca_metrics)
-            res = self.orca_estimator.fit(data=data, epochs=epochs, validation_data=validation_data)
+            self.orca_estimator.metrics = Metric.convert_metrics_list(orca_metrics)
+        else:
+            self.orca_estimator.metrics = metric
 
+        res = self.orca_estimator.fit(data=data, validation_data=validation_data,
+                                      epochs=epochs, batch_size=batch_size)
         return res
 
     def _check_data(self, x, y):
@@ -150,20 +142,17 @@ class TCNForecaster(Forecaster):
             Got output_feature_num of {} in config while y input shape of {}."\
             .format(self.data_config["output_feature_num"], y.shape[-1])
 
-    def predict(self, x, distributed=False):
+    def predict(self, x):
         """
         Predict using a trained forecaster.
 
         :param x: for single mode: A numpy array with shape (num_samples, lookback, feature_dim).
                   for distributed mode: An instance of SparkXShards or a Spark DataFrame
         """
-        if not self.internal.model_built:
+        if not self.orca_estimator and self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling predict!")
-        if not distributed:
-            return self.internal.predict(x)
-        else:
-            assert self.orca_estimator
-            return self.orca_estimator.predict(x)
+
+        return self.orca_estimator.predict(x)
 
     def predict_with_onnx(self, x, dirname=None):
         """
@@ -175,9 +164,10 @@ class TCNForecaster(Forecaster):
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling predict!")
-        return self.internal.predict_with_onnx(x, dirname=dirname)
+        assert isinstance(self.orca_estimator, PyTorchEstimator)
+        return self.orca_estimator.predict_with_onnx(x, dirname=dirname)
 
-    def evaluate(self, val_data, metrics=['mse'], distributed=False):
+    def evaluate(self, val_data, metrics=['mse']):
         """
         Evaluate using a trained forecaster.
 
@@ -191,14 +181,14 @@ class TCNForecaster(Forecaster):
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
-        if not distributed:
-            x = val_data["x"]
-            y = val_data["y"]
-            return self.internal.evaluate(x, y, metrics=metrics)
-        else:
+
+        if not isinstance(self.orca_estimator, PyTorchEstimator):
             orca_metrics = convert_str_metric_to_orca_metric(metrics)
             self.orca_estimator.metrics = Metric.convert_metrics_list(orca_metrics)
-            return self.orca_estimator.evaluate(val_data)
+        else:
+            self.orca_estimator.metrics = metrics
+
+        return self.orca_estimator.evaluate(val_data)
 
     def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None):
         """
@@ -212,7 +202,8 @@ class TCNForecaster(Forecaster):
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate_with_onnx(x, y, metrics=metrics, dirname=dirname)
+        assert isinstance(self.orca_estimator, PyTorchEstimator)
+        return self.orca_estimator.evaluate_with_onnx(x, y, metrics=metrics, dirname=dirname)
 
     def save(self, checkpoint_file):
         """
@@ -222,7 +213,8 @@ class TCNForecaster(Forecaster):
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling save!")
-        self.internal.save(checkpoint_file)
+        # self.internal.save(checkpoint_file)
+        self.orca_estimator.save(checkpoint_file)
 
     def restore(self, checkpoint_file):
         """
@@ -230,4 +222,5 @@ class TCNForecaster(Forecaster):
 
         :param checkpoint_file: The checkpoint file location you want to load the forecaster.
         """
-        self.internal.restore(checkpoint_file)
+        # self.internal.restore(checkpoint_file)
+        self.orca_estimator.load(checkpoint_file)

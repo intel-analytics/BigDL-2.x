@@ -95,11 +95,10 @@ class TestZouwuModelTCNForecaster(TestCase):
                                    kernel_size=3,
                                    num_channels=[4, 4],
                                    loss="mae",
-                                   lr=0.01)
-        train_loss = forecaster.fit(data=train_data, epochs=1,
+                                   lr=0.01,
                                    distributed=True)
-        test_mse = forecaster.evaluate(val_data=val_data, metrics="mse",
-                                   distributed=True)
+        train_loss = forecaster.fit(data=train_data, epochs=1)
+        test_mse = forecaster.evaluate(val_data=val_data, metrics="mse")
 
     def test_tcn_forecaster_onnx_methods(self):
         train_data, val_data, test_data = create_data()
@@ -166,5 +165,5 @@ class TestZouwuModelTCNForecaster(TestCase):
                                    output_feature_num=2,
                                    kernel_size=3,
                                    lr=0.01)
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             forecaster.fit(train_data, epochs=2)

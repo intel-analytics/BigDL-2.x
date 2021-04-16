@@ -102,11 +102,8 @@ class Estimator(object):
                                          bigdl_type="float")
         elif backend == "pytorch":
             return PyTorchEstimator(model=model,
-                                    loss=loss,
-                                    optimizer=optimizer,
                                     metrics=metrics,
-                                    model_dir=model_dir,
-                                    bigdl_type="float")
+                                    config=config)
         else:
             raise ValueError("Only horovod, torch_distributed and bigdl backends are supported"
                              f" for now, got backend: {backend}")
@@ -642,11 +639,51 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
 
 class PyTorchEstimator(OrcaRawEstimator):
-    def __init__(self, model, loss, optimizer, metrics=None, model_dir=None,
-                 bigdl_type="float"):
+    def __init__(self, model, config, metrics=None):
+        from zoo.orca.learn.metrics import Metric
+        self.metrics = Metric.convert_metrics_list(metrics)
+        self.model = model
+        self.config = config
 
-    def fit(self, data, epochs=1, batch_size=32, feature_cols=None, label_cols=None,
-            validation_data=None, checkpoint_trigger=None):
+    def fit(self, data, epochs=1, batch_size=32, validation_data=None):
+        x = data["x"]
+        y = data["y"]
+        self.config["batch_size"] = batch_size
+
+        if validation_data:
+            val_x = validation_data["x"]
+            val_y = validation_data["y"]
+            v_data = (val_x, val_y)
+        else:
+            v_data = (x, y)
+
+        res = self.model.fit_eval(x, y,
+                            validation_data=v_data,
+                            epochs=epochs,
+                            metric=self.metrics,
+                            **self.config)
+        return res
+
+    def predict(self, x):
+        return self.model.predict(x)
+
+    def evaluate(self, val_data):
+        x = val_data["x"]
+        y = val_data["y"]
+        return self.model.evaluate(x, y, metrics=self.metrics)
+
+    def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None):
+        return self.model.evaluate_with_onnx(x, y, metrics, dirname)
+
+    def save(self, path):
+        self.model.save(path)
+        return path
+
+    def load(self, path):
+        self.model.restore(path)
+
+    def get_model(self):
+        return self.model
 
 
 
