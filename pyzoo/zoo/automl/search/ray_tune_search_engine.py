@@ -21,7 +21,7 @@ from copy import deepcopy
 from zoo.automl.search.base import *
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
-from ray.tune import Trainable
+from ray.tune import Trainable, Stopper
 import ray.tune.track
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model import ModelBuilder
@@ -134,8 +134,29 @@ class RayTuneSearchEngine(SearchEngine):
         if "reward_metric" in stop.keys():
             stop[self.metric] = stop["reward_metric"]
             del stop["reward_metric"]
+        
+        # stopper
+        class TrailStopper(Stopper):
+            def __init__(self, stop, metric, mode):
+                self._mode = mode
+                self._metric = metric
+                self._stop = stop
 
-        self.stop_criteria = stop
+            def __call__(self, trial_id, result):
+                if self._metric in result.keys():
+                    if self._mode == "max" and result[self._metric] >= self._stop[self._metric]:
+                        return True
+                    if self._mode == "min" and result[self._metric] <= self._stop[self._metric]:
+                        return True
+                if "training_iteration" in result.keys():
+                    if result["training_iteration"] >= self._stop["training_iteration"]:
+                        return True
+                return False
+            
+            def stop_all(self):
+                return False
+
+        self.stop_criteria = TrailStopper(stop=stop, metric=self.metric, mode=self.mode)
 
         if search_space is None:
             search_space = recipe.search_space()
