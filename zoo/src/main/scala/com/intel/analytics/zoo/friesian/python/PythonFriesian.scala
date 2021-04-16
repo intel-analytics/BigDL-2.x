@@ -30,7 +30,7 @@ import org.apache.spark.sql.{DataFrame, Row}
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
 import scala.collection.mutable.WrappedArray
-import scala.util.Random
+
 
 object PythonFriesian {
   def ofFloat(): PythonFriesian[Float] = new PythonFriesian[Float]()
