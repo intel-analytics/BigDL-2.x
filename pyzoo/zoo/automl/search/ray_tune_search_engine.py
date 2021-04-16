@@ -257,7 +257,7 @@ class RayTuneSearchEngine(SearchEngine):
     @staticmethod
     def _get_best_trial(trial_list, metric):
         """Retrieve the best trial."""
-        mode = Evaluator.get_metric_mode(metric) == "max" else "min"
+        mode = Evaluator.get_metric_mode(metric)
         if mode == "max":
             return max(trial_list, key=lambda trial: trial.last_result.get(metric, 0))
         else:
