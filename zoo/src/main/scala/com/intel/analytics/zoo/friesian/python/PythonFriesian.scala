@@ -221,7 +221,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         if (buffer.size == partSize) {
           val records = Random.shuffle(buffer.toList.map(
             row => Record(row.getInt(0), row.getList[Double](1).asScala.toList, row.getList[Int](2).asScala.toList)))
-          val fileName = "partition_" + idx + "_" + subIndex + "_" + buffer.size
+          val fileName = "partition_" + idx + "_" + subIndex + "_" + buffer.size + ".parquet"
           ParquetWriter.writeAndClose(path + fileName, records, options = writeOptions)
           meta.append(List(idx, subIndex, partSize, fileName, ip))
           subIndex += 1
@@ -235,7 +235,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       if (buffer.nonEmpty){
         val records = Random.shuffle(buffer.toList.map(
           row => Record(row.getInt(0), row.getList[Double](1).asScala.toList, row.getList[Int](2).asScala.toList)))
-        val fileName = "partition_" + idx + "_" + subIndex + "_" + buffer.size
+        val fileName = "partition_" + idx + "_" + subIndex + "_" + buffer.size + ".parquet"
         ParquetWriter.writeAndClose(path + fileName, records, options = writeOptions)
         meta.append(List(idx, subIndex, buffer.size, fileName, ip))
       }
