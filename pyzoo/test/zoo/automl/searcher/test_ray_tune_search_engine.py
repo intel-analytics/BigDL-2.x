@@ -29,10 +29,11 @@ from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 
 
 class SimpleRecipe(Recipe):
-    def __init__(self):
+    def __init__(self, stop_metric=0):
         super().__init__()
         self.num_samples = 2
         self.training_iteration = 20
+        self.reward_metric = stop_metric
 
     def search_space(self):
         return {
@@ -77,7 +78,8 @@ def prepare_searcher(data,
                      optimizer_creator=optimizer_creator,
                      loss_creator=loss_creator,
                      feature_transformer=None,
-                     recipe=None,
+                     recipe=SimpleRecipe(),
+                     metric="mse",
                      name="demo"):
     modelBuilder = PytorchModelBuilder(model_creator=model_creator,
                                        optimizer_creator=optimizer_creator,
@@ -89,7 +91,9 @@ def prepare_searcher(data,
     searcher.compile(data=data,
                      model_create_func=modelBuilder,
                      recipe=recipe,
-                     feature_transformers=feature_transformer)
+                     feature_transformers=feature_transformer,
+                     search_space=search_space,
+                     metric=metric)
     return searcher
 
 
@@ -160,3 +164,39 @@ class TestRayTuneSearchEngine(ZooTestCase):
         searcher.run()
         best_trials = searcher.get_best_trials(k=1)
         assert best_trials is not None
+
+    def test_searcher_metric(self):
+        train_x, train_y, val_x, val_y = get_np_input()
+        data_with_val = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
+        # test metric name is returned
+        searcher = prepare_searcher(data=data_with_val, 
+                                    name='test_searcher_metric_name',
+                                    metric='mse',
+                                    recipe=SimpleRecipe(stop_metric=float('inf'))) # stop at once
+        analysis = searcher.run()
+        # assert metric name is reported
+        assert 'mse' in analysis.trials[0].last_result.keys()
+        # assert the trail stop at once since mse has mode of 'min'
+        assert analysis.trials[0].last_result['iterations_since_restore'] == 1
+
+        # test max mode metric with stop
+        searcher = prepare_searcher(data=data_with_val, 
+                                    name='test_searcher_metric_name',
+                                    metric='r2',
+                                    recipe=SimpleRecipe(stop_metric=float('-inf'))) # stop at once
+        analysis = searcher.run()
+        # assert metric name is reported
+        assert 'r2' in analysis.trials[0].last_result.keys()
+        # assert the trail stop at once since mse has mode of 'max'
+        assert analysis.trials[0].last_result['iterations_since_restore'] == 1
+
+        # test min mode metric without stop
+        searcher = prepare_searcher(data=data_with_val, 
+                                    name='test_searcher_metric_name',
+                                    metric='mse',
+                                    recipe=SimpleRecipe(stop_metric=0)) # stop at once
+        analysis = searcher.run()
+        # assert metric name is reported
+        assert 'mse' in analysis.trials[0].last_result.keys()
+        # assert the trail stop at once since mse has mode of 'min'
+        assert analysis.trials[0].last_result['iterations_since_restore'] == 20
