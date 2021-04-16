@@ -257,14 +257,18 @@ class RayTuneSearchEngine(SearchEngine):
     @staticmethod
     def _get_best_trial(trial_list, metric):
         """Retrieve the best trial."""
-        return max(trial_list, key=lambda trial: trial.last_result.get(metric, 0))
+        mode = Evaluator.get_metric_mode(metric) == "max" else "min"
+        if mode == "max":
+            return max(trial_list, key=lambda trial: trial.last_result.get(metric, 0))
+        else:
+            return min(trial_list, key=lambda trial: trial.last_result.get(metric, 0))
 
     @staticmethod
     def _get_sorted_trials(trial_list, metric):
         return sorted(
             trial_list,
             key=lambda trial: trial.last_result.get(metric, 0),
-            reverse=True)
+            reverse=True if Evaluator.get_metric_mode(metric) == "max" else False)
 
     @staticmethod
     def _get_best_result(trial_list, metric):
