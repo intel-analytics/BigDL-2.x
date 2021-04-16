@@ -168,7 +168,8 @@ class TestRayTuneSearchEngine(ZooTestCase):
     def test_searcher_metric(self):
         train_x, train_y, val_x, val_y = get_np_input()
         data_with_val = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
-        # test metric name is returned
+
+        # test metric name is returned and max mode can be stopped
         searcher = prepare_searcher(data=data_with_val, 
                                     name='test_searcher_metric_name',
                                     metric='mse',
@@ -194,7 +195,7 @@ class TestRayTuneSearchEngine(ZooTestCase):
         searcher = prepare_searcher(data=data_with_val, 
                                     name='test_searcher_metric_name',
                                     metric='mse',
-                                    recipe=SimpleRecipe(stop_metric=0)) # stop at once
+                                    recipe=SimpleRecipe(stop_metric=0)) # never stop by metric
         analysis = searcher.run()
         # assert metric name is reported
         assert 'mse' in analysis.trials[0].last_result.keys()
