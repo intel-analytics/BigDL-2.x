@@ -19,8 +19,8 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.common.metrics import ME, MAE, MSE, RMSE, MSLE, R2
 
 from zoo.automl.common.metrics import MPE, MAPE, MSPE, sMAPE, MDAPE, sMDAPE
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from numpy.testing import assert_almost_equal
+from numpy.testing import assert_array_almost_equal
 
 
 class TestMetrics(ZooTestCase):
@@ -100,6 +100,19 @@ class TestMetrics(ZooTestCase):
         assert_almost_equal(sMDAPE(y_true, y_pred, multioutput='uniform_average'),
                             [10.19], decimal=2)
         assert_almost_equal(MSE(y_true, y_pred, multioutput='uniform_average'), [0.32], decimal=2)
+
+    def test_highdim_array_metrics(self):
+        y_true = ([[[3, -0.5], [2, 7]], [[3, -0.5], [2, 7]], [[3, -0.5], [2, 7]]])
+        y_pred = ([[[2.5, -0.3], [2, 8]], [[2.5, -0.3], [2, 8]], [[2.5, -0.3], [2, 8]]])
+
+        assert_almost_equal(sMAPE(y_true, y_pred, multioutput='raw_values'),
+                            [[9.09, 25], [0, 6.67]], decimal=2)
+        assert_almost_equal(MAPE(y_true, y_pred, multioutput='raw_values'),
+                            [[16.67, 40.00], [0, 14.29]], decimal=2)
+        assert_almost_equal(RMSE(y_true, y_pred, multioutput='raw_values'),
+                            [[0.5, 0.2], [0, 1]], decimal=2)
+        assert_almost_equal(MSE(y_true, y_pred, multioutput='raw_values'),
+                            [[0.25, 0.04], [0, 1]], decimal=2)
 
     def test_multioutput_array_metrics(self):
         y_true = [[1, 2], [2.5, -1], [4.5, 3], [5, 7]]

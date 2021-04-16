@@ -51,8 +51,10 @@ class TestSeq2SeqPytorch(TestCase):
         mse, smape = model.evaluate(self.val_data[0],
                                     self.val_data[1],
                                     metrics=["mse", "smape"])
-        assert len(mse) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
-        assert len(smape) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
+        assert len(mse) == self.val_data[1].shape[-2]
+        assert len(mse[0]) == self.val_data[1].shape[-1]
+        assert len(smape) == self.val_data[1].shape[-2]
+        assert len(smape[0]) == self.val_data[1].shape[-1]
 
     def test_s2s_teacher_forcing_fit_evaluate(self):
         model = Seq2SeqPytorch()
@@ -61,8 +63,10 @@ class TestSeq2SeqPytorch(TestCase):
         mse, smape = model.evaluate(self.val_data[0],
                                     self.val_data[1],
                                     metrics=["mse", "smape"])
-        assert len(mse) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
-        assert len(smape) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
+        assert len(mse) == self.val_data[1].shape[-2]
+        assert len(mse[0]) == self.val_data[1].shape[-1]
+        assert len(smape) == self.val_data[1].shape[-2]
+        assert len(smape[0]) == self.val_data[1].shape[-1]
 
     def test_s2s_predict_save_restore(self):
         model = Seq2SeqPytorch()

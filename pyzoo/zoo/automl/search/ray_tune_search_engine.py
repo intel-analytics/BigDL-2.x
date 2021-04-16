@@ -25,6 +25,7 @@ from ray.tune import Trainable
 import ray.tune.track
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model import ModelBuilder
+from zoo.orca.automl import hp
 from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
 import pandas as pd
@@ -503,9 +504,9 @@ class RayTuneSearchEngine(SearchEngine):
         tune_config = {}
         for k, v in space.items():
             if isinstance(v, RandomSample):
-                tune_config[k] = tune.sample_from(v.func)
+                tune_config[k] = hp.sample_from(v.func)
             elif isinstance(v, GridSearch):
-                tune_config[k] = tune.grid_search(v.values)
+                tune_config[k] = hp.grid_search(v.values)
             else:
                 tune_config[k] = v
         return tune_config
