@@ -21,6 +21,7 @@ import pytest
 import tempfile
 from unittest import TestCase
 
+from pyspark.sql.functions import max, min, col
 from zoo.common.nncontext import *
 from zoo.friesian.feature import FeatureTable, StringIndex
 
@@ -128,3 +129,32 @@ class TestTable(TestCase):
         assert "col_1" not in merged_tbl.df.columns, "col_1 shouldn't be a column of merged_tbl"
         assert "int_cols" in merged_tbl.df.columns, "int_cols should be a column of merged_tbl"
         assert "col_1" in feature_tbl.df.columns, "col_1 should be a column of feature_tbl"
+
+    def test_norm(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path).fillna(0, ["col_2"])
+        normalized_tbl = feature_tbl.normalize("col_2")
+        max_value = normalized_tbl.df.select("col_2")\
+        .agg(max(col("col_2")).alias("max"))\
+        .rdd.map(lambda row: row['max']).collect()[0]
+        min_value = normalized_tbl.df.select("col_2") \
+            .agg(min(col("col_2")).alias("min")) \
+            .rdd.map(lambda row: row['min']).collect()[0]
+
+        assert max_value <= 1, "col_2 shouldn't be more than 1 after normalization"
+        assert min_value >= 0, "col_2 shouldn't be less than 0 after normalization"
+
+    def test_cross(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path).fillna(0, ["col_2", "col_3"])
+        crossed_tbl = feature_tbl.cross_columns([["col_2", "col_3"]], [100])
+        assert "col_2_col_3" in crossed_tbl.df.columns, "crossed column is not created"
+        max_value = crossed_tbl.df.select("col_2_col_3") \
+            .agg(max(col("col_2_col_3")).alias("max")) \
+            .rdd.map(lambda row: row['max']).collect()[0]
+        min_value = crossed_tbl.df.select("col_2_col_3") \
+            .agg(min(col("col_2_col_3")).alias("min")) \
+            .rdd.map(lambda row: row['min']).collect()[0]
+
+        assert max_value <= 100, "cross value shouldn't be more than 100 after cross"
+        assert min_value > 0, "cross value shouldn't be less than 0 after cross"

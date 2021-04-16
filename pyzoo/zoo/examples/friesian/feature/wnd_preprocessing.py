@@ -82,8 +82,7 @@ def _parse_args():
 if __name__ == '__main__':
     args = _parse_args()
     if args.cluster_mode == "local":
-        # init_orca_context("local", cores=args.executor_cores, memory=args.executor_memory)
-        sc = init_nncontext("wnd")
+        init_orca_context("local", cores=args.executor_cores, memory=args.executor_memory)
     elif args.cluster_mode == "standalone":
         init_orca_context("standalone", master=args.master,
                           cores=args.executor_cores, num_nodes=args.num_executor,
@@ -95,10 +94,8 @@ if __name__ == '__main__':
                           num_nodes=args.num_executor, memory=args.executor_memory,
                           driver_cores=args.driver_cores, driver_memory=args.driver_memory,
                           conf=conf)
-    sc = init_nncontext("wnd")
     time_start = time()
     paths = [os.path.join(args.input_folder, 'day_%d.parquet' % i) for i in args.day_range]
-    # paths = os.path.join(args.input_folder, 'sample_test_day_0.parquet')
     tbl = FeatureTable.read_parquet(paths)
     idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
     item_size = idx_list[1].count()
@@ -114,5 +111,4 @@ if __name__ == '__main__':
     tbl_all_data.show(5)
     print("Finished")
     tbl_all_data.write_parquet(args.output_folder)
-    sc.stop()
-    # stop_orca_context()
+    stop_orca_context()
