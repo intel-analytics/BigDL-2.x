@@ -14,9 +14,7 @@ bash ppml-spark-submit.sh \
         --conf spark.driver.blockManager.port=10026 \
         --conf spark.io.compression.codec=lz4 \
         --class com.intel.analytics.bigdl.models.lenet.Train \
-        --executor-cores 4 \
-        --total-executor-cores 4 \
-        --executor-memory 10G \
+        --driver-memory 10G \
         /ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar \
         -f /ppml/trusted-big-data-ml/work/data \
         -b 64 \
