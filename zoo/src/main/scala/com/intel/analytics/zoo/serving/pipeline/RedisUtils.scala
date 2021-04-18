@@ -19,9 +19,19 @@ package com.intel.analytics.zoo.serving.pipeline
 import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.log4j.Logger
-import redis.clients.jedis.Jedis
+import redis.clients.jedis.{Jedis, StreamEntryID}
 
 object RedisUtils {
+  def createRedisGroupIfNotExist(jedis: Jedis, streamName: String): Unit = {
+    try {
+      jedis.xgroupCreate(streamName,
+        "serving", new StreamEntryID(0, 0), true)
+    } catch {
+      case e: Exception =>
+        ClusterServing.logger.info(s"xgroupCreate raise [$e], " +
+          s"will not create new group.")
+    }
+  }
   def checkMemory(db: Jedis, inputThreshold: Double, cutRatio: Double): Unit = {
     var redisInfo = RedisUtils.getMapFromInfo(db.info())
     if (redisInfo("used_memory").toLong >=

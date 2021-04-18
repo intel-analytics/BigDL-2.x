@@ -77,7 +77,7 @@ object BytesPredictionInput {
     BytesPredictionInput(UUID.randomUUID().toString, str)
 }
 
-case class InstancesPredictionInput(uuid: String, instances: Instances) extends PredictionInput {
+case class InstancesPredictionInput(uuid: String, instances: Instances) extends PredictionInput with Supportive {
   override def getId(): String = this.uuid
   override def toHash(): HashMap[String, String] = {
     val hash = new HashMap[String, String]()

@@ -21,29 +21,25 @@ class RGActor(
   override val logger = LoggerFactory.getLogger(classOf[RedisGetActor])
   val jedis = retrieveJedis(redisHost, redisPort,
     redisSecureEnabled, redissTrustStorePath, redissTrustStoreToken)
-  val requestMap = Map[String, ActorRef]()
+  var requestMap = mutable.Map[String, ActorRef]()
 
   override def receive: Receive = {
-    case message: PredictionQueryMessage =>
-      val results = get(redisOutputQueue, message.ids)
-      if (null != results && results.size == message.ids.size) {
-        results.foreach(x => {
-          val b64string = x._2.get("value")
-          try {
-            x._2.put("value", ArrowDeserializer(b64string))
-          } catch {
-            case _: Exception =>
-          }
-        })
+    case message: PutEndMessage =>
+      logger.info(s"PutEndMessage received from ${sender().path.name} at ${System.currentTimeMillis()}")
+      requestMap += (message.actor.path.name -> message.actor)
+    case message: DequeueMessage => {
+      logger.info(s"DequeueMessage received at ${System.currentTimeMillis()}")
+      getAll(redisOutputQueue).foreach(result => {
+        val queryOption = requestMap.get(result._1).get
+        if (queryOption != null) {
+          val queryActor = requestMap.get(result._1).asInstanceOf[ActorRef]
+          val queryResult = result._2.asScala
+          println(queryResult.toString())
+          queryActor ! ModelOutputMessage(queryResult)
+        }
 
-        sender() ! results
-        // result get, remove in redis here
-        message.ids.foreach(id =>
-          jedis.del(Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + id)
-        )
-      } else {
-        sender() ! Seq[(String, util.Map[String, String])]()
-      }
+      })
+    }
   }
 
   def get(queue: String, ids: Seq[String]): Seq[(String, util.Map[String, String])] = {
@@ -54,11 +50,14 @@ class RGActor(
       }).filter(!_._2.isEmpty)
     }
   }
-  def getAll(queue: String, ids: Seq[String]): mutable.Set[(String, util.Map[String, String])] = {
-    val resultSet = jedis.keys(s"${queue}:*")
-    resultSet.asScala.map(key => {
+  def getAll(queue: String): mutable.Set[(String, util.Map[String, String])] = {
+    val resultSet = jedis.keys(s"${queue}*")
+    val res = resultSet.asScala.map(key => {
       (key, jedis.hgetAll(key))
+
     })
+    resultSet.asScala.foreach(key => jedis.del(key))
+    res
   }
 
 }
