@@ -1,10 +1,10 @@
 # PPML (Privacy Preserving Machine Learning)
 
-PPML (Privacy-Preserving Machine Learning) aims at protecting user privacy, meanwhile keep machine learning applications still useful. However, achieving this goal without impacting existing applications is no trival, especially in end-to-end big data scenarios. To reslove this problem, Analytics-Zoo provides an end-to-end PPML platform for Big Data AI based on Intel SGX. This PPML platform ensure the whole Big Data & AI pipeline are fully protected by secured SGX enclave in hardware level, meanwhile exising Big Data & AI applications, such as Flink, Spark, SparkSQL and machine/deep learning, can be seamlessly migrated into this PPML platform without any code changes.
+PPML (Privacy-Preserving Machine Learning) aims at protecting user privacy, meanwhile keep machine learning applications still useful. However, achieving this goal without impacting existing applications is difficult, especially in end-to-end big data scenarios. To reslove this problem, Analytics-Zoo provides an end-to-end PPML platform for Big Data AI based on Intel SGX. This PPML platform ensure the whole Big Data & AI pipeline are fully protected by secured SGX enclave in hardware level, meanwhile exising Big Data & AI applications, such as Flink, Spark, SparkSQL and machine/deep learning, can be seamlessly migrated into this PPML platform without any code changes.
 
 ## PPML for Big Data AI
 
-To take full advantage of big data, especially the value of private or sensitive data, customers need to build a trusted platform under the guidance of privacy laws or regulation, such as [GDPR](https://gdpr-info.eu/). This requirement raises a big challenge to customers who already have big data and big data applications, such as Spark/SparkSQL, Flink and AI applications. Migrating these applications into privacy preserving way requires lots of additional efforts.
+To take full advantage of big data, especially the value of private or sensitive data, customers need to build a trusted platform under the guidance of privacy laws or regulation, such as [GDPR](https://gdpr-info.eu/). This requirement raises big challenges to customers who already have big data and big data applications, such as Spark/SparkSQL, Flink/FlinkSQL and AI applications. Migrating these applications into privacy preserving way requires lots of additional efforts.
 
 With Analytics-Zoo, customers can build a Trusted Platform for big data with a few clicks, and all existing big data & AI applications can be migrated into this platform without any code changes.
 
@@ -43,10 +43,9 @@ In this section, we will demonstrate how to use Analytics-Zoo to setup trusted S
 
 ### Get started
 
+#### Prerequisite: Install SGX Driver & Prepare Scripts
 
-#### Prerequisite
-
-Please check if current platform [has SGX feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). Then, enable SGX feature in BIOS. Note that after SGX is enabled, a protion of memory will be assigned to SGX, and cannot be used or seen by OS. 
+Please check if current platform [has SGX feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). Then, enable SGX feature in BIOS. Note that after SGX is enabled, a protion of memory will be assigned to SGX, and cannot be used or seen by OS.
 
 Download scripts and dockerfiles in [this link](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml).
 
@@ -72,7 +71,7 @@ cp -r ../../keys .
 ./build-docker-image.sh
 ```
 
-#### Step 1: Start Spark in SGX
+#### Step 1: Start Trusted Big Data Analytics and ML Platform
 
 Enter `analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene` dir. Start Spark service with this command
 
@@ -81,7 +80,7 @@ Enter `analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene` dir. Start 
 sudo docker exec -it spark-local bash
 ```
 
-##### Step 2: Submit jobs to Spark
+##### Step 2: Run Spark Program
 
 Modify `init.sh`, which is task/env related.
 
@@ -137,6 +136,8 @@ The result should look like:
 
 This example is a simple Spark local PI example, if you want to run application in distributed Spark cluster protected by SGX, please refer to [distributed bigdata ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-big-data-ml/scala/docker-graphene#start-the-distributed-bigdata-ml).
 
+##### Step 3: Run BigDL Program
+
 ## Trusted Realtime Compute and ML
 
 In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Flink in SGX, then run real-time model serving in safe way. For more examples, please refer to [trusted-realtime-ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-realtime-ml/scala/docker-graphene).
@@ -147,6 +148,18 @@ In this section, we will demonstrate how to use Analytics-Zoo to setup trusted F
 - Distributed end-to-end serving solution with Cluster Serving
 
 ### Get started
+
+#### Prerequisite: Install SGX Driver & Prepare Scripts
+
+Please check if current platform [has SGX feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). Then, enable SGX feature in BIOS. Note that after SGX is enabled, a protion of memory will be assigned to SGX, and cannot be used or seen by OS.
+
+Download scripts and dockerfiles in [this link](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml).
+
+Check SGX driver with `ls /dev | grep sgx`. If SGX driver is not installed, run `install-graphene-driver.sh` and run it with root premission.
+
+```bash
+./ppml/scripts/install-graphene-driver.sh
+```
 
 #### Setp 0: Prepare Environment
 
@@ -170,7 +183,7 @@ cp -r ../../keys .
 ./build-docker-image.sh
 ```
 
-#### Step 1: Start Cluster Serving Service
+#### Step 1: Start  Trusted Realtime Compute and ML Platform
 
 Enter `analytics-zoo/ppml/trusted-realtime-ml/scala/docker-graphene` dir.
 
@@ -180,7 +193,10 @@ Start cluster serving in single container
 ./start-local-cluster-serving.sh
 ```
 
-#### Step 2: Inference with Cluster Serving
+#### Step 2: Run Flink Program
+
+
+#### Step 3: Run Trusted Cluster Serving
 
 After all services are ready, then you can directly push inference requests int queue with [Restful API](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide/#restful-api). Also, you can push image/input into queue with Python API
 
@@ -189,8 +205,6 @@ from zoo.serving.client import InputQueue
 input_api = InputQueue()
 input_api.enqueue('my-image1', user_define_key={"path: 'path/to/image1'})
 ```
-
-#### Step 3: Stop Cluster Serving Service
 
 Cluster Serving service is a long running service in container, you can stop it with
 
