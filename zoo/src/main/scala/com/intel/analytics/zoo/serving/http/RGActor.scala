@@ -19,9 +19,9 @@ class RGActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conventions
   override def receive: Receive = {
     case message: PutEndMessage =>
       logger.info(s"${System.currentTimeMillis()} PutEndMessage received from ${sender().path.name} at time")
-      requestMap += (Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + message.key -> message.actor)
+      requestMap += (Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + message.key -> sender())
     case message: DequeueMessage => {
-      logger.info(s"${System.currentTimeMillis()} Dequeue at time ")
+//      logger.info(s"${System.currentTimeMillis()} Dequeue at time ")
       getAll(redisOutputQueue).foreach(result => {
         logger.info(s"${System.currentTimeMillis()} Get redis result at time ")
         val queryOption = requestMap.get(result._1)

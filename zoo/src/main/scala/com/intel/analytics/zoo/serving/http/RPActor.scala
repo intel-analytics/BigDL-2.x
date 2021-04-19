@@ -25,13 +25,13 @@ class RPActor(getActor: ActorRef, redisInputQueue: String = "serving_stream"
 
         put(redisInputQueue, predictionInput)
         logger.info(s"${System.currentTimeMillis()} Input enqueue $predictionInput at time ")
-        getActor ! PutEndMessage(predictionInput.getId(), this.self)
-        master = sender()
+        getActor.forward(PutEndMessage(predictionInput.getId(), this.self))
+//        master = sender()
       }
 
     case message: ModelOutputMessage =>
       logger.info(s"TestOutputMessage received from ${sender().path.name}")
-      master ! message
+//      master ! message
       logger.info(s"forwarded message to ${master.path.name}")
     //      val a = Await.result(getA ? PutEndMessage(this.self), timeout.duration).asInstanceOf[String]
     case message: SecuredModelSecretSaltMessage =>
