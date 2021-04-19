@@ -13,3 +13,4 @@ case class ModelOutputMessage(valueMap: mutable.Map[String, String])
 case class DataInputMessage(inputs: Seq[PredictionInput])
 
 case class TestInputMessage(inputs: String)
+case class TestOutputMessage(inputs: String)

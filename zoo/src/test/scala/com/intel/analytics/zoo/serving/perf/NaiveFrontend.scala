@@ -22,7 +22,7 @@ import java.util
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
 
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Cancellable, Props}
 import akka.http.scaladsl.{ConnectionContext, Http}
 import akka.http.scaladsl.server.Directives.{complete, path, _}
 import akka.pattern.ask
@@ -47,25 +47,34 @@ class GetA() extends Actor {
     case message: PutEndMessage =>
       logger.info(s"PutEndMessage received from ${sender().path.name} at ${System.currentTimeMillis()}")
       requestMap += (message.actor.path.name -> message.actor)
-      sender() ! "1"
     case message: DequeueMessage =>
       logger.info(s"DequeueMessage received from ${sender().path.name} at ${System.currentTimeMillis()}, request map is ${requestMap}")
-      requestMap.foreach(e => e._2 ! "1")
+      requestMap.foreach(e => e._2 ! TestOutputMessage("1"))
   }
 }
 class PutA(getA: ActorRef) extends Actor {
   val logger = LoggerFactory.getLogger(getClass)
   implicit val timeout: Timeout = Timeout(10, TimeUnit.SECONDS)
+  implicit val executionContext = context.system.dispatcher
+  var master: ActorRef = _
+  var output: TestOutputMessage = _
+  var c: Cancellable = _
   override def receive: Receive = {
-    case message: DataInputMessage =>
-      println("DataInputMessage received")
-      val a = Await.result(getA ? PutEndMessage(this.self), timeout.duration).asInstanceOf[String]
-      sender() ! a
     case message: TestInputMessage =>
-      logger.info("TestInputMessage received")
-      val a = Await.result(getA ? PutEndMessage(this.self), timeout.duration).asInstanceOf[String]
-      logger.info(s"answer get at ${a.toString}")
-      sender() ! a
+      println(s"TestInputMessage received from ${sender().path.name}")
+      getA ! PutEndMessage(this.self)
+      master = sender()
+      logger.info(s"start schedule at ${System.currentTimeMillis()}")
+      c = context.system.scheduler.scheduleOnce(10000 millisecond,self, message)
+      logger.info(s"cancel schedule at ${System.currentTimeMillis()}")
+      sender() ! output
+    case message: TestOutputMessage =>
+      logger.info(s"TestOutputMessage received from ${sender().path.name}")
+      output = message
+        c.cancel()
+//      val a = Await.result(getA ? PutEndMessage(this.self), timeout.duration).asInstanceOf[String]
+
+
   }
 }
 object NaiveFrontend extends SSupportive with EncryptSupportive {
@@ -103,13 +112,14 @@ object NaiveFrontend extends SSupportive with EncryptSupportive {
           (contentType, content) => {
 
               try {
-                val a = Await.result(putter ? TestInputMessage(content), timeout.duration)
+                val a = Await.result(putter ? TestInputMessage(content), timeout.duration).asInstanceOf[TestOutputMessage]
                 logger.info(a.toString)
+
 //                val result = timing("predict") {
 //                  Await.result(putter ? DataInputMessage, timeout.duration).asInstanceOf[String]
 //                }
 //                logger.info(result.toString)
-                complete(200, a.toString)
+                complete(200, a.toString())
               }
                 catch {
                 case e =>
