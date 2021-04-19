@@ -30,6 +30,7 @@ from torch.utils.data import DataLoader
 from pyspark.sql import DataFrame
 import warnings
 import torch
+import types
 
 
 class Estimator(object):
@@ -96,6 +97,7 @@ class Estimator(object):
             return PyTorchSparkEstimator(model=model,
                                          loss=loss,
                                          optimizer=optimizer,
+                                         config=config,
                                          metrics=metrics,
                                          model_dir=model_dir,
                                          bigdl_type="float")
@@ -259,20 +261,29 @@ class PyTorchRayEstimator(OrcaRayEstimator):
 
 
 class PyTorchSparkEstimator(OrcaSparkEstimator):
-    def __init__(self, model, loss, optimizer, metrics=None, model_dir=None,
+    def __init__(self, model, loss, optimizer, config=None, metrics=None, model_dir=None,
                  bigdl_type="float"):
         from zoo.pipeline.api.torch import TorchModel, TorchLoss, TorchOptim
         self.loss = loss
+        self.model = model
+        self.optimizer = optimizer
+        self.config = {} if config is None else config
+        if isinstance(self.loss, types.FunctionType):
+            self.loss = self.loss(self.config)
         if self.loss is None:
             self.loss = TorchLoss()
         else:
             self.loss = TorchLoss.from_pytorch(loss)
-        if optimizer is None:
+        if isinstance(self.model, types.FunctionType):
+            self.model = self.model(self.config)
+        if isinstance(self.optimizer, types.FunctionType):
+            self.optimizer = self.optimizer(self.model, config)
+        if self.optimizer is None:
             from zoo.orca.learn.optimizers.schedule import Default
             self.optimizer = SGD(learningrate_schedule=Default()).get_optimizer()
-        elif isinstance(optimizer, TorchOptimizer):
+        elif isinstance(self.optimizer, TorchOptimizer):
             self.optimizer = TorchOptim.from_pytorch(optimizer)
-        elif isinstance(optimizer, OrcaOptimizer):
+        elif isinstance(self.optimizer, OrcaOptimizer):
             self.optimizer = optimizer.get_optimizer()
         else:
             raise ValueError("Only PyTorch optimizer and orca optimizer are supported")
@@ -281,7 +292,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         self.log_dir = None
         self.app_name = None
         self.model_dir = model_dir
-        self.model = TorchModel.from_pytorch(model)
+        self.model = TorchModel.from_pytorch(self.model)
         self.estimator = SparkEstimator(self.model, self.optimizer, model_dir,
                                         bigdl_type=bigdl_type)
 
@@ -373,7 +384,10 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
                                                           feature_cols, label_cols)
             self.estimator.train(train_fset, self.loss, end_trigger, checkpoint_trigger,
                                  val_fset, self.metrics, batch_size)
-        elif isinstance(data, DataLoader) or callable(data):
+        elif isinstance(data, DataLoader) or callable(data) or isinstance(data, types.FunctionType):
+            if isinstance(data, types.FunctionType):
+                data, validation_data = data(self.config, batch_size), validation_data(self.config,
+                                                                                       batch_size)
             train_fset, val_fset = self._handle_data_loader(data, validation_data)
             self.estimator.train_minibatch(train_fset, self.loss, end_trigger,
                                            checkpoint_trigger, val_fset, self.metrics)

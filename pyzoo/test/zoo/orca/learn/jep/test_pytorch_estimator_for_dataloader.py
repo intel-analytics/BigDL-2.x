@@ -19,6 +19,7 @@ import os
 import pytest
 import torch
 import torch.nn as nn
+import torch.optim as optim
 from torch.utils.data import TensorDataset
 
 from zoo.orca import init_orca_context, stop_orca_context
@@ -28,6 +29,20 @@ from zoo.orca.learn.metrics import *
 from zoo.orca.learn.trigger import EveryEpoch
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+
+
+class SimpleModel(nn.Module):
+    def __init__(self):
+        super(SimpleModel, self).__init__()
+        self.dense1 = nn.Linear(2, 4)
+        self.bn1 = torch.nn.BatchNorm1d(4)
+        self.dense2 = nn.Linear(4, 1)
+
+    def forward(self, x):
+        x = self.dense1(x)
+        x = self.bn1(x)
+        x = torch.sigmoid(self.dense2(x))
+        return x
 
 
 class TestEstimatorForSparkDataLoader(TestCase):
@@ -45,19 +60,6 @@ class TestEstimatorForSparkDataLoader(TestCase):
         stop_orca_context()
 
     def test_bigdl_pytorch_estimator_dataloader(self):
-        class SimpleModel(nn.Module):
-            def __init__(self):
-                super(SimpleModel, self).__init__()
-                self.dense1 = nn.Linear(2, 4)
-                self.bn1 = torch.nn.BatchNorm1d(4)
-                self.dense2 = nn.Linear(4, 1)
-
-            def forward(self, x):
-                x = self.dense1(x)
-                x = self.bn1(x)
-                x = torch.sigmoid(self.dense2(x))
-                return x
-
         model = SimpleModel()
 
         estimator = Estimator.from_torch(model=model, loss=nn.BCELoss(),
@@ -78,6 +80,41 @@ class TestEstimatorForSparkDataLoader(TestCase):
                       checkpoint_trigger=EveryEpoch())
         estimator.evaluate(data=val_loader)
 
+    def test_bigdl_pytorch_estimator_data_creator_func(self):
+        model = SimpleModel()
+
+        inputs = torch.Tensor([[1, 2], [1, 3], [3, 2], [5, 6], [8, 9], [1, 9]])
+        targets = torch.Tensor([[0], [0], [0], [1], [1], [1]])
+
+        def train_data_creator(config, batch_size):
+            train_loader = torch.utils.data.DataLoader(
+                TensorDataset(inputs, targets),
+                batch_size=batch_size,
+                num_workers=config.get("threads", 1)
+            )
+            return train_loader
+
+        def test_data_creator(config, batch_size):
+            val_loader = torch.utils.data.DataLoader(
+                TensorDataset(inputs, targets),
+                batch_size=batch_size,
+                num_workers=config.get("threads", 1)
+            )
+            return val_loader
+
+        def optim_creator(model, config):
+            return optim.Adam(model.parameters(), lr=config.get("lr", 0.01))
+
+        estimator = Estimator.from_torch(model=model, loss=nn.BCELoss(),
+                                         metrics=[Accuracy()],
+                                         optimizer=optim_creator,
+                                         config={"lr": 0.01, "threads": 2}
+                                         )
+
+        estimator.fit(data=train_data_creator, epochs=2, batch_size=2,
+                      validation_data=test_data_creator,
+                      checkpoint_trigger=EveryEpoch())
+        estimator.evaluate(data=test_data_creator, batch_size=2)
 
 if __name__ == "__main__":
     pytest.main([__file__])
