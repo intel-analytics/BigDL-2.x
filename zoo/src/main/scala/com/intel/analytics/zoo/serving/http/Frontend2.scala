@@ -20,8 +20,8 @@ import java.io.File
 import java.security.{KeyStore, SecureRandom}
 import java.util
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
-import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.{ConnectionContext, Http}
 import akka.http.scaladsl.server.Directives.{complete, path, _}
@@ -33,13 +33,14 @@ import com.google.common.util.concurrent.RateLimiter
 import com.intel.analytics.zoo.pipeline.inference.EncryptSupportive
 import com.intel.analytics.zoo.serving.utils.Conventions
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.apache.log4j.Logger
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-object Frontend2 extends Supportive with EncryptSupportive {
-  override val logger = LoggerFactory.getLogger(getClass)
+object Frontend2 extends SSupportive with EncryptSupportive {
+  val logger = LoggerFactory.getLogger(getClass)
 
   val name = "analytics zoo web serving frontend"
 
@@ -49,8 +50,8 @@ object Frontend2 extends Supportive with EncryptSupportive {
   implicit val timeout: Timeout = Timeout(100, TimeUnit.SECONDS)
 
   def main(args: Array[String]): Unit = {
-    timing(s"$name started successfully.")() {
-      val arguments = timing("parse arguments")() {
+    timing(s"$name started successfully.") {
+      val arguments = timing("parse arguments") {
         argumentsParser.parse(args, FrontEndAppArguments()) match {
           case Some(arguments) => logger.info(s"starting with $arguments"); arguments
           case None => argumentsParser.failure("miss args, please see the usage info"); null
@@ -62,29 +63,15 @@ object Frontend2 extends Supportive with EncryptSupportive {
         case false => null
       }
       val redisGetterName = s"redis-getter"
-      val redisGetter = timing(s"$redisGetterName initialized.")() {
-        val redisGetterProps = Props(new RGActor(
-          arguments.redisHost,
-          arguments.redisPort,
-          arguments.redisInputQueue,
-          arguments.redisOutputQueue,
-          arguments.redisSecureEnabled,
-          arguments.redissTrustStorePath,
-          arguments.redissTrustStoreToken))
+      val redisGetter = timing(s"$redisGetterName initialized.") {
+        val redisGetterProps = Props(new RGActor())
         system.actorOf(redisGetterProps, name = redisGetterName)
       }
       val redisPutterName = s"redis-putter"
-      val putterQ = timing(s"$redisPutterName initialized.")() {
-        val redisPutterProps = Props(new RPActor(
-          arguments.redisHost, arguments.redisPort,
-          arguments.redisInputQueue, arguments.redisOutputQueue,
-          arguments.timeWindow, arguments.countWindow,
-          arguments.redisSecureEnabled,
-          arguments.redissTrustStorePath,
-          arguments.redissTrustStoreToken,
-          redisGetter))
+      val putterQ = timing(s"$redisPutterName initialized.") {
+        val redisPutterProps = Props(new RPActor(redisGetter))
         val putterQueue = new LinkedBlockingQueue[ActorRef](1000)
-        List.range(0, 1000).map(index => {
+        List.range(0, 100).map(index => {
           val querierName = s"querier-$index"
           val querier = system.actorOf(redisPutterProps, name = querierName)
           putterQueue.put(querier)
@@ -94,10 +81,9 @@ object Frontend2 extends Supportive with EncryptSupportive {
 
       def processPredictionInput(inputs: Seq[PredictionInput]):
       Seq[PredictionOutput[String]] = {
-        val result = silent("response waiting")() {
+        val result = timing("response waiting") {
           val ids = inputs.map(_.getId())
-          val results = timing(s"query message wait for key $ids")(
-            overallRequestTimer, waitRedisTimer) {
+          val results = timing(s"query message wait for key $ids") {
             val redisPutter = putterQ.take()
             val res = Await.result(redisPutter ? DataInputMessage(inputs), timeout.duration)
               .asInstanceOf[ModelOutputMessage].valueMap
@@ -113,13 +99,13 @@ object Frontend2 extends Supportive with EncryptSupportive {
         result.toSeq
       }
 
-      val route = timing("initialize http route")() {
+      val route = timing("initialize http route") {
         path("") {
-          timing("welcome")(overallRequestTimer) {
+          timing("welcome") {
             complete("welcome to " + name)
           }
         } ~ (get & path("metrics")) {
-          timing("metrics")(overallRequestTimer, metricsRequestTimer) {
+          timing("metrics") {
             val keys = metrics.getTimers().keySet()
             val servingMetrics = keys.toArray.map(key => {
               val timer = metrics.getTimers().get(key)
@@ -143,8 +129,8 @@ object Frontend2 extends Supportive with EncryptSupportive {
               complete(500, error.toString)
             } else {
               try {
-                val result = timing("predict")(overallRequestTimer, predictRequestTimer) {
-                  val instances = timing("json deserialization")() {
+                val result = timing("predict") {
+                  val instances = timing("json deserialization") {
                     JsonUtil.fromJson(classOf[Instances], content)
                   }
                   val inputs = instances.instances.map(instance => {
@@ -153,9 +139,9 @@ object Frontend2 extends Supportive with EncryptSupportive {
                   val outputs = processPredictionInput(inputs)
                   Predictions(outputs)
                 }
-                silent("response complete")() {
-                  complete(200, result.toString)
-                }
+
+                complete(200, result.toString)
+
               } catch {
                 case e =>
                   val message = e.getMessage
@@ -198,8 +184,12 @@ object Frontend2 extends Supportive with EncryptSupportive {
       }
       Http().bindAndHandle(route, arguments.interface, arguments.port)
       logger.info(s"http started at http://${arguments.interface}:${arguments.port}")
-      system.scheduler.schedule(10 milliseconds, 1 milliseconds,
-        redisGetter, DequeueMessage())(system.dispatcher)
+      while(true) {
+        redisGetter ! DequeueMessage()
+        Thread.sleep(1)
+      }
+//      system.scheduler.schedule(1 milliseconds, 1 millisecond,
+//        redisGetter, DequeueMessage())(system.dispatcher)
     }
   }
 
@@ -323,3 +313,13 @@ case class FrontEndApp2Arguments(
                                  redissTrustStoreToken: String = "1234qwer"
                                )
 
+trait SSupportive {
+  def timing[T](name: String)(f: => T): T = {
+    val begin = System.nanoTime()
+    val result = f
+    val end = System.nanoTime()
+    val cost = (end - begin)
+    Logger.getLogger(getClass).info(s"$name time elapsed [${cost / 1e6} ms].")
+    result
+  }
+}

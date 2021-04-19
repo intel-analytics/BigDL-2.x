@@ -11,37 +11,29 @@ import org.slf4j.LoggerFactory
 import scala.collection.mutable
 import scala.concurrent.Await
 
-class RPActor(
-                     redisHost: String,
-                     redisPort: Int,
-                     redisInputQueue: String,
-                     redisOutputQueue: String,
-                     timeWindow: Int,
-                     countWindow: Int,
-                     redisSecureEnabled: Boolean,
-                     redissTrustStorePath: String,
-                     redissTrustStoreToken: String,
-                     redisGetActor: ActorRef) extends JedisEnabledActor {
-  override val logger = LoggerFactory.getLogger(classOf[RedisPutActor])
-  val jedis = retrieveJedis(redisHost, redisPort,
-    redisSecureEnabled, redissTrustStorePath, redissTrustStoreToken)
+class RPActor(getActor: ActorRef, redisInputQueue: String = "serving_stream"
+              ) extends JedisEnabledActor {
+  override val logger = LoggerFactory.getLogger(getClass)
+  val jedis = retrieveJedis()
   implicit val timeout: Timeout = Timeout(100, TimeUnit.SECONDS)
-  var start = System.currentTimeMillis()
-  val cache = Set[PredictionInput]()
+  var master: ActorRef = _
 
   override def receive: Receive = {
     case message: DataInputMessage =>
-      silent(s"$actorName input message process, ${cache.size}")() {
-        val predictionInputs = message.inputs
-        predictionInputs.foreach(x => {
-          put(redisInputQueue, x)
-          logger.info(s"Input enqueue $x at time ${System.currentTimeMillis()}")
-        })
-      }
-      logger.info(s"sending put end message to ${redisGetActor.path.name}")
-      val res = Await.result(redisGetActor ? PutEndMessage, timeout.duration)
-      sender() ! res
+      silent(s"$actorName input message process")() {
+        val predictionInput = message.inputs.head
 
+        put(redisInputQueue, predictionInput)
+        logger.info(s"${System.currentTimeMillis()} Input enqueue $predictionInput at time ")
+        getActor ! PutEndMessage(predictionInput.getId(), this.self)
+        master = sender()
+      }
+
+    case message: ModelOutputMessage =>
+      logger.info(s"TestOutputMessage received from ${sender().path.name}")
+      master ! message
+      logger.info(s"forwarded message to ${master.path.name}")
+    //      val a = Await.result(getA ? PutEndMessage(this.self), timeout.duration).asInstanceOf[String]
     case message: SecuredModelSecretSaltMessage =>
       silent(s"$actorName put secret and salt in redis")() {
         jedis.hset(Conventions.MODEL_SECURED_KEY, Conventions.MODEL_SECURED_SECRET, message.secret)

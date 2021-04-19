@@ -61,17 +61,15 @@ class PutA(getA: ActorRef) extends Actor {
   var c: Cancellable = _
   override def receive: Receive = {
     case message: TestInputMessage =>
-      println(s"TestInputMessage received from ${sender().path.name}")
-      getA ! PutEndMessage(this.self)
+      logger.info(s"TestInputMessage received from ${sender().path.name}")
+      getA ! PutEndMessage("", this.self)
       master = sender()
-      logger.info(s"start schedule at ${System.currentTimeMillis()}")
-      c = context.system.scheduler.scheduleOnce(10000 millisecond,self, message)
-      logger.info(s"cancel schedule at ${System.currentTimeMillis()}")
-      sender() ! output
+
     case message: TestOutputMessage =>
       logger.info(s"TestOutputMessage received from ${sender().path.name}")
       output = message
-        c.cancel()
+      master ! output
+      logger.info(s"forwarded message to ${master.path.name}")
 //      val a = Await.result(getA ? PutEndMessage(this.self), timeout.duration).asInstanceOf[String]
 
 
@@ -137,7 +135,7 @@ object NaiveFrontend extends SSupportive with EncryptSupportive {
       }
 
       Http().bindAndHandle(route, "0.0.0.0", 10020)
-      system.scheduler.schedule(1000 milliseconds, 1000 milliseconds,
+      system.scheduler.schedule(1 milliseconds, 1 milliseconds,
         getter, DequeueMessage())(system.dispatcher)
     }
   }

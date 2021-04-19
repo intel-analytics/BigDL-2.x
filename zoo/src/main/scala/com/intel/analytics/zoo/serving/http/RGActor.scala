@@ -10,32 +10,25 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
-class RGActor(
-                     redisHost: String,
-                     redisPort: Int,
-                     redisInputQueue: String,
-                     redisOutputQueue: String,
-                     redisSecureEnabled: Boolean,
-                     redissTrustStorePath: String,
-                     redissTrustStoreToken: String) extends JedisEnabledActor {
-  override val logger = LoggerFactory.getLogger(classOf[RedisGetActor])
-  val jedis = retrieveJedis(redisHost, redisPort,
-    redisSecureEnabled, redissTrustStorePath, redissTrustStoreToken)
+class RGActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":"
+                     ) extends JedisEnabledActor {
+  override val logger = LoggerFactory.getLogger(getClass)
+  val jedis = retrieveJedis()
   var requestMap = mutable.Map[String, ActorRef]()
 
   override def receive: Receive = {
     case message: PutEndMessage =>
-      logger.info(s"PutEndMessage received from ${sender().path.name} at ${System.currentTimeMillis()}")
-      requestMap += (message.actor.path.name -> message.actor)
+      logger.info(s"${System.currentTimeMillis()} PutEndMessage received from ${sender().path.name} at time")
+      requestMap += (Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + message.key -> message.actor)
     case message: DequeueMessage => {
-      logger.info(s"DequeueMessage received at ${System.currentTimeMillis()}")
+      logger.info(s"${System.currentTimeMillis()} Dequeue at time ")
       getAll(redisOutputQueue).foreach(result => {
-        val queryOption = requestMap.get(result._1).get
-        if (queryOption != null) {
-          val queryActor = requestMap.get(result._1).asInstanceOf[ActorRef]
+        logger.info(s"${System.currentTimeMillis()} Get redis result at time ")
+        val queryOption = requestMap.get(result._1)
+        if (queryOption != None) {
           val queryResult = result._2.asScala
-          println(queryResult.toString())
-          queryActor ! ModelOutputMessage(queryResult)
+          queryOption.get ! ModelOutputMessage(queryResult)
+          logger.info(s"${System.currentTimeMillis()} Send ${result._1} back at time ")
         }
 
       })

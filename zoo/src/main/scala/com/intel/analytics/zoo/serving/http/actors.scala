@@ -42,11 +42,11 @@ trait JedisEnabledActor extends Actor with Supportive {
   override val logger = LoggerFactory.getLogger(getClass)
 
   def retrieveJedis(
-      redisHost: String,
-      redisPort: Int,
-      redisSecureEnabled: Boolean,
-      redissTrustStorePath: String,
-      redissTrustStoreToken: String): Jedis =
+      redisHost: String = "localhost",
+      redisPort: Int = 6379,
+      redisSecureEnabled: Boolean = false,
+      redissTrustStorePath: String = "",
+      redissTrustStoreToken: String = ""): Jedis =
     timing(s"$actorName retrieve redis connection")() {
       if (redisSecureEnabled) {
         System.setProperty("javax.net.ssl.trustStore", redissTrustStorePath)
