@@ -20,6 +20,7 @@ class RGActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conventions
     case message: PutEndMessage =>
       logger.info(s"${System.currentTimeMillis()} PutEndMessage received from ${sender().path.name} at time")
       requestMap += (Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + message.key -> sender())
+      logger.info(s"result map is currently $requestMap")
     case message: DequeueMessage => {
 //      logger.info(s"${System.currentTimeMillis()} Dequeue at time ")
       getAll(redisOutputQueue).foreach(result => {
@@ -28,6 +29,7 @@ class RGActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conventions
         if (queryOption != None) {
           val queryResult = result._2.asScala
           queryOption.get ! ModelOutputMessage(queryResult)
+          requestMap -= result._1
           logger.info(s"${System.currentTimeMillis()} Send ${result._1} back at time ")
         }
 
