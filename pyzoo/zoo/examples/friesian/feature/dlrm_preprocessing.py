@@ -20,8 +20,10 @@ import os
 
 from argparse import ArgumentParser
 from time import time
+import numpy as np
 
 from zoo.orca import init_orca_context, stop_orca_context
+from zoo.util.utils import get_node_ip
 
 LABEL_COL = 0
 INT_COLS = ["_c{}".format(i) for i in list(range(1, 14))]
@@ -78,6 +80,90 @@ def _parse_args():
     return args
 
 
+def save_file(folder_path):
+    def f(index, iterator):
+        ip = get_node_ip()
+        part_size = 1000000
+        buffer = []
+        sub_index = 0
+        for record in iterator:
+            if len(buffer) == part_size:
+                import random
+                random.shuffle(buffer)
+                X_int_buffer = np.array([record[1] for record in buffer], dtype=np.float32)
+                X_cat_buffer = np.array([record[2] for record in buffer], dtype=np.int32)
+                y_buffer = np.array([record[0] for record in buffer], dtype=np.int32)
+                file_name = "partition{}_{}_{}.npz".format(index, sub_index, part_size)
+                np.savez_compressed(
+                    folder_path + file_name,
+                    X_int=X_int_buffer,
+                    X_cat=X_cat_buffer,
+                    y=y_buffer,
+                    size=part_size
+                )
+                sub_index += 1
+                buffer = [[record[0], record[1], record[2]]]
+                yield index, part_size, file_name, ip
+            else:
+                buffer.append([record[0], record[1], record[2]])
+        remain_size = len(buffer)
+        if remain_size > 0:
+            import random
+            random.shuffle(buffer)
+            X_int_buffer = np.array([record[1] for record in buffer], dtype=np.float32)
+            X_cat_buffer = np.array([record[2] for record in buffer], dtype=np.int32)
+            y_buffer = np.array([record[0] for record in buffer], dtype=np.int32)
+            file_name = "partition{}_{}_{}.npz".format(index, sub_index, remain_size)
+            np.savez_compressed(
+                folder_path + file_name,
+                X_int=X_int_buffer,
+                X_cat=X_cat_buffer,
+                y=y_buffer,
+                size=remain_size
+            )
+            yield index, remain_size, file_name, ip
+
+    return f
+
+
+def preprocess_and_save(data_tbl, models, mode, partitions=None):
+    data_tbl = data_tbl.encode_string(CAT_COLS, models) \
+        .fillna(0, INT_COLS + CAT_COLS).log(INT_COLS)
+    data_tbl = data_tbl.merge_cols(INT_COLS, "X_int").merge_cols(CAT_COLS, "X_cat")
+    rdd = data_tbl.to_spark_df().rdd
+    if mode == "train":
+        save_path = "/disk1/saved_data/"
+    elif mode == "test":
+        assert partitions
+        rdd = rdd.repartition(partitions)
+        save_path = "/disk1/saved_data_test/"
+    else:
+        raise ValueError("mode should be either train or test")
+    print("Saving data files to disk")
+    save_res = rdd.mapPartitionsWithIndex(
+        save_file(save_path)).collect()
+    return save_res
+
+
+def process_save_res(save_res):
+    size_map = {}
+    for partition_id, subpartition_size, file_name, ip in save_res:
+        if ip not in size_map:
+            size_map[ip] = {}
+        if partition_id not in size_map[ip]:
+            size_map[ip][partition_id] = []
+        size_map[ip][partition_id].append(subpartition_size)
+    size = 0
+    count = 0
+    for node, data in size_map.items():
+        for partition_id, subpartition_size in data.items():
+            size += sum(subpartition_size)
+            count += len(subpartition_size)
+        print("Node {} has {} subpartitions and {} records".format(node, count, size))
+        size = 0
+        count = 0
+
+
 if __name__ == '__main__':
     args = _parse_args()
     if args.cluster_mode == "local":
@@ -94,17 +180,23 @@ if __name__ == '__main__':
                           driver_cores=args.driver_cores, driver_memory=args.driver_memory,
                           conf=conf)
     time_start = time()
-    paths = [os.path.join(args.input_folder, 'day_%d.parquet' % i) for i in args.day_range]
+    paths = [os.path.join(args.input_folder, "day_%d.parquet" % i) for i in args.day_range]
     tbl = FeatureTable.read_parquet(paths)
     idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
-    tbl_all_data = FeatureTable.read_parquet(paths)
-    tbl_all_data = tbl_all_data.encode_string(CAT_COLS, idx_list)\
-        .fillna(0, INT_COLS + CAT_COLS).log(INT_COLS)
-    tbl_all_data = tbl_all_data.merge_cols(INT_COLS, "X_int").merge_cols(CAT_COLS, "X_cat")
-    tbl_all_data.shuffle_partition().write_parquet("/home/kai/Downloads/dlrm_saved")
-    # tbl_all_data.compute()
+
+    train_data = FeatureTable.read_parquet(paths[:-1])
+    train_save_res = preprocess_and_save(train_data, idx_list, "train")
+
+    test_data = FeatureTable.read_parquet(os.path.join(args.input_folder, "day_23_test.parquet"))
+    test_save_res = preprocess_and_save(test_data, idx_list, "test",
+                                        partitions=args.executor_cores*args.num_executor)
+
     time_end = time()
-    print("Train data loading and preprocessing time: ", time_end - time_start)
-    tbl_all_data.show(5)
+    print("Total time: ", time_end - time_start)
+    train_data.show(5)
+    print("Train data distribution: ")
+    process_save_res(train_save_res)
+    print("Test data distribution: ")
+    process_save_res(test_save_res)
     print("Finished")
     stop_orca_context()
