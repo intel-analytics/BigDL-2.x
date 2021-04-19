@@ -101,14 +101,14 @@ object FrontEndApp extends Supportive with EncryptSupportive {
 
       def processPredictionInput(inputs: Seq[PredictionInput]):
       Seq[PredictionOutput[String]] = {
-        timing("put message send")() {
+        silent("put message send")() {
           val message = PredictionInputMessage(inputs)
           redisPutter ! message
         }
-        val result = timing("response waiting")() {
+        val result = silent("response waiting")() {
           val ids = inputs.map(_.getId())
           val queryMessage = PredictionQueryMessage(ids)
-          val querier = timing("querier take")() {
+          val querier = silent("querier take")() {
             querierQueue.take()
           }
           val results = timing(s"query message wait for key $ids")(
@@ -116,7 +116,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
             Await.result(querier ? queryMessage, timeout.duration)
               .asInstanceOf[Seq[(String, util.Map[String, String])]]
           }
-          timing("querier back")() {
+          silent("querier back")() {
             querierQueue.offer(querier)
           }
           val objectMapper = new ObjectMapper()
@@ -191,7 +191,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                   val outputs = processPredictionInput(inputs)
                   Predictions(outputs)
                 }
-                timing("response complete")() {
+                silent("response complete")() {
                   complete(200, result.toString)
                 }
               } catch {

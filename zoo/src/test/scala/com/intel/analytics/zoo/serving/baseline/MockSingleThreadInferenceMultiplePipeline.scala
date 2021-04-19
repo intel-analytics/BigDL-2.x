@@ -23,10 +23,11 @@ import java.util.Base64
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.zoo.serving.ClusterServing.helper
 import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
 import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions, Supportive}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Conventions, Supportive}
 import org.apache.log4j.{Level, Logger}
 import scopt.OptionParser
 
@@ -81,8 +82,8 @@ object MockSingleThreadInferenceMultiplePipeline extends Supportive {
   def main(args: Array[String]): Unit = {
     Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
     val param = parser.parse(args, Params()).head
-    val helper = new ClusterServingHelper(_configPath = param.configPath)
-    helper.loadConfig()
+    val configParser = new ConfigParser(param.configPath)
+    helper = configParser.loadConfig()
 
     ClusterServing.model = helper.loadInferenceModel(param.parNum)
     val warmT = makeTensorFromShape(param.inputShape)
@@ -109,7 +110,7 @@ object MockSingleThreadInferenceMultiplePipeline extends Supportive {
         s"with input ${param.testNum.toString}") {
         var a = Seq[(String, String)]()
         val pre = new PreProcessing(true)
-        (0 until helper.thrdPerModel).foreach(i =>
+        (0 until helper.threadPerModel).foreach(i =>
           a = a :+ (i.toString(), b64string)
         )
         (0 until param.testNum).map(_ => {
