@@ -129,21 +129,23 @@ class FeatureTable(Table):
         df = cross_columns(self.df, cross_column_list, cross_sizes)
         return FeatureTable(df)
 
-    def normalize(self, col_name):
-        assembler = VectorAssembler(inputCols=[col_name], outputCol=col_name + "_vect")
+    def normalize(self, columns):
+        df = self.df
+        for col_name in columns:
+            assembler = VectorAssembler(inputCols=[col_name], outputCol=col_name + "_vect")
 
-        # MinMaxScaler Transformation
-        scaler = MinMaxScaler(inputCol=col_name + "_vect", outputCol=col_name + "_scaled")
+            # MinMaxScaler Transformation
+            scaler = MinMaxScaler(inputCol=col_name + "_vect", outputCol=col_name + "_scaled")
 
-        # Pipeline of VectorAssembler and MinMaxScaler
-        pipeline = Pipeline(stages=[assembler, scaler])
+            # Pipeline of VectorAssembler and MinMaxScaler
+            pipeline = Pipeline(stages=[assembler, scaler])
 
-        unlist = udf(lambda x: float(list(x)[0]), DoubleType())
+            unlist = udf(lambda x: float(list(x)[0]), DoubleType())
 
-        # Fitting pipeline on dataframe
-        df = pipeline.fit(self.df).transform(self.df) \
-            .withColumn(col_name, unlist(col_name + "_scaled"))\
-            .drop(col_name + "_vect").drop(col_name + "_scaled")
+            # Fitting pipeline on dataframe
+            df = pipeline.fit(df).transform(df) \
+                .withColumn(col_name, unlist(col_name + "_scaled"))\
+                .drop(col_name + "_vect").drop(col_name + "_scaled")
         return FeatureTable(df)
 
 

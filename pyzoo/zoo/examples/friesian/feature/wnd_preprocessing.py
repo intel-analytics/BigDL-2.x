@@ -98,12 +98,10 @@ if __name__ == '__main__':
     paths = [os.path.join(args.input_folder, 'day_%d.parquet' % i) for i in args.day_range]
     tbl = FeatureTable.read_parquet(paths)
     idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
-    item_size = idx_list[1].count()
     tbl_all_data = tbl.encode_string(CAT_COLS, idx_list)\
-        .fillna(0, INT_COLS + CAT_COLS)
-    for col in INT_COLS:
-        tbl_all_data = tbl_all_data.normalize(col)
-    tbl_all_data = tbl_all_data.cross_columns(cross_column_list=[CAT_COLS[0:2], CAT_COLS[2:4]],
+        .fillna(0, INT_COLS + CAT_COLS)\
+        .normalize(INT_COLS)\
+        .cross_columns(cross_column_list=[CAT_COLS[0:2], CAT_COLS[2:4]],
                                               cross_sizes=[100, 100])
     tbl_all_data.compute()
     time_end = time()
