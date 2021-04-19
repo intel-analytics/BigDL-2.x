@@ -467,7 +467,9 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
             val_feature_set = FeatureSet.sample_rdd(data.rdd.map(
                 lambda row: row_to_sample(row, schema, feature_cols, label_cols)))
             result = self.estimator.evaluate(val_feature_set, self.metrics, batch_size)
-        elif isinstance(data, DataLoader) or callable(data):
+        elif isinstance(data, DataLoader) or callable(data) or isinstance(data, types.FunctionType):
+            if isinstance(data, types.FunctionType):
+                data = data(self.config, batch_size)
             val_feature_set = FeatureSet.pytorch_dataloader(data)
             result = self.estimator.evaluate_minibatch(val_feature_set, self.metrics)
         else:

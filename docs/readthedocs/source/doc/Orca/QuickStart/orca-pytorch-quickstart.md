@@ -94,8 +94,8 @@ from torchvision import datasets, transforms
 torch.manual_seed(0)
 dir='./'
 
-batch_size=64
-test_batch_size=64
+batch_size=320
+test_batch_size=320
 
 def train_loader_creator(config, batch_size):
     train_loader = torch.utils.data.DataLoader(
@@ -136,10 +136,10 @@ Next, fit and evaluate using the Estimator
 ```python
 from zoo.orca.learn.trigger import EveryEpoch 
 
-est.fit(data=train_loader_creator, epochs=10, validation_data=test_loader_creator,
+est.fit(data=train_loader_creator, epochs=10, batch_size=batch_size, validation_data=test_loader_creator,
         checkpoint_trigger=EveryEpoch())
 
-result = est.evaluate(data=test_loader_creator)
+result = est.evaluate(data=test_loader_creator, batch_size=test_batch_size)
 for r in result:
     print(r, ":", result[r])
 ```
