@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from unittest import TestCase
-from zoo.automl.model import ModelBuilder
+from zoo.automl.model import KerasModelBuilder
 import numpy as np
 import tensorflow as tf
 
@@ -45,7 +45,7 @@ class TestBaseKerasModel(TestCase):
     data = get_data()
 
     def test_fit_evaluate(self):
-        modelBuilder_keras = ModelBuilder.from_tfkeras(model_creator_keras)
+        modelBuilder_keras = KerasModelBuilder(model_creator_keras)
         model = modelBuilder_keras.build(config={
             "lr": 1e-2,
             "batch_size": 32,

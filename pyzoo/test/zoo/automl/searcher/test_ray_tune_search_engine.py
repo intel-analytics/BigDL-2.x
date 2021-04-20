@@ -16,7 +16,7 @@
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.search import SearchEngineFactory
-from zoo.automl.model import ModelBuilder
+from zoo.automl.model import PytorchModelBuilder
 from zoo.zouwu.model.VanillaLSTM_pytorch import model_creator as LSTM_model_creator
 import torch
 import torch.nn as nn
@@ -66,9 +66,9 @@ def prepare_searcher(data,
                      feature_transformer=None,
                      recipe=SimpleRecipe(),
                      name="demo"):
-    modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator,
-                                             optimizer_creator=optimizer_creator,
-                                             loss_creator=loss_creator)
+    modelBuilder = PytorchModelBuilder(model_creator=model_creator,
+                                       optimizer_creator=optimizer_creator,
+                                       loss_creator=loss_creator)
     searcher = SearchEngineFactory.create_engine(backend="ray",
                                                  logs_dir="~/zoo_automl_logs",
                                                  resources_per_trial={"cpu": 2},
