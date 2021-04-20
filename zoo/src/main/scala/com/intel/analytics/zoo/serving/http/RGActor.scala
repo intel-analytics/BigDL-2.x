@@ -10,7 +10,8 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
-class RGActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":"
+class RGActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":",
+              redisInputQueue: String = "serving_stream"
                      ) extends JedisEnabledActor {
   override val logger = LoggerFactory.getLogger(getClass)
   val jedis = retrieveJedis()
@@ -21,6 +22,15 @@ class RGActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conventions
       logger.info(s"${System.currentTimeMillis()} PutEndMessage received from ${sender().path.name} at time")
       requestMap += (Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + message.key -> sender())
       logger.info(s"result map is currently $requestMap")
+    case message: DataInputMessage =>
+      silent(s"$actorName input message process")() {
+        val predictionInput = message.inputs.head
+
+        put(redisInputQueue, predictionInput)
+        logger.info(s"${System.currentTimeMillis()} Input enqueue $predictionInput at time ")
+        requestMap += (Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + predictionInput.getId() -> sender())
+        //        master = sender()
+      }
     case message: DequeueMessage => {
 //      logger.info(s"${System.currentTimeMillis()} Dequeue at time ")
       getAll(redisOutputQueue).foreach(result => {
@@ -36,7 +46,12 @@ class RGActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conventions
       })
     }
   }
-
+  def put(queue: String, input: PredictionInput): Unit = {
+    timing(s"$actorName put request to redis")(FrontEndApp.putRedisTimer) {
+      val hash = input.toHash()
+      jedis.xadd(queue, null, hash)
+    }
+  }
   def get(queue: String, ids: Seq[String]): Seq[(String, util.Map[String, String])] = {
     silent(s"$actorName get response from redis")(FrontEndApp.getRedisTimer) {
       ids.map(id => {

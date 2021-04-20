@@ -91,7 +91,7 @@ object Frontend2 extends SSupportive with EncryptSupportive {
           val ids = inputs.map(_.getId())
           val results = timing(s"query message wait for key $ids") {
 //            val redisPutter = putterQ.take()
-            val res = Await.result(putter ? DataInputMessage(inputs), timeout.duration)
+            val res = Await.result(getter ? DataInputMessage(inputs), timeout.duration)
               .asInstanceOf[ModelOutputMessage].valueMap
 //            putterQ.offer(redisPutter)
             res
