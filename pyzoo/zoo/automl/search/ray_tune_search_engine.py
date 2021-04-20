@@ -30,7 +30,7 @@ from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
 import pandas as pd
 
-SEARCH_ALG_ALLOWED = ("variant_generator", "skopt", "bayesopt")
+SEARCH_ALG_ALLOWED = ("variant_generator", "skopt", "bayesopt", "sigopt")
 
 
 class RayTuneSearchEngine(SearchEngine):

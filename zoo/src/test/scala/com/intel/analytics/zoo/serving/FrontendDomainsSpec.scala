@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+/*
 package com.intel.analytics.zoo.serving
 
 import java.nio.file.{Files, Paths}
@@ -298,3 +299,4 @@ class FrontendDomainsSpec extends FlatSpec with Matchers with BeforeAndAfter wit
   }
 
 }
+*/

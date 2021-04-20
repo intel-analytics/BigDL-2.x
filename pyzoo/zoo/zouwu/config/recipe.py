@@ -660,6 +660,8 @@ class XgbRegressorSkOptRecipe(Recipe):
             num_rand_samples=10,
             n_estimators_range=(50, 1000),
             max_depth_range=(2, 15),
+            lr=(1e-4, 1e-1),
+            min_child_weight=[1, 2, 3],
     ):
         """
         """
@@ -669,12 +671,16 @@ class XgbRegressorSkOptRecipe(Recipe):
 
         self.n_estimators_range = n_estimators_range
         self.max_depth_range = max_depth_range
+        self.lr = tune.loguniform(lr[0], lr[1])
+        self.min_child_weight = tune.choice(min_child_weight)
 
     def search_space(self, all_available_features):
         space = {
-            "n_estimators": hp.randint(self.n_estimators_range[0],
-                                       self.n_estimators_range[1]),
-            "max_depth": hp.randint(self.max_depth_range[0],
-                                    self.max_depth_range[1]),
+            "n_estimators": tune.randint(self.n_estimators_range[0],
+                                         self.n_estimators_range[1]),
+            "max_depth": tune.randint(self.max_depth_range[0],
+                                      self.max_depth_range[1]),
+            "min_child_weight": self.min_child_weight,
+            "lr": self.lr
         }
         return space

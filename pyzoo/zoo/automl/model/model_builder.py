@@ -14,79 +14,71 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from abc import ABC, abstractmethod
 
 
 class ModelBuilder:
-    def __init__(self, backend=None, cls=None, **params):
-        self.params = params
-        self.backend = backend
-        self.cls = cls
 
-    @classmethod
-    def from_pytorch(cls, model_creator, optimizer_creator, loss_creator):
-        return cls(backend="pytorch",
-                   model_creator=model_creator,
-                   optimizer_creator=optimizer_creator,
-                   loss_creator=loss_creator
-                   )
+    @abstractmethod
+    def build(self, config):
+        pass
 
-    @classmethod
-    def from_tfkeras(cls, model_creator):
-        return cls(backend="keras",
-                   model_creator=model_creator)
 
-    @classmethod
-    def from_name(cls, name, dev_option="pytorch"):
-        def get_class(base_class, class_name=name):
-            mapping = {c.__name__: c for c in base_class.__subclasses__()}
-            if class_name not in mapping.keys():
-                raise ValueError(f"We don't have built-in {class_name} yet. "
-                                 f"Please choose from {mapping.keys}")
-            return mapping[class_name]
+class KerasModelBuilder(ModelBuilder):
 
-        if dev_option == 'pytorch':
-            from zoo.automl.model.base_pytorch_model import PytorchBaseModel
-            return cls(cls=get_class(PytorchBaseModel))
+    def __init__(self, model_creator):
+        self.model_creator = model_creator
 
-        elif dev_option == 'tf.keras':
-            from zoo.automl.model.base_keras_model import KerasBaseModel
-            return cls(cls=get_class(KerasBaseModel))
+    def build(self, config):
+        from zoo.automl.model.base_keras_model import KerasBaseModel
+        model = KerasBaseModel(self.model_creator)
+        model.build(config)
+        return model
 
-    @classmethod
-    def from_cls(cls, estimator):
-        return cls(cls=estimator)
+    def build_from_ckpt(self, checkpoint_filename):
+        from zoo.automl.model.base_keras_model import KerasBaseModel
+        model = KerasBaseModel(self.model_creator)
+        model.restore(checkpoint_filename)
+        return model
+
+
+class PytorchModelBuilder(ModelBuilder):
+
+    def __init__(self, model_creator,
+                 optimizer_creator,
+                 loss_creator):
+        self.model_creator = model_creator
+        self.optimizer_creator = optimizer_creator
+        self.loss_creator = loss_creator
+
+    def build(self, config):
+        from zoo.automl.model.base_pytorch_model import PytorchBaseModel
+        model = PytorchBaseModel(self.model_creator,
+                                 self.optimizer_creator,
+                                 self.loss_creator)
+        model.build(config)
+        return model
 
     def build_from_ckpt(self, checkpoint_filename):
         '''Restore from a saved model'''
-        if self.backend == "pytorch":
-            from zoo.automl.model.base_pytorch_model import PytorchBaseModel
-            model = PytorchBaseModel(**self.params)
-            model.restore(checkpoint_filename)
-            return model
+        from zoo.automl.model.base_pytorch_model import PytorchBaseModel
+        model = PytorchBaseModel(self.model_creator,
+                                 self.optimizer_creator,
+                                 self.loss_creator)
+        model.restore(checkpoint_filename)
+        return model
 
-        elif self.backend == "keras":
-            from zoo.automl.model.base_keras_model import KerasBaseModel
-            model = KerasBaseModel(**self.params)
-            model.restore(checkpoint_filename)
-            return model
+
+class XGBoostModelBuilder(ModelBuilder):
+
+    def __init__(self, model_type, n_cpus):
+        self.model_type = model_type
+        self.n_cpus = n_cpus
 
     def build(self, config):
-        '''Build a new model'''
-        if self.backend == "pytorch":
-            from zoo.automl.model.base_pytorch_model import PytorchBaseModel
-            model = PytorchBaseModel(**self.params)
-            model.build(config)
-            return model
+        from zoo.orca.automl.xgboost.XGBoost import XGBoost
+        model = XGBoost(model_type=self.model_type, config=config)
 
-        elif self.backend == "keras":
-            from zoo.automl.model.base_keras_model import KerasBaseModel
-            model = KerasBaseModel(**self.params)
-            model.build(config)
-            return model
-
-        elif self.cls is not None:
-            return self.cls(config=config)
-
-        else:
-            builder = self.from_name(config["model"], dev_option=config["dev_option"])
-            return builder.cls(config=config)
+        if self.n_cpus is not None:
+            model.set_params(n_jobs=self.n_cpus)
+        return model
