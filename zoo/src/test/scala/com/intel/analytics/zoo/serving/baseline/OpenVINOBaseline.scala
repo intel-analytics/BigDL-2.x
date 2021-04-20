@@ -25,7 +25,7 @@ import com.intel.analytics.zoo.pipeline.api.net.TFNet
 import com.intel.analytics.zoo.pipeline.inference.{DeviceType, InferenceModelFactory, OpenVINOModel, OpenVinoInferenceSupportive}
 import com.intel.analytics.zoo.serving.ClusterServing.{argv, helper}
 import com.intel.analytics.zoo.serving.PreProcessing
-import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
+import com.intel.analytics.zoo.serving.serialization.{ArrowDeserializer, ArrowSerializer}
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Supportive}
 import scopt.OptionParser

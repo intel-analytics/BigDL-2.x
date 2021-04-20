@@ -2,38 +2,38 @@ package com.intel.analytics.zoo.serving.http
 
 import java.util
 
-import akka.actor.ActorRef
-import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
+import akka.actor.{Actor, ActorRef}
+import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
+import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.slf4j.LoggerFactory
+import redis.clients.jedis.JedisPool
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
-class RGActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":",
-              redisInputQueue: String = "serving_stream"
-                     ) extends JedisEnabledActor {
+class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":",
+                   redisInputQueue: String = "serving_stream",
+                   jedisPool: JedisPool = null) extends Actor with Supportive {
   override val logger = LoggerFactory.getLogger(getClass)
-  val jedis = retrieveJedis()
+  val jedis = if (jedisPool == null) {
+    RedisIO.getRedisClient(new JedisPool())
+  } else {
+    RedisIO.getRedisClient(jedisPool)
+  }
   var requestMap = mutable.Map[String, ActorRef]()
 
   override def receive: Receive = {
-    case message: PutEndMessage =>
-      logger.info(s"${System.currentTimeMillis()} PutEndMessage received from ${sender().path.name} at time")
-      requestMap += (Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + message.key -> sender())
-      logger.info(s"result map is currently $requestMap")
     case message: DataInputMessage =>
-      silent(s"$actorName input message process")() {
+      timing(s"${self.path.name} input message process")() {
         val predictionInput = message.inputs.head
 
-        put(redisInputQueue, predictionInput)
+        enqueue(redisInputQueue, predictionInput)
         logger.info(s"${System.currentTimeMillis()} Input enqueue $predictionInput at time ")
         requestMap += (Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + predictionInput.getId() -> sender())
-        //        master = sender()
       }
     case message: DequeueMessage => {
-//      logger.info(s"${System.currentTimeMillis()} Dequeue at time ")
-      getAll(redisOutputQueue).foreach(result => {
+      dequeue(redisOutputQueue).foreach(result => {
         logger.info(s"${System.currentTimeMillis()} Get redis result at time ")
         val queryOption = requestMap.get(result._1)
         if (queryOption != None) {
@@ -46,21 +46,13 @@ class RGActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conventions
       })
     }
   }
-  def put(queue: String, input: PredictionInput): Unit = {
-    timing(s"$actorName put request to redis")(FrontEndApp.putRedisTimer) {
+  def enqueue(queue: String, input: PredictionInput): Unit = {
+    timing(s"${self.path.name} put request to redis")(FrontEndApp.putRedisTimer) {
       val hash = input.toHash()
       jedis.xadd(queue, null, hash)
     }
   }
-  def get(queue: String, ids: Seq[String]): Seq[(String, util.Map[String, String])] = {
-    silent(s"$actorName get response from redis")(FrontEndApp.getRedisTimer) {
-      ids.map(id => {
-        val key = s"$queue$id"
-        (id, jedis.hgetAll(key))
-      }).filter(!_._2.isEmpty)
-    }
-  }
-  def getAll(queue: String): mutable.Set[(String, util.Map[String, String])] = {
+  def dequeue(queue: String): mutable.Set[(String, util.Map[String, String])] = {
     val resultSet = jedis.keys(s"${queue}*")
     val res = resultSet.asScala.map(key => {
       (key, jedis.hgetAll(key))

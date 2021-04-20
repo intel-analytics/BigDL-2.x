@@ -62,39 +62,20 @@ object Frontend2 extends SSupportive with EncryptSupportive {
         case true => RateLimiter.create(arguments.tokensPerSecond)
         case false => null
       }
-      val getterName = s"redis-getter"
-      val getter = timing(s"$getterName initialized.") {
-        val getterProps = Props(new RGActor())
-        system.actorOf(getterProps, name = getterName)
+      val actorName = s"redis-getter"
+      val ioActor = timing(s"$actorName initialized.") {
+        val getterProps = Props(new RedisIOActor())
+        system.actorOf(getterProps, name = actorName)
       }
-      val putterName = s"redis-putter"
-      val putter = timing(s"$putterName initialized.") {
-        val putterProps = Props(new RPActor(getter))
-        system.actorOf(putterProps, name = putterName)
-      }
-//
-//      val redisPutterName = s"redis-putter"
-//      val putterQ = timing(s"$redisPutterName initialized.") {
-//        val redisPutterProps = Props(new RPActor(redisGetter))
-//        val putterQueue = new LinkedBlockingQueue[ActorRef](1000)
-//        List.range(0, 100).map(index => {
-//          val querierName = s"querier-$index"
-//          val querier = system.actorOf(redisPutterProps, name = querierName)
-//          putterQueue.put(querier)
-//        })
-//        putterQueue
-//      }
+
 
       def processPredictionInput(inputs: Seq[PredictionInput]):
       Seq[PredictionOutput[String]] = {
         val result = timing("response waiting") {
           val ids = inputs.map(_.getId())
           val results = timing(s"query message wait for key $ids") {
-//            val redisPutter = putterQ.take()
-            val res = Await.result(getter ? DataInputMessage(inputs), timeout.duration)
+            Await.result(ioActor ? DataInputMessage(inputs), timeout.duration)
               .asInstanceOf[ModelOutputMessage].valueMap
-//            putterQ.offer(redisPutter)
-            res
           }
           val objectMapper = new ObjectMapper()
           results.map(r => {
@@ -191,7 +172,7 @@ object Frontend2 extends SSupportive with EncryptSupportive {
       Http().bindAndHandle(route, arguments.interface, arguments.port)
       logger.info(s"http started at http://${arguments.interface}:${arguments.port}")
       while(true) {
-        getter ! DequeueMessage()
+        ioActor ! DequeueMessage()
         Thread.sleep(1)
       }
 //      system.scheduler.schedule(1 milliseconds, 1 millisecond,

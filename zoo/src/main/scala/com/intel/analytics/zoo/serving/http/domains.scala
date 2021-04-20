@@ -23,6 +23,7 @@ import java.util.{HashMap, UUID}
 import akka.actor.ActorRef
 import com.codahale.metrics.Timer
 import com.google.common.collect.ImmutableList
+import com.intel.analytics.zoo.serving.serialization.StreamSerializer
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.complex._
@@ -85,6 +86,15 @@ case class InstancesPredictionInput(uuid: String, instances: Instances) extends 
     val b64 = java.util.Base64.getEncoder.encodeToString(bytes)
     hash.put("uri", uuid)
     hash.put("data", b64)
+    hash
+  }
+  def toHashByStream(): HashMap[String, String] = {
+    val hash = new HashMap[String, String]()
+    val bytes = StreamSerializer.objToBytes(instances)
+    val b64 = java.util.Base64.getEncoder.encodeToString(bytes)
+    hash.put("uri", uuid)
+    hash.put("data", b64)
+    hash.put("serde", "stream")
     hash
   }
 }

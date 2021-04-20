@@ -30,7 +30,7 @@ import org.apache.log4j.Logger
 
 
 class FlinkInference(helper: ClusterServingHelper)
-  extends RichMapFunction[List[(String, String)], List[(String, String)]] {
+  extends RichMapFunction[List[(String, String, String)], List[(String, String)]] {
 
   var logger: Logger = null
   var inference: ClusterServingInference = null
@@ -64,7 +64,7 @@ class FlinkInference(helper: ClusterServingHelper)
 
   }
 
-  override def map(in: List[(String, String)]): List[(String, String)] = {
+  override def map(in: List[(String, String, String)]): List[(String, String)] = {
     val t1 = System.nanoTime()
     val postProcessed = {
       if (helper.modelType == "openvino") {

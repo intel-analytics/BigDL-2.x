@@ -30,7 +30,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import akka.pattern.ask
 import akka.util.Timeout
-import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
+import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.holders.NullableIntHolder

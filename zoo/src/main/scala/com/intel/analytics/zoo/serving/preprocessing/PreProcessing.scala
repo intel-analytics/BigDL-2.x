@@ -28,6 +28,7 @@ import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.pipeline.inference.{EncryptSupportive, InferenceSupportive}
 import com.intel.analytics.zoo.serving.http.Instances
+import com.intel.analytics.zoo.serving.serialization.StreamSerializer
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
@@ -64,10 +65,14 @@ class PreProcessing(chwFlag: Boolean = true,
     })
   }
 
-  def decodeArrowBase64(key: String, s: String): Activity = {
+  def decodeArrowBase64(key: String, s: String, serde: String = ""): Activity = {
     try {
       byteBuffer = java.util.Base64.getDecoder.decode(s)
-      val instance = Instances.fromArrow(byteBuffer)
+      val instance = if (serde == "stream") {
+        StreamSerializer.bytesToObj(byteBuffer).asInstanceOf[Instances]
+      } else {
+        Instances.fromArrow(byteBuffer)
+      }
 
       val kvMap = getInputFromInstance(instance)
       kvMap.head

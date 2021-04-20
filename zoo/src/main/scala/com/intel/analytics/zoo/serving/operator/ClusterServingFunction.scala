@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.serving.operator
 import java.nio.file.Files
 
 import com.intel.analytics.zoo.serving.ClusterServing
-import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
+import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
 import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 import org.apache.flink.core.fs.Path

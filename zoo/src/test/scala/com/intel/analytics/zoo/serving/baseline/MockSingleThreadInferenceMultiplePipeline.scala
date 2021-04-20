@@ -25,7 +25,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.serving.ClusterServing.helper
 import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
-import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
+import com.intel.analytics.zoo.serving.serialization.{ArrowDeserializer, ArrowSerializer}
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Conventions, Supportive}
 import org.apache.log4j.{Level, Logger}
@@ -108,7 +108,7 @@ object MockSingleThreadInferenceMultiplePipeline extends Supportive {
 
       timing(s"Thread $thrdId Baseline for SingleThreadInferenceMultiplePipeline " +
         s"with input ${param.testNum.toString}") {
-        var a = Seq[(String, String)]()
+        var a = Seq[(String, String, String)]()
         val pre = new PreProcessing(true)
         (0 until helper.threadPerModel).foreach(i =>
           a = a :+ (i.toString(), b64string)

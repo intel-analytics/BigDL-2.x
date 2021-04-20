@@ -30,7 +30,7 @@ import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 import scala.collection.JavaConverters._
 
 class FlinkRedisSource(params: ClusterServingHelper)
-  extends RichParallelSourceFunction[List[(String, String)]] {
+  extends RichParallelSourceFunction[List[(String, String, String)]] {
   @volatile var isRunning = true
   var jedis: Jedis = null
   var logger: Logger = null
@@ -73,7 +73,7 @@ class FlinkRedisSource(params: ClusterServingHelper)
   }
 
   override def run(sourceContext: SourceFunction
-    .SourceContext[List[(String, String)]]): Unit = while (isRunning) {
+    .SourceContext[List[(String, String, String)]]): Unit = while (isRunning) {
     val groupName = "serving"
     val consumerName = "consumer-" + UUID.randomUUID().toString
     val readNumPerTime = if (params.modelType == "openvino") params.threadPerModel else 1
@@ -90,7 +90,7 @@ class FlinkRedisSource(params: ClusterServingHelper)
         val key = streamMessages.getKey
         val entries = streamMessages.getValue.asScala
         val it = entries.map(e => {
-          (e.getFields.get("uri"), e.getFields.get("data"))
+          (e.getFields.get("uri"), e.getFields.get("data"), e.getFields.get("serde"))
         }).toList
         sourceContext.collect(it)
       }

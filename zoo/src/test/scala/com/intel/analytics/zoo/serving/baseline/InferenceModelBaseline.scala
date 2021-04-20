@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.serving.ClusterServing.{argv, helper}
 import com.intel.analytics.zoo.serving.PreProcessing
-import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
+import com.intel.analytics.zoo.serving.serialization.{ArrowDeserializer, ArrowSerializer}
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Supportive}
 import scopt.OptionParser

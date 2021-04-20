@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.serving.models
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
-import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
+import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
 import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 import org.scalatest.{FlatSpec, Matchers}
