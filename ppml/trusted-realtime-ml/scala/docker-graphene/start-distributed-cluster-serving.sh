@@ -51,7 +51,7 @@ ssh root@$MASTER "docker run -itd \
       -v $SECURE_PASSWORD_PATH:/ppml/trusted-cluster-serving/redis/work/password \
       --name=redis \
       -e SGX_MEM_SIZE=16G \
-      $TRUSTED_CLUSTER_SERVING_DOCKER bash -c 'cd /ppml/trusted-cluster-serving/redis && ./init-redis.sh && ./start-redis.sh'"
+      $TRUSTED_CLUSTER_SERVING_DOCKER bash -c 'cd /ppml/trusted-realtime-ml/redis && ./init-redis.sh && ./start-redis.sh'"
 
 REDIS_ELAPSED_TIME=0
 while ! ssh root@$MASTER "nc -z $MASTER 6379"; do
@@ -94,7 +94,7 @@ ssh root@$MASTER "docker run -itd \
       -e SGX_MEM_SIZE=32G \
       -e REDIS_HOST=$MASTER \
       -e CORE_NUM=2 \
-      $TRUSTED_CLUSTER_SERVING_DOCKER bash -c 'cd /ppml/trusted-cluster-serving/java && ./init-java.sh && ./start-http-frontend.sh'"
+      $TRUSTED_CLUSTER_SERVING_DOCKER bash -c 'cd /ppml/trusted-realtime-ml/java && ./init-java.sh && ./start-http-frontend.sh'"
 
 HTTP_FRONTEND_ELAPSED_TIME=0
 while ! ssh root@$MASTER "nc -z $MASTER 10023"; do
@@ -132,7 +132,7 @@ ssh root@$MASTER "docker run -itd \
       -e CORE_NUM=2 \
       -e FLINK_JOB_MANAGER_IP=$MASTER \
       -e FLINK_JOB_MANAGER_REST_PORT=8081 \
-      $TRUSTED_CLUSTER_SERVING_DOCKER bash -c 'cd /ppml/trusted-cluster-serving/java && ./init-cluster-serving.sh && ./start-cluster-serving-job.sh'"
+      $TRUSTED_CLUSTER_SERVING_DOCKER bash -c 'cd /ppml/trusted-realtime-ml/java && ./init-cluster-serving.sh && ./start-cluster-serving-job.sh'"
 
 CLUSTER_SERVING_ELAPSED_TIME=0
 while ! ssh root@$MASTER "docker logs cluster-serving | grep 'Job has been submitted'"; do

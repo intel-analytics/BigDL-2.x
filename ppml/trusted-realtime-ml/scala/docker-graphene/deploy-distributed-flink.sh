@@ -43,7 +43,7 @@ ssh root@$MASTER "docker run \
       -e FLINK_JOB_MANAGER_REST_PORT=8081 \
       -e FLINK_JOB_MANAGER_RPC_PORT=6123 \
       -e CORE_NUM=3 \
-      $TRUSTED_CLUSTER_SERVING_DOCKER bash -c 'cd /ppml/trusted-cluster-serving/java && ./init-java.sh && ./start-flink-jobmanager.sh && tail -f /dev/null'"
+      $TRUSTED_CLUSTER_SERVING_DOCKER bash -c 'cd /ppml/trusted-realtime-ml/java && ./init-java.sh && ./start-flink-jobmanager.sh && tail -f /dev/null'"
 
 
 JOB_MANAGER_ELAPSED_TIME=0
@@ -90,7 +90,7 @@ for worker in ${WORKERS[@]}
         -e FLINK_TASK_MANAGER_RPC_PORT=6125 \
         -e FLINK_TASK_MANAGER_TASKSLOTS_NUM=1 \
         -e CORE_NUM=25 \
-        $TRUSTED_CLUSTER_SERVING_DOCKER bash -c 'cd /ppml/trusted-cluster-serving/java && ./init-java.sh && ./start-flink-taskmanager.sh'"
+        $TRUSTED_CLUSTER_SERVING_DOCKER bash -c 'cd /ppml/trusted-realtime-ml/java && ./init-java.sh && ./start-flink-taskmanager.sh'"
   done
 
 for worker in ${WORKERS[@]}
