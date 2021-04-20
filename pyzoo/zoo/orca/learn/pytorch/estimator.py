@@ -268,8 +268,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         self.model = model
         self.optimizer = optimizer
         self.config = {} if config is None else config
-        if isinstance(self.loss, types.FunctionType):
-            self.loss = self.loss(self.config)
+
         if self.loss is None:
             self.loss = TorchLoss()
         else:
@@ -277,12 +276,12 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         if isinstance(self.model, types.FunctionType):
             self.model = self.model(self.config)
         if isinstance(self.optimizer, types.FunctionType):
-            self.optimizer = self.optimizer(self.model, config)
+            self.optimizer = self.optimizer(self.model, self.config)
         if self.optimizer is None:
             from zoo.orca.learn.optimizers.schedule import Default
             self.optimizer = SGD(learningrate_schedule=Default()).get_optimizer()
         elif isinstance(self.optimizer, TorchOptimizer):
-            self.optimizer = TorchOptim.from_pytorch(optimizer)
+            self.optimizer = TorchOptim.from_pytorch(self.optimizer)
         elif isinstance(self.optimizer, OrcaOptimizer):
             self.optimizer = optimizer.get_optimizer()
         else:

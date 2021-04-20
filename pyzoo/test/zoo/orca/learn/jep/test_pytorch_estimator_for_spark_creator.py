@@ -62,16 +62,22 @@ class TestEstimatorForSparkCreator(TestCase):
 
         estimator = Estimator.from_torch(model=model, loss=nn.BCELoss(),
                                          metrics=[Accuracy()],
-                                         optimizer=Adam())
+                                         optimizer=Adam(),
+                                         config={"threads": 2})
 
-        def get_dataloader():
+        def get_dataloader(config, batch_size):
             inputs = torch.Tensor([[1, 2], [1, 3], [3, 2], [5, 6], [8, 9], [1, 9]])
             targets = torch.Tensor([[0], [0], [0], [1], [1], [1]])
-            return torch.utils.data.DataLoader(TensorDataset(inputs, targets), batch_size=2)
+            data_loader = torch.utils.data.DataLoader(
+                TensorDataset(inputs, targets),
+                batch_size=batch_size,
+                num_workers=config.get("threads", 1)
+            )
+            return data_loader
 
-        estimator.fit(data=get_dataloader, epochs=2, validation_data=get_dataloader,
+        estimator.fit(data=get_dataloader, epochs=2, batch_size=2, validation_data=get_dataloader,
                       checkpoint_trigger=EveryEpoch())
-        estimator.evaluate(data=get_dataloader)
+        estimator.evaluate(data=get_dataloader, batch_size=2)
         model = estimator.get_model()
         assert isinstance(model, nn.Module)
 
