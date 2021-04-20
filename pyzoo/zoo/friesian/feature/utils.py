@@ -45,6 +45,14 @@ def shuffle_partition(df):
     return callZooFunc("float", "shufflePartition", df)
 
 
+def shuffle_subpartition(df, part_size=1000000):
+    return callZooFunc("float", "shuffleSubPartition", df, part_size)
+
+
+def ordinal_shuffle_partition(df):
+    return callZooFunc("float", "ordinalShufflePartition", df)
+
+
 def write_parquet(df, path, mode):
     callZooFunc("float", "dfWriteParquet", df, path, mode)
 

@@ -90,6 +90,12 @@ class Table:
     def shuffle_partition(self):
         return self._clone(shuffle_partition(self.df))
 
+    def ordinal_shuffle_partition(self):
+        return self._clone(ordinal_shuffle_partition(self.df))
+
+    def shuffle_subpartition(self, part_size=1000000):
+        return self._clone(shuffle_subpartition(self.df, part_size))
+
     def write_parquet(self, path, mode="overwrite"):
         write_parquet(self.df, path, mode)
 
