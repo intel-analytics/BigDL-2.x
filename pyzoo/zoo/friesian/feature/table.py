@@ -291,8 +291,8 @@ class FeatureTable(Table):
 
     def gen_negative_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
         """
-        Generate a negative item visits for each positive item visit
-        
+        Generate negative item visits for each positive item visit
+
         :param item_size: integer, max of item.
         :param item_col:  string, name of item column
         :param label_col:  string, name of label column
@@ -426,8 +426,8 @@ class FeatureTable(Table):
                 cats = getcat(items)
             elif isinstance(items, list) and isinstance(items[0], int):
                 cats = [getcat(item) for item in items]
-            elif isinstance(items, list) and isinstance(items[0], list) and\
-                isinstance(items[0][0], int):
+            elif isinstance(items, list) and isinstance(items[0], list) and isinstance(items[0][0],
+                                                                                       int):
                 cats = []
                 for line in items:
                     line_cats = [getcat(item) for item in line]
