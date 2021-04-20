@@ -93,7 +93,7 @@ output.bin
 Pull docker image from Dockerhub
 
 ```bash
-docker pull intelanalytics/analytics-zoo-ppml-trusted-cluster-serving-scala-occlum:0.10-SNAPSHOT
+docker pull intelanalytics/analytics-zoo-ppml-trusted-cluster-serving-scala-graphene:0.10-SNAPSHOT
 ```
 
 Also, you can build docker image from Dockerfile (this will take some time).
@@ -157,22 +157,51 @@ In this section, we will demonstrate how to use Analytics-Zoo to setup trusted F
 
 #### Setp 0: Prepare Environment
 
-Please clone or download Analytics-Zoo source code, then enter `analytics-zoo/ppml`. If SGX driver is not installed, please install SGX driver with this command.
+Download scripts and dockerfiles in [this link](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml).
+
+##### TLS keys & password
+
+Prepare keys for TLS (test only, need input security password for keys).
 
 ```bash
-./scripts/install-graphene-driver.sh
+./ppml/scripts/generate-keys.sh
 ```
 
-Prepare the keys for TLS.
+This scrips will generate 5 files in `keys` dir (you can replace them with your own TLS keys).
 
 ```bash
-./scripts/generate-keys.sh
+keystore.pkcs12
+server.crt
+server.csr
+server.key
+server.pem
 ```
 
-Build docker image from Dockerfile.
+Generated `password` to avoid plain text security password transfer.
 
 ```bash
-cd trusted-realtime-ml/scala/docker-graphene
+./ppml/scripts/generate-password.sh
+```
+
+This scrips will generate 2 files in `password` dir.
+
+```bash
+key.txt
+output.bin
+```
+
+##### Docker
+
+Pull docker image from Dockerhub
+
+```bash
+docker pull intelanalytics/analytics-zoo-ppml-trusted-realtime-ml-scala-occlum:0.10-SNAPSHOT
+```
+
+Also, you can build docker image from Dockerfile (this will take some time).
+
+```bash
+cd ppml/trusted-big-data-ml/scala/docker-graphene
 cp -r ../../keys .
 ./build-docker-image.sh
 ```
