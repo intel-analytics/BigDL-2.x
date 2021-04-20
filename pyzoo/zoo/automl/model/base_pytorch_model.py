@@ -65,6 +65,8 @@ class PytorchBaseModel(BaseModel):
         # check config and update
         self._check_config(**config)
         self.config = config
+        if not isinstance(self.model, torch.nn.Module):
+            raise ValueError("You must create a torch model in model_creator")
         # build model
         self.model = self.model_creator(config)
         self.model_built = True

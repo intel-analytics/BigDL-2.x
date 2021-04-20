@@ -17,6 +17,7 @@ from unittest import TestCase
 from zoo.automl.model import KerasModelBuilder
 import numpy as np
 import tensorflow as tf
+import pytest
 
 
 def get_data():
@@ -56,3 +57,36 @@ class TestBaseKerasModel(TestCase):
                                     validation_data=(self.data["val_x"], self.data["val_y"]),
                                     epochs=20)
         assert val_result is not None
+
+    def test_uncompiled_model(self):
+        def model_creator(config):
+            """Returns a tf.keras model"""
+            model = tf.keras.models.Sequential([
+                tf.keras.layers.Dense(1)
+            ])
+            return model
+
+        modelBuilder_keras = KerasModelBuilder(model_creator)
+        with pytest.raises(ValueError):
+            model = modelBuilder_keras.build(config={
+                "lr": 1e-2,
+                "batch_size": 32,
+                "metric": "mse"
+            })
+            model.fit_eval(x=self.data["x"],
+                           y=self.data["y"],
+                           validation_data=(self.data["val_x"], self.data["val_y"]),
+                           epochs=20)
+
+    def test_unaligned_metric_value(self):
+        modelBuilder_keras = KerasModelBuilder(model_creator_keras)
+        model = modelBuilder_keras.build(config={
+            "lr": 1e-2,
+            "batch_size": 32,
+        })
+        with pytest.raises(ValueError):
+            model.fit_eval(x=self.data["x"],
+                           y=self.data["y"],
+                           validation_data=(self.data["val_x"], self.data["val_y"]),
+                           metric='mae',
+                           epochs=20)
