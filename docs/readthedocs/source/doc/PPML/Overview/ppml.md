@@ -93,14 +93,13 @@ output.bin
 Pull docker image from Dockerhub
 
 ```bash
-docker pull intelanalytics/analytics-zoo-ppml-trusted-cluster-serving-scala-graphene:0.10-SNAPSHOT
+docker pull intelanalytics/analytics-zoo-ppml-trusted-realtime-ml-scala-graphene:0.10-SNAPSHOT
 ```
 
 Also, you can build docker image from Dockerfile (this will take some time).
 
 ```bash
 cd ppml/trusted-big-data-ml/scala/docker-graphene
-cp -r ../../keys .
 ./build-docker-image.sh
 ```
 
@@ -202,7 +201,6 @@ Also, you can build docker image from Dockerfile (this will take some time).
 
 ```bash
 cd ppml/trusted-big-data-ml/scala/docker-graphene
-cp -r ../../keys .
 ./build-docker-image.sh
 ```
 
@@ -210,15 +208,34 @@ cp -r ../../keys .
 
 Enter `analytics-zoo/ppml/trusted-realtime-ml/scala/docker-graphene` dir.
 
-Start cluster serving in single container
+Modify `environments.sh`. Change MASTER, WORKER IP and file paths.
 
 ```bash
-./start-local-cluster-serving.sh
+nano environments.sh
+```
+
+Start Flink in SGX
+
+```bash
+./deploy-flink.sh
+```
+
+After all jobs are done, stop Flink in SGX
+
+```bash
+./stop-flink.sh
 ```
 
 #### Step 2: Run Flink Program
 
+Submit jobs to Flink
+
+```bash
+```
+
 #### Step 3: Run Trusted Cluster Serving
+
+[Analytics-Zoo Cluster serving](https://www.usenix.org/conference/opml20/presentation/song) is a distributed end-to-end inference service based on Flink. With SGX and TLS, this service can be fully secured for input data and model.
 
 After all services are ready, then you can directly push inference requests int queue with [Restful API](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide/#restful-api). Also, you can push image/input into queue with Python API
 
