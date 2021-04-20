@@ -57,13 +57,41 @@ Check SGX driver with `ls /dev | grep sgx`. If SGX driver is not installed, run 
 
 #### Setp 0: Prepare Environment
 
-Prepare keys for TLS.
+
+##### TLS keys & password
+
+Prepare keys for TLS (test only, need input security password for keys).
 
 ```bash
 ./ppml/scripts/generate-keys.sh
 ```
 
-Build docker image from Dockerfile
+This scrips will generate 5 files in `keys` dir (you can replace them with your own TLS keys).
+
+```bash
+keystore.pkcs12
+server.crt
+server.csr
+server.key
+server.pem
+```
+
+Generated `password` to avoid plain text security password transfer.
+
+```bash
+./ppml/scripts/generate-password.sh
+```
+
+This scrips will generate 2 files in `password` dir.
+
+```bash
+key.txt
+output.bin
+```
+
+##### Docker
+
+Build docker image from Dockerfile.
 
 ```bash
 cd ppml/trusted-big-data-ml/scala/docker-graphene
