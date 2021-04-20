@@ -200,7 +200,7 @@ class FriesianSpec extends ZooSpecHelper {
       StructField("time", StringType, true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
-    val dft = friesian.genNegItems(df, 10)
+    val dft = friesian.genNegSamples(df, 10)
     assert(dft.filter(df("label") === 1).count() == 6)
     assert(dft.filter(df("label") === 0).count() == 6)
   }
@@ -213,22 +213,14 @@ class FriesianSpec extends ZooSpecHelper {
     val items: RDD[Row] = sc.parallelize((0  to 2).map(i => Row(i, 0))
       ++ (0  to 2).map(i => Row(i + 3, 1)) ++  (0  to 2).map(i => Row(i + 6, 2)))
 
-    val schema = StructType( Array(
+    val schema = StructType(Array(
     StructField("name", StringType, true),
     StructField("history", ArrayType(IntegerType), true)
     ))
-    val schema2 = StructType(Array(
-    StructField("item", IntegerType, true),
-    StructField("category", IntegerType, true)
-    ))
     val df = sqlContext.createDataFrame(data, schema)
-    val df2 = sqlContext.createDataFrame(items, schema2)
-    val dft = friesian.genNegHisSeq(df, 9, df2, "history", 4)
+    val dft = friesian.genNegHisSeq(df, 9, "history", 4)
     assert(dft.select("noclk_item_list").collect().length == 3)
-    assert(dft.select("noclk_cat_list").collect().length == 3)
     assert(dft.select("noclk_item_list").rdd.map(r =>
-      r.getAs[mutable.WrappedArray[mutable.WrappedArray[Int]]](0)).collect()(0).length == 5)
-    assert(dft.select("noclk_cat_list").rdd.map(r =>
       r.getAs[mutable.WrappedArray[mutable.WrappedArray[Int]]](0)).collect()(0).length == 5)
   }
 

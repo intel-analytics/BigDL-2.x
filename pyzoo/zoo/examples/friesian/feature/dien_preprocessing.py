@@ -26,8 +26,8 @@ except ModuleNotFoundError:
 
 from optparse import OptionParser
 from zoo.orca import init_orca_context, stop_orca_context, OrcaContext
-from pyspark.sql.functions import udf
-from zoo.friesian.feature import FeatureTable
+from pyspark.sql.functions import udf, col
+from zoo.friesian.feature import FeatureTable, StringIndex
 from pyspark.sql.types import StringType, IntegerType, ArrayType, FloatType
 
 if __name__ == "__main__":
@@ -41,54 +41,63 @@ if __name__ == "__main__":
     spark = OrcaContext.get_spark_session()
 
     # read review datavi run.sh
-    review_df = spark.read.json(options.review_file).select(
+    transaction_df = spark.read.json(options.review_file).select(
         ['reviewerID', 'asin', 'unixReviewTime']) \
         .withColumnRenamed('reviewerID', 'user') \
         .withColumnRenamed('asin', 'item') \
         .withColumnRenamed('unixReviewTime', 'time')\
-        .dropna("any").persist(storageLevel=StorageLevel.DISK_ONLY)
-    print("review_df, ", review_df.count())
+        .sample(0.0001).dropna("any").persist(storageLevel=StorageLevel.DISK_ONLY)
+    transaction_tbl = FeatureTable(transaction_df)
+    print("review_tbl, ", transaction_tbl.count())
 
     # read meta data
     def get_category(x):
         cat = x[0][-1] if x[0][-1] is not None else "default"
         return cat.strip().lower()
     spark.udf.register("get_category", get_category, StringType())
-    meta_df = spark.read.json(options.meta_file).select(['asin', 'categories'])\
+    item_df = spark.read.json(options.meta_file).select(['asin', 'categories'])\
         .dropna(subset=['asin', 'categories']) \
         .selectExpr("*", "get_category(categories) as category") \
         .withColumnRenamed("asin", "item").drop("categories").distinct()\
         .persist(storageLevel=StorageLevel.DISK_ONLY)
-    print("meta_data, ", meta_df.count())
+    item_tbl = FeatureTable(item_df)
 
-    meta_tbl = FeatureTable(meta_df)
-    review_tbl = FeatureTable(review_df)
-    full_tbl = review_tbl.join(meta_tbl, on="item", how="left").fillna("default", ["category"])
-    item_size = full_tbl.df.select("item").distinct().count()
+    print("item_tbl, ", item_tbl.count())
 
-    print("full data after join,", full_tbl.count())
-    indices = full_tbl.gen_string_idx(['user', 'item', 'category'], 1)
-    item2cat = full_tbl.gen_ind2ind(['item', 'category'], [indices[1], indices[2]])
+    item_category_indices = item_tbl.gen_string_idx(["item", "category"], 1)
+    cat_default = item_category_indices[1].df.filter("category == 'default'").collect()
+    defalut_cat_index = cat_default[0][1] if cat_default else item_category_indices[1].count()
+    new_row = spark.createDataFrame([("default", int(defalut_cat_index))], ["category", "id"])
+    category_index = StringIndex(item_category_indices[1].df.union(new_row).distinct()\
+                                 .withColumn("id", col("id").cast("Integer")), "category")
+    item_size = item_category_indices[0].count()
 
-    for i in range(len(indices)):
-        indices[i].write_parquet(options.output)
-    item2cat.write_parquet(options.output+"item2cat")
-
+    user_index = transaction_tbl.gen_string_idx(['user'], 1)
     get_label = udf(lambda x: [float(x), 1 - float(x)], ArrayType(FloatType()))
+    item2cat = item_tbl\
+        .encode_string(["item", "category"], [item_category_indices[0], category_index])\
+        .distinct()
 
-    full_tbl = full_tbl\
-        .encode_string(['user', 'item', 'category'], [indices[0], indices[1], indices[2]]) \
-        .gen_hist_seq(user_col="user", cols=['item', 'category'],
+    transaction_tbl= transaction_tbl\
+        .encode_string(['user', 'item'], [user_index[0], item_category_indices[0]])\
+        .gen_hist_seq(user_col="user", cols=['item'],
                       sort_col='time', min_len=1, max_len=100)\
-        .gen_length("item_history")\
-        .gen_negative_items(item_size, item_col='item', neg_num=1) \
-        .gen_negative_cat(item2cat, "item", "category") \
-        .gen_neg_hist_seq(item_size, item2cat.df, 'item_history', neg_num=5) \
-        .mask_pad(
-            padding_cols=['item_history', 'category_history', 'noclk_item_list', 'noclk_cat_list'],
-            mask_cols=['item_history'],
-            seq_len=100)\
+        .gen_neg_hist_seq(item_size, 'item_history', neg_num=5) \
+        .gen_negative_samples(item_size, item_col='item', neg_num=1)\
+        .gen_length("item_history") \
         .transform_python_udf("label", "label", get_label)
+
+    full_tbl = transaction_tbl.join(item2cat, "item")\
+        .gen_cats_from_items(item_tbl, ["item_history", "noclk_item_list"], defalut_cat_index)\
+        .mask_pad(padding_cols=['item_history', 'category_history', 'noclk_item_list', 'noclk_category_list'],
+                  mask_cols=['item_history'],
+                  seq_len=100)
+
+    # write out
+    user_index[0].write_parquet(options.output+"user_index")
+    item_category_indices[0].write_parquet(options.output+"item_index")
+    category_index.write_parquet(options.output+"category_index")
+    item2cat.write_parquet(options.output+"item2cat")
     full_tbl.write_parquet(options.output + "data")
 
     print("final output count, ", full_tbl.count())

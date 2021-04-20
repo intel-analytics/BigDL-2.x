@@ -246,44 +246,39 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def genNegHisSeq(df: DataFrame, itemSize: Int,
-                   item2catdf: DataFrame,
                    item_history_col: String,
                    negNum: Int = 5): DataFrame = {
-    val item2cat = item2catdf.rdd.map(r => (r.getAs[Int](0), r.getAs[Int](1))).collectAsMap()
     val sqlContext = df.sqlContext
 
     val combinedRDD = df.rdd.map(row => {
       val item_history = row.getAs[WrappedArray[Int]](item_history_col)
       val r = new Random()
       val negItemSeq = Array.ofDim[Int](item_history.length, negNum)
-      val negCatSeq = Array.ofDim[Int](item_history.length, negNum)
       for (i <- 0 until item_history.length) {
         for (j <- 0 until negNum) {
           var negItem = 0
           do {
             negItem = r.nextInt(itemSize)
-          } while (negItem == item_history(i) || !item2cat.contains(negItem))
+          } while (negItem == item_history(i) )
           negItemSeq(i)(j) = negItem
-          negCatSeq(i)(j) = item2cat(negItem)
         }
       }
-      val result = Row.fromSeq(row.toSeq ++ Array[Any](negItemSeq, negCatSeq))
+      val result = Row.fromSeq(row.toSeq ++ Array[Any](negItemSeq))
       result
     })
 
     val newSchema = StructType(df.schema.fields ++ Array(
-      StructField("noclk_item_list", ArrayType(ArrayType(IntegerType))),
-      StructField("noclk_cat_list", ArrayType(ArrayType(IntegerType)))))
+      StructField("noclk_item_list", ArrayType(ArrayType(IntegerType)))))
 
    sqlContext.createDataFrame(combinedRDD, newSchema)
   }
 
 
-  def genNegItems(df: DataFrame,
-                  itemSize: Int,
-                  itemCol: String = "item",
-                  labelCol: String = "label",
-                  negNum: Int = 1): DataFrame = {
+  def genNegSamples(df: DataFrame,
+                    itemSize: Int,
+                    itemCol: String = "item",
+                    labelCol: String = "label",
+                    negNum: Int = 1): DataFrame = {
 
     val r = new Random()
 

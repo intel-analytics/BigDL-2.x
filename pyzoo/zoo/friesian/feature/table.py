@@ -117,6 +117,20 @@ class Table:
         else:
             return self._clone(fill_na(self.df, value, columns))
 
+    def dropna(self, how='any', thresh=None, subset=None):
+        """
+        Drop null values. a wrapper of dataframe dropna
+        :return: A new Table that replaced the null values with specified value
+        """
+        return self._clone(self.df.dropna(how, thresh, subset))
+
+    def distinct(self):
+        """
+        A wrapper of dataframe distinct
+        :return: A new Table that only has distinct rows
+        """
+        return self._clone(self.df.distinct())
+
     def clip(self, columns, min=0):
         """
         clips continuous values so that they are within a min bound. For instance by setting the
@@ -230,7 +244,8 @@ class FeatureTable(Table):
             col_name = columns[i]
             index_tbl.broadcast()
             data_df = data_df.join(index_tbl.df, col_name, how="left") \
-                .drop(col_name).withColumnRenamed("id", col_name)
+                .drop(col_name).withColumnRenamed("id", col_name)\
+                .dropna(subset=[col_name])
         return FeatureTable(data_df)
 
     def gen_string_idx(self, columns, freq_limit):
@@ -274,7 +289,7 @@ class FeatureTable(Table):
     def _clone(self, df):
         return FeatureTable(df)
 
-    def gen_negative_items(self, item_size, item_col="item", label_col="label", neg_num=1):
+    def gen_negative_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
         """
         Generate a negative item visits for each positive item visit
         
@@ -285,23 +300,7 @@ class FeatureTable(Table):
 
         :return: FeatureTable
         """
-        df = callZooFunc("float", "genNegItems", self.df, item_size, item_col, label_col, neg_num)
-        return FeatureTable(df)
-
-    def gen_negative_cat(self, item2cat, item_col="item", cat_col="category"):
-        """
-        Generate a category for each negative item
-
-        :param item2cat:  FeatureTable with a dataframe of item to catgory mapping
-        :param item_col:  string, name of item column
-        :param cat_col:  string, name of category column
-
-        :return: FeatureTable
-        """
-        item2cat_map = dict(item2cat.df.rdd.map(lambda row: (row[0], row[1])).collect())
-        gen_neg_cat = udf(lambda item: item2cat_map[item], returnType=IntegerType())
-        df = self.df.withColumn(cat_col, gen_neg_cat(col(item_col)))
-
+        df = callZooFunc("float", "genNegSamples", self.df, item_size, item_col, label_col, neg_num)
         return FeatureTable(df)
 
     def gen_hist_seq(self, user_col, cols, sort_col='time', min_len=1, max_len=100):
@@ -319,7 +318,7 @@ class FeatureTable(Table):
         df = callZooFunc("float", "genHistSeq", self.df, user_col, cols, sort_col, min_len, max_len)
         return FeatureTable(df)
 
-    def gen_neg_hist_seq(self, item_size, item2cat, item_history_col, neg_num):
+    def gen_neg_hist_seq(self, item_size, item_history_col, neg_num):
         """
          Generate a list negative samples for each item in item_history_col
 
@@ -331,8 +330,7 @@ class FeatureTable(Table):
          :return: FeatureTable
          """
 
-        df = callZooFunc("float", "genNegHisSeq", self.df, item_size, item2cat, item_history_col,
-                         neg_num)
+        df = callZooFunc("float", "genNegHisSeq", self.df, item_size, item_history_col, neg_num)
         return FeatureTable(df)
 
     def pad(self, padding_cols, seq_len=100):
@@ -409,6 +407,41 @@ class FeatureTable(Table):
         assert isinstance(table, Table), "the joined table should be a Table"
         joined_df = self.df.join(table.df, on=on, how=how)
         return FeatureTable(joined_df)
+
+    def gen_cats_from_items(self, item2cat, item_cols, defalut_cat_index):
+        """
+         Get the category or other field from another map like FeatureTable
+
+         :param item2cat: FeatureTable with two columns [category, item]
+         :param item_cols: list[string]
+         :param defalut_cat_index: default value for category if key does not exist
+
+         :return: FeatureTable
+         """
+        item2cat_map = dict(item2cat.df.distinct().rdd.map(lambda row: (row[0], row[1])).collect())
+
+        def gen_cat(items):
+            getcat = lambda item: item2cat_map.get(item, defalut_cat_index)
+            if isinstance(items, int):
+                cats = getcat(items)
+            elif isinstance(items, list) and isinstance(items[0], int):
+                cats = [getcat(item) for item in items]
+            elif isinstance(items, list) and isinstance(items[0], list) and\
+                isinstance(items[0][0], int):
+                cats = []
+                for line in items:
+                    line_cats = [getcat(item) for item in line]
+                    cats.append(line_cats)
+            else:
+                raise ValueError('only int, list[int], and list[list[int]] are supported.')
+            return cats
+
+        df = self.df
+        for c in item_cols:
+            col_type = df.schema[c].dataType
+            cat_udf = udf(gen_cat, col_type)
+            df = df.withColumn(c.replace("item", "category"), cat_udf(col(c)))
+        return FeatureTable(df)
 
 
 class StringIndex(Table):

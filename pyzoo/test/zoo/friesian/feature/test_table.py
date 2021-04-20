@@ -20,7 +20,7 @@ import tempfile
 from unittest import TestCase
 from zoo.orca import init_orca_context, stop_orca_context, OrcaContext
 
-from pyspark.sql.functions import col, explode
+from pyspark.sql.functions import col, explode, udf
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
 from zoo.friesian.feature import FeatureTable, StringIndex
 from zoo.common.nncontext import *
@@ -166,7 +166,7 @@ class TestTable(TestCase):
             StructField("time", StringType(), True)
         ])
         df = spark.createDataFrame(data=data, schema=schema)
-        tbl = FeatureTable(df).gen_negative_items(10)
+        tbl = FeatureTable(df).gen_negative_samples(10)
         dft = tbl.df
         assert tbl.count() == 12
         assert dft.filter("label == 1").count() == 6
@@ -174,7 +174,6 @@ class TestTable(TestCase):
 
     def test_gen_hist_seq(self):
         spark = OrcaContext.get_spark_session()
-        sc = OrcaContext.get_spark_context
         data = [("jack", 1, "2019-07-01 12:01:19.000"),
                 ("jack", 2, "2019-08-01 12:01:19.000"),
                 ("jack", 3, "2019-09-01 12:01:19.000"),
@@ -206,7 +205,7 @@ class TestTable(TestCase):
             ("rose", [1, 2])]
         schema = StructType([
             StructField("name", StringType(), True),
-            StructField("history", ArrayType(IntegerType()), True)])
+            StructField("item_history", ArrayType(IntegerType()), True)])
 
         df = spark.createDataFrame(data, schema)
         df2 = sc\
@@ -214,9 +213,34 @@ class TestTable(TestCase):
             .toDF(["item", "category"]).withColumn("item", col("item").cast("Integer")) \
             .withColumn("category", col("category").cast("Integer"))
         tbl = FeatureTable(df)
-        tbl = tbl.gen_neg_hist_seq(9, df2, "history", 4)
+        tbl = tbl.gen_neg_hist_seq(9, "item_history", 4)
         assert tbl.df.select("noclk_item_list").count() == 3
-        assert tbl.df.select("noclk_cat_list").count() == 3
+
+    def test_gen_cats_from_items(self):
+        spark = OrcaContext.get_spark_session()
+        sc = OrcaContext.get_spark_context()
+        data = [
+            ("jack", [1, 2, 3, 4, 5]),
+            ("alice", [4, 5, 6, 7, 8]),
+            ("rose", [1, 2])]
+        schema = StructType([
+            StructField("name", StringType(), True),
+            StructField("item_history", ArrayType(IntegerType()), True)])
+
+        df = spark.createDataFrame(data, schema)
+        df.filter("name like '%alice%'").show()
+
+        df2 = sc\
+            .parallelize([(0, 0), (1, 0), (2, 0), (3, 0), (4, 1), (5, 1), (6, 1), (8, 2), (9, 2)]) \
+            .toDF(["item", "category"]).withColumn("item", col("item").cast("Integer")) \
+            .withColumn("category", col("category").cast("Integer"))
+        tbl = FeatureTable(df)
+        tbl2 = tbl.gen_neg_hist_seq(9, "item_history", 4)
+        tbl3 = tbl2.gen_cats_from_items(FeatureTable(df2), [ "item_history", "noclk_item_list"],5)
+        assert tbl3.df.select("category_history").count() == 3
+        assert tbl3.df.select("noclk_category_list").count() == 3
+        assert tbl3.df.filter("name like '%alice%'").select("noclk_category_list").count() == 1
+        assert tbl3.df.filter("name == 'rose'").select("noclk_category_list").count() == 1
 
     def test_pad(self):
         spark = OrcaContext.get_spark_session()
@@ -249,7 +273,7 @@ class TestTable(TestCase):
         assert tbl.df.filter("size(history_mask) = 4").count() == 3
         assert tbl.df.filter("size(history_mask) = 2").count() == 0
 
-    def gen_length(self):
+    def test_gen_length(self):
         spark = OrcaContext.get_spark_session()
         data = [("jack", [1, 2, 3, 4, 5]),
                 ("alice", [4, 5, 6, 7, 8]),
