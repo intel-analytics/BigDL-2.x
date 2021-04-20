@@ -75,7 +75,7 @@ class FlinkInference(helper: ClusterServingHelper)
     }
 
     val t2 = System.nanoTime()
-    logger.debug(s"${in.size} records backend time ${(t2 - t1) / 1e9} s. " +
+    logger.info(s"${in.size} records backend time ${(t2 - t1) / 1e9} s. " +
       s"Throughput ${in.size / ((t2 - t1) / 1e9)}")
     postProcessed
   }
