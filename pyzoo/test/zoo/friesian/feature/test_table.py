@@ -236,7 +236,7 @@ class TestTable(TestCase):
             .withColumn("category", col("category").cast("Integer"))
         tbl = FeatureTable(df)
         tbl2 = tbl.gen_neg_hist_seq(9, "item_history", 4)
-        tbl3 = tbl2.gen_cats_from_items(FeatureTable(df2), ["item_history", "noclk_item_list"],5)
+        tbl3 = tbl2.gen_cats_from_items(FeatureTable(df2), ["item_history", "noclk_item_list"], 5)
         assert tbl3.df.select("category_history").count() == 3
         assert tbl3.df.select("noclk_category_list").count() == 3
         assert tbl3.df.filter("name like '%alice%'").select("noclk_category_list").count() == 1

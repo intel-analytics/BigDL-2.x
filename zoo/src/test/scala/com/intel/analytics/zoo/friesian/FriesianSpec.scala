@@ -129,7 +129,7 @@ class FriesianSpec extends ZooSpecHelper {
       Row("jack", Seq(1, 2, 3, 4, 5)),
       Row("alice", Seq(4, 5, 6, 7, 8)),
       Row("rose", Seq(1, 2))))
-    val schema = StructType( Array(
+    val schema = StructType(Array(
       StructField("name", StringType, true),
       StructField("history", ArrayType(IntegerType), true)
     ))
