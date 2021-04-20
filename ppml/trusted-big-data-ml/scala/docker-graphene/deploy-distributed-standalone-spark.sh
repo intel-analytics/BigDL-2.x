@@ -56,7 +56,7 @@ ssh root@$MASTER "docker run -itd \
 while ! ssh root@$MASTER "nc -z $MASTER 8080"; do
   sleep 10
 done
-echo ">>> $MASTER, redis started successfully."
+echo ">>> $MASTER, spark-master started successfully."
 
 for worker in ${WORKERS[@]}
   do
@@ -90,4 +90,4 @@ for worker in ${WORKERS[@]}
     echo ">>> $worker, spark-worker-$worker started successfully."
   done
 
-bash ./start-distributed-standalone-spark.sh
+# check status
