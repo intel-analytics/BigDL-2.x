@@ -133,7 +133,7 @@ class TestTable(TestCase):
     def test_norm(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path).fillna(0, ["col_2"])
-        normalized_tbl = feature_tbl.normalize("col_2")
+        normalized_tbl = feature_tbl.normalize(["col_2"])
         max_value = normalized_tbl.df.select("col_2")\
         .agg(max(col("col_2")).alias("max"))\
         .rdd.map(lambda row: row['max']).collect()[0]
