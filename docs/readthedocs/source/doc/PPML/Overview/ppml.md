@@ -47,9 +47,7 @@ In this section, we will demonstrate how to use Analytics-Zoo to setup trusted S
 
 Please check if current platform [has SGX feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). Then, enable SGX feature in BIOS. Note that after SGX is enabled, a protion of memory will be assigned to SGX, and cannot be used or seen by OS.
 
-Download scripts and dockerfiles in [this link](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml).
-
-Check SGX driver with `ls /dev | grep sgx`. If SGX driver is not installed, run `install-graphene-driver.sh` and run it with root premission.
+Check SGX driver with `ls /dev | grep sgx`. If SGX driver is not installed, please install [SGX DCAP driver](https://github.com/intel/SGXDataCenterAttestationPrimitives/tree/master/driver/linux) with [install-graphene-driver.sh](https://github.com/intel-analytics/analytics-zoo/blob/master/ppml/scripts/install-graphene-driver.sh) (need root premission).
 
 ```bash
 ./ppml/scripts/install-graphene-driver.sh
@@ -57,6 +55,7 @@ Check SGX driver with `ls /dev | grep sgx`. If SGX driver is not installed, run 
 
 #### Setp 0: Prepare Environment
 
+Download scripts and dockerfiles in [this link](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml).
 
 ##### TLS keys & password
 
@@ -91,7 +90,13 @@ output.bin
 
 ##### Docker
 
-Build docker image from Dockerfile.
+Pull docker image from Dockerhub
+
+```bash
+docker pull intelanalytics/analytics-zoo-ppml-trusted-cluster-serving-scala-occlum:0.10-SNAPSHOT
+```
+
+Also, you can build docker image from Dockerfile (this will take some time).
 
 ```bash
 cd ppml/trusted-big-data-ml/scala/docker-graphene
@@ -148,17 +153,7 @@ In this section, we will demonstrate how to use Analytics-Zoo to setup trusted F
 
 ### Get started
 
-#### Prerequisite: Install SGX Driver & Prepare Scripts
-
-Please check if current platform [has SGX feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). Then, enable SGX feature in BIOS. Note that after SGX is enabled, a protion of memory will be assigned to SGX, and cannot be used or seen by OS.
-
-Download scripts and dockerfiles in [this link](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml).
-
-Check SGX driver with `ls /dev | grep sgx`. If SGX driver is not installed, run `install-graphene-driver.sh` and run it with root premission.
-
-```bash
-./ppml/scripts/install-graphene-driver.sh
-```
+#### [Prerequisite: Install SGX Driver & Prepare Scripts](#prerequisite-install-sgx-driver--prepare-scripts)
 
 #### Setp 0: Prepare Environment
 
@@ -193,7 +188,6 @@ Start cluster serving in single container
 ```
 
 #### Step 2: Run Flink Program
-
 
 #### Step 3: Run Trusted Cluster Serving
 
