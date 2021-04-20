@@ -59,6 +59,8 @@ sealed trait PredictionInput {
   def getId(): String
 
   def toHash(): HashMap[String, String]
+
+  def toHashByStream(): HashMap[String, String]
 }
 
 case class BytesPredictionInput(uuid: String, bytesStr: String) extends PredictionInput {
@@ -70,6 +72,11 @@ case class BytesPredictionInput(uuid: String, bytesStr: String) extends Predicti
     val hash = new HashMap[String, String]()
     hash.put("uri", uuid)
     hash.put("data", bytesStr)
+    hash
+  }
+
+  override def toHashByStream(): util.HashMap[String, String] = {
+    val hash = new HashMap[String, String]()
     hash
   }
 }
@@ -88,7 +95,8 @@ case class InstancesPredictionInput(uuid: String, instances: Instances) extends 
     hash.put("data", b64)
     hash
   }
-  def toHashByStream(): HashMap[String, String] = {
+
+  override def toHashByStream(): HashMap[String, String] = {
     val hash = new HashMap[String, String]()
     val bytes = StreamSerializer.objToBytes(instances)
     val b64 = java.util.Base64.getEncoder.encodeToString(bytes)

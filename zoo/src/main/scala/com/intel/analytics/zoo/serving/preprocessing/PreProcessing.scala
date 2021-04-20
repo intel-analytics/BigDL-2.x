@@ -57,7 +57,7 @@ class PreProcessing(chwFlag: Boolean = true,
         }
         else {
           (kv._1, decodeTensor(kv._2.asInstanceOf[(
-            ArrayBuffer[Int], ArrayBuffer[Float], ArrayBuffer[Int], ArrayBuffer[Int])]))
+            ArrayBuffer[Int], ArrayBuffer[Any], ArrayBuffer[Int], ArrayBuffer[Int])]))
         }
       ).toList
       val arr = oneInsMap.map(x => x._2)
@@ -69,12 +69,35 @@ class PreProcessing(chwFlag: Boolean = true,
     try {
       byteBuffer = java.util.Base64.getDecoder.decode(s)
       val instance = if (serde == "stream") {
-        StreamSerializer.bytesToObj(byteBuffer).asInstanceOf[Instances]
+        val ins = StreamSerializer.bytesToObj(byteBuffer).asInstanceOf[Instances].constructTensors()
+        ins.flatMap(insMap => {
+          val oneInsMap = insMap.map(kv => {
+            if (kv._2.isInstanceOf[String]) {
+              if (kv._2.asInstanceOf[String].contains("|")) {
+                (kv._1, decodeString(kv._2.asInstanceOf[String]))
+              }
+              else {
+                (kv._1, decodeImage(kv._2.asInstanceOf[String]))
+
+              }
+            }
+            else {
+              (kv._1, decodeTensor((kv._2._1._1.asInstanceOf[ArrayBuffer[Int]], kv._2._1._2.asInstanceOf[ArrayBuffer[Any]],
+              kv._2._2._1.asInstanceOf[ArrayBuffer[Int]], kv._2._2._2.asInstanceOf[ArrayBuffer[Int]])))
+//              (kv._1, decodeTensor(kv._2.asInstanceOf[(
+//                ArrayBuffer[Int], ArrayBuffer[Float], ArrayBuffer[Int], ArrayBuffer[Int])]))
+            }
+          })
+          val arr = oneInsMap.map(x => x._2)
+          Seq(T.array(arr.toArray))
+        })
+
       } else {
-        Instances.fromArrow(byteBuffer)
+        val ins = Instances.fromArrow(byteBuffer)
+        getInputFromInstance(ins)
       }
 
-      val kvMap = getInputFromInstance(instance)
+      val kvMap = instance
       kvMap.head
     } catch {
       case e: Exception =>
@@ -121,9 +144,17 @@ class PreProcessing(chwFlag: Boolean = true,
       imageTensor
     }
   }
-  def decodeTensor(info: (ArrayBuffer[Int], ArrayBuffer[Float],
+  def decodeTensor(info: (ArrayBuffer[Int], ArrayBuffer[Any],
     ArrayBuffer[Int], ArrayBuffer[Int])): Tensor[Float] = {
-    val data = info._2.toArray
+    val data = if (info._2.isInstanceOf[ArrayBuffer[Double]]) {
+      var a = new ArrayBuffer[Float]()
+      info._2.asInstanceOf[ArrayBuffer[Double]].foreach(x => a.append(x.toFloat))
+      a.toArray
+    }
+    else {
+      info._2.asInstanceOf[ArrayBuffer[Float]].toArray
+    }
+
     val shape = info._1.toArray
     if (info._3.size == 0) {
       Tensor[Float](data, shape)

@@ -111,7 +111,7 @@ object MockSingleThreadInferenceMultiplePipeline extends Supportive {
         var a = Seq[(String, String, String)]()
         val pre = new PreProcessing(true)
         (0 until helper.threadPerModel).foreach(i =>
-          a = a :+ (i.toString(), b64string)
+          a = a :+ (i.toString(), b64string, "")
         )
         (0 until param.testNum).map(_ => {
           clusterServingInference.singleThreadPipeline(a.toList)

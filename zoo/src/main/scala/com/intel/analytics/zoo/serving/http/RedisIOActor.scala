@@ -27,9 +27,9 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conven
     case message: DataInputMessage =>
       timing(s"${self.path.name} input message process")() {
         val predictionInput = message.inputs.head
-
-        enqueue(redisInputQueue, predictionInput)
         logger.info(s"${System.currentTimeMillis()} Input enqueue $predictionInput at time ")
+        enqueue(redisInputQueue, predictionInput)
+
         requestMap += (Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + predictionInput.getId() -> sender())
       }
     case message: DequeueMessage => {
@@ -48,7 +48,7 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conven
   }
   def enqueue(queue: String, input: PredictionInput): Unit = {
     timing(s"${self.path.name} put request to redis")(FrontEndApp.putRedisTimer) {
-      val hash = input.toHash()
+      val hash = input.toHashByStream()
       jedis.xadd(queue, null, hash)
     }
   }

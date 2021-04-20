@@ -47,7 +47,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {
@@ -76,7 +76,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {
@@ -106,7 +106,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {
@@ -136,7 +136,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {
@@ -165,7 +165,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {
@@ -194,7 +194,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {
@@ -223,7 +223,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
       helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {

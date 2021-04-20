@@ -120,6 +120,7 @@ object Frontend2 extends SSupportive with EncryptSupportive {
                   val instances = timing("json deserialization") {
                     JsonUtil.fromJson(classOf[Instances], content)
                   }
+                  instances
                   val inputs = instances.instances.map(instance => {
                     InstancesPredictionInput(Instances(instance))
                   })
