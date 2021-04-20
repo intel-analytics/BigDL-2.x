@@ -48,13 +48,13 @@ class AutoEstimator:
         """
         from zoo.orca.automl.pytorch_utils import validate_pytorch_loss, \
             validate_pytorch_optim
-        from zoo.automl.model import ModelBuilder
+        from zoo.automl.model import PytorchModelBuilder
         from zoo.automl.search import SearchEngineFactory
         loss = validate_pytorch_loss(loss)
         optimizer = validate_pytorch_optim(optimizer)
-        model_builder = ModelBuilder.from_pytorch(model_creator=model_creator,
-                                                  optimizer_creator=optimizer,
-                                                  loss_creator=loss)
+        model_builder = PytorchModelBuilder(model_creator=model_creator,
+                                            optimizer_creator=optimizer,
+                                            loss_creator=loss)
         searcher = SearchEngineFactory.create_engine(backend="ray",
                                                      logs_dir=logs_dir,
                                                      resources_per_trial=resources_per_trial,
@@ -77,9 +77,9 @@ class AutoEstimator:
         :param name: Name of the auto estimator.
         :return: an AutoEstimator object.
         """
-        from zoo.automl.model import ModelBuilder
+        from zoo.automl.model import KerasModelBuilder
         from zoo.automl.search import SearchEngineFactory
-        model_builder = ModelBuilder.from_tfkeras(model_creator=model_creator)
+        model_builder = KerasModelBuilder(model_creator=model_creator)
         searcher = SearchEngineFactory.create_engine(backend="ray",
                                                      logs_dir=logs_dir,
                                                      resources_per_trial=resources_per_trial,

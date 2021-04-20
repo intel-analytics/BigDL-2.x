@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from unittest import TestCase
-from zoo.automl.model import ModelBuilder
+from zoo.automl.model import PytorchModelBuilder
 import numpy as np
 import torch
 import torch.nn as nn
@@ -49,9 +49,9 @@ class TestBasePytorchModel(TestCase):
     data = get_data()
 
     def test_fit_evaluate(self):
-        modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator_pytorch,
-                                                 optimizer_creator=optimizer_creator,
-                                                 loss_creator=loss_creator)
+        modelBuilder = PytorchModelBuilder(model_creator=model_creator_pytorch,
+                                           optimizer_creator=optimizer_creator,
+                                           loss_creator=loss_creator)
         model = modelBuilder.build(config={
             "lr": 1e-2,
             "batch_size": 32,
@@ -63,9 +63,9 @@ class TestBasePytorchModel(TestCase):
         assert val_result is not None
 
     def test_evaluate(self):
-        modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator_pytorch,
-                                                 optimizer_creator=optimizer_creator,
-                                                 loss_creator=loss_creator)
+        modelBuilder = PytorchModelBuilder(model_creator=model_creator_pytorch,
+                                           optimizer_creator=optimizer_creator,
+                                           loss_creator=loss_creator)
         model = modelBuilder.build(config={
             "lr": 1e-2,
             "batch_size": 32,
@@ -97,9 +97,9 @@ class TestBasePytorchModel(TestCase):
             pass
 
     def test_predict(self):
-        modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator_pytorch,
-                                                 optimizer_creator=optimizer_creator,
-                                                 loss_creator=loss_creator)
+        modelBuilder = PytorchModelBuilder(model_creator=model_creator_pytorch,
+                                           optimizer_creator=optimizer_creator,
+                                           loss_creator=loss_creator)
         model = modelBuilder.build(config={
             "lr": 1e-2,
             "batch_size": 32,
