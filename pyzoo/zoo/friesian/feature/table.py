@@ -125,8 +125,8 @@ class FeatureTable(Table):
     def _clone(self, df):
         return FeatureTable(df)
 
-    def cross_columns(self, cross_column_list, bucket_sizes):
-        df = cross_columns(self.df, cross_column_list, bucket_sizes)
+    def cross_columns(self, crossed_columns, bucket_sizes):
+        df = cross_columns(self.df, crossed_columns, bucket_sizes)
         return FeatureTable(df)
 
     def normalize(self, columns):
