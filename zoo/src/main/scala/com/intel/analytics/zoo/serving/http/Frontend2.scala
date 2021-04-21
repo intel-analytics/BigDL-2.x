@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.serving.http
 import java.io.File
 import java.security.{KeyStore, SecureRandom}
 import java.util
+import java.util.UUID
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
 
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
@@ -33,6 +34,7 @@ import com.google.common.util.concurrent.RateLimiter
 import com.intel.analytics.zoo.pipeline.inference.EncryptSupportive
 import com.intel.analytics.zoo.serving.utils.Conventions
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import org.apache.log4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -69,12 +71,12 @@ object Frontend2 extends SSupportive with EncryptSupportive {
       }
 
 
-      def processPredictionInput(inputs: Seq[PredictionInput]):
+      def processPredictionInput(inputs: Activity):
       Seq[PredictionOutput[String]] = {
         val result = timing("response waiting") {
-          val ids = inputs.map(_.getId())
-          val results = timing(s"query message wait for key $ids") {
-            Await.result(ioActor ? DataInputMessage(inputs), timeout.duration)
+          val id = UUID.randomUUID().toString
+          val results = timing(s"query message wait for key $id") {
+            Await.result(ioActor ? DataInputMessage(id, inputs), timeout.duration)
               .asInstanceOf[ModelOutputMessage].valueMap
           }
           val objectMapper = new ObjectMapper()
@@ -117,14 +119,11 @@ object Frontend2 extends SSupportive with EncryptSupportive {
             } else {
               try {
                 val result = timing("predict") {
-                  val instances = timing("json deserialization") {
-                    JsonUtil.fromJson(classOf[Instances], content)
+                  val input = timing("json deserialization") {
+//                    JsonUtil.fromJson(classOf[Instances], content)
+                    ServingFrontendSerializer.deserialize(content)
                   }
-                  instances
-                  val inputs = instances.instances.map(instance => {
-                    InstancesPredictionInput(Instances(instance))
-                  })
-                  val outputs = processPredictionInput(inputs)
+                  val outputs = processPredictionInput(input)
                   Predictions(outputs)
                 }
 

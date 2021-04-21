@@ -1,9 +1,11 @@
 package com.intel.analytics.zoo.serving.http
 
 import java.util
+import java.util.{HashMap, UUID}
 
 import akka.actor.{Actor, ActorRef}
-import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.zoo.serving.serialization.{ArrowDeserializer, StreamSerializer}
 import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.slf4j.LoggerFactory
@@ -26,11 +28,10 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conven
   override def receive: Receive = {
     case message: DataInputMessage =>
       timing(s"${self.path.name} input message process")() {
-        val predictionInput = message.inputs.head
-        logger.info(s"${System.currentTimeMillis()} Input enqueue $predictionInput at time ")
-        enqueue(redisInputQueue, predictionInput)
+        logger.info(s"${System.currentTimeMillis()} Input enqueue ${message.id} at time ")
+        enqueue(redisInputQueue, message)
 
-        requestMap += (Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + predictionInput.getId() -> sender())
+        requestMap += (Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + message.id -> sender())
       }
     case message: DequeueMessage => {
       dequeue(redisOutputQueue).foreach(result => {
@@ -46,9 +47,14 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conven
       })
     }
   }
-  def enqueue(queue: String, input: PredictionInput): Unit = {
+  def enqueue(queue: String, input: DataInputMessage): Unit = {
     timing(s"${self.path.name} put request to redis")(FrontEndApp.putRedisTimer) {
-      val hash = input.toHashByStream()
+      val hash = new HashMap[String, String]()
+      val bytes = StreamSerializer.objToBytes(input.inputs)
+      val b64 = java.util.Base64.getEncoder.encodeToString(bytes)
+      hash.put("uri", input.id)
+      hash.put("data", b64)
+      hash.put("serde", "stream")
       jedis.xadd(queue, null, hash)
     }
   }

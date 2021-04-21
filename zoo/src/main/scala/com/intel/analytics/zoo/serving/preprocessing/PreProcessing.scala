@@ -69,29 +69,7 @@ class PreProcessing(chwFlag: Boolean = true,
     try {
       byteBuffer = java.util.Base64.getDecoder.decode(s)
       val instance = if (serde == "stream") {
-        val ins = StreamSerializer.bytesToObj(byteBuffer).asInstanceOf[Instances].constructTensors()
-        ins.flatMap(insMap => {
-          val oneInsMap = insMap.map(kv => {
-            if (kv._2.isInstanceOf[String]) {
-              if (kv._2.asInstanceOf[String].contains("|")) {
-                (kv._1, decodeString(kv._2.asInstanceOf[String]))
-              }
-              else {
-                (kv._1, decodeImage(kv._2.asInstanceOf[String]))
-
-              }
-            }
-            else {
-              (kv._1, decodeTensor((kv._2._1._1.asInstanceOf[ArrayBuffer[Int]], kv._2._1._2.asInstanceOf[ArrayBuffer[Any]],
-              kv._2._2._1.asInstanceOf[ArrayBuffer[Int]], kv._2._2._2.asInstanceOf[ArrayBuffer[Int]])))
-//              (kv._1, decodeTensor(kv._2.asInstanceOf[(
-//                ArrayBuffer[Int], ArrayBuffer[Float], ArrayBuffer[Int], ArrayBuffer[Int])]))
-            }
-          })
-          val arr = oneInsMap.map(x => x._2)
-          Seq(T.array(arr.toArray))
-        })
-
+        Seq(StreamSerializer.bytesToObj(byteBuffer).asInstanceOf[Activity])
       } else {
         val ins = Instances.fromArrow(byteBuffer)
         getInputFromInstance(ins)
