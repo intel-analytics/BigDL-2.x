@@ -132,3 +132,7 @@ class TestBasePytorchModel(TestCase):
                 "lr": 1e-2,
                 "batch_size": 32,
             })
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

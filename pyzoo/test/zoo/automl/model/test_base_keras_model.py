@@ -90,3 +90,7 @@ class TestBaseKerasModel(TestCase):
                            validation_data=(self.data["val_x"], self.data["val_y"]),
                            metric='mae',
                            epochs=20)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])
