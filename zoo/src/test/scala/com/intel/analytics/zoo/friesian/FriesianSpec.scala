@@ -160,7 +160,7 @@ class FriesianSpec extends ZooSpecHelper {
   }
 
 
-  "genHisSeq" should "work properly" in {
+  "addHisSeq" should "work properly" in {
     val data = sc.parallelize(Seq(
       Row("jack", 1, "2019-07-01 12:01:19.000"),
       Row("jack", 2, "2019-08-01 12:01:19.000"),
@@ -179,14 +179,14 @@ class FriesianSpec extends ZooSpecHelper {
     ))
     val df = sqlContext.createDataFrame(data, schema)
            .withColumn("ts", col("time").cast("timestamp").cast("long"))
-    val dft = friesian.genHistSeq(df, "name", Array("item").toList.asJava, "ts", 1, 4)
+    val dft = friesian.addHistSeq(df, "name", Array("item").toList.asJava, "ts", 1, 4)
     assert(dft.count() == 8)
     assert(dft.filter(df("name") === "alice").count() == 2)
     assert(dft.filter(df("name") === "jack").count() == 6)
-    assert(dft.columns.contains("item_history"))
+    assert(dft.columns.contains("item_hist_seq"))
   }
 
-  "genNegSamples" should "work properly" in {
+  "addNegSamples" should "work properly" in {
     val data = sc.parallelize(Seq(
       Row("jack", 1, "2019-07-01 12:01:19.000"),
       Row("jack", 2, "2019-08-01 12:01:19.000"),
@@ -200,12 +200,12 @@ class FriesianSpec extends ZooSpecHelper {
       StructField("time", StringType, true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
-    val dft = friesian.genNegSamples(df, 10)
-    assert(dft.filter(df("label") === 1).count() == 6)
-    assert(dft.filter(df("label") === 0).count() == 6)
+    val dft = friesian.addNegSamples(df, 10)
+    assert(dft.filter(col("label") === 1).count() == 6)
+    assert(dft.filter(col("label") === 0).count() == 6)
   }
 
-  "genNegHisSeq" should "work properly" in {
+  "addNegHisSeq" should "work properly" in {
     val data: RDD[Row] = sc.parallelize(Seq(
       Row("jack", Seq(1, 2, 3, 4, 5)),
       Row("alice", Seq(4, 5, 6, 7, 8)),
@@ -218,9 +218,9 @@ class FriesianSpec extends ZooSpecHelper {
     StructField("history", ArrayType(IntegerType), true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
-    val dft = friesian.genNegHisSeq(df, 9, "history", 4)
-    assert(dft.select("noclk_item_list").collect().length == 3)
-    assert(dft.select("noclk_item_list").rdd.map(r =>
+    val dft = friesian.addNegHisSeq(df, 9, "history", 4)
+    assert(dft.select("neg_item_hist_seq").collect().length == 3)
+    assert(dft.select("neg_item_hist_seq").rdd.map(r =>
       r.getAs[mutable.WrappedArray[mutable.WrappedArray[Int]]](0)).collect()(0).length == 5)
   }
 
@@ -235,7 +235,7 @@ class FriesianSpec extends ZooSpecHelper {
       StructField("history", ArrayType(IntegerType), true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
-    val dft = friesian.genLength(df, "history")
+    val dft = friesian.addLength(df, "history")
 
     assert(dft.columns.contains("history_length"))
     assert(dft.filter("history_length = 2").count() == 1)

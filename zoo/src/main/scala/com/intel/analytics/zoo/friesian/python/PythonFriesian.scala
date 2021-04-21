@@ -184,12 +184,12 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     resultDF
   }
 
-  def genHistSeq(df: DataFrame,
-                userCol: String,
-                colNamesin: JList[String],
-                sortCol: String,
-                minLength: Int,
-                maxLength: Int): DataFrame = {
+  def addHistSeq(df: DataFrame,
+                 userCol: String,
+                 colNamesin: JList[String],
+                 sortCol: String,
+                 minLength: Int,
+                 maxLength: Int): DataFrame = {
     val colNames: Array[String] = colNamesin.asScala.toArray
     val schema = ArrayType(StructType(colNames.flatMap(c =>
       Seq(StructField(c, IntegerType), StructField(c + "_history", ArrayType(IntegerType))))))
@@ -213,10 +213,10 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     val selectColumns = Seq(col(userCol)) ++
       colNames.flatMap(c =>
         Seq(col("history." + c).as(c),
-          col("history." + c + "_history").as(c + "_history")))
+          col("history." + c + "_history").as(c + "_hist_seq")))
     val collectColumns = colNames.map(c => col(c)) ++ Seq(col(sortCol))
     val filterCondition = colNames.map(c =>
-      "size(" + c +  s"_history) >= $minLength").mkString(" and ")
+      "size(" + c +  s"_hist_seq) >= $minLength").mkString(" and ")
 
     df.groupBy(userCol)
       .agg(collect_list(struct(collectColumns: _*)).as("his_collect"))
@@ -245,7 +245,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     df.sqlContext.sql(s"select *, $selectStatement from tmp")
   }
 
-  def genNegHisSeq(df: DataFrame, itemSize: Int,
+  def addNegHisSeq(df: DataFrame, itemSize: Int,
                    item_history_col: String,
                    negNum: Int = 5): DataFrame = {
     val sqlContext = df.sqlContext
@@ -268,13 +268,13 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     })
 
     val newSchema = StructType(df.schema.fields ++ Array(
-      StructField("noclk_item_list", ArrayType(ArrayType(IntegerType)))))
+      StructField("neg_item_hist_seq", ArrayType(ArrayType(IntegerType)))))
 
    sqlContext.createDataFrame(combinedRDD, newSchema)
   }
 
 
-  def genNegSamples(df: DataFrame,
+  def addNegSamples(df: DataFrame,
                     itemSize: Int,
                     itemCol: String = "item",
                     labelCol: String = "label",
@@ -345,7 +345,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     df.sqlContext.sql(s"select $leftCols, $selectStatement from tmp")
   }
 
-  def genLength(df: DataFrame, colName: String): DataFrame = {
+  def addLength(df: DataFrame, colName: String): DataFrame = {
     df.withColumn(colName + "_length", size(col(colName)))
   }
 

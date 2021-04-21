@@ -289,7 +289,7 @@ class FeatureTable(Table):
     def _clone(self, df):
         return FeatureTable(df)
 
-    def gen_negative_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
+    def add_negative_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
         """
         Generate negative item visits for each positive item visit
 
@@ -300,10 +300,10 @@ class FeatureTable(Table):
 
         :return: FeatureTable
         """
-        df = callZooFunc("float", "genNegSamples", self.df, item_size, item_col, label_col, neg_num)
+        df = callZooFunc("float", "addNegSamples", self.df, item_size, item_col, label_col, neg_num)
         return FeatureTable(df)
 
-    def gen_hist_seq(self, user_col, cols, sort_col='time', min_len=1, max_len=100):
+    def add_hist_seq(self, user_col, cols, sort_col='time', min_len=1, max_len=100):
         """
         Generate a list of item visits in history
 
@@ -315,10 +315,10 @@ class FeatureTable(Table):
 
         :return: FeatureTable
         """
-        df = callZooFunc("float", "genHistSeq", self.df, user_col, cols, sort_col, min_len, max_len)
+        df = callZooFunc("float", "addHistSeq", self.df, user_col, cols, sort_col, min_len, max_len)
         return FeatureTable(df)
 
-    def gen_neg_hist_seq(self, item_size, item_history_col, neg_num):
+    def add_neg_hist_seq(self, item_size, item_history_col, neg_num):
         """
          Generate a list negative samples for each item in item_history_col
 
@@ -330,7 +330,7 @@ class FeatureTable(Table):
          :return: FeatureTable
          """
 
-        df = callZooFunc("float", "genNegHisSeq", self.df, item_size, item_history_col, neg_num)
+        df = callZooFunc("float", "addNegHisSeq", self.df, item_size, item_history_col, neg_num)
         return FeatureTable(df)
 
     def pad(self, padding_cols, seq_len=100):
@@ -357,7 +357,7 @@ class FeatureTable(Table):
         df = callZooFunc("float", "mask", self.df, mask_cols, seq_len)
         return FeatureTable(df)
 
-    def gen_length(self, col_name):
+    def add_length(self, col_name):
         """
          Generagte length of a colum
 
@@ -365,7 +365,7 @@ class FeatureTable(Table):
 
          :return: FeatureTable
          """
-        df = callZooFunc("float", "genLength", self.df, col_name)
+        df = callZooFunc("float", "addLength", self.df, col_name)
         return FeatureTable(df)
 
     def mask_pad(self, padding_cols, mask_cols, seq_len=100):
@@ -408,20 +408,20 @@ class FeatureTable(Table):
         joined_df = self.df.join(table.df, on=on, how=how)
         return FeatureTable(joined_df)
 
-    def gen_cats_from_items(self, item2cat, item_cols, defalut_cat_index):
+    def add_feature(self, item_cols, feature_tbl, default_value):
         """
          Get the category or other field from another map like FeatureTable
 
-         :param item2cat: FeatureTable with two columns [category, item]
          :param item_cols: list[string]
+         :param feature_tbl: FeatureTable with two columns [category, item]
          :param defalut_cat_index: default value for category if key does not exist
 
          :return: FeatureTable
          """
-        item2cat_map = dict(item2cat.df.distinct().rdd.map(lambda row: (row[0], row[1])).collect())
+        item2cat_map = dict(feature_tbl.df.distinct().rdd.map(lambda row: (row[0], row[1])).collect())
 
         def gen_cat(items):
-            getcat = lambda item: item2cat_map.get(item, defalut_cat_index)
+            getcat = lambda item: item2cat_map.get(item, default_value)
             if isinstance(items, int):
                 cats = getcat(items)
             elif isinstance(items, list) and isinstance(items[0], int):

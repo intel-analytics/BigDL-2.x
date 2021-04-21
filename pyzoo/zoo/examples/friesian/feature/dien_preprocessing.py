@@ -66,8 +66,8 @@ if __name__ == "__main__":
 
     item_category_indices = item_tbl.gen_string_idx(["item", "category"], 1)
     cat_default = item_category_indices[1].df.filter("category == 'default'").collect()
-    defalut_cat_index = cat_default[0][1] if cat_default else item_category_indices[1].count()
-    new_row = spark.createDataFrame([("default", int(defalut_cat_index))], ["category", "id"])
+    default_cat = cat_default[0][1] if cat_default else item_category_indices[1].count()
+    new_row = spark.createDataFrame([("default", int(default_cat))], ["category", "id"])
     category_index = StringIndex(item_category_indices[1].df.union(new_row).distinct()
                                  .withColumn("id", col("id").cast("Integer")), "category")
     item_size = item_category_indices[0].count()
@@ -78,21 +78,20 @@ if __name__ == "__main__":
         .encode_string(["item", "category"], [item_category_indices[0], category_index])\
         .distinct()
 
-    transaction_tbl = transaction_tbl\
+    full_tbl = transaction_tbl\
         .encode_string(['user', 'item'], [user_index[0], item_category_indices[0]])\
-        .gen_hist_seq(user_col="user", cols=['item'],
+        .add_hist_seq(user_col="user", cols=['item'],
                       sort_col='time', min_len=1, max_len=100)\
-        .gen_neg_hist_seq(item_size, 'item_history', neg_num=5) \
-        .gen_negative_samples(item_size, item_col='item', neg_num=1)\
-        .gen_length("item_history") \
+        .add_neg_hist_seq(item_size, 'item_hist_seq', neg_num=5) \
+        .add_negative_samples(item_size, item_col='item', neg_num=1)\
+        .join(item2cat, "item")\
+        .add_feature(["item_hist_seq", "neg_item_hist_seq"], item_tbl, default_cat)\
+        .mask_pad(mask_cols=['item_hist_seq'],
+                  padding_cols=['item_hist_seq', 'category_hist_seq',
+                                'neg_item_hist_seq', 'neg_category_hist_seq'],
+                  seq_len=100) \
+        .add_length("item_hist_seq") \
         .transform_python_udf("label", "label", get_label)
-
-    full_tbl = transaction_tbl.join(item2cat, "item")\
-        .gen_cats_from_items(item_tbl, ["item_history", "noclk_item_list"], defalut_cat_index)\
-        .mask_pad(padding_cols=['item_history', 'category_history',
-                                'noclk_item_list', 'noclk_category_list'],
-                  mask_cols=['item_history'],
-                  seq_len=100)
 
     # write out
     user_index[0].write_parquet(options.output+"user_index")
