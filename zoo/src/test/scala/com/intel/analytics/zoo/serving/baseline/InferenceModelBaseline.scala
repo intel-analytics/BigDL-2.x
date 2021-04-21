@@ -21,10 +21,11 @@ import java.util.Base64
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.zoo.serving.ClusterServing.{argv, helper}
 import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Supportive}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Supportive}
 import scopt.OptionParser
 
 
@@ -85,8 +86,9 @@ object InferenceModelBaseline extends Supportive {
   }
   def main(args: Array[String]): Unit = {
     val param = parser.parse(args, Params()).head
-    val helper = new ClusterServingHelper()
-    helper.loadConfig()
+    val configParser = new ConfigParser(param.configPath)
+    helper = configParser.loadConfig()
+
 
     val model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
@@ -108,12 +110,12 @@ object InferenceModelBaseline extends Supportive {
       s"with input ${param.testNum.toString}") {
       var a = Seq[(String, Table)]()
       val pre = new PreProcessing(true)
-      (0 until helper.thrdPerModel).foreach(i =>
+      (0 until helper.threadPerModel).foreach(i =>
         a = a :+ (i.toString(), T(warmT))
       )
-      (0 until param.testNum).grouped(helper.thrdPerModel).flatMap(batch => {
+      (0 until param.testNum).grouped(helper.threadPerModel).flatMap(batch => {
           val t = timer.timing("Batch input", batch.size) {
-            clusterServingInference.batchInput(a, helper.thrdPerModel, true, helper.resize)
+            clusterServingInference.batchInput(a, helper.threadPerModel, true, helper.resize)
           }
           clusterServingInference.dimCheck(t, "add", helper.modelType)
           val result = timer.timing("Inference", batch.size) {
