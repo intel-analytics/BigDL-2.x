@@ -80,7 +80,7 @@ def model_creator(config):
     return model
 
 def optim_creator(model, config):
-    return torch.optim.Adam(model.parameters(), lr=0.001)
+    return torch.optim.Adam(model.parameters(), lr=config.get("lr", 0.01))
 ```
 
 ### **Step 3: Define Train Dataset**
@@ -128,7 +128,7 @@ First, Create an Estimator
 from zoo.orca.learn.pytorch import Estimator 
 from zoo.orca.learn.metrics import Accuracy
 
-est = Estimator.from_torch(model=model_creator, optimizer=optim_creator, loss=criterion, metrics=[Accuracy()])
+est = Estimator.from_torch(model=model_creator, optimizer=optim_creator, loss=criterion, metrics=[Accuracy()], config={"lr": 0.001})
 ```
 
 Next, fit and evaluate using the Estimator
