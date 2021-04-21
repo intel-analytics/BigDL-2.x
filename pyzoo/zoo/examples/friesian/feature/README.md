@@ -20,7 +20,7 @@ After you download the files, you should convert them to parquet files with the 
 ## Preprocess
 * Spark local, example command
 ```bash
-python dlrm_preprocesing.py \
+python dlrm_preprocessing.py \
     --executor_cores 36 \
     --executor_memory 50g \
     --days 0-1 \
@@ -30,7 +30,7 @@ python dlrm_preprocesing.py \
 
 * Spark standalone, example command
 ```bash
-python dlrm_preprocesing.py \
+python dlrm_preprocessing.py \
     --cluster_mode standalone \
     --master spark://master/url \
     --driver_cores 4 \
@@ -45,7 +45,7 @@ python dlrm_preprocesing.py \
 
 * Spark yarn client mode, example command
 ```bash
-python dlrm_preprocesing.py \
+python dlrm_preprocessing.py \
     --cluster_mode yarn \
     --driver_cores 4 \
     --driver_memory 36g \
