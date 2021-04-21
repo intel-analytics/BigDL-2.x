@@ -48,7 +48,7 @@ Check SGX driver with `ls /dev | grep sgx`. If SGX driver is not installed, plea
 ./ppml/scripts/install-graphene-driver.sh
 ```
 
-#### Setp 0: Prepare Environment
+#### Step 0: Prepare Environment
 
 Download scripts and dockerfiles in [this link](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml).
 
@@ -168,7 +168,7 @@ In this section, we will demonstrate how to use Analytics-Zoo to setup trusted F
 
 #### [Prerequisite: Install SGX Driver & Prepare Scripts](#prerequisite-install-sgx-driver--prepare-scripts)
 
-#### Setp 0: Prepare Environment
+#### Step 0: Prepare Environment
 
 Download scripts and dockerfiles in [this link](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml).
 
@@ -208,7 +208,7 @@ output.bin
 Pull docker image from Dockerhub
 
 ```bash
-docker pull intelanalytics/analytics-zoo-ppml-trusted-realtime-ml-scala-occlum:0.10-SNAPSHOT
+docker pull intelanalytics/analytics-zoo-ppml-trusted-realtime-ml-scala-graphene:0.10-SNAPSHOT
 ```
 
 Also, you can build docker image from Dockerfile (this will take some time).
