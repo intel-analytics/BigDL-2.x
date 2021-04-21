@@ -53,6 +53,9 @@ ssh root@$MASTER "docker run -itd \
       -e SPARK_MASTER_PORT=7077 \
       -e SPARK_MASTER_WEBUI_PORT=8080 \
       $TRUSTED_BIGDATA_ML_DOCKER bash -c 'cd /ppml/trusted-big-data-ml && ./init.sh && ./start-spark-standalone-master-sgx.sh'"
+while ! ssh root@$MASTER "nc -z $MASTER 8080"; do
+  sleep 10
+done
 
 for worker in ${WORKERS[@]}
   do
@@ -78,4 +81,12 @@ for worker in ${WORKERS[@]}
           $TRUSTED_BIGDATA_ML_DOCKER bash -c 'cd /ppml/trusted-big-data-ml && ./init.sh && ./start-spark-standalone-worker-sgx.sh'"
   done
 
+for worker in ${WORKERS[@]}
+  do
+    while ! ssh root@$worker "nc -z $worker 8081"; do
+      sleep 10
+    done
+  done
+
 ./distributed-check-status.sh
+
