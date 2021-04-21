@@ -102,6 +102,14 @@ cd ppml/trusted-big-data-ml/scala/docker-graphene
 
 Enter `analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene` dir. Start Spark service with this command
 
+Prepare `keys` and `password`
+```bash
+cd ppml/trusted-big-data-ml/scala/docker-graphene
+# copy keys and password into current directory
+cp -r ../keys .
+cp -r ../password .
+```
+
 ```bash
 ./start-local-big-data-ml.sh
 sudo docker exec -it spark-local bash
@@ -222,6 +230,14 @@ cd ppml/trusted-big-data-ml/scala/docker-graphene
 
 Enter `analytics-zoo/ppml/trusted-realtime-ml/scala/docker-graphene` dir.
 
+Prepare `keys` and `password`
+```bash
+cd ppml/trusted-realtime-ml/scala/docker-graphene
+# copy keys and password into current directory
+cp -r ../keys .
+cp -r ../password .
+```
+
 Modify `environments.sh`. Change MASTER, WORKER IP and file paths.
 
 ```bash
@@ -251,17 +267,29 @@ cd ${FLINK_HOME}
 
 If Jobmanager is not running on current node, please add `-m ${FLINK_JOB_MANAGER_IP}`.
 
+The result should look like:
+
+```bash
+(a,5)    
+(action,1) 
+(after,1)
+(against,1)  
+(all,2) 
+(and,12) 
+(arms,1)   
+(arrows,1)  
+(awry,1)   
+(ay,1)    
+(bare,1)  
+(be,4)      
+(bear,3)      
+(bodkin,1) 
+(bourn,1)  
+```
+
 #### Step 3: Run Trusted Cluster Serving
 
 [Analytics-Zoo Cluster serving](https://www.usenix.org/conference/opml20/presentation/song) is a distributed end-to-end inference service based on Flink. Now this feature is available in PPML solution, while all input data and model in inference pipeline are fully protected.
-
-Prepare `keys` and `password`
-```bash
-cd ppml/trusted-realtime-ml/scala/docker-graphene
-# copy keys and password into current directory
-cp -r ../keys .
-cp -r ../password .
-```
 
 Start Cluster Serving Service
 
@@ -280,5 +308,7 @@ input_api.enqueue('my-image1', user_define_key={"path: 'path/to/image1'})
 Cluster Serving service is a long running service in container, you can stop it with
 
 ```bash
-docker stop containerID
+docker stop trusted-cluster-servinglocal
 ```
+
+For distributed/multi-container, please refer to [Distributed Trusted Cluster Serving]()
