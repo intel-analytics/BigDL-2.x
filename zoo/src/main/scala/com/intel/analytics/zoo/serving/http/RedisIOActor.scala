@@ -6,7 +6,7 @@ import java.util.{HashMap, UUID}
 import akka.actor.{Actor, ActorRef}
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.serving.serialization.{ArrowDeserializer, StreamSerializer}
-import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
+import com.intel.analytics.zoo.serving.pipeline.RedisUtils
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.JedisPool
@@ -19,9 +19,9 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conven
                    jedisPool: JedisPool = null) extends Actor with Supportive {
   override val logger = LoggerFactory.getLogger(getClass)
   val jedis = if (jedisPool == null) {
-    RedisIO.getRedisClient(new JedisPool())
+    RedisUtils.getRedisClient(new JedisPool())
   } else {
-    RedisIO.getRedisClient(jedisPool)
+    RedisUtils.getRedisClient(jedisPool)
   }
   var requestMap = mutable.Map[String, ActorRef]()
 
@@ -34,18 +34,20 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conven
         requestMap += (Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + message.id -> sender())
       }
     case message: DequeueMessage => {
-      dequeue(redisOutputQueue).foreach(result => {
-        logger.info(s"${System.currentTimeMillis()} Get redis result at time ")
-        val queryOption = requestMap.get(result._1)
-        if (queryOption != None) {
-          val queryResult = result._2.asScala
-          queryOption.get ! ModelOutputMessage(queryResult)
-          requestMap -= result._1
-          logger.info(s"${System.currentTimeMillis()} Send ${result._1} back at time ")
-        }
+        if (!requestMap.isEmpty) {
+          dequeue(redisOutputQueue).foreach(result => {
+            logger.info(s"${System.currentTimeMillis()} Get redis result at time ")
+            val queryOption = requestMap.get(result._1)
+            if (queryOption != None) {
+              val queryResult = result._2.asScala
+              queryOption.get ! ModelOutputMessage(queryResult)
+              requestMap -= result._1
+              logger.info(s"${System.currentTimeMillis()} Send ${result._1} back at time ")
+            }
 
-      })
-    }
+          })
+        }
+      }
   }
   def enqueue(queue: String, input: DataInputMessage): Unit = {
     timing(s"${self.path.name} put request to redis")(FrontEndApp.putRedisTimer) {

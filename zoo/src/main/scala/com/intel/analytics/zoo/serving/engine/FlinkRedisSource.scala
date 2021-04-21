@@ -20,7 +20,7 @@ import java.util.AbstractMap.SimpleEntry
 import java.util.UUID
 
 import com.intel.analytics.zoo.serving.ClusterServing
-import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
+import com.intel.analytics.zoo.serving.pipeline.RedisUtils
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions, FileUtils}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, RichSourceFunction, SourceFunction}
@@ -38,38 +38,9 @@ class FlinkRedisSource(params: ClusterServingHelper)
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
 
-    if (params.redisSecureEnabled) {
-      System.setProperty("javax.net.ssl.trustStore", params.redisSecureTrustStorePath)
-      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStoreToken)
-      System.setProperty("javax.net.ssl.keyStoreType", "JKS")
-      System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
-      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStoreToken)
-    }
-    if (ClusterServing.jedisPool == null) {
-      ClusterServing.synchronized {
-        if (ClusterServing.jedisPool == null) {
-          ClusterServing.jedisPool = new JedisPool(ClusterServing.jedisPoolConfig,
-            params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
-        }
-      }
-    }
-
-    logger.info(
-      s"FlinkRedisSource connect to Redis: redis://${params.redisHost}:${params.redisPort} " +
-      s"with timeout: ${params.redisTimeout} and redisSecureEnabled: ${params.redisSecureEnabled}")
-    params.redisSecureEnabled match {
-      case true => logger.info(s"FlinkRedisSource connect to secured Redis successfully.")
-      case false => logger.info(s"FlinkRedisSource connect to plain Redis successfully.")
-    }
-    jedis = RedisIO.getRedisClient(ClusterServing.jedisPool)
-    try {
-      jedis.xgroupCreate(params.jobName,
-        "serving", new StreamEntryID(0, 0), true)
-    } catch {
-      case e: Exception =>
-        logger.info(s"xgroupCreate raise [$e], " +
-          s"will not create new group.")
-    }
+    RedisUtils.initializeRedis()
+    jedis = RedisUtils.getRedisClient(ClusterServing.jedisPool)
+    RedisUtils.createRedisGroupIfNotExist(jedis, params.jobName)
   }
 
   override def run(sourceContext: SourceFunction
