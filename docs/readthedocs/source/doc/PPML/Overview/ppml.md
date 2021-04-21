@@ -1,6 +1,6 @@
 # PPML (Privacy Preserving Machine Learning)
 
-PPML (Privacy-Preserving Machine Learning) aims at protecting user privacy, meanwhile keep machine learning applications still useful. However, achieving this goal without impacting existing applications is difficult, especially in end-to-end big data scenarios. To reslove this problem, Analytics-Zoo provides an end-to-end PPML platform for Big Data AI based on Intel SGX (Software Guard Extensions). This PPML platform ensure the whole Big Data & AI pipeline are fully protected by secured SGX enclave in hardware level, meanwhile exising Big Data & AI applications, such as Flink, Spark, SparkSQL and machine/deep learning, can be seamlessly migrated into this PPML platform without any code changes.
+PPML (Privacy-Preserving Machine Learning) aims at protecting user privacy, meanwhile keeping machine learning applications still useful. However, achieving this goal without impacting existing applications is difficult, especially in end-to-end big data scenarios. To resolve this problem, Analytics-Zoo provides an end-to-end PPML platform for Big Data AI based on Intel SGX (Software Guard Extensions). This PPML platform ensures the whole Big Data & AI pipeline are fully protected by secured SGX enclave in hardware level, further more existing Big Data & AI applications, such as Flink, Spark, SparkSQL and machine/deep learning, can be seamlessly migrated into this PPML platform without any code changes.
 
 ## PPML for Big Data AI
 
@@ -8,11 +8,11 @@ To take full advantage of big data, especially the value of private or sensitive
 
 With Analytics-Zoo, customers can build a Trusted Platform for big data with a few clicks, and all existing big data & AI applications, such as Flink and Spark applications, can be migrated into this platform without any code changes. In specific, Analytics-Zoo uses serval security technologies
 
-- Confiditional Computation with Intel SGX. Intel SGX provides hardware-based isolation and memory encryption with very limited attack surface.
+- Confidential Computation with Intel SGX. Intel SGX provides hardware-based isolation and memory encryption with very limited attack surface.
 - Seamless migration with LibOS. Based on LibOS projects ([Graphene](https://grapheneproject.io/) and [Occlum](https://occlum.io/)), Analytics-Zoo empowers our customers (e.g., data scientists and big data developers) to build PPML applications on top of large scale dataset without impacting existing applications.
 - Secured networks with TLS and encryption. All network traffic are protected by TLS, in some cases, content should be encrypted before transformation.
-- File or model protection with encryption. Model and senstive configuration files will be encrypted before uploading to Trusted platform. These files are only decrypted in SGX enclave. 
-- Environment & App attestation with SGX attestation. SGX attestation ensure that remote/local SGX env and applications can be verified.
+- File or model protection with encryption. Model and sensitive configuration files will be encrypted before uploading to Trusted platform. These files are only decrypted in SGX enclave. 
+- Environment & App attestation with SGX attestation. SGX attestation ensures that remote/local SGX env and applications can be verified.
 
 
 Note: Intel SGX requires hardware support, please [check if your CPU has this feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). In [3rd Gen Intel Xeon Scalable Processors](https://newsroom.intel.com/press-kits/3rd-gen-intel-xeon-scalable/), SGX allows up to 1TB of data to be included in secure enclaves.
@@ -21,7 +21,7 @@ Note: Intel SGX requires hardware support, please [check if your CPU has this fe
 
 - Protecting data and model confidentiality
   - Sensitive input/output data (computation, training and inference), e.g., healthcare data
-  - Propretary model, e.g., model trained with self-owned or sensitive data
+  - Proprietary model, e.g., model trained with self-owned or sensitive data
 - Seamless migrate existing big data applications into privacy preserving applications
 - Trusted big data & AI Platform based on Intel SGX
   - Trusted Big Data Analytics and ML: Spark batch, SparkSQL, BigDL, TPC-H
@@ -40,9 +40,9 @@ In this section, we will demonstrate how to use Analytics-Zoo to setup trusted S
 
 #### Prerequisite: Install SGX Driver & Prepare Scripts
 
-Please check if current platform [has SGX feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). Then, enable SGX feature in BIOS. Note that after SGX is enabled, a protion of memory will be assigned to SGX, and cannot be used or seen by OS.
+Please check if current platform [has SGX feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). Then, enable SGX feature in BIOS. Note that after SGX is enabled, a portion of memory will be assigned to SGX (this memory cannot be seen/used by OS and other applications).
 
-Check SGX driver with `ls /dev | grep sgx`. If SGX driver is not installed, please install [SGX DCAP driver](https://github.com/intel/SGXDataCenterAttestationPrimitives/tree/master/driver/linux) with [install-graphene-driver.sh](https://github.com/intel-analytics/analytics-zoo/blob/master/ppml/scripts/install-graphene-driver.sh) (need root premission).
+Check SGX driver with `ls /dev | grep sgx`. If SGX driver is not installed, please install [SGX DCAP driver](https://github.com/intel/SGXDataCenterAttestationPrimitives/tree/master/driver/linux) with [install-graphene-driver.sh](https://github.com/intel-analytics/analytics-zoo/blob/master/ppml/scripts/install-graphene-driver.sh) (need root permission).
 
 ```bash
 ./ppml/scripts/install-graphene-driver.sh
