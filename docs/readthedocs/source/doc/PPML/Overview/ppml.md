@@ -12,7 +12,7 @@ With Analytics-Zoo, customers can build a Trusted Platform for big data with a f
 - Seamless migration with LibOS. Based on LibOS projects ([Graphene](https://grapheneproject.io/) and [Occlum](https://occlum.io/)), Analytics-Zoo empowers our customers (e.g., data scientists and big data developers) to build PPML applications on top of large scale dataset without impacting existing applications.
 - Secured networks with TLS and encryption. All network traffic are protected by TLS, in some cases, content should be encrypted before transformation.
 - File or model protection with encryption. Model and senstive configuration files will be encrypted before uploading to Trusted platform. These files are only decrypted in SGX enclave. 
-- Environment & App attestation with SGX attestation
+- Environment & App attestation with SGX attestation. SGX attestation ensure that remote/local SGX env and applications can be verified.
 
 
 Note: Intel SGX requires hardware support, please [check if your CPU has this feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). In [3rd Gen Intel Xeon Scalable Processors](https://newsroom.intel.com/press-kits/3rd-gen-intel-xeon-scalable/), SGX allows up to 1TB of data to be included in secure enclaves.
