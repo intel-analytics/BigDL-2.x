@@ -41,8 +41,8 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-object Frontend2 extends SSupportive with EncryptSupportive {
-  val logger = LoggerFactory.getLogger(getClass)
+object Frontend2 extends Supportive with EncryptSupportive {
+  override val logger = LoggerFactory.getLogger(getClass)
 
   val name = "analytics zoo web serving frontend"
 
@@ -52,8 +52,8 @@ object Frontend2 extends SSupportive with EncryptSupportive {
   implicit val timeout: Timeout = Timeout(100, TimeUnit.SECONDS)
 
   def main(args: Array[String]): Unit = {
-    timing(s"$name started successfully.") {
-      val arguments = timing("parse arguments") {
+    timing(s"$name started successfully.")() {
+      val arguments = timing("parse arguments")() {
         argumentsParser.parse(args, FrontEndAppArguments()) match {
           case Some(arguments) => logger.info(s"starting with $arguments"); arguments
           case None => argumentsParser.failure("miss args, please see the usage info"); null
@@ -65,7 +65,7 @@ object Frontend2 extends SSupportive with EncryptSupportive {
         case false => null
       }
       val actorName = s"redis-getter"
-      val ioActor = timing(s"$actorName initialized.") {
+      val ioActor = timing(s"$actorName initialized.")() {
         val getterProps = Props(new RedisIOActor())
         system.actorOf(getterProps, name = actorName)
       }
@@ -73,9 +73,9 @@ object Frontend2 extends SSupportive with EncryptSupportive {
 
       def processPredictionInput(inputs: Activity):
       Seq[PredictionOutput[String]] = {
-        val result = timing("response waiting") {
+        val result = silent("response waiting")() {
           val id = UUID.randomUUID().toString
-          val results = timing(s"query message wait for key $id") {
+          val results = silent(s"query message wait for key $id")() {
             Await.result(ioActor ? DataInputMessage(id, inputs), timeout.duration)
               .asInstanceOf[ModelOutputMessage].valueMap
           }
@@ -88,13 +88,13 @@ object Frontend2 extends SSupportive with EncryptSupportive {
         result.toSeq
       }
 
-      val route = timing("initialize http route") {
+      val route = timing("initialize http route")() {
         path("") {
-          timing("welcome") {
+          timing("welcome")() {
             complete("welcome to " + name)
           }
         } ~ (get & path("metrics")) {
-          timing("metrics") {
+          timing("metrics")() {
             val keys = metrics.getTimers().keySet()
             val servingMetrics = keys.toArray.map(key => {
               val timer = metrics.getTimers().get(key)
@@ -118,8 +118,8 @@ object Frontend2 extends SSupportive with EncryptSupportive {
               complete(500, error.toString)
             } else {
               try {
-                val result = timing("predict") {
-                  val input = timing("json deserialization") {
+                val result = timing("predict")() {
+                  val input = timing("json deserialization")() {
 //                    JsonUtil.fromJson(classOf[Instances], content)
                     ServingFrontendSerializer.deserialize(content)
                   }
@@ -300,13 +300,3 @@ case class FrontEndApp2Arguments(
                                  redissTrustStoreToken: String = "1234qwer"
                                )
 
-trait SSupportive {
-  def timing[T](name: String)(f: => T): T = {
-    val begin = System.nanoTime()
-    val result = f
-    val end = System.nanoTime()
-    val cost = (end - begin)
-    Logger.getLogger(getClass).info(s"$name time elapsed [${cost / 1e6} ms].")
-    result
-  }
-}

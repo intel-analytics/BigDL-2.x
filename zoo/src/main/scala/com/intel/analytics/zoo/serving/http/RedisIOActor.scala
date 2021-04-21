@@ -27,8 +27,8 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conven
 
   override def receive: Receive = {
     case message: DataInputMessage =>
-      timing(s"${self.path.name} input message process")() {
-        logger.info(s"${System.currentTimeMillis()} Input enqueue ${message.id} at time ")
+      silent(s"${self.path.name} input message process")() {
+//        logger.info(s"${System.currentTimeMillis()} Input enqueue ${message.id} at time ")
         enqueue(redisInputQueue, message)
 
         requestMap += (Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + message.id -> sender())
@@ -36,13 +36,13 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conven
     case message: DequeueMessage => {
         if (!requestMap.isEmpty) {
           dequeue(redisOutputQueue).foreach(result => {
-            logger.info(s"${System.currentTimeMillis()} Get redis result at time ")
+//            logger.info(s"${System.currentTimeMillis()} Get redis result at time ")
             val queryOption = requestMap.get(result._1)
             if (queryOption != None) {
               val queryResult = result._2.asScala
               queryOption.get ! ModelOutputMessage(queryResult)
               requestMap -= result._1
-              logger.info(s"${System.currentTimeMillis()} Send ${result._1} back at time ")
+//              logger.info(s"${System.currentTimeMillis()} Send ${result._1} back at time ")
             }
 
           })
@@ -50,7 +50,7 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conven
       }
   }
   def enqueue(queue: String, input: DataInputMessage): Unit = {
-    timing(s"${self.path.name} put request to redis")(FrontEndApp.putRedisTimer) {
+    silent(s"${self.path.name} put request to redis")(FrontEndApp.putRedisTimer) {
       val hash = new HashMap[String, String]()
       val bytes = StreamSerializer.objToBytes(input.inputs)
       val b64 = java.util.Base64.getEncoder.encodeToString(bytes)
