@@ -1,24 +1,19 @@
 # PPML (Privacy Preserving Machine Learning)
 
-PPML (Privacy-Preserving Machine Learning) aims at protecting user privacy, meanwhile keep machine learning applications still useful. However, achieving this goal without impacting existing applications is difficult, especially in end-to-end big data scenarios. To reslove this problem, Analytics-Zoo provides an end-to-end PPML platform for Big Data AI based on Intel SGX. This PPML platform ensure the whole Big Data & AI pipeline are fully protected by secured SGX enclave in hardware level, meanwhile exising Big Data & AI applications, such as Flink, Spark, SparkSQL and machine/deep learning, can be seamlessly migrated into this PPML platform without any code changes.
+PPML (Privacy-Preserving Machine Learning) aims at protecting user privacy, meanwhile keep machine learning applications still useful. However, achieving this goal without impacting existing applications is difficult, especially in end-to-end big data scenarios. To reslove this problem, Analytics-Zoo provides an end-to-end PPML platform for Big Data AI based on Intel SGX (Software Guard Extensions). This PPML platform ensure the whole Big Data & AI pipeline are fully protected by secured SGX enclave in hardware level, meanwhile exising Big Data & AI applications, such as Flink, Spark, SparkSQL and machine/deep learning, can be seamlessly migrated into this PPML platform without any code changes.
 
 ## PPML for Big Data AI
 
 To take full advantage of big data, especially the value of private or sensitive data, customers need to build a trusted platform under the guidance of privacy laws or regulation, such as [GDPR](https://gdpr-info.eu/). This requirement raises big challenges to customers who already have big data and big data applications, such as Spark/SparkSQL, Flink/FlinkSQL and AI applications. Migrating these applications into privacy preserving way requires lots of additional efforts.
 
-With Analytics-Zoo, customers can build a Trusted Platform for big data with a few clicks, and all existing big data & AI applications can be migrated into this platform without any code changes.
+With Analytics-Zoo, customers can build a Trusted Platform for big data with a few clicks, and all existing big data & AI applications, such as Flink and Spark applications, can be migrated into this platform without any code changes. In specific, Analytics-Zoo uses serval security technologies
 
-To achieve this goal, Analytics-Zoo uses serval security technologies
-
-Different from state-of-the-art PPML solution, Analytics-Zoo focuses on big data, end-to-end  and distributed analytisis & AI applications. This PPML platform ensure the whole Big Data & AI pipeline are fully protected by secured SGX enclave in hardware level, meanwhile exising Big Data & AI applications, such as Flink, Spark, SparkSQL and machine/deep learning, can be seamlessly migrated into this PPML platform without any code changes.
-
-Based on Intel SGX (Software Guard Extensions) and LibOS projects ([Graphene](https://grapheneproject.io/) and [Occlum](https://occlum.io/)), Analytics-Zoo empowers our customers (e.g., data scientists and big data developers) to build PPML applications on top of large scale dataset without impacting existing applications. In specific:
-
-- Confiditional Computation with SGX
-- Seamless migration with LibOS. Based on Intel SGX (Software Guard Extensions) and LibOS projects ([Graphene](https://grapheneproject.io/) and [Occlum](https://occlum.io/)), Analytics-Zoo empowers our customers (e.g., data scientists and big data developers) to build PPML applications on top of large scale dataset without impacting existing applications.
-- Secured networks with TLS and encryption
-- File or model protection with encryption
+- Confiditional Computation with Intel SGX. Intel SGX provides hardware-based isolation and memory encryption with very limited attack surface.
+- Seamless migration with LibOS. Based on LibOS projects ([Graphene](https://grapheneproject.io/) and [Occlum](https://occlum.io/)), Analytics-Zoo empowers our customers (e.g., data scientists and big data developers) to build PPML applications on top of large scale dataset without impacting existing applications.
+- Secured networks with TLS and encryption. All network traffic are protected by TLS, in some cases, content should be encrypted before transformation.
+- File or model protection with encryption. Model and senstive configuration files will be encrypted before uploading to Trusted platform. These files are only decrypted in SGX enclave. 
 - Environment & App attestation with SGX attestation
+
 
 Note: Intel SGX requires hardware support, please [check if your CPU has this feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). In [3rd Gen Intel Xeon Scalable Processors](https://newsroom.intel.com/press-kits/3rd-gen-intel-xeon-scalable/), SGX allows up to 1TB of data to be included in secure enclaves.
 
