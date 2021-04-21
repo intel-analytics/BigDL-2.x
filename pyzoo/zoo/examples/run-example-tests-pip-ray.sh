@@ -72,16 +72,6 @@ fi
 execute_ray_test super_resolution_BSDS3000 "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/super_resolution/super_resolution.py --backend torch_distributed"
 time7=$?
 
-if [ -f ${ANALYTICS_ZOO_ROOT}/data/airline_14col.data ]
-then
-    echo "airline_14col.data already exists"
-else
-    wget -nv $FTP_URI/analytics-zoo-data/airline_14col.data -P ${ANALYTICS_ZOO_ROOT}/data/
-fi
-
-execute_ray_test auto-xgboost-classifier ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostClassifier.py
-time8=$?
-
 if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/data ]; then
   echo "Cifar10 already exists"
 else
@@ -90,7 +80,20 @@ else
 fi
 
 execute_ray_test cifar10 "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/cifar10/cifar10.py --backend torch_distributed"
+time8=$?
+
+if [ -f ${ANALYTICS_ZOO_ROOT}/data/airline_14col.data ]
+then
+    echo "airline_14col.data already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/airline_14col.data -P ${ANALYTICS_ZOO_ROOT}/data/
+fi
+
+execute_ray_test auto-xgboost-classifier ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostClassifier.py
 time9=$?
+
+execute_ray_test auto-xgboost-regressor ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostRegressor.py
+time10=$?
 
 echo "#1 rl_pong time used:$time1 seconds"
 echo "#2 sync_parameter_server time used:$time2 seconds"
@@ -99,7 +102,8 @@ echo "#4 multiagent_two_trainers time used:$time4 seconds"
 echo "#5 mxnet_lenet time used:$time5 seconds"
 echo "#6 fashion-mnist time used:$time6 seconds"
 echo "#7 super-resolution time used:$time7 seconds"
-echo "#8 auto-xgboost-classifier time used:$time8 seconds"
-echo "#9 cifar10 time used:$time9 seconds"
+echo "#8 cifar10 time used:$time8 seconds"
+echo "#9 auto-xgboost-classifier time used:$time9 seconds"
+echo "#10 auto-xgboost-regressor time used:$time10 seconds"
 
 clear_up
