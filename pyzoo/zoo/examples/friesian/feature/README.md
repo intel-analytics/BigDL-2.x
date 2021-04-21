@@ -69,4 +69,4 @@ In the above commands
 * input_folder: Path to the folder of parquet files.
 * frequency_limit: Categories with a count/frequency below frequency_limit will be omitted from
  the encoding. For instance, '15', '_c14:15,_c15:16', etc. We recommend using "15" when you
-  preprocess the whole 1TB dataset.
+  preprocess the whole 1TB dataset. Default: 15.
