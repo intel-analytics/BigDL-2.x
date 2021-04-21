@@ -103,25 +103,21 @@ cd ppml/trusted-big-data-ml/scala/docker-graphene
 ./build-docker-image.sh
 ```
 
-#### Step 1: Start Trusted Big Data Analytics and ML Platform
+#### Step 1: Single-Node Trusted Big Data Analytics and ML Platform
 
 Enter `analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene` dir. Start Spark service with this command
 
 ```bash
 ./start-local-big-data-ml.sh
 sudo docker exec -it spark-local bash
-```
-
-##### Step 2: Run Spark Program
-
-Modify `init.sh`, which is task/env related.
-
-```bash
+cd /ppml/trusted-big-data-ml
 ./init.sh
-vim start-spark-local-pi-sgx.sh
 ```
 
-Then run the script to run pi test in spark:
+##### **Example 1: Spark Pi on Graphene-SGX**
+
+This example is a simple Spark local PI example, this a very easy way to verify if your SGX environment is ready.  
+Run the script to run pi test in spark:
 
 ```bash
 bash start-spark-local-pi-sgx.sh
@@ -137,9 +133,32 @@ The result should look like:
 
 >   Pi is roughly 3.1422957114785572
 
-This example is a simple Spark local PI example, if you want to run application in distributed Spark cluster protected by SGX, please refer to [distributed bigdata ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-big-data-ml/scala/docker-graphene#start-the-distributed-bigdata-ml).
+##### **Example 2: Analytics Zoo model training on Graphene-SGX**
 
-##### Step 3: Run BigDL Program
+This example is 
+
+```bash
+bash start-spark-local-train-sgx.sh
+```
+
+Open another terminal and check the log:
+```bash
+sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.sgx.log | egrep "###|INFO"
+```
+or
+```bash
+sudo docker logs spark-local | egrep "###|INFO"
+```
+
+The result should look like: <br>
+>   ############# train optimized[P1182:T2:java] ---- end time: 310534 ms return from shim_write(...) = 0x1d <br>
+>   ############# ModuleLoader.saveToFile File.saveBytes end, used 827002 ms[P1182:T2:java] ---- end time: 1142754 ms return from shim_write(...) = 0x48 <br>
+>   ############# ModuleLoader.saveToFile saveWeightsToFile end, used 842543 ms[P1182:T2:java] ---- end time: 1985297 ms return from shim_write(...) = 0x4b <br>
+>   ############# model saved[P1182:T2:java] ---- end time: 1985297 ms return from shim_write(...) = 0x19 <br>
+
+
+#### Step 2: Distributed Trusted Big Data Analytics and ML Platform
+
 
 ## Trusted Realtime Compute and ML
 
