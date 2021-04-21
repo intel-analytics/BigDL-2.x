@@ -128,7 +128,8 @@ time9=$((now-start))
 echo "#10 start example for orca auto-xgboost-regressor"
 start=$(date "+%s")
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostRegressor.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostRegressor.py \
+ -p ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/incd.csv
 
 now=$(date "+%s")
 time10=$((now-start))

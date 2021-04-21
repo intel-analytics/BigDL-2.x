@@ -92,7 +92,7 @@ fi
 execute_ray_test auto-xgboost-classifier ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostClassifier.py
 time9=$?
 
-execute_ray_test auto-xgboost-regressor ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostRegressor.py
+execute_ray_test auto-xgboost-regressor "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostRegressor.py -p ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/incd.csv"
 time10=$?
 
 echo "#1 rl_pong time used:$time1 seconds"
