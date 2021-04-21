@@ -11,9 +11,8 @@ With Analytics-Zoo, customers/developers can build a Trusted Platform for big da
 - Confidential Computation with Intel SGX. Intel SGX provides hardware-based isolation and memory encryption with very limited attack surface.
 - Seamless migration with LibOS. Based on LibOS projects ([Graphene](https://grapheneproject.io/) and [Occlum](https://occlum.io/)), Analytics-Zoo empowers our customers (e.g., data scientists and big data developers) to build PPML applications on top of large scale dataset without impacting existing applications.
 - Secured networks with TLS and encryption. All network traffic are protected by TLS, in some cases, content should be encrypted before transformation.
-- File or model protection with encryption. Model and sensitive configuration files will be encrypted before uploading to Trusted platform. These files are only decrypted in SGX enclave. 
+- File or model protection with encryption. Model and sensitive configuration files will be encrypted before uploading to Trusted platform. These files are only decrypted in SGX enclave.
 - Environment & App attestation with SGX attestation. SGX attestation ensures that remote/local SGX env and applications can be verified.
-
 
 Note: Intel SGX requires hardware support, please [check if your CPU has this feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). In [3rd Gen Intel Xeon Scalable Processors](https://newsroom.intel.com/press-kits/3rd-gen-intel-xeon-scalable/), SGX allows up to 1TB of data to be included in secure enclaves.
 
@@ -100,15 +99,11 @@ cd ppml/trusted-big-data-ml/scala/docker-graphene
 
 #### Step 1: Single-Node Trusted Big Data Analytics and ML Platform
 
-Enter `analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene` dir. Start Spark service with this command
+Enter `analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene` dir.
 
-Prepare `keys` and `password`
-```bash
-cd ppml/trusted-big-data-ml/scala/docker-graphene
-# copy keys and password into current directory
-cp -r ../keys .
-cp -r ../password .
-```
+Modify `start-local-big-data-ml.sh`. Change IP and file paths (e.g., `keys` and `password`).
+
+Start Spark service with this command
 
 ```bash
 ./start-local-big-data-ml.sh
@@ -161,7 +156,6 @@ The result should look like: <br>
 
 
 #### Step 2: Distributed Trusted Big Data Analytics and ML Platform
-
 
 ## Trusted Realtime Compute and ML
 
@@ -230,15 +224,7 @@ cd ppml/trusted-big-data-ml/scala/docker-graphene
 
 Enter `analytics-zoo/ppml/trusted-realtime-ml/scala/docker-graphene` dir.
 
-Prepare `keys` and `password`
-```bash
-cd ppml/trusted-realtime-ml/scala/docker-graphene
-# copy keys and password into current directory
-cp -r ../keys .
-cp -r ../password .
-```
-
-Modify `environments.sh`. Change MASTER, WORKER IP and file paths.
+Modify `environments.sh`. Change MASTER, WORKER IP and file paths (e.g., `keys` and `password`).
 
 ```bash
 nano environments.sh
