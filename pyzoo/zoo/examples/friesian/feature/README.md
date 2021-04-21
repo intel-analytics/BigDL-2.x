@@ -18,7 +18,7 @@ After you download the files, you should convert them to parquet files with the 
 
 
 ## Preprocess
-* Spark local, example command
+* Spark local, we can use the first several days to have a trial, example command
 ```bash
 python dlrm_preprocessing.py \
     --executor_cores 36 \
