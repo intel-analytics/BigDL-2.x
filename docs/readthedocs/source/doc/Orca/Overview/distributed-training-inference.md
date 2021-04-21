@@ -106,12 +106,18 @@ View the related [Python API doc]() for more details.
 Users may create a PyTorch `Estimator` using the *BigDL* backend (currently default for PyTorch) as follows:
 
 ```python
-model = LeNet() # a torch.nn.Module
-model.train()
-criterion = nn.NLLLoss()
+def model_creator(config):
+    model = LeNet() # a torch.nn.Module
+    model.train()
+    return model
 
-adam = torch.optim.Adam(model.parameters(), args.lr)
-est = Estimator.from_torch(model=model, optimizer=adam, loss=criterion)
+def optimizer_creator(model, config):
+    return torch.optim.Adam(model.parameters(), config["lr"])
+
+est = Estimator.from_torch(model=model_creator,
+                           optimizer=optimizer_creator,
+                           loss=nn.NLLLoss(),
+                           config={"lr": 1e-2})
 ```
 
 Then users can perform distributed model training and inference as follows:
@@ -138,7 +144,7 @@ def model_creator(config):
 def optimizer_creator(model, config):
     return torch.optim.Adam(model.parameters(), config["lr"])
 
-est = Estimator.from_torch(model=model,
+est = Estimator.from_torch(model=model_creator,
                            optimizer=optimizer_creator,
                            loss=nn.NLLLoss(),
                            config={"lr": 1e-2},
