@@ -242,16 +242,34 @@ After all jobs are done, stop Flink in SGX
 
 #### Step 2: Run Flink Program
 
-Submit jobs to Flink
+If working env has Flink, then submit jobs to Flink
 
 ```bash
+cd ${FLINK_HOME}
+./bin/flink run ./examples/batch/WordCount.jar
 ```
+
+If Jobmanager is not running on current node, please add `-m ${FLINK_JOB_MANAGER_IP}`.
 
 #### Step 3: Run Trusted Cluster Serving
 
-[Analytics-Zoo Cluster serving](https://www.usenix.org/conference/opml20/presentation/song) is a distributed end-to-end inference service based on Flink. With SGX and TLS, this service can be fully secured for input data and model.
+[Analytics-Zoo Cluster serving](https://www.usenix.org/conference/opml20/presentation/song) is a distributed end-to-end inference service based on Flink. Now this feature is available in PPML solution, while all input data and model in inference pipeline are fully protected.
 
-After all services are ready, then you can directly push inference requests int queue with [Restful API](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide/#restful-api). Also, you can push image/input into queue with Python API
+Prepare `keys` and `password`
+```bash
+cd ppml/trusted-realtime-ml/scala/docker-graphene
+# copy keys and password into current directory
+cp -r ../keys .
+cp -r ../password .
+```
+
+Start Cluster Serving Service
+
+```bash
+./start-local-cluster-serving.sh
+```
+
+After all services are ready, you can directly push inference requests int queue with [Restful API](https://analytics-zoo.github.io/master/#ClusterServingGuide/ProgrammingGuide/#restful-api). Also, you can push image/input into queue with Python API
 
 ```python
 from zoo.serving.client import InputQueue
