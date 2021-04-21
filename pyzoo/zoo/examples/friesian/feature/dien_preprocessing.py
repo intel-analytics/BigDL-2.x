@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
     full_tbl = transaction_tbl.join(item2cat, "item")\
         .gen_cats_from_items(item_tbl, ["item_history", "noclk_item_list"], defalut_cat_index)\
-        .mask_pad(padding_cols=['item_history', 'category_history', \
+        .mask_pad(padding_cols=['item_history', 'category_history',
                                 'noclk_item_list', 'noclk_category_list'],
                   mask_cols=['item_history'],
                   seq_len=100)
