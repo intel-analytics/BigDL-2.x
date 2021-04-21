@@ -45,7 +45,7 @@ class FlinkInference(helper: ClusterServingHelper)
               .getFile(Conventions.SERVING_MODEL_TMP_DIR).getPath
 
             logger.info(s"Model loaded at executor at path ${localModelDir}")
-            helper.modelDir = localModelDir
+            helper.modelPath = localModelDir
             ClusterServing.model = helper.loadInferenceModel()
           }
         }
