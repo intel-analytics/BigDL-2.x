@@ -47,8 +47,8 @@ ssh root@$MASTER "docker run -itd \
       --device=/dev/sgx/provision \
       -v /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket \
       -v $ENCLAVE_KEY_PATH:/graphene/Pal/src/host/Linux-SGX/signer/enclave-key.pem \
-      -v $KEYS_PATH:/ppml/trusted-cluster-serving/redis/work/keys \
-      -v $SECURE_PASSWORD_PATH:/ppml/trusted-cluster-serving/redis/work/password \
+      -v $KEYS_PATH:/ppml/trusted-realtime-ml/redis/work/keys \
+      -v $SECURE_PASSWORD_PATH:/ppml/trusted-realtime-ml/redis/work/password \
       --name=redis \
       -e SGX_MEM_SIZE=16G \
       $TRUSTED_CLUSTER_SERVING_DOCKER bash -c 'cd /ppml/trusted-realtime-ml/redis && ./init-redis.sh && ./start-redis.sh'"
@@ -86,10 +86,10 @@ ssh root@$MASTER "docker run -itd \
       --device=/dev/sgx/provision \
       -v /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket \
       -v $ENCLAVE_KEY_PATH:/graphene/Pal/src/host/Linux-SGX/signer/enclave-key.pem \
-      -v $KEYS_PATH:/ppml/trusted-cluster-serving/redis/work/keys \
-      -v $KEYS_PATH:/ppml/trusted-cluster-serving/java/work/keys \
-      -v $SECURE_PASSWORD_PATH:/ppml/trusted-cluster-serving/redis/work/password \
-      -v $SECURE_PASSWORD_PATH:/ppml/trusted-cluster-serving/java/work/password \
+      -v $KEYS_PATH:/ppml/trusted-realtime-ml/redis/work/keys \
+      -v $KEYS_PATH:/ppml/trusted-realtime-ml/java/work/keys \
+      -v $SECURE_PASSWORD_PATH:/ppml/trusted-realtime-ml/redis/work/password \
+      -v $SECURE_PASSWORD_PATH:/ppml/trusted-realtime-ml/java/work/password \
       --name=http-frontend \
       -e SGX_MEM_SIZE=32G \
       -e REDIS_HOST=$MASTER \
@@ -124,8 +124,8 @@ ssh root@$MASTER "docker run -itd \
       --device=/dev/sgx/provision \
       -v /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket \
       -v $ENCLAVE_KEY_PATH:/graphene/Pal/src/host/Linux-SGX/signer/enclave-key.pem \
-      -v $KEYS_PATH:/ppml/trusted-cluster-serving/java/work/keys \
-      -v $SECURE_PASSWORD_PATH:/ppml/trusted-cluster-serving/redis/work/password \
+      -v $KEYS_PATH:/ppml/trusted-realtime-ml/java/work/keys \
+      -v $SECURE_PASSWORD_PATH:/ppml/trusted-realtime-ml/redis/work/password \
       --name=cluster-serving \
       -e SGX_MEM_SIZE=16G \
       -e REDIS_HOST=$MASTER \

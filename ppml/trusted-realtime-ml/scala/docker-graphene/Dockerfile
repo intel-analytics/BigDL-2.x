@@ -105,14 +105,14 @@ RUN mkdir -p /graphene && \
     mkdir -p /graphene/python && \
     mkdir -p /graphene/Tools && \
     mkdir -p /graphene/Pal/src && \
-    mkdir -p /ppml/trusted-cluster-serving/redis && \
-    mkdir -p /ppml/trusted-cluster-serving/redis/work/keys && \
-    mkdir -p /ppml/trusted-cluster-serving/redis/work/password && \
-    mkdir -p /ppml/trusted-cluster-serving/java/work && \
-    mkdir -p /ppml/trusted-cluster-serving/java/work/keys && \
-    mkdir -p /ppml/trusted-cluster-serving/java/work/password && \
-    mkdir -p /ppml/trusted-cluster-serving/java/work/data && \
-    mkdir -p /ppml/trusted-cluster-serving/java/work/models && \
+    mkdir -p /ppml/trusted-realtime-ml/redis && \
+    mkdir -p /ppml/trusted-realtime-ml/redis/work/keys && \
+    mkdir -p /ppml/trusted-realtime-ml/redis/work/password && \
+    mkdir -p /ppml/trusted-realtime-ml/java/work && \
+    mkdir -p /ppml/trusted-realtime-ml/java/work/keys && \
+    mkdir -p /ppml/trusted-realtime-ml/java/work/password && \
+    mkdir -p /ppml/trusted-realtime-ml/java/work/data && \
+    mkdir -p /ppml/trusted-realtime-ml/java/work/models && \
     mkdir -p /graphene/Pal/src/host/Linux-SGX/signer
 
 COPY --from=graphene /graphene/Scripts /graphene/Scripts
@@ -136,10 +136,10 @@ RUN apt-get update --fix-missing && \
     apt-get install -y openssl libssl-dev pkg-config && \
     apt-get install -y netcat net-tools
 
-RUN mkdir -p /ppml/trusted-cluster-serving/redis/src && \
-    tar -C /ppml/trusted-cluster-serving/redis/src --strip-components=1 -xf /ppml/trusted-cluster-serving/redis/redis.tar.gz && \
-    make BUILD_TLS=yes -C /ppml/trusted-cluster-serving/redis/src && \
-    cp /ppml/trusted-cluster-serving/redis/src/src/redis-server /ppml/trusted-cluster-serving/redis/redis-server
+RUN mkdir -p /ppml/trusted-realtime-ml/redis/src && \
+    tar -C /ppml/trusted-realtime-ml/redis/src --strip-components=1 -xf /ppml/trusted-realtime-ml/redis/redis.tar.gz && \
+    make BUILD_TLS=yes -C /ppml/trusted-realtime-ml/redis/src && \
+    cp /ppml/trusted-realtime-ml/redis/src/src/redis-server /ppml/trusted-realtime-ml/redis/redis-server
 
 ADD ./redis.Makefile /ppml/trusted-realtime-ml/redis/Makefile
 ADD ./redis-server.manifest.template /ppml/trusted-realtime-ml/redis/redis-server.manifest.template

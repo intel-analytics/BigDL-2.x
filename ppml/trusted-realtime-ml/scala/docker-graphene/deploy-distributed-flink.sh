@@ -35,8 +35,8 @@ ssh root@$MASTER "docker run \
       --device=/dev/sgx/provision \
       -v /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket \
       -v $ENCLAVE_KEY_PATH:/graphene/Pal/src/host/Linux-SGX/signer/enclave-key.pem \
-      -v $KEYS_PATH:/ppml/trusted-cluster-serving/java/work/keys \
-      -v $SECURE_PASSWORD_PATH:/ppml/trusted-cluster-serving/java/work/password \
+      -v $KEYS_PATH:/ppml/trusted-realtime-ml/java/work/keys \
+      -v $SECURE_PASSWORD_PATH:/ppml/trusted-realtime-ml/java/work/password \
       --name=flink-job-manager \
       -e SGX_MEM_SIZE=32G \
       -e FLINK_JOB_MANAGER_IP=$MASTER \
@@ -76,10 +76,10 @@ for worker in ${WORKERS[@]}
         --device=/dev/sgx/provision \
         -v /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket \
         -v $ENCLAVE_KEY_PATH:/graphene/Pal/src/host/Linux-SGX/signer/enclave-key.pem \
-        -v $KEYS_PATH:/ppml/trusted-cluster-serving/redis/work/keys \
-        -v $KEYS_PATH:/ppml/trusted-cluster-serving/java/work/keys \
-        -v $SECURE_PASSWORD_PATH:/ppml/trusted-cluster-serving/redis/work/password \
-        -v $SECURE_PASSWORD_PATH:/ppml/trusted-cluster-serving/java/work/password \
+        -v $KEYS_PATH:/ppml/trusted-realtime-ml/redis/work/keys \
+        -v $KEYS_PATH:/ppml/trusted-realtime-ml/java/work/keys \
+        -v $SECURE_PASSWORD_PATH:/ppml/trusted-realtime-ml/redis/work/password \
+        -v $SECURE_PASSWORD_PATH:/ppml/trusted-realtime-ml/java/work/password \
         --name=flink-task-manager-$worker \
         -e SGX_MEM_SIZE=64G \
         -e FLINK_JOB_MANAGER_IP=$MASTER \
