@@ -311,4 +311,4 @@ Cluster Serving service is a long running service in container, you can stop it 
 docker stop trusted-cluster-servinglocal
 ```
 
-For distributed/multi-container, please refer to [Distributed Trusted Cluster Serving]()
+For distributed/multi-container, please refer to [Distributed Trusted Cluster Serving](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-realtime-ml/scala/docker-graphene#in-distributed-mode)
