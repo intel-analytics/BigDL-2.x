@@ -29,12 +29,12 @@ Note: Intel SGX requires hardware support, please [check if your CPU has this fe
   - Propretary model, e.g., model trained with self-owned or sensitive data
 - Seamless migrate existing big data applications into privacy preserving applications
 - Trusted big data & AI Platform based on Intel SGX
-  - Trusted Big Data Analytics and ML
-  - Trusted Realtime Compute and ML
+  - Trusted Big Data Analytics and ML: Spark batch, SparkSQL, BigDL, TPC-H
+  - Trusted Realtime Compute and ML: Flink batch/streaming, Cluster Serving
 
 ## Trusted Big Data Analytics and ML
 
-In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Spark in SGX, then run Spark PI example in safe way. For more examples, please refer to [trusted-big-data-ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-big-data-ml/scala/docker-graphene).
+In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Spark in SGX, then run Spark PI example in safe way. Trusted Big Data Analytics and ML supports Spark related applications, such as Spark batch jobs, SparkSQL and BigDL etc. For more examples, please refer to [trusted-big-data-ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-big-data-ml/scala/docker-graphene).
 
 ### Use cases
 
@@ -143,7 +143,7 @@ This example is a simple Spark local PI example, if you want to run application 
 
 ## Trusted Realtime Compute and ML
 
-In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Flink in SGX, then run real-time model serving in safe way. For more examples, please refer to [trusted-realtime-ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-realtime-ml/scala/docker-graphene).
+In this section, we will demonstrate how to use Analytics-Zoo to setup trusted Flink in SGX, then run real-time model serving in safe way. Trusted Realtime Compute and ML supports Flink related applications, such as Batch/Streaming Flink jobs, FlinkSQL and Cluster Serving. For more examples, please refer to [trusted-realtime-ml](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml/trusted-realtime-ml/scala/docker-graphene).
 
 ### User cases
 
