@@ -190,6 +190,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
                  sortCol: String,
                  minLength: Int,
                  maxLength: Int): DataFrame = {
+    df.sparkSession.conf.set("spark.sql.legacy.allowUntypedScalaUDF", "true")
     val colNames: Array[String] = colNamesin.asScala.toArray
     val schema = ArrayType(StructType(colNames.flatMap(c =>
       Seq(StructField(c, IntegerType), StructField(c + "_history", ArrayType(IntegerType))))))
