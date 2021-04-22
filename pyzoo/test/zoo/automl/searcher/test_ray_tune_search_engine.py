@@ -26,7 +26,6 @@ import pandas as pd
 import numpy as np
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
-import json
 
 
 class SimpleRecipe(Recipe):
@@ -35,14 +34,28 @@ class SimpleRecipe(Recipe):
         self.num_samples = 2
         self.training_iteration = 20
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         return {
             "lr": hp.uniform(0.001, 0.01),
             "batch_size": hp.choice([32, 64]),
-            "selected_features": json.dumps(all_available_features),
-            "input_dim": len(all_available_features)+1 if all_available_features else 1,
-            "output_dim": 1
         }
+
+
+def create_lstm_recipe(input_dim):
+    class LSTMRecipe(Recipe):
+        def __init__(self):
+            super().__init__()
+            self.num_samples = 2
+            self.training_iteration = 20
+
+        def search_space(self):
+            return {
+                "lr": hp.uniform(0.001, 0.01),
+                "batch_size": hp.choice([32, 64]),
+                "input_dim": input_dim,
+                "output_dim": 1
+            }
+    return LSTMRecipe()
 
 
 def linear_model_creator(config):
@@ -64,7 +77,7 @@ def prepare_searcher(data,
                      optimizer_creator=optimizer_creator,
                      loss_creator=loss_creator,
                      feature_transformer=None,
-                     recipe=SimpleRecipe(),
+                     recipe=None,
                      name="demo"):
     modelBuilder = PytorchModelBuilder(model_creator=model_creator,
                                        optimizer_creator=optimizer_creator,
@@ -73,13 +86,10 @@ def prepare_searcher(data,
                                                  logs_dir="~/zoo_automl_logs",
                                                  resources_per_trial={"cpu": 2},
                                                  name=name)
-    search_space = recipe.search_space(feature_transformer.get_feature_list())\
-        if feature_transformer else None
     searcher.compile(data=data,
                      model_create_func=modelBuilder,
                      recipe=recipe,
-                     feature_transformers=feature_transformer,
-                     search_space=search_space)
+                     feature_transformers=feature_transformer)
     return searcher
 
 
@@ -126,7 +136,9 @@ class TestRayTuneSearchEngine(ZooTestCase):
                               'val_df': pd.DataFrame({'x': val_x, 'y': val_y}),
                               'feature_cols': ['x'],
                               'target_col': 'y'}
-        searcher = prepare_searcher(data=dataframe_with_val, name='test_ray_dataframe_with_val')
+        searcher = prepare_searcher(data=dataframe_with_val,
+                                    name='test_ray_dataframe_with_val',
+                                    recipe=SimpleRecipe())
         searcher.run()
         best_trials = searcher.get_best_trials(k=1)
         assert best_trials is not None
@@ -137,9 +149,11 @@ class TestRayTuneSearchEngine(ZooTestCase):
         ft = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len,
                                             dt_col="datetime",
                                             target_col="value")
+        input_dim = len(ft.get_feature_list()) + 1
         searcher = prepare_searcher(data=dataframe_with_datetime,
                                     model_creator=LSTM_model_creator,
                                     name='test_ray_dateframe_with_datetime_with_val',
+                                    recipe=create_lstm_recipe(input_dim),
                                     feature_transformer=ft)
         searcher.run()
         best_trials = searcher.get_best_trials(k=1)
