@@ -51,7 +51,7 @@ Check SGX driver with `ls /dev | grep sgx`. If SGX driver is not installed, plea
 
 Download scripts and dockerfiles in [this link](https://github.com/intel-analytics/analytics-zoo/tree/master/ppml).
 
-##### TLS keys & password
+##### TLS keys & password & Enclave key
 
 Prepare keys for TLS (test only, need input security password for keys).
 
@@ -82,6 +82,12 @@ key.txt
 output.bin
 ```
 
+You also need to generate your enclave key using the command below, and keep it safely for future remote attestations and to start SGX enclaves more securely. It will generate a file enclave-key.pem in your present working directory, which will be your enclave key. To store the key elsewhere, modify the outputted file path.
+
+```bash
+openssl genrsa -3 -out enclave-key.pem 3072
+```
+
 ##### Docker
 
 Pull docker image from Dockerhub
@@ -109,8 +115,10 @@ cp -r ../keys .
 cp -r ../password .
 ```
 
+Before you run the following commands to start the container, you need to modify the paths in deploy-local-big-data-ml.sh.
+Then run the following commands:
 ```bash
-./start-local-big-data-ml.sh
+./deploy-local-big-data-ml.sh
 sudo docker exec -it spark-local bash
 cd /ppml/trusted-big-data-ml
 ./init.sh
@@ -160,49 +168,19 @@ The result should look like: <br>
 
 ##### **Example 3: Spark-SQL on Graphene-SGX** 
 
-Before run TPC-H test in container we created, we should download and install [SBT](https://www.scala-sbt.org/download.html) and deploy a [HDFS](https://hadoop.apache.org/docs/r1.2.1/) for TPC-H output, then build and package TPC-H dataset according to [TPC-H](https://github.com/qiuxin2012/tpch-spark) with your needs. After packaged, check if we have `spark-tpc-h-queries_2.11-1.0.jar ` under `tpch-spark/target/scala-2.11`, if have, we package successfully.
+Before run TPC-H test in container we created, we should download and install [SBT](https://www.scala-sbt.org/download.html) and deploy a [HDFS](https://hadoop.apache.org/docs/r2.7.7/hadoop-project-dist/hadoop-common/ClusterSetup.html) for TPC-H dataset and output, then build the source codes with SBT and generate TPC-H dataset according to [TPC-H](https://github.com/qiuxin2012/tpch-spark). After packaged, check if we have `spark-tpc-h-queries_2.11-1.0.jar ` under `tpch-spark/target/scala-2.11`, if have, we package successfully.
 
 Copy TPC-H to container: <br>
 ```bash
 docker cp tpch-spark/ spark-local:/ppml/trusted-big-data-ml/work
+docker cp tpch-spark/start-spark-local-tpc-h-sgx.sh spark-local:/ppml/trusted-big-data-ml/
 sudo docker exec -it spark-local bash
-vim start-spark-local-tpc-h-sgx.sh
-```
-
-Please modify HDFS_NAMENODE_IP in this script and then add these code in the `start-spark-local-tpc-h-sgx.sh` file: <br>
-```bash
-#!/bin/bash
-
-set -x
-
-SGX=1 ./pal_loader /opt/jdk8/bin/java \
-        -cp '/ppml/trusted-big-data-ml/work/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar:/ppml/trusted-big-data-ml/work/tpch-spark/dbgen/*:/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
-        -Xmx10g \
-        -Dbigdl.mklNumThreads=1 \
-        -XX:ActiveProcessorCount=24 \
-        org.apache.spark.deploy.SparkSubmit \
-        --master 'local[4]' \
-        --conf spark.driver.port=10027 \
-        --conf spark.scheduler.maxRegisteredResourcesWaitingTime=5000000 \
-        --conf spark.worker.timeout=600 \
-        --conf spark.starvation.timeout=250000 \
-        --conf spark.rpc.askTimeout=600 \
-        --conf spark.blockManager.port=10025 \
-        --conf spark.driver.host=127.0.0.1 \
-        --conf spark.driver.blockManager.port=10026 \
-        --conf spark.io.compression.codec=lz4 \
-        --conf spark.sql.shuffle.partitions=8 \
-        --class main.scala.TpchQuery \
-        --executor-cores 4 \
-        --total-executor-cores 4 \
-        --executor-memory 10G \
-        /ppml/trusted-big-data-ml/work/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar \
-        hdfs://HDFS_NAMENODE_IP:8020/dbgen hdfs://HDFS_NAMENODE_IP:8020/tmp/output | tee spark.local.tpc.h.sgx.log
+cd /ppml/trusted-big-data-ml/
 ```
 
 Then run the script to run TPC-H test in spark: <br>
 ```bash
-sh start-spark-local-tpc-h-sgx.sh
+sh start-spark-local-tpc-h-sgx.sh [your_hdfs_tpch_data_dir] [your_hdfs_output_dir]
 ```
 
 Open another terminal and check the log: <br>
