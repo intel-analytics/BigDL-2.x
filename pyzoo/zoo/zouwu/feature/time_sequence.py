@@ -540,9 +540,10 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         for attr in TIME_FEATURE:
             if attr == "WEEKOFYEAR":
                 # DatetimeProperties.weekofyear has been deprecated since pandas 1.1.0,
-                # convert to DatetimeIndex to fix
+                # convert to DatetimeIndex to fix, and call pd.Int64Index to return a index
                 field_datetime = pd.to_datetime(field.values.astype(np.int64))
-                df[attr + "({})".format(self.dt_col)] = field_datetime.isocalendar().week
+                df[attr + "({})".format(self.dt_col)] =\
+                    pd.Int64Index(field_datetime.isocalendar().week)
             else:
                 df[attr + "({})".format(self.dt_col)] = getattr(field.dt, attr.lower())
 
