@@ -62,15 +62,15 @@ If all is well, the following results should be displayed:
 
 ```
 Detecting redis status...
-Redis initilization successful.
+Redis initialization successful.
 Detecting Flink job manager status...
-Flink job manager initilization successful.
+Flink job manager initialization successful.
 Detecting Flink task manager status...
-Flink task manager initilization successful.
+Flink task manager initialization successful.
 Detecting http frontend status. This may take a while.
-Http frontend initilization successful.
+Http frontend initialization successful.
 Detecting cluster-serving-job status...
-cluster-serving-job initilization successful.
+cluster-serving-job initialization successful.
 ```
 
 It is suggested to run this script once after starting local cluster serving to verify that all components are up and running.
@@ -120,15 +120,15 @@ If all is well, the following results should be displayed:
 
 ```
 Detecting redis status...
-Redis initilization successful.
+Redis initialization successful.
 Detecting Flink job manager status...
-Flink job manager initilization successful.
+Flink job manager initialization successful.
 Detecting Flink task manager status...
-Flink task manager initilization successful.
+Flink task manager initialization successful.
 Detecting http frontend status. This may take a while.
-Http frontend initilization successful.
+Http frontend initialization successful.
 Detecting cluster-serving-job status...
-cluster-serving-job initilization successful.
+cluster-serving-job initialization successful.
 ```
 
 It is suggested to run this script once after starting distributed cluster serving to verify that all components are up and running.
