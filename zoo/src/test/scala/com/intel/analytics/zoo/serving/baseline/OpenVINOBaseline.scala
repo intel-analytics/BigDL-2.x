@@ -23,10 +23,11 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.pipeline.api.net.TFNet
 import com.intel.analytics.zoo.pipeline.inference.{DeviceType, InferenceModelFactory, OpenVINOModel, OpenVinoInferenceSupportive}
+import com.intel.analytics.zoo.serving.ClusterServing.{argv, helper}
 import com.intel.analytics.zoo.serving.PreProcessing
 import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Supportive}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Supportive}
 import scopt.OptionParser
 
 
@@ -82,8 +83,8 @@ object OpenVINOBaseline extends Supportive {
   }
   def main(args: Array[String]): Unit = {
     val param = parser.parse(args, Params()).head
-    val helper = new ClusterServingHelper()
-    helper.loadConfig()
+    val configParser = new ConfigParser(param.configPath)
+    helper = configParser.loadConfig()
     val warmT = makeTensorFromShape(param.inputShape)
     val clusterServingInference = new ClusterServingInference(null, helper)
     clusterServingInference.typeCheck(warmT)
@@ -101,7 +102,7 @@ object OpenVINOBaseline extends Supportive {
 
       (0 until param.parNum).indices.toParArray.foreach(_ => {
         val model = OpenVinoInferenceSupportive.loadOpenVinoIR(
-          helper.defPath, helper.weightPath, DeviceType.CPU, helper.thrdPerModel)
+          helper.defPath, helper.weightPath, DeviceType.CPU, helper.threadPerModel)
         val t = warmT
         model.predict(t)
 //        val model = TFNet(helper.weightPath)
@@ -114,12 +115,12 @@ object OpenVINOBaseline extends Supportive {
         val timer = new Timer()
         var a = Seq[(String, String)]()
         val pre = new PreProcessing(true)
-        (0 until helper.thrdPerModel).foreach(i =>
+        (0 until helper.threadPerModel).foreach(i =>
           a = a :+ (i.toString(), b64string)
         )
-        (0 until param.testNum).grouped(helper.thrdPerModel).flatMap(i => {
+        (0 until param.testNum).grouped(helper.threadPerModel).flatMap(i => {
           val preprocessed = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Preprocess", helper.thrdPerModel) {
+            s"Thread ${Thread.currentThread().getId} Preprocess", helper.threadPerModel) {
             a.map(item => {
               val deserializer = new ArrowDeserializer()
               val arr = deserializer.create(b64string)
@@ -130,21 +131,21 @@ object OpenVINOBaseline extends Supportive {
             })
           }
           val t = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Batch input", helper.thrdPerModel) {
+            s"Thread ${Thread.currentThread().getId} Batch input", helper.threadPerModel) {
             clusterServingInference.batchInput(
-              preprocessed, helper.thrdPerModel, false, helper.resize)
+              preprocessed, helper.threadPerModel, false, helper.resize)
           }
           clusterServingInference.dimCheck(t, "add", helper.modelType)
           val result = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Inference", helper.thrdPerModel) {
+            s"Thread ${Thread.currentThread().getId} Inference", helper.threadPerModel) {
             model.predict(t)
 //              model.forward(t)
           }
           clusterServingInference.dimCheck(t, "remove", helper.modelType)
           clusterServingInference.dimCheck(result, "remove", helper.modelType)
           val postprocessed = timer.timing(
-            s"Thread ${Thread.currentThread().getId} Postprocess", helper.thrdPerModel) {
-            (0 until helper.thrdPerModel).map(i => {
+            s"Thread ${Thread.currentThread().getId} Postprocess", helper.threadPerModel) {
+            (0 until helper.threadPerModel).map(i => {
               ArrowSerializer.activityBatchToByte(result, i + 1)
             })
           }
