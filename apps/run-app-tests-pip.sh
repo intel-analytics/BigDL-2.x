@@ -841,7 +841,7 @@ else
 fi
 
 sed -i '/get_ipython()/d; /plot./d; /plt./d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster.py
-sed -i "s/epochs=20/epochs=2/g" ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster.py
+sed -i "s/epochs=20/epochs=2/g; " ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster.py
 cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/
 
 python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/zouwu/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster.py
