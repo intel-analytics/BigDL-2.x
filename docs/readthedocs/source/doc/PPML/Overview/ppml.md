@@ -97,13 +97,17 @@ cd ppml/trusted-big-data-ml/scala/docker-graphene
 ./build-docker-image.sh
 ```
 
-#### Step 1: Single-Node Trusted Big Data Analytics and ML Platform
+#### Single-Node Trusted Big Data Analytics and ML Platform
 
-Enter `analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene` dir.
+Enter `analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene` dir. Start Spark service with this command
 
-Modify `start-local-big-data-ml.sh`. Change IP and file paths (e.g., `keys` and `password`).
-
-Start Spark service with this command
+Prepare `keys` and `password`
+```bash
+cd ppml/trusted-big-data-ml/scala/docker-graphene
+# copy keys and password into current directory
+cp -r ../keys .
+cp -r ../password .
+```
 
 ```bash
 ./start-local-big-data-ml.sh
@@ -131,9 +135,9 @@ The result should look like:
 
 >   Pi is roughly 3.1422957114785572
 
-##### **Example 2: Analytics Zoo model training on Graphene-SGX**
+##### **Example 2: BigDL model training on Graphene-SGX**
 
-This example is 
+This example is about how to train a lenet model using BigDL on Graphene-SGX. Before you run the following script, you should download the MNIST Data from [here](http://yann.lecun.com/exdb/mnist/). Use `gzip -d` to unzip all the downloaded files(train-images-idx3-ubyte.gz, train-labels-idx1-ubyte.gz, t10k-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz) and put them into folder `/ppml/trusted-big-data-ml/work/data`. Then run the following script:  
 
 ```bash
 bash start-spark-local-train-sgx.sh
@@ -154,8 +158,90 @@ The result should look like: <br>
 >   ############# ModuleLoader.saveToFile saveWeightsToFile end, used 842543 ms[P1182:T2:java] ---- end time: 1985297 ms return from shim_write(...) = 0x4b <br>
 >   ############# model saved[P1182:T2:java] ---- end time: 1985297 ms return from shim_write(...) = 0x19 <br>
 
+##### **Example 3: Spark-SQL on Graphene-SGX** 
 
-#### Step 2: Distributed Trusted Big Data Analytics and ML Platform
+Before run TPC-H test in container we created, we should download and install [SBT](https://www.scala-sbt.org/download.html) and deploy a [HDFS](https://hadoop.apache.org/docs/r1.2.1/) for TPC-H output, then build and package TPC-H dataset according to [TPC-H](https://github.com/qiuxin2012/tpch-spark) with your needs. After packaged, check if we have `spark-tpc-h-queries_2.11-1.0.jar ` under `tpch-spark/target/scala-2.11`, if have, we package successfully.
+
+Copy TPC-H to container: <br>
+```bash
+docker cp tpch-spark/ spark-local:/ppml/trusted-big-data-ml/work
+sudo docker exec -it spark-local bash
+vim start-spark-local-tpc-h-sgx.sh
+```
+
+Please modify HDFS_NAMENODE_IP in this script and then add these code in the `start-spark-local-tpc-h-sgx.sh` file: <br>
+```bash
+#!/bin/bash
+
+set -x
+
+SGX=1 ./pal_loader /opt/jdk8/bin/java \
+        -cp '/ppml/trusted-big-data-ml/work/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar:/ppml/trusted-big-data-ml/work/tpch-spark/dbgen/*:/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+        -Xmx10g \
+        -Dbigdl.mklNumThreads=1 \
+        -XX:ActiveProcessorCount=24 \
+        org.apache.spark.deploy.SparkSubmit \
+        --master 'local[4]' \
+        --conf spark.driver.port=10027 \
+        --conf spark.scheduler.maxRegisteredResourcesWaitingTime=5000000 \
+        --conf spark.worker.timeout=600 \
+        --conf spark.starvation.timeout=250000 \
+        --conf spark.rpc.askTimeout=600 \
+        --conf spark.blockManager.port=10025 \
+        --conf spark.driver.host=127.0.0.1 \
+        --conf spark.driver.blockManager.port=10026 \
+        --conf spark.io.compression.codec=lz4 \
+        --conf spark.sql.shuffle.partitions=8 \
+        --class main.scala.TpchQuery \
+        --executor-cores 4 \
+        --total-executor-cores 4 \
+        --executor-memory 10G \
+        /ppml/trusted-big-data-ml/work/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar \
+        hdfs://HDFS_NAMENODE_IP:8020/dbgen hdfs://HDFS_NAMENODE_IP:8020/tmp/output | tee spark.local.tpc.h.sgx.log
+```
+
+Then run the script to run TPC-H test in spark: <br>
+```bash
+sh start-spark-local-tpc-h-sgx.sh
+```
+
+Open another terminal and check the log: <br>
+```bash
+sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.tpc.h.sgx.log | egrep "###|INFO|finished"
+```
+
+The result should look like: <br>
+>   ----------------22 finished--------------------
+
+#### Distributed Trusted Big Data Analytics and ML Platform
+
+##### **Step 1: Configure the environments for master, workers, docker image, security keys/password files, enclave key, and data path.**
+Requirement: setup passwordless ssh login to all the nodes.
+```bash
+nano environments.sh
+```
+##### **Step 2: Start distributed big data ML**
+To start the Spark services for distributed big data ML, run
+```bash
+./deploy-distributed-standalone-spark.sh
+```
+
+Then run the following command to start the training:
+```bash
+./start-distributed-spark-train-sgx.sh
+```
+
+##### **Step 3: Stop distributed big data ML**
+When stopping distributed big data ML, stop the training first:
+```bash
+./stop-distributed-standalone-spark.sh
+```
+Then stop the spark services:
+```bash
+./undeploy-distributed-standalone-spark.sh
+```
+
+-----------------------------------------------
 
 ## Trusted Realtime Compute and ML
 
