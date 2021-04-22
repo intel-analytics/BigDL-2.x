@@ -17,6 +17,7 @@ class ServingFrontendSerializer extends JsonDeserializer[Activity]{
   var stringBuffer: ArrayBuffer[String] = null
   var shapeBuffer: ArrayBuffer[Int] = null
   var valueCount: Int = 0
+  var shapeMask: Map[Int, Boolean] = null
   override def deserialize(p: JsonParser, ctxt: DeserializationContext): Activity = {
     val oc = p.getCodec
     val node = oc.readTree[JsonNode](p)
@@ -24,7 +25,7 @@ class ServingFrontendSerializer extends JsonDeserializer[Activity]{
     val tensorBuffer = new ArrayBuffer[Tensor[Float]]()
     while (inputsIt.hasNext) {
       initBuffer()
-      parse(inputsIt.next())
+      parse(inputsIt.next(), 0)
       if (shapeBuffer.isEmpty) shapeBuffer.append(1)
       if (!floatBuffer.isEmpty) {
         tensorBuffer.append(Tensor[Float](floatBuffer.toArray, shapeBuffer.toArray))
@@ -36,14 +37,17 @@ class ServingFrontendSerializer extends JsonDeserializer[Activity]{
     }
     T.array(tensorBuffer.toArray)
   }
-  def parse(node: JsonNode): Unit = {
+  def parse(node: JsonNode, currentShapeDim: Int): Unit = {
     if (node.isInstanceOf[ArrayNode]) {
 
       val iter = node.elements()
-      while (iter.hasNext) {
-        parse(iter.next())
+      if (shapeMask.get(currentShapeDim) == None) {
+        shapeBuffer.append(node.size())
+        shapeMask += (currentShapeDim -> true)
       }
-      shapeBuffer.append(node.size())
+      while (iter.hasNext) {
+        parse(iter.next(), currentShapeDim + 1)
+      }
     } else if (node.isInstanceOf[TextNode]) {
       stringBuffer.append(node.asText())
     } else if (node.isInstanceOf[ObjectNode]) {
@@ -58,6 +62,7 @@ class ServingFrontendSerializer extends JsonDeserializer[Activity]{
     floatBuffer = new ArrayBuffer[Float]()
     shapeBuffer = new ArrayBuffer[Int]()
     stringBuffer = new ArrayBuffer[String]()
+    shapeMask = Map[Int, Boolean]()
   }
 
 }

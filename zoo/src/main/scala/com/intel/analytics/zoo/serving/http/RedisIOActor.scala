@@ -50,7 +50,7 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX + Conven
       }
   }
   def enqueue(queue: String, input: DataInputMessage): Unit = {
-    silent(s"${self.path.name} put request to redis")(FrontEndApp.putRedisTimer) {
+    timing(s"${self.path.name} put request to redis")(FrontEndApp.putRedisTimer) {
       val hash = new HashMap[String, String]()
       val bytes = StreamSerializer.objToBytes(input.inputs)
       val b64 = java.util.Base64.getEncoder.encodeToString(bytes)

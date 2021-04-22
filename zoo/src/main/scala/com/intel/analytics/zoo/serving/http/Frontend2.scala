@@ -73,9 +73,9 @@ object Frontend2 extends Supportive with EncryptSupportive {
 
       def processPredictionInput(inputs: Activity):
       Seq[PredictionOutput[String]] = {
-        val result = silent("response waiting")() {
+        val result = timing("response waiting")() {
           val id = UUID.randomUUID().toString
-          val results = silent(s"query message wait for key $id")() {
+          val results = timing(s"query message wait for key $id")() {
             Await.result(ioActor ? DataInputMessage(id, inputs), timeout.duration)
               .asInstanceOf[ModelOutputMessage].valueMap
           }
