@@ -176,7 +176,6 @@ class BasePredictor(object):
                                        )
         searcher.compile(data={'df': input_df, 'val_df': validation_df},
                          model_create_func=model_fn,
-                         search_space=search_space,
                          recipe=recipe,
                          search_alg=self.search_alg,
                          search_alg_params=self.search_alg_params,
