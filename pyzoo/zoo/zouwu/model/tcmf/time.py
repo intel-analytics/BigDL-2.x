@@ -94,7 +94,7 @@ class TimeCovariates(object):
         return monthYear
 
     def _week_of_year(self):
-        weekYear = np.array(self.dti.weekofyear, dtype=np.float)
+        weekYear = np.array(pd.Int64Index(self.dti.isocalendar().week), dtype=np.float)
         if self.normalized:
             weekYear = weekYear / 51.0 - 0.5
         return weekYear
