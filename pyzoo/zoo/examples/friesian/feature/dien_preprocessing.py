@@ -46,7 +46,7 @@ if __name__ == "__main__":
         .withColumnRenamed('reviewerID', 'user') \
         .withColumnRenamed('asin', 'item') \
         .withColumnRenamed('unixReviewTime', 'time')\
-        .sample(0.0001).dropna("any").persist(storageLevel=StorageLevel.DISK_ONLY)
+        .dropna("any").persist(storageLevel=StorageLevel.DISK_ONLY)
     transaction_tbl = FeatureTable(transaction_df)
     print("review_tbl, ", transaction_tbl.count())
 

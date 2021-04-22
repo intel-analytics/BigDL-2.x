@@ -418,7 +418,8 @@ class FeatureTable(Table):
 
          :return: FeatureTable
          """
-        item2cat_map = dict(feature_tbl.df.distinct().rdd.map(lambda row: (row[0], row[1])).collect())
+        item2cat_map = dict(feature_tbl.df.distinct().rdd.map(lambda row: (row[0], row[1]))
+                            .collect())
 
         def gen_cat(items):
             getcat = lambda item: item2cat_map.get(item, default_value)
