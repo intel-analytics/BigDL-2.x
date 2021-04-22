@@ -22,6 +22,7 @@ from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 import json
+from packaging import version
 
 TIME_FEATURE = ("MINUTE", "DAY", "DAYOFYEAR", "HOUR", "WEEKDAY", "WEEKOFYEAR", "MONTH")
 ADDITIONAL_TIME_FEATURE = ("IS_AWAKE", "IS_BUSY_HOURS", "IS_WEEKEND")
@@ -538,7 +539,8 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
         # built in time features
         for attr in TIME_FEATURE:
-            if attr == "WEEKOFYEAR":
+            if attr == "WEEKOFYEAR" and \
+                    version.parse(pd.__version__) >= version.parse("1.1.0"):
                 # DatetimeProperties.weekofyear has been deprecated since pandas 1.1.0,
                 # convert to DatetimeIndex to fix, and call pd.Int64Index to return a index
                 field_datetime = pd.to_datetime(field.values.astype(np.int64))

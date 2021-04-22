@@ -47,6 +47,7 @@
 
 import pandas as pd
 import numpy as np
+from packaging import version
 
 
 class TimeCovariates(object):
@@ -94,7 +95,9 @@ class TimeCovariates(object):
         return monthYear
 
     def _week_of_year(self):
-        weekYear = np.array(pd.Int64Index(self.dti.isocalendar().week), dtype=np.float)
+        weekYear = np.array(pd.Int64Index(self.dti.isocalendar().week), dtype=np.float) if\
+            version.parse(pd.__version__) >= version.parse("1.1.0") else\
+            np.array(self.dti.weekofyear, dtype=np.float)
         if self.normalized:
             weekYear = weekYear / 51.0 - 0.5
         return weekYear
