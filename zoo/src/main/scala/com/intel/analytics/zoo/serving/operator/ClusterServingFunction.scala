@@ -27,6 +27,7 @@ import org.apache.flink.table.functions.{FunctionContext, ScalarFunction}
 import org.apache.flink.util.FileUtils
 import org.slf4j.LoggerFactory
 
+@SerialVersionUID(1L)
 class ClusterServingFunction()
   extends ScalarFunction {
   val clusterServingParams = new ClusterServingParams()
