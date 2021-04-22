@@ -1,11 +1,20 @@
 # Trusted Realtime ML
+<<<<<<< HEAD
 SGX-based Trusted Big Data ML allows user to run end-to-end Intel Analytics Zoo cluster serving with Flink local and distributed cluster on Graphene-SGX.
+=======
+SGX-based Trusted Big Data ML allows user to run end to end Intel Analytics Zoo cluster serving with Flink local and distributed cluster on Graphene-SGX.
+>>>>>>> Fix typo
 
 *Please mind the IP and file path settings. They should be changed to the IP/path of your own SGX server on which you are running the programs.*
 
 ## How To Build
+<<<<<<< HEAD
 Before running the following command, please modify the paths in `build-docker-image.sh` first. <br>
 Then, build the docker image by running: <br>
+=======
+Before run the following command, please modify the paths in the build-docker-image.sh file at first. <br>
+Then build docker image by running this command: <br>
+>>>>>>> Fix typo
 ```bash
 ./build-docker-image.sh
 ```
