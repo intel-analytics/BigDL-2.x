@@ -51,8 +51,10 @@ class TestTcn(TestCase):
         mse, smape = self.model.evaluate(self.val_data[0],
                                          self.val_data[1],
                                          metrics=["mse", "smape"])
-        assert len(mse) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
-        assert len(smape) == self.val_data[1].shape[-1] * self.val_data[1].shape[-2]
+        assert len(mse) == self.val_data[1].shape[-2]
+        assert len(mse[0]) == self.val_data[1].shape[-1]
+        assert len(smape) == self.val_data[1].shape[-2]
+        assert len(smape[0]) == self.val_data[1].shape[-1]
 
     def test_predict_save_restore(self):
         config = {"batch_size": 128}

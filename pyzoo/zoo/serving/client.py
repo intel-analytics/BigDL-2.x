@@ -68,13 +68,11 @@ class API:
     """
     def __init__(self, host=None, port=None, name="serving_stream"):
         self.name = name
-        if not host:
-            host = "localhost"
-        if not port:
-            port = "6379"
+        self.host = host if host else "localhost"
+        self.port = port if port else "6379"
 
-        self.db = redis.StrictRedis(host=host,
-                                    port=port, db=0)
+        self.db = redis.StrictRedis(host=self.host,
+                                    port=self.port, db=0)
         try:
             self.db.xgroup_create(name, "serving")
         except Exception:
@@ -82,9 +80,9 @@ class API:
 
 
 class InputQueue(API):
-    def __init__(self, host=None, port=None, sync=True, frontend_url=None):
-        super().__init__(host, port)
-        self.frontend_url = None
+    def __init__(self, frontend_url=None, **kwargs):
+        super().__init__(**kwargs)
+        self.frontend_url = frontend_url
         if self.frontend_url:
             # frontend_url is provided, using frontend
             try:
@@ -98,7 +96,7 @@ class InputQueue(API):
             except Exception as e:
                 print("Connection error, please check your HTTP server. Error msg is ", e)
         else:
-            self.output_queue = OutputQueue(host, port)
+            self.output_queue = OutputQueue(**kwargs)
 
         # TODO: these params can be read from config in future
         self.input_threshold = 0.6
@@ -234,8 +232,8 @@ class InputQueue(API):
 
 
 class OutputQueue(API):
-    def __init__(self, host=None, port=None):
-        super().__init__(host, port)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def dequeue(self):
         res_list = self.db.keys(RESULT_PREFIX + self.name + ':*')

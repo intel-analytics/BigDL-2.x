@@ -115,7 +115,8 @@ RUN mkdir -p /graphene && \
     mkdir -p /ppml/trusted-big-data-ml/work/password && \
     mkdir -p /ppml/trusted-big-data-ml/work/data && \
     mkdir -p /ppml/trusted-big-data-ml/work/models && \
-    mkdir -p /ppml/trusted-big-data-ml/work/apps
+    mkdir -p /ppml/trusted-big-data-ml/work/apps && \
+    mkdir -p /graphene/Pal/src/host/Linux-SGX/signer
 
 COPY --from=graphene /graphene/Scripts /graphene/Scripts
 COPY --from=graphene /graphene/Runtime/ /graphene/Runtime
@@ -133,10 +134,7 @@ RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils vim curl nano wget unzip maven git tree && \
     apt-get install -y libsm6 make build-essential && \
     apt-get install -y autoconf gawk bison libcurl4-openssl-dev python3-protobuf libprotobuf-c-dev protobuf-c-compiler && \
-    apt-get install -y netcat net-tools && \
-    mkdir -p /graphene/Pal/src/host/Linux-SGX/signer && \
-    cd /graphene/Pal/src/host/Linux-SGX/signer && \
-    openssl genrsa -3 -out enclave-key.pem 3072
+    apt-get install -y netcat net-tools
 
 ADD ./java.manifest.template /ppml/trusted-big-data-ml/java.manifest.template
 ADD ./Makefile /ppml/trusted-big-data-ml/Makefile
@@ -145,9 +143,15 @@ ADD ./start-spark-local-train-sgx.sh /ppml/trusted-big-data-ml/start-spark-local
 ADD ./start-spark-standalone-master-sgx.sh /ppml/trusted-big-data-ml/start-spark-standalone-master-sgx.sh
 ADD ./start-spark-standalone-worker-sgx.sh /ppml/trusted-big-data-ml/start-spark-standalone-worker-sgx.sh
 ADD ./start-spark-standalone-driver-sgx.sh /ppml/trusted-big-data-ml/start-spark-standalone-driver-sgx.sh
+ADD ./distributed-check-status.sh /ppml/trusted-big-data-ml/distributed-check-status.sh
+ADD ./check-status.sh /ppml/trusted-big-data-ml/check-status.sh
+ADD ./ppml-spark-submit.sh /ppml/trusted-big-data-ml/ppml-spark-submit.sh
 
 RUN chmod a+x /ppml/trusted-big-data-ml/init.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-local-train-sgx.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-master-sgx.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-worker-sgx.sh && \
-    chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-driver-sgx.sh
+    chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-driver-sgx.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/distributed-check-status.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/check-status.sh
+   

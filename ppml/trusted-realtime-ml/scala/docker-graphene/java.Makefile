@@ -5,10 +5,10 @@ G_JAVA_XMX ?= 2G
 G_SGX_SIZE ?= 8G
 G_SGX_THREAD_NUM ?= 256
 
-THIS_DIR ?= /ppml/trusted-cluster-serving/java
+THIS_DIR ?= /ppml/trusted-realtime-ml/java
 JDK_HOME ?= /opt/jdk8
 WORK_DIR ?= $(THIS_DIR)/work
-FLINK_HOME?=/ppml/trusted-cluster-serving/java/work/flink-1.10.1
+FLINK_HOME ?= /ppml/trusted-realtime-ml/java/work/flink-1.10.1
 
 ifeq ($(DEBUG),1)
 GRAPHENE_LOG_LEVEL = debug
@@ -38,6 +38,7 @@ java.manifest: java.manifest.template
                 -e 's|$$(SPARK_HOME)|'"$(SPARK_HOME)"'|g' \
                 -e 's|$$(WORK_DIR)|'"$(WORK_DIR)"'|g' \
                 -e 's|$$(G_SGX_SIZE)|'"$(G_SGX_SIZE)"'|g' \
+                -e 's|$$(FLINK_HOME)|'"$(FLINK_HOME)"'|g' \
                 $< > $@
 
 java.manifest.sgx: java.manifest

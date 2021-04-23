@@ -16,12 +16,12 @@
 #
 
 from zoo.automl.search import SearchEngineFactory
-from zoo.automl.model import ModelBuilder
+from zoo.automl.model import PytorchModelBuilder, KerasModelBuilder
 import torch
 import tensorflow as tf
 import torch.nn as nn
 from zoo.automl.recipe.base import Recipe
-from ray import tune
+from zoo.orca.automl import hp
 import numpy as np
 from zoo.orca import init_orca_context
 
@@ -59,8 +59,8 @@ class SimpleRecipe(Recipe):
 
     def search_space(self, all_available_features):
         return {
-            "lr": tune.uniform(0.01, 0.02),
-            "batch_size": tune.choice([16, 32, 64])
+            "lr": hp.uniform(0.01, 0.02),
+            "batch_size": hp.choice([16, 32, 64])
         }
 
 
@@ -78,9 +78,9 @@ def get_data():
 if __name__ == "__main__":
     # 1. the way to enable auto tuning model from creators.
     init_orca_context(init_ray_on_spark=True)
-    modelBuilder = ModelBuilder.from_pytorch(model_creator=model_creator,
-                                             optimizer_creator=optimizer_creator,
-                                             loss_creator=loss_creator)
+    modelBuilder = PytorchModelBuilder(model_creator=model_creator,
+                                       optimizer_creator=optimizer_creator,
+                                       loss_creator=loss_creator)
 
     searcher = SearchEngineFactory.create_engine(backend="ray",
                                                  logs_dir="~/zoo_automl_logs",
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     val_result_pytorch_manual = model.evaluate(x=data["x"], y=data["y"], metrics=['rmse'])
 
     # 3. try another modelbuilder based on tfkeras
-    modelBuilder_keras = ModelBuilder.from_tfkeras(model_creator_keras)
+    modelBuilder_keras = KerasModelBuilder(model_creator_keras)
     model = modelBuilder_keras.build(config={
         "lr": 1e-2,  # used in optimizer_creator
         "batch_size": 32,  # used in data_creator

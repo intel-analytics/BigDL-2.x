@@ -136,6 +136,13 @@ now=$(date "+%s")
 time9=$((now-start))
 clear_up
 
+echo "#10 Start zouwu autots tests"
+start=$(date "+%s")
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/zouwu/examples/quickstart/zouwu_autots_nyc_taxi.py --cluster_mode yarn
+now=$(date "+%s")
+time10=$((now-start))
+
+
 echo "#1 orca tf transfer_learning time used:$time1 seconds"
 echo "#2 orca tf basic_text_classification time used:$time2 seconds"
 echo "#3 orca bigdl attention time used:$time3 seconds"
@@ -145,3 +152,4 @@ echo "#6 orca rl_pong time used:$time6 seconds"
 echo "#7 orca multiagent time used:$time7 seconds"
 echo "#8 orca async_parameter_server time used:$time8 seconds"
 echo "#9 orca sync_parameter_server time used:$time9 seconds"
+echo "#10 zouwu autots time used:$time10 seconds"

@@ -1,12 +1,11 @@
 # Trusted Big Data ML
-SGX-based Trusted Big Data ML allows user to run end to end big data analytics application and Intel Analytics Zoo and BigDL model training with spark local and distributed cluster on Graphene-SGX.
+SGX-based Trusted Big Data ML allows the user to run end-to-end big data analytics application and Intel Analytics Zoo and BigDL model training with spark local and distributed cluster on Graphene-SGX.
 
-*Please mind the ip and file path settings, they should be changed to the ip/path of your own sgx server on which you are running the programs.*
+*Please mind the IP and file path settings. They should be changed to the IP/path of your own sgx server on which you are running the programs.*
 
-
-## How To Build 
-Before run the following command, please modify the pathes in the build-docker-image.sh file at first. <br>
-Then build docker image by running this command: <br>
+## How To Build
+Before running the following command, please modify the paths in `build-docker-image.sh`. <br>
+Then build the docker image by running this command: <br>
 ```bash
 ./build-docker-image.sh
 ```
@@ -16,36 +15,41 @@ Then build docker image by running this command: <br>
 ### Prerequisite
 To launch Trusted Big Data ML applications on Graphene-SGX, you need to install graphene-sgx-driver:
 ```bash
-../../../scripts/install-graphene-driver.sh
+sudo bash ../../../scripts/install-graphene-driver.sh
 ```
 
 ### Prepare the data
 To train a model with ppml in analytics zoo and bigdl, you need to prepare the data first. The Docker image is taking lenet and mnist as example. <br>
 You can download the MNIST Data from [here](http://yann.lecun.com/exdb/mnist/). Unzip all the files and put them in one folder(e.g. mnist). <br>
-There're four files. **train-images-idx3-ubyte** contains train images, **train-labels-idx1-ubyte** is train label file, **t10k-images-idx3-ubyte** has validation images and **t10k-labels-idx1-ubyte** contains validation labels. For more detail, please refer to the download page. <br>
-After you uncompress the gzip files, these files may be renamed by some uncompress tools, e.g. **train-images-idx3-ubyte** is renamed to **train-images.idx3-ubyte**. Please change the name back before you run the example.  <br>
+There are four files. **train-images-idx3-ubyte** contains train images, **train-labels-idx1-ubyte** is train label file, **t10k-images-idx3-ubyte** has validation images and **t10k-labels-idx1-ubyte** contains validation labels. For more detail, please refer to the download page. <br>
+After you decompress the gzip files, these files may be renamed by some decompress tools, e.g. **train-images-idx3-ubyte** is renamed to **train-images.idx3-ubyte**. Please change the name back before you run the example.  <br>
 
 ### Prepare the keys
 The ppml in analytics zoo needs secured keys to enable spark security such as Authentication, RPC Encryption, Local Storage Encryption and TLS, you need to prepare the secure keys and keystores.
 This script is in /analytics-zoo/ppml/scripts:
 ```bash
-../../../scripts/generate-keys.sh
+sudo bash ../../../scripts/generate-keys.sh
+```
+You also need to generate your enclave key using the command below, and keep it safely for future remote attestations and to start SGX enclaves more securely.
+It will generate a file `enclave-key.pem` in your present working directory, which will be your enclave key. To store the key elsewhere, modify the outputted file path.
+```bash
+openssl genrsa -3 -out enclave-key.pem 3072
 ```
 ### Prepare the password
-You also need to store the password you used in previous step in a secured file:
+Next, you need to store the password you used in the previous step in a secured file:
 This script is also in /analytics-zoo/ppml/scripts:
 ```bash
-../../../scripts/generate-password.sh used_password_when_generate_keys
+sudo bash ../../../scripts/generate-password.sh used_password_when_generate_keys
 ```
 
 ### Run the PPML as Docker containers
 
 #### In spark local mode
 ##### Start the container to run spark applications in ppml
-Before you run the following command to start container, you need to modify the paths in the start-local-big-data-ml.sh. <br>
-Then run the following command: <br>
+Before you run the following commands to start the container, you need to modify the paths in `deploy-local-big-data-ml.sh`. <br>
+Then run the following commands: <br>
 ```bash
-./start-local-big-data-ml.sh
+./deploy-local-big-data-ml.sh
 sudo docker exec -it spark-local bash
 cd /ppml/trusted-big-data-ml
 ```
@@ -55,7 +59,7 @@ cd /ppml/trusted-big-data-ml
 ./init.sh
 vim start-spark-local-pi-sgx.sh
 ```
-Add these code in the `start-spark-local-pi-sgx.sh` file: <br>
+Add these code in `start-spark-local-pi-sgx.sh`: <br>
 ```bash
 #!/bin/bash
 
@@ -86,8 +90,7 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
 
 Then run the script to run pi test in spark: <br>
 ```bash
-chmod a+x start-spark-local-pi-sgx.sh
-./start-spark-local-pi-sgx.sh
+sh start-spark-local-pi-sgx.sh
 ```
 
 Open another terminal and check the log:
@@ -154,6 +157,7 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
         --conf spark.driver.host=127.0.0.1 \
         --conf spark.driver.blockManager.port=10026 \
         --conf spark.io.compression.codec=lz4 \
+        --conf spark.sql.shuffle.partitions=8 \
         --class main.scala.TpchQuery \
         --executor-cores 4 \
         --total-executor-cores 4 \
@@ -164,29 +168,76 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
 
 Then run the script to run TPC-H test in spark: <br>
 ```bash
-chmod a+x start-spark-local-tpc-h-sgx.sh
-./start-spark-local-tpc-h-sgx.sh
+sh start-spark-local-tpc-h-sgx.sh
 ```
 
 Open another terminal and check the log: <br>
 ```bash
-sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.tpc.h.sgx.log | egrep "###|INFO"
+sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/spark.local.tpc.h.sgx.log | egrep "###|INFO|finished"
 ```
+
+The result should look like: <br>
+>   ----------------22 finished--------------------
+
 ##### Other Spark workloads are also supported, please follow the 3 examples to submit your workload with spark on Graphene-SGX
 
 
 #### In spark standalone cluster mode
-##### setup passwordless ssh login to all the nodes.
-##### config the environments for master, workers, docker image, security keys/password files and data path.
+
+Pay attention to the filenames here. They can be quite confusing.
+
+##### Setup passwordless ssh login to all the nodes.
+##### Configure the environments for master, workers, docker image, security keys/password files, enclave key, and data path.
 ```bash
 nano environments.sh
 ```
-##### start the distributed bigdata ml
+##### Start distributed big data ML
+To start the Spark services for distributed big data ML, run
 ```bash
-./start-distributed-big-data-ml.sh
+./deploy-distributed-standalone-spark.sh
 ```
-##### stop the distributed bigdata ml
+
+Then run the following command to start the training:
 ```bash
-./stop-distributed-big-data-ml.sh
+./start-distributed-spark-train-sgx.sh
 ```
+
+##### Stop distributed big data ML
+When stopping distributed big data ML, stop the training first:
+```bash
+./stop-distributed-standalone-spark.sh
+```
+Then stop the spark services:
+```bash
+./undeploy-distributed-standalone-spark.sh
+```
+
 ##### Other Spark workloads are also supported, please follow the 3 examples to submit your workload with spark on Graphene-SGX
+
+Note that in the distributed scenario, you need to run them in the container named `spark-driver` instead of `spark-local` for these examples to work.
+
+##### Troubleshooting
+You can run the script `sudo bash distributed-check-status.sh` after starting distributed cluster serving to check whether the components have been correctly started.
+
+To test a specific component, pass one or more argument to it among the following:
+"master", and "worker". For example, run the following command to check the status of the Spark job master.
+
+```bash
+./distributed-check-status.sh master
+```
+
+To test all components, you can either pass no argument or pass the "all" argument.
+
+```bash
+./distributed-check-status.sh
+```
+If all is well, the following results should be displayed:
+
+```
+(1/2) Detecting Master state...
+Master initialization successful.
+(2/2) Detecting Worker state...
+Worker initialization successful.
+```
+
+It is suggested to run this script once after starting distributed cluster serving to verify that all components are up and running.
