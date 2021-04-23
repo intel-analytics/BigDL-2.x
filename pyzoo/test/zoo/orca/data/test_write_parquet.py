@@ -22,7 +22,7 @@ import os
 from zoo.orca.data.image.parquet_dataset import ParquetDataset
 from zoo.orca.data.image.parquet_dataset import _write_ndarrays, write_from_directory
 from zoo.orca.data.image.utils import DType, FeatureType, SchemaField
-from zoo.orca.learn.tf.estimator import Estimator
+from zoo.orca.learn.tf2.estimator import Estimator
 from zoo.orca.data.image import write_mnist
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
