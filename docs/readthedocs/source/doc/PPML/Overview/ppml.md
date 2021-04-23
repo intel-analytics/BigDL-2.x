@@ -38,7 +38,7 @@ In this section, we will demonstrate how to use Analytics-Zoo to setup trusted S
 ### Get started
 
 #### Prerequisite: 
-(1)Install SGX Driver & Prepare Scripts
+(1) Install SGX Driver & Prepare Scripts
 
 Please check if current platform [has SGX feature](https://www.intel.com/content/www/us/en/support/articles/000028173/processors/intel-core-processors.html). Then, enable SGX feature in BIOS. Note that after SGX is enabled, a portion of memory will be assigned to SGX (this memory cannot be seen/used by OS and other applications).
 
