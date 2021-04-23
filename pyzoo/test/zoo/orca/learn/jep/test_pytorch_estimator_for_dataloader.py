@@ -57,6 +57,7 @@ class TestEstimatorForSparkDataLoader(TestCase):
                 x = self.bn1(x)
                 x = torch.sigmoid(self.dense2(x))
                 return x
+
         model = SimpleModel()
 
         estimator = Estimator.from_torch(model=model, loss=nn.BCELoss(),
