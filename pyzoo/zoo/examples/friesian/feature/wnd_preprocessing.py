@@ -20,13 +20,17 @@ import os
 
 from argparse import ArgumentParser
 from time import time
+from functools import reduce
 
 from zoo.orca import init_orca_context, stop_orca_context
+from zoo.orca.data.file import makedirs, write_text, exists
 from zoo import init_nncontext
 
 LABEL_COL = 0
-INT_COLS = ["_c{}".format(i) for i in list(range(1, 14))]
-CAT_COLS = ["_c{}".format(i) for i in list(range(14, 40))]
+INT_COLS = ["c{}".format(i) for i in list(range(1, 14))]
+CAT_COLS = ["c{}".format(i) for i in list(range(14, 40))]
+
+CROSS_COLS = [CAT_COLS[0:2], CAT_COLS[2:4]]
 
 conf = {"spark.network.timeout": "10000000",
         "spark.sql.broadcastTimeout": "7200",
@@ -82,7 +86,8 @@ def _parse_args():
 if __name__ == '__main__':
     args = _parse_args()
     if args.cluster_mode == "local":
-        init_orca_context("local", cores=args.executor_cores, memory=args.executor_memory)
+        # init_orca_context("local", cores=args.executor_cores, memory=args.executor_memory)
+        sc = init_nncontext("wnd")
     elif args.cluster_mode == "standalone":
         init_orca_context("standalone", master=args.master,
                           cores=args.executor_cores, num_nodes=args.num_executor,
@@ -94,19 +99,44 @@ if __name__ == '__main__':
                           num_nodes=args.num_executor, memory=args.executor_memory,
                           driver_cores=args.driver_cores, driver_memory=args.driver_memory,
                           conf=conf)
+
     time_start = time()
-    paths = [os.path.join(args.input_folder, 'day_%d.parquet' % i) for i in args.day_range]
+    paths = [os.path.join(args.input_folder, 'sample_test_day_%d.parquet' % i) for i in args.day_range]
     tbl = FeatureTable.read_parquet(paths)
+    # change name for all columns
+    columns = dict([("_c{}".format(i), "c{}".format(i)) for i in range(40)])
+    tbl = tbl.rename(columns)
     idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
+    cat_sizes = [idx.count() for idx in idx_list]
+    # cross_sizes = [reduce(lambda x, y: round(x * y * 0.0001), sizes)
+    #                for sizes in [cat_sizes[0:2], cat_sizes[2:4]]]
+
+    cross_sizes = [10000, 10000]
+
     tbl_all_data = tbl.encode_string(CAT_COLS, idx_list)\
         .fillna(0, INT_COLS + CAT_COLS)\
         .normalize(INT_COLS)\
-        .cross_columns(cross_column_list=[CAT_COLS[0:2], CAT_COLS[2:4]],
-                                              cross_sizes=[100, 100])
+        .cross_columns(crossed_columns=[CAT_COLS[0:2], CAT_COLS[2:4]],
+                       bucket_sizes=cross_sizes)
     tbl_all_data.compute()
     time_end = time()
     print("Train data loading and preprocessing time: ", time_end - time_start)
+
+    # save meta
+    if not exists(os.path.join(args.output_folder, "meta")):
+        makedirs(os.path.join(args.output_folder, "meta"))
+    cate_sizes_text = ""
+    for i in cat_sizes:
+        cate_sizes_text += str(i) + '\n'
+    write_text(os.path.join(args.output_folder, "meta/categorical_sizes.txt"), cate_sizes_text)
+
+    cross_sizes_text = ""
+    for i in cross_sizes:
+        cross_sizes_text += str(i) + '\n'
+    write_text(os.path.join(args.output_folder, "meta/cross_sizes.txt"), cross_sizes_text)
+
     tbl_all_data.show(5)
     print("Finished")
-    tbl_all_data.write_parquet(args.output_folder)
-    stop_orca_context()
+    tbl_all_data.write_parquet(os.path.join(args.output_folder, "data_parquet"))
+    # stop_orca_context()
+    sc.stop()
