@@ -48,7 +48,9 @@ Check SGX driver with `ls /dev | grep sgx`. If SGX driver is not installed, plea
 ./ppml/scripts/install-graphene-driver.sh
 ```
 
-(2) You also need to generate your enclave key using the command below, and keep it safely for future remote attestations and to start SGX enclaves more securely. It will generate a file enclave-key.pem in your present working directory, which will be your enclave key. To store the key elsewhere, modify the outputted file path.
+(2) Generate key for enclave
+
+You also need to generate your enclave key using the command below, and keep it safely for future remote attestations and to start SGX enclaves more securely. It will generate a file enclave-key.pem in your present working directory, which will be your enclave key. To store the key elsewhere, modify the outputted file path.
 
 ```bash
 openssl genrsa -3 -out enclave-key.pem 3072
