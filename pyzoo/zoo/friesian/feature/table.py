@@ -116,7 +116,7 @@ class Table:
         else:
             return self._clone(fill_na(self.df, value, columns))
 
-    def dropna(self, how='any', thresh=None, columns):
+    def dropna(self, columns, how='any', thresh=None):
         """
         Drops the rows containing null values in the specified columns.
 
