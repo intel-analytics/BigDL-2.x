@@ -350,7 +350,7 @@ class TestTable(TestCase):
                                            "the number of specified columns"
         assert median_tbl.df.filter("column == 'col_1'").count() == 1, "col_1 should exist in " \
                                                                        "'column' of median_tbl"
-        assert median_tbl.df.filter("column == 'col_2'").filter("median == 1.0"), \
+        assert median_tbl.df.filter("column == 'col_2'").filter("median == 1.0").count() == 1, \
             "the median of col_2 should be 1.0"
 
 

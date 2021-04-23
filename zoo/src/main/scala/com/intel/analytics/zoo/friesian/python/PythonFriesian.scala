@@ -180,20 +180,24 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     }
     var resultDF = df
     val cols = columns.asScala.toArray
-    val colsIdx = Utils.getIndex(df, cols)
+    val colsType = Utils.getIndex(df, cols).map(idx => df.schema(idx).dataType.typeName)
+    (cols zip colsType).foreach(nameAndType => {
+      if (!Utils.checkColumnNumeric(df, nameAndType._1)) {
+        throw new IllegalArgumentException(s"Unsupported data type ${nameAndType._2} of " +
+          s"column ${nameAndType._1}")
+      }
+    })
 
     for(i <- 0 until columns.size()) {
       val colName = columns.get(i)
-      val colType = df.schema(colsIdx(i)).dataType.typeName
-      if (!Utils.checkColumnNumeric(df, colName)) {
-        throw new IllegalArgumentException(s"Unsupported data type $colType of column $colName")
-      }
+      val colType = colsType(i)
 
       val clipFuncUDF = colType match {
         case "long" => udf(Utils.getClipFunc[Long](min, max, colType))
         case "integer" => udf(Utils.getClipFunc[Int](min, max, colType))
         case "double" => udf(Utils.getClipFunc[Double](min, max, colType))
-        case _ => throw new IllegalArgumentException(s"")
+        case _ => throw new IllegalArgumentException(s"Unsupported data type $colType of column" +
+          s" $colName")
       }
       resultDF = resultDF.withColumn(colName, clipFuncUDF(col(colName)))
     }
@@ -289,7 +293,6 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
    sqlContext.createDataFrame(combinedRDD, newSchema)
   }
-
 
   def addNegSamples(df: DataFrame,
                     itemSize: Int,
