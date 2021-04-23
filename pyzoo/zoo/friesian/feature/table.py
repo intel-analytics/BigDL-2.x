@@ -116,12 +116,21 @@ class Table:
         else:
             return self._clone(fill_na(self.df, value, columns))
 
-    def dropna(self, how='any', thresh=None, subset=None):
+    def dropna(self, how='any', thresh=None, columns):
         """
-        Drop null values. a wrapper of dataframe dropna
-        :return: A new Table that replaced the null values with specified value
+        Drops the rows containing null values in the specified columns.
+
+        :param columns: a list of strings that specifies column names. If it is None, it will
+               operate on all columns.
+        :param how: If `how` is "any", then drop rows containing any null values in `columns`.
+               If `how` is "all", then drop rows only if every column in `columns` is null for
+               that row.
+        :param thresh: int, if specified, drop rows that have less than thresh non-null values.
+               Default is None.
+
+        :return: A new Table that drops the rows containing null values in the specified columns.
         """
-        return self._clone(self.df.dropna(how, thresh, subset))
+        return self._clone(self.df.dropna(how, thresh, subset=columns))
 
     def distinct(self):
         """
@@ -130,31 +139,13 @@ class Table:
         """
         return self._clone(self.df.distinct())
 
-    def clip(self, columns, min=0):
-        """
-        Returns a new Table that drops the rows containing null values in the specified columns.
-
-        :param columns: a list of strings that specifies column names. Default is None, in which
-               case it operates on all columns.
-        :param how: If `how` is "any", then drop rows containing any null values in `columns`.
-               If `how` is "all", then drop rows only if every column in `columns` is null for
-               that row.
-
-        :return: a Table object
-        """
-        if columns is None:
-            columns = df.columns
-        elif not isinstance(columns, list):
-            columns = [columns]
-        return self._clone(self.df.na.drop(how=how, subset=columns))
-
     def filter(self, condition):
         """
-        Returns a new Table that filters the rows that satisfy `condition`.
+        Filters the rows that satisfy `condition`.
 
         :param condition: a string that gives the condition for filtering.
 
-        :return: a Table object with filtered rows
+        :return: a new Table with filtered rows
         """
         return self._clone(self.df.filter(condition))
 
@@ -194,13 +185,14 @@ class Table:
 
     def fill_median(self, columns=None):
         """
-        Returns a new Table that replaces null values with the median in the specified numeric
-        columns. Any column to be filled should not contain only null values.
+        Replaces null values with the median in the specified numeric columns. Any column to be
+        filled should not contain only null values.
 
         :param columns: a list of strings that specifies column names. Default is None, in which
                case it operates on all numeric columns.
 
-        :return: a Table object
+        :return: a new Table that replaces null values with the median in the specified numeric
+                 columns. 
         """
         if not isinstance(columns, list) and columns is not None:
             columns = [columns]
@@ -214,7 +206,7 @@ class Table:
         :param columns: a list of strings that specifies column names. Default is None, in which
                case it operates on all numeric columns.
 
-        :return: a Table object
+        :return: a new Table that contains the medians of the specified columns.
         """
         if not isinstance(columns, list) and columns is not None:
             columns = [columns]
