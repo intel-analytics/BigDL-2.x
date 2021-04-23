@@ -29,8 +29,8 @@ Remarks:
   eg. For mac SBT users,
   ```sbt
   libraryDependencies ++= Seq(
-  "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.12.1-spark_2.4.3" % "0.10.0-SNAPSHOT",
-  "com.intel.analytics.zoo" % "zoo-core-mkl-mac" % "0.10.0-SNAPSHOT"
+  "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.12.2-spark_2.4.3" % "0.10.0",
+  "com.intel.analytics.zoo" % "zoo-core-mkl-mac" % "0.10.0"
   )
   ```
 
