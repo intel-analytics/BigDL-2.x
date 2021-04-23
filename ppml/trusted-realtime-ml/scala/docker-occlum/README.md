@@ -95,10 +95,10 @@ In this mode, all components, redis, Flink & http front end, are running in diff
 Pre-requests:
 
 1. Setup `no password ssh login` between all nodes.
-2. Modify IP/paths in `environments.sh`. 
+2. Modify IP/paths in `environment.sh`. 
 
 ```bash
-nano environments.sh
+nano environment.sh
 ```
 
 ##### Start distributed cluster serving
