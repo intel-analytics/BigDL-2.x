@@ -118,10 +118,10 @@ cp -r ../keys .
 cp -r ../password .
 ```
 
-Before you run the following commands to start the container, you need to modify the paths in deploy-local-big-data-ml.sh.
+Before you run the following commands to start the container, you need to modify the paths in deploy-local-spark-sgx.sh.
 Then run the following commands:
 ```bash
-./deploy-local-big-data-ml.sh
+./deploy-local-spark-sgx.sh
 sudo docker exec -it spark-local bash
 cd /ppml/trusted-big-data-ml
 ./init.sh
