@@ -28,10 +28,10 @@ import org.apache.log4j.Logger
 /**
  * Inference Logic of Cluster Serving
  */
-class ClusterServingInference(preProcessing: PreProcessing,
-                              helper: ClusterServingHelper,
-                              recordEncrypted: Boolean = false) {
+class ClusterServingInference() {
   val logger = Logger.getLogger(getClass)
+  val helper = ClusterServing.helper
+  val preProcessing = new PreProcessing()
 
   def singleThreadPipeline(in: List[(String, String, String)]): List[(String, String)] = {
     singleThreadInference(preProcess(in))

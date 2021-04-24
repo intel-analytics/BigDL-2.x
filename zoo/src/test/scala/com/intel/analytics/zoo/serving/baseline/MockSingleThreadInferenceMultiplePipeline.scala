@@ -91,10 +91,7 @@ object MockSingleThreadInferenceMultiplePipeline extends Supportive {
 
     val timer = new Timer()
     for (thrdId <- 0 to 4) {
-      val clusterServingInference = new ClusterServingInference(new PreProcessing(
-        helper.chwFlag, helper.redisHost, helper.redisPort,
-        Conventions.SERVING_STREAM_DEFAULT_NAME, helper.recordEncrypted),
-        helper)
+      val clusterServingInference = new ClusterServingInference()
       clusterServingInference.typeCheck(warmT)
       clusterServingInference.dimCheck(warmT, "add", helper.modelType)
       (0 until 10).foreach(_ => {
@@ -109,7 +106,8 @@ object MockSingleThreadInferenceMultiplePipeline extends Supportive {
       timing(s"Thread $thrdId Baseline for SingleThreadInferenceMultiplePipeline " +
         s"with input ${param.testNum.toString}") {
         var a = Seq[(String, String, String)]()
-        val pre = new PreProcessing(true)
+        val pre = new PreProcessing()
+        pre.helper.chwFlag = true
         (0 until helper.threadPerModel).foreach(i =>
           a = a :+ (i.toString(), b64string, "")
         )

@@ -27,7 +27,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import sys.process._
 
 class TensorflowModelSpec extends FlatSpec with Matchers {
-
+  ClusterServing.helper = new ClusterServingHelper()
   "Tensorflow Inception v1" should "work" in {
     ("wget -O /tmp/tensorflow_inception_v1.tar http://10.239.45.10:8081" +
       "/repository/raw/analytics-zoo-data/tensorflow_inception_v1.tar").!
@@ -37,7 +37,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+    val helper = ClusterServing.helper
     helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_inception_v1/"
@@ -45,8 +45,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_inception_v1*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
+    val inference = new ClusterServingInference()
     val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -66,7 +65,8 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+val helper = ClusterServing.helper
     helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_mobilenet_v1/"
@@ -74,8 +74,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_mobilenet_v1*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
+    val inference = new ClusterServingInference()
     val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -96,7 +95,8 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+val helper = ClusterServing.helper
     helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_mobilenet_v2/"
@@ -104,8 +104,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_mobilenet_v2*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
+    val inference = new ClusterServingInference()
     val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -126,7 +125,8 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+val helper = ClusterServing.helper
     helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_resnet50/"
@@ -134,8 +134,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_resnet50*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
+    val inference = new ClusterServingInference()
     val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -155,7 +154,8 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/ndarray-128-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+val helper = ClusterServing.helper
     helper.chwFlag = false
     helper.modelType = "tensorflowSavedModel"
     helper.weightPath = "/tmp/tensorflow_tfauto/"
@@ -163,8 +163,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_tfauto*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
+    val inference = new ClusterServingInference()
     val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -184,7 +183,8 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+val helper = ClusterServing.helper
     helper.chwFlag = false
     helper.modelType = "tensorflowFrozenModel"
     helper.weightPath = "/tmp/tensorflow_vgg16/"
@@ -192,8 +192,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_vgg16*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
+    val inference = new ClusterServingInference()
     val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
@@ -213,7 +212,8 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/ndarray-2-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+val helper = ClusterServing.helper
     helper.chwFlag = false
     helper.modelType = "tensorflowSavedModel"
     helper.weightPath = "/tmp/tensorflow_tf_2out/"
@@ -221,8 +221,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/tensorflow_tf_2out*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
+    val inference = new ClusterServingInference()
     val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
