@@ -17,8 +17,7 @@ import os
 
 from pyspark.sql.functions import col, udf, array, broadcast, explode, struct, collect_list
 from zoo.orca import OrcaContext
-from zoo.friesian.feature.utils import generate_string_idx, fill_na, \
-    fill_na_int, compute, log_with_clip, clip_min
+from zoo.friesian.feature.utils import *
 from zoo.common.utils import callZooFunc
 
 JAVA_INT_MIN = -2147483648
@@ -97,33 +96,31 @@ class Table:
         """
         return self._clone(self.df.drop(*cols))
 
-    def fillna(self, value, columns, fill_int=False):
+    def fillna(self, value, columns):
         """
         Replace null values.
 
         :param value: int, long, float, string, or boolean.
                Value to replace null values with.
-        :param columns: str or list of str, the target columns to be filled. If columns=None,
-               and fill_int=True all columns of integer type will be filled. If columns=None
-               and fill_int=False all columns will be filled.
-        :param fill_int: boolean, if the value is int, -2147483648 <= value <= 2147483647 and all
-               the target columns are integer type, you can set True to accelerate the fillna
-               process. Default: False.
+        :param columns: list of str, the target columns to be filled. If columns=None and value
+               is int, all columns of integer type will be filled. If columns=None and value is
+               long, float, string or boolean, all columns will be filled.
 
         :return: A new Table that replaced the null values with specified value
         """
         if columns and not isinstance(columns, list):
             columns = [columns]
-        if fill_int:
-            if isinstance(value, int) and JAVA_INT_MIN <= value <= JAVA_INT_MAX:
-                return self._clone(fill_na_int(self.df, value, columns))
+        if columns:
+            check_col_exists(self.df, columns)
+        if isinstance(value, int) and JAVA_INT_MIN <= value <= JAVA_INT_MAX:
+            if columns:
+                col_not_int_list = list(filter(lambda x: x[0] in columns and x[1] != "int",
+                                               self.df.dtypes))
+                if len(col_not_int_list) == 0:
+                    return self._clone(fill_na_int(self.df, value, columns))
             else:
-                raise ValueError("value should be int and -2147483648 <= value <= 2147483647 if "
-                                 "you want accelerate the fill na int process, but got value "
-                                 "type " + value.__class__.__name__ + " and value " + str(value) +
-                                 ".")
-        else:
-            return self._clone(fill_na(self.df, value, columns))
+                return self._clone(fill_na_int(self.df, value, columns))
+        return self._clone(fill_na(self.df, value, columns))
 
     def dropna(self, how='any', thresh=None, subset=None):
         """
@@ -150,8 +147,11 @@ class Table:
 
         :return: A new Table that replaced the value less than `min` with specified `min`
         """
+        if columns is None:
+            raise ValueError("columns should be str or list of str, but got None.")
         if not isinstance(columns, list):
             columns = [columns]
+        check_col_exists(self.df, columns)
         return self._clone(clip_min(self.df, columns, min))
 
     def log(self, columns, clipping=True):
@@ -165,8 +165,11 @@ class Table:
 
         :return: A new Table that replaced value in columns with logged value.
         """
+        if columns is None:
+            raise ValueError("columns should be str or list of str, but got None.")
         if not isinstance(columns, list):
             columns = [columns]
+        check_col_exists(self.df, columns)
         return self._clone(log_with_clip(self.df, columns, clipping))
 
     # Merge column values as a list to a new col
@@ -268,8 +271,11 @@ class FeatureTable(Table):
 
         :return: List of StringIndex
         """
+        if columns is None:
+            raise ValueError("columns should be str or list of str, but got None.")
         if not isinstance(columns, list):
             columns = [columns]
+        check_col_exists(self.df, columns)
         if freq_limit:
             if isinstance(freq_limit, int):
                 freq_limit = str(freq_limit)

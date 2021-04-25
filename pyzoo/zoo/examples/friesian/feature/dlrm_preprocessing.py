@@ -117,7 +117,7 @@ if __name__ == '__main__':
     idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
     tbl_all_data = FeatureTable.read_parquet(paths[:-1])
     tbl_all_data = tbl_all_data.encode_string(CAT_COLS, idx_list)\
-        .fillna(0, INT_COLS + CAT_COLS, fill_int=True).log(INT_COLS)
+        .fillna(0, INT_COLS + CAT_COLS).log(INT_COLS)
     tbl_all_data = tbl_all_data.merge_cols(INT_COLS, "X_int").merge_cols(CAT_COLS, "X_cat")
     tbl_all_data.compute()
     time_end = time()

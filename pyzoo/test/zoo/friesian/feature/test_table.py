@@ -36,34 +36,22 @@ class TestTable(TestCase):
     def test_fillna_int(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
-        filled_tbl = feature_tbl.fillna(0, ["col_2", "col_3"])
+        filled_tbl = feature_tbl.fillna(5, ["col_2", "col_3"])
         assert isinstance(filled_tbl, FeatureTable), "filled_tbl should be a FeatureTable"
         assert feature_tbl.df.filter("col_2 is null").count() != 0 and feature_tbl \
             .df.filter("col_3 is null").count() != 0, "feature_tbl should not be changed"
-        assert filled_tbl.df.filter("col_2 is null").count() == 0, "col_2 null values should be " \
-                                                                   "filled"
-        assert filled_tbl.df.filter("col_3 is null").count() == 0, "col_3 null values should be " \
-                                                                   "filled"
-        filled_tbl = feature_tbl.fillna(5, ["col_2", "col_3"], fill_int=True)
+        assert filled_tbl.df.filter("col_2 == 5").count() == 1, "col_2 null values should be " \
+                                                                "filled with 5"
+        assert filled_tbl.df.filter("col_3 == 5").count() == 1, "col_3 null values should be " \
+                                                                "filled with 5"
+        filled_tbl = feature_tbl.fillna(5, None)
         assert filled_tbl.df.filter("col_2 == 5").count() == 1, "col_2 null values should be " \
                                                                 "filled with 5"
         assert filled_tbl.df.filter("col_3 == 5").count() == 1, "col_3 null values should be " \
                                                                 "filled with 5"
         with self.assertRaises(Exception) as context:
-            feature_tbl.fillna(3.2, ["col_2", "col_3"], fill_int=True)
-        self.assertTrue('value should be int and -2147483648 <= value <= 2147483647 if you want '
-                        'accelerate the fill na int process, but got value type float and value '
-                        '3.2.' in str(context.exception))
-        with self.assertRaises(Exception) as context:
-            feature_tbl.fillna(2147483648, ["col_2", "col_3"], fill_int=True)
-        self.assertTrue('value should be int and -2147483648 <= value <= 2147483647 if you want '
-                        'accelerate the fill na int process, but got value type int and value '
-                        '2147483648.' in str(context.exception))
-        filled_tbl = feature_tbl.fillna(5, None, fill_int=True)
-        assert filled_tbl.df.filter("col_2 == 5").count() == 1, "col_2 null values should be " \
-                                                                "filled with 5"
-        assert filled_tbl.df.filter("col_3 == 5").count() == 1, "col_3 null values should be " \
-                                                                "filled with 5"
+            feature_tbl.fillna(0, ["col_2", "col_3", "col_8"])
+        self.assertTrue('are not exist in this Table' in str(context.exception))
 
     def test_fillna_double(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
@@ -95,9 +83,6 @@ class TestTable(TestCase):
                                                                    "filled"
         assert filled_tbl.df.filter("col_3 is null").count() == 0, "col_3 null values should be " \
                                                                    "filled"
-        with self.assertRaises(Exception) as context:
-            feature_tbl.fillna(3, ["col_1", "col_2", "col_3"], fill_int=True)
-        self.assertTrue('Only columns of IntegerType are supported' in str(context.exception))
 
     def test_fillna_string(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
@@ -163,6 +148,10 @@ class TestTable(TestCase):
         assert clip_tbl.df.filter("col_1 < 2").count() == 0, "col_1 should >= 2"
         assert clip_tbl.df.filter("col_2 < 2").count() == 0, "col_2 should >= 2"
         assert clip_tbl.df.filter("col_3 < 2").count() == 0, "col_3 should >= 2"
+        with self.assertRaises(Exception) as context:
+            feature_tbl.clip(None, 2)
+        self.assertTrue('columns should be str or list of str, but got None.'
+                        in str(context.exception))
 
     def test_rename(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
