@@ -15,13 +15,10 @@
 #
 import os
 
-from pyspark import SparkContext
 from pyspark.sql.functions import col, udf, array, broadcast, explode, struct, collect_list
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import generate_string_idx, fill_na, \
     fill_na_int, compute, log_with_clip, clip_min
-import random
-from pyspark.sql.types import ArrayType, IntegerType, Row, StructType, StructField
 from zoo.common.utils import callZooFunc
 
 JAVA_INT_MIN = -2147483648
@@ -100,20 +97,31 @@ class Table:
         """
         return self._clone(self.df.drop(*cols))
 
-    def fillna(self, value, columns):
+    def fillna(self, value, columns, fill_int=False):
         """
         Replace null values.
 
         :param value: int, long, float, string, or boolean.
                Value to replace null values with.
-        :param columns: list of str, the target columns to be filled. If columns=None and value
-               is int, all columns of integer type will be filled. If columns=None and value is
-               long, float, string or boolean, all columns will be filled.
+        :param columns: str or list of str, the target columns to be filled. If columns=None,
+               and fill_int=True all columns of integer type will be filled. If columns=None
+               and fill_int=False all columns will be filled.
+        :param fill_int: boolean, if the value is int, -2147483648 <= value <= 2147483647 and all
+               the target columns are integer type, you can set True to accelerate the fillna
+               process. Default: False.
 
         :return: A new Table that replaced the null values with specified value
         """
-        if isinstance(value, int) and JAVA_INT_MIN <= value <= JAVA_INT_MAX:
-            return self._clone(fill_na_int(self.df, value, columns))
+        if columns and not isinstance(columns, list):
+            columns = [columns]
+        if fill_int:
+            if isinstance(value, int) and JAVA_INT_MIN <= value <= JAVA_INT_MAX:
+                return self._clone(fill_na_int(self.df, value, columns))
+            else:
+                raise ValueError("value should be int and -2147483648 <= value <= 2147483647 if "
+                                 "you want accelerate the fill na int process, but got value "
+                                 "type " + value.__class__.__name__ + " and value " + str(value) +
+                                 ".")
         else:
             return self._clone(fill_na(self.df, value, columns))
 
@@ -136,7 +144,7 @@ class Table:
         clips continuous values so that they are within a min bound. For instance by setting the
         min value to 0, all negative values in columns will be replaced with 0.
 
-        :param columns: list of str, the target columns to be clipped.
+        :param columns: str or list of str, the target columns to be clipped.
         :param min: int, The mininum value to clip values to: values less than this will be
                replaced with this value.
 
@@ -150,7 +158,7 @@ class Table:
         """
         Calculates the log of continuous columns.
 
-        :param columns: list of str, the target columns to calculate log.
+        :param columns: str or list of str, the target columns to calculate log.
         :param clipping: boolean, if clipping=True, the negative values in columns will be
                clipped to 0 and `log(x+1)` will be calculated. If clipping=False, `log(x)` will be
                calculated.
