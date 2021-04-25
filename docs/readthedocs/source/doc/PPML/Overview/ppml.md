@@ -1,6 +1,6 @@
 # PPML (Privacy Preserving Machine Learning)
 
-Protecting privacy and confidentiality is critical for large-scale data analysis and machine learning. Analytics Zoo ***PPML*** support allows users to continue to apply standard Big Data and AI technologies (such as Apache Spark, Apache Flink, Tensorflow, PyTorch, etc.) without sacrificing privacy; it combines different low level hardware and software technologies (e.g., Intel SGX, LibOS such as Graphene and Occlum, Federated Learning, etc.)
+Protecting privacy and confidentiality is critical for large-scale data analysis and machine learning. Analytics Zoo ***PPML*** combines various low level hardware and software security technologies (e.g., Intel SGX, LibOS such as Graphene and Occlum, Federated Learning, etc.), so that users can continute to apply standard Big Data and AI technologies (such as Apache Spark, Apache Flink, Tensorflow, PyTorch, etc.) without sacrificing privacy.
 
 ## 1. PPML for Big Data AI
 Analytics Zoo provides a distributed PPML platform for protecting the *end-to-end Big Data AI pipeline* (from data ingestion, data analysis, all the way to machine learning and deep learning). In particular, it extends the single-node [Trusted Execution Environment](https://en.wikipedia.org/wiki/Trusted_execution_environment) to provide a *Trusted Cluster Environment*, so as to run unmodified Big Data analysis and ML/DL programs in a secure fashion on (private or public) cloud:
@@ -15,10 +15,10 @@ That is, even when the program runs in an untrusted cloud environment, all the d
 In the current release, two types of trusted Big Data AI applications are supported:
 
 1. Big Data analytics and ML/DL (supporting [Apache Spark](https://spark.apache.org/) and [BigDL](https://github.com/intel-analytics/BigDL))
-2.  Realtime compute and ML/DL (supporting [Apache Flink](https://flink.apache.org/) and Analytics Zoo [Cluster Serving]((https://www.usenix.org/conference/opml20/presentation/song) )) 
+2.  Realtime compute and ML/DL (supporting [Apache Flink](https://flink.apache.org/) and Analytics Zoo [Cluster Serving](https://www.usenix.org/conference/opml20/presentation/song)) 
 
 ## 2. Trusted Big Data Analytics and ML
-With the trusted Big Data analytics and ML/DL support, users can run standard Spark data analysis (such as Spark SQL, Dataframe, MLlib, etc.) and distributed deep learning (using BigDL) in a secure and trusted fashion as follows:
+With the trusted Big Data analytics and ML/DL support, users can run standard Spark data analysis (such as Spark SQL, Dataframe, MLlib, etc.) and distributed deep learning (using BigDL) in a secure and trusted fashion.
 
 ### 2.1 Prerequisite
 
