@@ -119,7 +119,7 @@ class RayTuneSearchEngine(SearchEngine):
                 validation_data = {"x": data["val_x"], "y": data["val_y"]}
             else:
                 validation_data = None
-        
+
         # metric and metric's mode
         self.metric = metric
         self.mode = Evaluator.get_metric_mode(metric)
@@ -134,7 +134,7 @@ class RayTuneSearchEngine(SearchEngine):
         if "reward_metric" in stop.keys():
             stop[self.metric] = stop["reward_metric"]
             del stop["reward_metric"]
-        
+
         # stopper
         class TrailStopper(Stopper):
             def __init__(self, stop, metric, mode):
@@ -152,7 +152,7 @@ class RayTuneSearchEngine(SearchEngine):
                     if result["training_iteration"] >= self._stop["training_iteration"]:
                         return True
                 return False
-            
+
             def stop_all(self):
                 return False
 
@@ -434,7 +434,9 @@ class RayTuneSearchEngine(SearchEngine):
                 report_dict = {"training_iteration": i,
                                metric: metric_value,
                                "checkpoint": checkpoint_filename,
-                               "best_" + metric: best_reward_m if Evaluator.get_metric_mode(metric) == "max" else -best_reward_m}
+                               "best_" + metric: best_reward_m
+                               if Evaluator.get_metric_mode(metric) == "max"
+                               else -best_reward_m}
                 tune.report(**report_dict)
 
         return train_func

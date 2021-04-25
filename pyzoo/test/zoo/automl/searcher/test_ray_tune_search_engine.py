@@ -171,55 +171,61 @@ class TestRayTuneSearchEngine(ZooTestCase):
         data_with_val = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
 
         # test metric name is returned and max mode can be stopped
-        searcher = prepare_searcher(data=data_with_val, 
+        searcher = prepare_searcher(data=data_with_val,
                                     name='test_searcher_metric_name',
                                     metric='mse',
-                                    recipe=SimpleRecipe(stop_metric=float('inf'))) # stop at once
+                                    recipe=SimpleRecipe(stop_metric=float('inf')))  # stop at once
         analysis = searcher.run()
-        sorted_results = list(map(lambda x:x.last_result['mse'],
-                                 RayTuneSearchEngine._get_sorted_trials(analysis.trials,metric='mse')))
+        sorted_results = list(map(lambda x: x.last_result['mse'],
+                                  RayTuneSearchEngine._get_sorted_trials(analysis.trials,
+                                                                         metric='mse')))
 
         # assert metric name is reported
         assert 'mse' in analysis.trials[0].last_result.keys()
         # assert _get_sorted_trials get increasing result
-        assert all(sorted_results[i]<=sorted_results[i+1] for i in range(len(sorted_results)-1))
+        assert all(sorted_results[i] <= sorted_results[i+1] for i in range(len(sorted_results)-1))
         # assert _get_best_result get minimum result
-        assert RayTuneSearchEngine._get_best_result(analysis.trials, metric='mse')['mse'] == sorted_results[0]
+        assert RayTuneSearchEngine._get_best_result(analysis.trials,
+                                                    metric='mse')['mse'] == sorted_results[0]
         # assert the trail stop at once since mse has mode of 'min'
         assert analysis.trials[0].last_result['iterations_since_restore'] == 1
 
         # max mode metric with stop
-        searcher = prepare_searcher(data=data_with_val, 
+        searcher = prepare_searcher(data=data_with_val,
                                     name='test_searcher_metric_name',
                                     metric='r2',
-                                    recipe=SimpleRecipe(stop_metric=float('-inf'))) # stop at once
+                                    recipe=SimpleRecipe(stop_metric=float('-inf')))  # stop at once
         analysis = searcher.run()
-        sorted_results = list(map(lambda x:x.last_result['r2'],
-                                 RayTuneSearchEngine._get_sorted_trials(analysis.trials, metric='r2')))
+        sorted_results = list(map(lambda x: x.last_result['r2'],
+                                  RayTuneSearchEngine._get_sorted_trials(analysis.trials,
+                                                                         metric='r2')))
 
         # assert metric name is reported
         assert 'r2' in analysis.trials[0].last_result.keys()
         # assert _get_sorted_trials get decreasing result
-        assert all(sorted_results[i]>=sorted_results[i+1] for i in range(len(sorted_results)-1))
+        assert all(sorted_results[i] >= sorted_results[i+1] for i in range(len(sorted_results)-1))
         # assert _get_best_result get maximum result
-        assert RayTuneSearchEngine._get_best_result(analysis.trials, metric='r2')['r2'] == sorted_results[0]
+        assert RayTuneSearchEngine._get_best_result(analysis.trials,
+                                                    metric='r2')['r2'] == sorted_results[0]
         # assert the trail stop at once since mse has mode of 'max'
         assert analysis.trials[0].last_result['iterations_since_restore'] == 1
 
         # test min mode metric without stop
-        searcher = prepare_searcher(data=data_with_val, 
+        searcher = prepare_searcher(data=data_with_val,
                                     name='test_searcher_metric_name',
                                     metric='mae',
-                                    recipe=SimpleRecipe(stop_metric=0)) # never stop by metric
+                                    recipe=SimpleRecipe(stop_metric=0))  # never stop by metric
         analysis = searcher.run()
-        sorted_results = list(map(lambda x:x.last_result['mae'],
-                                 RayTuneSearchEngine._get_sorted_trials(analysis.trials,metric='mae')))
+        sorted_results = list(map(lambda x: x.last_result['mae'],
+                                  RayTuneSearchEngine._get_sorted_trials(analysis.trials,
+                                                                         metric='mae')))
 
         # assert metric name is reported
         assert 'mae' in analysis.trials[0].last_result.keys()
         # assert _get_sorted_trials get increasing result
-        assert all(sorted_results[i]<=sorted_results[i+1] for i in range(len(sorted_results)-1))
+        assert all(sorted_results[i] <= sorted_results[i+1] for i in range(len(sorted_results)-1))
         # assert _get_best_result get minimum result
-        assert RayTuneSearchEngine._get_best_result(analysis.trials, metric='mae')['mae'] == sorted_results[0]
+        assert RayTuneSearchEngine._get_best_result(analysis.trials,
+                                                    metric='mae')['mae'] == sorted_results[0]
         # assert the trail stop at once since mse has mode of 'min'
         assert analysis.trials[0].last_result['iterations_since_restore'] == 20
