@@ -96,9 +96,9 @@ Enter `analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene` dir.
     cp -r ../keys .
     cp -r ../password .
     ```
-2. To start the container, first modify the paths in deploy-local-big-data-ml.sh, and then run the following commands:
+2. To start the container, first modify the paths in deploy-local-spark-sgx.sh, and then run the following commands:
     ```bash
-    ./deploy-local-big-data-ml.sh
+    ./deploy-local-spark-sgx.sh
     sudo docker exec -it spark-local bash
     cd /ppml/trusted-big-data-ml
     ./init.sh
@@ -220,11 +220,11 @@ Then stop the service:
 ```
 
 ## 3. Trusted Realtime Compute and ML
-With the trusted realtime compute and ML/DL support, users can run standard Flink stream processing and distributed DL model inference (with Cluster Serving) in a secure and trusted fashion.
+With the trusted realtime compute and ML/DL support, users can run standard Flink stream processing and distributed DL model inference (using [Cluster Serving](https://www.usenix.org/conference/opml20/presentation/song)) in a secure and trusted fashion.
 
 ### 3.1 Prerequisite
 
-Please refer to [here]()
+Please refer to [Section 2.1 Prerequisite](#prerequisite)
 
 ### 3.2 Prepare Docker Container
 
@@ -293,9 +293,7 @@ The result should look like:
 ```
 #### 3.3.4 Run Trusted Cluster Serving
 
-Analytics Zoo [Cluster serving](https://www.usenix.org/conference/opml20/presentation/song) is a distributed, realtime DL model serving system (running on top of Flink). 
-
-Start Cluster Serving Service as follows:
+Start Cluster Serving as follows:
 
 ```bash
 ./start-local-cluster-serving.sh
