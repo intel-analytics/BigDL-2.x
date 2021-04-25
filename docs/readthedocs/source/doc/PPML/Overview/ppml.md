@@ -1,6 +1,6 @@
 # PPML (Privacy Preserving Machine Learning)
 
-Protecting privacy and confidentiality is critical for large-scale data analysis and machine learning. Analytics Zoo ***PPML*** support allows users to continue to apply standard Big Data and AI technologies (such as Apache Spark, Apache Flink, Tensorflow, PyTorch, etc.) without sacrificing privacy, by combining different  low level hardware and software technologies (e.g., Intel SGX, LibOS such as Graphene and Occlum, Federated Learning, etc.)
+Protecting privacy and confidentiality is critical for large-scale data analysis and machine learning. Analytics Zoo ***PPML*** support allows users to continue to apply standard Big Data and AI technologies (such as Apache Spark, Apache Flink, Tensorflow, PyTorch, etc.) without sacrificing privacy; it combines different low level hardware and software technologies (e.g., Intel SGX, LibOS such as Graphene and Occlum, Federated Learning, etc.)
 
 ## 1. PPML for Big Data AI
 Analytics Zoo provides a distributed PPML platform for protecting the *end-to-end Big Data AI pipeline* (from data ingestion, data analysis, all the way to machine learning and deep learning). In particular, it extends the single-node [Trusted Execution Environment](https://en.wikipedia.org/wiki/Trusted_execution_environment) to provide a *Trusted Cluster Environment*, so as to run unmodified Big Data analysis and ML/DL programs in a secure fashion on (private or public) cloud:
