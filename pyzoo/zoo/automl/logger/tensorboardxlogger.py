@@ -64,7 +64,7 @@ class TensorboardXLogger():
         else:
             self._file_writer = SummaryWriter(logdir=self.logs_dir)
 
-    def run(self, config, metric):
+    def run(self, config, metric, logo_str="AutoML"):
         '''
         Write log files(event files)
 
@@ -98,7 +98,7 @@ class TensorboardXLogger():
             new_config[key] = {}
             for k, value in config[key].items():
                 if value is not None:
-                    new_config[key]['AutoTS/' + k] = value
+                    new_config[key][f'{logo_str}/' + k] = value
 
         new_metric = {}
         for key in metric.keys():
@@ -107,7 +107,7 @@ class TensorboardXLogger():
                 if not isinstance(value, list):
                     value = [value]
                 if type(value[-1]) in VALID_SUMMARY_TYPES and not np.isnan(value[-1]):
-                    new_metric[key]['AutoTS/' + k] = value
+                    new_metric[key][f'{logo_str}/' + k] = value
 
         # hparams log write
         for key in new_metric.keys():

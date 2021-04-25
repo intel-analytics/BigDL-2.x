@@ -143,12 +143,12 @@ class RayTuneSearchEngine(SearchEngine):
                 self._stop = stop
 
             def __call__(self, trial_id, result):
-                if self._metric in result.keys():
+                if self._metric in self._stop.keys():
                     if self._mode == "max" and result[self._metric] >= self._stop[self._metric]:
                         return True
                     if self._mode == "min" and result[self._metric] <= self._stop[self._metric]:
                         return True
-                if "training_iteration" in result.keys():
+                if "training_iteration" in self._stop.keys():
                     if result["training_iteration"] >= self._stop["training_iteration"]:
                         return True
                 return False
