@@ -17,8 +17,8 @@
 package com.intel.analytics.zoo.serving.pipeline
 
 import com.intel.analytics.zoo.serving.ClusterServing
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 
-import com.intel.analytics.zoo.serving.utils.Conventions
 import scala.collection.JavaConverters._
 import redis.clients.jedis.exceptions.JedisConnectionException
 import redis.clients.jedis.{Jedis, JedisPool, Pipeline, StreamEntryID}
