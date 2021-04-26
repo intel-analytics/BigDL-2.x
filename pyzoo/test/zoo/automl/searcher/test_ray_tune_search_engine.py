@@ -125,7 +125,9 @@ class TestRayTuneSearchEngine(ZooTestCase):
     def test_numpy_input(self):
         train_x, train_y, val_x, val_y = get_np_input()
         data_with_val = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
-        searcher = prepare_searcher(data=data_with_val, name='test_ray_numpy_with_val')
+        searcher = prepare_searcher(data=data_with_val,
+                                    name='test_ray_numpy_with_val',
+                                    recipe=SimpleRecipe())
         searcher.run()
         best_trials = searcher.get_best_trials(k=1)
         assert best_trials is not None
