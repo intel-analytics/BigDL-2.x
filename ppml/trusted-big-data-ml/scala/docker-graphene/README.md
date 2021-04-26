@@ -25,7 +25,7 @@ There are four files. **train-images-idx3-ubyte** contains train images, **train
 After you decompress the gzip files, these files may be renamed by some decompress tools, e.g. **train-images-idx3-ubyte** is renamed to **train-images.idx3-ubyte**. Please change the name back before you run the example.  <br>
 
 ### Prepare the keys
-The ppml in analytics zoo needs secured keys to enable spark security such as Authentication, RPC Encryption, Local Storage Encryption and TLS, you need to prepare the secure keys and keystores. In this example, you can generate keys and keystores with root permission (test only, need input security password for keys).
+The ppml in analytics zoo needs secured keys to enable spark security such as Authentication, RPC Encryption, Local Storage Encryption and TLS, you need to prepare the secure keys and keystores. In this tutorial, you can generate keys and keystores with root permission (test only, need input security password for keys).
 
 ```bash
 sudo ../../../scripts/generate-keys.sh
@@ -37,8 +37,8 @@ It will generate a file `enclave-key.pem` in your present working directory, whi
 openssl genrsa -3 -out enclave-key.pem 3072
 ```
 ### Prepare the password
-Next, you need to store the password you used in the previous step in a secured file:
-This script is also in /analytics-zoo/ppml/scripts:
+Next, you need to store the password you used for key generation, i.e., `generate-keys.sh`, in a secured file:
+
 ```bash
 sudo bash ../../../scripts/generate-password.sh used_password_when_generate_keys
 ```
