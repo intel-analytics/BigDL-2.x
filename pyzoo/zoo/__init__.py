@@ -16,6 +16,7 @@
 
 from zoo.common.nncontext import *
 from zoo.util.engine import prepare_env
+import pyspark
 
 prepare_env()
 creator_classes = JavaCreator.get_creator_class()[:]
