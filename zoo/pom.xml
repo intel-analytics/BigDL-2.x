@@ -9,6 +9,7 @@
     <packaging>jar</packaging>
     <version>0.10.0</version>
     
+    <name>analytics-zoo</name>
     <description>Big Data AI platform for distributed TensorFlow and PyTorch on Apache Spark.</description>
     <url>https://github.com/intel-analytics/analytics-zoo</url>
 
