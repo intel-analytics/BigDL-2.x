@@ -93,7 +93,6 @@ def prepare_searcher(data,
                      model_create_func=modelBuilder,
                      recipe=recipe,
                      feature_transformers=feature_transformer,
-                     search_space=search_space,
                      metric=metric)
     return searcher
 
