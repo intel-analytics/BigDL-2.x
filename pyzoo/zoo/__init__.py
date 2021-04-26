@@ -18,6 +18,8 @@ from zoo.common.nncontext import *
 from zoo.util.engine import prepare_env
 import pyspark
 
+pyspark_version = list(map(int, pyspark.__version__.split(".")))
+
 prepare_env()
 creator_classes = JavaCreator.get_creator_class()[:]
 JavaCreator.set_creator_class([])
@@ -33,7 +35,7 @@ JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.net.python.P
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.inference.PythonInferenceModel")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.estimator.python.PythonEstimator")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.orca.python.PythonOrca")
-if pyspark.__version__ >= "2.4":
+if pyspark_version[0] > 2 or (pyspark_version[0] == 2 and pyspark_version[1] >= 4):
     JavaCreator.add_creator_class("com.intel.analytics.zoo.friesian.python.PythonFriesian")
 for clz in creator_classes:
     JavaCreator.add_creator_class(clz)
