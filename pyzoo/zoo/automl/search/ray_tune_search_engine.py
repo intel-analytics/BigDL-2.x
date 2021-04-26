@@ -143,7 +143,7 @@ class RayTuneSearchEngine(SearchEngine):
         stop.setdefault("training_iteration", 1)
 
         # stopper
-        class TrailStopper(Stopper):
+        class TrialStopper(Stopper):
             def __init__(self, stop, metric, mode):
                 self._mode = mode
                 self._metric = metric
@@ -163,7 +163,7 @@ class RayTuneSearchEngine(SearchEngine):
             def stop_all(self):
                 return False
 
-        self.stopper = TrailStopper(stop=stop, metric=self.metric, mode=self.mode)
+        self.stopper = TrialStopper(stop=stop, metric=self.metric, mode=self.mode)
 
         if search_space is None:
             search_space = recipe.search_space()
