@@ -36,4 +36,4 @@ JavaCreator.add_creator_class("com.intel.analytics.zoo.friesian.python.PythonFri
 for clz in creator_classes:
     JavaCreator.add_creator_class(clz)
 
-__version__ = "0.10.0.dev0"
+__version__ = "0.10.0"
