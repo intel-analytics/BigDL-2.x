@@ -29,7 +29,7 @@ class Recipe(metaclass=ABCMeta):
         self.reward_metric = None
 
     @abstractmethod
-    def search_space(self, all_available_features):
+    def search_space(self):
         pass
 
     def runtime_params(self):

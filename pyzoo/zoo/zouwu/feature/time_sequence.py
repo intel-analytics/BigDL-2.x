@@ -563,8 +563,11 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
     def _get_features(self, input_df, config):
         feature_matrix = self._generate_features(input_df)
-        # self.write_generate_feature_list(feature_defs)
-        feature_cols = np.asarray(json.loads(config.get("selected_features")))
+        selected_features = config.get("selected_features")
+        if selected_features:
+            feature_cols = np.asarray(json.loads(selected_features))
+        else:
+            feature_cols = self.get_feature_list()
         # we do not include target col in candidates.
         # the first column is designed to be the default position of target column.
         target_col = np.array(self.target_col)
@@ -573,7 +576,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         return target_feature_matrix.astype(float)
 
     def _get_optional_parameters(self):
-        return set(["past_seq_len"])
+        return {"past_seq_len", "selected_features"}
 
     def _get_required_parameters(self):
-        return set(["selected_features"])
+        return set()

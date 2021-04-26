@@ -127,7 +127,7 @@ class RayTuneSearchEngine(SearchEngine):
         del stop['num_samples']
         self.stop_criteria = stop
         if search_space is None:
-            search_space = recipe.search_space(all_available_features=None)
+            search_space = recipe.search_space()
         self._search_alg = RayTuneSearchEngine._set_search_alg(search_alg, search_alg_params,
                                                                recipe, search_space)
         self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params)
