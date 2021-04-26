@@ -54,3 +54,6 @@
 
 # default: false
 # modelEncrypted:
+
+# default: false
+# recordEncrypted:
