@@ -18,16 +18,17 @@ from unittest import TestCase
 
 import numpy as np
 import pytest
+import argparse
 
 import torch
 import torch.nn as nn
 from zoo.orca.automl.auto_estimator import AutoEstimator
 from zoo.automl.recipe.base import Recipe
 from zoo.orca.automl.pytorch_utils import LR_NAME
+from zoo.orca import init_orca_context, stop_orca_context
 
-os.environ["KMP_SETTINGS"] = "0"
 
-# TODO From our own ut
+
 class Net(nn.Module):
     def __init__(self, dropout, fc1_size, fc2_size):
         super().__init__()
@@ -89,38 +90,31 @@ class LinearRecipe(Recipe):
 
     def runtime_params(self):
         return {
-            "training_iteration": 1,
-            "num_samples": 4
+            "training_iteration": args.specify_training_iteration,
+            "num_samples": args.specify_num_samples
         }
 
-    # TODO From other example
-    def train_example(workers_per_node):
-    estimator = Estimator.from_torch(
-        model=model_creator,
-        optimizer=optimizer_creator,
-        loss=nn.MSELoss(),
-        scheduler_creator=scheduler_creator,
-        workers_per_node=workers_per_node,
-        config={
-            "lr": 1e-2,  # used in optimizer_creator
-            "hidden_size": 1  # used in model_creator
-        }, backend="horovod")
 
-    # train 5 epochs
-    stats = estimator.fit(train_data_creator, batch_size=4, epochs=5)
-    print("train stats: {}".format(stats))
-    val_stats = estimator.evaluate(validation_data_creator)
-    print("validation stats: {}".format(val_stats))
-
-    # retrieve the model
-    model = estimator.get_model()
-    print("trained weight: % .2f, bias: % .2f" % (
-        model.weight.item(), model.bias.item()))
+def train_example(specify_optimizer, specify_loss_function):
+    auto_est = AutoEstimator.from_torch(model_creator=model_creator,
+                                        optimizer=specify_optimizer,
+                                        loss=specify_loss_function,
+                                        logs_dir="/tmp/zoo_automl_logs",
+                                        resources_per_trial={"cpu": 2},
+                                        name="test_fit")
+    data = get_train_val_data()
+    auto_est.fit(data, recipe=LinearRecipe(), metric="accuracy")
+    # Choose the best model
+    best_model = auto_est.get_best_model()
+    best_model_mse = best_model.evaluate(x=data.get('val_x'), y=data.get('val_y'), metrics=['mse'], multioutput="raw_values")
+    print(f'mse is {best_model_mse[0][0]}')
+    return best_model
 
 
-# TODO Some interactive options
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog='Autoestimator_pytorch', 
+                                    description='Automatically fit the model and return the best model.')                       
     parser.add_argument('--cluster_mode', type=str, default="local",
                         help='The mode for the Spark cluster.')
     parser.add_argument("--num_nodes", type=int, default=1,
@@ -132,7 +126,7 @@ if __name__ == "__main__":
     parser.add_argument("--memory", type=str, default="10g",
                         help="The memory you want to use on each node. "
                              "You can change it depending on your own cluster setting.")
-    parser.add_argument("--workers_per_node", type=int, default=2,
+    parser.add_argument("--workers_per_node", type=int, default=2,\
                         help="The number of workers to run on each node")
     parser.add_argument('--k8s_master', type=str, default="",
                         help="The k8s master. "
@@ -142,17 +136,27 @@ if __name__ == "__main__":
                         help="The runtime k8s image. "
                              "You can change it with your k8s image.")
     parser.add_argument('--k8s_driver_host', type=str, default="",
-                        help="The k8s driver localhost.")
+                        help="The k8s driver localhost. ")
     parser.add_argument('--k8s_driver_port', type=str, default="",
                         help="The k8s driver port.")
+    
+    parser.add_argument('-so','--specify_optimizer', type=str, default="Adam",
+                        help="Specify optimizer.")
+    parser.add_argument('-slf','--specify_loss_function', type=str, default="BCELoss",
+                        help="Specify loss function.")    
+    parser.add_argument('-sti','--specify_training_iteration', type=int, default=1,
+                        help="Users can specify parameters by themselves.")
+    parser.add_argument('-sns','--specify_num_samples', type=int, default=4,
+                        help="The number of number sample.") 
 
     args = parser.parse_args()
     if args.cluster_mode == "local":
         init_orca_context(cluster_mode="local", cores=args.cores,
-                          num_nodes=args.num_nodes, memory=args.memory)
+                          num_nodes=args.num_nodes, memory=args.memory,
+                          init_ray_on_spark=True)
     elif args.cluster_mode == "yarn":
         init_orca_context(cluster_mode="yarn-client", cores=args.cores,
-                          num_nodes=args.num_nodes, memory=args.memory)
+                          memory=args.memory,  init_ray_on_spark=True)
     elif args.cluster_mode == "k8s":
         if not args.k8s_master or not args.container_image \
                 or not args.k8s_driver_host or not args.k8s_driver_port:
@@ -161,8 +165,9 @@ if __name__ == "__main__":
                          'k8s_driver_host/port are required not to be empty')
         init_orca_context(cluster_mode="k8s", master=args.k8s_master,
                           container_image=args.container_image,
-                          num_nodes=args.num_nodes, cores=args.cores,
+                          cores=args.cores, init_ray_on_spark=True,
                           conf={"spark.driver.host": args.k8s_driver_host,
                                 "spark.driver.port": args.k8s_driver_port})
-    train_example(workers_per_node=args.workers_per_node)
+
+    train_example(specify_optimizer=args.specify_optimizer, specify_loss_function=args.specify_loss_function)
     stop_orca_context()
