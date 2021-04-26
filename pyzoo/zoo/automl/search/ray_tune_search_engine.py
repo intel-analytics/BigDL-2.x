@@ -131,9 +131,16 @@ class RayTuneSearchEngine(SearchEngine):
         del stop['num_samples']
 
         # temp operation for reward_metric
+        redundant_stop_keys = stop.keys() - {"reward_metric", "training_iteration"}
+        assert len(redundant_stop_keys) == 0, \
+            f"{redundant_stop_keys} is not expected in stop criteria, \
+             only \"reward_metric\", \"training_iteration\" are expected."
+
         if "reward_metric" in stop.keys():
-            stop[self.metric] = stop["reward_metric"]
+            stop[self.metric] = -stop["reward_metric"] if \
+                self.mode == "min" else stop["reward_metric"]
             del stop["reward_metric"]
+        stop.setdefault("training_iteration", 1)
 
         # stopper
         class TrailStopper(Stopper):
@@ -156,13 +163,14 @@ class RayTuneSearchEngine(SearchEngine):
             def stop_all(self):
                 return False
 
-        self.stop_criteria = TrailStopper(stop=stop, metric=self.metric, mode=self.mode)
+        self.stopper = TrailStopper(stop=stop, metric=self.metric, mode=self.mode)
 
         if search_space is None:
             search_space = recipe.search_space()
         self._search_alg = RayTuneSearchEngine._set_search_alg(search_alg, search_alg_params,
-                                                               recipe, search_space, metric)
-        self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params, metric)
+                                                               recipe, self.metric, self.mode)
+        self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params,
+                                                             self.metric, self.mode)
         self.search_space = self._prepare_tune_config(search_space)
 
         if feature_transformers is None and data_mode == 'dataframe':
@@ -197,7 +205,7 @@ class RayTuneSearchEngine(SearchEngine):
         #                                                      self.remote_dir)
 
     @staticmethod
-    def _set_search_alg(search_alg, search_alg_params, recipe, search_space, metric):
+    def _set_search_alg(search_alg, search_alg_params, recipe, metric, mode):
         if search_alg:
             if not isinstance(search_alg, str):
                 raise ValueError(f"search_alg should be of type str."
@@ -213,13 +221,13 @@ class RayTuneSearchEngine(SearchEngine):
 
             search_alg_params.update(dict(
                 metric=metric,
-                mode=Evaluator.get_metric_mode(metric),
+                mode=mode,
             ))
             search_alg = tune.create_searcher(search_alg, **search_alg_params)
         return search_alg
 
     @staticmethod
-    def _set_scheduler(scheduler, scheduler_params, metric):
+    def _set_scheduler(scheduler, scheduler_params, metric, mode):
         if scheduler:
             if not isinstance(scheduler, str):
                 raise ValueError(f"Scheduler should be of type str. "
@@ -229,7 +237,7 @@ class RayTuneSearchEngine(SearchEngine):
             scheduler_params.update(dict(
                 time_attr="training_iteration",
                 metric=metric,
-                mode=Evaluator.get_metric_mode(metric),
+                mode=mode,
             ))
             scheduler = tune.create_scheduler(scheduler, **scheduler_params)
         return scheduler
@@ -245,7 +253,7 @@ class RayTuneSearchEngine(SearchEngine):
             metric=self.metric,
             mode=self.mode,
             name=self.name,
-            stop=self.stop_criteria,
+            stop=self.stopper,
             config=self.search_space,
             search_alg=self._search_alg,
             num_samples=self.num_samples,
@@ -269,7 +277,9 @@ class RayTuneSearchEngine(SearchEngine):
         return analysis
 
     def get_best_trials(self, k=1):
-        sorted_trials = RayTuneSearchEngine._get_sorted_trials(self.trials, metric=self.metric)
+        sorted_trials = RayTuneSearchEngine._get_sorted_trials(self.trials,
+                                                               metric=self.metric,
+                                                               mode=self.mode)
         best_trials = sorted_trials[:k]
         return [self._make_trial_output(t) for t in best_trials]
 
@@ -278,25 +288,25 @@ class RayTuneSearchEngine(SearchEngine):
                            model_path=os.path.join(trial.logdir, trial.last_result["checkpoint"]))
 
     @staticmethod
-    def _get_best_trial(trial_list, metric):
+    def _get_best_trial(trial_list, metric, mode):
         """Retrieve the best trial."""
-        mode = Evaluator.get_metric_mode(metric)
         if mode == "max":
             return max(trial_list, key=lambda trial: trial.last_result.get(metric, 0))
         else:
             return min(trial_list, key=lambda trial: trial.last_result.get(metric, 0))
 
     @staticmethod
-    def _get_sorted_trials(trial_list, metric):
+    def _get_sorted_trials(trial_list, metric, mode):
         return sorted(
             trial_list,
             key=lambda trial: trial.last_result.get(metric, 0),
-            reverse=True if Evaluator.get_metric_mode(metric) == "max" else False)
+            reverse=True if mode == "max" else False)
 
     @staticmethod
-    def _get_best_result(trial_list, metric):
+    def _get_best_result(trial_list, metric, mode):
         """Retrieve the last result from the best trial."""
-        return {metric: RayTuneSearchEngine._get_best_trial(trial_list, metric).last_result[metric]}
+        return {metric: RayTuneSearchEngine._get_best_trial(trial_list,
+                                                            metric, mode).last_result[metric]}
 
     def test_run(self):
         def mock_reporter(**kwargs):
@@ -408,7 +418,7 @@ class RayTuneSearchEngine(SearchEngine):
             # no need to call build since it is called the first time fit_eval is called.
             # callbacks = [TuneCallback(tune_reporter)]
             # fit model
-            best_reward_m = None
+            best_reward = None
             # print("config:", config)
             for i in range(1, 101):
                 result = trial_model.fit_eval(x_train,
@@ -419,12 +429,18 @@ class RayTuneSearchEngine(SearchEngine):
                                               # verbose=1,
                                               **config)
                 metric_value = result
-                reward_m = result if Evaluator.get_metric_mode(metric) == "max" else -result
+                reward = result
                 checkpoint_filename = "best.ckpt"
 
                 # Save best reward iteration
-                if best_reward_m is None or reward_m > best_reward_m:
-                    best_reward_m = reward_m
+                mode = Evaluator.get_metric_mode(metric)
+                if mode == "max":
+                    has_best_reward = best_reward is None or reward > best_reward
+                else:
+                    has_best_reward = best_reward is None or reward > best_reward
+
+                if has_best_reward:
+                    best_reward = reward
                     if isinstance(model_create_func, ModelBuilder):
                         trial_model.save(checkpoint_filename)
                     else:
@@ -436,9 +452,7 @@ class RayTuneSearchEngine(SearchEngine):
                 report_dict = {"training_iteration": i,
                                metric: metric_value,
                                "checkpoint": checkpoint_filename,
-                               "best_" + metric: best_reward_m
-                               if Evaluator.get_metric_mode(metric) == "max"
-                               else -best_reward_m}
+                               "best_" + metric: best_reward}
                 tune.report(**report_dict)
 
         return train_func
