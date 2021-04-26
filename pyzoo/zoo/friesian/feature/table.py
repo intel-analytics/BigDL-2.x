@@ -192,7 +192,7 @@ class Table:
                case it operates on all numeric columns.
 
         :return: a new Table that replaces null values with the median in the specified numeric
-                 columns. 
+                 columns.
         """
         if not isinstance(columns, list) and columns is not None:
             columns = [columns]
