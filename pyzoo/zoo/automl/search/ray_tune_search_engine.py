@@ -51,7 +51,7 @@ class RayTuneSearchEngine(SearchEngine):
         self.pipeline = None
         self.train_func = None
         self.trainable_class = None
-        self.resources_per_trail = resources_per_trial
+        self.resources_per_trial = resources_per_trial
         self.trials = None
         self.remote_dir = remote_dir
         self.name = name
@@ -258,7 +258,7 @@ class RayTuneSearchEngine(SearchEngine):
             search_alg=self._search_alg,
             num_samples=self.num_samples,
             scheduler=self._scheduler,
-            resources_per_trial=self.resources_per_trail,
+            resources_per_trial=self.resources_per_trial,
             verbose=1,
             reuse_actors=True
         )
