@@ -58,11 +58,14 @@ class TestMetrics(ZooTestCase):
     def test_multioutput_metrics(self):
         y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
         y_pred = np.array([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]])
-        assert_almost_equal(MSE(y_true, y_pred), [(1. / 3 + 2. / 3 + 2. / 3) / 4.])
+        assert_almost_equal(MSE(y_true, y_pred, multioutput='uniform_average'),
+                            [(1. / 3 + 2. / 3 + 2. / 3) / 4.])
 
-        assert_almost_equal(MSLE(y_true, y_pred), [0.200], decimal=2)
+        assert_almost_equal(MSLE(y_true, y_pred, multioutput='uniform_average'),
+                            [0.200], decimal=2)
 
-        assert_almost_equal(MAE(y_true, y_pred), [(1. + 2. / 3) / 4.])
+        assert_almost_equal(MAE(y_true, y_pred, multioutput='uniform_average'),
+                            [(1. + 2. / 3) / 4.])
 
         assert_almost_equal(R2(y_true, y_pred, multioutput='variance_weighted'), [1. - 5. / 2])
 
@@ -142,3 +145,21 @@ class TestMetrics(ZooTestCase):
                                   [5.56, 20.24], decimal=2)
         assert_array_almost_equal(sMDAPE(y_true, y_pred, multioutput='raw_values'),
                                   [2.63, 8.99], decimal=2)
+
+    def test_large_array_metrics(self):
+        y_true = np.ones((20000000, 4, 1), dtype=np.float32)
+        y_pred = np.zeros((20000000, 4, 1), dtype=np.float32)
+
+        assert_array_almost_equal(MAPE(y_true, y_pred, multioutput='raw_values'),
+                                  [[100], [100], [100], [100]], decimal=2)
+        assert_array_almost_equal(MSE(y_true, y_pred, multioutput='raw_values'),
+                                  [[1], [1], [1], [1]], decimal=2)
+        assert_array_almost_equal(MAE(y_true, y_pred, multioutput='raw_values'),
+                                  [[1], [1], [1], [1]], decimal=2)
+
+        assert_almost_equal(MSE(y_true, y_pred, multioutput='uniform_average'),
+                            [1], decimal=2)
+        assert_almost_equal(MAPE(y_true, y_pred, multioutput='uniform_average'),
+                            [100], decimal=2)
+        assert_almost_equal(MAE(y_true, y_pred, multioutput='uniform_average'),
+                            [1], decimal=2)
