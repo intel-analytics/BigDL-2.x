@@ -106,9 +106,8 @@ def train_example(specify_optimizer, specify_loss_function):
     auto_est.fit(data, recipe=LinearRecipe(), metric="accuracy")
     # Choose the best model
     best_model = auto_est.get_best_model()
-    best_model_mse = best_model.evaluate(x=data.get('val_x'), y=data.get('val_y'), metrics=['mse'], multioutput="raw_values")
-    print(f'mse is {best_model_mse[0][0]}')
-    return best_model
+    best_model_accuracy = best_model.evaluate(x=data['val_x'], y=data['val_y'], metrics=['accuracy'], multioutput="raw_values")
+    print(f'model accuracy is {best_model_accuracy[0]}')
 
 
 
