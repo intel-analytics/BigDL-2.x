@@ -42,3 +42,6 @@ def clip_min(df, columns, min):
 
 def cross_columns(df, cross_column_list, bucket_sizes):
     return callZooFunc("float", "crossColumns", df, cross_column_list, bucket_sizes)
+
+def normalize_array(df, column):
+    return callZooFunc("float", "normalizeArray", df, column)

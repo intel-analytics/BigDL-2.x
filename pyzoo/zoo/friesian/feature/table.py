@@ -14,8 +14,9 @@
 # limitations under the License.
 #
 import os
+from functools import reduce
 
-from pyspark.sql.types import DoubleType
+from pyspark.sql.types import DoubleType, ArrayType
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
@@ -23,7 +24,7 @@ from pyspark.sql.functions import col, udf, array, broadcast, explode, struct, c
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import generate_string_idx, fill_na, \
-    fill_na_int, compute, log_with_clip, clip_min, cross_columns
+    fill_na_int, compute, log_with_clip, clip_min, cross_columns, normalize_array
 from zoo.common.utils import callZooFunc
 
 
@@ -315,6 +316,41 @@ class FeatureTable(Table):
                 .withColumn(col_name, unlist(col_name + "_scaled"))\
                 .drop(col_name + "_vect").drop(col_name + "_scaled")
         return FeatureTable(df)
+
+    def normalize1(self, columns):
+        df = self.df
+        types = [x[1] for x in self.df.select(*columns).dtypes]
+        scalar_cols = [columns[i] for i in range(len(columns))
+                        if types[i] == "int" or types[i] == "bigint"
+                        or types[i] == "float" or types[i] == "double"]
+        array_cols = [columns[i] for i in range(len(columns)) if types[i] == "array"]
+        vector_cols = [columns[i] for i in range(len(columns)) if types[i] == "VectorUDT"]
+        if scalar_cols:
+            assembler = VectorAssembler(inputCols=scalar_cols, outputCol="vect")
+
+            # MinMaxScaler Transformation
+            scaler = MinMaxScaler(inputCol="vect", outputCol="scaled")
+
+            # Pipeline of VectorAssembler and MinMaxScaler
+            pipeline = Pipeline(stages=[assembler, scaler])
+
+            tolist = udf(lambda x: x.toArray().tolist(), ArrayType(DoubleType()))
+
+            # Fitting pipeline on dataframe
+            df = pipeline.fit(df).transform(df) \
+                .withColumn("scaled_list", tolist(col("scaled"))) \
+                .drop("vect").drop("scaled")
+            for i in range(len(scalar_cols)):
+                df = df.withColumn(scalar_cols[i], col("scaled_list")[i])
+            df = df.drop("scaled_list")
+
+        for c in array_cols:
+            df = normalize_array(df, c)
+        for c in vector_cols:
+            scaler = MinMaxScaler(inputCol=c, outputCol="scaled")
+            df = scaler.fit(df).transform(df).withColumnRenamed("scaled", c)
+        return FeatureTable(df)
+
 
     def add_negative_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
         """

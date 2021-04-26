@@ -28,6 +28,8 @@ import org.apache.spark.sql.functions.{col, collect_list, explode, row_number, s
 spark_partition_id, struct, udf, log => sqllog, array}
 import org.apache.spark.sql.types.{ArrayType, IntegerType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.ml.linalg.DenseVector
+import org.apache.spark.ml.feature.MinMaxScaler
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
@@ -362,5 +364,25 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def addLength(df: DataFrame, colName: String): DataFrame = {
     df.withColumn(colName + "_length", size(col(colName)))
+  }
+
+  def normalizeArray(df: DataFrame, column: String): DataFrame = {
+    val toVector = udf((arr: Seq[Any]) => {
+      val doubleArray = arr.map {
+        case f: Float => f.toDouble
+        case i: Int => i.toDouble
+        case l: Long => l.toDouble
+        case d: Double => d
+      }
+      new DenseVector(doubleArray.toArray)
+    })
+
+    val vectoredDF = df.withColumn(column, toVector(col(column)))
+    val scaler = new MinMaxScaler()
+        .setInputCol(column)
+        .setOutputCol("scaled");
+
+    val resultDF = scaler.fit(df).transform(df).withColumnRenamed("scaled", column)
+    resultDF
   }
 }

@@ -78,6 +78,8 @@ def _parse_args():
                              "omitted from the encoding. For instance, '15', '_c14:15,_c15:16', "
                              "etc")
 
+    parser.add_argument('--cross_sizes', type=str, help='bucket sizes for cross columns', default="10000, 10000")
+
     args = parser.parse_args()
     start, end = args.days.split('-')
     args.day_range = list(range(int(start), int(end) + 1))
@@ -97,6 +99,8 @@ def _parse_args():
         args.frequency_limit = frequency_limit_dict
     else:
         args.frequency_limit = default_limit
+
+    args.cross_sizes = [int(x) for x in args.cross_sizes.split(',')]
 
     return args
 
@@ -129,11 +133,11 @@ if __name__ == '__main__':
     # cross_sizes = [reduce(lambda x, y: round(x * y * 0.0001), sizes)
     #                for sizes in [cat_sizes[0:2], cat_sizes[2:4]]]
 
-    cross_sizes = [10000, 10000]
+    cross_sizes = args.cross_sizes
 
     tbl_all_data = tbl.encode_string(CAT_COLS, idx_list)\
         .fillna(0, INT_COLS + CAT_COLS)\
-        .normalize(INT_COLS)\
+        .normalize1(INT_COLS)\
         .cross_columns(crossed_columns=[CAT_COLS[0:2], CAT_COLS[2:4]],
                        bucket_sizes=cross_sizes)
     tbl_all_data.compute()
