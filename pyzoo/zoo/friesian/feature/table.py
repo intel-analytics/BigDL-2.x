@@ -15,12 +15,9 @@
 #
 import os
 
-from pyspark import SparkContext
 from pyspark.sql.functions import col, udf, array, broadcast, explode, struct, collect_list
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
-import random
-from pyspark.sql.types import ArrayType, IntegerType, Row, StructType, StructField
 from zoo.common.utils import callZooFunc
 
 JAVA_INT_MIN = -2147483648
@@ -111,10 +108,19 @@ class Table:
 
         :return: A new Table that replaced the null values with specified value
         """
+        if columns and not isinstance(columns, list):
+            columns = [columns]
+        if columns:
+            check_col_exists(self.df, columns)
         if isinstance(value, int) and JAVA_INT_MIN <= value <= JAVA_INT_MAX:
-            return self._clone(fill_na_int(self.df, value, columns))
-        else:
-            return self._clone(fill_na(self.df, value, columns))
+            if columns:
+                col_not_int_list = list(filter(lambda x: x[0] in columns and x[1] != "int",
+                                               self.df.dtypes))
+                if len(col_not_int_list) == 0:
+                    return self._clone(fill_na_int(self.df, value, columns))
+            else:
+                return self._clone(fill_na_int(self.df, value, columns))
+        return self._clone(fill_na(self.df, value, columns))
 
     def dropna(self, columns, how='any', thresh=None):
         """
@@ -155,7 +161,7 @@ class Table:
         Clips continuous values so that they are within the range [min, max]. For instance, by
         setting the min value to 0, all negative values in columns will be replaced with 0.
 
-        :param columns: list of str, the target columns to be clipped.
+        :param columns: str or list of str, the target columns to be clipped.
         :param min: numeric, the mininum value to clip values to. Values less than this will be
                replaced with this value.
         :param max: numeric, the maxinum value to clip values to. Values greater than this will be
@@ -165,6 +171,8 @@ class Table:
                  value greater than `max` with specified `max`
         """
         assert min is not None or max is not None, "at least one of min and max should be not None"
+        if columns is None:
+            raise ValueError("columns should be str or list of str, but got None.")
         if not isinstance(columns, list):
             columns = [columns]
         return self._clone(clip(self.df, columns, min, max))
@@ -173,15 +181,18 @@ class Table:
         """
         Calculates the log of continuous columns.
 
-        :param columns: list of str, the target columns to calculate log.
+        :param columns: str or list of str, the target columns to calculate log.
         :param clipping: boolean, if clipping=True, the negative values in columns will be
                clipped to 0 and `log(x+1)` will be calculated. If clipping=False, `log(x)` will be
                calculated.
 
         :return: A new Table that replaced value in columns with logged value.
         """
+        if columns is None:
+            raise ValueError("columns should be str or list of str, but got None.")
         if not isinstance(columns, list):
             columns = [columns]
+        check_col_exists(self.df, columns)
         return self._clone(log_with_clip(self.df, columns, clipping))
 
     def fill_median(self, columns=None):
@@ -312,8 +323,11 @@ class FeatureTable(Table):
 
         :return: List of StringIndex
         """
+        if columns is None:
+            raise ValueError("columns should be str or list of str, but got None.")
         if not isinstance(columns, list):
             columns = [columns]
+        check_col_exists(self.df, columns)
         if freq_limit:
             if isinstance(freq_limit, int):
                 freq_limit = str(freq_limit)
