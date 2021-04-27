@@ -155,6 +155,22 @@ class BasePredictor(object):
             2019-01-03  2           3                   9
         """
         return self.pipeline.predict(input_df)
+    
+    def _detach_recipe(self, recipe):
+        self.search_space = recipe.search_space()
+
+        stop = recipe.runtime_params()
+        if "reward_metric" in stop.keys():
+            self.mode = Evaluator.get_metric_mode(self.metric)
+            stop["reward_metric"] = -stop["reward_metric"] if \
+                self.mode == "min" else stop["reward_metric"]
+        self.num_samples = stop["num_samples"]
+        del stop["num_samples"]
+        self.stop = stop
+
+        if self.search_alg and self.search_alg.lower() == "bayesopt":
+            self.search_alg_params.update({"space": recipe.manual_search_space()})
+
 
     def _hp_search(self,
                    input_df,
@@ -168,6 +184,8 @@ class BasePredictor(object):
 
         model_fn = self.make_model_fn(resources_per_trial)
 
+        self._detach_recipe(recipe)
+
         # prepare parameters for search engine
 
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
@@ -177,8 +195,10 @@ class BasePredictor(object):
                                        )
         searcher.compile(data=input_df,
                          model_create_func=model_fn,
-                         recipe=recipe,
                          validation_data=validation_df,
+                         search_space=self.search_space,
+                         num_samples=self.num_samples,
+                         stop=self.stop,
                          search_alg=self.search_alg,
                          search_alg_params=self.search_alg_params,
                          scheduler=self.scheduler,
