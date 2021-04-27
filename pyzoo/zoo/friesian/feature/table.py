@@ -539,4 +539,4 @@ class StringIndex(Table):
         Size of the StringIndex
         :return:
         """
-        return self.df.select(self.col_name, "id").distinct().count()
+        return self.df.count()
