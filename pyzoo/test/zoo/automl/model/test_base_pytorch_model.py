@@ -112,6 +112,8 @@ class TestBasePytorchModel(TestCase):
                        validation_data=(self.data["val_x"], self.data["val_y"]),
                        epochs=20)
         pred = model.predict(x=self.data["val_x"])
+        pred_full_batch = model.predict(x=self.data["val_x"], batch_size=len(self.data["val_x"]))
+        np.testing.assert_almost_equal(pred, pred_full_batch)
         try:
             import onnx
             import onnxruntime
