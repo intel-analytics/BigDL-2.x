@@ -437,7 +437,7 @@ class RayTuneSearchEngine(SearchEngine):
                 if mode == "max":
                     has_best_reward = best_reward is None or reward > best_reward
                 else:
-                    has_best_reward = best_reward is None or reward > best_reward
+                    has_best_reward = best_reward is None or reward < best_reward
 
                 if has_best_reward:
                     best_reward = reward

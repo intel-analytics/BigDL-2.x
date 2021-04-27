@@ -188,6 +188,8 @@ class TestRayTuneSearchEngine(ZooTestCase):
         assert RayTuneSearchEngine._get_best_result(analysis.trials,
                                                     metric='mse',
                                                     mode="min")['mse'] == sorted_results[0]
+        assert all(analysis.trials[i].last_result['mse'] >=
+                   analysis.trials[i].last_result['best_mse'] for i in range(len(sorted_results)))
         # assert the trail stop at once since mse has mode of 'min'
         assert analysis.trials[0].last_result['iterations_since_restore'] == 1
 
@@ -210,6 +212,8 @@ class TestRayTuneSearchEngine(ZooTestCase):
         assert RayTuneSearchEngine._get_best_result(analysis.trials,
                                                     metric='r2',
                                                     mode="max")['r2'] == sorted_results[0]
+        assert all(analysis.trials[i].last_result['r2'] <=
+                   analysis.trials[i].last_result['best_r2'] for i in range(len(sorted_results)))
         # assert the trail stop at once since mse has mode of 'max'
         assert analysis.trials[0].last_result['iterations_since_restore'] == 1
 
@@ -232,5 +236,7 @@ class TestRayTuneSearchEngine(ZooTestCase):
         assert RayTuneSearchEngine._get_best_result(analysis.trials,
                                                     metric='mae',
                                                     mode="min")['mae'] == sorted_results[0]
+        assert all(analysis.trials[i].last_result['mae'] >=
+                   analysis.trials[i].last_result['best_mae'] for i in range(len(sorted_results)))
         # assert the trail stop at once since mse has mode of 'min'
         assert analysis.trials[0].last_result['iterations_since_restore'] == 20
