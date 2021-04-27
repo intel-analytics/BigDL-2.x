@@ -73,7 +73,7 @@ class TCNForecaster(Forecaster):
         }
 
     def fit(self, data, validation_data=None, epochs=1, metric="mse", batch_size=32,
-            distributed=False, **kwargs):
+            distributed=False, backend="bigdl", **kwargs):
         """
         Fit(Train) the forecaster.
 
@@ -91,10 +91,11 @@ class TCNForecaster(Forecaster):
         :param metric: The metric for training data.
         :param batch_size: Number of batch size you want to train.
         :param distributed: whether train in ditributed.
+        :param backend: works with distributed=True. You can choose "horovod",  "torch_distributed" or "bigdl" as backend.
+               Default: `bigdl`
         """
-        self.config["batch_size"] = batch_size
-
         if not distributed:
+            self.config["batch_size"] = batch_size
             x = data["x"]
             y = data["y"]
 
@@ -121,14 +122,44 @@ class TCNForecaster(Forecaster):
 
             self.config.update(self.data_config)
             self.internal.build(self.config)
-
             orca_metrics = convert_str_metric_to_orca_metric(metric)
-            self.orca_estimator = Estimator.from_torch(model=self.internal.model,
-                                                  optimizer=self.internal.optimizer,
-                                                  loss=self.internal.criterion,
-                                                  backend="bigdl",
-                                                  metrics=orca_metrics)
-            res = self.orca_estimator.fit(data=data, epochs=epochs, validation_data=validation_data)
+            if backend == "bigdl":
+                self.orca_estimator = Estimator.from_torch(model=self.internal.model,
+                                                      optimizer=self.internal.optimizer,
+                                                      loss=self.internal.criterion,
+                                                      backend=backend,
+                                                      metrics=orca_metrics)
+                res = self.orca_estimator.fit(data=data, batch_size=batch_size, epochs=epochs,
+                                              validation_data=validation_data)
+            elif backend in ("torch_distributed", "horovod"):
+                from zoo.orca.learn.pytorch.training_operator import TrainingOperator
+                scheduler_creator = kwargs.get("scheduler_creator", None)
+                training_operator_cls = kwargs.get("training_operator_cls", TrainingOperator)
+                initialization_hook = kwargs.get("initialization_hook", None)
+                if "config" in kwargs:
+                    self.config.update(kwargs["config"])
+                scheduler_step_freq = kwargs.get("scheduler_step_freq", "batch")
+                use_tqdm = kwargs.get("use_tqdm", False)
+                workers_per_node = kwargs.get("workers_per_node", 1)
+                self.orca_estimator = Estimator.from_torch(model=self.internal.model_creator,
+                                                           optimizer=self.internal.optimizer_creator,
+                                                           loss=self.internal.criterion,
+                                                           backend=backend,
+                                                           metrics=orca_metrics,
+                                                           scheduler_creator = scheduler_creator,
+                                                           training_operator_cls = training_operator_cls,
+                                                           initialization_hook = initialization_hook,
+                                                           config = self.config,
+                                                           scheduler_step_freq = scheduler_step_freq,
+                                                           use_tqdm = use_tqdm,
+                                                           workers_per_node = workers_per_node)
+                self.orca_estimator.fit(data=data, batch_size=batch_size, epochs=epochs)
+                if validation_data:
+                    res = self.orca_estimator.evaluate(data=validation_data, batch_size=batch_size)
+                else:
+                    res = self.orca_estimator.evaluate(data=data, batch_size=batch_size)
+            else:
+                raise RuntimeError("Only support bigdl/horovod/torch_distributed as backend!")
 
         return res
 

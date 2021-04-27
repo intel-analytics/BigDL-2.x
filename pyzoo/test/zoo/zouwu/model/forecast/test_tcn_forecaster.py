@@ -45,7 +45,7 @@ def create_data():
     return train_data, val_data, test_data
 
 
-def create_dataloader():
+def create_dataloader(batchsize=2):
     import torch
     from torch.utils.data import TensorDataset
     input_time_steps = 5
@@ -54,11 +54,11 @@ def create_dataloader():
     targets = torch.rand(num_train_samples, output_time_steps, output_feature_dim)
     train_loader = torch.utils.data.DataLoader(
         TensorDataset(inputs, targets),
-        batch_size=2,
+        batch_size=batchsize,
     )
     val_loader = torch.utils.data.DataLoader(
         TensorDataset(inputs, targets),
-        batch_size=2,
+        batch_size=batchsize,
     )
     return train_loader, val_loader
 
@@ -99,6 +99,26 @@ class TestZouwuModelTCNForecaster(TestCase):
         train_loss = forecaster.fit(data=train_data, epochs=1,
                                    distributed=True)
         test_mse = forecaster.evaluate(val_data=val_data, metrics="mse",
+                                   distributed=True)
+
+    def test_tcn_forecaster_fit_eva_torch_distributed_backend(self):
+        train_data, val_data = create_dataloader()
+        def get_train_data(config, batch_size):
+            return train_data
+        def get_val_data(config, batch_size):
+            return val_data
+        forecaster = TCNForecaster(past_seq_len=5,
+                                   future_seq_len=2,
+                                   input_feature_num=input_feature_dim,
+                                   output_feature_num=output_feature_dim,
+                                   kernel_size=3,
+                                   num_channels=[4, 4],
+                                   loss="mae",
+                                   lr=0.01)
+        train_loss = forecaster.fit(data=get_train_data, epochs=1,
+                                   distributed=True, backend="torch_distributed",
+                                    )
+        test_mse = forecaster.evaluate(val_data=get_val_data, metrics="mse",
                                    distributed=True)
 
     def test_tcn_forecaster_onnx_methods(self):
