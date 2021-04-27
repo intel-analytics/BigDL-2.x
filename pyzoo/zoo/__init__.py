@@ -14,11 +14,11 @@
 # limitations under the License.
 #
 
-__version__ = "0.10.0.dev0"
-
 from zoo.common.nncontext import *
 from zoo.util.engine import prepare_env, compare_version
-from pyspark import __version__ as pyspark_version
+import pyspark
+
+__version__ = "0.10.0.dev0"
 
 prepare_env()
 creator_classes = JavaCreator.get_creator_class()[:]
@@ -35,7 +35,7 @@ JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.net.python.P
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.inference.PythonInferenceModel")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.estimator.python.PythonEstimator")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.orca.python.PythonOrca")
-if compare_version(pyspark_version, "2.4") >= 0:
+if compare_version(pyspark.__version__, "2.4") >= 0:
     JavaCreator.add_creator_class("com.intel.analytics.zoo.friesian.python.PythonFriesian")
 for clz in creator_classes:
     JavaCreator.add_creator_class(clz)
