@@ -19,7 +19,7 @@ import pytest
 import tempfile
 from unittest import TestCase
 
-from pyspark.sql.functions import col, max, min
+from pyspark.sql.functions import col, max, min, array
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
 
 from zoo.orca import OrcaContext
@@ -155,7 +155,7 @@ class TestTable(TestCase):
 
     def test_norm(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
-        feature_tbl = FeatureTable.read_parquet(file_path).fillna(0, ["col_2"])
+        feature_tbl = FeatureTable.read_parquet(file_path).fillna(0, ["col_2", "col_3"])
         normalized_tbl = feature_tbl.normalize(["col_2"])
         max_value = normalized_tbl.df.select("col_2")\
         .agg(max(col("col_2")).alias("max"))\
@@ -166,6 +166,10 @@ class TestTable(TestCase):
 
         assert max_value <= 1, "col_2 shouldn't be more than 1 after normalization"
         assert min_value >= 0, "col_2 shouldn't be less than 0 after normalization"
+
+        tbl2 = FeatureTable(feature_tbl.df.withColumn("col2-col3", array(["col_2", "col_3"])))
+        normalized_tbl2 = tbl2.normalize(["col_2", "col2-col3"])
+        normalized_tbl2.compute()
 
     def test_cross(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")

@@ -108,8 +108,7 @@ def _parse_args():
 if __name__ == '__main__':
     args = _parse_args()
     if args.cluster_mode == "local":
-        # init_orca_context("local", cores=args.executor_cores, memory=args.executor_memory)
-        sc = init_nncontext("wnd")
+        init_orca_context("local", cores=args.executor_cores, memory=args.executor_memory)
     elif args.cluster_mode == "standalone":
         init_orca_context("standalone", master=args.master,
                           cores=args.executor_cores, num_nodes=args.num_executor,
@@ -137,7 +136,7 @@ if __name__ == '__main__':
 
     tbl_all_data = tbl.encode_string(CAT_COLS, idx_list)\
         .fillna(0, INT_COLS + CAT_COLS)\
-        .normalize1(INT_COLS)\
+        .normalize(INT_COLS)\
         .cross_columns(crossed_columns=[CAT_COLS[0:2], CAT_COLS[2:4]],
                        bucket_sizes=cross_sizes)
     tbl_all_data.compute()
@@ -160,5 +159,4 @@ if __name__ == '__main__':
     tbl_all_data.show(5)
     print("Finished")
     tbl_all_data.write_parquet(os.path.join(args.output_folder, "data_parquet"))
-    # stop_orca_context()
-    sc.stop()
+    stop_orca_context()

@@ -382,7 +382,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         .setInputCol(column)
         .setOutputCol("scaled");
 
-    val resultDF = scaler.fit(df).transform(df).withColumnRenamed("scaled", column)
+    val resultDF = scaler.fit(vectoredDF).transform(vectoredDF).withColumnRenamed("scaled", column)
     resultDF
   }
 }

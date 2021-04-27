@@ -300,31 +300,14 @@ class FeatureTable(Table):
 
     def normalize(self, columns):
         df = self.df
-        for col_name in columns:
-            assembler = VectorAssembler(inputCols=[col_name], outputCol=col_name + "_vect")
-
-            # MinMaxScaler Transformation
-            scaler = MinMaxScaler(inputCol=col_name + "_vect", outputCol=col_name + "_scaled")
-
-            # Pipeline of VectorAssembler and MinMaxScaler
-            pipeline = Pipeline(stages=[assembler, scaler])
-
-            unlist = udf(lambda x: float(list(x)[0]), DoubleType())
-
-            # Fitting pipeline on dataframe
-            df = pipeline.fit(df).transform(df) \
-                .withColumn(col_name, unlist(col_name + "_scaled"))\
-                .drop(col_name + "_vect").drop(col_name + "_scaled")
-        return FeatureTable(df)
-
-    def normalize1(self, columns):
-        df = self.df
         types = [x[1] for x in self.df.select(*columns).dtypes]
         scalar_cols = [columns[i] for i in range(len(columns))
                         if types[i] == "int" or types[i] == "bigint"
                         or types[i] == "float" or types[i] == "double"]
-        array_cols = [columns[i] for i in range(len(columns)) if types[i] == "array"]
-        vector_cols = [columns[i] for i in range(len(columns)) if types[i] == "VectorUDT"]
+        array_cols = [columns[i] for i in range(len(columns))
+                      if types[i] == "array<int>" or types[i] == "array<bigint>"
+                      or types[i] == "array<float>" or types[i] == "array<double>"]
+        vector_cols = [columns[i] for i in range(len(columns)) if types[i] == "vector"]
         if scalar_cols:
             assembler = VectorAssembler(inputCols=scalar_cols, outputCol="vect")
 
