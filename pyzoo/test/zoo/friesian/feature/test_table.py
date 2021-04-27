@@ -76,8 +76,8 @@ class TestTable(TestCase):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
         string_idx_list = feature_tbl.gen_string_idx(["col_4", "col_5"], freq_limit=1)
-        assert string_idx_list[0].count() == 3, "col_4 should have 3 indices"
-        assert string_idx_list[1].count() == 2, "col_5 should have 2 indices"
+        assert string_idx_list[0].size() == 3, "col_4 should have 3 indices"
+        assert string_idx_list[1].size() == 2, "col_5 should have 2 indices"
         with tempfile.TemporaryDirectory() as local_path:
             for str_idx in string_idx_list:
                 str_idx.write_parquet(local_path)
@@ -102,15 +102,15 @@ class TestTable(TestCase):
             feature_tbl.gen_string_idx(["col_4", "col_5"], freq_limit="col_4:1,col_5:3")
         self.assertTrue('freq_limit only supports int, dict or None, but get str' in str(
             context.exception))
-        assert string_idx_list[0].count() == 3, "col_4 should have 3 indices"
-        assert string_idx_list[1].count() == 1, "col_5 should have 1 indices"
+        assert string_idx_list[0].size() == 3, "col_4 should have 3 indices"
+        assert string_idx_list[1].size() == 1, "col_5 should have 1 indices"
 
     def test_gen_string_idx_none(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
         string_idx_list = feature_tbl.gen_string_idx(["col_4", "col_5"], freq_limit=None)
-        assert string_idx_list[0].count() == 3, "col_4 should have 3 indices"
-        assert string_idx_list[1].count() == 2, "col_5 should have 2 indices"
+        assert string_idx_list[0].size() == 3, "col_4 should have 3 indices"
+        assert string_idx_list[1].size() == 2, "col_5 should have 2 indices"
 
     def test_clip(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
@@ -202,7 +202,7 @@ class TestTable(TestCase):
         df = spark.createDataFrame(data=data, schema=schema)
         tbl = FeatureTable(df).add_negative_samples(10)
         dft = tbl.df
-        assert tbl.count() == 12
+        assert tbl.size() == 12
         assert dft.filter("label == 1").count() == 6
         assert dft.filter("label == 0").count() == 6
 
@@ -225,7 +225,7 @@ class TestTable(TestCase):
         df = df.withColumn("ts", col("time").cast("timestamp").cast("long"))
         tbl = FeatureTable(df.select("name", "item", "ts")) \
             .add_hist_seq("name", ["item"], "ts", 1, 4)
-        assert tbl.count() == 8
+        assert tbl.size() == 8
         assert tbl.df.filter(col("name") == "alice").count() == 2
         assert tbl.df.filter("name like '%jack'").count() == 6
         assert "item_hist_seq" in tbl.df.columns

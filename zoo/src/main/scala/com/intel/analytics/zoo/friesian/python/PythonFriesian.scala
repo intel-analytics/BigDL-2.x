@@ -28,7 +28,7 @@ import org.apache.spark.sql.functions.{col, collect_list, explode, row_number, s
 spark_partition_id, struct, udf, log => sqllog, array}
 import org.apache.spark.sql.types.{ArrayType, IntegerType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
-import org.apache.spark.ml.linalg.DenseVector
+import org.apache.spark.ml.linalg.{DenseVector, Vector => MLVector}
 import org.apache.spark.ml.feature.MinMaxScaler
 
 import scala.reflect.ClassTag
@@ -187,7 +187,9 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     resultDF
   }
 
-  def crossColumns(df: DataFrame, crossCols: JList[JList[String]], bucketSizes: JList[Int]): DataFrame = {
+  def crossColumns(df: DataFrame,
+                   crossCols: JList[JList[String]],
+                   bucketSizes: JList[Int]): DataFrame = {
     def crossColumns(bucketSize: Int) = udf((cols: WrappedArray[Any]) => {
       Utils.hashBucket(cols.mkString("_"), bucketSize = bucketSize)
     })
@@ -195,7 +197,9 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     var resultDF = df
     for (i <- 0 until crossCols.size()) {
       resultDF = resultDF.withColumn(crossCols.get(i).asScala.toList.mkString("_"),
-        crossColumns(bucketSizes.get(i))(array(crossCols.get(i).asScala.toArray.map(x => col(x)): _*)))
+        crossColumns(bucketSizes.get(i))(
+          array(crossCols.get(i).asScala.toArray.map(x => col(x)): _*)
+        ))
     }
     resultDF
   }
@@ -381,8 +385,9 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     val scaler = new MinMaxScaler()
         .setInputCol(column)
         .setOutputCol("scaled");
-
-    val resultDF = scaler.fit(vectoredDF).transform(vectoredDF).withColumnRenamed("scaled", column)
+    val toArray = udf((vec: MLVector) => vec.toArray.map(_.toFloat))
+    val resultDF = scaler.fit(vectoredDF).transform(vectoredDF)
+      .withColumn(column, toArray(col("scaled")))
     resultDF
   }
 }

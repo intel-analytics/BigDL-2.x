@@ -77,7 +77,7 @@ class Table:
         """
         return self.df
 
-    def count(self):
+    def size(self):
         """
         Returns the number of rows in this Table.
 
@@ -339,11 +339,17 @@ class FeatureTable(Table):
                 df = df.withColumn(scalar_cols[i], col("scaled_list")[i])
             df = df.drop("scaled_list")
 
+            # cast to float
+            for c in scalar_cols:
+                df = df.withColumn(c, col(c).cast("float"))
+
         for c in array_cols:
             df = normalize_array(df, c)
+
         for c in vector_cols:
             scaler = MinMaxScaler(inputCol=c, outputCol="scaled")
             df = scaler.fit(df).transform(df).withColumnRenamed("scaled", c)
+
         return FeatureTable(df)
 
     def add_negative_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
@@ -545,10 +551,3 @@ class StringIndex(Table):
         """
         path = path + "/" + self.col_name + ".parquet"
         self.df.write.parquet(path, mode=mode)
-
-    def size(self):
-        """
-        Size of the StringIndex
-        :return:
-        """
-        return self.df.count()
