@@ -387,7 +387,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         .setOutputCol("scaled");
     val toArray = udf((vec: MLVector) => vec.toArray.map(_.toFloat))
     val resultDF = scaler.fit(vectoredDF).transform(vectoredDF)
-      .withColumn(column, toArray(col("scaled")))
+      .withColumn(column, toArray(col("scaled"))).drop("scaled")
     resultDF
   }
 }

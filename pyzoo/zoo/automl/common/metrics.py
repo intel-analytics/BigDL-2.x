@@ -15,9 +15,9 @@
 #
 
 from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score as R2
-from sklearn.metrics import mean_absolute_error as MAE
-from sklearn.metrics import mean_squared_log_error as MSLE
+from sklearn.metrics import r2_score
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_log_error
 import numpy as np
 import pandas as pd
 
@@ -29,6 +29,7 @@ def _standardize_input(y_true, y_pred, multioutput):
     """
     This function check the validation of the input
     input should be one of list/tuple/ndarray with same shape and not be None
+    input dtype will be cast to np.float64
     input will be changed to corresponding 2-dim ndarray
     """
     if y_true is None or y_pred is None:
@@ -43,6 +44,9 @@ def _standardize_input(y_true, y_pred, multioutput):
     if isinstance(y_true, pd.DataFrame) and isinstance(y_pred, pd.DataFrame):
         y_true = y_true.to_numpy()
         y_pred = y_pred.to_numpy()
+
+    y_true = y_true.astype(np.float64)
+    y_pred = y_pred.astype(np.float64)
 
     original_shape = y_true.shape[1:]
 
@@ -128,7 +132,7 @@ def MAPE(y_true, y_pred, multioutput='raw_values'):
         array of floating point values, one for each individual target.
     """
     y_true, y_pred, original_shape = _standardize_input(y_true, y_pred, multioutput)
-    output_errors = np.mean(100 * np.abs((y_true - y_pred) / (y_true + EPSILON)), axis=0,)
+    output_errors = 100 * np.mean(np.abs((y_true - y_pred) / (y_true + EPSILON)), axis=0,)
     if multioutput == 'raw_values':
         return output_errors.reshape(original_shape)
     return np.mean(output_errors)
@@ -211,6 +215,63 @@ def MSPE(y_true, y_pred, multioutput='raw_values'):
     if multioutput == 'raw_values':
         return output_errors.reshape(original_shape)
     return np.mean(output_errors)
+
+
+def MSLE(y_true, y_pred, multioutput='raw_values'):
+    """
+    calculate the mean squared log error(MSLE).
+    :param y_true: array-like of shape = (n_samples, *)
+        Ground truth (correct) target values.
+    :param y_pred: array-like of shape = (n_samples, *)
+        Estimated target values.
+    :param multioutput: string in ['raw_values', 'uniform_average']
+    :return:float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+    """
+    y_true, y_pred, original_shape = _standardize_input(y_true, y_pred, multioutput)
+    result = mean_squared_log_error(y_true, y_pred, multioutput=multioutput)
+    if multioutput == 'raw_values':
+        return result.reshape(original_shape)
+    return result
+
+
+def R2(y_true, y_pred, multioutput='raw_values'):
+    """
+    calculate the r2 score.
+    :param y_true: array-like of shape = (n_samples, *)
+        Ground truth (correct) target values.
+    :param y_pred: array-like of shape = (n_samples, *)
+        Estimated target values.
+    :param multioutput: string in ['raw_values', 'uniform_average']
+    :return:float or ndarray of floats
+        A non-negative floating point value (the best value is 1.0), or an
+        array of floating point values, one for each individual target.
+    """
+    y_true, y_pred, original_shape = _standardize_input(y_true, y_pred, multioutput)
+    result = r2_score(y_true, y_pred, multioutput=multioutput)
+    if multioutput == 'raw_values':
+        return result.reshape(original_shape)
+    return result
+
+
+def MAE(y_true, y_pred, multioutput='raw_values'):
+    """
+    calculate the mean absolute error (MAE).
+    :param y_true: array-like of shape = (n_samples, *)
+        Ground truth (correct) target values.
+    :param y_pred: array-like of shape = (n_samples, *)
+        Estimated target values.
+    :param multioutput: string in ['raw_values', 'uniform_average']
+    :return:float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+    """
+    y_true, y_pred, original_shape = _standardize_input(y_true, y_pred, multioutput)
+    result = mean_absolute_error(y_true, y_pred, multioutput=multioutput)
+    if multioutput == 'raw_values':
+        return result.reshape(original_shape)
+    return result
 
 
 def RMSE(y_true, y_pred, multioutput='raw_values'):

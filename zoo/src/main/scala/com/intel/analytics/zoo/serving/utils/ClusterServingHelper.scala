@@ -55,6 +55,7 @@ class ClusterServingHelper
   @BeanProperty var redisSecureTrustStorePath = ""
   @BeanProperty var redisSecureStructStorePassword = ""
   @BeanProperty var modelEncrypted = false
+  @BeanProperty var recordEncrypted = false
 
   var configPath: String = "config.yaml"
   var redisHost: String = _
@@ -66,7 +67,6 @@ class ClusterServingHelper
   var weightPath: String = _
   var defPath: String = _
   var redisSecureTrustStoreToken: String = ""
-  var recordEncrypted: Boolean = false
 
   def parseConfigStrings(): Unit = {
     redisHost = redisUrl.split(":").head.trim
