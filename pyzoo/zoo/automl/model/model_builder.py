@@ -82,3 +82,10 @@ class XGBoostModelBuilder(ModelBuilder):
         model = XGBoost(model_type=self.model_type, config=self.model_config)
         model._build(**config)
         return model
+
+    def build_from_ckpt(self, checkpoint_filename):
+        from zoo.orca.automl.xgboost.XGBoost import XGBoost
+        model = XGBoost(model_type=self.model_type, config=self.model_config)
+        model.restore(checkpoint_filename)
+        return model
+
