@@ -136,7 +136,7 @@ def setup_package():
         license='Apache License, Version 2.0',
         url='https://github.com/intel-analytics/analytics-zoo',
         packages=packages,
-        install_requires=['pyspark==2.4.3', 'bigdl==0.12.1', 'conda-pack==0.3.1'],
+        install_requires=['pyspark==2.4.3', 'bigdl==0.12.2', 'conda-pack==0.3.1'],
         extras_require={'ray': ['ray==1.2.0', 'psutil', 'aiohttp==3.7.0',
                                 'setproctitle', 'pyarrow==0.17.0', 'hiredis==1.1.0'],
                         'automl': ['tensorflow>=1.15.0,<2.0.0', 'h5py==2.10.0', 'hiredis==1.1.0',

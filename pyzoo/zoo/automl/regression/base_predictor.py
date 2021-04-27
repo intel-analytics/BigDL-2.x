@@ -111,6 +111,7 @@ class BasePredictor(object):
         else:
             upload_dir = None
 
+        self.metric = metric
         self.pipeline = self._hp_search(
             input_df,
             validation_df=validation_df,
@@ -164,15 +165,10 @@ class BasePredictor(object):
                    resources_per_trial,
                    remote_dir):
         ft = self.create_feature_transformer()
-        try:
-            feature_list = ft.get_feature_list()
-        except:
-            feature_list = None
 
         model_fn = self.make_model_fn(resources_per_trial)
 
         # prepare parameters for search engine
-        search_space = recipe.search_space(feature_list)
 
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
                                        resources_per_trial=resources_per_trial,
@@ -181,7 +177,6 @@ class BasePredictor(object):
                                        )
         searcher.compile(data={'df': input_df, 'val_df': validation_df},
                          model_create_func=model_fn,
-                         search_space=search_space,
                          recipe=recipe,
                          search_alg=self.search_alg,
                          search_alg_params=self.search_alg_params,
@@ -207,11 +202,12 @@ class BasePredictor(object):
 
     def _make_pipeline(self, analysis, feature_transformers, model,
                        remote_dir):
-        metric = "reward_metric"
-        best_config = analysis.get_best_config(metric=metric, mode="max")
-        best_logdir = analysis.get_best_logdir(metric=metric, mode="max")
+        metric = self.metric
+        mode = Evaluator.get_metric_mode(metric)
+        best_config = analysis.get_best_config(metric=metric, mode=mode)
+        best_logdir = analysis.get_best_logdir(metric=metric, mode=mode)
         print("best log dir is ", best_logdir)
-        dataframe = analysis.dataframe(metric=metric, mode="max")
+        dataframe = analysis.dataframe(metric=metric, mode=mode)
         # print(dataframe)
         model_path = os.path.join(best_logdir, dataframe["checkpoint"].iloc[0])
         config = convert_bayes_configs(best_config).copy()

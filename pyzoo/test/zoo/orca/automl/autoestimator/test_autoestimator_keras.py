@@ -46,7 +46,7 @@ def get_train_val_data():
 
 
 class LinearRecipe(Recipe):
-    def search_space(self, all_available_features):
+    def search_space(self):
         from zoo.orca.automl import hp
         return {
             "hidden_size": hp.choice([5, 10]),

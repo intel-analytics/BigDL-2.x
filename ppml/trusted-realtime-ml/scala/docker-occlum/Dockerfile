@@ -25,8 +25,8 @@ RUN git clone https://github.com/redis/redis.git && \
 # stage. 2 Flink & analytics-zoo
 FROM ubuntu:18.04 as analytics-zoo
 
-ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.1
+ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
+ARG BIGDL_VERSION=0.12.2
 ARG SPARK_VERSION=2.4.3
 ARG SPARK_MAJOR_VERSION=2.4
 ARG FLINK_VERSION=1.10.1
@@ -52,7 +52,7 @@ RUN cd /opt && \
 
 # analytics-zoo
 RUN cd /opt && git clone https://github.com/intel-analytics/analytics-zoo.git && \
-    cd analytics-zoo && \
+    cd analytics-zoo/zoo && \
     export MAVEN_OPTS="-XX:ReservedCodeCacheSize=512m -XX:MaxPermSize=3G \
         -Dhttp.proxyHost=$HTTP_PROXY_HOST \
         -Dhttp.proxyPort=$HTTP_PROXY_PORT \
@@ -71,8 +71,8 @@ RUN cd /opt && \
 # stage.3 az ppml occlum
 FROM occlum/occlum:0.21.0-ubuntu18.04
 
-ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.1
+ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
+ARG BIGDL_VERSION=0.12.2
 ARG SPARK_VERSION=2.4.3
 ARG FLINK_VERSION=1.10.1
 ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}

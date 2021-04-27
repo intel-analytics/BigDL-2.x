@@ -57,7 +57,7 @@ class SimpleRecipe(Recipe):
         self.num_samples = 2
         self.training_iteration = 20
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         return {
             "lr": hp.uniform(0.01, 0.02),
             "batch_size": hp.choice([16, 32, 64])

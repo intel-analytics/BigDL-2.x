@@ -69,8 +69,8 @@ RUN git clone https://github.com/intel-analytics/BigDL.git && \
 
 # stage.4 analytics-zoo
 FROM ubuntu:18.04 as analytics-zoo
-ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.1
+ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
+ARG BIGDL_VERSION=0.12.2
 ARG SPARK_VERSION=2.4.3
 ENV ANALYTICS_ZOO_VERSION	${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION		${SPARK_VERSION}
@@ -84,7 +84,7 @@ RUN ./download-analytics-zoo.sh
 
 # stage.5 az ppml
 FROM ubuntu:18.04
-ARG ANALYTICS_ZOO_VERSION=0.10.0-SNAPSHOT
+ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
 ARG SPARK_VERSION=2.4.3
 ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION			${SPARK_VERSION}
@@ -145,6 +145,7 @@ ADD ./start-spark-standalone-worker-sgx.sh /ppml/trusted-big-data-ml/start-spark
 ADD ./start-spark-standalone-driver-sgx.sh /ppml/trusted-big-data-ml/start-spark-standalone-driver-sgx.sh
 ADD ./distributed-check-status.sh /ppml/trusted-big-data-ml/distributed-check-status.sh
 ADD ./check-status.sh /ppml/trusted-big-data-ml/check-status.sh
+ADD ./ppml-spark-submit.sh /ppml/trusted-big-data-ml/ppml-spark-submit.sh
 
 RUN chmod a+x /ppml/trusted-big-data-ml/init.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-local-train-sgx.sh && \
