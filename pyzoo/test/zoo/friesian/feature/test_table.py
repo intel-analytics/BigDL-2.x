@@ -51,7 +51,7 @@ class TestTable(TestCase):
                                                                 "filled with 5"
         with self.assertRaises(Exception) as context:
             feature_tbl.fillna(0, ["col_2", "col_3", "col_8"])
-        self.assertTrue('are not exist in this Table' in str(context.exception))
+        self.assertTrue('do not exist in this Table' in str(context.exception))
 
     def test_fillna_double(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
