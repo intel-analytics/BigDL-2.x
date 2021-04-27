@@ -175,6 +175,7 @@ class Table:
             raise ValueError("columns should be str or list of str, but got None.")
         if not isinstance(columns, list):
             columns = [columns]
+        check_col_exists(self.df, columns)
         return self._clone(clip(self.df, columns, min, max))
 
     def log(self, columns, clipping=True):
@@ -206,8 +207,10 @@ class Table:
         :return: A new Table that replaces null values with the median in the specified numeric
                  columns.
         """
-        if not isinstance(columns, list) and columns is not None:
+        if columns and not isinstance(columns, list):
             columns = [columns]
+        if columns:
+            check_col_exists(self.df, columns)
         return self._clone(fill_median(self.df, columns))
 
     def median(self, columns):
@@ -220,8 +223,10 @@ class Table:
 
         :return: A new Table that contains the medians of the specified columns.
         """
-        if not isinstance(columns, list) and columns is not None:
+        if columns and not isinstance(columns, list):
             columns = [columns]
+        if columns:
+            check_col_exists(self.df, columns)
         return self._clone(median(self.df, columns))
 
     # Merge column values as a list to a new col
