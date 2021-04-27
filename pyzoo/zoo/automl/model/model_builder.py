@@ -71,14 +71,14 @@ class PytorchModelBuilder(ModelBuilder):
 
 class XGBoostModelBuilder(ModelBuilder):
 
-    def __init__(self, model_type, n_cpus):
+    def __init__(self, model_type="regressor", n_cpus=1, **xgb_config):
         self.model_type = model_type
-        self.n_cpus = n_cpus
+        self.model_config = xgb_config.copy()
+        if n_cpus and 'n_jobs' not in xgb_config:
+            self.model_config['n_jobs'] = n_cpus
 
     def build(self, config):
         from zoo.orca.automl.xgboost.XGBoost import XGBoost
-        model = XGBoost(model_type=self.model_type, config=config)
-
-        if self.n_cpus is not None:
-            model.set_params(n_jobs=self.n_cpus)
+        model = XGBoost(model_type=self.model_type, config=self.model_config)
+        model._build(**config)
         return model
