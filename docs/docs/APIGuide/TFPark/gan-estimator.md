@@ -47,7 +47,7 @@ estimator.train(input_fn=input_fn, end_trigger=MaxIteration(100))
 
 * **input_fn**: a python function that takes zero arguments and return a TFDataset. Each record in the TFDataset should
 a tuple. The first element of the tuple is generator inputs, and the second element of the tuple should be real data.
-* **end_trigger**: BigDL's [Trigger](https://bigdl-project.github.io/0.9.0/#APIGuide/Triggers/) to indicate when to stop the training. If none, defaults to
+* **end_trigger**: BigDL's [Trigger](https://bigdl-project.github.io/0.10.0/#APIGuide/Triggers/) to indicate when to stop the training. If none, defaults to
 train for one epoch.
 
 

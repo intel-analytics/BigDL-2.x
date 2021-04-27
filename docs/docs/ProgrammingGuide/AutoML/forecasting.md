@@ -14,7 +14,7 @@ We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux)
 ```bash
 conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
-pip install analytics-zoo[automl]==0.9.0.dev0 # or above
+pip install analytics-zoo[automl]==0.10.0 # or above
 ```
 
 #### 1. Before training, init RayOnSpark.   

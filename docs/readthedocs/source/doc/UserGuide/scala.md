@@ -59,7 +59,7 @@ You can run an Analytics Zoo example, e.g., the [Wide & Deep Recommendation](htt
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \ 
   --master local[2] \
   --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
-  dist/lib/analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.9.0-jar-with-dependencies.jar \   #change to your jar file if your download is not spark_2.4.3-0.9.0
+  dist/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.10.0-jar-with-dependencies.jar \   #change to your jar file if your download is not spark_2.4.3-0.10.0
   --inputDir ./data/census \
   --batchSize 320 \
   --maxEpoch 20 \
@@ -71,7 +71,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
   --executor-cores cores_per_executor \
   --total-executor-cores total_cores_for_the_job \
   --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
-  dist/lib/analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.9.0-jar-with-dependencies.jar \   #change to your jar file if your download is not spark_2.4.3-0.9.0
+  dist/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.10.0-jar-with-dependencies.jar \   #change to your jar file if your download is not spark_2.4.3-0.10.0
   --inputDir ./data/census \
   --batchSize 320 \
   --maxEpoch 20 \
@@ -84,7 +84,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
   --executor-cores cores_per_executor \
   --num-executors executors_number \
   --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
-  dist/lib/analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.9.0-jar-with-dependencies.jar \   #change to your jar file if your download is not spark_2.4.3-0.9.0
+  dist/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.10.0-jar-with-dependencies.jar \   #change to your jar file if your download is not spark_2.4.3-0.10.0
   --inputDir ./data/census \
   --batchSize 320 \
   --maxEpoch 20 \
@@ -97,7 +97,7 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
   --executor-cores cores_per_executor \
   --num-executors executors_number \
   --class com.intel.analytics.zoo.examples.recommendation.WideAndDeepExample \
-  dist/lib/analytics-zoo-bigdl_0.12.1-spark_2.4.3-0.9.0-jar-with-dependencies.jar \   #change to your jar file if your download is not spark_2.4.3-0.9.0
+  dist/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.10.0-jar-with-dependencies.jar \   #change to your jar file if your download is not spark_2.4.3-0.10.0
   --inputDir ./data/census \
   --batchSize 320 \
   --maxEpoch 20 \
@@ -118,8 +118,8 @@ Currently, Analytics Zoo releases are hosted on maven central; below is an examp
 ```xml
 <dependency>
     <groupId>com.intel.analytics.zoo</groupId>
-    <artifactId>analytics-zoo-bigdl_0.12.1-spark_2.4.3</artifactId>
-    <version>0.9.0</version>
+    <artifactId>analytics-zoo-bigdl_0.12.2-spark_2.4.3</artifactId>
+    <version>0.10.0</version>
 </dependency>
 ```
 
@@ -128,14 +128,14 @@ You can find the other SPARK version [here](https://search.maven.org/search?q=an
 
 SBT developers can use
 ```sbt
-libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.12.1-spark_2.4.3" % "0.9.0"
+libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.12.2-spark_2.4.3" % "0.10.0"
 ```
 
 ##### **2.1.2 Nightly Build**
 
 Currently, Analytics Zoo nightly build is hosted on [SonaType](https://oss.sonatype.org/content/groups/public/com/intel/analytics/zoo/).
 
-To link your application with the latest Analytics Zoo nightly build, you should add some dependencies like [official releases](#11-official-release), but change `0.9.0` to the snapshot version (such as 0.10.0-snapshot), and add below repository to your pom.xml.
+To link your application with the latest Analytics Zoo nightly build, you should add some dependencies like [official releases](#11-official-release), but change `0.10.0` to the snapshot version (such as 0.10.0-snapshot), and add below repository to your pom.xml.
 
 
 ```xml
