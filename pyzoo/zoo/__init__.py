@@ -18,6 +18,8 @@ from zoo.common.nncontext import *
 from zoo.util.engine import prepare_env
 import pyspark
 
+__version__ = "0.10.0.dev0"
+
 pyspark_version = list(map(int, pyspark.__version__.split(".")))
 
 prepare_env()
@@ -39,5 +41,3 @@ if pyspark_version[0] > 2 or (pyspark_version[0] == 2 and pyspark_version[1] >= 
     JavaCreator.add_creator_class("com.intel.analytics.zoo.friesian.python.PythonFriesian")
 for clz in creator_classes:
     JavaCreator.add_creator_class(clz)
-
-__version__ = "0.10.0.dev0"
