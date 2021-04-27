@@ -54,3 +54,4 @@ def check_col_exists(df, columns):
     col_not_exist = list(filter(lambda x: x not in df_cols, columns))
     if len(col_not_exist) > 0:
         raise ValueError(str(col_not_exist) + " are not exist in this Table")
+

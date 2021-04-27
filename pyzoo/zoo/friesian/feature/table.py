@@ -259,7 +259,7 @@ class Table:
 
         :param n: int, number of rows to show.
         :param truncate: If set to True, truncate strings longer than 20 chars by default.
-               If set to a number greater than one, truncates long strings to length `truncpyzoo/zoo/friesian/feature/table.pyate` and
+               If set to a number greater than one, truncates long strings to length `truncate` and
                align cells right.
         """
         self.df.show(n, truncate)
