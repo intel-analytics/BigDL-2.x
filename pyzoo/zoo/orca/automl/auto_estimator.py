@@ -98,8 +98,10 @@ class AutoEstimator:
 
     def fit(self,
             data,
-            recipe=None,
+            search_space,
             validation_data=None,
+            num_samples=1,
+            early_stop=None,
             metric=None,
             search_alg=None,
             search_alg_params=None,
@@ -110,8 +112,10 @@ class AutoEstimator:
             raise RuntimeError("This AutoEstimator has already been fitted and cannot fit again.")
         self.searcher.compile(data=data,
                               model_create_func=self.model_builder,
-                              recipe=recipe,
                               validation_data=validation_data,
+                              search_space=search_space,
+                              num_samples=num_samples,
+                              stop=early_stop,
                               metric=metric,
                               search_alg=search_alg,
                               search_alg_params=search_alg_params,
