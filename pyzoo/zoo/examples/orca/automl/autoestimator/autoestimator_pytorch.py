@@ -26,7 +26,7 @@ from zoo.orca.automl.auto_estimator import AutoEstimator
 from zoo.automl.recipe.base import Recipe
 from zoo.orca.automl.pytorch_utils import LR_NAME
 from zoo.orca import init_orca_context, stop_orca_context
-
+from abc import abstractmethod
 
 
 class Net(nn.Module):
@@ -78,6 +78,12 @@ def get_train_val_data():
 
 
 class LinearRecipe(Recipe):
+
+    def __init__(self, training_iteration, num_samples):
+        super().__init__()
+        self.training_iteration = training_iteration
+        self.num_samples = num_samples
+
     def search_space(self, all_available_features):
         from zoo.orca.automl import hp
         return {
@@ -88,22 +94,18 @@ class LinearRecipe(Recipe):
             "batch_size": hp.choice([32, 64])
         }
 
-    def runtime_params(self):
-        return {
-            "training_iteration": args.specify_training_iteration,
-            "num_samples": args.specify_num_samples
-        }
 
-
-def train_example(specify_optimizer, specify_loss_function):
+def train_example(args):
     auto_est = AutoEstimator.from_torch(model_creator=model_creator,
-                                        optimizer=specify_optimizer,
-                                        loss=specify_loss_function,
+                                        optimizer="Adam",
+                                        loss="BCELoss",
                                         logs_dir="/tmp/zoo_automl_logs",
-                                        resources_per_trial={"cpu": 2},
+                                        resources_per_trial={"cpu": args.cpus_per_trial},
                                         name="test_fit")
     data = get_train_val_data()
-    auto_est.fit(data, recipe=LinearRecipe(), metric="accuracy")
+    recipe=LinearRecipe(training_iteration=args.epochs,
+                        num_samples=args.trials)
+    auto_est.fit(data, recipe=recipe, metric="accuracy")
     # Choose the best model
     best_model = auto_est.get_best_model()
     best_model_accuracy = best_model.evaluate(x=data['val_x'], y=data['val_y'], metrics=['accuracy'], multioutput="raw_values")
@@ -139,14 +141,12 @@ if __name__ == "__main__":
     parser.add_argument('--k8s_driver_port', type=str, default="",
                         help="The k8s driver port.")
     
-    parser.add_argument('-so','--specify_optimizer', type=str, default="Adam",
-                        help="Specify optimizer.")
-    parser.add_argument('-slf','--specify_loss_function', type=str, default="BCELoss",
-                        help="Specify loss function.")    
-    parser.add_argument('-sti','--specify_training_iteration', type=int, default=1,
-                        help="Users can specify parameters by themselves.")
-    parser.add_argument('-sns','--specify_num_samples', type=int, default=4,
-                        help="The number of number sample.") 
+    parser.add_argument('--cpus_per_trial', type=int,default=2,
+                        help="The number of cores you want to allocate for each trial.")
+    parser.add_argument('--epochs', type=int, default=1,
+                        help="The number of epochs in each trial.")
+    parser.add_argument('--trials', type=int, default=4,
+                        help="The number of searching trials.") 
 
     args = parser.parse_args()
     if args.cluster_mode == "local":
@@ -168,5 +168,5 @@ if __name__ == "__main__":
                           conf={"spark.driver.host": args.k8s_driver_host,
                                 "spark.driver.port": args.k8s_driver_port})
 
-    train_example(specify_optimizer=args.specify_optimizer, specify_loss_function=args.specify_loss_function)
+    train_example(args)
     stop_orca_context()
