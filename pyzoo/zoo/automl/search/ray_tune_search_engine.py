@@ -59,9 +59,10 @@ class RayTuneSearchEngine(SearchEngine):
     def compile(self,
                 data,
                 model_create_func,
-                recipe,
+                search_space,
                 validation_data=None,
-                search_space=None,
+                num_samples=1,
+                stop=None,
                 search_alg=None,
                 search_alg_params=None,
                 scheduler=None,
@@ -104,21 +105,17 @@ class RayTuneSearchEngine(SearchEngine):
         self.metric = metric
         self.mode = Evaluator.get_metric_mode(metric)
 
-        # prepare parameters for search engine
-        runtime_params = recipe.runtime_params()
-        self.num_samples = runtime_params['num_samples']
-        stop = dict(runtime_params)
-        del stop['num_samples']
+        self.num_samples = num_samples
 
-        # temp operation for reward_metric
+        # early stop
+        if stop is None:
+            stop = {}
         redundant_stop_keys = stop.keys() - {"reward_metric", "training_iteration"}
         assert len(redundant_stop_keys) == 0, \
             f"{redundant_stop_keys} is not expected in stop criteria, \
              only \"reward_metric\", \"training_iteration\" are expected."
-
         if "reward_metric" in stop.keys():
-            stop[self.metric] = -stop["reward_metric"] if \
-                self.mode == "min" else stop["reward_metric"]
+            stop[self.metric] = stop["reward_metric"]
             del stop["reward_metric"]
         stop.setdefault("training_iteration", 1)
 
@@ -129,7 +126,7 @@ class RayTuneSearchEngine(SearchEngine):
         self.search_space = search_space
 
         self._search_alg = RayTuneSearchEngine._set_search_alg(search_alg, search_alg_params,
-                                                               recipe, self.metric, self.mode)
+                                                               self.metric, self.mode)
         self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params,
                                                              self.metric, self.mode)
 
@@ -143,7 +140,7 @@ class RayTuneSearchEngine(SearchEngine):
                                                    )
 
     @staticmethod
-    def _set_search_alg(search_alg, search_alg_params, recipe, metric, mode):
+    def _set_search_alg(search_alg, search_alg_params, metric, mode):
         if search_alg:
             if not isinstance(search_alg, str):
                 raise ValueError(f"search_alg should be of type str."
