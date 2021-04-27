@@ -42,37 +42,27 @@ class TestTimeSequencePredictor(ZooTestCase):
 
     def test_GridRandomRecipe(self):
         recipe = GridRandomRecipe(num_rand_samples=100)
-        search_space = recipe.search_space(
-            all_available_features=[
-                "f1", "f2", "f3", "target1", "target2"])
+        search_space = recipe.search_space()
         assert search_space is not None
 
     def test_RandomRecipe(self):
         recipe = GridRandomRecipe(num_rand_samples=100)
-        search_space = recipe.search_space(
-            all_available_features=[
-                "f1", "f2", "f3", "target1", "target2"])
+        search_space = recipe.search_space()
         assert search_space is not None
 
     def test_LSTMGridRandomRecipe(self):
         recipe = LSTMGridRandomRecipe(num_rand_samples=100)
-        search_space = recipe.search_space(
-            all_available_features=[
-                "f1", "f2", "f3", "target1", "target2"])
+        search_space = recipe.search_space()
         assert search_space is not None
 
     def test_MTNetGridRandomRecipe(self):
         recipe = MTNetGridRandomRecipe()
-        search_space = recipe.search_space(
-            all_available_features=[
-                "f1", "f2", "f3", "target1", "target2"])
+        search_space = recipe.search_space()
         assert search_space is not None
 
     def test_BayesRecipe(self):
         recipe = BayesRecipe(num_samples=10)
-        search_space = recipe.search_space(
-            all_available_features=[
-                "f1", "f2", "f3", "target1", "target2"])
+        search_space = recipe.search_space()
         assert search_space is not None
         assert recipe.reward_metric is not None
 

@@ -30,9 +30,8 @@ class SmokeRecipe(Recipe):
     def __init__(self):
         super(self.__class__, self).__init__()
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         return {
-            "selected_features": json.dumps(all_available_features),
             "model": "LSTM",
             "lstm_1_units": hp.choice([32, 64]),
             "dropout_1": hp.uniform(0.2, 0.5),
@@ -54,9 +53,8 @@ class MTNetSmokeRecipe(Recipe):
     def __init__(self):
         super(self.__class__, self).__init__()
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         return {
-            "selected_features": json.dumps(all_available_features),
             "model": "MTNet",
             "lr": 0.001,
             "batch_size": 16,
@@ -81,7 +79,7 @@ class TCNSmokeRecipe(Recipe):
     def __init__(self):
         super(self.__class__, self).__init__()
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         return {
             "lr": 0.001,
             "batch_size": 16,
@@ -165,18 +163,8 @@ class GridRandomRecipe(Recipe):
             look_back)
         self.epochs = epochs
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         return {
-            # -------- feature related parameters
-            "selected_features": hp.sample_from(lambda spec:
-                                                json.dumps(
-                                                    list(np.random.choice(
-                                                        all_available_features,
-                                                        size=np.random.randint(
-                                                            low=3,
-                                                            high=len(all_available_features)),
-                                                        replace=False)))),
-
             # -------- model selection TODO add MTNet
             "model": hp.choice(["LSTM", "Seq2seq"]),
 
@@ -242,18 +230,8 @@ class LSTMGridRandomRecipe(Recipe):
         self.batch_size = hp.grid_search(batch_size)
         self.epochs = epochs
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         return {
-            # -------- feature related parameters
-            "selected_features": hp.sample_from(lambda spec:
-                                                json.dumps(
-                                                    list(np.random.choice(
-                                                        all_available_features,
-                                                        size=np.random.randint(
-                                                            low=3,
-                                                            high=len(all_available_features) + 1),
-                                                        replace=False)))),
-
             "model": "LSTM",
 
             # --------- Vanilla LSTM model parameters
@@ -312,18 +290,8 @@ class Seq2SeqRandomRecipe(Recipe):
         self.batch_size = hp.grid_search(batch_size)
         self.epochs = epochs
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         return {
-            # -------- feature related parameters
-            "selected_features": hp.sample_from(lambda spec:
-                                                json.dumps(
-                                                    list(np.random.choice(
-                                                        all_available_features,
-                                                        size=np.random.randint(
-                                                            low=3,
-                                                            high=len(all_available_features) + 1),
-                                                        replace=False)))),
-
             "model": "Seq2Seq",
             "latent_dim": self.latent_dim,
             "dropout": self.dropout_config,
@@ -385,17 +353,8 @@ class MTNetGridRandomRecipe(Recipe):
             lambda spec: (
                 spec.config.long_num + 1) * spec.config.time_step)
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         return {
-            "selected_features": hp.sample_from(lambda spec:
-                                                json.dumps(
-                                                    list(np.random.choice(
-                                                        all_available_features,
-                                                        size=np.random.randint(
-                                                            low=3,
-                                                            high=len(all_available_features)),
-                                                        replace=False)))),
-
             "model": "MTNet",
             "lr": self.lr,
             "batch_size": self.batch_size,
@@ -453,7 +412,7 @@ class TCNGridRandomRecipe(Recipe):
         self.kernel_size = hp.grid_search(kernel_size)
         self.dropout = hp.choice(dropout)
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         return {
             "lr": self.lr,
             "batch_size": self.batch_size,
@@ -494,19 +453,9 @@ class RandomRecipe(Recipe):
         self.past_seq_config = PastSeqParamHandler.get_past_seq_config(
             look_back)
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         import random
         return {
-            # -------- feature related parameters
-            "selected_features": hp.sample_from(lambda spec:
-                                                json.dumps(
-                                                    list(np.random.choice(
-                                                        all_available_features,
-                                                        size=np.random.randint(
-                                                            low=3,
-                                                            high=len(all_available_features)),
-                                                        replace=False)))),
-
             "model": hp.choice(["LSTM", "Seq2seq"]),
             # --------- Vanilla LSTM model parameters
             "lstm_1_units": hp.choice([8, 16, 32, 64, 128]),
@@ -592,11 +541,10 @@ class BayesRecipe(Recipe):
         total_space.update(self.bayes_past_seq_config)
         return total_space
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         total_fixed_params = {
             "epochs": self.epochs,
             "model": "LSTM",
-            "selected_features": json.dumps(all_available_features),
             # "batch_size": 1024,
         }
         total_fixed_params.update(self.fixed_past_seq_config)
@@ -641,7 +589,7 @@ class XgbRegressorGridRandomRecipe(Recipe):
         self.subsample = subsample
         self.min_child_weight = hp.choice(min_child_weight)
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         return {
             # -------- feature related parameters
             "model": "XGBRegressor",
@@ -674,7 +622,7 @@ class XgbRegressorSkOptRecipe(Recipe):
         self.lr = hp.loguniform(lr[0], lr[1])
         self.min_child_weight = hp.choice(min_child_weight)
 
-    def search_space(self, all_available_features):
+    def search_space(self):
         space = {
             "n_estimators": hp.randint(self.n_estimators_range[0],
                                        self.n_estimators_range[1]),

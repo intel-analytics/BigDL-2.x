@@ -77,7 +77,7 @@ def get_train_val_data():
 
 
 class LinearRecipe(Recipe):
-    def search_space(self, all_available_features):
+    def search_space(self):
         from zoo.orca.automl import hp
         return {
             "dropout": hp.uniform(0.2, 0.3),

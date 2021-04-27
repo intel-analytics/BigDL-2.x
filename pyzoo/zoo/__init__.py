@@ -18,7 +18,7 @@ from zoo.common.nncontext import *
 from zoo.util.engine import prepare_env, compare_version
 import pyspark
 
-__version__ = "0.10.0.dev0"
+__version__ = "0.11.0.dev0"
 
 prepare_env()
 creator_classes = JavaCreator.get_creator_class()[:]
