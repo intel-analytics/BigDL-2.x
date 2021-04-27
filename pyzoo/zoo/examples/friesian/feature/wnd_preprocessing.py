@@ -106,7 +106,7 @@ if __name__ == '__main__':
                           conf=conf)
 
     time_start = time()
-    paths = [os.path.join(args.input_folder, 'sample_test_day_%d.parquet' % i) for i in args.day_range]
+    paths = [os.path.join(args.input_folder, 'day_%d.parquet' % i) for i in args.day_range]
     tbl = FeatureTable.read_parquet(paths)
     # change name for all columns
     columns = dict([("_c{}".format(i), "c{}".format(i)) for i in range(40)])
