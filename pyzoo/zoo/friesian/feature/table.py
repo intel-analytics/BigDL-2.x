@@ -533,3 +533,10 @@ class StringIndex(Table):
         """
         path = path + "/" + self.col_name + ".parquet"
         self.df.write.parquet(path, mode=mode)
+
+    def size(self):
+        """
+        Size of the StringIndex
+        :return:
+        """
+        return self.df.select(self.col_name, "id").distinct().count()

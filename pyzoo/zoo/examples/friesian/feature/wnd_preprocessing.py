@@ -73,10 +73,9 @@ def _parse_args():
         choices=['overwrite', 'errorifexists'],
         default='errorifexists')
 
-    parser.add_argument('--frequency_limit', type=str, default="15",
-                        help="Categories with a count/frequency below frequency_limit will be "
-                             "omitted from the encoding. For instance, '15', '_c14:15,_c15:16', "
-                             "etc")
+    parser.add_argument('--frequency_limit', type=int, default=15,
+                        help="frequency below frequency_limit will be "
+                             "omitted from the encoding.")
 
     parser.add_argument('--cross_sizes', type=str, help='bucket sizes for cross columns', default="10000, 10000")
 
@@ -84,21 +83,6 @@ def _parse_args():
     start, end = args.days.split('-')
     args.day_range = list(range(int(start), int(end) + 1))
     args.days = len(args.day_range)
-
-    frequency_limit_dict = {}
-    default_limit = None
-    if args.frequency_limit:
-        frequency_limit = args.frequency_limit.split(",")
-        for fl in frequency_limit:
-            frequency_pair = fl.split(":")
-            if len(frequency_pair) == 1:
-                default_limit = int(frequency_pair[0])
-            elif len(frequency_pair) == 2:
-                frequency_limit_dict[frequency_pair[0]] = frequency_pair[1]
-    if len(frequency_limit_dict) > 0:
-        args.frequency_limit = frequency_limit_dict
-    else:
-        args.frequency_limit = default_limit
 
     args.cross_sizes = [int(x) for x in args.cross_sizes.split(',')]
 
@@ -122,15 +106,13 @@ if __name__ == '__main__':
                           conf=conf)
 
     time_start = time()
-    paths = [os.path.join(args.input_folder, 'day_%d.parquet' % i) for i in args.day_range]
+    paths = [os.path.join(args.input_folder, 'sample_test_day_%d.parquet' % i) for i in args.day_range]
     tbl = FeatureTable.read_parquet(paths)
     # change name for all columns
     columns = dict([("_c{}".format(i), "c{}".format(i)) for i in range(40)])
     tbl = tbl.rename(columns)
     idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
-    cat_sizes = [idx.count() for idx in idx_list]
-    # cross_sizes = [reduce(lambda x, y: round(x * y * 0.0001), sizes)
-    #                for sizes in [cat_sizes[0:2], cat_sizes[2:4]]]
+    cat_sizes = [idx.size() for idx in idx_list]
 
     cross_sizes = args.cross_sizes
 
