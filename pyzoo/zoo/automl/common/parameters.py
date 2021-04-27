@@ -17,3 +17,6 @@
 # where pipeline saves file by default
 DEFAULT_PPL_DIR = "./saved_pipeline"
 DEFAULT_CONFIG_DIR = "./saved_configs"
+
+# logger default name
+DEFAULT_LOGGER_NAME = "AutoML"
