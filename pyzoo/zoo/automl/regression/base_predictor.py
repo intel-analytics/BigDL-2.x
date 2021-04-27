@@ -164,15 +164,10 @@ class BasePredictor(object):
                    resources_per_trial,
                    remote_dir):
         ft = self.create_feature_transformer()
-        try:
-            feature_list = ft.get_feature_list()
-        except:
-            feature_list = None
 
         model_fn = self.make_model_fn(resources_per_trial)
 
         # prepare parameters for search engine
-        search_space = recipe.search_space(feature_list)
 
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
                                        resources_per_trial=resources_per_trial,
@@ -181,7 +176,6 @@ class BasePredictor(object):
                                        )
         searcher.compile(data={'df': input_df, 'val_df': validation_df},
                          model_create_func=model_fn,
-                         search_space=search_space,
                          recipe=recipe,
                          search_alg=self.search_alg,
                          search_alg_params=self.search_alg_params,
