@@ -40,8 +40,10 @@ def fill_na_int(df, fill_val, columns):
 def clip_min(df, columns, min):
     return callZooFunc("float", "clipMin", df, columns, min)
 
+
 def cross_columns(df, cross_column_list, bucket_sizes):
     return callZooFunc("float", "crossColumns", df, cross_column_list, bucket_sizes)
+
 
 def normalize_array(df, column):
     return callZooFunc("float", "normalizeArray", df, column)

@@ -77,7 +77,8 @@ def _parse_args():
                         help="frequency below frequency_limit will be "
                              "omitted from the encoding.")
 
-    parser.add_argument('--cross_sizes', type=str, help='bucket sizes for cross columns', default="10000, 10000")
+    parser.add_argument('--cross_sizes', type=str,
+                        help='bucket sizes for cross columns', default="10000, 10000")
 
     args = parser.parse_args()
     start, end = args.days.split('-')

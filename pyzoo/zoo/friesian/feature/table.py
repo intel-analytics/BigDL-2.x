@@ -295,15 +295,27 @@ class FeatureTable(Table):
         return FeatureTable(df)
 
     def cross_columns(self, crossed_columns, bucket_sizes):
+        """
+        Cross columns and hashed to specified bucket size
+        :param crossed_columns: list of column name pairs to be crossed.
+        i.e. [['a', 'b'], ['c', 'd']]
+        :param bucket_sizes: hash bucket size for crossed pairs. i.e. [1000, 300]
+        :return: FeatureTable include crossed columns(i.e. 'a_b', 'c_d')
+        """
         df = cross_columns(self.df, crossed_columns, bucket_sizes)
         return FeatureTable(df)
 
     def normalize(self, columns):
+        """
+        Normalize numeric columns
+        :param columns: list of column names
+        :return: FeatureTable
+        """
         df = self.df
         types = [x[1] for x in self.df.select(*columns).dtypes]
         scalar_cols = [columns[i] for i in range(len(columns))
-                        if types[i] == "int" or types[i] == "bigint"
-                        or types[i] == "float" or types[i] == "double"]
+                       if types[i] == "int" or types[i] == "bigint"
+                       or types[i] == "float" or types[i] == "double"]
         array_cols = [columns[i] for i in range(len(columns))
                       if types[i] == "array<int>" or types[i] == "array<bigint>"
                       or types[i] == "array<float>" or types[i] == "array<double>"]
@@ -333,7 +345,6 @@ class FeatureTable(Table):
             scaler = MinMaxScaler(inputCol=c, outputCol="scaled")
             df = scaler.fit(df).transform(df).withColumnRenamed("scaled", c)
         return FeatureTable(df)
-
 
     def add_negative_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
         """
@@ -489,6 +500,7 @@ class FeatureTable(Table):
             cat_udf = udf(gen_cat, col_type)
             df = df.withColumn(c.replace("item", "category"), cat_udf(col(c)))
         return FeatureTable(df)
+
 
 class StringIndex(Table):
     def __init__(self, df, col_name):

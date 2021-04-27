@@ -40,7 +40,8 @@ class TestTable(TestCase):
         filled_tbl = feature_tbl.fillna(0, ["col_2", "col_3"])
         assert isinstance(filled_tbl, FeatureTable), "filled_tbl should be a FeatureTable"
         assert feature_tbl.df.filter("col_2 is null").count() != 0 and feature_tbl \
-            .df.filter("col_3 is null").count() != 0, "feature_tbl should not be changed"
+                                                                           .df.filter(
+            "col_3 is null").count() != 0, "feature_tbl should not be changed"
         assert filled_tbl.df.filter("col_2 is null").count() == 0, "col_2 null values should be " \
                                                                    "filled"
         assert filled_tbl.df.filter("col_3 is null").count() == 0, "col_3 null values should be " \
@@ -52,7 +53,8 @@ class TestTable(TestCase):
         filled_tbl = feature_tbl.fillna(3.2, ["col_2", "col_3"])
         assert isinstance(filled_tbl, FeatureTable), "filled_tbl should be a FeatureTable"
         assert feature_tbl.df.filter("col_2 is null").count() != 0 and feature_tbl \
-            .df.filter("col_3 is null").count() != 0, "feature_tbl should not be changed"
+                                                                           .df.filter(
+            "col_3 is null").count() != 0, "feature_tbl should not be changed"
         assert filled_tbl.df.filter("col_2 is null").count() == 0, "col_2 null values should be " \
                                                                    "filled"
         assert filled_tbl.df.filter("col_3 is null").count() == 0, "col_3 null values should be " \
@@ -118,7 +120,8 @@ class TestTable(TestCase):
         clip_tbl = feature_tbl.clip(["col_1", "col_2", "col_3"], 2)
         assert isinstance(clip_tbl, FeatureTable), "clip_tbl should be a FeatureTable"
         assert feature_tbl.df.filter("col_1 < 2").count() != 0 and feature_tbl \
-            .df.filter("col_2 < 2").count() != 0, "feature_tbl should not be changed"
+                                                                       .df.filter(
+            "col_2 < 2").count() != 0, "feature_tbl should not be changed"
         assert clip_tbl.df.filter("col_1 < 2").count() == 0, "col_1 should >= 2"
         assert clip_tbl.df.filter("col_2 < 2").count() == 0, "col_2 should >= 2"
         assert clip_tbl.df.filter("col_3 < 2").count() == 0, "col_3 should >= 2"
@@ -140,7 +143,8 @@ class TestTable(TestCase):
         log_tbl = feature_tbl.log(["col_1", "col_2", "col_3"])
         assert isinstance(log_tbl, FeatureTable), "log_tbl should be a FeatureTable"
         assert feature_tbl.df.filter("col_1 == 1").count() != 0 and feature_tbl \
-            .df.filter("col_2 == 1").count() != 0, "feature_tbl should not be changed"
+                                                                        .df.filter(
+            "col_2 == 1").count() != 0, "feature_tbl should not be changed"
         assert log_tbl.df.filter("col_1 == 1").count() == 0, "col_1 should != 1"
         assert log_tbl.df.filter("col_2 == 1").count() == 0, "col_2 should != 1"
         assert log_tbl.df.filter("col_3 == 1").count() == 0, "col_3 should != 1"
@@ -157,9 +161,9 @@ class TestTable(TestCase):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path).fillna(0, ["col_2", "col_3"])
         normalized_tbl = feature_tbl.normalize(["col_2"])
-        max_value = normalized_tbl.df.select("col_2")\
-        .agg(max(col("col_2")).alias("max"))\
-        .rdd.map(lambda row: row['max']).collect()[0]
+        max_value = normalized_tbl.df.select("col_2") \
+            .agg(max(col("col_2")).alias("max")) \
+            .rdd.map(lambda row: row['max']).collect()[0]
         min_value = normalized_tbl.df.select("col_2") \
             .agg(min(col("col_2")).alias("min")) \
             .rdd.map(lambda row: row['min']).collect()[0]
@@ -223,7 +227,7 @@ class TestTable(TestCase):
                              StructField("time", StringType(), True)])
         df = spark.createDataFrame(data=data, schema=schema)
         df = df.withColumn("ts", col("time").cast("timestamp").cast("long"))
-        tbl = FeatureTable(df.select("name", "item", "ts"))\
+        tbl = FeatureTable(df.select("name", "item", "ts")) \
             .add_hist_seq("name", ["item"], "ts", 1, 4)
         assert tbl.count() == 8
         assert tbl.df.filter(col("name") == "alice").count() == 2
@@ -242,7 +246,7 @@ class TestTable(TestCase):
             StructField("item_hist_seq", ArrayType(IntegerType()), True)])
 
         df = spark.createDataFrame(data, schema)
-        df2 = sc\
+        df2 = sc \
             .parallelize([(1, 0), (2, 0), (3, 0), (4, 1), (5, 1), (6, 1), (7, 2), (8, 2), (9, 2)]) \
             .toDF(["item", "category"]).withColumn("item", col("item").cast("Integer")) \
             .withColumn("category", col("category").cast("Integer"))
@@ -264,7 +268,7 @@ class TestTable(TestCase):
         df = spark.createDataFrame(data, schema)
         df.filter("name like '%alice%'").show()
 
-        df2 = sc\
+        df2 = sc \
             .parallelize([(0, 0), (1, 0), (2, 0), (3, 0), (4, 1), (5, 1), (6, 1), (8, 2), (9, 2)]) \
             .toDF(["item", "category"]).withColumn("item", col("item").cast("Integer")) \
             .withColumn("category", col("category").cast("Integer"))
