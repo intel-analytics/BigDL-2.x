@@ -40,8 +40,7 @@ class TestTable(TestCase):
         filled_tbl = feature_tbl.fillna(0, ["col_2", "col_3"])
         assert isinstance(filled_tbl, FeatureTable), "filled_tbl should be a FeatureTable"
         assert feature_tbl.df.filter("col_2 is null").count() != 0 and feature_tbl \
-                                                                           .df.filter(
-            "col_3 is null").count() != 0, "feature_tbl should not be changed"
+            .df.filter("col_3 is null").count() != 0, "feature_tbl should not be changed"
         assert filled_tbl.df.filter("col_2 is null").count() == 0, "col_2 null values should be " \
                                                                    "filled"
         assert filled_tbl.df.filter("col_3 is null").count() == 0, "col_3 null values should be " \
@@ -53,8 +52,7 @@ class TestTable(TestCase):
         filled_tbl = feature_tbl.fillna(3.2, ["col_2", "col_3"])
         assert isinstance(filled_tbl, FeatureTable), "filled_tbl should be a FeatureTable"
         assert feature_tbl.df.filter("col_2 is null").count() != 0 and feature_tbl \
-                                                                           .df.filter(
-            "col_3 is null").count() != 0, "feature_tbl should not be changed"
+            .df.filter("col_3 is null").count() != 0, "feature_tbl should not be changed"
         assert filled_tbl.df.filter("col_2 is null").count() == 0, "col_2 null values should be " \
                                                                    "filled"
         assert filled_tbl.df.filter("col_3 is null").count() == 0, "col_3 null values should be " \
@@ -120,8 +118,7 @@ class TestTable(TestCase):
         clip_tbl = feature_tbl.clip(["col_1", "col_2", "col_3"], 2)
         assert isinstance(clip_tbl, FeatureTable), "clip_tbl should be a FeatureTable"
         assert feature_tbl.df.filter("col_1 < 2").count() != 0 and feature_tbl \
-                                                                       .df.filter(
-            "col_2 < 2").count() != 0, "feature_tbl should not be changed"
+            .df.filter("col_2 < 2").count() != 0, "feature_tbl should not be changed"
         assert clip_tbl.df.filter("col_1 < 2").count() == 0, "col_1 should >= 2"
         assert clip_tbl.df.filter("col_2 < 2").count() == 0, "col_2 should >= 2"
         assert clip_tbl.df.filter("col_3 < 2").count() == 0, "col_3 should >= 2"
@@ -143,8 +140,7 @@ class TestTable(TestCase):
         log_tbl = feature_tbl.log(["col_1", "col_2", "col_3"])
         assert isinstance(log_tbl, FeatureTable), "log_tbl should be a FeatureTable"
         assert feature_tbl.df.filter("col_1 == 1").count() != 0 and feature_tbl \
-                                                                        .df.filter(
-            "col_2 == 1").count() != 0, "feature_tbl should not be changed"
+            .df.filter("col_2 == 1").count() != 0, "feature_tbl should not be changed"
         assert log_tbl.df.filter("col_1 == 1").count() == 0, "col_1 should != 1"
         assert log_tbl.df.filter("col_2 == 1").count() == 0, "col_2 should != 1"
         assert log_tbl.df.filter("col_3 == 1").count() == 0, "col_3 should != 1"
