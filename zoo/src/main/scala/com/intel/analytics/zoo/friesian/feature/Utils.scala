@@ -75,15 +75,20 @@ private[friesian] object Utils {
   }
 
   def castNumeric(value: Any, typeName: String): Any = {
-    if (!value.isInstanceOf[Number]) {
-      throw new IllegalArgumentException(s"Unsupported data type ${value.getClass.getName}" +
-        s" $value")
+    if (value == null) {
+      null
     }
-    typeName match {
-      case "long" => value.asInstanceOf[Number].longValue
-      case "integer" => value.asInstanceOf[Number].intValue
-      case "double" => value.asInstanceOf[Number].doubleValue
-      case _ => throw new IllegalArgumentException(s"The type $typeName is not numeric")
+    else {
+      if (!value.isInstanceOf[Number]) {
+        throw new IllegalArgumentException(s"Unsupported data type ${value.getClass.getName}" +
+          s" $value")
+      }
+      typeName match {
+        case "long" => value.asInstanceOf[Number].longValue
+        case "integer" => value.asInstanceOf[Number].intValue
+        case "double" => value.asInstanceOf[Number].doubleValue
+        case _ => throw new IllegalArgumentException(s"The type $typeName is not numeric")
+      }
     }
   }
 
@@ -96,24 +101,21 @@ private[friesian] object Utils {
     }
   }
 
-  def getClipFunc[T](min: Any, max: Any, colType: String): T => T = {
-    if (min == null) {
+  def getClipFunc[T](minVal: Any, maxVal: Any, colType: String): T => T = {
+    if (minVal == null) {
       (value: T) => {
-        val maxVal = castNumeric(max, colType)
         if (Utils.isLarger(value, maxVal, colType)) maxVal.asInstanceOf[T]
         else value
       }
-    } else if (max == null) {
+    } else if (maxVal == null) {
       (value: T) => {
-        val minVal = castNumeric(min, colType)
         if (Utils.isLarger(minVal, value, colType)) minVal.asInstanceOf[T]
         else value
       }
     } else {
-      val maxVal = castNumeric(max, colType)
-      val minVal = castNumeric(min, colType)
       if (Utils.isLarger(minVal, maxVal, colType)) {
-        throw new IllegalArgumentException(s"min should be smaller than max but get $min > $max")
+        throw new IllegalArgumentException(s"min should be smaller than max but get $minVal >" +
+          s" $maxVal")
       }
       (value: T) => {
         if (Utils.isLarger(value, maxVal, colType)) maxVal.asInstanceOf[T]

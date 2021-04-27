@@ -192,10 +192,13 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       val colName = columns.get(i)
       val colType = colsType(i)
 
+      val minVal = Utils.castNumeric(min, colType)
+      val maxVal = Utils.castNumeric(max, colType)
+
       val clipFuncUDF = colType match {
-        case "long" => udf(Utils.getClipFunc[Long](min, max, colType))
-        case "integer" => udf(Utils.getClipFunc[Int](min, max, colType))
-        case "double" => udf(Utils.getClipFunc[Double](min, max, colType))
+        case "long" => udf(Utils.getClipFunc[Long](minVal, maxVal, colType))
+        case "integer" => udf(Utils.getClipFunc[Int](minVal, maxVal, colType))
+        case "double" => udf(Utils.getClipFunc[Double](minVal, maxVal, colType))
         case _ => throw new IllegalArgumentException(s"Unsupported data type $colType of column" +
           s" $colName")
       }

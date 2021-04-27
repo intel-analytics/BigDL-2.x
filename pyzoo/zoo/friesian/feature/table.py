@@ -141,23 +141,24 @@ class Table:
 
     def filter(self, condition):
         """
-        Filters the rows that satisfy `condition`.
+        Filters the rows that satisfy `condition`. For instance, filter("col_1 == 1") will filter
+        the rows that has value 1 at column col_1.
 
         :param condition: a string that gives the condition for filtering.
 
-        :return: a new Table with filtered rows
+        :return: A new Table with filtered rows
         """
         return self._clone(self.df.filter(condition))
 
     def clip(self, columns, min=None, max=None):
         """
-        clips continuous values so that they are within the range [min, max]. For instance by
+        Clips continuous values so that they are within the range [min, max]. For instance, by
         setting the min value to 0, all negative values in columns will be replaced with 0.
 
         :param columns: list of str, the target columns to be clipped.
-        :param min: numeric, the mininum value to clip values to: values less than this will be
+        :param min: numeric, the mininum value to clip values to. Values less than this will be
                replaced with this value.
-        :param max: numeric, the maxinum value to clip values to: values greater than this will be
+        :param max: numeric, the maxinum value to clip values to. Values greater than this will be
                replaced with this value.
 
         :return: A new Table that replaced the value less than `min` with specified `min` and the
@@ -188,25 +189,25 @@ class Table:
         Replaces null values with the median in the specified numeric columns. Any column to be
         filled should not contain only null values.
 
-        :param columns: a list of strings that specifies column names. Default is None, in which
-               case it operates on all numeric columns.
+        :param columns: a list of strings that specifies column names. If it is None, it will
+               operate on all numeric columns.
 
-        :return: a new Table that replaces null values with the median in the specified numeric
+        :return: A new Table that replaces null values with the median in the specified numeric
                  columns.
         """
         if not isinstance(columns, list) and columns is not None:
             columns = [columns]
         return self._clone(fill_median(self.df, columns))
 
-    def median(self, columns=None):
+    def median(self, columns):
         """
         Returns a new Table that has two columns, `column` and `median`, containing the column
         names and the medians of the specified numeric columns.
 
-        :param columns: a list of strings that specifies column names. Default is None, in which
-               case it operates on all numeric columns.
+        :param columns: a list of strings that specifies column names. If it is None, it will
+               operate on all numeric columns.
 
-        :return: a new Table that contains the medians of the specified columns.
+        :return: A new Table that contains the medians of the specified columns.
         """
         if not isinstance(columns, list) and columns is not None:
             columns = [columns]
@@ -247,7 +248,7 @@ class Table:
 
         :param n: int, number of rows to show.
         :param truncate: If set to True, truncate strings longer than 20 chars by default.
-               If set to a number greater than one, truncates long strings to length `truncate` and
+               If set to a number greater than one, truncates long strings to length `truncpyzoo/zoo/friesian/feature/table.pyate` and
                align cells right.
         """
         self.df.show(n, truncate)
