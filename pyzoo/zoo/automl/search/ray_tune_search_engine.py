@@ -51,9 +51,7 @@ class RayTuneSearchEngine(SearchEngine):
         :param name: searcher name
         :param remote_dir: checkpoint will be uploaded to remote_dir in hdfs
         """
-        self.pipeline = None
         self.train_func = None
-        self.trainable_class = None
         self.resources_per_trial = resources_per_trial
         self.trials = None
         self.remote_dir = remote_dir
@@ -341,8 +339,6 @@ class RayTuneSearchEngine(SearchEngine):
         input_data_id = ray.put(input_data)
         ft_id = ray.put(feature_transformers)
 
-        # model_id = ray.put(model)
-
         # validation data processing
         df_not_empty = isinstance(validation_data, dict) or\
             (isinstance(validation_data, pd.DataFrame) and not validation_data.empty)
@@ -379,9 +375,7 @@ class RayTuneSearchEngine(SearchEngine):
                 if imputer:
                     trial_input_df = imputer.impute(trial_input_df)
                 config = convert_bayes_configs(config).copy()
-                # print("config is ", config)
                 (x_train, y_train) = trial_ft.fit_transform(trial_input_df, **config)
-                # trial_ft.fit(trial_input_df, **config)
 
                 # handling validation data
                 validation_data = None
@@ -402,7 +396,6 @@ class RayTuneSearchEngine(SearchEngine):
             # callbacks = [TuneCallback(tune_reporter)]
             # fit model
             best_reward = None
-            # print("config:", config)
             for i in range(1, 101):
                 result = trial_model.fit_eval(x_train,
                                               y_train,
