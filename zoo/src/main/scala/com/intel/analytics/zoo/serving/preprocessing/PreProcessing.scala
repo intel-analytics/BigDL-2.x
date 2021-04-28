@@ -27,7 +27,7 @@ import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.pipeline.inference.{EncryptSupportive, InferenceSupportive}
-import com.intel.analytics.zoo.serving.http.Instances
+import com.intel.analytics.zoo.serving.http.{Instances, ServingFrontendSerializer}
 import com.intel.analytics.zoo.serving.serialization.StreamSerializer
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.opencv.core.Size
@@ -64,10 +64,12 @@ class PreProcessing()
 
   def decodeArrowBase64(key: String, s: String, serde: String = ""): Activity = {
     try {
-      byteBuffer = java.util.Base64.getDecoder.decode(s)
+
       val instance = if (serde == "stream") {
-        Seq(StreamSerializer.bytesToObj(byteBuffer).asInstanceOf[Activity])
+        Seq(ServingFrontendSerializer.deserialize(s))
+
       } else {
+        byteBuffer = java.util.Base64.getDecoder.decode(s)
         val ins = Instances.fromArrow(byteBuffer)
         getInputFromInstance(ins)
       }

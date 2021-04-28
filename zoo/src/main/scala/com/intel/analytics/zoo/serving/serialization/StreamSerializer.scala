@@ -14,6 +14,9 @@ object StreamSerializer {
       out.writeObject(obj)
       out.flush()
       bos.toByteArray()
+    } catch {
+      case e: Exception => e.printStackTrace()
+        throw new Error("Ser error")
     } finally {
       try {
         bos.close()
@@ -27,6 +30,9 @@ object StreamSerializer {
     val in = new ObjectInputStream(bis)
     try {
       in.readObject()
+    } catch {
+      case e: Exception => e.printStackTrace()
+        throw new Error("Deser error")
     } finally {
       try {
         bis.close()

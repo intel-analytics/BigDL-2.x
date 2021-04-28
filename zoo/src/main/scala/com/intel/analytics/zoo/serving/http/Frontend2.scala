@@ -71,7 +71,7 @@ object Frontend2 extends Supportive with EncryptSupportive {
       }
 
 
-      def processPredictionInput(inputs: Activity):
+      def processPredictionInput(inputs: String):
       Seq[PredictionOutput[String]] = {
         val result = timing("response waiting")() {
           val id = UUID.randomUUID().toString
@@ -119,11 +119,12 @@ object Frontend2 extends Supportive with EncryptSupportive {
             } else {
               try {
                 val result = timing("predict")() {
-                  val input = timing("json deserialization")() {
-//                    JsonUtil.fromJson(classOf[Instances], content)
-                    ServingFrontendSerializer.deserialize(content)
-                  }
-                  val outputs = processPredictionInput(input)
+//                  val input = timing("json deserialization")() {
+////                    JsonUtil.fromJson(classOf[Instances], content)
+//                    logger.info(s"json string received, start deserialize")
+//                    ServingFrontendSerializer.deserialize(content)
+//                  }
+                  val outputs = processPredictionInput(content)
                   Predictions(outputs)
                 }
 
