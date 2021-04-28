@@ -165,10 +165,10 @@ if __name__ == "__main__":
                         default="",
                         help="The k8s driver port.")
     parser.add_argument(
-                        '--cpus_per_trial',
-                        type=int,
-                        default=2,
-                        help="The number of cores you want to allocate for each trial.")
+        '--cpus_per_trial',
+        type=int,
+        default=2,
+        help="The number of cores you want to allocate for each trial.")
     parser.add_argument('--epochs',
                         type=int,
                         default=1,
