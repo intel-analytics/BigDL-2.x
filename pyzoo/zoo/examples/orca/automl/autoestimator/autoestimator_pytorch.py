@@ -108,7 +108,7 @@ def train_example(args):
     auto_est.fit(data, recipe=recipe, metric="accuracy")
     # Choose the best model
     best_model = auto_est.get_best_model()
-    best_model_accuracy = best_model.evaluate(x=data['val_x'], y=data['val_y'], metrics=['accuracy'], multioutput="raw_values")
+    best_model_accuracy = best_model.evaluate(x=data['val_x'], y=data['val_y'], metrics=['accuracy'])
     print(f'model accuracy is {best_model_accuracy[0]}')
 
 
