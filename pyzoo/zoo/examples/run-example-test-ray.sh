@@ -138,7 +138,7 @@ time10=$((now-start))
 echo "#11 start example for orca autoestimator-pytorch"
 start=$(date "+%s")
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoestimator/autoecastimator_pytorch.py \
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoestimator/autoestimator_pytorch.py \
     --trials 5 --epochs 2
 
 now=$(date "+%s")
@@ -156,4 +156,4 @@ echo "#7 orca super-resolution example time used:$time7 seconds"
 echo "#8 orca cifar10 example time used:$time8 seconds"
 echo "#9 orca auto-xgboost-classifier time used:$time9 seconds"
 echo "#10 orca auto-xgboost-regressor time used:$time10 seconds"
-echo "#11 orca autoecastimator-pytorch time used:$time11 second"
+echo "#11 orca autoestimator-pytorch time used:$time11 second"

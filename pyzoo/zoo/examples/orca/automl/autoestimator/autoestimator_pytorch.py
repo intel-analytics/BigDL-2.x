@@ -71,6 +71,7 @@ def get_train_val_data():
         y2 = np.ones((size // 2, 1))
         y = np.concatenate([y1, y2], axis=0)
         return x, y
+
     train_x, train_y = get_x_y(size=1000)
     val_x, val_y = get_x_y(size=400)
     data = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
@@ -78,7 +79,6 @@ def get_train_val_data():
 
 
 class LinearRecipe(Recipe):
-
     def __init__(self, training_iteration, num_samples):
         super().__init__()
         self.training_iteration = training_iteration
@@ -96,77 +96,114 @@ class LinearRecipe(Recipe):
 
 
 def train_example(args):
-    auto_est = AutoEstimator.from_torch(model_creator=model_creator,
-                                        optimizer="Adam",
-                                        loss="BCELoss",
-                                        logs_dir="/tmp/zoo_automl_logs",
-                                        resources_per_trial={"cpu": args.cpus_per_trial},
-                                        name="test_fit")
+    auto_est = AutoEstimator.from_torch(
+        model_creator=model_creator,
+        optimizer="Adam",
+        loss="BCELoss",
+        logs_dir="/tmp/zoo_automl_logs",
+        resources_per_trial={"cpu": args.cpus_per_trial},
+        name="test_fit")
     data = get_train_val_data()
-    recipe=LinearRecipe(training_iteration=args.epochs,
-                        num_samples=args.trials)
+    recipe = LinearRecipe(training_iteration=args.epochs,
+                          num_samples=args.trials)
     auto_est.fit(data, recipe=recipe, metric="accuracy")
     # Choose the best model
     best_model = auto_est.get_best_model()
-    best_model_accuracy = best_model.evaluate(x=data['val_x'], y=data['val_y'], metrics=['accuracy'])
+    best_model_accuracy = best_model.evaluate(x=data['val_x'],
+                                              y=data['val_y'],
+                                              metrics=['accuracy'])
     print(f'model accuracy is {best_model_accuracy[0]}')
 
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog='Autoestimator_pytorch', 
-                                    description='Automatically fit the model and return the best model.')                       
-    parser.add_argument('--cluster_mode', type=str, default="local",
+    parser = argparse.ArgumentParser(
+        prog='Autoestimator_pytorch',
+        description='Automatically fit the model and return the best model.')
+    parser.add_argument('--cluster_mode',
+                        type=str,
+                        default="local",
                         help='The mode for the Spark cluster.')
-    parser.add_argument("--num_nodes", type=int, default=1,
-                        help="The number of nodes to be used in the cluster. "
-                             "You can change it depending on your own cluster setting.")
-    parser.add_argument("--cores", type=int, default=4,
-                        help="The number of cpu cores you want to use on each node. "
-                             "You can change it depending on your own cluster setting.")
-    parser.add_argument("--memory", type=str, default="10g",
-                        help="The memory you want to use on each node. "
-                             "You can change it depending on your own cluster setting.")
+    parser.add_argument(
+        "--num_nodes",
+        type=int,
+        default=1,
+        help="The number of nodes to be used in the cluster. "
+        "You can change it depending on your own cluster setting.")
+    parser.add_argument(
+        "--cores",
+        type=int,
+        default=4,
+        help="The number of cpu cores you want to use on each node. "
+        "You can change it depending on your own cluster setting.")
+    parser.add_argument(
+        "--memory",
+        type=str,
+        default="10g",
+        help="The memory you want to use on each node. "
+        "You can change it depending on your own cluster setting.")
     parser.add_argument("--workers_per_node", type=int, default=2,\
                         help="The number of workers to run on each node")
-    parser.add_argument('--k8s_master', type=str, default="",
+    parser.add_argument('--k8s_master',
+                        type=str,
+                        default="",
                         help="The k8s master. "
-                             "It should be k8s://https://<k8s-apiserver-host>: "
-                             "<k8s-apiserver-port>.")
-    parser.add_argument("--container_image", type=str, default="",
+                        "It should be k8s://https://<k8s-apiserver-host>: "
+                        "<k8s-apiserver-port>.")
+    parser.add_argument("--container_image",
+                        type=str,
+                        default="",
                         help="The runtime k8s image. "
-                             "You can change it with your k8s image.")
-    parser.add_argument('--k8s_driver_host', type=str, default="",
+                        "You can change it with your k8s image.")
+    parser.add_argument('--k8s_driver_host',
+                        type=str,
+                        default="",
                         help="The k8s driver localhost. ")
-    parser.add_argument('--k8s_driver_port', type=str, default="",
+    parser.add_argument('--k8s_driver_port',
+                        type=str,
+                        default="",
                         help="The k8s driver port.")
-    
-    parser.add_argument('--cpus_per_trial', type=int,default=2,
-                        help="The number of cores you want to allocate for each trial.")
-    parser.add_argument('--epochs', type=int, default=1,
+
+    parser.add_argument(
+        '--cpus_per_trial',
+        type=int,
+        default=2,
+        help="The number of cores you want to allocate for each trial.")
+    parser.add_argument('--epochs',
+                        type=int,
+                        default=1,
                         help="The number of epochs in each trial.")
-    parser.add_argument('--trials', type=int, default=4,
-                        help="The number of searching trials.") 
+    parser.add_argument('--trials',
+                        type=int,
+                        default=4,
+                        help="The number of searching trials.")
 
     args = parser.parse_args()
     if args.cluster_mode == "local":
-        init_orca_context(cluster_mode="local", cores=args.cores,
-                          num_nodes=args.num_nodes, memory=args.memory,
+        init_orca_context(cluster_mode="local",
+                          cores=args.cores,
+                          num_nodes=args.num_nodes,
+                          memory=args.memory,
                           init_ray_on_spark=True)
     elif args.cluster_mode == "yarn":
-        init_orca_context(cluster_mode="yarn-client", cores=args.cores,
-                          memory=args.memory,  init_ray_on_spark=True)
+        init_orca_context(cluster_mode="yarn-client",
+                          cores=args.cores,
+                          memory=args.memory,
+                          init_ray_on_spark=True)
     elif args.cluster_mode == "k8s":
         if not args.k8s_master or not args.container_image \
                 or not args.k8s_driver_host or not args.k8s_driver_port:
             parser.print_help()
             parser.error('k8s_master, container_image,'
                          'k8s_driver_host/port are required not to be empty')
-        init_orca_context(cluster_mode="k8s", master=args.k8s_master,
+        init_orca_context(cluster_mode="k8s",
+                          master=args.k8s_master,
                           container_image=args.container_image,
-                          cores=args.cores, init_ray_on_spark=True,
-                          conf={"spark.driver.host": args.k8s_driver_host,
-                                "spark.driver.port": args.k8s_driver_port})
+                          cores=args.cores,
+                          init_ray_on_spark=True,
+                          conf={
+                              "spark.driver.host": args.k8s_driver_host,
+                              "spark.driver.port": args.k8s_driver_port
+                          })
 
     train_example(args)
     stop_orca_context()
