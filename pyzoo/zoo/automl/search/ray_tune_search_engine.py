@@ -30,7 +30,7 @@ from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
 import pandas as pd
 
-SEARCH_ALG_ALLOWED = ("variant_generator", "skopt", "bayesopt", "sigopt")
+SEARCH_ALG_ALLOWED = ("random", "variant_generator", "skopt", "bayesopt", "sigopt")
 
 
 class RayTuneSearchEngine(SearchEngine):
@@ -46,7 +46,10 @@ class RayTuneSearchEngine(SearchEngine):
                  ):
         """
         Constructor
+        :param logs_dir: local dir to save training results
         :param resources_per_trial: resources for each trial
+        :param name: searcher name
+        :param remote_dir: checkpoint will be uploaded to remote_dir in hdfs
         """
         self.pipeline = None
         self.train_func = None
@@ -71,18 +74,30 @@ class RayTuneSearchEngine(SearchEngine):
                 metric="mse"):
         """
         Do necessary preparations for the engine
-        :param input_df:
-        :param search_space:
-        :param num_samples:
-        :param stop:
-        :param search_algorithm:
-        :param search_algorithm_params:
-        :param fixed_params:
-        :param feature_transformers:
-        :param model:
-        :param validation_df:
-        :param metric:
-        :return:
+        :param data: data dictionary
+               Pandas Dataframe API keys:
+                   "df": dataframe for training
+                   "val_df": (optional) dataframe for validation
+                   "feature_cols": (optional) column name for extra features
+                   "target_col": (optional) column name for target
+               Numpy ndarray API keys:
+                   "x": ndarray for training input
+                   "y": ndarray for training output
+                   "x_val": (optional) ndarray for validation input
+                   "y_val": (optional) ndarray for validation output
+               Note: For Pandas Dataframe API keys, if "feature_cols" or "target_col" is missing,
+                     then feature_transformers is required.
+        :param model_create_func: model creation function
+        :param recipe: search recipe 
+        :param search_space: search_space, required if recipe is not provided
+        :param search_alg: str, one of "random", 
+               "variant_generator", "skopt", "bayesopt" and "sigopt"
+        :param search_alg_params: parameters for search algorithm
+        :param scheduler: str, all supported scheduler provieded by ray tune
+        :param scheduler_params: parameters for scheduler
+        :param feature_transformers: feature transformer instance
+        :param mc: if calculate uncertainty
+        :param metric: metric name
         """
 
         # data mode detection
@@ -263,6 +278,11 @@ class RayTuneSearchEngine(SearchEngine):
         return analysis
 
     def get_best_trials(self, k=1):
+        """
+        get best trail list
+        :params k: top k
+        :return: trials list
+        """
         sorted_trials = RayTuneSearchEngine._get_sorted_trials(self.trials,
                                                                metric=self.metric,
                                                                mode=self.mode)
@@ -306,11 +326,15 @@ class RayTuneSearchEngine(SearchEngine):
                             ):
         """
         Prepare the train function for ray tune
-        :param input_df: input dataframe
+        :param input_data: input data
+        :param model_create_func: model creation function
         :param feature_transformers: feature transformers
-        :param model: model or model selector
-        :param validation_df: validation dataframe
         :param metric: the rewarding metric
+        :param validation_data: validation data
+        :param mc: if calculate uncertainty
+        :param remote_dir: checkpoint will be uploaded to remote_dir in hdfs
+        :param numpy_format: if you use numpy API
+        
         :return: the train function
         """
         numpy_format_id = ray.put(numpy_format)
