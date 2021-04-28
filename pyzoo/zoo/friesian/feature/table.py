@@ -133,8 +133,8 @@ class Table:
         """
         Drops the rows containing null values in the specified columns.
 
-        :param columns: a list of strings that specifies column names. If it is None, it will
-               operate on all columns.
+        :param columns: a string or a list of strings that specifies column names. If it is None,
+               it will operate on all columns.
         :param how: If `how` is "any", then drop rows containing any null values in `columns`.
                If `how` is "all", then drop rows only if every column in `columns` is null for
                that row.
@@ -208,8 +208,8 @@ class Table:
         Replaces null values with the median in the specified numeric columns. Any column to be
         filled should not contain only null values.
 
-        :param columns: a list of strings that specifies column names. If it is None, it will
-               operate on all numeric columns.
+        :param columns: a string or a list of strings that specifies column names. If it is None,
+               it will operate on all numeric columns.
 
         :return: A new Table that replaces null values with the median in the specified numeric
                  columns.
@@ -225,8 +225,8 @@ class Table:
         Returns a new Table that has two columns, `column` and `median`, containing the column
         names and the medians of the specified numeric columns.
 
-        :param columns: a list of strings that specifies column names. If it is None, it will
-               operate on all numeric columns.
+        :param columns: a string or a list of strings that specifies column names. If it is None,
+               it will operate on all numeric columns.
 
         :return: A new Table that contains the medians of the specified columns.
         """
