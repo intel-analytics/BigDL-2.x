@@ -123,7 +123,7 @@ est = Estimator.from_torch(model=model_creator,
 Then users can perform distributed model training and inference as follows:
 
 ```python
-est.fit(data=train_loader, epochs=args.epochs)
+est.fit(data=train_loader_func, epochs=args.epochs)
 predictions = est.predict(xshards)
 ```
 

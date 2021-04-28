@@ -85,7 +85,7 @@ def optim_creator(model, config):
 
 ### **Step 3: Define Train Dataset**
 
-You can define the dataset using standard [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html). 
+You can define the dataset using standard [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html) or a *Data Creator Function* that returns a PyTorch `DataLoader`. Orca also supports [Orca SparkXShards](../Overview/data-parallel-processing).
 
 ```python
 import torch
@@ -117,8 +117,6 @@ def test_loader_creator(config, batch_size):
         batch_size=batch_size, shuffle=False)
     return test_loader
 ```
-
-Alternatively, we can also use a [Data Creator Function](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist_data_creator_func.ipynb) or [Orca XShards](../Overview/data-parallel-processing) as the input data, especially when the data size is very large)
 
 ### **Step 4: Fit with Orca Estimator**
 

@@ -54,16 +54,14 @@ class Estimator(object):
 
         :param model: PyTorch model if backend="bigdl", PyTorch model creator function if
                backend="horovod" or "torch_distributed"
-        :param optimizer: Orca or PyTorch optimizer if backend="bigdl", PyTorch optimizer creator
-               function if backend="horovod" or "torch_distributed"
-        :param loss: PyTorch loss if backend="bigdl", PyTorch loss creator function if
-               backend="horovod" or "torch_distributed"
+        :param optimizer: Orca or PyTorch optimizer creator function if backend="bigdl", PyTorch
+               optimizer creator function if backend="horovod" or "torch_distributed"
+        :param loss: PyTorch loss creator function
         :param metrics: Orca validation methods for evaluate.
         :param scheduler_creator: parameter for `horovod` and `torch_distributed` backends. a
                learning rate scheduler wrapping the optimizer. You will need to set
                ``scheduler_step_freq="epoch"`` for the scheduler to be incremented correctly.
-        :param config: parameter for `horovod` and `torch_distributed` backends. Config dict to
-               create model, optimizer loss and data.
+        :param config: parameter config dict to create model, optimizer loss and data.
         :param scheduler_step_freq: parameter for `horovod` and `torch_distributed` backends.
                "batch", "epoch" or None. This will determine when ``scheduler.step`` is called. If
                "batch", ``step`` will be called after every optimizer step. If "epoch", ``step``
@@ -337,7 +335,8 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         Train this torch model with train data.
 
         :param data: train data. It can be a XShards, Spark Dataframe, PyTorch DataLoader and
-               PyTorch DataLoader creator function.
+               PyTorch DataLoader creator function that takes config and batch_size as argument and
+               returns a PyTorch DataLoader for training.
                If data is an XShards, each partition can be a Pandas DataFrame or a dictionary of
                {'x': feature, 'y': label}, where feature(label) is a numpy array or
                a list of numpy arrays.
