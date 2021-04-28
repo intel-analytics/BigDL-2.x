@@ -135,7 +135,7 @@ libraryDependencies += "com.intel.analytics.zoo" % "analytics-zoo-bigdl_0.12.2-s
 
 Currently, Analytics Zoo nightly build is hosted on [SonaType](https://oss.sonatype.org/content/groups/public/com/intel/analytics/zoo/).
 
-To link your application with the latest Analytics Zoo nightly build, you should add some dependencies like [official releases](#11-official-release), but change `0.10.0` to the snapshot version (such as 0.10.0), and add below repository to your pom.xml.
+To link your application with the latest Analytics Zoo nightly build, you should add some dependencies like [official releases](#11-official-release), but change `0.10.0` to the snapshot version (such as 0.10.0-snapshot), and add below repository to your pom.xml.
 
 
 ```xml
