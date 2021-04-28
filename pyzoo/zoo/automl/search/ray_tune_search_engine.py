@@ -23,7 +23,6 @@ from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME
 from ray.tune import Trainable, Stopper
-import ray.tune.track
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model import ModelBuilder
 from zoo.orca.automl import hp
@@ -106,15 +105,6 @@ class RayTuneSearchEngine(SearchEngine):
             target_col = data.get("target_col", None)
             validation_df = data.get("val_df", None)
         else:
-            if data["x"].ndim == 1:
-                data["x"] = data["x"].reshape(-1, 1)
-            if data["y"].ndim == 1:
-                data["y"] = data["y"].reshape(-1, 1)
-            if "val_x" in data.keys() and data["val_x"].ndim == 1:
-                data["val_x"] = data["val_x"].reshape(-1, 1)
-            if "val_y" in data.keys() and data["val_y"].ndim == 1:
-                data["val_y"] = data["val_y"].reshape(-1, 1)
-
             input_data = {"x": data["x"], "y": data["y"]}
             if 'val_x' in data.keys():
                 validation_data = {"x": data["val_x"], "y": data["val_y"]}
@@ -168,11 +158,13 @@ class RayTuneSearchEngine(SearchEngine):
 
         if search_space is None:
             search_space = recipe.search_space()
+        self.search_space = search_space
+
         self._search_alg = RayTuneSearchEngine._set_search_alg(search_alg, search_alg_params,
                                                                recipe, self.metric, self.mode)
         self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params,
                                                              self.metric, self.mode)
-        self.search_space = search_space
+        
 
         if feature_transformers is None and data_mode == 'dataframe':
             feature_transformers = IdentityTransformer(feature_cols, target_col)
