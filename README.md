@@ -25,7 +25,7 @@ For more information, you may [read the docs](https://analytics-zoo.readthedocs.
 ---
 
 ## Installing
-You can use Analytics Zoo on [Google Colab](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/colab.html) without any installation. Analytics Zoo also includes a set of [notebooks](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/notebooks.html) that you can directly open and run in Colab.
+You can use Analytics Zoo on [Google Colab](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/UserGuide/colab.html) without any installation. Analytics Zoo also includes a set of [notebooks](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/UserGuide/notebooks.html) that you can directly open and run in Colab.
 
 To install Analytics Zoo, we recommend using [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)  environments.
 
@@ -41,7 +41,7 @@ To install latest nightly build, use ```pip install --pre --upgrade analytics-zo
 
 Most AI projects start with a Python notebook running on a single laptop; however, one usually needs to go through a mountain of pains to scale it to handle larger data set in a distributed fashion. The  _**Orca**_ library seamlessly scales out your single node TensorFlow or PyTorch notebook across large clusters (so as to process distributed Big Data).
 
-First, initialize [Orca Context](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html):
+First, initialize [Orca Context](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/Orca/Overview/orca-context.html):
 
 ```python
 from zoo.orca import init_orca_context
@@ -50,7 +50,7 @@ from zoo.orca import init_orca_context
 sc = init_orca_context(cluster_mode="yarn", cores=4, memory="10g", num_nodes=2) 
 ```
 
-Next, perform [data-parallel processing in Orca](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/data-parallel-processing.html) (supporting standard Spark Dataframes, TensorFlow Dataset, PyTorch DataLoader, Pandas, etc.):
+Next, perform [data-parallel processing in Orca](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/Orca/Overview/data-parallel-processing.html) (supporting standard Spark Dataframes, TensorFlow Dataset, PyTorch DataLoader, Pandas, etc.):
 
 ```python
 from pyspark.sql.functions import array
@@ -60,7 +60,7 @@ df = df.withColumn('user', array('user')) \
        .withColumn('item', array('item'))
 ```
 
-Finally, use [sklearn-style Estimator APIs in Orca](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/distributed-training-inference.html) to perform distributed _TensorFlow_, _PyTorch_ or _Keras_ training and inference:
+Finally, use [sklearn-style Estimator APIs in Orca](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/Orca/Overview/distributed-training-inference.html) to perform distributed _TensorFlow_, _PyTorch_ or _Keras_ training and inference:
 
 ```python
 from tensorflow import keras
@@ -83,7 +83,7 @@ est.fit(data=df,
         label_cols=['label'])
 ```
 
-See [TensorFlow](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-tf-quickstart.html) and [PyTorch](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/QuickStart/orca-pytorch-quickstart.html) quickstart, as well as the [document website](https://analytics-zoo.readthedocs.io/), for more details.
+See [TensorFlow](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/Orca/QuickStart/orca-tf-quickstart.html) and [PyTorch](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/Orca/QuickStart/orca-pytorch-quickstart.html) quickstart, as well as the [document website](https://analytics-zoo.readthedocs.io/), for more details.
 
 ## Getting Started with RayOnSpark
 
@@ -110,7 +110,7 @@ counters = [Counter.remote() for i in range(5)]
 print(ray.get([c.increment.remote() for c in counters]))
 ```
 
-See the RayOnSpark [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/Ray/Overview/ray.html) and [quickstart](https://analytics-zoo.readthedocs.io/en/latest/doc/Ray/QuickStart/ray-quickstart.html) for more details.
+See the RayOnSpark [user guide](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/Ray/Overview/ray.html) and [quickstart](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/Ray/QuickStart/ray-quickstart.html) for more details.
 
 ## Getting Started with BigDL Extensions
 
@@ -145,13 +145,13 @@ val pipeline = new Pipeline().setStages(Array(scaler, estimator))
 val pipelineModel = pipeline.fit(trainingDF)  
 val predictions = pipelineModel.transform(validationDF)
 ```
-See the [Scala](https://analytics-zoo.readthedocs.io/en/latest/doc/UserGuide/scala.html), [NNframes](https://analytics-zoo.readthedocs.io/en/latest/doc/UseCase/nnframes.html) and [Keras API](https://analytics-zoo.readthedocs.io/en/latest/doc/UseCase/keras-api.html) user guides for more details.
+See the [Scala](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/UserGuide/scala.html), [NNframes](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/UseCase/nnframes.html) and [Keras API](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/UseCase/keras-api.html) user guides for more details.
 
 ## Getting Started with Zouwu
 
 Time series prediction takes observations from previous time steps as input and predicts the values at future time steps. The _**Zouwu**_ library makes it easy to build end-to-end time series analysis by applying AutoML to extremely large-scale time series prediction.
 
-To train a time series model with AutoML, first initialize [Orca Context](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html):
+To train a time series model with AutoML, first initialize [Orca Context](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/Orca/Overview/orca-context.html):
 
 ```python
 from zoo.orca import init_orca_context
@@ -178,13 +178,13 @@ ts_pipeline = trainer.fit(train_df, validation_df)
 ts_pipeline.predict(test_df)
 ```
 
-See the Zouwu [user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/Zouwu/Overview/zouwu.html) and [example](https://analytics-zoo.readthedocs.io/en/latest/doc/Zouwu/QuickStart/zouwu-autots-quickstart.html) for more details.
+See the Zouwu [user guide](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/Zouwu/Overview/zouwu.html) and [example](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/Zouwu/QuickStart/zouwu-autots-quickstart.html) for more details.
 
 ## PPML (Privacy Preserving Machine Learning)
 
 ***Analytics Zoo PPML*** provides a *Trusted Cluster Environment* for protecting the end-to-end Big Data AI pipeline. It combines various low level hardware and software security technologies (e.g., Intel SGX, LibOS such as Graphene and Occlum, Federated Learning, etc.), and allows users to run unmodified Big Data analysis and ML/DL programs (such as Apache Spark, Apache Flink, Tensorflow, PyTorch, etc.) in a secure fashion on (private or public) cloud.
 
-See the [PPML user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/PPML/Overview/ppml.html) for more details. 
+See the [PPML user guide](https://analytics-zoo.readthedocs.io/en/v0.10.0/doc/PPML/Overview/ppml.html) for more details. 
 
 ## More information
 
