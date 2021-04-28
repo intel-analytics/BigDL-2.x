@@ -66,14 +66,6 @@ def _standardize_input(y_true, y_pred, multioutput):
     if y_true.shape[1] != y_pred.shape[1]:
         raise ValueError("y_true and y_pred have different number of output "
                          "({0}!={1})".format(y_true.shape[1], y_pred.shape[1]))
-    allowed_multioutput_str = ('raw_values', 'uniform_average',
-                               'variance_weighted')
-    if isinstance(multioutput, str):
-        if multioutput not in allowed_multioutput_str:
-            raise ValueError("Allowed 'multioutput' string values are {}. "
-                             "You provided multioutput={!r}"
-                             .format(allowed_multioutput_str, multioutput))
-
     return y_true, y_pred, original_shape
 
 
@@ -349,7 +341,6 @@ class Evaluator(object):
     }
 
     max_mode_metrics = ('r2', 'accuracy')
-    available_multioutput = ('raw_values', 'uniform_average')
 
     @staticmethod
     def evaluate(metric, y_true, y_pred, multioutput='uniform_average'):
@@ -364,9 +355,13 @@ class Evaluator(object):
 
     @staticmethod
     def check_multioutput(multioutput):
-        if multioutput not in Evaluator.available_multioutput:
-            raise ValueError(f"multioutput {multioutput} is not supported. "
-                             f"Please choose from {Evaluator.available_multioutput}")
+        allowed_multioutput_str = ('raw_values', 'uniform_average',
+                                   'variance_weighted')
+        if isinstance(multioutput, str):
+            if multioutput not in allowed_multioutput_str:
+                raise ValueError("Allowed 'multioutput' string values are {}. "
+                                 "You provided multioutput={!r}"
+                                 .format(allowed_multioutput_str, multioutput))
 
     @staticmethod
     def get_metric_mode(metric):
