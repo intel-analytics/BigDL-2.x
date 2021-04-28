@@ -141,7 +141,9 @@ if __name__ == "__main__":
         default="10g",
         help="The memory you want to use on each node. "
         "You can change it depending on your own cluster setting.")
-    parser.add_argument("--workers_per_node", type=int, default=2,\
+    parser.add_argument("--workers_per_node",
+                        type=int,
+                        default=2,
                         help="The number of workers to run on each node")
     parser.add_argument('--k8s_master',
                         type=str,
@@ -162,12 +164,11 @@ if __name__ == "__main__":
                         type=str,
                         default="",
                         help="The k8s driver port.")
-
     parser.add_argument(
-        '--cpus_per_trial',
-        type=int,
-        default=2,
-        help="The number of cores you want to allocate for each trial.")
+                        '--cpus_per_trial',
+                        type=int,
+                        default=2,
+                        help="The number of cores you want to allocate for each trial.")
     parser.add_argument('--epochs',
                         type=int,
                         default=1,
