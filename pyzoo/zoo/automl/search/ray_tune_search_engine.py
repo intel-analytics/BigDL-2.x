@@ -268,11 +268,11 @@ class RayTuneSearchEngine(SearchEngine):
         # Visualization code for ray (leaderboard)
         # catch the ImportError Since it has been processed in TensorboardXLogger
         tf_config, tf_metric = self._log_adapt(analysis)
-        loggor_name = self.name if self.name else DEFAULT_LOGGER_NAME
+        logger_name = self.name if self.name else DEFAULT_LOGGER_NAME
 
         self.logger = TensorboardXLogger(logs_dir=os.path.join(self.logs_dir,
-                                                               loggor_name+"_leaderboard"),
-                                         name=loggor_name)
+                                                               logger_name+"_leaderboard"),
+                                         name=logger_name)
         self.logger.run(tf_config, tf_metric)
         self.logger.close()
 
