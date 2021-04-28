@@ -22,7 +22,7 @@ from sklearn.model_selection import train_test_split
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray import RayContext
 from zoo.zouwu.config.recipe import *
-from zoo.orca.automl.xgboost.auto_xgb import AutoXGBClassifier
+from zoo.orca.automl.xgboost import AutoXGBClassifier
 
 
 if __name__ == '__main__':

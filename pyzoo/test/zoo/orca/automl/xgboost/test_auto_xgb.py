@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.orca.automl.xgboost.auto_xgb import AutoXGBRegressor
+from zoo.orca.automl.xgboost import AutoXGBRegressor
 
 import numpy as np
 from unittest import TestCase
