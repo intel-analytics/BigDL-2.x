@@ -18,14 +18,10 @@
 
 . `dirname $0`/prepare_env.sh
 
-cd "`dirname $0`"
-
-py_version="$(python -V 2>&1)"
-
 echo "Running Friesian feature tests"
 python -m pytest -v ../test/zoo/friesian/feature/
-exit_status_3=$?
-if [ $exit_status_3 -ne 0 ];
+exit_status=$?
+if [ $exit_status -ne 0 ];
 then
-    exit $exit_status_3
+    exit $exit_status
 fi

@@ -181,11 +181,24 @@ class TestTable(TestCase):
         assert feature_tbl.df.filter("col_1 is null").count() != 0 and feature_tbl\
             .df.filter("col_4 is null").count() != 0, "feature_tbl should not be changed"
         assert dropped_tbl.df.filter("col_1 is null").count() == 0, "col_1 null values should " \
-                                                                    "be filled"
+                                                                    "be dropped"
         assert dropped_tbl.df.filter("col_4 is null").count() == 0, "col_4 null values should " \
-                                                                    "be filled"
+                                                                    "be dropped"
         assert 0 < dropped_tbl.df.count() < feature_tbl.df.count(), "the number of rows should " \
                                                                     "be decreased"
+
+        dropped_tbl = feature_tbl.dropna(["col_1", "col_4"], how="all")
+        assert dropped_tbl.df.filter("col_1 is null and col_4 is null").count() == 0, \
+            "col_1 and col_4 should not both have null values"
+        dropped_tbl = feature_tbl.dropna(["col_2", "col_4"], how="all")
+        assert dropped_tbl.df.filter("col_2 is null").count() > 0, \
+            "col_2 should still have null values after dropna with how=all"
+
+        dropped_tbl = feature_tbl.dropna(["col_2", "col_3", "col_5"], thresh=2)
+        assert dropped_tbl.df.filter("col_2 is null").count() > 0, \
+            "col_2 should still have null values after dropna with thresh=2"
+        assert dropped_tbl.df.filter("col_3 is null and col_5 is null").count() == 0, \
+            "col_3 and col_5 should not both have null values"
 
     def test_fill_median(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
@@ -405,7 +418,7 @@ class TestTable(TestCase):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
         with self.assertRaises(Exception) as context:
-            feature_tbl.fill_median(["col_4", "col_5"])
+            feature_tbl.median(["col_4", "col_5"])
         self.assertTrue('col_4 with data type StringType is not supported' in
                         str(context.exception))
 

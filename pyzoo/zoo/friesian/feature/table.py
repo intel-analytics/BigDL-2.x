@@ -203,7 +203,7 @@ class Table:
         check_col_exists(self.df, columns)
         return self._clone(log_with_clip(self.df, columns, clipping))
 
-    def fill_median(self, columns=None):
+    def fill_median(self, columns):
         """
         Replaces null values with the median in the specified numeric columns. Any column to be
         filled should not contain only null values.
