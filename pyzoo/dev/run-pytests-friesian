@@ -18,6 +18,8 @@
 
 . `dirname $0`/prepare_env.sh
 
+cd "`dirname $0`"
+
 echo "Running Friesian feature tests"
 python -m pytest -v ../test/zoo/friesian/feature/
 exit_status=$?
