@@ -120,7 +120,7 @@ if __name__ == '__main__':
                                          max_depth_range=max_depth_range,
                                          ),
         search_alg = "skopt"
-        scheduler = "AsyncHyperBand",
+        scheduler = "AsyncHyperBand"
         scheduler_params = dict(
             max_t=50,
             grace_period=1,
@@ -136,10 +136,10 @@ if __name__ == '__main__':
         scheduler = None
         scheduler_params = None
 
-    auto_xgb_reg = AutoXGBClassifier(n_cpus=4, name="auto_xgb_classifier", **config)
+    auto_xgb_clf = AutoXGBClassifier(n_cpus=4, name="auto_xgb_classifier", **config)
     import time
     start = time.time()
-    auto_xgb_reg.fit(data,
+    auto_xgb_clf.fit(data,
                      recipe=recipe,
                      metric="error",
                      search_alg=search_alg,
@@ -148,6 +148,6 @@ if __name__ == '__main__':
                      scheduler_params=scheduler_params)
     end = time.time()
     print("elapse: ", (end-start), "s")
-    best_model = auto_xgb_reg.get_best_model()
+    best_model = auto_xgb_clf.get_best_model()
     accuracy = best_model.evaluate(X_val, y_val, metrics=["accuracy"])
     print("Evaluate: accuracy is", accuracy)
