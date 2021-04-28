@@ -103,7 +103,7 @@ set_train_summary(summary)
 * **summary**: The train summary to be set. A TrainSummary object contains information
                necessary for the optimizer to know how often the logs are recorded,
                where to store the logs and how to retrieve them, etc. For details,
-               refer to the docs of [TrainSummary](https://bigdl-project.github.io/0.9.0/#ProgrammingGuide/visualization/).
+               refer to the docs of [TrainSummary](https://bigdl-project.github.io/master/#ProgrammingGuide/visualization/).
 
 ### set_val_summary
 
@@ -116,7 +116,7 @@ set_val_summary(summary)
 * **summary**: The validation summary to be set. A ValidationSummary object contains information
                necessary for the optimizer to know how often the logs are recorded,
                where to store the logs and how to retrieve them, etc. For details,
-               refer to the docs of [ValidationSummary](https://bigdl-project.github.io/0.9.0/#ProgrammingGuide/visualization/).
+               refer to the docs of [ValidationSummary](https://bigdl-project.github.io/master/#ProgrammingGuide/visualization/).
                
 
 ### set_constant_gradient_clipping
@@ -150,5 +150,5 @@ optimize(self, end_trigger=None)
 
 #### Arguments
 
-* **end_trigger**: BigDL's [Trigger](https://bigdl-project.github.io/0.9.0/#APIGuide/Triggers/) to indicate when to stop the training. If none, defaults to
+* **end_trigger**: BigDL's [Trigger](https://bigdl-project.github.io/master/#APIGuide/Triggers/) to indicate when to stop the training. If none, defaults to
                    train for one epoch.

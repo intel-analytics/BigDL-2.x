@@ -118,7 +118,7 @@ docker pull intelanalytics/zoo-cluster-serving
 ```
 then, (or directly run `docker run`, it will pull the image if it does not exist)
 ```
-docker run --name cluster-serving -itd --net=host intelanalytics/zoo-cluster-serving:0.9.0
+docker run --name cluster-serving -itd --net=host intelanalytics/zoo-cluster-serving:0.10.0
 ```
 Log into the container
 ```
