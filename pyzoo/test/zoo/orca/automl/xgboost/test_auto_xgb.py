@@ -14,10 +14,9 @@
 # limitations under the License.
 #
 
-from zoo.orca.automl.xgboost.auto_xgb import AutoXGBRegressor, AutoXGBClassifier
+from zoo.orca.automl.xgboost.auto_xgb import AutoXGBRegressor
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal
 from unittest import TestCase
 from zoo.automl.recipe.base import Recipe
 
@@ -65,3 +64,5 @@ class TestAutoXGBRegressor(TestCase):
                          recipe=XGBRecipe(),
                          metric="mse")
         best_model = auto_xgb_reg.get_best_model()
+        assert 5 <= best_model.model.n_estimators <= 10
+        assert 2 <= best_model.model.max_depth <= 5
