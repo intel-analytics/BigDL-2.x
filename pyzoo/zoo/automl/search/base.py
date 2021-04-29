@@ -16,7 +16,7 @@
 
 
 from abc import ABC, abstractmethod
-
+from ray.tune import Stopper
 
 class GoodError(Exception):
     pass
@@ -49,3 +49,24 @@ class TrialOutput(object):
     def __init__(self, config, model_path):
         self.config = config
         self.model_path = model_path
+
+# stopper
+class TrialStopper(Stopper):
+    def __init__(self, stop, metric, mode):
+        self._mode = mode
+        self._metric = metric
+        self._stop = stop
+
+    def __call__(self, trial_id, result):
+        if self._metric in self._stop.keys():
+            if self._mode == "max" and result[self._metric] >= self._stop[self._metric]:
+                return True
+            if self._mode == "min" and result[self._metric] <= self._stop[self._metric]:
+                return True
+        if "training_iteration" in self._stop.keys():
+            if result["training_iteration"] >= self._stop["training_iteration"]:
+                return True
+        return False
+
+    def stop_all(self):
+        return False

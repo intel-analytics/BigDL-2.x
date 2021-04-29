@@ -22,7 +22,7 @@ from zoo.automl.search.base import *
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME
-from ray.tune import Trainable, Stopper
+from ray.tune import Trainable
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model import ModelBuilder
 from zoo.orca.automl import hp
@@ -113,10 +113,10 @@ class RayTuneSearchEngine(SearchEngine):
 
         # data extract
         if data_mode == 'dataframe':
-            input_df = data['df']
+            input_data = data['df']
             feature_cols = data.get("feature_cols", None)
             target_col = data.get("target_col", None)
-            validation_df = data.get("val_df", None)
+            validation_data = data.get("val_df", None)
         else:
             input_data = {"x": data["x"], "y": data["y"]}
             if 'val_x' in data.keys():
@@ -146,27 +146,6 @@ class RayTuneSearchEngine(SearchEngine):
             del stop["reward_metric"]
         stop.setdefault("training_iteration", 1)
 
-        # stopper
-        class TrialStopper(Stopper):
-            def __init__(self, stop, metric, mode):
-                self._mode = mode
-                self._metric = metric
-                self._stop = stop
-
-            def __call__(self, trial_id, result):
-                if self._metric in self._stop.keys():
-                    if self._mode == "max" and result[self._metric] >= self._stop[self._metric]:
-                        return True
-                    if self._mode == "min" and result[self._metric] <= self._stop[self._metric]:
-                        return True
-                if "training_iteration" in self._stop.keys():
-                    if result["training_iteration"] >= self._stop["training_iteration"]:
-                        return True
-                return False
-
-            def stop_all(self):
-                return False
-
         self.stopper = TrialStopper(stop=stop, metric=self.metric, mode=self.mode)
 
         if search_space is None:
@@ -177,31 +156,21 @@ class RayTuneSearchEngine(SearchEngine):
                                                                recipe, self.metric, self.mode)
         self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params,
                                                              self.metric, self.mode)
-        
 
         if feature_transformers is None and data_mode == 'dataframe':
             feature_transformers = IdentityTransformer(feature_cols, target_col)
 
-        if data_mode == 'dataframe':
-            self.train_func = self._prepare_train_func(input_data=input_df,
-                                                       model_create_func=model_create_func,
-                                                       feature_transformers=feature_transformers,
-                                                       validation_data=validation_df,
-                                                       metric=metric,
-                                                       mc=mc,
-                                                       remote_dir=self.remote_dir,
-                                                       numpy_format=False
-                                                       )
-        else:
-            self.train_func = self._prepare_train_func(input_data=input_data,
-                                                       model_create_func=model_create_func,
-                                                       feature_transformers=None,
-                                                       validation_data=validation_data,
-                                                       metric=metric,
-                                                       mc=mc,
-                                                       remote_dir=self.remote_dir,
-                                                       numpy_format=True
-                                                       )
+        numpy_format = True if data_mode == 'ndarray' else False
+
+        self.train_func = self._prepare_train_func(input_data=input_data,
+                                                   model_create_func=model_create_func,
+                                                   feature_transformers=feature_transformers,
+                                                   validation_data=validation_data,
+                                                   metric=metric,
+                                                   mc=mc,
+                                                   remote_dir=self.remote_dir,
+                                                   numpy_format=numpy_format
+                                                   )
 
     @staticmethod
     def _set_search_alg(search_alg, search_alg_params, recipe, metric, mode):
@@ -264,8 +233,8 @@ class RayTuneSearchEngine(SearchEngine):
         self.trials = analysis.trials
 
         # Visualization code for ray (leaderboard)
-        tf_config, tf_metric = self._log_adapt(analysis)
         logger_name = self.name if self.name else DEFAULT_LOGGER_NAME
+        tf_config, tf_metric = TensorboardXLogger._ray_tune_searcher_log_adapt(analysis)
 
         self.logger = TensorboardXLogger(logs_dir=os.path.join(self.logs_dir,
                                                                logger_name+"_leaderboard"),
@@ -416,7 +385,8 @@ class RayTuneSearchEngine(SearchEngine):
             # callbacks = [TuneCallback(tune_reporter)]
             # fit model
             best_reward = None
-            for i in range(1, 101):
+            training_iteration = 1
+            while True:
                 result = trial_model.fit_eval(x_train,
                                               y_train,
                                               validation_data=validation_data,
@@ -424,7 +394,6 @@ class RayTuneSearchEngine(SearchEngine):
                                               metric=metric,
                                               # verbose=1,
                                               **config)
-                metric_value = result
                 reward = result
                 checkpoint_filename = "best.ckpt"
 
@@ -445,21 +414,12 @@ class RayTuneSearchEngine(SearchEngine):
                     if remote_dir is not None:
                         upload_ppl_hdfs(remote_dir, checkpoint_filename)
 
-                report_dict = {"training_iteration": i,
-                               metric: metric_value,
+                report_dict = {"training_iteration": training_iteration,
+                               metric: reward,
                                "checkpoint": checkpoint_filename,
                                "best_" + metric: best_reward}
                 tune.report(**report_dict)
 
-        return train_func
+                training_iteration += 1
 
-    def _log_adapt(self, analysis):
-        # config
-        config = analysis.get_all_configs()
-        # metric
-        metric_raw = analysis.fetch_trial_dataframes()
-        metric = {}
-        for key, value in metric_raw.items():
-            metric[key] = dict(zip(list(value.columns), list(map(list, value.values.T))))
-            config[key]["address"] = key
-        return config, metric
+        return train_func
