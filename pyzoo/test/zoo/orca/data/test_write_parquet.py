@@ -23,7 +23,7 @@ from zoo.orca.data.image.parquet_dataset import ParquetDataset
 from zoo.orca.data.image.parquet_dataset import _write_ndarrays, write_from_directory
 from zoo.orca.data.image.utils import DType, FeatureType, SchemaField
 from zoo.orca.learn.tf2.estimator import Estimator
-from zoo.orca.data.image import write_mnist
+from zoo.orca.data.image import write_mnist, write_voc
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
 
@@ -141,6 +141,15 @@ def test_write_mnist(orca_context_fixture):
     finally:
         shutil.rmtree(temp_dir)
 
+def test_write_voc(orca_context_fixture):
+    sc = orca_context_fixture
+    temp_dir = tempfile.mkdtemp()
+    try:
+        output_path = os.path.join(temp_dir, "output_dataset")
+        write_voc("~/Datasets/VOCdevkit", splits_names=((2007, "trainval")), 
+                  output_path="file://" + output_path)
+    finally:
+        shutil.rmtree(temp_dir)
 
 def test_train_simple(orca_context_fixture):
     sc = orca_context_fixture
