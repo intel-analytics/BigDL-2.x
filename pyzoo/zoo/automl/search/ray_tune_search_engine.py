@@ -21,6 +21,7 @@ from copy import deepcopy
 from zoo.automl.search.base import *
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
+from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME
 from ray.tune import Trainable, Stopper
 import ray.tune.track
 from zoo.automl.logger import TensorboardXLogger
@@ -267,10 +268,11 @@ class RayTuneSearchEngine(SearchEngine):
         # Visualization code for ray (leaderboard)
         # catch the ImportError Since it has been processed in TensorboardXLogger
         tf_config, tf_metric = self._log_adapt(analysis)
+        logger_name = self.name if self.name else DEFAULT_LOGGER_NAME
 
         self.logger = TensorboardXLogger(logs_dir=os.path.join(self.logs_dir,
-                                                               self.name+"_leaderboard"),
-                                         name=self.name)
+                                                               logger_name+"_leaderboard"),
+                                         name=logger_name)
         self.logger.run(tf_config, tf_metric)
         self.logger.close()
 
