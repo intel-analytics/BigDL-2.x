@@ -117,9 +117,9 @@ class PytorchBaseModel(BaseModel):
             x, y, validation_data = PytorchBaseModel.covert_input(x, y, validation_data)
 
         train_loader = None if training_dataloader_creator is None \
-                            else training_dataloader_creator(config)
+                            else training_dataloader_creator(self.config)
         valid_loader = None if validation_dataloader_creator is None \
-                            else validation_dataloader_creator(config)
+                            else validation_dataloader_creator(self.config)
         
         epoch_losses = []
         for i in range(epochs):
@@ -127,9 +127,12 @@ class PytorchBaseModel(BaseModel):
             epoch_losses.append(train_loss)
         train_stats = {"loss": np.mean(epoch_losses), "last_loss": epoch_losses[-1]}
         # todo: support input validation data None
-        assert validation_data is not None, "You must input validation data!"
-        val_stats = self._validate(validation_data[0],
-                                   validation_data[1],
+        assert (validation_data is not None) or (valid_loader is not None),\
+               "You must input validation data!"
+        validation_x = validation_data[0] if validation_data else None
+        validation_y = validation_data[1] if validation_data else None
+        val_stats = self._validate(validation_x,
+                                   validation_y,
                                    metric=metric,
                                    loader=valid_loader)
         self.onnx_model_built = False
@@ -192,7 +195,7 @@ class PytorchBaseModel(BaseModel):
         if loader is None:
             x = self._reshape_input(x)
             y = self._reshape_input(y)
-            valid_loader = DataLoader(TensorDataset(x),
+            valid_loader = DataLoader(TensorDataset(x, y),
                                       batch_size=int(batch_size),
                                       shuffle=False)
         else:
@@ -200,11 +203,14 @@ class PytorchBaseModel(BaseModel):
         self.model.eval()
         with torch.no_grad():
             yhat_list = []
-            for x_valid_batch in valid_loader:
-                yhat_list.append(self.model(x_valid_batch[0]).numpy())
+            y_list = []
+            for x_valid_batch, y_valid_batch in valid_loader:
+                yhat_list.append(self.model(x_valid_batch).numpy())
+                y_list.append(y_valid_batch.numpy())
             yhat = np.concatenate(yhat_list, axis=0)
+            y = np.concatenate(y_list, axis=0)
             eval_result = Evaluator.evaluate(metric=metric,
-                                             y_true=y.numpy(), y_pred=yhat,
+                                             y_true=y, y_pred=yhat,
                                              multioutput='uniform_average')
         return {metric: eval_result}
 
