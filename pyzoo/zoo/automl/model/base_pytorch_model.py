@@ -198,7 +198,7 @@ class PytorchBaseModel(BaseModel):
                        for m in metrics]
         return eval_result
 
-    def predict(self, x, mc=False):
+    def predict(self, x, mc=False, batch_size=32):
         # reshape 1dim input
         x = self._reshape_input(x)
 
@@ -209,7 +209,12 @@ class PytorchBaseModel(BaseModel):
             self.model.train()
         else:
             self.model.eval()
-        yhat = self.model(x).detach().numpy()
+        test_loader = DataLoader(TensorDataset(x),
+                                 batch_size=int(batch_size))
+        yhat_list = []
+        for x_test_batch in test_loader:
+            yhat_list.append(self.model(x_test_batch[0]).detach().numpy())
+        yhat = np.concatenate(yhat_list, axis=0)
         return yhat
 
     def predict_with_uncertainty(self, x, n_iter=100):
