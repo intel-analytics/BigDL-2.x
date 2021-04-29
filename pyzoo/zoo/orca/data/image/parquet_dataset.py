@@ -242,5 +242,5 @@ def write_voc(voc_root_path, splits_names, output_path, **kwargs):
                              shape=label_shape)
     }
     kwargs = {key:value for key, value in kwargs.items() if key not in ["classes"]}
-    ParquetDataset.write(output_path, make_generator(voc_datasets), schema, **kwargs)
+    ParquetDataset.write(output_path, make_generator(), schema, **kwargs)
             
