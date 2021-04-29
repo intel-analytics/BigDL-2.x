@@ -86,9 +86,9 @@ class RayTuneSearchEngine(SearchEngine):
                Note: For Pandas Dataframe API keys, if "feature_cols" or "target_col" is missing,
                      then feature_transformers is required.
         :param model_create_func: model creation function
-        :param recipe: search recipe 
+        :param recipe: search recipe
         :param search_space: search_space, required if recipe is not provided
-        :param search_alg: str, one of "random", 
+        :param search_alg: str, one of "random",
                "variant_generator", "skopt", "bayesopt" and "sigopt"
         :param search_alg_params: parameters for search algorithm
         :param scheduler: str, all supported scheduler provieded by ray tune
@@ -321,7 +321,7 @@ class RayTuneSearchEngine(SearchEngine):
         :param mc: if calculate uncertainty
         :param remote_dir: checkpoint will be uploaded to remote_dir in hdfs
         :param numpy_format: if you use numpy API
-        
+
         :return: the train function
         """
         numpy_format_id = ray.put(numpy_format)

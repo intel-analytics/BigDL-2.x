@@ -18,6 +18,7 @@
 from abc import ABC, abstractmethod
 from ray.tune import Stopper
 
+
 class GoodError(Exception):
     pass
 
@@ -49,6 +50,7 @@ class TrialOutput(object):
     def __init__(self, config, model_path):
         self.config = config
         self.model_path = model_path
+
 
 # stopper
 class TrialStopper(Stopper):
