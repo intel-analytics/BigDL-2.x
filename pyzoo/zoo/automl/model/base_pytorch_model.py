@@ -78,7 +78,14 @@ class PytorchBaseModel(BaseModel):
             x = x.reshape(-1, 1)
         return x
 
-    def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
+    def fit_eval(self, x, y, 
+                 validation_data=None,
+                 training_dataloader_creator=None,
+                 validation_dataloader_creator=None,
+                 mc=False,
+                 verbose=0,
+                 epochs=1,
+                 metric="mse",
                  **config):
         """
         fit_eval will build a model at the first time it is built
@@ -86,9 +93,6 @@ class PytorchBaseModel(BaseModel):
         params be functional
         TODO: check the updated params and decide if the model is needed to be rebuilt
         """
-        # reshape 1dim input
-        x = self._reshape_input(x)
-        y = self._reshape_input(y)
 
         # update config settings
         def update_config():
@@ -106,15 +110,28 @@ class PytorchBaseModel(BaseModel):
             self._check_config(**tmp_config)
             self.config.update(config)
 
+        # reshape input
+        if training_dataloader_creator is None:
+            x = self._reshape_input(x)
+            y = self._reshape_input(y)
+            x, y, validation_data = PytorchBaseModel.covert_input(x, y, validation_data)
+
+        train_loader = None if training_dataloader_creator is None \
+                            else training_dataloader_creator(config)
+        valid_loader = None if validation_dataloader_creator is None \
+                            else validation_dataloader_creator(config)
+        
         epoch_losses = []
-        x, y, validation_data = PytorchBaseModel.covert_input(x, y, validation_data)
         for i in range(epochs):
-            train_loss = self._train_epoch(x, y)
+            train_loss = self._train_epoch(x, y, loader=train_loader)
             epoch_losses.append(train_loss)
         train_stats = {"loss": np.mean(epoch_losses), "last_loss": epoch_losses[-1]}
         # todo: support input validation data None
         assert validation_data is not None, "You must input validation data!"
-        val_stats = self._validate(validation_data[0], validation_data[1], metric=metric)
+        val_stats = self._validate(validation_data[0],
+                                   validation_data[1],
+                                   metric=metric,
+                                   loader=valid_loader)
         self.onnx_model_built = False
         return val_stats[metric]
 
@@ -135,13 +152,16 @@ class PytorchBaseModel(BaseModel):
                                PytorchBaseModel.to_torch(validation_data[1]).float())
         return x, y, validation_data
 
-    def _train_epoch(self, x, y):
+    def _train_epoch(self, x, y, loader=None):
         batch_size = self.config["batch_size"]
         self.model.train()
         total_loss = 0
-        train_loader = DataLoader(TensorDataset(x, y),
-                                  batch_size=int(batch_size),
-                                  shuffle=True)
+        if loader is None:
+            train_loader = DataLoader(TensorDataset(x, y),
+                                    batch_size=int(batch_size),
+                                    shuffle=True)
+        else:
+            train_loader = loader
         batch_idx = 0
         tqdm = None
         try:
@@ -168,18 +188,25 @@ class PytorchBaseModel(BaseModel):
     def _forward(self, x, y):
         return self.model(x)
 
-    def _validate(self, x, y, metric):
-        x = self._reshape_input(x)
-        y = self._reshape_input(y)
+    def _validate(self, x, y, metric, batch_size=32, loader=None):
+        if loader is None:
+            x = self._reshape_input(x)
+            y = self._reshape_input(y)
+            valid_loader = DataLoader(TensorDataset(x),
+                                      batch_size=int(batch_size),
+                                      shuffle=False)
+        else:
+            valid_loader = loader
         self.model.eval()
         with torch.no_grad():
-            yhat = self.model(x)
-            val_loss = self.criterion(yhat, y)
+            yhat_list = []
+            for x_valid_batch in valid_loader:
+                yhat_list.append(self.model(x_valid_batch[0]).numpy())
+            yhat = np.concatenate(yhat_list, axis=0)
             eval_result = Evaluator.evaluate(metric=metric,
-                                             y_true=y.numpy(), y_pred=yhat.numpy(),
+                                             y_true=y.numpy(), y_pred=yhat,
                                              multioutput='uniform_average')
-        return {"val_loss": val_loss.item(),
-                metric: eval_result}
+        return {metric: eval_result}
 
     def _print_model(self):
         # print model and parameters
