@@ -312,6 +312,26 @@ class RayTuneSearchEngine(SearchEngine):
         return {metric: RayTuneSearchEngine._get_best_trial(trial_list,
                                                             metric, mode).last_result[metric]}
 
+    def test_run(self):
+        def mock_reporter(**kwargs):
+            assert self.metric in kwargs, "Did not report proper metric"
+            assert "checkpoint" in kwargs, "Accidentally removed `checkpoint`?"
+            raise GoodError("This works.")
+
+        try:
+            self.train_func({'out_units': 1,
+                             'selected_features': ["MONTH(datetime)", "WEEKDAY(datetime)"]},
+                            mock_reporter)
+            # self.train_func(self.search_space, mock_reporter)
+
+        except TypeError as e:
+            print("Forgot to modify function signature?")
+            raise e
+        except GoodError:
+            print("Works!")
+            return 1
+        raise Exception("Didn't call reporter...")
+
     @staticmethod
     def _prepare_train_func(input_data,
                             model_create_func,
