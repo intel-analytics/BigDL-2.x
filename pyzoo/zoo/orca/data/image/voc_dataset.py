@@ -33,19 +33,20 @@ class VOCDatasets:
     ----------------
     root: str, example:'./data/VOCdevkit'.
     splits_names: tuple, ((year, trainval)).
-    **kwargs:
-        classes: list[str], If you using custom-voc dataset, you need to config the name of custom objects.
+    classes: list[str], If you using custom-voc dataset, you need to config the name of custom objects.
+    difficult: bool, False ignore voc xml difficult value.
     """
-    def __init__(self, root="VOCdevkit", splits_names = ((2007, "trainval"), (2012, "trainval")), **kwargs) -> None:
+    def __init__(self, root="VOCdevkit", splits_names = ((2007, "trainval"), (2012, "trainval")), classes=None, difficult=False) -> None:
         
         self.CLASSES = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car',
                         'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike',
                         'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
-        if kwargs.get('classes', None):
-            self.CLASSES = kwargs['classes']
+        if classes:
+            self.CLASSES = classes
 
         self.cat2label = {cat: i for i, cat in enumerate(self.CLASSES)}
-        self._root = root
+        self._root = osp.abspath(osp.expanduser(root))
+        self._diff = difficult
         self._imgid_items = self._load_items(splits_names)
         self._anno_path = osp.join('{}', 'Annotations', '{}.xml')
         self._image_path = osp.join('{}', 'JPEGImages', '{}.jpg')
@@ -76,6 +77,7 @@ class VOCDatasets:
             img = self._im_cache
         else:
             img = self._read_image(img_path)
+
         return img, self._im_anno[idx]
 
     def _load_label(self, idx):
@@ -116,7 +118,9 @@ class VOCDatasets:
             xmax = int((float(xml_box.find('xmax').text) - 1))
             ymax = int((float(xml_box.find('ymax').text) - 1))
             label.append([xmin, ymin, xmax, ymax, cls_id, difficult])
-        label = np.array(label)
+        label = np.array(label).astype(np.int)
+        if not self._diff:
+            label = label[...,:5]
         try:
             self._check_label(label, width, height)
         except AssertionError as e:
@@ -138,6 +142,8 @@ class VOCDatasets:
     def _read_image(self, image_path):
         try:
             img = Image.open(image_path)
+            img = np.array(img)
+            img = img.astype(np.uint8)
             return img
         except FileNotFoundError as e:
             raise e
