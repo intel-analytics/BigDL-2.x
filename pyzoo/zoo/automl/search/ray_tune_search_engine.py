@@ -385,8 +385,7 @@ class RayTuneSearchEngine(SearchEngine):
             # callbacks = [TuneCallback(tune_reporter)]
             # fit model
             best_reward = None
-            training_iteration = 1
-            while True:
+            for i in range(1, 101):
                 result = trial_model.fit_eval(x_train,
                                               y_train,
                                               validation_data=validation_data,
@@ -414,12 +413,10 @@ class RayTuneSearchEngine(SearchEngine):
                     if remote_dir is not None:
                         upload_ppl_hdfs(remote_dir, checkpoint_filename)
 
-                report_dict = {"training_iteration": training_iteration,
+                report_dict = {"training_iteration": i,
                                metric: reward,
                                "checkpoint": checkpoint_filename,
                                "best_" + metric: best_reward}
                 tune.report(**report_dict)
-
-                training_iteration += 1
 
         return train_func
