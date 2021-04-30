@@ -70,22 +70,15 @@ class LeNet(nn.Module):
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
         
+model = LeNet()
+model.train()
 criterion = nn.NLLLoss()
-```
-After defining your model, you need to define a *Model Creator Function* that returns an instance of your model, and a *Optimizer Creator Function* that returns a PyTorch optimizer.
-
-```python
-def model_creator(config):
-    model = LeNet()
-    return model
-
-def optim_creator(model, config):
-    return torch.optim.Adam(model.parameters(), lr=config.get("lr", 0.01))
+adam = torch.optim.Adam(model.parameters(), 0.001)
 ```
 
 ### **Step 3: Define Train Dataset**
 
-You can define the dataset using standard [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html) or a *Data Creator Function* that returns a PyTorch `DataLoader`. Orca also supports [Orca SparkXShards](../Overview/data-parallel-processing).
+You can define the dataset using standard [Pytorch DataLoader](https://pytorch.org/docs/stable/data.html). 
 
 ```python
 import torch
@@ -94,29 +87,25 @@ from torchvision import datasets, transforms
 torch.manual_seed(0)
 dir='./'
 
-batch_size=320
-test_batch_size=320
-
-def train_loader_creator(config, batch_size):
-    train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST(dir, train=True, download=True,
-                       transform=transforms.Compose([
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))
-                       ])),
-        batch_size=batch_size, shuffle=True)
-    return train_loader
-
-def test_loader_creator(config, batch_size):
-    test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST(dir, train=False,
-                       transform=transforms.Compose([
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))
-                       ])),
-        batch_size=batch_size, shuffle=False)
-    return test_loader
+batch_size=64
+test_batch_size=64
+train_loader = torch.utils.data.DataLoader(
+    datasets.MNIST(dir, train=True, download=True,
+                   transform=transforms.Compose([
+                       transforms.ToTensor(),
+                       transforms.Normalize((0.1307,), (0.3081,))
+                   ])),
+    batch_size=batch_size, shuffle=True)
+test_loader = torch.utils.data.DataLoader(
+    datasets.MNIST(dir, train=False,
+                   transform=transforms.Compose([
+                       transforms.ToTensor(),
+                       transforms.Normalize((0.1307,), (0.3081,))
+                   ])),
+    batch_size=test_batch_size, shuffle=False)
 ```
+
+Alternatively, we can also use a [Data Creator Function](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/quickstart/pytorch_lenet_mnist_data_creator_func.ipynb) or [Orca XShards](../Overview/data-parallel-processing) as the input data, especially when the data size is very large)
 
 ### **Step 4: Fit with Orca Estimator**
 
@@ -126,7 +115,7 @@ First, Create an Estimator
 from zoo.orca.learn.pytorch import Estimator 
 from zoo.orca.learn.metrics import Accuracy
 
-est = Estimator.from_torch(model=model_creator, optimizer=optim_creator, loss=criterion, metrics=[Accuracy()], config={"lr": 0.001})
+est = Estimator.from_torch(model=model, optimizer=adam, loss=criterion, metrics=[Accuracy()])
 ```
 
 Next, fit and evaluate using the Estimator
@@ -134,10 +123,10 @@ Next, fit and evaluate using the Estimator
 ```python
 from zoo.orca.learn.trigger import EveryEpoch 
 
-est.fit(data=train_loader_creator, epochs=10, batch_size=batch_size, validation_data=test_loader_creator,
+est.fit(data=train_loader, epochs=10, validation_data=test_loader,
         checkpoint_trigger=EveryEpoch())
 
-result = est.evaluate(data=test_loader_creator, batch_size=test_batch_size)
+result = est.evaluate(data=test_loader)
 for r in result:
     print(r, ":", result[r])
 ```

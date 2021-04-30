@@ -52,11 +52,12 @@ class Estimator(object):
         """
         Create an Estimator for torch.
 
-        :param model: PyTorch model if backend="bigdl", PyTorch model creator function if
-               backend="horovod" or "torch_distributed"
-        :param optimizer: Orca or PyTorch optimizer creator function if backend="bigdl", PyTorch
-               optimizer creator function if backend="horovod" or "torch_distributed"
-        :param loss: PyTorch loss creator function
+        :param model: PyTorch model or model creator function if backend="bigdl", PyTorch
+               model creator function if backend="horovod" or "torch_distributed"
+        :param optimizer: Orca/PyTorch optimizer or optimizer creator function if backend="bigdl"
+               , PyTorch optimizer creator function if backend="horovod" or "torch_distributed"
+        :param loss: PyTorch loss or loss creator function if backend="bigdl", PyTorch loss creator
+               function if backend="horovod" or "torch_distributed"
         :param metrics: Orca validation methods for evaluate.
         :param scheduler_creator: parameter for `horovod` and `torch_distributed` backends. a
                learning rate scheduler wrapping the optimizer. You will need to set
@@ -281,7 +282,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         elif isinstance(self.optimizer, TorchOptimizer):
             self.optimizer = TorchOptim.from_pytorch(self.optimizer)
         elif isinstance(self.optimizer, OrcaOptimizer):
-            self.optimizer = optimizer.get_optimizer()
+            self.optimizer = self.optimizer.get_optimizer()
         else:
             raise ValueError("Only PyTorch optimizer and orca optimizer are supported")
         from zoo.orca.learn.metrics import Metric
