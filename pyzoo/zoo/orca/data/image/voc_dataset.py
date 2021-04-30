@@ -36,7 +36,7 @@ class VOCDatasets:
     classes: list[str], If you using custom-voc dataset, you need to config the name of custom objects.
     difficult: bool, False ignore voc xml difficult value.
     """
-    def __init__(self, root="VOCdevkit", splits_names = ((2007, "trainval"), (2012, "trainval")), classes=None, difficult=False) -> None:
+    def __init__(self, root="VOCdevkit", splits_names = [(2007, "trainval"), (2012, "trainval")], classes=None, difficult=False) -> None:
         
         self.CLASSES = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car',
                         'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike',
