@@ -22,7 +22,7 @@ from zoo.automl.search.base import *
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME
-from ray.tune import Trainable
+from ray.tune import Trainable, Stopper
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model import ModelBuilder
 from zoo.orca.automl import hp
@@ -30,7 +30,7 @@ from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
 import pandas as pd
 
-SEARCH_ALG_ALLOWED = ("random", "variant_generator", "skopt", "bayesopt", "sigopt")
+SEARCH_ALG_ALLOWED = ("skopt", "bayesopt", "sigopt")
 
 
 class RayTuneSearchEngine(SearchEngine):
@@ -88,10 +88,9 @@ class RayTuneSearchEngine(SearchEngine):
         :param model_create_func: model creation function
         :param recipe: search recipe
         :param search_space: search_space, required if recipe is not provided
-        :param search_alg: str, one of "random",
-               "variant_generator", "skopt", "bayesopt" and "sigopt"
-        :param search_alg_params: parameters for search algorithm
-        :param scheduler: str, all supported scheduler provieded by ray tune
+        :param search_alg: str, one of "skopt", "bayesopt" and "sigopt"
+        :param search_alg_params: extra parameters for searcher algorithm
+        :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
         :param feature_transformers: feature transformer instance
         :param mc: if calculate uncertainty
@@ -246,7 +245,7 @@ class RayTuneSearchEngine(SearchEngine):
 
     def get_best_trials(self, k=1):
         """
-        get best trail list
+        get a list of best k trials
         :params k: top k
         :return: trials list
         """
@@ -314,13 +313,13 @@ class RayTuneSearchEngine(SearchEngine):
         """
         Prepare the train function for ray tune
         :param input_data: input data
-        :param model_create_func: model creation function
+        :param model_create_func: model create function
         :param feature_transformers: feature transformers
         :param metric: the rewarding metric
         :param validation_data: validation data
         :param mc: if calculate uncertainty
         :param remote_dir: checkpoint will be uploaded to remote_dir in hdfs
-        :param numpy_format: if you use numpy API
+        :param numpy_format: whether input data is of numpy format
 
         :return: the train function
         """
@@ -420,3 +419,25 @@ class RayTuneSearchEngine(SearchEngine):
                 tune.report(**report_dict)
 
         return train_func
+
+
+# stopper
+class TrialStopper(Stopper):
+    def __init__(self, stop, metric, mode):
+        self._mode = mode
+        self._metric = metric
+        self._stop = stop
+
+    def __call__(self, trial_id, result):
+        if self._metric in self._stop.keys():
+            if self._mode == "max" and result[self._metric] >= self._stop[self._metric]:
+                return True
+            if self._mode == "min" and result[self._metric] <= self._stop[self._metric]:
+                return True
+        if "training_iteration" in self._stop.keys():
+            if result["training_iteration"] >= self._stop["training_iteration"]:
+                return True
+        return False
+
+    def stop_all(self):
+        return False
