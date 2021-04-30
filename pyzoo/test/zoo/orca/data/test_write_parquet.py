@@ -145,8 +145,9 @@ def test_write_voc(orca_context_fixture):
     sc = orca_context_fixture
     temp_dir = tempfile.mkdtemp()
     try:
+        dataset_path = os.path.join(resource_path, "VOCdevkit")
         output_path = os.path.join(temp_dir, "output_dataset")
-        write_voc("~/Datasets/VOCdevkit", splits_names=((2007, "trainval")), 
+        write_voc(dataset_path, splits_names=[(2007, "trainval")],
                   output_path="file://" + output_path)
     finally:
         shutil.rmtree(temp_dir)

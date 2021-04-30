@@ -27,7 +27,7 @@ from bigdl.util.common import get_node_and_core_number
 import os
 import numpy as np
 import random
-
+import io
 
 class ParquetDataset:
     @staticmethod
@@ -229,14 +229,17 @@ def write_voc(voc_root_path, splits_names, output_path, **kwargs):
     def make_generator():
         for i in range(len(voc_datasets)):
             image, label = voc_datasets[i]  #label [x1,y1,x2,y2,cls]
-            yield{"image":image, "label":label}
+            img_buf = io.BytesIO()
+            np.save(img_buf, image)
+            img_buf = img_buf.getvalue()
+            yield{"image":img_buf, "label":label}
 
     image, label = voc_datasets[0]
     label_shape = (-1, label.shape[-1])
     schema = {
         "image": SchemaField(feature_type=FeatureType.NDARRAY,
                              dtype=ndarray_dtype_to_dtype(image.dtype),
-                             shape=(-1, -1, 3)),
+                             shape=()),
         "label": SchemaField(feature_type=FeatureType.NDARRAY,
                              dtype=ndarray_dtype_to_dtype(image.dtype),
                              shape=label_shape)
