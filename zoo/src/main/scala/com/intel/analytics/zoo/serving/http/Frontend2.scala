@@ -35,8 +35,10 @@ import com.intel.analytics.zoo.pipeline.inference.EncryptSupportive
 import com.intel.analytics.zoo.serving.utils.Conventions
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.zoo.serving.ClusterServing
 import org.apache.log4j.Logger
 import org.slf4j.LoggerFactory
+import redis.clients.jedis.JedisPool
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
@@ -59,14 +61,14 @@ object Frontend2 extends Supportive with EncryptSupportive {
           case None => argumentsParser.failure("miss args, please see the usage info"); null
         }
       }
-
+      val jedisPool = new JedisPool(ClusterServing.jedisPoolConfig, arguments.redisHost, arguments.redisPort)
       val rateLimiter: RateLimiter = arguments.tokenBucketEnabled match {
         case true => RateLimiter.create(arguments.tokensPerSecond)
         case false => null
       }
       val actorName = s"redis-getter"
       val ioActor = timing(s"$actorName initialized.")() {
-        val getterProps = Props(new RedisIOActor())
+        val getterProps = Props(new RedisIOActor(jedisPool = jedisPool))
         system.actorOf(getterProps, name = actorName)
       }
 
