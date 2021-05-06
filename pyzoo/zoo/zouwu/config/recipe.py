@@ -200,7 +200,7 @@ class LSTMSeq2SeqRandomRecipe(Recipe):
             num_rand_samples=1,
             epochs=1,
             training_iteration=20,
-            batch_size=[32, 64],
+            batch_size=[128, 256, 512],
             lr=(0.001, 0.01),
             lstm_hidden_dim=[64, 128],
             lstm_layer_num=[1, 2, 3, 4],
