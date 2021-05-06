@@ -186,6 +186,96 @@ class GridRandomRecipe(Recipe):
         }
 
 
+class LSTMSeq2SeqRandomRecipe(Recipe):
+    """
+    A recipe involves both grid search and random search, only for Seq2SeqPytorch
+    Note:This recipe is specifically designed for third-party model searching,
+         rather than TimeSequencePredictor.
+    """
+    def __init__(
+            self,
+            input_feature_num,
+            output_feature_num,
+            future_seq_len,
+            num_rand_samples=1,
+            epochs=1,
+            training_iteration=20,
+            batch_size=[128, 256, 512],
+            lr=(0.001, 0.01),
+            lstm_hidden_dim=[64, 128],
+            lstm_layer_num=[1, 2, 3, 4],
+            dropout=(0, 0.25),
+            teacher_forcing=[True, False]):
+        """
+        Constructor.
+        set the param to a list for grid search.
+        set the param to a tuple with length = 2 for random search.
+        :param input_feature_num: (int) no. of input feature
+        :param output_feature_num: (int) no. of ouput feature
+        :param future_seq_len: (int) no. of steps to be predicted (i.e. horizon)
+        :param num_rand_samples: (int) number of hyper-param configurations sampled randomly
+        :param epochs: (int) no. of epochs to train in each iteration
+        :param training_iteration: (int) no. of iterations for training (n epochs) in trials
+        :param batch_size: (tuple|list) grid search candidates for batch size
+        :param lr: (tuple|list) learning rate
+        :param lstm_hidden_dim: (tuple|list) lstm hidden dim for both encoder and decoder
+        :param lstm_layer_num: (tuple|list) no. of lstm layer for both encoder and decoder
+        :param dropout: (tuple|list) dropout for lstm layer
+        :param teacher_forcing: (list) if to use teacher forcing machanism during training
+        """
+        super(self.__class__, self).__init__()
+        # -- runtime params
+        self.num_samples = num_rand_samples
+        self.training_iteration = training_iteration
+
+        # -- optimization params
+        self.lr = self._gen_sample_func(lr, "lr")
+        self.batch_size = self._gen_sample_func(batch_size, "batch_size")
+        self.epochs = epochs
+
+        # -- model params
+        self.input_feature_num = input_feature_num
+        self.output_feature_num = output_feature_num
+        self.future_seq_len = future_seq_len
+        self.lstm_hidden_dim = self._gen_sample_func(lstm_hidden_dim, "lstm_hidden_dim")
+        self.lstm_layer_num = self._gen_sample_func(lstm_layer_num, "lstm_layer_num")
+        self.dropout = self._gen_sample_func(dropout, "dropout")
+        self.teacher_forcing = self._gen_sample_func(teacher_forcing, "teacher_forcing")
+
+    def _gen_sample_func(self, ranges, param_name):
+        if isinstance(ranges, tuple):
+            assert len(ranges) == 2, \
+                f"length of tuple {param_name} should be 2 while get {len(ranges)} instead."
+            assert param_name != "teacher_forcing", \
+                f"type of {param_name} can only be a list while get a tuple"
+            if param_name in ["lr"]:
+                return hp.loguniform(lower=ranges[0], upper=ranges[1])
+            if param_name in ["lstm_hidden_dim", "lstm_layer_num", "batch_size"]:
+                return hp.randint(lower=ranges[0], upper=ranges[1])
+            if param_name in ["dropout"]:
+                return hp.uniform(lower=ranges[0], upper=ranges[1])
+        if isinstance(ranges, list):
+            return hp.grid_search(ranges)
+        raise RuntimeError(f"{param_name} should be either a list or a tuple.")
+
+    def search_space(self):
+        return {
+            # ----------- data parameters
+            "input_feature_num": self.input_feature_num,
+            "output_feature_num": self.output_feature_num,
+            "future_seq_len": self.future_seq_len,
+            # ----------- optimization parameters
+            "lr": self.lr,
+            "batch_size": self.batch_size,
+            "epochs": self.epochs,
+            # ----------- model parameters
+            "lstm_hidden_dim": self.lstm_hidden_dim,
+            "lstm_layer_num": self.lstm_layer_num,
+            "dropout": self.dropout,
+            "teacher_forcing": self.teacher_forcing,
+        }
+
+
 class LSTMGridRandomRecipe(Recipe):
     """
     A recipe involves both grid search and random search, only for LSTM.
