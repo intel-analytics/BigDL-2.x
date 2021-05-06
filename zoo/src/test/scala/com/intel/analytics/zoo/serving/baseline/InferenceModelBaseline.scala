@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.serving.ClusterServing.{argv, helper}
-import com.intel.analytics.zoo.serving.PreProcessing
+import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
 import com.intel.analytics.zoo.serving.serialization.{ArrowDeserializer, ArrowSerializer}
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Supportive}
@@ -38,7 +38,7 @@ object InferenceModelBaseline extends Supportive {
   case class Params(configPath: String = "config.yaml",
                     testNum: Int = 1000,
                     parNum: Int = 1,
-                    inputShape: String = "3, 224, 224",
+                    inputShape: String = "224, 224, 3",
                     singleMode: Boolean = false)
   val parser = new OptionParser[Params]("Text Classification Example") {
     opt[String]('c', "configPath")
@@ -87,47 +87,46 @@ object InferenceModelBaseline extends Supportive {
   def main(args: Array[String]): Unit = {
     val param = parser.parse(args, Params()).head
     val configParser = new ConfigParser(param.configPath)
-    helper = configParser.loadConfig()
+    ClusterServing.helper = configParser.loadConfig()
 
 
-    val model = helper.loadInferenceModel()
-    val warmT = makeTensorFromShape(param.inputShape)
+    ClusterServing.model = ClusterServing.helper.loadInferenceModel()
+
     val clusterServingInference = new ClusterServingInference()
-    clusterServingInference.typeCheck(warmT)
-    clusterServingInference.dimCheck(warmT, "add", helper.modelType)
     (0 until 10).foreach(_ => {
-      val result = model.doPredict(warmT)
+      val warmT = makeTensorFromShape(param.inputShape)
+      clusterServingInference.singleThreadInference(List(("", warmT)))
     })
     println("Warming up finished, begin baseline test...generating Base64 string")
 
-    val b64string = getBase64StringOfTensor(warmT)
-    println(s"Previewing base64 string, prefix is ${b64string.substring(0, 20)}")
-    Thread.sleep(3000)
-
-
-    val timer = new Timer()
-    timing(s"Base line for single pipeline " +
-      s"with input ${param.testNum.toString}") {
-      var a = Seq[(String, Table)]()
-      val pre = new PreProcessing()
-      (0 until helper.threadPerModel).foreach(i =>
-        a = a :+ (i.toString(), T(warmT))
-      )
-      (0 until param.testNum).grouped(helper.threadPerModel).flatMap(batch => {
-          val t = timer.timing("Batch input", batch.size) {
-            clusterServingInference.batchInput(a, helper.threadPerModel, true, helper.resize)
-          }
-          clusterServingInference.dimCheck(t, "add", helper.modelType)
-          val result = timer.timing("Inference", batch.size) {
-            model.doPredict(t)
-          }
-          clusterServingInference.dimCheck(t, "remove", helper.modelType)
-          clusterServingInference.dimCheck(result, "remove", helper.modelType)
-
-          Seq()
-      }).toArray
-      timer.print()
-    }
+//    val b64string = getBase64StringOfTensor(warmT)
+//    println(s"Previewing base64 string, prefix is ${b64string.substring(0, 20)}")
+//    Thread.sleep(3000)
+//    val helper = ClusterServing.helper
+//
+//    val timer = new Timer()
+//    timing(s"Base line for single pipeline " +
+//      s"with input ${param.testNum.toString}") {
+//      var a = Seq[(String, Table)]()
+//      val pre = new PreProcessing()
+//      (0 until helper.threadPerModel).foreach(i =>
+//        a = a :+ (i.toString(), T(warmT))
+//      )
+//      (0 until param.testNum).grouped(helper.threadPerModel).flatMap(batch => {
+//          val t = timer.timing("Batch input", batch.size) {
+//            clusterServingInference.batchInput(a, helper.threadPerModel, true, helper.resize)
+//          }
+//          clusterServingInference.dimCheck(t, "add", helper.modelType)
+//          val result = timer.timing("Inference", batch.size) {
+//            ClusterServing.model.doPredict(t)
+//          }
+//          clusterServingInference.dimCheck(t, "remove", helper.modelType)
+//          clusterServingInference.dimCheck(result, "remove", helper.modelType)
+//
+//          Seq()
+//      }).toArray
+//      timer.print()
+//    }
 
 
 

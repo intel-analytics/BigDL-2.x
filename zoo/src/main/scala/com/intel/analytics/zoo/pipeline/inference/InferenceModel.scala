@@ -529,9 +529,9 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   def doRelease(): Unit = {
     clearModelQueue()
   }
-
+  import org.scalameter._
   private def predict(inputActivity: Activity): Activity = {
-    val model = retrieveModel()
+    var model = retrieveModel()
     try {
       val begin = System.nanoTime()
       val result = model.predict(inputActivity)
@@ -543,21 +543,13 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
 
       result
     } finally {
-
-
       model match {
         case null =>
         case _ =>
           modelQueue.push(model)
-//            val success = modelQueue.offer(model)
-//            success match {
-//              case true =>
-//              case false => model.release()
-//            }
       }
-
-
     }
+
   }
 
   private def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
