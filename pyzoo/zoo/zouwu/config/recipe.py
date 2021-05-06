@@ -244,7 +244,7 @@ class LSTMSeq2SeqRandomRecipe(Recipe):
 
     def _gen_sample_func(self, ranges, param_name):
         if isinstance(ranges, tuple):
-            assert len(ranges)==2, \
+            assert len(ranges) == 2, \
                 f"length of tuple {param_name} should be 2 while get {len(ranges)} instead."
             assert param_name != "teacher_forcing", \
                 f"type of {param_name} can only be a list while get a tuple"
