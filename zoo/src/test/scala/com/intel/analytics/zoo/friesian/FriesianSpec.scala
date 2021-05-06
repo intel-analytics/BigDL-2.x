@@ -223,24 +223,6 @@ class FriesianSpec extends ZooSpecHelper {
       r.getAs[mutable.WrappedArray[mutable.WrappedArray[Int]]](0)).collect()(0).length == 5)
   }
 
-  "addLength" should "work properly" in {
-    val r = scala.util.Random
-    val data: RDD[Row] = sc.parallelize(Seq(
-      Row("jack", Seq(1, 2, 3, 4, 5)),
-      Row("alice", Seq(4, 5, 6, 7, 8)),
-      Row("rose", Seq(1, 2))))
-    val schema = StructType(Array(
-      StructField("name", StringType, true),
-      StructField("history", ArrayType(IntegerType), true)
-    ))
-    val df = sqlContext.createDataFrame(data, schema)
-    val dft = friesian.addLength(df, "history")
-
-    assert(dft.columns.contains("history_length"))
-    assert(dft.filter("history_length = 2").count() == 1)
-    assert(dft.filter("history_length = 5").count() == 2)
-  }
-
   "Fill median" should "work properly" in {
     val path = resource.getFile + "/data1.parquet"
     val df = sqlContext.read.parquet(path)

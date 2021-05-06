@@ -378,26 +378,18 @@ class TestTable(TestCase):
                              StructField("list", ArrayType(IntegerType()), True),
                              StructField("matrix", ArrayType(ArrayType(IntegerType())))])
         df = spark.createDataFrame(data, schema)
-        tbl = FeatureTable(df).pad(["list", "matrix"], 4)
-        dft = tbl.df
-        assert dft.filter("size(matrix) = 4").count() == 3
-        assert dft.filter("size(list) = 4").count() == 3
+        tbl1 = FeatureTable(df).pad(["list", "matrix"], seq_len=4)
+        dft1 = tbl1.df
+        dft1.show(100, False)
+        tbl2 = FeatureTable(df).pad(cols=["list", "matrix"], mask_cols=["list"], seq_len=4)
+        tbl2.df.show(100, False)
+        assert(tbl2.count == 1)
 
-    def test_mask(self):
-        spark = OrcaContext.get_spark_session()
-        data = [
-            ("jack", [1, 2, 3, 4, 5]),
-            ("alice", [4, 5, 6, 7, 8]),
-            ("rose", [1, 2])]
-        schema = StructType([
-            StructField("name", StringType(), True),
-            StructField("history", ArrayType(IntegerType()), True)])
-
-        df = spark.createDataFrame(data, schema)
-        tbl = FeatureTable(df).mask(["history"], 4)
-        assert "history_mask" in tbl.df.columns
-        assert tbl.df.filter("size(history_mask) = 4").count() == 3
-        assert tbl.df.filter("size(history_mask) = 2").count() == 0
+        assert dft1.filter("size(matrix) = 4").count() == 3
+        assert dft1.filter("size(list) = 4").count() == 3
+        assert tbl2.df.filter("size(list_mask) = 4").count() == 3
+        assert tbl2.df.filter("size(list_mask) = 2").count() == 0
+        assert "list_mask" in tbl2.df.columns
 
     def test_add_length(self):
         spark = OrcaContext.get_spark_session()

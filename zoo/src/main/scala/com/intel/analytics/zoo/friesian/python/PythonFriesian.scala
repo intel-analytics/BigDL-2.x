@@ -388,10 +388,6 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     df.sqlContext.sql(s"select $leftCols, $selectStatement from tmp")
   }
 
-  def addLength(df: DataFrame, colName: String): DataFrame = {
-    df.withColumn(colName + "_length", size(col(colName)))
-  }
-
   def fillMedian(df: DataFrame, columns: JList[String] = null): DataFrame = {
     val cols = if (columns == null) {
       df.columns.filter(column => Utils.checkColumnNumeric(df, column))
