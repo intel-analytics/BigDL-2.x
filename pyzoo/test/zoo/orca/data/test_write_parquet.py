@@ -149,6 +149,14 @@ def test_write_voc(orca_context_fixture):
         output_path = os.path.join(temp_dir, "output_dataset")
         write_voc(dataset_path, splits_names=[(2007, "trainval")],
                   output_path="file://" + output_path)
+        data, schema = ParquetDataset._read_as_dict_rdd("file://" + output_path)
+        data = data.collect()
+        from io import BytesIO
+        import numpy as np
+        for d in data:
+            img_bytes = BytesIO(d["image"])
+            img = np.load(img_bytes)
+            label = d["label"]
     finally:
         shutil.rmtree(temp_dir)
 
