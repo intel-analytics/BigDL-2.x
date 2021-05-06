@@ -42,7 +42,11 @@ You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any 
 
 ### **1.1 Setup for CDH**
 
-CDH Version: CDH 5.X, CDH 6.X is not supported
+CDH Version: CDH 5.15.2 is supportted
+CDH Version: other CDH 5.X, CDH 6.X is not supported
+
+- Download and install [CDH](https://docs.cloudera.com/documentation/enterprise/latest/topics/installation.html) and [MariaBD](https://docs.cloudera.com/documentation/enterprise/5-15-x/topics/install_cm_mariadb.html#install_cm_mariadb_config) on your cluster.
+
 
 ---
 ### **2. YARN Client Mode**
@@ -125,3 +129,97 @@ Follow the steps below if you need to run Analytics Zoo in [YARN cluster mode](h
   ```
 
   You can adjust the configurations according to your cluster settings.
+  
+  
+  ---
+### **4. YARN Client Mode on CDH**
+
+- Install Analytics Zoo in the created conda environment via pip:
+
+  ```bash
+  pip install analytics-zoo
+  ```
+
+  View the [Python User Guide](./python.md) for more details.
+  
+
+- We recommend using `init_orca_context` at the very beginning of your code to initiate and run Analytics Zoo on standard Hadoop/YARN clusters in [YARN client mode](https://spark.apache.org/docs/latest/running-on-yarn.html#launching-spark-on-yarn):
+
+  ```python
+  from zoo.orca import init_orca_context
+
+  sc = init_orca_context(cluster_mode="yarn-client", cores=4, memory="10g", num_nodes=2)
+  ```
+
+  By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment, detect the current Hadoop configurations from `HADOOP_CONF_DIR` and initiate the distributed execution engine on the underlying YARN cluster. View [Orca Context](../Orca/Overview/orca-context.md) for more details.
+  
+
+- You can then simply run your Analytics Zoo program in a Jupyter notebook:
+
+  ```bash
+  jupyter notebook --notebook-dir=./ --ip=* --no-browser
+  ```
+
+  or as a normal Python script (e.g. script.py):
+
+  ```bash
+  python script.py
+  ```
+
+---
+### **5. YARN Cluster Mode on CDH**
+
+Follow the steps below if you need to run Analytics Zoo in [YARN cluster mode](https://spark.apache.org/docs/latest/running-on-yarn.html#launching-spark-on-yarn).
+
+- Download and extract [Spark](https://spark.apache.org/downloads.html). You are recommended to use [Spark 2.4.3](https://archive.apache.org/dist/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz). Set the environment variable `SPARK_HOME`:
+
+  ```bash
+  export SPARK_HOME=the root directory where you extract the downloaded Spark package
+  ```
+
+- Download and extract [Analytics Zoo](../release.md). Make sure the Analytics Zoo package you download is built with the compatible version with your Spark. Set the environment variable `ANALYTICS_ZOO_HOME`:
+
+  ```bash
+  export ANALYTICS_ZOO_HOME=the root directory where you extract the downloaded Analytics Zoo package
+  ```
+
+- Pack the current conda environment to `environment.tar.gz` (you can use any name you like):
+
+  ```bash
+  conda pack -o environment.tar.gz
+  ```
+
+- _You need to write your Analytics Zoo program as a Python script._ In the script, you can call `init_orca_context` and specify cluster_mode to be "spark-submit":
+
+  ```python
+  from zoo.orca import init_orca_context
+
+  sc = init_orca_context(cluster_mode="spark-submit")
+  ```
+
+- Use `spark-submit` to submit your compressed jar file of your Analytics Zoo program on CDH (e.g. script.py):
+
+  ```bash
+  PYSPARK_PYTHON=./environment/bin/python ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
+      --conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=./environment/bin/python \
+      --master yarn-cluster \
+      --executor-memory 10g \
+      --driver-memory 10g \
+      --executor-cores 8 \
+      --num-executors 2 \
+      --archives environment.tar.gz#environment \
+      script.py
+      
+  {SPARK_HOME}/bin/spark-submit 
+      --master yarn 
+      --deploy-mode client 
+      --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" 
+      --executor-cores 44 
+      --num-executors 3 
+      --driver-memory 20g 
+      --class com.intel.analytics.bigdl.models.PATH.TO.YOUR.USED.MODEL
+      /opt/work/BigDL/dist/lib/bigdl-0.11.0-SNAPSHOT-jar-with-dependencies.jar 
+      -f hdfs://172.16.0.105:8020/YOUR/USED/DATASET 
+      -b NUMBER/OF/BATCHSIZE 
+      -e NUMBER/OF/EPOCH
+  ```
