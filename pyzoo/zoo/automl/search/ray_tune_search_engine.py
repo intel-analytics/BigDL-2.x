@@ -30,8 +30,6 @@ from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
 import pandas as pd
 
-SEARCH_ALG_ALLOWED = ("skopt", "bayesopt", "sigopt")
-
 
 class RayTuneSearchEngine(SearchEngine):
     """
@@ -180,12 +178,6 @@ class RayTuneSearchEngine(SearchEngine):
             search_alg = search_alg.lower()
             if search_alg_params is None:
                 search_alg_params = dict()
-            if search_alg not in SEARCH_ALG_ALLOWED:
-                raise ValueError(f"search_alg must be one of {SEARCH_ALG_ALLOWED}. "
-                                 f"Got: {search_alg}")
-            elif search_alg == "bayesopt":
-                search_alg_params.update({"space": recipe.manual_search_space()})
-
             search_alg_params.update(dict(
                 metric=metric,
                 mode=mode,

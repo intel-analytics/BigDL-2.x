@@ -600,45 +600,35 @@ class BayesRecipe(Recipe):
             if look_back[0] < 2:
                 print("The input min look back value is smaller than 2. "
                       "We sample from range (2, {}) instead.".format(look_back[1]))
-            self.bayes_past_seq_config = {"past_seq_len_float": look_back}
-            self.fixed_past_seq_config = {}
+            self.bayes_past_seq_config = \
+                {"past_seq_len_float": hp.uniform(look_back[0], look_back[1])}
         elif isinstance(look_back, int):
             if look_back < 2:
                 raise ValueError(
                     "look back value should not be smaller than 2. "
                     "Current value is ", look_back)
-            self.bayes_past_seq_config = {}
-            self.fixed_past_seq_config = {"past_seq_len": look_back}
+            self.bayes_past_seq_config = {"past_seq_len": look_back}
         else:
             raise ValueError(
                 "look back is {}.\n "
                 "look_back should be either a tuple with 2 int values:"
                 " (min_len, max_len) or a single int".format(look_back))
 
-    def manual_search_space(self):
-        model_space = {
-            # --------- model parameters
-            "lstm_1_units_float": (8, 128),
-            "dropout_1": (0.2, 0.5),
-            "lstm_2_units_float": (8, 128),
-            "dropout_2": (0.2, 0.5),
-
-            # ----------- optimization parameters
-            "lr": (0.001, 0.01),
-            "batch_size_log": (5, 10),
-        }
-        total_space = model_space.copy()
-        total_space.update(self.bayes_past_seq_config)
-        return total_space
-
     def search_space(self):
-        total_fixed_params = {
+        total_params = {
             "epochs": self.epochs,
             "model": "LSTM",
-            # "batch_size": 1024,
+            # --------- model parameters
+            "lstm_1_units_float": hp.uniform(8, 128),
+            "dropout_1": hp.uniform(0.2, 0.5),
+            "lstm_2_units_float": hp.uniform(8, 128),
+            "dropout_2": hp.uniform(0.2, 0.5),
+            # ----------- optimization parameters
+            "lr": hp.uniform(0.001, 0.1),
+            "batch_size_float": hp.uniform(32, 128),
         }
-        total_fixed_params.update(self.fixed_past_seq_config)
-        return total_fixed_params
+        total_params.update(self.bayes_past_seq_config)
+        return total_params
 
 
 class XgbRegressorGridRandomRecipe(Recipe):
