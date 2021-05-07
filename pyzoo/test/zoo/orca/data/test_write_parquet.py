@@ -23,7 +23,7 @@ from zoo.orca.data.image.parquet_dataset import ParquetDataset
 from zoo.orca.data.image.parquet_dataset import _write_ndarrays, write_from_directory
 from zoo.orca.data.image.utils import DType, FeatureType, SchemaField
 from zoo.orca.learn.tf2.estimator import Estimator
-from zoo.orca.data.image import write_mnist
+from zoo.orca.data.image import write_mnist, write_coco
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
 
@@ -141,6 +141,25 @@ def test_write_mnist(orca_context_fixture):
     finally:
         shutil.rmtree(temp_dir)
 
+def test_write_coco(orca_context_fixture):
+    sc = orca_context_fixture
+    temp_dir = tempfile.mkdtemp()
+    split_names = "train2017"
+    try:
+        img_path = os.path.join(resource_path,"COCO/{}".format(split_names))
+        ann_file = os.path.join(resource_path,"COCO/annotations/instance_{}.json".format(split_names))
+        write_cooc(img_path, ann_file, output_path="file://" + output_path)
+        data, schema = ParquetDataset._read_as_dict_rdd("file://" + output_path)
+        data = data.collect()
+        from io import BytesIO
+        import numpy as np
+        for d in data:
+            img_bytes = BytesIO(d["image"])
+            img = np.load(img_bytes)
+            label = d["label"]
+            print(label.shape)
+    finally:
+        shutil.rmtree(temp_dir)
 
 def test_train_simple(orca_context_fixture):
     sc = orca_context_fixture
