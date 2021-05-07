@@ -58,7 +58,9 @@ class TestAutoXGBRegressor(TestCase):
         stop_orca_context()
 
     def test_fit(self):
-        auto_xgb_reg = AutoXGBRegressor(n_cpus=2, name="auto_xgb_regressor", tree_method='hist')
+        auto_xgb_reg = AutoXGBRegressor(cpus_per_trial=2,
+                                        name="auto_xgb_regressor",
+                                        tree_method='hist')
         data = get_data()
         auto_xgb_reg.fit(data,
                          recipe=XGBRecipe(),

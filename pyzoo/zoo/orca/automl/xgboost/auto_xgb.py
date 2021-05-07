@@ -20,15 +20,29 @@ from zoo.orca.automl.auto_estimator import AutoEstimator
 
 class AutoXGBClassifier(AutoEstimator):
     def __init__(self,
-                 logs_dir="~/auto_xgb_classifier_logs",
-                 n_cpus=None,
+                 logs_dir="/tmp/auto_xgb_classifier_logs",
+                 cpus_per_trial=1,
                  name=None,
                  **xgb_configs
                  ):
+        """
+        Automated xgboost classifier
+
+        :param logs_dir: Local directory to save logs and results. It defaults to
+            "/tmp/auto_xgb_classifier_logs"
+        :param cpus_per_trial: Int. Number of cpus for each trial. It defaults to 1.
+            The value will also be assigned to n_jobs in xgboost,
+            which is the number of parallel threads used to run xgboost.
+        :param name: Name of the auto xgboost classifier.
+        :param xgb_configs: Other scikit learn xgboost parameters. You may refer to
+           https://xgboost.readthedocs.io/en/latest/python/python_api.html#module-xgboost.sklearn
+           for the parameter names to specify. Note that we will directly use cpus_per_trial value
+           for n_jobs in xgboost and you shouldn't specify n_jobs again.
+        """
         xgb_model_builder = XGBoostModelBuilder(model_type='classifier',
-                                                n_cpus=n_cpus,
+                                                cpus_per_trial=cpus_per_trial,
                                                 **xgb_configs)
-        resources_per_trial = {"cpu": n_cpus} if n_cpus else None
+        resources_per_trial = {"cpu": cpus_per_trial} if cpus_per_trial else None
         super().__init__(model_builder=xgb_model_builder,
                          logs_dir=logs_dir,
                          resources_per_trial=resources_per_trial,
@@ -38,14 +52,27 @@ class AutoXGBClassifier(AutoEstimator):
 class AutoXGBRegressor(AutoEstimator):
     def __init__(self,
                  logs_dir="~/auto_xgb_regressor_logs",
-                 n_cpus=None,
+                 cpus_per_trial=1,
                  name=None,
                  **xgb_configs
                  ):
+        """
+        Automated xgboost regressor
+
+        :param logs_dir: Local directory to save logs and results. It defaults to
+            "/tmp/auto_xgb_classifier_logs"
+        :param cpus_per_trial: Int. Number of cpus for each trial. The value will also be assigned
+            to n_jobs, which is the number of parallel threads used to run xgboost.
+        :param name: Name of the auto xgboost classifier.
+        :param xgb_configs: Other scikit learn xgboost parameters. You may refer to
+           https://xgboost.readthedocs.io/en/latest/python/python_api.html#module-xgboost.sklearn
+           for the parameter names to specify. Note that we will directly use cpus_per_trial value
+           for n_jobs in xgboost and you shouldn't specify n_jobs again.
+        """
         xgb_model_builder = XGBoostModelBuilder(model_type='regressor',
-                                                n_cpus=n_cpus,
+                                                cpus_per_trial=cpus_per_trial,
                                                 **xgb_configs)
-        resources_per_trial = {"cpu": n_cpus} if n_cpus else None
+        resources_per_trial = {"cpu": cpus_per_trial} if cpus_per_trial else None
         super().__init__(model_builder=xgb_model_builder,
                          logs_dir=logs_dir,
                          resources_per_trial=resources_per_trial,

@@ -83,8 +83,7 @@ if __name__ == '__main__':
     data = {'x': X_train, 'y': y_train, 'val_x': X_val, 'val_y': y_val}
 
     config = {'random_state': 2,
-              'min_child_weight': 3,
-              'n_jobs': 2}
+              'min_child_weight': 3}
 
     recipe = None
 
@@ -174,7 +173,7 @@ if __name__ == '__main__':
         scheduler = None
         scheduler_params = None
 
-    auto_xgb_reg = AutoXGBRegressor(n_cpus=2, name="auto_xgb_regressor", **config)
+    auto_xgb_reg = AutoXGBRegressor(cpus_per_trial=2, name="auto_xgb_regressor", **config)
     auto_xgb_reg.fit(data,
                      recipe=recipe,
                      metric="rmse",

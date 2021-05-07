@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
     config = {"tree_method": 'hist', "learning_rate": 0.1, "gamma": 0.1,
               "min_child_weight": 30, "reg_lambda": 1, "scale_pos_weight": 2,
-              "subsample": 1, "n_jobs": 4}
+              "subsample": 1}
 
     if opt.mode == 'skopt':
         recipe = XgbRegressorSkOptRecipe(num_rand_samples=num_rand_samples,
@@ -136,7 +136,7 @@ if __name__ == '__main__':
         scheduler = None
         scheduler_params = None
 
-    auto_xgb_clf = AutoXGBClassifier(n_cpus=4, name="auto_xgb_classifier", **config)
+    auto_xgb_clf = AutoXGBClassifier(cpus_per_trial=4, name="auto_xgb_classifier", **config)
     import time
     start = time.time()
     auto_xgb_clf.fit(data,
