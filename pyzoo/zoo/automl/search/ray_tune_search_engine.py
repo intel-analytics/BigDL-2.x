@@ -86,7 +86,7 @@ class RayTuneSearchEngine(SearchEngine):
         :param model_create_func: model creation function
         :param recipe: search recipe
         :param search_space: search_space, required if recipe is not provided
-        :param search_alg: str, one of "skopt", "bayesopt" and "sigopt"
+        :param search_alg: str, all supported searcher provided by ray tune
         :param search_alg_params: extra parameters for searcher algorithm
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
