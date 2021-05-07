@@ -175,7 +175,6 @@ class RayTuneSearchEngine(SearchEngine):
             if not isinstance(search_alg, str):
                 raise ValueError(f"search_alg should be of type str."
                                  f" Got {search_alg.__class__.__name__}")
-            search_alg = search_alg.lower()
             if search_alg_params is None:
                 search_alg_params = dict()
             search_alg_params.update(dict(
