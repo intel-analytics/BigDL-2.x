@@ -42,7 +42,7 @@ You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any 
 
 ### **1.1 Setup for CDH**
 
-CDH Version: other CDH 5.X, CDH 6.X is not supported
+CDH Version: CDH 5.X, CDH 6.X is not supported
 
 ---
 ### **2. YARN Client Mode**
