@@ -22,6 +22,7 @@ from zoo.orca.data import SparkXShards
 from zoo.orca.data.file import open_text, write_text
 from zoo.orca.data.image.utils import chunks, dict_to_row, row_to_dict, encode_schema, \
     decode_schema, SchemaField, FeatureType, DType, ndarray_dtype_to_dtype
+from zoo.orca.data.image.coco_dataset import COCODetection
 from bigdl.util.common import get_node_and_core_number
 import os
 import numpy as np
@@ -220,3 +221,27 @@ def write_mnist(image_file, label_file, output_path, **kwargs):
     images = _extract_mnist_images(image_filepath=image_file)
     labels = _extract_mnist_labels(labels_filepath=label_file)
     _write_ndarrays(images, labels, output_path, **kwargs)
+
+def write_coco(image_path, anno_file, output_path, **kwargs):
+    custom_classes = kwargs.get('classes', None)
+    coco_datasets = COCODetection(image_path, anno_file, classes=custom_classes)
+    def make_generator():
+        for i in range(len(coco_datasets)):
+            image, label = coco_datasets[i]
+            img_buf = io.BytesIO()
+            np.save(img_buf, image)
+            img_buf = img_buf.getvalue()
+            yield{"image":img_buf, "label":label}
+
+    image, label = coco_datasets[0]
+    label_shape = (-1, label.shape[-1])
+    schema = {
+        "image": SchemaField(feature_type=FeatureType.NDARRAY,
+                             dtype=ndarray_dtype_to_dtype(image.dtype),
+                             shape=()),
+        "label": SchemaField(feature_type=FeatureType.NDARRAY,
+                             dtype=ndarray_dtype_to_dtype(image.dtype),
+                             shape=label_shape)
+    }
+    kwargs = {key:value for key, value in kwargs.items() if key not in ["classes"]}
+    ParquetDataset.write(output, make_generator(), schema, **kwargs)
