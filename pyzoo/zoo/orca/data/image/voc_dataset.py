@@ -148,3 +148,4 @@ class VOCDatasets:
     @property
     def classes_label(self):
         return self.CLASSES
+        
