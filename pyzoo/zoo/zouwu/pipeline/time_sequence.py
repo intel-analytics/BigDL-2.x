@@ -137,7 +137,7 @@ class TimeSequencePipeline(Pipeline):
     def evaluate(self,
                  input_df,
                  metrics=["mse"],
-                 multioutput='raw_values'
+                 multioutput='uniform_average'
                  ):
         """
         evaluate the pipeline
