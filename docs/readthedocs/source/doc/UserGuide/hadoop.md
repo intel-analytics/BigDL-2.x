@@ -42,11 +42,7 @@ You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any 
 
 ### **1.1 Setup for CDH**
 
-CDH Version: CDH 5.15.2 is supportted
 CDH Version: other CDH 5.X, CDH 6.X is not supported
-
-- Download and install [CDH](https://docs.cloudera.com/documentation/enterprise/latest/topics/installation.html) and [MariaBD](https://docs.cloudera.com/documentation/enterprise/5-15-x/topics/install_cm_mariadb.html#install_cm_mariadb_config) on your cluster.
-
 
 ---
 ### **2. YARN Client Mode**
