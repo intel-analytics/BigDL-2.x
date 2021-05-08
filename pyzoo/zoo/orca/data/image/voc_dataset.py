@@ -115,7 +115,7 @@ class VOCDatasets:
             xmax = int((float(xml_box.find('xmax').text) - 1))
             ymax = int((float(xml_box.find('ymax').text) - 1))
             label.append([xmin, ymin, xmax, ymax, cls_id, difficult])
-        label = np.array(label).astype(np.int)
+        label = np.array(label).astype(np.int32)
         if not self._diff:
             label = label[...,:5]
         try:
@@ -148,4 +148,3 @@ class VOCDatasets:
     @property
     def classes_label(self):
         return self.CLASSES
-        
