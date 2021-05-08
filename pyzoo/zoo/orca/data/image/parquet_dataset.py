@@ -27,6 +27,7 @@ from bigdl.util.common import get_node_and_core_number
 import os
 import numpy as np
 import random
+import io
 
 
 class ParquetDataset:
@@ -244,4 +245,4 @@ def write_coco(image_path, anno_file, output_path, **kwargs):
                              shape=label_shape)
     }
     kwargs = {key:value for key, value in kwargs.items() if key not in ["classes"]}
-    ParquetDataset.write(output, make_generator(), schema, **kwargs)
+    ParquetDataset.write(output_path, make_generator(), schema, **kwargs)
