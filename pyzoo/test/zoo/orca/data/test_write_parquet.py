@@ -141,14 +141,16 @@ def test_write_mnist(orca_context_fixture):
     finally:
         shutil.rmtree(temp_dir)
 
+
 def test_write_coco(orca_context_fixture):
     sc = orca_context_fixture
     temp_dir = tempfile.mkdtemp()
     split_names = "train2017"
     try:
         img_path = os.path.join(resource_path,"COCO/{}".format(split_names))
-        ann_file = os.path.join(resource_path,"COCO/annotations/instance_{}.json".format(split_names))
-        write_cooc(img_path, ann_file, output_path="file://" + output_path)
+        ann_file = os.path.join(resource_path,"COCO/annotations/instances_{}.json".format(split_names))
+        output_path = os.path.join(temp_dir, "output_dataset")
+        write_coco(img_path, ann_file, output_path="file://" + output_path)
         data, schema = ParquetDataset._read_as_dict_rdd("file://" + output_path)
         data = data.collect()
         from io import BytesIO
@@ -160,6 +162,7 @@ def test_write_coco(orca_context_fixture):
             print(label.shape)
     finally:
         shutil.rmtree(temp_dir)
+
 
 def test_train_simple(orca_context_fixture):
     sc = orca_context_fixture
