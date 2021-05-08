@@ -42,47 +42,12 @@ You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any 
 
 ### **1.1 Setup for CDH**
 
-CDH Version: CDH 5.X, CDH 6.X is not supported
+CDH Version: Except 5.15.2, other CDH 5.X, CDH 6.X is not supported
 
 ---
-### **2. YARN Client Mode**
+### **2. YARN Client Mode on CDH**
 
-- Install Analytics Zoo in the created conda environment via pip:
-
-  ```bash
-  pip install analytics-zoo
-  ```
-
-  View the [Python User Guide](./python.md) for more details.
-  
-
-- We recommend using `init_orca_context` at the very beginning of your code to initiate and run Analytics Zoo on standard Hadoop/YARN clusters in [YARN client mode](https://spark.apache.org/docs/latest/running-on-yarn.html#launching-spark-on-yarn):
-
-  ```python
-  from zoo.orca import init_orca_context
-
-  sc = init_orca_context(cluster_mode="yarn-client", cores=4, memory="10g", num_nodes=2)
-  ```
-
-  By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment, detect the current Hadoop configurations from `HADOOP_CONF_DIR` and initiate the distributed execution engine on the underlying YARN cluster. View [Orca Context](../Orca/Overview/orca-context.md) for more details.
-  
-
-- You can then simply run your Analytics Zoo program in a Jupyter notebook:
-
-  ```bash
-  jupyter notebook --notebook-dir=./ --ip=* --no-browser
-  ```
-
-  or as a normal Python script (e.g. script.py):
-
-  ```bash
-  python script.py
-  ```
-
----
-### **3. YARN Cluster Mode**
-
-Follow the steps below if you need to run Analytics Zoo in [YARN cluster mode](https://spark.apache.org/docs/latest/running-on-yarn.html#launching-spark-on-yarn).
+Follow the steps below if you need to run Analytics Zoo in [YARN client mode](https://spark.apache.org/docs/latest/running-on-yarn.html#launching-spark-on-yarn).
 
 - Download and extract [Spark](https://spark.apache.org/downloads.html). You are recommended to use [Spark 2.4.3](https://archive.apache.org/dist/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz). Set the environment variable `SPARK_HOME`:
 
@@ -95,72 +60,58 @@ Follow the steps below if you need to run Analytics Zoo in [YARN cluster mode](h
   ```bash
   export ANALYTICS_ZOO_HOME=the root directory where you extract the downloaded Analytics Zoo package
   ```
+- Before running the following two examples, please download [dataset of MNIST](http://yann.lecun.com/exdb/mnist/) on Cloudra Manager and CDH
 
-- Pack the current conda environment to `environment.tar.gz` (you can use any name you like):
-
-  ```bash
-  conda pack -o environment.tar.gz
-  ```
-
-- _You need to write your Analytics Zoo program as a Python script._ In the script, you can call `init_orca_context` and specify cluster_mode to be "spark-submit":
-
-  ```python
-  from zoo.orca import init_orca_context
-
-  sc = init_orca_context(cluster_mode="spark-submit")
-  ```
-
-- Use `spark-submit` to submit your Analytics Zoo program (e.g. script.py):
+#### (1) Python Example  
+- Use `spark-submit` to submit training LeNet example on CDH with Analytics Zoo:
 
   ```bash
   PYSPARK_PYTHON=./environment/bin/python ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
-      --conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=./environment/bin/python \
-      --master yarn-cluster \
-      --executor-memory 10g \
-      --driver-memory 10g \
-      --executor-cores 8 \
-      --num-executors 2 \
-      --archives environment.tar.gz#environment \
-      script.py
+    --conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=./environment/bin/python \
+    --master yarn \
+    --deploy-mode client \
+    --executor-cores 44 \
+    --num-executors 3 \
+    --class com.intel.analytics.bigdl.models.lenet.Train \
+  analytics-zoo/dist/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
+    -f hdfs://172.16.0.105:8020/mnist \
+    -b 132 \
+    -e 3
   ```
+If run success, you would see the output like:
+> INFO  DistriOptimizer$:427 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Trained 132.0 records in 0.051549321 seconds. Throughput is 2560.6545 records/second. Loss is 0.15130447. Sequential4f65e3db's hyper parameters: Current learning rate is 0.05. Current dampening is 1.7976931348623157E308.
+> INFO  DistriOptimizer$:472 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Epoch finished. Wall clock time is 91485.329183 ms
+> INFO  DistriOptimizer$:111 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Validate model...
+> INFO  DistriOptimizer$:177 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] validate model throughput is 49120.7 records/second
+> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Top1Accuracy is Accuracy(correct: 9665, count: 10000, accuracy: 0.9665)
+> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Top5Accuracy is Accuracy(correct: 9995, count: 10000, accuracy: 0.9995)
+> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Loss is (Loss: 1116.1461, count: 10000, Average Loss: 0.111614615)
 
-  You can adjust the configurations according to your cluster settings.
-  
-  
-  ---
-### **4. YARN Client Mode on CDH**
 
-- Install Analytics Zoo in the created conda environment via pip:
+#### (2) Scala Example
+- Use `spark-submit` to submit training LeNet example on CDH with Analytics Zoo:
 
   ```bash
-  pip install analytics-zoo
+  # Spark yarn client mode, please make sure the right HADOOP_CONF_DIR is set
+  ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
+  --master yarn \
+  --deploy-mode client \
+  --executor-cores 44 \
+  --num-executors 3 \
+  --class com.intel.analytics.bigdl.models.lenet.Train \
+  analytics-zoo/dist/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
+  -f hdfs://172.16.0.105:8020/mnist \
+  -b 132 \
+  -e 3
   ```
-
-  View the [Python User Guide](./python.md) for more details.
-  
-
-- We recommend using `init_orca_context` at the very beginning of your code to initiate and run Analytics Zoo on standard Hadoop/YARN clusters in [YARN client mode](https://spark.apache.org/docs/latest/running-on-yarn.html#launching-spark-on-yarn):
-
-  ```python
-  from zoo.orca import init_orca_context
-
-  sc = init_orca_context(cluster_mode="yarn-client", cores=4, memory="10g", num_nodes=2)
-  ```
-
-  By specifying cluster_mode to be "yarn-client", `init_orca_context` would automatically prepare the runtime Python environment, detect the current Hadoop configurations from `HADOOP_CONF_DIR` and initiate the distributed execution engine on the underlying YARN cluster. View [Orca Context](../Orca/Overview/orca-context.md) for more details.
-  
-
-- You can then simply run your Analytics Zoo program in a Jupyter notebook:
-
-  ```bash
-  jupyter notebook --notebook-dir=./ --ip=* --no-browser
-  ```
-
-  or as a normal Python script (e.g. script.py):
-
-  ```bash
-  python script.py
-  ```
+If run success, you would see the output like:
+> INFO  DistriOptimizer$:427 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Trained 132.0 records in 0.048059022 seconds. Throughput is 2746.6228 records/second. Loss is 0.10078872. Sequential20dc409's hyper parameters: Current learning rate is 0.05. Current dampening is 1.7976931348623157E308.
+> INFO  DistriOptimizer$:472 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Epoch finished. Wall clock time is 89554.313084 ms
+> INFO  DistriOptimizer$:111 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Validate model...
+> INFO  DistriOptimizer$:177 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] validate model throughput is 52652.59 records/second
+> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Top1Accuracy is Accuracy(correct: 9614, count: 10000, accuracy: 0.9614)
+> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Top5Accuracy is Accuracy(correct: 9995, count: 10000, accuracy: 0.9995)
+> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Loss is (Loss: 1263.0082, count: 10000, Average Loss: 0.12630081)
 
 ---
 ### **5. YARN Cluster Mode on CDH**
@@ -181,7 +132,7 @@ Follow the steps below if you need to run Analytics Zoo in [YARN cluster mode](h
 - Before running the following two examples, please download [dataset of MNIST](http://yann.lecun.com/exdb/mnist/) on Cloudra Manager and CDH
 
 #### (1) Python Example  
-- Use `spark-submit` to submit your Analytics Zoo program python example of training LeNet on CDH (e.g. script.py):
+- Use `spark-submit` to submit training LeNet example on CDH with Analytics Zoo:
 
   ```bash
   PYSPARK_PYTHON=./environment/bin/python ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
@@ -202,7 +153,7 @@ If run success, you would see the output like:
 and then check the log detail using the following given URL in the output.
 
 #### (2) Scala Example
-- Use `spark-submit` to submit your Analytics Zoo program scala example of training LeNet on CDH (e.g. script.py):
+- Use `spark-submit` to submit training LeNet example on CDH with Analytics Zoo:
 
   ```bash
   # Spark yarn cluster mode, please make sure the right HADOOP_CONF_DIR is set
