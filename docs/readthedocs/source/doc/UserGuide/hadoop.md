@@ -79,13 +79,13 @@ Follow the steps below if you need to run Analytics Zoo in [YARN client mode](ht
     -e 3
   ```
 If run success, you would see the output like:
-> INFO  DistriOptimizer$:427 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Trained 132.0 records in 0.051549321 seconds. Throughput is 2560.6545 records/second. Loss is 0.15130447. Sequential4f65e3db's hyper parameters: Current learning rate is 0.05. Current dampening is 1.7976931348623157E308.
-> INFO  DistriOptimizer$:472 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Epoch finished. Wall clock time is 91485.329183 ms
-> INFO  DistriOptimizer$:111 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Validate model...
-> INFO  DistriOptimizer$:177 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] validate model throughput is 49120.7 records/second
-> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Top1Accuracy is Accuracy(correct: 9665, count: 10000, accuracy: 0.9665)
-> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Top5Accuracy is Accuracy(correct: 9995, count: 10000, accuracy: 0.9995)
-> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Loss is (Loss: 1116.1461, count: 10000, Average Loss: 0.111614615)
+> INFO  DistriOptimizer$:427 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Trained 132.0 records in 0.051549321 seconds. Throughput is 2560.6545 records/second. Loss is 0.15130447. Sequential4f65e3db's hyper parameters: Current learning rate is 0.05. Current dampening is 1.7976931348623157E308. <br>
+> INFO  DistriOptimizer$:472 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Epoch finished. Wall clock time is 91485.329183 ms <br>
+> INFO  DistriOptimizer$:111 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Validate model... <br>
+> INFO  DistriOptimizer$:177 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] validate model throughput is 49120.7 records/second <br>
+> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Top1Accuracy is Accuracy(correct: 9665, count: 10000, accuracy: 0.9665) <br>
+> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Top5Accuracy is Accuracy(correct: 9995, count: 10000, accuracy: 0.9995) <br>
+> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 91.114175155s] Loss is (Loss: 1116.1461, count: 10000, Average Loss: 0.111614615) <br>
 
 
 #### (2) Scala Example
@@ -105,13 +105,13 @@ If run success, you would see the output like:
   -e 3
   ```
 If run success, you would see the output like:
-> INFO  DistriOptimizer$:427 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Trained 132.0 records in 0.048059022 seconds. Throughput is 2746.6228 records/second. Loss is 0.10078872. Sequential20dc409's hyper parameters: Current learning rate is 0.05. Current dampening is 1.7976931348623157E308.
-> INFO  DistriOptimizer$:472 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Epoch finished. Wall clock time is 89554.313084 ms
-> INFO  DistriOptimizer$:111 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Validate model...
-> INFO  DistriOptimizer$:177 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] validate model throughput is 52652.59 records/second
-> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Top1Accuracy is Accuracy(correct: 9614, count: 10000, accuracy: 0.9614)
-> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Top5Accuracy is Accuracy(correct: 9995, count: 10000, accuracy: 0.9995)
-> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Loss is (Loss: 1263.0082, count: 10000, Average Loss: 0.12630081)
+> INFO  DistriOptimizer$:427 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Trained 132.0 records in 0.048059022 seconds. Throughput is 2746.6228 records/second. Loss is 0.10078872. Sequential20dc409's hyper parameters: Current learning rate is 0.05. Current dampening is 1.7976931348623157E308. <br>
+> INFO  DistriOptimizer$:472 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Epoch finished. Wall clock time is 89554.313084 ms <br>
+> INFO  DistriOptimizer$:111 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Validate model... <br>
+> INFO  DistriOptimizer$:177 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] validate model throughput is 52652.59 records/second <br>
+> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Top1Accuracy is Accuracy(correct: 9614, count: 10000, accuracy: 0.9614) <br>
+> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Top5Accuracy is Accuracy(correct: 9995, count: 10000, accuracy: 0.9995) <br>
+> INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Loss is (Loss: 1263.0082, count: 10000, Average Loss: 0.12630081) <br>
 
 ---
 ### **5. YARN Cluster Mode on CDH**
