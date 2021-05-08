@@ -18,23 +18,31 @@ package com.intel.analytics.zoo.serving.http
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.util
+import java.util.concurrent.LinkedBlockingQueue
+import scala.concurrent.Await
 import java.util.{HashMap, UUID}
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, Props}
+import akka.pattern.ask
 import com.codahale.metrics.Timer
-import com.google.common.collect.ImmutableList
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.complex._
 import org.apache.arrow.vector.dictionary.DictionaryProvider
 import org.apache.arrow.vector.ipc.{ArrowStreamReader, ArrowStreamWriter}
-import org.apache.arrow.vector.types.FloatingPointPrecision
 import org.apache.arrow.vector.types.Types.MinorType
 import org.apache.arrow.vector.types.pojo.{ArrowType, Field, FieldType, Schema}
 import org.apache.arrow.vector._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+
+import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.common.collect.ImmutableList
+import com.intel.analytics.zoo.serving.http.FrontEndApp.{overallRequestTimer, system, timeout, timing, waitRedisTimer, silent}
+
 
 sealed trait ServingMessage
 
@@ -72,6 +80,7 @@ case class BytesPredictionInput(uuid: String, bytesStr: String) extends Predicti
     hash
   }
 }
+
 object BytesPredictionInput {
   def apply(str: String): BytesPredictionInput =
     BytesPredictionInput(UUID.randomUUID().toString, str)
@@ -79,6 +88,7 @@ object BytesPredictionInput {
 
 case class InstancesPredictionInput(uuid: String, instances: Instances) extends PredictionInput {
   override def getId(): String = this.uuid
+
   override def toHash(): HashMap[String, String] = {
     val hash = new HashMap[String, String]()
     val bytes = instances.toArrow()
@@ -88,6 +98,7 @@ case class InstancesPredictionInput(uuid: String, instances: Instances) extends 
     hash
   }
 }
+
 object InstancesPredictionInput {
   def apply(instances: Instances): InstancesPredictionInput =
     InstancesPredictionInput(UUID.randomUUID().toString, instances)
@@ -134,9 +145,9 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
   }
 
   def makeSchema(
-      tensors: Seq[mutable.LinkedHashMap[String, (
-        (mutable.ArrayBuffer[Int], Any), (mutable.ArrayBuffer[Int], mutable.ArrayBuffer[Any])
-        )]]): Schema = {
+                  tensors: Seq[mutable.LinkedHashMap[String, (
+                    (mutable.ArrayBuffer[Int], Any), (mutable.ArrayBuffer[Int], mutable.ArrayBuffer[Any])
+                    )]]): Schema = {
     assert(instances.size > 0, "must have instances, and each should have the same schema")
     val sample = tensors(0)
     val key_fields = sample.map(s => (s._1, s._2))
@@ -312,7 +323,7 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
             shapeVector.allocateNew()
             val shapeSize = shape.size
             val shapeIntVector = shapeDataVector.asInstanceOf[IntVector]
-            for(j <- 0 until shapeSize) {
+            for (j <- 0 until shapeSize) {
               shapeVector.startNewValue(j)
               shapeIntVector.setSafe(j, shape(j))
               shapeVector.endValue(j, 1)
@@ -388,7 +399,7 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
             indicesShapeVector.allocateNew()
             val indicesShapeSize = indicesShape.size
             val indicesShapeIntVector = indicesShapeDataVector.asInstanceOf[IntVector]
-            for(j <- 0 until indicesShapeSize) {
+            for (j <- 0 until indicesShapeSize) {
               indicesShapeVector.startNewValue(j)
               indicesShapeIntVector.setSafe(j, indicesShape(j))
               indicesShapeVector.endValue(j, 1)
@@ -441,14 +452,14 @@ object Instances {
     val root = arrowStreamReader.getVectorSchemaRoot()
     val fieldVectors: util.List[FieldVector] = root.getFieldVectors
 
-    while(arrowStreamReader.loadNextBatch()) {
+    while (arrowStreamReader.loadNextBatch()) {
       val map = new mutable.LinkedHashMap[String, Any]()
       fieldVectors.toArray().map(fieldVector => {
         val (name, value) =
           if (fieldVector.isInstanceOf[IntVector]) {
-          val vector = fieldVector.asInstanceOf[IntVector]
-          (vector.getName, vector.getObject(0))
-        } else if (fieldVector.isInstanceOf[Float4Vector]) {
+            val vector = fieldVector.asInstanceOf[IntVector]
+            (vector.getName, vector.getObject(0))
+          } else if (fieldVector.isInstanceOf[Float4Vector]) {
             val vector = fieldVector.asInstanceOf[Float4Vector]
             (vector.getName, vector.getObject(0))
           } else if (fieldVector.isInstanceOf[VarCharVector]) {
@@ -469,28 +480,28 @@ object Instances {
             val indicesDataDataVector = indicesDataVector.asInstanceOf[ListVector].getDataVector
 
             val shape = new ArrayBuffer[Int]()
-            for(i <- 0 until shapeDataVector.getValueCount) {
+            for (i <- 0 until shapeDataVector.getValueCount) {
               shape.append(shapeDataVector.getObject(i).asInstanceOf[Int])
             }
             val data = dataDataVector.getMinorType match {
               case MinorType.INT =>
                 val data = new ArrayBuffer[Float]()
                 val dataIntVector = dataDataVector.asInstanceOf[IntVector]
-                for(i <- 0 until dataIntVector.getValueCount) {
+                for (i <- 0 until dataIntVector.getValueCount) {
                   data.append(dataIntVector.getObject(i).toFloat)
                 }
                 data
               case MinorType.FLOAT4 =>
                 val data = new ArrayBuffer[Float]()
                 val dataFloatVector = dataDataVector.asInstanceOf[Float4Vector]
-                for(i <- 0 until dataFloatVector.getValueCount) {
+                for (i <- 0 until dataFloatVector.getValueCount) {
                   data.append(dataFloatVector.getObject(i).asInstanceOf[Float])
                 }
                 data
               case MinorType.VARCHAR =>
                 val data = new ArrayBuffer[String]()
                 val dataVarCharVector = dataDataVector.asInstanceOf[VarCharVector]
-                for(i <- 0 until dataVarCharVector.getValueCount) {
+                for (i <- 0 until dataVarCharVector.getValueCount) {
                   data.append(
                     new String(dataVarCharVector.getObject(i).getBytes))
                 }
@@ -498,25 +509,25 @@ object Instances {
               case MinorType.VARBINARY =>
                 val data = new ArrayBuffer[String]()
                 val dataVarBinaryVector = dataDataVector.asInstanceOf[VarBinaryVector]
-                for(i <- 0 until dataVarBinaryVector.getValueCount) {
+                for (i <- 0 until dataVarBinaryVector.getValueCount) {
                   data.append(
                     new String(dataVarBinaryVector.getObject(i).asInstanceOf[Array[Byte]]))
                 }
                 data
             }
             val indicesShape = new ArrayBuffer[Int]()
-            for(i <- 0 until indicesShapeDataVector.getValueCount) {
+            for (i <- 0 until indicesShapeDataVector.getValueCount) {
               indicesShape.append(indicesShapeDataVector.getObject(i).asInstanceOf[Int])
             }
             val indicesData = new ArrayBuffer[Int]()
-            for(i <- 0 until indicesDataDataVector.getValueCount) {
+            for (i <- 0 until indicesDataDataVector.getValueCount) {
               indicesData.append(indicesDataDataVector.getObject(i).asInstanceOf[Int])
             }
             (structVector.getName, (shape, data, indicesShape, indicesData))
           } else {
             (null, null)
           }
-        if(null != name) {
+        if (null != name) {
           map.put(name, value)
         }
       })
@@ -538,9 +549,9 @@ object Instances {
   }
 
   private def transferListToTensor(
-      source: Any,
-      shape: mutable.ArrayBuffer[Int],
-      data: mutable.ArrayBuffer[Any]): Unit = {
+                                    source: Any,
+                                    shape: mutable.ArrayBuffer[Int],
+                                    data: mutable.ArrayBuffer[Any]): Unit = {
     if (source.isInstanceOf[List[_]]) {
       val list = source.asInstanceOf[List[_]]
       shape.append(list.size)
@@ -591,20 +602,20 @@ case class ServingError(error: String) {
 }
 
 case class ServingTimerMetrics(
-    name: String,
-    count: Long,
-    meanRate: Double,
-    min: Long,
-    max: Long,
-    mean: Double,
-    median: Double,
-    stdDev: Double,
-    _75thPercentile: Double,
-    _95thPercentile: Double,
-    _98thPercentile: Double,
-    _99thPercentile: Double,
-    _999thPercentile: Double
-)
+                                name: String,
+                                count: Long,
+                                meanRate: Double,
+                                min: Long,
+                                max: Long,
+                                mean: Double,
+                                median: Double,
+                                stdDev: Double,
+                                _75thPercentile: Double,
+                                _95thPercentile: Double,
+                                _98thPercentile: Double,
+                                _99thPercentile: Double,
+                                _999thPercentile: Double
+                              )
 
 object ServingTimerMetrics {
   def apply(name: String, timer: Timer): ServingTimerMetrics =
@@ -623,4 +634,186 @@ object ServingTimerMetrics {
       timer.getSnapshot.get99thPercentile() / 1000000,
       timer.getSnapshot.get999thPercentile() / 1000000
     )
+}
+
+
+class ServableManager {
+  private var modelVersionMap = new mutable.HashMap[String, mutable.HashMap[String, Servable]]
+
+  def load(servableConfigDir: String): Unit = {
+    if (!new java.io.File(servableConfigDir).isFile){
+      throw ServableLoadException("servable config dir not exist", null)
+    }
+    val servableManagerConfYaml = scala.io.Source.fromFile(servableConfigDir).mkString
+    val modelInfoList = YamlUtil.fromYaml(classOf[ServableManagerConf], servableManagerConfYaml).modelMetaDataList
+    for (modelInfo <- modelInfoList) {
+      if (!modelVersionMap.contains(modelInfo.getModelName)) {
+        val versionMapper = new mutable.HashMap[String, Servable]
+        modelVersionMap(modelInfo.getModelName) = versionMapper
+      }
+      if (modelVersionMap(modelInfo.getModelName).contains(modelInfo.getModelVersion)) {
+        throw ServableLoadException("duplicated model info", null)
+      }
+      modelInfo match {
+        case _: ClusterServingMetaData =>
+          var clusterServingModelInfo = modelInfo.asInstanceOf[ClusterServingMetaData]
+          val servable = new ClusterServingServable(clusterServingModelInfo)
+          servable.load()
+          modelVersionMap(modelInfo.getModelName)(modelInfo.getModelVersion) = servable
+      }
+    }
+  }
+
+  def retriveServables(modelName: String): List[Servable] = {
+    if (!modelVersionMap.contains(modelName)) {
+      throw ModelNotFoundException("model not exist", null)
+    }
+    modelVersionMap(modelName).values.toList
+  }
+
+  def retriveServable(modelName: String, modelVersion: String): Servable = {
+    if (!modelVersionMap.contains(modelName) || !modelVersionMap(modelName).contains(modelVersion)) {
+      throw ModelNotFoundException("model not exist", null)
+    }
+    modelVersionMap(modelName)(modelVersion)
+  }
+}
+
+abstract class Servable(modelMetaData: ModelMetaData) {
+  def predict(input: Instances): Seq[PredictionOutput[String]]
+
+  def load(): Unit
+
+  def getMetaData: ModelMetaData = modelMetaData
+}
+
+
+class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) extends Servable(clusterServingMetaData) with Supportive {
+  var redisPutter: ActorRef = _
+  var redisGetter: ActorRef = _
+  var querierQueue: LinkedBlockingQueue[ActorRef] = _
+
+  def load(): Unit = {
+    val redisPutterName = s"redis-putter-${clusterServingMetaData.modelName}-${clusterServingMetaData.modelVersion}"
+    redisPutter = timing(s"$redisPutterName initialized.")() {
+      val redisPutterProps = Props(new RedisPutActor(
+        clusterServingMetaData.redisHost,
+        clusterServingMetaData.redisPort.toInt,
+        clusterServingMetaData.redisInputQueue,
+        clusterServingMetaData.redisOutputQueue,
+        clusterServingMetaData.timeWindow,
+        clusterServingMetaData.countWindow,
+        clusterServingMetaData.redisSecureEnabled,
+        clusterServingMetaData.redisTrustStorePath,
+        clusterServingMetaData.redisTrustStoreToken))
+      system.actorOf(redisPutterProps, name = redisPutterName)
+    }
+
+    val redisGetterName = s"redis-getter-${clusterServingMetaData.modelName}-${clusterServingMetaData.modelVersion}"
+    redisGetter = timing(s"$redisGetterName initialized.")() {
+      val redisGetterProps = Props(new RedisGetActor(
+        clusterServingMetaData.redisHost,
+        clusterServingMetaData.redisPort.toInt,
+        clusterServingMetaData.redisInputQueue,
+        clusterServingMetaData.redisOutputQueue,
+        clusterServingMetaData.redisSecureEnabled,
+        clusterServingMetaData.redisTrustStorePath,
+        clusterServingMetaData.redisTrustStoreToken))
+      system.actorOf(redisGetterProps, name = redisGetterName)
+    }
+    println("redisgetter:" + redisGetter)
+
+    val querierNum = 1000
+    querierQueue = timing(s"queriers initialized.")() {
+      val querierQueue = new LinkedBlockingQueue[ActorRef](querierNum)
+      val querierProps = Props(new QueryActor(redisGetter))
+      List.range(0, querierNum).map(index => {
+        val querierName = s"querier-$index-${clusterServingMetaData.modelName}-${clusterServingMetaData.modelVersion}"
+        val querier = system.actorOf(querierProps, name = querierName)
+        querierQueue.put(querier)
+      })
+      querierQueue
+    }
+  }
+
+
+  def predict(instances: Instances):
+  Seq[PredictionOutput[String]] = {
+    val inputs = instances.instances.map(instance => {
+      InstancesPredictionInput(Instances(instance))
+    })
+    timing("put message send")() {
+      val message = PredictionInputMessage(inputs)
+      redisPutter ! message
+    }
+    val result = timing("response waiting")() {
+      val ids = inputs.map(_.getId())
+      val queryMessage = PredictionQueryMessage(ids)
+      val querier = timing("querier take")() {
+        querierQueue.take()
+      }
+      val results = timing(s"query message wait for key $ids")(
+        overallRequestTimer, waitRedisTimer) {
+        Await.result(querier ? queryMessage, timeout.duration)
+          .asInstanceOf[Seq[(String, util.Map[String, String])]]
+      }
+      timing("querier back")() {
+        querierQueue.offer(querier)
+      }
+      val objectMapper = new ObjectMapper()
+      results.map(r => {
+        val resultStr = objectMapper.writeValueAsString(r._2)
+        PredictionOutput(r._1, resultStr)
+      })
+    }
+    result
+  }
+
+}
+
+
+@JsonTypeInfo(
+  use = JsonTypeInfo.Id.NAME,
+  include = JsonTypeInfo.As.PROPERTY,
+  property = "type"
+)
+@JsonSubTypes(Array(
+  new Type(value = classOf[ClusterServingMetaData], name = "ClusterServingMetaData")
+))
+abstract class ModelMetaData(modelName: String, modelVersion: String, features: Array[String]) {
+  def getModelName: String = {
+    modelName
+  }
+
+  def getModelVersion: String = {
+    modelVersion
+  }
+}
+
+
+case class ClusterServingMetaData(modelName: String,
+                                  modelVersion: String,
+                                  redisHost: String,
+                                  redisPort: String,
+                                  redisInputQueue: String,
+                                  redisOutputQueue: String,
+                                  timeWindow: Int = 0,
+                                  countWindow: Int = 56,
+                                  redisSecureEnabled: Boolean = false,
+                                  redisTrustStorePath: String = null,
+                                  redisTrustStoreToken: String = "1234qwer",
+                                  features: Array[String])
+  extends ModelMetaData(modelName, modelVersion, features)
+
+
+case class ServableManagerConf(modelMetaDataList: List[ModelMetaData])
+
+case class ModelNotFoundException(message: String = null, cause: Throwable = null)
+  extends RuntimeException(message, cause) {
+  def this(response: ServingResponse[String]) = this(JsonUtil.toJson(response), null)
+}
+
+case class ServableLoadException(message: String = null, cause: Throwable = null)
+  extends RuntimeException(message, cause) {
+  def this(response: ServingResponse[String]) = this(JsonUtil.toJson(response), null)
 }

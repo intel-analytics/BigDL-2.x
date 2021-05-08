@@ -57,6 +57,41 @@ object FrontEndApp extends Supportive with EncryptSupportive {
         }
       }
 
+      val servableManager = new ServableManager
+      timing("load servable manager")() {
+        try servableManager.load(arguments.servableManagerPath)
+        catch {
+          case e: ServableLoadException =>
+            logger.info("ServableLoadException: " + e.message)
+            return
+          case e =>
+            logger.info("Loading Config File Error: " + e)
+            val exampleYaml =
+              """
+                ---
+                 modelMetaDataList:
+                 - !<ClusterServingMetaData>
+                    modelName: "1"
+                    modelVersion:"1.0"
+                    redisHost: "localhost"
+                    redisPort: "6381"
+                    redisInputQueue: "serving_stream2"
+                    redisOutputQueue: "cluster-serving_serving_stream2:"
+                 - !<InflerenceModelMetaData>
+                    modelName: "1"
+                    modelVersion:"1.0"
+                    modelPath:"/"
+                    modelType:"OpenVINO"
+                    features:
+                      - "a"
+                      - "b"
+              """
+            logger.info("Example Format of Input:" + exampleYaml)
+            return
+        }
+      }
+      logger.info("Servable Manager Load Success!")
+
       val rateLimiter: RateLimiter = arguments.tokenBucketEnabled match {
         case true => RateLimiter.create(arguments.tokensPerSecond)
         case false => null
@@ -225,6 +260,83 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               }
             }
           }
+        } ~ pathPrefix("models") {
+          concat(
+            (get & path(Segment)) {
+              (modelName) => {
+                timing("get model versions with model name")(overallRequestTimer) {
+                  try {
+                    val servables = servableManager.retriveServables(modelName)
+                    val metaData = servables.map(e => e.getMetaData)
+                    val json = JsonUtil.toJson(metaData)
+                    complete(200, json)
+                  }
+                  catch {
+                    case e: ModelNotFoundException =>
+                      complete(200, "Model Not Found")
+                    case e: ServingRuntimeException =>
+                      complete(405, "Serving Runtime Error Err: " + e)
+                    case e =>
+                      complete(500, "Internal Error: " + e)
+                  }
+                }
+              }
+            } ~ (get & path(Segment / "versions" / Segment)) {
+              (modelName, modelVersion) => {
+                timing("get model versions with model name")(overallRequestTimer) {
+                  try {
+                    val servables = servableManager.retriveServable(modelName, modelVersion)
+                    val metaData = servables.getMetaData
+                    val json = JsonUtil.toJson(metaData)
+                    complete(200, json)
+                  }
+                  catch {
+                    case e: ModelNotFoundException =>
+                      complete(200, "Model Not Found")
+                    case e: ServingRuntimeException =>
+                      complete(405, "Serving Runtime Error Err: " + e)
+                    case e =>
+                      complete(500, "Internal Error: " + e)
+                  }
+                }
+              }
+            } ~ (post & path(Segment / "versions" / Segment / "predict") & extract(_.request.entity.contentType) & entity(as[String])) {
+              (modelName, modelVersion, contentType, content) => {
+                timing("predict model timing")(overallRequestTimer) {
+                  try {
+                    logger.info("model name: " + modelName + "\nmodel version: " + modelVersion)
+                    val servable = timing("retriving servable")() {
+                      servableManager.retriveServable(modelName, modelVersion)
+                    }
+                    servable match {
+                      case _: ClusterServingServable =>
+                        val result = timing("cluster serving predict")(overallRequestTimer, predictRequestTimer) {
+                          val instances = timing("json deserialization")() {
+                            JsonUtil.fromJson(classOf[Instances], content)
+                          }
+                          val outputs = timing("cluster serving predict total")() {
+                            servable.predict(instances)
+                          }
+                          Predictions(outputs)
+                        }
+                        timing("cluster serving response complete")() {
+                          complete(200, result.toString)
+                        }
+                    }
+                  }
+                  catch {
+                    case e: ModelNotFoundException =>
+                      complete(200, "Model Not Found. Err: " + e.message)
+                    case e: ServingRuntimeException =>
+                      complete(405, "Serving Runtime Error Err: " + e.message)
+                    case e =>
+                      e.printStackTrace()
+                      complete(500, "Internal Error: " + e)
+                  }
+                }
+              }
+            }
+          )
         }
       }
       if (arguments.httpsEnabled) {
@@ -313,10 +425,13 @@ object FrontEndApp extends Supportive with EncryptSupportive {
     opt[String]('w', "redissTrustStoreToken")
       .action((x, c) => c.copy(redissTrustStoreToken = x))
       .text("rediss trustStore password")
+    opt[String]('z', "servableManagerPath")
+      .action((x, c) => c.copy(servableManagerPath = x))
+      .text("servableManagerPath")
   }
 
   def defineServerContext(httpsKeyStoreToken: String,
-      httpsKeyStorePath: String): ConnectionContext = {
+                          httpsKeyStorePath: String): ConnectionContext = {
     val token = httpsKeyStoreToken.toCharArray
 
     val keyStore = KeyStore.getInstance("PKCS12")
@@ -339,24 +454,25 @@ object FrontEndApp extends Supportive with EncryptSupportive {
 }
 
 case class FrontEndAppArguments(
-  interface: String = "0.0.0.0",
-  port: Int = 10020,
-  securePort: Int = 10023,
-  redisHost: String = "localhost",
-  redisPort: Int = 6379,
-  redisInputQueue: String = Conventions.SERVING_STREAM_DEFAULT_NAME,
-  redisOutputQueue: String =
-    Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":",
-  parallelism: Int = 1000,
-  timeWindow: Int = 0,
-  countWindow: Int = 56,
-  tokenBucketEnabled: Boolean = false,
-  tokensPerSecond: Int = 100,
-  tokenAcquireTimeout: Int = 100,
-  httpsEnabled: Boolean = false,
-  httpsKeyStorePath: String = null,
-  httpsKeyStoreToken: String = "1234qwer",
-  redisSecureEnabled: Boolean = false,
-  redissTrustStorePath: String = null,
-  redissTrustStoreToken: String = "1234qwer"
-)
+                                 interface: String = "0.0.0.0",
+                                 port: Int = 10020,
+                                 securePort: Int = 10023,
+                                 redisHost: String = "localhost",
+                                 redisPort: Int = 6379,
+                                 redisInputQueue: String = Conventions.SERVING_STREAM_DEFAULT_NAME,
+                                 redisOutputQueue: String =
+                                 Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":",
+                                 parallelism: Int = 1000,
+                                 timeWindow: Int = 0,
+                                 countWindow: Int = 56,
+                                 tokenBucketEnabled: Boolean = false,
+                                 tokensPerSecond: Int = 100,
+                                 tokenAcquireTimeout: Int = 100,
+                                 httpsEnabled: Boolean = false,
+                                 httpsKeyStorePath: String = null,
+                                 httpsKeyStoreToken: String = "1234qwer",
+                                 redisSecureEnabled: Boolean = false,
+                                 redissTrustStorePath: String = null,
+                                 redissTrustStoreToken: String = "1234qwer",
+                                 servableManagerPath: String = "/home/yansu/projects/cluster_serving.yaml"
+                               )
