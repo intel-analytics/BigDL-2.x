@@ -22,7 +22,7 @@ import os
 from zoo.orca.data.image.parquet_dataset import ParquetDataset
 from zoo.orca.data.image.parquet_dataset import _write_ndarrays, write_from_directory
 from zoo.orca.data.image.utils import DType, FeatureType, SchemaField
-from zoo.orca.learn.tf.estimator import Estimator
+from zoo.orca.learn.tf2.estimator import Estimator
 from zoo.orca.data.image import write_mnist, write_voc
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
@@ -149,14 +149,16 @@ def test_write_voc(orca_context_fixture):
         output_path = os.path.join(temp_dir, "output_dataset")
         write_voc(dataset_path, splits_names=[(2007, "trainval")],
                   output_path="file://" + output_path)
-        data, schema = ParquetDataset._read_as_dict_rdd("file://" + output_path)
-        data = data.collect()
-        from io import BytesIO
-        import numpy as np
-        for d in data:
-            img_bytes = BytesIO(d["image"])
-            img = np.load(img_bytes)
-            label = d["label"]
+
+        train_xshard = ParquetDataset._read_as_xshards("file://" + output_path)
+
+        data = train_xshard.collect()[0]
+        image_path = data["image_id"][0]
+
+        with open(image_path, "rb") as f:
+            image_bytes = f.read()
+
+        assert image_bytes == data['image'][0]
     finally:
         shutil.rmtree(temp_dir)
 
