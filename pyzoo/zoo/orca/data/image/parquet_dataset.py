@@ -227,21 +227,17 @@ def write_voc(voc_root_path, splits_names, output_path, **kwargs):
     custom_classes = kwargs.get("classes", None)
     voc_datasets = VOCDatasets(voc_root_path, splits_names,classes=custom_classes)
     def make_generator():
-        for i in range(len(voc_datasets)):
-            image, label = voc_datasets[i]  #label [x1,y1,x2,y2,cls]
-            img_buf = io.BytesIO()
-            np.save(img_buf, image)
-            img_buf = img_buf.getvalue()
-            yield{"image":img_buf, "label":label}
+        for img_path, label in voc_datasets:
+            yield{"image":img_path, "label":label}
 
     image, label = voc_datasets[0]
     label_shape = (-1, label.shape[-1])
     schema = {
-        "image": SchemaField(feature_type=FeatureType.NDARRAY,
-                             dtype=ndarray_dtype_to_dtype(image.dtype),
-                             shape=()),
+        "image": SchemaField(feature_type=FeatureType.IMAGE,
+                            dtype=DType.FLOAT32,
+                            shape=()),
         "label": SchemaField(feature_type=FeatureType.NDARRAY,
-                             dtype=ndarray_dtype_to_dtype(image.dtype),
+                             dtype=ndarray_dtype_to_dtype(label.dtype),
                              shape=label_shape)
     }
     kwargs = {key:value for key, value in kwargs.items() if key not in ["classes"]}
