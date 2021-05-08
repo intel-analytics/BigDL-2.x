@@ -67,6 +67,10 @@ class VOCDatasets:
     def __len__(self):
         return len(self._imgid_items)
 
+    def __iter__(self):
+        img_path = [self._image_path.format(*img_id) for img_id in self._imgid_items]
+        return zip(img_path, self._im_anno)
+
     def __getitem__(self, idx):
         img_id = self._imgid_items[idx]
         img_path = self._image_path.format(*img_id)
