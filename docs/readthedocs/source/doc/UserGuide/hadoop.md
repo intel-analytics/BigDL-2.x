@@ -198,6 +198,7 @@ Follow the steps below if you need to run Analytics Zoo in [YARN cluster mode](h
   ```
 If run success, you would see the output like:
 > final status: SUCCEEDED
+
 and then check the log detail using the following given URL in the output.
 
 #### (2) Scala Example
@@ -218,4 +219,5 @@ and then check the log detail using the following given URL in the output.
   ```
 If run success, you would see the output like:
 > final status: SUCCEEDED
+
 and then check the log detail using the following given URL in the output.
