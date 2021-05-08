@@ -178,44 +178,38 @@ Follow the steps below if you need to run Analytics Zoo in [YARN cluster mode](h
   ```bash
   export ANALYTICS_ZOO_HOME=the root directory where you extract the downloaded Analytics Zoo package
   ```
+- Before running the following two examples, please download [dataset of MNIST](http://yann.lecun.com/exdb/mnist/) on Cloudra Manager and CDH
 
-- Pack the current conda environment to `environment.tar.gz` (you can use any name you like):
-
-  ```bash
-  conda pack -o environment.tar.gz
-  ```
-
-- _You need to write your Analytics Zoo program as a Python script._ In the script, you can call `init_orca_context` and specify cluster_mode to be "spark-submit":
-
-  ```python
-  from zoo.orca import init_orca_context
-
-  sc = init_orca_context(cluster_mode="spark-submit")
-  ```
-
-- Use `spark-submit` to submit your compressed jar file of your Analytics Zoo program on CDH (e.g. script.py):
+#### (1) Python Example  
+- Use `spark-submit` to submit your Analytics Zoo program python example of training LeNet on CDH (e.g. script.py):
 
   ```bash
   PYSPARK_PYTHON=./environment/bin/python ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
-      --conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=./environment/bin/python \
-      --master yarn-cluster \
-      --executor-memory 10g \
-      --driver-memory 10g \
-      --executor-cores 8 \
-      --num-executors 2 \
-      --archives environment.tar.gz#environment \
-      script.py
-      
-  {SPARK_HOME}/bin/spark-submit 
-      --master yarn 
-      --deploy-mode client 
-      --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" 
-      --executor-cores 44 
-      --num-executors 3 
-      --driver-memory 20g 
-      --class com.intel.analytics.bigdl.models.PATH.TO.YOUR.USED.MODEL
-      /opt/work/BigDL/dist/lib/bigdl-0.11.0-SNAPSHOT-jar-with-dependencies.jar 
-      -f hdfs://172.16.0.105:8020/YOUR/USED/DATASET 
-      -b NUMBER/OF/BATCHSIZE 
-      -e NUMBER/OF/EPOCH
+    --conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=./environment/bin/python \
+    --master yarn \
+    --deploy-mode cluster \
+    --executor-cores 44 \
+    --num-executors 3 \
+    --class com.intel.analytics.bigdl.models.lenet.Train \
+  analytics-zoo/dist/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
+    -f hdfs://172.16.0.105:8020/mnist \
+    -b 132 \
+    -e 3
+  ```
+  
+#### (2) Scala Example
+- Use `spark-submit` to submit your Analytics Zoo program scala example of training LeNet on CDH (e.g. script.py):
+
+  ```bash
+  # Spark yarn cluster mode, please make sure the right HADOOP_CONF_DIR is set
+  ${ANALYTICS_ZOO_HOME}/bin/spark-submit-scala-with-zoo.sh \
+    --master yarn \
+    --deploy-mode cluster \
+    --executor-cores 44 \
+    --num-executors 3 \
+    --class com.intel.analytics.bigdl.models.lenet.Train \
+    analytics-zoo/dist/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
+    -f hdfs://172.16.0.105:8020/mnist \
+    -b 132 \
+    -e 3
   ```
