@@ -196,7 +196,10 @@ Follow the steps below if you need to run Analytics Zoo in [YARN cluster mode](h
     -b 132 \
     -e 3
   ```
-  
+If run success, you would see the output like:
+> final status: SUCCEEDED
+and then check the log detail using the following given URL in the output.
+
 #### (2) Scala Example
 - Use `spark-submit` to submit your Analytics Zoo program scala example of training LeNet on CDH (e.g. script.py):
 
@@ -213,3 +216,6 @@ Follow the steps below if you need to run Analytics Zoo in [YARN cluster mode](h
     -b 132 \
     -e 3
   ```
+If run success, you would see the output like:
+> final status: SUCCEEDED
+and then check the log detail using the following given URL in the output.
