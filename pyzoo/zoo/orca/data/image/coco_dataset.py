@@ -110,12 +110,13 @@ class COCODetection:
                 continue
             else:
                 label = self.cat2label[ann['category_id']]
-            bbox = [x1, y1, x1 + w, y1 + h, label]
+            bbox = [int(x1), int(y1), int(x1 + w), int(y1 + h), int(label)]
             if ann.get('iscrowd', False):
                 continue
             gt_bboxes.append(bbox)
         img_path = osp.join(self.data_root, img_info['filename'])
         img = self._read_image(img_path)
+        gt_bboxes = np.array(gt_bboxes).astype(np.int)
         return img, gt_bboxes
 
     def _read_image(self, image_path):
@@ -129,8 +130,8 @@ class COCODetection:
 
 
 if __name__=="__main__":
-    data_dir = "/home/gtf/Datasets/COCO/train2017"
-    ann_info = '/home/gtf/Datasets/COCO/annotations/instances_train2017.json'
+    data_dir = "/home/gtf/Datasets/VOC2007/JPEGImages"
+    ann_info = '/home/gtf/Datasets/VOC2007/VOC2007.json'
     coco_data = COCODetection(data_dir,ann_info, classes=None)
     img, label = coco_data[0]
     print('label', label)
