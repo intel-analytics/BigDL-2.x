@@ -464,7 +464,7 @@ case class FrontEndAppArguments(
                                  Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":",
                                  parallelism: Int = 1000,
                                  timeWindow: Int = 0,
-                                 countWindow: Int = 56,
+                                 countWindow: Int = 0,
                                  tokenBucketEnabled: Boolean = false,
                                  tokensPerSecond: Int = 100,
                                  tokenAcquireTimeout: Int = 100,
@@ -474,5 +474,5 @@ case class FrontEndAppArguments(
                                  redisSecureEnabled: Boolean = false,
                                  redissTrustStorePath: String = null,
                                  redissTrustStoreToken: String = "1234qwer",
-                                 servableManagerPath: String = "/home/yansu/projects/cluster_serving.yaml"
+                                 servableManagerPath: String = "./servables-conf.yaml"
                                )
