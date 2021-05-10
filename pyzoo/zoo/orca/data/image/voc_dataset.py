@@ -18,10 +18,12 @@ import os
 import os.path as osp
 from PIL import Image
 import logging
+
 try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
+
 
 class VOCDatasets:
     """Pascal VOC dataset load
@@ -30,11 +32,16 @@ class VOCDatasets:
     ----------------
     root: str, example:'./data/VOCdevkit'.
     splits_names: tuple, ((year, trainval)).
-    classes: list[str], If you using custom-voc dataset, you need to config the name of custom objects.
+    classes: list[str], If you using custom-voc dataset, \
+    you need to config the name of custom objects.
     difficult: bool, False ignore voc xml difficult value.
     """
-    def __init__(self, root="VOCdevkit", splits_names = [(2007, "trainval"), (2012, "trainval")], classes=None, difficult=False) -> None:
-        
+
+    def __init__(self, root="VOCdevkit",
+                 splits_names=[(2007, "trainval")],
+                 classes=None,
+                 difficult=False) -> None:
+
         self.CLASSES = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car',
                         'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike',
                         'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
@@ -52,7 +59,7 @@ class VOCDatasets:
         self._im_cache = {}
 
     def _load_items(self, splits_names):
-        
+
         img_ids = []
         for year, txtname in splits_names:
             vocfolder = osp.join(self._root, "VOC{}".format(year))
@@ -101,7 +108,7 @@ class VOCDatasets:
             # store the shapes for later usage
             self._im_shapes[idx] = (width, height)
 
-        #load label [[x1, y1, x2, y2, cls, difficult]]
+        # load label [[x1, y1, x2, y2, cls, difficult]]
         label = []
         for obj in root.iter('object'):
             try:
@@ -121,7 +128,7 @@ class VOCDatasets:
             label.append([xmin, ymin, xmax, ymax, cls_id, difficult])
         label = np.array(label).astype(np.int32)
         if not self._diff:
-            label = label[...,:5]
+            label = label[..., :5]
         try:
             self._check_label(label, width, height)
         except AssertionError as e:
@@ -130,15 +137,18 @@ class VOCDatasets:
 
     def _check_label(self, label, width, height):
         """Check if label is correct."""
-        xmin = label[:,0]
-        ymin = label[:,1]
-        xmax = label[:,2]
-        ymax = label[:,3]
-        assert ((0 <= xmin) & (xmin < width)).any(), "xmin must in [0, {}), given {}".format(width, xmin)
-        assert ((0 <= ymin) & (ymin <height)).any(), "ymin must in [0, {}), given {}".format(height, ymin)
-        assert ((xmin < xmax) & (xmax<= width)).any(), "xmax must in (xmin, {}], given {}".format(width, xmax)
-        assert ((ymin < ymax) & (ymax <= height)).any(), "ymax must in (ymin, {}], given {}".format(height, ymax)
-
+        xmin = label[:, 0]
+        ymin = label[:, 1]
+        xmax = label[:, 2]
+        ymax = label[:, 3]
+        assert ((0 <= xmin) & (xmin < width)).any(), \
+            "xmin must in [0, {}), given {}".format(width, xmin)
+        assert ((0 <= ymin) & (ymin < height)).any(), \
+            "ymin must in [0, {}), given {}".format(height, ymin)
+        assert ((xmin < xmax) & (xmax <= width)).any(), \
+            "xmax must in ({}, {}], given {}".format(xmin, width, xmax)
+        assert ((ymin < ymax) & (ymax <= height)).any(), \
+            "ymax must in ({}, {}], given {}".format(ymin, height, ymax)
 
     def _read_image(self, image_path):
         try:
