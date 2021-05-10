@@ -114,7 +114,7 @@ If run success, you would see the output like:
 > INFO  DistriOptimizer$:180 - [Epoch 3 60060/60000][Iteration 1365][Wall Clock 89.182042038s] Loss is (Loss: 1263.0082, count: 10000, Average Loss: 0.12630081) <br>
 
 ---
-### **5. YARN Cluster Mode on CDH**
+### **3. YARN Cluster Mode on CDH**
 
 Follow the steps below if you need to run Analytics Zoo in [YARN cluster mode](https://spark.apache.org/docs/latest/running-on-yarn.html#launching-spark-on-yarn).
 
