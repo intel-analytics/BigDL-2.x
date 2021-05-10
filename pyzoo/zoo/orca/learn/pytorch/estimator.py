@@ -330,7 +330,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         return train_feature_set, val_feature_set
 
-    def fit(self, data, epochs=1, batch_size=32, feature_cols=None, label_cols=None,
+    def fit(self, data, epochs=1, batch_size=None, feature_cols=None, label_cols=None,
             validation_data=None, checkpoint_trigger=None):
         """
         Train this torch model with train data.
@@ -359,7 +359,11 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         from zoo.orca.learn.trigger import Trigger
 
         end_trigger = MaxEpoch(epochs)
-        assert batch_size > 0, "batch_size should be greater than 0"
+        if isinstance(data, DataLoader):
+            assert batch_size is None and data.batch_size > 0, "You should specify batch size in" \
+            "DataLoader."
+        else:
+            assert batch_size is not None and batch_size > 0, "batch_size should be greater than 0"
         checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
 
         if self.log_dir is not None and self.app_name is not None:
@@ -432,7 +436,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
             result = convert_predict_rdd_to_dataframe(data, predicted_rdd)
         return result
 
-    def evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None,
+    def evaluate(self, data, batch_size=None, feature_cols=None, label_cols=None,
                  validation_metrics=None):
         """
         Evaluate model.
@@ -455,6 +459,11 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         assert data is not None, "validation data shouldn't be None"
         assert self.metrics is not None, "metrics shouldn't be None, please specify the metrics" \
                                          " argument when creating this estimator."
+        if isinstance(data, DataLoader):
+            assert batch_size is None and data.batch_size > 0, "You should specify batch size in" \
+            "DataLoader."
+        else:
+            assert batch_size is not None and batch_size > 0, "batch_size should be greater than 0"
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
