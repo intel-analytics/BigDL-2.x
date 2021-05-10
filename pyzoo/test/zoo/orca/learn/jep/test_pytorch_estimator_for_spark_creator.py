@@ -19,6 +19,7 @@ from unittest import TestCase
 import pytest
 import torch
 import torch.nn as nn
+import torch.optim as optim
 from torch.utils.data import TensorDataset
 
 from zoo.orca import init_orca_context, stop_orca_context
@@ -58,12 +59,17 @@ class TestEstimatorForSparkCreator(TestCase):
                 x = torch.sigmoid(self.dense2(x))
                 return x
 
-        model = SimpleModel()
+        def model_creator(config):
+            model = SimpleModel()
+            return model
 
-        estimator = Estimator.from_torch(model=model, loss=nn.BCELoss(),
+        def optim_creator(model, config):
+            return optim.Adam(model.parameters(), lr=config.get("lr", 0.01))
+
+        estimator = Estimator.from_torch(model=model_creator, loss=nn.BCELoss(),
                                          metrics=[Accuracy()],
-                                         optimizer=Adam(),
-                                         config={"threads": 2})
+                                         optimizer=optim_creator,
+                                         config={"lr": 0.001})
 
         def get_dataloader(config, batch_size):
             inputs = torch.Tensor([[1, 2], [1, 3], [3, 2], [5, 6], [8, 9], [1, 9]])
