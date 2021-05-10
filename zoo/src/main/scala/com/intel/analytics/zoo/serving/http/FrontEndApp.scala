@@ -62,10 +62,8 @@ object FrontEndApp extends Supportive with EncryptSupportive {
         try servableManager.load(arguments.servableManagerPath)
         catch {
           case e: ServableLoadException =>
-            logger.info("ServableLoadException: " + e.message)
-            return
+            throw e
           case e =>
-            logger.info("Loading Config File Error: " + e)
             val exampleYaml =
               """
                 ---
@@ -87,7 +85,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                       - "b"
               """
             logger.info("Example Format of Input:" + exampleYaml)
-            return
+            throw e
         }
       }
       logger.info("Servable Manager Load Success!")
@@ -264,7 +262,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           concat(
             (get & path(Segment)) {
               (modelName) => {
-                timing("get model versions with model name")(overallRequestTimer) {
+                timing("get model infos with model name")(overallRequestTimer, servablesRetriveTimer) {
                   try {
                     val servables = servableManager.retriveServables(modelName)
                     val metaData = servables.map(e => e.getMetaData)
@@ -283,7 +281,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               }
             } ~ (get & path(Segment / "versions" / Segment)) {
               (modelName, modelVersion) => {
-                timing("get model versions with model name")(overallRequestTimer) {
+                timing("get model info with model name and model version")(overallRequestTimer, servableRetriveTimer) {
                   try {
                     val servables = servableManager.retriveServable(modelName, modelVersion)
                     val metaData = servables.getMetaData
@@ -302,7 +300,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               }
             } ~ (post & path(Segment / "versions" / Segment / "predict") & extract(_.request.entity.contentType) & entity(as[String])) {
               (modelName, modelVersion, contentType, content) => {
-                timing("predict model timing")(overallRequestTimer) {
+                timing("backend inference timing")(overallRequestTimer, backendInferenceTimer) {
                   try {
                     logger.info("model name: " + modelName + "\nmodel version: " + modelVersion)
                     val servable = timing("retriving servable")() {
@@ -326,7 +324,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                   }
                   catch {
                     case e: ModelNotFoundException =>
-                      complete(200, "Model Not Found. Err: " + e.message)
+                      complete(404, "Model Not Found. Err: " + e.message)
                     case e: ServingRuntimeException =>
                       complete(405, "Serving Runtime Error Err: " + e.message)
                     case e =>
@@ -356,6 +354,9 @@ object FrontEndApp extends Supportive with EncryptSupportive {
   val metrics = new MetricRegistry
   val overallRequestTimer = metrics.timer("zoo.serving.request.overall")
   val predictRequestTimer = metrics.timer("zoo.serving.request.predict")
+  val servableRetriveTimer = metrics.timer("zoo.serving.retrive.servable")
+  val servablesRetriveTimer = metrics.timer("zoo.serving.retrive.servables")
+  val backendInferenceTimer = metrics.timer("zoo.serving.backend.inference")
   val putRedisTimer = metrics.timer("zoo.serving.redis.put")
   val getRedisTimer = metrics.timer("zoo.serving.redis.get")
   val waitRedisTimer = metrics.timer("zoo.serving.redis.wait")
@@ -425,9 +426,9 @@ object FrontEndApp extends Supportive with EncryptSupportive {
     opt[String]('w', "redissTrustStoreToken")
       .action((x, c) => c.copy(redissTrustStoreToken = x))
       .text("rediss trustStore password")
-    opt[String]('z', "servableManagerPath")
+    opt[String]('z', "servableManagerConfPath")
       .action((x, c) => c.copy(servableManagerPath = x))
-      .text("servableManagerPath")
+      .text("servableManagerConfPath")
   }
 
   def defineServerContext(httpsKeyStoreToken: String,

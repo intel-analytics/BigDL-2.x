@@ -21,6 +21,7 @@ import java.util
 import java.util.concurrent.LinkedBlockingQueue
 import scala.concurrent.Await
 import java.util.{HashMap, UUID}
+import java.nio.file.{Paths, Files}
 
 import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
@@ -640,11 +641,11 @@ object ServingTimerMetrics {
 class ServableManager {
   private var modelVersionMap = new mutable.HashMap[String, mutable.HashMap[String, Servable]]
 
-  def load(servableConfigDir: String): Unit = {
-    if (!new java.io.File(servableConfigDir).isFile){
-      throw ServableLoadException("servable config dir not exist", null)
+  def load(servableManagerConfigDir: String): Unit = {
+    if (!Files.exists(Paths.get(servableManagerConfigDir))){
+      throw ServableLoadException("servable Manager config dir not exist", null)
     }
-    val servableManagerConfYaml = scala.io.Source.fromFile(servableConfigDir).mkString
+    val servableManagerConfYaml = scala.io.Source.fromFile(servableManagerConfigDir).mkString
     val modelInfoList = YamlUtil.fromYaml(classOf[ServableManagerConf], servableManagerConfYaml).modelMetaDataList
     for (modelInfo <- modelInfoList) {
       if (!modelVersionMap.contains(modelInfo.getModelName)) {
@@ -652,7 +653,8 @@ class ServableManager {
         modelVersionMap(modelInfo.getModelName) = versionMapper
       }
       if (modelVersionMap(modelInfo.getModelName).contains(modelInfo.getModelVersion)) {
-        throw ServableLoadException("duplicated model info", null)
+        throw ServableLoadException("duplicated model info. Model Name: " + modelInfo.getModelName
+          + ", Model Version: " + modelInfo.getModelVersion, null)
       }
       modelInfo match {
         case _: ClusterServingMetaData =>
@@ -666,14 +668,14 @@ class ServableManager {
 
   def retriveServables(modelName: String): List[Servable] = {
     if (!modelVersionMap.contains(modelName)) {
-      throw ModelNotFoundException("model not exist", null)
+      throw ModelNotFoundException("model not exist. Model Name: " + modelName, null)
     }
     modelVersionMap(modelName).values.toList
   }
 
   def retriveServable(modelName: String, modelVersion: String): Servable = {
     if (!modelVersionMap.contains(modelName) || !modelVersionMap(modelName).contains(modelVersion)) {
-      throw ModelNotFoundException("model not exist", null)
+      throw ModelNotFoundException("model not exist. Model Name: " + modelName + ", Model Version: " + modelVersion, null)
     }
     modelVersionMap(modelName)(modelVersion)
   }
