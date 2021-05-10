@@ -146,6 +146,7 @@ def test_write_voc(orca_context_fixture):
     sc = orca_context_fixture
     temp_dir = tempfile.mkdtemp()
     try:
+        from zoo.orca.data import SparkXShards
         dataset_path = os.path.join(resource_path, "VOCdevkit")
         output_path = os.path.join(temp_dir, "output_dataset")
         write_voc(dataset_path, splits_names=[(2007, "trainval")],
