@@ -385,8 +385,7 @@ class RayTuneSearchEngine(SearchEngine):
             # fit model
             best_reward = None
             for i in range(1, 101):
-                result = trial_model.fit_eval(x_train,
-                                              y_train,
+                result = trial_model.fit_eval(data=(x_train, y_train),
                                               validation_data=validation_data,
                                               mc=mc,
                                               metric=metric,

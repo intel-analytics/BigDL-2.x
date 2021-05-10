@@ -59,8 +59,7 @@ class TestBasePytorchModel(TestCase):
             "lr": 1e-2,
             "batch_size": 32,
         })
-        val_result = model.fit_eval(x=self.data["x"],
-                                    y=self.data["y"],
+        val_result = model.fit_eval(data=(self.data["x"], self.data["y"]),
                                     validation_data=(self.data["val_x"], self.data["val_y"]),
                                     epochs=20)
         assert val_result is not None
@@ -73,8 +72,7 @@ class TestBasePytorchModel(TestCase):
             "lr": 1e-2,
             "batch_size": 32,
         })
-        model.fit_eval(x=self.data["x"],
-                       y=self.data["y"],
+        model.fit_eval(data=(self.data["x"], self.data["y"]),
                        validation_data=(self.data["val_x"], self.data["val_y"]),
                        epochs=20)
         mse_eval = model.evaluate(x=self.data["val_x"], y=self.data["val_y"])
@@ -86,8 +84,7 @@ class TestBasePytorchModel(TestCase):
         except ImportError:
             pass
         # incremental training test
-        model.fit_eval(x=self.data["x"],
-                       y=self.data["y"],
+        model.fit_eval(data=(self.data["x"], self.data["y"]),
                        validation_data=(self.data["val_x"], self.data["val_y"]),
                        epochs=20)
         mse_eval = model.evaluate(x=self.data["val_x"], y=self.data["val_y"])
@@ -107,8 +104,7 @@ class TestBasePytorchModel(TestCase):
             "lr": 1e-2,
             "batch_size": 32,
         })
-        model.fit_eval(x=self.data["x"],
-                       y=self.data["y"],
+        model.fit_eval(data=(self.data["x"], self.data["y"]),
                        validation_data=(self.data["val_x"], self.data["val_y"]),
                        epochs=20)
         pred = model.predict(x=self.data["val_x"])

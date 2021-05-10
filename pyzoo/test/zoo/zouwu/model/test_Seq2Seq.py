@@ -65,7 +65,7 @@ class TestSeq2Seq(ZooTestCase):
                                                      past_seq_len=self.past_seq_len,
                                                      future_seq_len=self.future_seq_len_1)
         print("fit_eval_future_seq_len_1:",
-              self.model_1.fit_eval(x_train_1, y_train_1, **self.config))
+              self.model_1.fit_eval((x_train_1, y_train_1), **self.config))
         assert self.model_1.past_seq_len == 6
         assert self.model_1.feature_num == 4
         assert self.model_1.future_seq_len == 1
@@ -88,7 +88,7 @@ class TestSeq2Seq(ZooTestCase):
             'latent_dim': 128,
             'dropout': 0.2
         }
-        model.fit_eval(x_train, y_train, **model_config)
+        model.fit_eval((x_train, y_train), **model_config)
         y_pred = model.predict(x_test)
         rmse, smape = model.evaluate(x=x_test, y=y_test, metric=["rmse", "smape"])
         assert rmse.shape == smape.shape
@@ -105,7 +105,7 @@ class TestSeq2Seq(ZooTestCase):
                                                      past_seq_len=self.past_seq_len,
                                                      future_seq_len=self.future_seq_len_2)
         print("fit_eval_future_seq_len_2:",
-              self.model_2.fit_eval(x_train_2, y_train_2, **self.config))
+              self.model_2.fit_eval((x_train_2, y_train_2), **self.config))
         assert self.model_2.future_seq_len == 2
 
         self.fitted = True
@@ -118,7 +118,7 @@ class TestSeq2Seq(ZooTestCase):
                                                  past_seq_len=self.past_seq_len,
                                                  future_seq_len=self.future_seq_len_1)
 
-        self.model_1.fit_eval(x_train_1, y_train_1, **self.config)
+        self.model_1.fit_eval((x_train_1, y_train_1), **self.config)
 
         print("evaluate_future_seq_len_1:", self.model_1.evaluate(x_val_1,
                                                                   y_val_1,
@@ -133,7 +133,7 @@ class TestSeq2Seq(ZooTestCase):
                                                  past_seq_len=self.past_seq_len,
                                                  future_seq_len=self.future_seq_len_2)
 
-        self.model_2.fit_eval(x_train_2, y_train_2, **self.config)
+        self.model_2.fit_eval((x_train_2, y_train_2), **self.config)
 
         print("evaluate_future_seq_len_2:", self.model_2.evaluate(x_val_2,
                                                                   y_val_2,
@@ -145,7 +145,7 @@ class TestSeq2Seq(ZooTestCase):
                                                      past_seq_len=self.past_seq_len,
                                                      future_seq_len=self.future_seq_len_1)
         x_test_1 = self.feat._roll_test(self.test_data, past_seq_len=self.past_seq_len)
-        self.model_1.fit_eval(x_train_1, y_train_1, **self.config)
+        self.model_1.fit_eval((x_train_1, y_train_1), **self.config)
 
         predict_1 = self.model_1.predict(x_test_1)
         assert predict_1.shape == (x_test_1.shape[0], self.future_seq_len_1)
@@ -155,7 +155,7 @@ class TestSeq2Seq(ZooTestCase):
                                                      past_seq_len=self.past_seq_len,
                                                      future_seq_len=self.future_seq_len_2)
         x_test_2 = self.feat._roll_test(self.test_data, past_seq_len=self.past_seq_len)
-        self.model_2.fit_eval(x_train_2, y_train_2, **self.config)
+        self.model_2.fit_eval((x_train_2, y_train_2), **self.config)
 
         predict_2 = self.model_2.predict(x_test_2)
         assert predict_2.shape == (x_test_2.shape[0], self.future_seq_len_2)
@@ -165,7 +165,7 @@ class TestSeq2Seq(ZooTestCase):
                                                      past_seq_len=self.past_seq_len,
                                                      future_seq_len=self.future_seq_len_1)
         x_test_1 = self.feat._roll_test(self.test_data, past_seq_len=self.past_seq_len)
-        self.model_1.fit_eval(x_train_1, y_train_1, **self.config)
+        self.model_1.fit_eval((x_train_1, y_train_1), **self.config)
 
         predict_1_before = self.model_1.predict(x_test_1)
         new_model_1 = LSTMSeq2Seq(check_optional_config=False)
@@ -180,7 +180,7 @@ class TestSeq2Seq(ZooTestCase):
                 "predict before is {}, and predict after is {}".format(predict_1_before,
                                                                        predict_1_after)
             new_config = {'epochs': 1}
-            new_model_1.fit_eval(x_train_1, y_train_1, **new_config)
+            new_model_1.fit_eval((x_train_1, y_train_1), **new_config)
         finally:
             shutil.rmtree(dirname)
 
@@ -189,7 +189,7 @@ class TestSeq2Seq(ZooTestCase):
                                                      past_seq_len=self.past_seq_len,
                                                      future_seq_len=self.future_seq_len_2)
         x_test_2 = self.feat._roll_test(self.test_data, past_seq_len=self.past_seq_len)
-        self.model_2.fit_eval(x_train_2, y_train_2, **self.config)
+        self.model_2.fit_eval((x_train_2, y_train_2), **self.config)
 
         predict_2_before = self.model_2.predict(x_test_2)
         new_model_2 = LSTMSeq2Seq(check_optional_config=False)
@@ -204,7 +204,7 @@ class TestSeq2Seq(ZooTestCase):
                 "predict before is {}, and predict after is {}".format(predict_2_before,
                                                                        predict_2_after)
             new_config = {'epochs': 2}
-            new_model_2.fit_eval(x_train_2, y_train_2, **new_config)
+            new_model_2.fit_eval((x_train_2, y_train_2), **new_config)
         finally:
             shutil.rmtree(dirname)
 
@@ -213,7 +213,7 @@ class TestSeq2Seq(ZooTestCase):
                                                      past_seq_len=self.past_seq_len,
                                                      future_seq_len=self.future_seq_len_2)
         x_test_2 = self.feat._roll_test(self.test_data, past_seq_len=self.past_seq_len)
-        self.model_2.fit_eval(x_train_2, y_train_2, mc=True, **self.config)
+        self.model_2.fit_eval((x_train_2, y_train_2), mc=True, **self.config)
         prediction, uncertainty = self.model_2.predict_with_uncertainty(x_test_2, n_iter=2)
         assert prediction.shape == (x_test_2.shape[0], self.future_seq_len_2)
         assert uncertainty.shape == (x_test_2.shape[0], self.future_seq_len_2)

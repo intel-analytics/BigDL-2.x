@@ -52,8 +52,7 @@ class TestBaseKerasModel(TestCase):
             "batch_size": 32,
             "metric": "mse"
         })
-        val_result = model.fit_eval(x=self.data["x"],
-                                    y=self.data["y"],
+        val_result = model.fit_eval(data=(self.data["x"], self.data["y"]),
                                     validation_data=(self.data["val_x"], self.data["val_y"]),
                                     epochs=20)
         assert val_result is not None
@@ -73,8 +72,7 @@ class TestBaseKerasModel(TestCase):
                 "batch_size": 32,
                 "metric": "mse"
             })
-            model.fit_eval(x=self.data["x"],
-                           y=self.data["y"],
+            model.fit_eval(data=(self.data["x"], self.data["y"]),
                            validation_data=(self.data["val_x"], self.data["val_y"]),
                            epochs=20)
 
@@ -85,8 +83,7 @@ class TestBaseKerasModel(TestCase):
             "batch_size": 32,
         })
         with pytest.raises(ValueError):
-            model.fit_eval(x=self.data["x"],
-                           y=self.data["y"],
+            model.fit_eval(data=(self.data["x"], self.data["y"]),
                            validation_data=(self.data["val_x"], self.data["val_y"]),
                            metric='mae',
                            epochs=20)
