@@ -15,7 +15,7 @@
 #
 
 from zoo.common.nncontext import *
-from zoo.util.engine import prepare_env
+from zoo.util.engine import prepare_env, is_spark_below_ver
 
 prepare_env()
 creator_classes = JavaCreator.get_creator_class()[:]
@@ -32,8 +32,9 @@ JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.api.net.python.P
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.inference.PythonInferenceModel")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.pipeline.estimator.python.PythonEstimator")
 JavaCreator.add_creator_class("com.intel.analytics.zoo.orca.python.PythonOrca")
-JavaCreator.add_creator_class("com.intel.analytics.zoo.friesian.python.PythonFriesian")
+if not is_spark_below_ver("2.4"):
+    JavaCreator.add_creator_class("com.intel.analytics.zoo.friesian.python.PythonFriesian")
 for clz in creator_classes:
     JavaCreator.add_creator_class(clz)
 
-__version__ = "0.10.0.dev0"
+__version__ = "0.11.0.dev0"

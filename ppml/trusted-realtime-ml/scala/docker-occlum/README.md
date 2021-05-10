@@ -1,4 +1,4 @@
-# Trusted Cluster Serving with occlum
+# Trusted Realtime ML with occlum
 
 Please pay attention to IP and path etc.. They should be changed to your own server IP/path.
 
@@ -14,29 +14,25 @@ Before running the following command, please modify the paths in `build-docker-i
 
 ### Prepare the keys
 
-PPML in analytics zoo needs secured keys to enable Flink TLS, https and TLS enabled Redis. You need to prepare secure keys and keystores.
-
-This script is under `analytics-zoo/ppml/scripts`:
+PPML in analytics zoo needs secured keys to enable Flink TLS, https and TLS enabled Redis. In this tutorial, you can generate keys and keystores with root permission (test only, need input security password for keys).
 
 ```bash
-../../../generate-keys.sh
+sudo ../../../scripts/generate-keys.sh
 ```
 
-You also need to store password you used in the previous step in a secured file:
-
-This script is also under `/analytics-zoo/ppml/scripts`:
+You also need to store password you used for key generation, i.e., `generate-keys.sh`, in a secured file:
 
 ```bash
-../../../generate-password.sh used_password_when_generate_keys
+../../../scripts/generate-password.sh used_password_when_generate_keys
 ```
 
 For example:
 
 ```bash
-../../../generate-password.sh 1234qwer
+../../../scripts/generate-password.sh 1234qwer
 ```
 
-### Start Trusted Clsuter Serving with PPML Docker image
+### Start Trusted Cluster Serving with PPML Docker image
 
 The default operating system limits on mmap counts is likely to be too low, which may result in out of memory exceptions.
 To address this, run the following command before stating trusted cluster serving:
@@ -49,7 +45,7 @@ This change will propagate into the containers as they share the same kernel as 
 
 In this mode, all components, redis, Flink & http front end, are running in single container.
 
-Before run the following command, please modify paths in `start-local-cluster-serving.sh` first. Then start Trusted Clsuter Serving with the following command:
+Before run the following command, please modify paths in `start-local-cluster-serving.sh` first. Then start Trusted Cluster Serving with the following command:
 
 ```bash
 ./start-local-cluster-serving.sh
@@ -63,27 +59,27 @@ To test a specific component, pass one or more argument to it among the followin
 "redis", "flinkjm", "flinktm", "frontend", and "serving". For example, run the following command to check the status of the Flink job manager.
 
 ```bash
-docker exec -it trusted-cluster-servinglocal bash /opt/check-status.sh flinkjm
+docker exec -it trusted-realtime-mllocal bash /opt/check-status.sh flinkjm
 ```
 
 To test all components, you can either pass no argument or pass the "all" argument.
 
 ```bash
-docker exec -it trusted-cluster-servinglocal bash /opt/check-status.sh
+docker exec -it trusted-realtime-mllocal bash /opt/check-status.sh
 ```
 If all is well, the following results should be displayed:
 
 ```
 Detecting redis status...
-Redis initilization successful.
+Redis initialization successful.
 Detecting Flink job manager status...
-Flink job manager initilization successful.
+Flink job manager initialization successful.
 Detecting Flink task manager status...
-Flink task manager initilization successful.
+Flink task manager initialization successful.
 Detecting http frontend status. This may take a while.
-Http frontend initilization successful.
+Http frontend initialization successful.
 Detecting cluster-serving-job status...
-cluster-serving-job initilization successful.
+cluster-serving-job initialization successful.
 ```
 
 It is suggested to run this script once after starting local cluster serving to verify that all components are up and running.
@@ -95,10 +91,10 @@ In this mode, all components, redis, Flink & http front end, are running in diff
 Pre-requests:
 
 1. Setup `no password ssh login` between all nodes.
-2. Modify IP/paths in `environments.sh`. 
+2. Modify IP/paths in `environment.sh`. 
 
 ```bash
-nano environments.sh
+nano environment.sh
 ```
 
 ##### Start distributed cluster serving

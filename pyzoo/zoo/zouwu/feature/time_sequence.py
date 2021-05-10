@@ -22,6 +22,7 @@ from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 import json
+from packaging import version
 
 TIME_FEATURE = ("MINUTE", "DAY", "DAYOFYEAR", "HOUR", "WEEKDAY", "WEEKOFYEAR", "MONTH")
 ADDITIONAL_TIME_FEATURE = ("IS_AWAKE", "IS_BUSY_HOURS", "IS_WEEKEND")
@@ -538,7 +539,15 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
         # built in time features
         for attr in TIME_FEATURE:
-            df[attr + "({})".format(self.dt_col)] = getattr(field.dt, attr.lower())
+            if attr == "WEEKOFYEAR" and \
+                    version.parse(pd.__version__) >= version.parse("1.1.0"):
+                # DatetimeProperties.weekofyear has been deprecated since pandas 1.1.0,
+                # convert to DatetimeIndex to fix, and call pd.Int64Index to return a index
+                field_datetime = pd.to_datetime(field.values.astype(np.int64))
+                df[attr + "({})".format(self.dt_col)] =\
+                    pd.Int64Index(field_datetime.isocalendar().week)
+            else:
+                df[attr + "({})".format(self.dt_col)] = getattr(field.dt, attr.lower())
 
         # additional time features
         hour = field.dt.hour
@@ -554,8 +563,11 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
 
     def _get_features(self, input_df, config):
         feature_matrix = self._generate_features(input_df)
-        # self.write_generate_feature_list(feature_defs)
-        feature_cols = np.asarray(json.loads(config.get("selected_features")))
+        selected_features = config.get("selected_features")
+        if selected_features:
+            feature_cols = np.asarray(json.loads(selected_features))
+        else:
+            feature_cols = self.get_feature_list()
         # we do not include target col in candidates.
         # the first column is designed to be the default position of target column.
         target_col = np.array(self.target_col)
@@ -564,7 +576,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
         return target_feature_matrix.astype(float)
 
     def _get_optional_parameters(self):
-        return set(["past_seq_len"])
+        return {"past_seq_len", "selected_features"}
 
     def _get_required_parameters(self):
-        return set(["selected_features"])
+        return set()

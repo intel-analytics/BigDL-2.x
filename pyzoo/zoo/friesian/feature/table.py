@@ -14,11 +14,18 @@
 # limitations under the License.
 #
 import os
+from functools import reduce
 
-from pyspark.sql.functions import col, array, broadcast
+from pyspark.sql.types import DoubleType, ArrayType
+from pyspark.ml import Pipeline
+from pyspark.ml.feature import MinMaxScaler
+from pyspark.ml.feature import VectorAssembler
+from pyspark.sql.functions import col, udf, array, broadcast, explode, struct, collect_list
+
 from zoo.orca import OrcaContext
-from zoo.friesian.feature.utils import generate_string_idx, fill_na, \
-    fill_na_int, compute, log_with_clip, clip_min
+from zoo.friesian.feature.utils import *
+from zoo.common.utils import callZooFunc
+
 
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
@@ -34,6 +41,21 @@ class Table:
             paths = [paths]
         spark = OrcaContext.get_spark_session()
         df = spark.read.parquet(*paths)
+        return df
+
+    @staticmethod
+    def _read_json(paths, cols):
+        if not isinstance(paths, list):
+            paths = [paths]
+        spark = OrcaContext.get_spark_session()
+        df = spark.read.json(paths)
+        if cols:
+            if isinstance(cols, list):
+                df = df.select(*cols)
+            elif isinstance(cols, str):
+                df = df.select(cols)
+            else:
+                raise Exception("cols should be a column name or list of column names")
         return df
 
     def _clone(self, df):
@@ -54,7 +76,7 @@ class Table:
         """
         return self.df
 
-    def count(self):
+    def size(self):
         """
         Returns the number of rows in this Table.
 
@@ -93,40 +115,126 @@ class Table:
 
         :return: A new Table that replaced the null values with specified value
         """
+        if columns and not isinstance(columns, list):
+            columns = [columns]
+        if columns:
+            check_col_exists(self.df, columns)
         if isinstance(value, int) and JAVA_INT_MIN <= value <= JAVA_INT_MAX:
-            return self._clone(fill_na_int(self.df, value, columns))
-        else:
-            return self._clone(fill_na(self.df, value, columns))
+            if columns:
+                col_not_int_list = list(filter(lambda x: x[0] in columns and x[1] != "int",
+                                               self.df.dtypes))
+                if len(col_not_int_list) == 0:
+                    return self._clone(fill_na_int(self.df, value, columns))
+            else:
+                return self._clone(fill_na_int(self.df, value, columns))
+        return self._clone(fill_na(self.df, value, columns))
 
-    def clip(self, columns, min=0):
+    def dropna(self, columns, how='any', thresh=None):
         """
-        clips continuous values so that they are within a min bound. For instance by setting the
-        min value to 0, all negative values in columns will be replaced with 0.
+        Drops the rows containing null values in the specified columns.
 
-        :param columns: list of str, the target columns to be clipped.
-        :param min: int, The mininum value to clip values to: values less than this will be
+        :param columns: a string or a list of strings that specifies column names. If it is None,
+               it will operate on all columns.
+        :param how: If `how` is "any", then drop rows containing any null values in `columns`.
+               If `how` is "all", then drop rows only if every column in `columns` is null for
+               that row.
+        :param thresh: int, if specified, drop rows that have less than thresh non-null values.
+               Default is None.
+
+        :return: A new Table that drops the rows containing null values in the specified columns.
+        """
+        return self._clone(self.df.dropna(how, thresh, subset=columns))
+
+    def distinct(self):
+        """
+        A wrapper of dataframe distinct
+        :return: A new Table that only has distinct rows
+        """
+        return self._clone(self.df.distinct())
+
+    def filter(self, condition):
+        """
+        Filters the rows that satisfy `condition`. For instance, filter("col_1 == 1") will filter
+        the rows that has value 1 at column col_1.
+
+        :param condition: a string that gives the condition for filtering.
+
+        :return: A new Table with filtered rows
+        """
+        return self._clone(self.df.filter(condition))
+
+    def clip(self, columns, min=None, max=None):
+        """
+        Clips continuous values so that they are within the range [min, max]. For instance, by
+        setting the min value to 0, all negative values in columns will be replaced with 0.
+
+        :param columns: str or list of str, the target columns to be clipped.
+        :param min: numeric, the mininum value to clip values to. Values less than this will be
+               replaced with this value.
+        :param max: numeric, the maxinum value to clip values to. Values greater than this will be
                replaced with this value.
 
-        :return: A new Table that replaced the value less than `min` with specified `min`
+        :return: A new Table that replaced the value less than `min` with specified `min` and the
+                 value greater than `max` with specified `max`
         """
+        assert min is not None or max is not None, "at least one of min and max should be not None"
+        if columns is None:
+            raise ValueError("columns should be str or list of str, but got None.")
         if not isinstance(columns, list):
             columns = [columns]
-        return self._clone(clip_min(self.df, columns, min))
+        check_col_exists(self.df, columns)
+        return self._clone(clip(self.df, columns, min, max))
 
     def log(self, columns, clipping=True):
         """
         Calculates the log of continuous columns.
 
-        :param columns: list of str, the target columns to calculate log.
+        :param columns: str or list of str, the target columns to calculate log.
         :param clipping: boolean, if clipping=True, the negative values in columns will be
                clipped to 0 and `log(x+1)` will be calculated. If clipping=False, `log(x)` will be
                calculated.
 
         :return: A new Table that replaced value in columns with logged value.
         """
+        if columns is None:
+            raise ValueError("columns should be str or list of str, but got None.")
         if not isinstance(columns, list):
             columns = [columns]
+        check_col_exists(self.df, columns)
         return self._clone(log_with_clip(self.df, columns, clipping))
+
+    def fill_median(self, columns):
+        """
+        Replaces null values with the median in the specified numeric columns. Any column to be
+        filled should not contain only null values.
+
+        :param columns: a string or a list of strings that specifies column names. If it is None,
+               it will operate on all numeric columns.
+
+        :return: A new Table that replaces null values with the median in the specified numeric
+                 columns.
+        """
+        if columns and not isinstance(columns, list):
+            columns = [columns]
+        if columns:
+            check_col_exists(self.df, columns)
+        return self._clone(fill_median(self.df, columns))
+
+    def median(self, columns):
+        """
+        Returns a new Table that has two columns, `column` and `median`, containing the column
+        names and the medians of the specified numeric columns.
+
+        :param columns: a string or a list of strings that specifies column names. If it is None,
+               it will operate on all numeric columns.
+
+        :return: A new Table that contains the medians of the specified columns.
+        """
+        if columns and not isinstance(columns, list):
+            columns = [columns]
+        if columns:
+            check_col_exists(self.df, columns)
+        return self._clone(median(self.df, columns))
 
     # Merge column values as a list to a new col
     def merge_cols(self, columns, target):
@@ -168,6 +276,9 @@ class Table:
         """
         self.df.show(n, truncate)
 
+    def write_parquet(self, path, mode="overwrite"):
+        self.df.write.mode(mode).parquet(path)
+
 
 class FeatureTable(Table):
     @classmethod
@@ -180,6 +291,10 @@ class FeatureTable(Table):
         :return: A FeatureTable
         """
         return cls(Table._read_parquet(paths))
+
+    @classmethod
+    def read_json(cls, paths, cols=None):
+        return cls(Table._read_json(paths, cols))
 
     def encode_string(self, columns, indices):
         """
@@ -204,7 +319,8 @@ class FeatureTable(Table):
             col_name = columns[i]
             index_tbl.broadcast()
             data_df = data_df.join(index_tbl.df, col_name, how="left") \
-                .drop(col_name).withColumnRenamed("id", col_name)
+                .drop(col_name).withColumnRenamed("id", col_name)\
+                .dropna(subset=[col_name])
         return FeatureTable(data_df)
 
     def gen_string_idx(self, columns, freq_limit):
@@ -213,13 +329,17 @@ class FeatureTable(Table):
 
         :param columns: str or a list of str, target columns to generate StringIndex.
         :param freq_limit: int, dict or None. Categories with a count/frequency below freq_limit
-               will be ommited from the encoding. Can be represented as both an integer,
-               dict or None. For instance, 15, {'col_4': 10, 'col_5': 2} etc.
+               will be omitted from the encoding. Can be represented as both an integer,
+               dict or None. For instance, 15, {'col_4': 10, 'col_5': 2} etc. None means all the
+               categories that appear will be encoded.
 
         :return: List of StringIndex
         """
+        if columns is None:
+            raise ValueError("columns should be str or list of str, but got None.")
         if not isinstance(columns, list):
             columns = [columns]
+        check_col_exists(self.df, columns)
         if freq_limit:
             if isinstance(freq_limit, int):
                 freq_limit = str(freq_limit)
@@ -233,7 +353,232 @@ class FeatureTable(Table):
                                    zip(df_id_list, columns)))
         return string_idx_list
 
+    def gen_ind2ind(self, cols, indices):
+        """
+        Generate a mapping between of indices
+
+        :param cols: a list of str, target columns to generate StringIndex.
+        :param indices:  list of StringIndex
+
+        :return: FeatureTable
+        """
+        df = self.encode_string(cols, indices).df.select(*cols).distinct()
+        return FeatureTable(df)
+
     def _clone(self, df):
+        return FeatureTable(df)
+
+    def cross_columns(self, crossed_columns, bucket_sizes):
+        """
+        Cross columns and hashed to specified bucket size
+        :param crossed_columns: list of column name pairs to be crossed.
+        i.e. [['a', 'b'], ['c', 'd']]
+        :param bucket_sizes: hash bucket size for crossed pairs. i.e. [1000, 300]
+        :return: FeatureTable include crossed columns(i.e. 'a_b', 'c_d')
+        """
+        df = cross_columns(self.df, crossed_columns, bucket_sizes)
+        return FeatureTable(df)
+
+    def normalize(self, columns):
+        """
+        Normalize numeric columns
+        :param columns: list of column names
+        :return: FeatureTable
+        """
+        df = self.df
+        types = [x[1] for x in self.df.select(*columns).dtypes]
+        scalar_cols = [columns[i] for i in range(len(columns))
+                       if types[i] == "int" or types[i] == "bigint"
+                       or types[i] == "float" or types[i] == "double"]
+        array_cols = [columns[i] for i in range(len(columns))
+                      if types[i] == "array<int>" or types[i] == "array<bigint>"
+                      or types[i] == "array<float>" or types[i] == "array<double>"]
+        vector_cols = [columns[i] for i in range(len(columns)) if types[i] == "vector"]
+        if scalar_cols:
+            assembler = VectorAssembler(inputCols=scalar_cols, outputCol="vect")
+
+            # MinMaxScaler Transformation
+            scaler = MinMaxScaler(inputCol="vect", outputCol="scaled")
+
+            # Pipeline of VectorAssembler and MinMaxScaler
+            pipeline = Pipeline(stages=[assembler, scaler])
+
+            tolist = udf(lambda x: x.toArray().tolist(), ArrayType(DoubleType()))
+
+            # Fitting pipeline on dataframe
+            df = pipeline.fit(df).transform(df) \
+                .withColumn("scaled_list", tolist(col("scaled"))) \
+                .drop("vect").drop("scaled")
+            for i in range(len(scalar_cols)):
+                df = df.withColumn(scalar_cols[i], col("scaled_list")[i])
+            df = df.drop("scaled_list")
+
+            # cast to float
+            for c in scalar_cols:
+                df = df.withColumn(c, col(c).cast("float"))
+
+        for c in array_cols:
+            df = normalize_array(df, c)
+
+        for c in vector_cols:
+            scaler = MinMaxScaler(inputCol=c, outputCol="scaled")
+            df = scaler.fit(df).transform(df).withColumnRenamed("scaled", c)
+
+        return FeatureTable(df)
+
+    def add_negative_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
+        """
+        Generate negative item visits for each positive item visit
+
+        :param item_size: integer, max of item.
+        :param item_col:  string, name of item column
+        :param label_col:  string, name of label column
+        :param neg_num:  integer, for each positive record, add neg_num of negative samples
+
+        :return: FeatureTable
+        """
+        df = callZooFunc("float", "addNegSamples", self.df, item_size, item_col, label_col, neg_num)
+        return FeatureTable(df)
+
+    def add_hist_seq(self, user_col, cols, sort_col='time', min_len=1, max_len=100):
+        """
+        Generate a list of item visits in history
+
+        :param user_col: string, user column.
+        :param cols:  list of string, ctolumns need to be aggragated
+        :param sort_col:  string, sort by sort_col
+        :param min_len:  int, minimal length of a history list
+        :param max_len:  int, maximal length of a history list
+
+        :return: FeatureTable
+        """
+        df = callZooFunc("float", "addHistSeq", self.df, user_col, cols, sort_col, min_len, max_len)
+        return FeatureTable(df)
+
+    def add_neg_hist_seq(self, item_size, item_history_col, neg_num):
+        """
+         Generate a list negative samples for each item in item_history_col
+
+         :param item_size: int, max of item.
+         :param item2cat:  FeatureTable with a dataframe of item to catgory mapping
+         :param item_history_col:  string, this column should be a list of visits in history
+         :param neg_num:  int, for each positive record, add neg_num of negative samples
+
+         :return: FeatureTable
+         """
+
+        df = callZooFunc("float", "addNegHisSeq", self.df, item_size, item_history_col, neg_num)
+        return FeatureTable(df)
+
+    def pad(self, padding_cols, seq_len=100):
+        """
+         Post padding padding columns
+
+         :param padding_cols: list of string, columns need to be padded with 0s.
+         :param seq_len:  int, length of padded column
+
+         :return: FeatureTable
+         """
+        df = callZooFunc("float", "postPad", self.df, padding_cols, seq_len)
+        return FeatureTable(df)
+
+    def mask(self, mask_cols, seq_len=100):
+        """
+         Mask mask_cols columns
+
+         :param mask_cols: list of string, columns need to be masked with 1s and 0s.
+         :param seq_len:  int, length of masked column
+
+         :return: FeatureTable
+         """
+        df = callZooFunc("float", "mask", self.df, mask_cols, seq_len)
+        return FeatureTable(df)
+
+    def add_length(self, col_name):
+        """
+         Generagte length of a colum
+
+         :param col_name: string.
+
+         :return: FeatureTable
+         """
+        df = callZooFunc("float", "addLength", self.df, col_name)
+        return FeatureTable(df)
+
+    def mask_pad(self, padding_cols, mask_cols, seq_len=100):
+        """
+         Mask and pad columns
+
+         :param padding_cols: list of string, columns need to be padded with 0s.
+         :param mask_cols: list of string, columns need to be masked with 1s and 0s.
+         :param seq_len:  int, length of masked column
+
+         :return: FeatureTable
+         """
+        table = self.mask(mask_cols, seq_len)
+        return table.pad(padding_cols, seq_len)
+
+    def transform_python_udf(self, in_col, out_col, udf_func):
+        """
+         Transform a FeatureTable using a python udf
+
+         :param in_col: string, name of column needed to be transformed.
+         :param out_col: string, output column.
+         :param udf_func: user defined python function
+
+         :return: FeatureTable
+         """
+        df = self.df.withColumn(out_col, udf_func(col(in_col)))
+        return FeatureTable(df)
+
+    def join(self, table, on=None, how=None):
+        """
+         Join a FeatureTable with another FeatureTable, it is wrapper of spark dataframe join
+
+         :param table: FeatureTable
+         :param on: string, join on this column
+         :param how: string
+
+         :return: FeatureTable
+         """
+        assert isinstance(table, Table), "the joined table should be a Table"
+        joined_df = self.df.join(table.df, on=on, how=how)
+        return FeatureTable(joined_df)
+
+    def add_feature(self, item_cols, feature_tbl, default_value):
+        """
+         Get the category or other field from another map like FeatureTable
+
+         :param item_cols: list[string]
+         :param feature_tbl: FeatureTable with two columns [category, item]
+         :param defalut_cat_index: default value for category if key does not exist
+
+         :return: FeatureTable
+         """
+        item2cat_map = dict(feature_tbl.df.distinct().rdd.map(lambda row: (row[0], row[1]))
+                            .collect())
+
+        def gen_cat(items):
+            getcat = lambda item: item2cat_map.get(item, default_value)
+            if isinstance(items, int):
+                cats = getcat(items)
+            elif isinstance(items, list) and isinstance(items[0], int):
+                cats = [getcat(item) for item in items]
+            elif isinstance(items, list) and isinstance(items[0], list) and isinstance(items[0][0],
+                                                                                       int):
+                cats = []
+                for line in items:
+                    line_cats = [getcat(item) for item in line]
+                    cats.append(line_cats)
+            else:
+                raise ValueError('only int, list[int], and list[list[int]] are supported.')
+            return cats
+
+        df = self.df
+        for c in item_cols:
+            col_type = df.schema[c].dataType
+            cat_udf = udf(gen_cat, col_type)
+            df = df.withColumn(c.replace("item", "category"), cat_udf(col(c)))
         return FeatureTable(df)
 
 

@@ -15,6 +15,9 @@
 #
 from unittest import TestCase
 from zoo.automl.model import PytorchModelBuilder
+
+import pytest
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -109,6 +112,8 @@ class TestBasePytorchModel(TestCase):
                        validation_data=(self.data["val_x"], self.data["val_y"]),
                        epochs=20)
         pred = model.predict(x=self.data["val_x"])
+        pred_full_batch = model.predict(x=self.data["val_x"], batch_size=len(self.data["val_x"]))
+        np.testing.assert_almost_equal(pred, pred_full_batch)
         try:
             import onnx
             import onnxruntime
@@ -116,3 +121,20 @@ class TestBasePytorchModel(TestCase):
             np.testing.assert_almost_equal(pred, pred_onnx)
         except ImportError:
             pass
+
+    def test_create_not_torch_model(self):
+        def model_creator(config):
+            return torch.Tensor(3, 5)
+
+        modelBuilder = PytorchModelBuilder(model_creator=model_creator,
+                                           optimizer_creator=optimizer_creator,
+                                           loss_creator=loss_creator)
+        with pytest.raises(ValueError):
+            model = modelBuilder.build(config={
+                "lr": 1e-2,
+                "batch_size": 32,
+            })
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

@@ -11,7 +11,7 @@
 # postProcessing:
 
 # default, false, if input is already batched NdArray, set true
-# dataAlreadyBatched:
+# inputAlreadyBatched:
 
 ######## Performance Configuration
 # default, number of cores per machine
@@ -54,3 +54,6 @@
 
 # default: false
 # modelEncrypted:
+
+# default: false
+# recordEncrypted:
