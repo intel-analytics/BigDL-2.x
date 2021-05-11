@@ -360,8 +360,9 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         end_trigger = MaxEpoch(epochs)
         if isinstance(data, DataLoader):
             assert batch_size is None and data.batch_size > 0, "You should specify batch size in " \
-                                                               "DataLoader not in fit method. " \
-                                                               "DataLoader supports automatic " \
+                                                               "PyTorch DataLoader, not in fit " \
+                                                               "method. PyTorch DataLoader " \
+                                                               "supports automatic " \
                                                                "batching(default)."
         else:
             assert batch_size is not None and batch_size > 0, "batch_size should be greater than 0"
@@ -462,8 +463,9 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
                                          " argument when creating this estimator."
         if isinstance(data, DataLoader):
             assert batch_size is None and data.batch_size > 0, "You should specify batch size in " \
-                                                               "DataLoader not in fit method. " \
-                                                               "DataLoader supports automatic " \
+                                                               "PyTorch DataLoader, not in fit " \
+                                                               "method. PyTorch DataLoader " \
+                                                               "supports automatic " \
                                                                "batching(default)."
         else:
             assert batch_size is not None and batch_size > 0, "batch_size should be greater than 0"
