@@ -120,7 +120,6 @@ class PyTorchRayEstimator(OrcaRayEstimator):
                  use_tqdm=False,
                  backend="torch_distributed",
                  workers_per_node=1):
-
         if config is not None and "batch_size" in config:
             raise Exception("Please do not specify batch_size in config. Input batch_size in the"
                             " fit/evaluate/predict function of the estimator instead.")
@@ -360,8 +359,10 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         end_trigger = MaxEpoch(epochs)
         if isinstance(data, DataLoader):
-            assert batch_size is None and data.batch_size > 0, "You should specify batch size in" \
-            "DataLoader."
+            assert batch_size is None and data.batch_size > 0, "You should specify batch size in " \
+                                                               "DataLoader not in fit method. " \
+                                                               "DataLoader supports automatic " \
+                                                               "batching(default)."
         else:
             assert batch_size is not None and batch_size > 0, "batch_size should be greater than 0"
         checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
@@ -460,8 +461,10 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         assert self.metrics is not None, "metrics shouldn't be None, please specify the metrics" \
                                          " argument when creating this estimator."
         if isinstance(data, DataLoader):
-            assert batch_size is None and data.batch_size > 0, "You should specify batch size in" \
-            "DataLoader."
+            assert batch_size is None and data.batch_size > 0, "You should specify batch size in " \
+                                                               "DataLoader not in fit method. " \
+                                                               "DataLoader supports automatic " \
+                                                               "batching(default)."
         else:
             assert batch_size is not None and batch_size > 0, "batch_size should be greater than 0"
 
