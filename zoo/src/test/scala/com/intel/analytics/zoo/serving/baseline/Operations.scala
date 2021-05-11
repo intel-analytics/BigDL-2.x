@@ -20,9 +20,11 @@ import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.TestUtils
 import com.intel.analytics.zoo.serving.serialization.JsonInputDeserializer
 import com.intel.analytics.zoo.serving.utils.Supportive
+import org.apache.log4j.Logger
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-object Operations {
+object Operations extends Supportive {
+  val logger = Logger.getLogger(getClass)
   def main(args: Array[String]): Unit = {
     // read file from zoo/src/test/resources/serving to String
     // this is a prepared json format input of DIEN recommendation model
@@ -33,15 +35,35 @@ object Operations {
 
     // create a InferenceModel and predict
     val model = new InferenceModel(1)
-    model.doLoadTensorflow("path/to/model", "frozenModel")
-    val result = model.doPredict(input)
+    model.doLoadTensorflow("/home/litchy/models/dien", "frozenModel")
+    val result = timing("predict") {
+      model.doPredict(input)
+    }
 
-    // use 3 threads to do above operations
+    // use 3 threads to predict each 100 times
     val model3 = new InferenceModel(3)
-    model3.doLoadTensorflow("path/to/model", "frozenModel")
+    model3.doLoadTensorflow("/home/litchy/models/dien", "frozenModel")
     (0 until 3).indices.toParArray.foreach(threadIndex => {
       val input = JsonInputDeserializer.deserialize(string)
-      val result = model3.doPredict(input)
+      (0 until 100).foreach(i => {
+        timing(s"thread $threadIndex predict") {
+          val result = model3.doPredict(input)
+        }
+      })
+    })
+    logger.info("inference without sleep benchmark test ended.\n\n\n")
+    // same operations above, but add some sleep after predict
+    (0 until 3).indices.toParArray.foreach(threadIndex => {
+      val input = JsonInputDeserializer.deserialize(string)
+      (0 until 100).foreach(i => {
+        timing(s"thread $threadIndex predict") {
+          val result = model3.doPredict(input)
+          if (i % (threadIndex + 2) == 0) {
+            // sleep for 100 ms
+            Thread.sleep(100)
+          }
+        }
+      })
     })
   }
 
