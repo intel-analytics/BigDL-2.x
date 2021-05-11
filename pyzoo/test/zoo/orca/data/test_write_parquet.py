@@ -147,19 +147,19 @@ def test_write_coco(orca_context_fixture):
     temp_dir = tempfile.mkdtemp()
     split_names = "train2017"
     try:
-        img_path = os.path.join(resource_path,"COCO/{}".format(split_names))
-        ann_file = os.path.join(resource_path,"COCO/annotations/instances_{}.json".format(split_names))
+        from zoo.orca.data import SparkXShards
+        img_path = os.path.join(resource_path, "COCO/{}".format(split_names))
+        ann_file = os.path.join(resource_path,
+                                "COCO/annotations/instances_{}.json".format(split_names))
         output_path = os.path.join(temp_dir, "output_dataset")
         write_coco(img_path, ann_file, output_path="file://" + output_path)
         data, schema = ParquetDataset._read_as_dict_rdd("file://" + output_path)
-        data = data.collect()
-        from io import BytesIO
-        import numpy as np
-        for d in data:
-            img_bytes = BytesIO(d["image"])
-            img = np.load(img_bytes)
-            label = d["label"]
-            print(label.shape)
+        data = data.collect()[0]
+        image_path = data["image_id"]
+        with open(image_path, "rb") as f:
+            image_bytes = f.read()
+        assert image_bytes == data['image']
+
     finally:
         shutil.rmtree(temp_dir)
 
