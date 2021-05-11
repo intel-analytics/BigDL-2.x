@@ -112,18 +112,19 @@ class XGBoost(BaseModel):
 
         self.model_init = True
 
-    def fit_eval(self, x, y, validation_data=None, **config):
+    def fit_eval(self, data, validation_data=None, **config):
         """
         Fit on the training data from scratch.
         Since the rolling process is very customized in this model,
         we enclose the rolling process inside this method.
-
-        :param x: training data, an array in shape (nd, Td),
-            nd is the number of series, Td is the time dimension
-        :param y: None. target is extracted from x directly
+        :param data: could be a tuple with numpy ndarray with form (x, y)
+               x: training data, an array in shape (nd, Td),
+                  nd is the number of series, Td is the time dimension
+               y: None. target is extracted from x directly
         :param verbose:
         :return: the evaluation metric value
         """
+        x, y = data[0], data[1]
         if not self.model_init:
             self._build(**config)
         if validation_data is not None and type(validation_data) is not list:
