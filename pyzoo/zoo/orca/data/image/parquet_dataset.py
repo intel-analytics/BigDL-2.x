@@ -223,26 +223,27 @@ def write_mnist(image_file, label_file, output_path, **kwargs):
     labels = _extract_mnist_labels(labels_filepath=label_file)
     _write_ndarrays(images, labels, output_path, **kwargs)
 
+
 def write_coco(image_path, anno_file, output_path, **kwargs):
     custom_classes = kwargs.get('classes', None)
     coco_datasets = COCODetection(image_path, anno_file, classes=custom_classes)
+
     def make_generator():
-        for i in range(len(coco_datasets)):
-            image, label = coco_datasets[i]
-            img_buf = io.BytesIO()
-            np.save(img_buf, image)
-            img_buf = img_buf.getvalue()
-            yield{"image":img_buf, "label":label}
+        for img_path, label in coco_datasets:
+            yield {"image": img_path, "label": label, "image_id": img_path}
 
     image, label = coco_datasets[0]
     label_shape = (-1, label.shape[-1])
     schema = {
-        "image": SchemaField(feature_type=FeatureType.NDARRAY,
-                             dtype=ndarray_dtype_to_dtype(image.dtype),
+        "image": SchemaField(feature_type=FeatureType.IMAGE,
+                             dtype=DType.FLOAT32,
                              shape=()),
         "label": SchemaField(feature_type=FeatureType.NDARRAY,
-                             dtype=ndarray_dtype_to_dtype(image.dtype),
-                             shape=label_shape)
+                             dtype=ndarray_dtype_to_dtype(label.dtype),
+                             shape=label_shape),
+        "image_id": SchemaField(feature_type=FeatureType.SCALAR,
+                                dtype=DType.STRING,
+                                shape=())
     }
-    kwargs = {key:value for key, value in kwargs.items() if key not in ["classes"]}
+    kwargs = {key: value for key, value in kwargs.items() if key not in ["classes"]}
     ParquetDataset.write(output_path, make_generator(), schema, **kwargs)
