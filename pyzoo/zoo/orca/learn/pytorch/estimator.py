@@ -359,11 +359,11 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         end_trigger = MaxEpoch(epochs)
         if isinstance(data, DataLoader):
-            assert batch_size is None and data.batch_size > 0, "You should specify batch size in " \
-                                                               "PyTorch DataLoader, not in fit " \
-                                                               "method. PyTorch DataLoader " \
-                                                               "supports automatic " \
-                                                               "batching(default)."
+            assert batch_size is None and data.batch_size > 0, "When using PyTorch Dataloader as " \
+                                                               "input, you need to specify the " \
+                                                               "batch size in DataLoader and " \
+                                                               "don't specify batch_size " \
+                                                               "in the fit method."
         else:
             assert batch_size is not None and batch_size > 0, "batch_size should be greater than 0"
         checkpoint_trigger = Trigger.convert_trigger(checkpoint_trigger)
@@ -462,11 +462,11 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         assert self.metrics is not None, "metrics shouldn't be None, please specify the metrics" \
                                          " argument when creating this estimator."
         if isinstance(data, DataLoader):
-            assert batch_size is None and data.batch_size > 0, "You should specify batch size in " \
-                                                               "PyTorch DataLoader, not in fit " \
-                                                               "method. PyTorch DataLoader " \
-                                                               "supports automatic " \
-                                                               "batching(default)."
+            assert batch_size is None and data.batch_size > 0, "When using PyTorch Dataloader as " \
+                                                               "input, you need to specify the " \
+                                                               "batch size in DataLoader and " \
+                                                               "don't specify batch_size " \
+                                                               "in the fit method."
         else:
             assert batch_size is not None and batch_size > 0, "batch_size should be greater than 0"
 
