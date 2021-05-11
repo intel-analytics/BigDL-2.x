@@ -108,8 +108,7 @@ if __name__ == "__main__":
         "batch_size": 32,  # used in data_creator
     })
 
-    model.fit_eval(x=data["x"],
-                   y=data["y"],
+    model.fit_eval(data=(data["x"], data["y"]),
                    validation_data=(data["val_x"], data["val_y"]),
                    epochs=20)
     val_result_pytorch_manual = model.evaluate(x=data["x"], y=data["y"], metrics=['rmse'])
@@ -122,8 +121,7 @@ if __name__ == "__main__":
         "metric": "mse"
     })
 
-    model.fit_eval(x=data["x"],
-                   y=data["y"],
+    model.fit_eval(data=(data["x"], data["y"]),
                    validation_data=(data["val_x"], data["val_y"]),
                    epochs=20)
     val_result_tensorflow_manual = model.evaluate(x=data["x"], y=data["y"], metrics=['rmse'])
