@@ -15,7 +15,7 @@
 # limitations under the License.
 # ==============================================================================
 # Most of the pytorch code is adapted from
-# https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
+# https://github.com/prakashpandey9/Text-Classification-Pytorch
 
 from __future__ import print_function
 import argparse
@@ -34,9 +34,9 @@ from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch
 
 
-parser = argparse.ArgumentParser(description='PyTorch Cifar10 Example')
+parser = argparse.ArgumentParser(description='PyTorch Sentiment Example')
 parser.add_argument('--cluster_mode', type=str, default="local",
-                    help='The cluster mode, such as local, yarn or k8s.')
+                    help='The cluster mode, local or yarn')
 parser.add_argument('--backend', type=str, default="bigdl",
                     help='The backend of PyTorch Estimator; '
                          'bigdl and torch_distributed are supported')
@@ -155,10 +155,8 @@ class LSTMClassifier(nn.Module):
 
         return final_output
 
-
-
-
 TEXT, vocab_size, word_embeddings = load_dataset()
+
 
 def model_creator(config):
     batch_size = 32
