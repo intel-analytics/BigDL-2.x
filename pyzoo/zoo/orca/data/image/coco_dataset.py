@@ -31,7 +31,7 @@ class COCODetection:
     """
 
     def __init__(self, image_dir, ann_file, classes=None):
-        self.classes = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
+        self.CLASSES = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
                         'train', 'truck', 'boat', 'traffic light', 'fire hydrant',
                         'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
                         'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe',
@@ -48,13 +48,8 @@ class COCODetection:
         self.image_dir = image_dir
         self.ann_file = ann_file
         if classes:
-<<<<<<< HEAD
-            self.classes = classes
-
-=======
             self.CLASSES = classes
             
->>>>>>> origin/coco
         self.data_infos = self.load_annotations(self.ann_file)
         self._ann_info = [self._load_label(idx) for idx in range(len(self))]
         self._img_path = [osp.join(self.image_dir, img_info['filename'])
