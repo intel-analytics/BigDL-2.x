@@ -16,6 +16,7 @@
 import os
 import json
 import logging
+import cv2
 import numpy as np
 from PIL import Image
 from os import path as osp
@@ -24,14 +25,13 @@ from pycocotools.coco import COCO
 
 class COCODetection:
     """
-    data_root: str, example "data_root='data/coco/'"
-    splits_name: str
+    image_dir:  str, example "path/coco/trainval2017'"
+    ann_file: str, example "path/coco/annotations/instances_train2017.json"
     classes: list['str']
-    difficult: bool, False ignore coco json difficult value.
     """
 
-    def __init__(self, data_root, ann_file, classes):
-        self.CLASSES = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
+    def __init__(self, image_dir, ann_file, classes=None):
+        self.classes = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
                         'train', 'truck', 'boat', 'traffic light', 'fire hydrant',
                         'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
                         'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe',
@@ -45,15 +45,14 @@ class COCODetection:
                         'mouse', 'remote', 'keyboard', 'cell phone', 'microwave',
                         'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock',
                         'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']
-        self.data_root = data_root
+        self.image_dir = image_dir
         self.ann_file = ann_file
         if classes:
             self.classes = classes
-        else:
-            self.classes = self.CLASSES
+
         self.data_infos = self.load_annotations(self.ann_file)
         self._ann_info = [self._load_label(idx) for idx in range(len(self))]
-        self._img_path = [osp.join(self.data_root, img_info['filename'])
+        self._img_path = [osp.join(self.image_dir, img_info['filename'])
                           for img_info in self.data_infos]
 
     def __len__(self):
@@ -114,11 +113,11 @@ class COCODetection:
                 continue
             else:
                 label = self.cat2label[ann['category_id']]
-            bbox = [int(x1), int(y1), int(x1 + w), int(y1 + h), int(label)]
+            bbox = [x1, y1, x1 + w, y1 + h, label]
             if ann.get('iscrowd', False):
                 continue
             gt_bboxes.append(bbox)
-        gt_bboxes = np.array(gt_bboxes).astype(np.uint8)
+        gt_bboxes = np.array(gt_bboxes).astype(np.int32)
         return gt_bboxes
 
     def _read_image(self, image_path):
@@ -129,12 +128,3 @@ class COCODetection:
             return img
         except FileNotFoundError as e:
             return e
-
-
-if __name__ == "__main__":
-    data_dir = "/home/gtf/Datasets/VOC2007/JPEGImages"
-    ann_info = '/home/gtf/Datasets/VOC2007/VOC2007.json'
-    coco_data = COCODetection(data_dir, ann_info, classes=None)
-    img, label = coco_data[0]
-    print('label', label)
-    print('data_len', len(coco_data))
