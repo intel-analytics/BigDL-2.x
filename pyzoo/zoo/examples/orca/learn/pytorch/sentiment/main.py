@@ -199,6 +199,7 @@ if args.backend == "bigdl":
     orca_estimator = Estimator.from_torch(model=net,
                                           optimizer=optimizer,
                                           loss=criterion,
+                                          workers_per_node=2,
                                           metrics=[Accuracy()],
                                           backend="bigdl")
 
@@ -211,6 +212,7 @@ elif args.backend == "torch_distributed":
     orca_estimator = Estimator.from_torch(model=model_creator,
                                           optimizer=optim_creator,
                                           loss=nn.CrossEntropyLoss(),
+                                          workers_per_node=2,
                                           metrics=[Accuracy()],
                                           backend="torch_distributed",
                                           config={"lr": 2e-5})
