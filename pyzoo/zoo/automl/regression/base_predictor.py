@@ -175,9 +175,10 @@ class BasePredictor(object):
                                        name=self.name,
                                        remote_dir=remote_dir,
                                        )
-        searcher.compile(data={'df': input_df, 'val_df': validation_df},
+        searcher.compile(data=input_df,
                          model_create_func=model_fn,
                          recipe=recipe,
+                         validation_data=validation_df,
                          search_alg=self.search_alg,
                          search_alg_params=self.search_alg_params,
                          scheduler=self.scheduler,
