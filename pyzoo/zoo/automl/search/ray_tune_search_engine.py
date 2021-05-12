@@ -87,6 +87,9 @@ class RayTuneSearchEngine(SearchEngine):
         :param recipe: search recipe
         :param search_space: search_space, required if recipe is not provided
         :param search_alg: str, all supported searcher provided by ray tune
+               (i.e."variant_generator", "random", "ax", "dragonfly", "skopt",
+               "hyperopt", "bayesopt", "bohb", "nevergrad", "optuna", "zoopt" and
+               "sigopt")
         :param search_alg_params: extra parameters for searcher algorithm
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
