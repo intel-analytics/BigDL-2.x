@@ -479,8 +479,9 @@ class MTNetKeras(BaseModel):
                              .format(input_output_dim, self.output_dim))
         return input_feature_num, input_output_dim
 
-    def fit_eval(self, x, y, validation_data=None, mc=False, metrics=None,
+    def fit_eval(self, data, validation_data=None, mc=False, metrics=None,
                  epochs=10, verbose=0, **config):
+        x, y = data[0], data[1]
         feature_num, output_dim = self._check_input(x, y)
         self._add_config_attributes(config, epochs=epochs, mc=mc, metrics=metrics,
                                     feature_num=feature_num, output_dim=output_dim)

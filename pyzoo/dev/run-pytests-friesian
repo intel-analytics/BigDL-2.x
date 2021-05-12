@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 # Copyright 2018 Analytics Zoo Authors.
 #
@@ -13,4 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .auto_xgb import AutoXGBRegressor, AutoXGBClassifier
+
+. `dirname $0`/prepare_env.sh
+
+cd "`dirname $0`"
+
+echo "Running Friesian feature tests"
+python -m pytest -v ../test/zoo/friesian/feature/
+exit_status=$?
+if [ $exit_status -ne 0 ];
+then
+    exit $exit_status
+fi

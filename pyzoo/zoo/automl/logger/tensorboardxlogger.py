@@ -129,6 +129,18 @@ class TensorboardXLogger():
                 global_step += 1
         w_hp.close()
 
+    @staticmethod
+    def _ray_tune_searcher_log_adapt(analysis):
+        # config
+        config = analysis.get_all_configs()
+        # metric
+        metric_raw = analysis.fetch_trial_dataframes()
+        metric = {}
+        for key, value in metric_raw.items():
+            metric[key] = dict(zip(list(value.columns), list(map(list, value.values.T))))
+            config[key]["address"] = key
+        return config, metric
+
     def close(self):
         '''
         Close the logger

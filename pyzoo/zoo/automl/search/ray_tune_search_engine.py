@@ -21,8 +21,8 @@ from copy import deepcopy
 from zoo.automl.search.base import *
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
+from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME
 from ray.tune import Trainable, Stopper
-import ray.tune.track
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model import ModelBuilder
 from zoo.orca.automl import hp
@@ -30,7 +30,7 @@ from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
 import pandas as pd
 
-SEARCH_ALG_ALLOWED = ("variant_generator", "skopt", "bayesopt", "sigopt")
+SEARCH_ALG_ALLOWED = ("skopt", "bayesopt", "sigopt")
 
 
 class RayTuneSearchEngine(SearchEngine):
@@ -46,11 +46,12 @@ class RayTuneSearchEngine(SearchEngine):
                  ):
         """
         Constructor
+        :param logs_dir: local dir to save training results
         :param resources_per_trial: resources for each trial
+        :param name: searcher name
+        :param remote_dir: checkpoint will be uploaded to remote_dir in hdfs
         """
-        self.pipeline = None
         self.train_func = None
-        self.trainable_class = None
         self.resources_per_trial = resources_per_trial
         self.trials = None
         self.remote_dir = remote_dir
@@ -71,18 +72,29 @@ class RayTuneSearchEngine(SearchEngine):
                 metric="mse"):
         """
         Do necessary preparations for the engine
-        :param input_df:
-        :param search_space:
-        :param num_samples:
-        :param stop:
-        :param search_algorithm:
-        :param search_algorithm_params:
-        :param fixed_params:
-        :param feature_transformers:
-        :param model:
-        :param validation_df:
-        :param metric:
-        :return:
+        :param data: data dictionary
+               Pandas Dataframe API keys:
+                   "df": dataframe for training
+                   "val_df": (optional) dataframe for validation
+                   "feature_cols": (optional) column name for extra features
+                   "target_col": (optional) column name for target
+               Numpy ndarray API keys:
+                   "x": ndarray for training input
+                   "y": ndarray for training output
+                   "x_val": (optional) ndarray for validation input
+                   "y_val": (optional) ndarray for validation output
+               Note: For Pandas Dataframe API keys, if "feature_cols" or "target_col" is missing,
+                     then feature_transformers is required.
+        :param model_create_func: model creation function
+        :param recipe: search recipe
+        :param search_space: search_space, required if recipe is not provided
+        :param search_alg: str, one of "skopt", "bayesopt" and "sigopt"
+        :param search_alg_params: extra parameters for searcher algorithm
+        :param scheduler: str, all supported scheduler provided by ray tune
+        :param scheduler_params: parameters for scheduler
+        :param feature_transformers: feature transformer instance
+        :param mc: if calculate uncertainty
+        :param metric: metric name
         """
 
         # data mode detection
@@ -100,20 +112,11 @@ class RayTuneSearchEngine(SearchEngine):
 
         # data extract
         if data_mode == 'dataframe':
-            input_df = data['df']
+            input_data = data['df']
             feature_cols = data.get("feature_cols", None)
             target_col = data.get("target_col", None)
-            validation_df = data.get("val_df", None)
+            validation_data = data.get("val_df", None)
         else:
-            if data["x"].ndim == 1:
-                data["x"] = data["x"].reshape(-1, 1)
-            if data["y"].ndim == 1:
-                data["y"] = data["y"].reshape(-1, 1)
-            if "val_x" in data.keys() and data["val_x"].ndim == 1:
-                data["val_x"] = data["val_x"].reshape(-1, 1)
-            if "val_y" in data.keys() and data["val_y"].ndim == 1:
-                data["val_y"] = data["val_y"].reshape(-1, 1)
-
             input_data = {"x": data["x"], "y": data["y"]}
             if 'val_x' in data.keys():
                 validation_data = {"x": data["val_x"], "y": data["val_y"]}
@@ -142,67 +145,31 @@ class RayTuneSearchEngine(SearchEngine):
             del stop["reward_metric"]
         stop.setdefault("training_iteration", 1)
 
-        # stopper
-        class TrialStopper(Stopper):
-            def __init__(self, stop, metric, mode):
-                self._mode = mode
-                self._metric = metric
-                self._stop = stop
-
-            def __call__(self, trial_id, result):
-                if self._metric in self._stop.keys():
-                    if self._mode == "max" and result[self._metric] >= self._stop[self._metric]:
-                        return True
-                    if self._mode == "min" and result[self._metric] <= self._stop[self._metric]:
-                        return True
-                if "training_iteration" in self._stop.keys():
-                    if result["training_iteration"] >= self._stop["training_iteration"]:
-                        return True
-                return False
-
-            def stop_all(self):
-                return False
-
         self.stopper = TrialStopper(stop=stop, metric=self.metric, mode=self.mode)
 
         if search_space is None:
             search_space = recipe.search_space()
+        self.search_space = search_space
+
         self._search_alg = RayTuneSearchEngine._set_search_alg(search_alg, search_alg_params,
                                                                recipe, self.metric, self.mode)
         self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params,
                                                              self.metric, self.mode)
-        self.search_space = self._prepare_tune_config(search_space)
 
         if feature_transformers is None and data_mode == 'dataframe':
             feature_transformers = IdentityTransformer(feature_cols, target_col)
 
-        if data_mode == 'dataframe':
-            self.train_func = self._prepare_train_func(input_data=input_df,
-                                                       model_create_func=model_create_func,
-                                                       feature_transformers=feature_transformers,
-                                                       validation_data=validation_df,
-                                                       metric=metric,
-                                                       mc=mc,
-                                                       remote_dir=self.remote_dir,
-                                                       numpy_format=False
-                                                       )
-        else:
-            self.train_func = self._prepare_train_func(input_data=input_data,
-                                                       model_create_func=model_create_func,
-                                                       feature_transformers=None,
-                                                       validation_data=validation_data,
-                                                       metric=metric,
-                                                       mc=mc,
-                                                       remote_dir=self.remote_dir,
-                                                       numpy_format=True
-                                                       )
-        # self.trainable_class = self._prepare_trainable_class(input_df,
-        #                                                      feature_transformers,
-        #                                                      # model,
-        #                                                      future_seq_len,
-        #                                                      validation_df,
-        #                                                      metric_op,
-        #                                                      self.remote_dir)
+        numpy_format = True if data_mode == 'ndarray' else False
+
+        self.train_func = self._prepare_train_func(input_data=input_data,
+                                                   model_create_func=model_create_func,
+                                                   feature_transformers=feature_transformers,
+                                                   validation_data=validation_data,
+                                                   metric=metric,
+                                                   mc=mc,
+                                                   remote_dir=self.remote_dir,
+                                                   numpy_format=numpy_format
+                                                   )
 
     @staticmethod
     def _set_search_alg(search_alg, search_alg_params, recipe, metric, mode):
@@ -265,18 +232,23 @@ class RayTuneSearchEngine(SearchEngine):
         self.trials = analysis.trials
 
         # Visualization code for ray (leaderboard)
-        # catch the ImportError Since it has been processed in TensorboardXLogger
-        tf_config, tf_metric = self._log_adapt(analysis)
+        logger_name = self.name if self.name else DEFAULT_LOGGER_NAME
+        tf_config, tf_metric = TensorboardXLogger._ray_tune_searcher_log_adapt(analysis)
 
         self.logger = TensorboardXLogger(logs_dir=os.path.join(self.logs_dir,
-                                                               self.name+"_leaderboard"),
-                                         name=self.name)
+                                                               logger_name+"_leaderboard"),
+                                         name=logger_name)
         self.logger.run(tf_config, tf_metric)
         self.logger.close()
 
         return analysis
 
     def get_best_trials(self, k=1):
+        """
+        get a list of best k trials
+        :params k: top k
+        :return: trials list
+        """
         sorted_trials = RayTuneSearchEngine._get_sorted_trials(self.trials,
                                                                metric=self.metric,
                                                                mode=self.mode)
@@ -329,13 +301,6 @@ class RayTuneSearchEngine(SearchEngine):
         raise Exception("Didn't call reporter...")
 
     @staticmethod
-    def _is_validation_df_valid(validation_df):
-        df_not_empty = isinstance(validation_df, pd.DataFrame) and not validation_df.empty
-        df_list_not_empty = isinstance(validation_df, list) and validation_df \
-            and not all([d.empty for d in validation_df])
-        return validation_df is not None and not (df_not_empty or df_list_not_empty)
-
-    @staticmethod
     def _prepare_train_func(input_data,
                             model_create_func,
                             feature_transformers,
@@ -347,18 +312,20 @@ class RayTuneSearchEngine(SearchEngine):
                             ):
         """
         Prepare the train function for ray tune
-        :param input_df: input dataframe
+        :param input_data: input data
+        :param model_create_func: model create function
         :param feature_transformers: feature transformers
-        :param model: model or model selector
-        :param validation_df: validation dataframe
         :param metric: the rewarding metric
+        :param validation_data: validation data
+        :param mc: if calculate uncertainty
+        :param remote_dir: checkpoint will be uploaded to remote_dir in hdfs
+        :param numpy_format: whether input data is of numpy format
+
         :return: the train function
         """
         numpy_format_id = ray.put(numpy_format)
         input_data_id = ray.put(input_data)
         ft_id = ray.put(feature_transformers)
-
-        # model_id = ray.put(model)
 
         # validation data processing
         df_not_empty = isinstance(validation_data, dict) or\
@@ -396,9 +363,7 @@ class RayTuneSearchEngine(SearchEngine):
                 if imputer:
                     trial_input_df = imputer.impute(trial_input_df)
                 config = convert_bayes_configs(config).copy()
-                # print("config is ", config)
                 (x_train, y_train) = trial_ft.fit_transform(trial_input_df, **config)
-                # trial_ft.fit(trial_input_df, **config)
 
                 # handling validation data
                 validation_data = None
@@ -419,16 +384,13 @@ class RayTuneSearchEngine(SearchEngine):
             # callbacks = [TuneCallback(tune_reporter)]
             # fit model
             best_reward = None
-            # print("config:", config)
             for i in range(1, 101):
-                result = trial_model.fit_eval(x_train,
-                                              y_train,
+                result = trial_model.fit_eval(data=(x_train, y_train),
                                               validation_data=validation_data,
                                               mc=mc,
                                               metric=metric,
                                               # verbose=1,
                                               **config)
-                metric_value = result
                 reward = result
                 checkpoint_filename = "best.ckpt"
 
@@ -450,136 +412,31 @@ class RayTuneSearchEngine(SearchEngine):
                         upload_ppl_hdfs(remote_dir, checkpoint_filename)
 
                 report_dict = {"training_iteration": i,
-                               metric: metric_value,
+                               metric: reward,
                                "checkpoint": checkpoint_filename,
                                "best_" + metric: best_reward}
                 tune.report(**report_dict)
 
         return train_func
 
-    @staticmethod
-    def _prepare_trainable_class(input_df,
-                                 feature_transformers,
-                                 future_seq_len,
-                                 metric,
-                                 validation_df=None,
-                                 mc=False,
-                                 remote_dir=None
-                                 ):
-        """
-        Prepare the train function for ray tune
-        :param input_df: input dataframe
-        :param feature_transformers: feature transformers
-        :param model: model or model selector
-        :param validation_df: validation dataframe
-        :param metric: the rewarding metric
-        :return: the train function
-        """
-        input_df_id = ray.put(input_df)
-        ft_id = ray.put(feature_transformers)
-        # model_id = ray.put(model)
 
-        df_not_empty = isinstance(validation_df, pd.DataFrame) and not validation_df.empty
-        df_list_not_empty = isinstance(validation_df, list) and validation_df \
-            and not all([d.empty for d in validation_df])
-        if validation_df is not None and (df_not_empty or df_list_not_empty):
-            validation_df_id = ray.put(validation_df)
-            is_val_df_valid = True
-        else:
-            is_val_df_valid = False
+# stopper
+class TrialStopper(Stopper):
+    def __init__(self, stop, metric, mode):
+        self._mode = mode
+        self._metric = metric
+        self._stop = stop
 
-        class TrainableClass(Trainable):
+    def __call__(self, trial_id, result):
+        if self._metric in self._stop.keys():
+            if self._mode == "max" and result[self._metric] >= self._stop[self._metric]:
+                return True
+            if self._mode == "min" and result[self._metric] <= self._stop[self._metric]:
+                return True
+        if "training_iteration" in self._stop.keys():
+            if result["training_iteration"] >= self._stop["training_iteration"]:
+                return True
+        return False
 
-            def _setup(self, config):
-                # print("config in set up is", config)
-                global_ft = ray.get(ft_id)
-                # global_model = ray.get(model_id)
-                self.trial_ft = deepcopy(global_ft)
-                self.trial_model = TimeSequenceModel(check_optional_config=False,
-                                                     future_seq_len=future_seq_len)
-
-                # handling input
-                global_input_df = ray.get(input_df_id)
-                trial_input_df = deepcopy(global_input_df)
-                self.config = convert_bayes_configs(config).copy()
-                (self.x_train, self.y_train) = self.trial_ft.fit_transform(trial_input_df,
-                                                                           **self.config)
-                # trial_ft.fit(trial_input_df, **config)
-
-                # handling validation data
-                self.validation_data = None
-                if is_val_df_valid:
-                    global_validation_df = ray.get(validation_df_id)
-                    trial_validation_df = deepcopy(global_validation_df)
-                    self.validation_data = self.trial_ft.transform(trial_validation_df)
-
-                # no need to call build since it is called the first time fit_eval is called.
-                # callbacks = [TuneCallback(tune_reporter)]
-                # fit model
-                self.best_reward_m = -999
-                self.reward_m = -999
-                self.ckpt_name = "pipeline.ckpt"
-                self.metric_op = 1 if metric_mode is "max" else -1
-
-            def _train(self):
-                # print("self.config in train is ", self.config)
-                result = self.trial_model.fit_eval(self.x_train, self.y_train,
-                                                   validation_data=self.validation_data,
-                                                   # verbose=1,
-                                                   **self.config)
-                # self.reward_m = result if Evaluator.get_metric_mode(metric) == "max" else -result
-                # if metric == "mean_squared_error":
-                #     self.reward_m = (-1) * result
-                #     # print("running iteration: ",i)
-                # elif metric == "r_square":
-                #     self.reward_m = result
-                # else:
-                #     raise ValueError("metric can only be \"mean_squared_error\" or \"r_square\"")
-                return {self.metric: result, "checkpoint": self.ckpt_name}
-
-            def _save(self, checkpoint_dir):
-                # print("checkpoint dir is ", checkpoint_dir)
-                ckpt_name = self.ckpt_name
-                # save in the working dir (without "checkpoint_{}".format(training_iteration))
-                path = os.path.join(checkpoint_dir, "..", ckpt_name)
-                # path = os.path.join(checkpoint_dir, ckpt_name)
-                # print("checkpoint save path is ", checkpoint_dir)
-                if self.reward_m > self.best_reward_m:
-                    self.best_reward_m = self.reward_m
-                    print("****this reward is", self.reward_m)
-                    print("*********saving checkpoint")
-                    save_zip(ckpt_name, self.trial_ft, self.trial_model, self.config)
-                    if remote_dir is not None:
-                        upload_ppl_hdfs(remote_dir, ckpt_name)
-                return path
-
-            def _restore(self, checkpoint_path):
-                # print("checkpoint path in restore is ", checkpoint_path)
-                if remote_dir is not None:
-                    restore_hdfs(checkpoint_path, remote_dir, self.trial_ft, self.trial_model)
-                else:
-                    restore_zip(checkpoint_path, self.trial_ft, self.trial_model)
-
-        return TrainableClass
-
-    def _prepare_tune_config(self, space):
-        tune_config = {}
-        for k, v in space.items():
-            if isinstance(v, RandomSample):
-                tune_config[k] = hp.sample_from(v.func)
-            elif isinstance(v, GridSearch):
-                tune_config[k] = hp.grid_search(v.values)
-            else:
-                tune_config[k] = v
-        return tune_config
-
-    def _log_adapt(self, analysis):
-        # config
-        config = analysis.get_all_configs()
-        # metric
-        metric_raw = analysis.fetch_trial_dataframes()
-        metric = {}
-        for key, value in metric_raw.items():
-            metric[key] = dict(zip(list(value.columns), list(map(list, value.values.T))))
-            config[key]["address"] = key
-        return config, metric
+    def stop_all(self):
+        return False

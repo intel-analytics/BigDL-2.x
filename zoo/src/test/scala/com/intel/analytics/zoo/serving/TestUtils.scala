@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.utils
+package com.intel.analytics.zoo.serving
 
-import org.apache.log4j.Logger
+object TestUtils {
+  /**
+   *
+   */
+  def getStrFromResourceFile(path: String): String = {
+    val resource = getClass().getClassLoader().getResource("serving")
 
-trait Supportive {
-  def timing[T](name: String)(f: => T): T = {
-    val begin = System.nanoTime()
-    val result = f
-    val end = System.nanoTime()
-    val cost = (end - begin)
-    Logger.getLogger(getClass).info(s"$name time elapsed [ ${cost / 1e6} ms ].")
-    result
+    val dataPath = s"${resource.getPath}/$path"
+    scala.io.Source.fromFile(dataPath).mkString
   }
 }
