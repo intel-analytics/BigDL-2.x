@@ -37,7 +37,7 @@ from zoo.orca.learn.trigger import EveryEpoch
 parser = argparse.ArgumentParser(description='PyTorch Cifar10 Example')
 parser.add_argument('--cluster_mode', type=str, default="local",
                     help='The cluster mode, such as local, yarn or k8s.')
-parser.add_argument('--backend', type=str, default="torch_distributed",
+parser.add_argument('--backend', type=str, default="bigdl",
                     help='The backend of PyTorch Estimator; '
                          'bigdl and torch_distributed are supported')
 args = parser.parse_args()
