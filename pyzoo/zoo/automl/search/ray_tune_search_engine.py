@@ -133,7 +133,7 @@ class RayTuneSearchEngine(SearchEngine):
         self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params,
                                                              self.metric, self.mode)
 
-        self.train_func = self._prepare_train_func(input_data=data,
+        self.train_func = self._prepare_train_func(data=data,
                                                    model_create_func=model_create_func,
                                                    feature_transformers=feature_transformers,
                                                    validation_data=validation_data,
@@ -265,7 +265,7 @@ class RayTuneSearchEngine(SearchEngine):
         raise Exception("Didn't call reporter...")
 
     @staticmethod
-    def _prepare_train_func(input_data,
+    def _prepare_train_func(data,
                             model_create_func,
                             feature_transformers,
                             metric,
@@ -275,7 +275,7 @@ class RayTuneSearchEngine(SearchEngine):
                             ):
         """
         Prepare the train function for ray tune
-        :param input_data: input data
+        :param data: input data
         :param model_create_func: model create function
         :param feature_transformers: feature transformers
         :param metric: the rewarding metric
@@ -285,17 +285,9 @@ class RayTuneSearchEngine(SearchEngine):
 
         :return: the train function
         """
-        input_data_id = ray.put(input_data)
+        data_id = ray.put(data)
+        validation_data_id = ray.put(validation_data)
         ft_id = ray.put(feature_transformers)
-
-        # validation data processing
-        df_not_empty = isinstance(validation_data, tuple) or\
-            (isinstance(validation_data, pd.DataFrame) and not validation_data.empty)
-        if validation_data is not None and df_not_empty:
-            validation_data_id = ray.put(validation_data)
-            is_val_valid = True
-        else:
-            is_val_valid = False
 
         def train_func(config):
             if isinstance(model_create_func, ModelBuilder):
@@ -314,7 +306,7 @@ class RayTuneSearchEngine(SearchEngine):
                         imputer = FillZeroImpute()
 
                 # handling input
-                global_input_df = ray.get(input_data_id)
+                global_input_df = ray.get(data_id)
                 trial_input_df = deepcopy(global_input_df)
                 if imputer:
                     trial_input_df = imputer.impute(trial_input_df)
@@ -322,16 +314,17 @@ class RayTuneSearchEngine(SearchEngine):
                 train_data = trial_ft.fit_transform(trial_input_df, **config)
 
                 # handling validation data
-                validation_data = None
+                global_validation_df = ray.get(validation_data_id)
+                is_val_valid = isinstance(global_validation_df, pd.DataFrame) \
+                    and not global_validation_df.empty
                 if is_val_valid:
-                    global_validation_df = ray.get(validation_data_id)
                     trial_validation_df = deepcopy(global_validation_df)
-                    validation_data = trial_ft.transform(trial_validation_df)
+                    val_data = trial_ft.transform(trial_validation_df)
+                else:
+                    val_data = None
             else:
-                train_data = ray.get(input_data_id)
-                validation_data = None
-                if is_val_valid:
-                    validation_data = ray.get(validation_data_id)
+                train_data = ray.get(data_id)
+                val_data = ray.get(validation_data_id)
                 trial_ft = None
 
             # no need to call build since it is called the first time fit_eval is called.
@@ -340,7 +333,7 @@ class RayTuneSearchEngine(SearchEngine):
             best_reward = None
             for i in range(1, 101):
                 result = trial_model.fit_eval(data=train_data,
-                                              validation_data=validation_data,
+                                              validation_data=val_data,
                                               mc=mc,
                                               metric=metric,
                                               **config)
