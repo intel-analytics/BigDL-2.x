@@ -70,10 +70,8 @@ def get_train_val_data():
         y2 = np.ones((size // 2, 1))
         y = np.concatenate([y1, y2], axis=0)
         return x, y
-    train_x, train_y = get_x_y(size=1000)
-    val_x, val_y = get_x_y(size=400)
-    data = (train_x, train_y)
-    validation_data = (val_x, val_y)
+    data = get_x_y(size=1000)
+    validation_data = get_x_y(size=400)
     return data, validation_data
 
 

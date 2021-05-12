@@ -39,10 +39,8 @@ def get_train_val_data():
         x = x.reshape((-1, 1))
         y = y.reshape((-1, 1))
         return x, y
-    train_x, train_y = get_x_y(size=1000)
-    val_x, val_y = get_x_y(size=400)
-    data = (train_x, train_y)
-    validation_data = (val_x, val_y)
+    data = get_x_y(size=1000)
+    validation_data = get_x_y(size=400)
     return data, validation_data
 
 
