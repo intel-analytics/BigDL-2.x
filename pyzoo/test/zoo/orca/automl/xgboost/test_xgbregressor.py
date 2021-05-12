@@ -47,7 +47,7 @@ class TestXgbregressor(ZooTestCase):
         pass
 
     def test_fit_predict_evaluate(self):
-        self.model.fit_eval(self.x, self.y, [(self.val_x, self.val_y)])
+        self.model.fit_eval((self.x, self.y), [(self.val_x, self.val_y)])
 
         # test predict
         result = self.model.predict(self.val_x)
@@ -56,7 +56,7 @@ class TestXgbregressor(ZooTestCase):
         evaluate_result = self.model.evaluate(self.val_x, self.val_y)
 
     def test_save_restore(self):
-        self.model.fit_eval(self.x, self.y, [(self.val_x, self.val_y)])
+        self.model.fit_eval((self.x, self.y), [(self.val_x, self.val_y)])
 
         result_save = self.model.predict(self.val_x)
         model_file = "tmp.pkl"

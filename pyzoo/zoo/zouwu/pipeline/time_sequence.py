@@ -52,7 +52,7 @@ class TimeSequencePipeline(Pipeline):
         else:
             validation_data = None
         new_config = {'epochs': epoch_num}
-        self.model.fit_eval(x, y, validation_data, mc=mc, verbose=1, **new_config)
+        self.model.fit_eval((x, y), validation_data, mc=mc, verbose=1, **new_config)
         print('Fit done!')
 
     def _is_val_df_valid(self, validation_df):
@@ -129,7 +129,7 @@ class TimeSequencePipeline(Pipeline):
         else:
             validation_data = None
 
-        self.model.fit_eval(x_train, y_train,
+        self.model.fit_eval((x_train, y_train),
                             validation_data=validation_data,
                             mc=mc,
                             verbose=1, **self.config)
