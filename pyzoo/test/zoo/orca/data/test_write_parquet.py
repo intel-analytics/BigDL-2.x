@@ -147,7 +147,6 @@ def test_write_coco(orca_context_fixture):
     temp_dir = tempfile.mkdtemp()
     split_names = "train2017"
     try:
-        from zoo.orca.data import SparkXShards
         img_path = os.path.join(resource_path, "COCO/{}".format(split_names))
         ann_file = os.path.join(resource_path,
                                 "COCO/annotations/instances_{}.json".format(split_names))

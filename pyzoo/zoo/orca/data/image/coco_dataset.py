@@ -48,8 +48,13 @@ class COCODetection:
         self.image_dir = image_dir
         self.ann_file = ann_file
         if classes:
+<<<<<<< HEAD
             self.classes = classes
 
+=======
+            self.CLASSES = classes
+            
+>>>>>>> origin/coco
         self.data_infos = self.load_annotations(self.ann_file)
         self._ann_info = [self._load_label(idx) for idx in range(len(self))]
         self._img_path = [osp.join(self.image_dir, img_info['filename'])
@@ -69,7 +74,7 @@ class COCODetection:
         """
 
         self.coco = COCO(ann_file)
-        self.cat_ids = self.coco.getCatIds(catNms=self.classes)
+        self.cat_ids = self.coco.getCatIds(catNms=self.CLASSES)
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
         self.img_ids = self.coco.getImgIds()
 
@@ -128,3 +133,7 @@ class COCODetection:
             return img
         except FileNotFoundError as e:
             return e
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/coco
