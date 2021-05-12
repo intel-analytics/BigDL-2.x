@@ -60,6 +60,7 @@ class RayTuneSearchEngine(SearchEngine):
                 data,
                 model_create_func,
                 recipe,
+                validation_data=None,
                 search_space=None,
                 search_alg=None,
                 search_alg_params=None,
@@ -70,21 +71,22 @@ class RayTuneSearchEngine(SearchEngine):
                 metric="mse"):
         """
         Do necessary preparations for the engine
-        :param data: data dictionary
-               Pandas Dataframe API keys:
-                   "df": dataframe for training
-                   "val_df": (optional) dataframe for validation
-                   "feature_cols": (optional) column name for extra features
-                   "target_col": (optional) column name for target
-               Numpy ndarray API keys:
-                   "x": ndarray for training input
-                   "y": ndarray for training output
-                   "x_val": (optional) ndarray for validation input
-                   "y_val": (optional) ndarray for validation output
-               Note: For Pandas Dataframe API keys, if "feature_cols" or "target_col" is missing,
-                     then feature_transformers is required.
+        :param data: data for training
+               Pandas Dataframe:
+                   a Pandas dataframe for training
+               Numpy ndarray:
+                   a tuple in form of (x, y) 
+                        x: ndarray for training input
+                        y: ndarray for training output
         :param model_create_func: model creation function
         :param recipe: search recipe
+        :param validation_data: data for validation
+               Pandas Dataframe:
+                   a Pandas dataframe for validation
+               Numpy ndarray:
+                   a tuple in form of (x, y) 
+                        x: ndarray for validation input
+                        y: ndarray for validation output
         :param search_space: search_space, required if recipe is not provided
         :param search_alg: str, all supported searcher provided by ray tune
                (i.e."variant_generator", "random", "ax", "dragonfly", "skopt",
@@ -97,32 +99,6 @@ class RayTuneSearchEngine(SearchEngine):
         :param mc: if calculate uncertainty
         :param metric: metric name
         """
-
-        # data mode detection
-        assert isinstance(data, dict), 'ERROR: Argument \'data\' should be a dictionary.'
-        data_mode = None  # data_mode can only be 'dataframe' or 'ndarray'
-        data_schema = set(data.keys())
-        if set(["df"]).issubset(data_schema):
-            data_mode = 'dataframe'
-        if set(["x", "y"]).issubset(data_schema):
-            data_mode = 'ndarray'
-        assert data_mode in ['dataframe', 'ndarray'],\
-            'ERROR: Argument \'data\' should fit either \
-                dataframe schema (include \'df\' in keys) or\
-                     ndarray (include \'x\' and \'y\' in keys) schema.'
-
-        # data extract
-        if data_mode == 'dataframe':
-            input_data = data['df']
-            feature_cols = data.get("feature_cols", None)
-            target_col = data.get("target_col", None)
-            validation_data = data.get("val_df", None)
-        else:
-            input_data = {"x": data["x"], "y": data["y"]}
-            if 'val_x' in data.keys():
-                validation_data = {"x": data["val_x"], "y": data["val_y"]}
-            else:
-                validation_data = None
 
         # metric and metric's mode
         self.metric = metric
@@ -157,19 +133,13 @@ class RayTuneSearchEngine(SearchEngine):
         self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params,
                                                              self.metric, self.mode)
 
-        if feature_transformers is None and data_mode == 'dataframe':
-            feature_transformers = IdentityTransformer(feature_cols, target_col)
-
-        numpy_format = True if data_mode == 'ndarray' else False
-
-        self.train_func = self._prepare_train_func(input_data=input_data,
+        self.train_func = self._prepare_train_func(input_data=data,
                                                    model_create_func=model_create_func,
                                                    feature_transformers=feature_transformers,
                                                    validation_data=validation_data,
                                                    metric=metric,
                                                    mc=mc,
-                                                   remote_dir=self.remote_dir,
-                                                   numpy_format=numpy_format
+                                                   remote_dir=self.remote_dir
                                                    )
 
     @staticmethod
@@ -302,7 +272,6 @@ class RayTuneSearchEngine(SearchEngine):
                             validation_data=None,
                             mc=False,
                             remote_dir=None,
-                            numpy_format=False,
                             ):
         """
         Prepare the train function for ray tune
@@ -313,36 +282,29 @@ class RayTuneSearchEngine(SearchEngine):
         :param validation_data: validation data
         :param mc: if calculate uncertainty
         :param remote_dir: checkpoint will be uploaded to remote_dir in hdfs
-        :param numpy_format: whether input data is of numpy format
 
         :return: the train function
         """
-        numpy_format_id = ray.put(numpy_format)
         input_data_id = ray.put(input_data)
         ft_id = ray.put(feature_transformers)
 
         # validation data processing
-        df_not_empty = isinstance(validation_data, dict) or\
+        df_not_empty = isinstance(validation_data, tuple) or\
             (isinstance(validation_data, pd.DataFrame) and not validation_data.empty)
-        df_list_not_empty = isinstance(validation_data, dict) or\
-            (isinstance(validation_data, list) and validation_data
-                and not all([d.empty for d in validation_data]))
-        if validation_data is not None and (df_not_empty or df_list_not_empty):
+        if validation_data is not None and df_not_empty:
             validation_data_id = ray.put(validation_data)
             is_val_valid = True
         else:
             is_val_valid = False
 
         def train_func(config):
-            numpy_format = ray.get(numpy_format_id)
-
             if isinstance(model_create_func, ModelBuilder):
                 trial_model = model_create_func.build(config)
             else:
                 trial_model = model_create_func()
 
-            if not numpy_format:
-                global_ft = ray.get(ft_id)
+            global_ft = ray.get(ft_id)
+            if global_ft:
                 trial_ft = deepcopy(global_ft)
                 imputer = None
                 if "imputation" in config:
@@ -357,7 +319,7 @@ class RayTuneSearchEngine(SearchEngine):
                 if imputer:
                     trial_input_df = imputer.impute(trial_input_df)
                 config = convert_bayes_configs(config).copy()
-                (x_train, y_train) = trial_ft.fit_transform(trial_input_df, **config)
+                train_data = trial_ft.fit_transform(trial_input_df, **config)
 
                 # handling validation data
                 validation_data = None
@@ -367,11 +329,9 @@ class RayTuneSearchEngine(SearchEngine):
                     validation_data = trial_ft.transform(trial_validation_df)
             else:
                 train_data = ray.get(input_data_id)
-                x_train, y_train = (train_data["x"], train_data["y"])
                 validation_data = None
                 if is_val_valid:
                     validation_data = ray.get(validation_data_id)
-                    validation_data = (validation_data["x"], validation_data["y"])
                 trial_ft = None
 
             # no need to call build since it is called the first time fit_eval is called.
@@ -379,11 +339,10 @@ class RayTuneSearchEngine(SearchEngine):
             # fit model
             best_reward = None
             for i in range(1, 101):
-                result = trial_model.fit_eval(data=(x_train, y_train),
+                result = trial_model.fit_eval(data=train_data,
                                               validation_data=validation_data,
                                               mc=mc,
                                               metric=metric,
-                                              # verbose=1,
                                               **config)
                 reward = result
                 checkpoint_filename = "best.ckpt"
