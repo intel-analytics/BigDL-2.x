@@ -75,7 +75,7 @@ class RayTuneSearchEngine(SearchEngine):
                Pandas Dataframe:
                    a Pandas dataframe for training
                Numpy ndarray:
-                   a tuple in form of (x, y) 
+                   a tuple in form of (x, y)
                         x: ndarray for training input
                         y: ndarray for training output
         :param model_create_func: model creation function
@@ -84,7 +84,7 @@ class RayTuneSearchEngine(SearchEngine):
                Pandas Dataframe:
                    a Pandas dataframe for validation
                Numpy ndarray:
-                   a tuple in form of (x, y) 
+                   a tuple in form of (x, y)
                         x: ndarray for validation input
                         y: ndarray for validation output
         :param search_space: search_space, required if recipe is not provided
