@@ -1,6 +1,7 @@
 # Pytorch Sentiment example
 
-We demonstrate how to easily show the graphical results of running synchronous distributed PyTorch training using PyTorch Estimator of Project Orca in Analytics Zoo. We use the LSTMClassifier to train on IMDB dataset. See [here](https://github.com/prakashpandey9/Text-Classification-Pytorch) for the original single-node version of this example. We provide the "torch_distributed" PyTorch training backend for this example.
+We demonstrate how to easily show the graphical results of running synchronous distributed PyTorch training using PyTorch Estimator of Project Orca in Analytics Zoo. We use the LSTMClassifier to train on IMDB dataset. See [here](https://github.com/prakashpandey9/Text-Classification-Pytorch) for the original single-node version of this example. We provide the "torch_distributed" PyTorch training backend for this example. We provide the "torch_distributed" PyTorch training backend for this example.
+
 
 # Prepare the environment
 

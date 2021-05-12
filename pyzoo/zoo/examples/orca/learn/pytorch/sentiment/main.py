@@ -37,9 +37,9 @@ from zoo.orca.learn.trigger import EveryEpoch
 parser = argparse.ArgumentParser(description='PyTorch Cifar10 Example')
 parser.add_argument('--cluster_mode', type=str, default="local",
                     help='The cluster mode, such as local, yarn or k8s.')
-# parser.add_argument('--backend', type=str, default="torch_distributed",
-#                     help='The backend of PyTorch Estimator; '
-#                          'bigdl and torch_distributed are supported')
+parser.add_argument('--backend', type=str, default="torch_distributed",
+                    help='The backend of PyTorch Estimator; '
+                         'bigdl and torch_distributed are supported')
 args = parser.parse_args()
 
 if args.cluster_mode == "local":
@@ -193,36 +193,36 @@ train_iter = train_loader_creator({}, batch_size)
 test_iter = test_loader_creator({}, batch_size)
 
 
-# if args.backend == "bigdl":
-#     net = model_creator({})
-#     optimizer = optim_creator(model=net, {})
-#     orca_estimator = Estimator.from_torch(model=net,
-#                                           optimizer=optimizer,
-#                                           loss=criterion,
-#                                           metrics=[Accuracy()],
-#                                           backend="bigdl")
-#
-#     orca_estimator.fit(data=train_iter, epochs=2, validation_data=test_iter,
-#                        checkpoint_trigger=EveryEpoch())
-#
-#     res = orca_estimator.evaluate(data=test_iter)
-#     print("Accuracy of the network on the test images: %s" % res)
-# elif args.backend == "torch_distributed":
-orca_estimator = Estimator.from_torch(model=model_creator,
-                                      optimizer=optim_creator,
-                                      loss=nn.CrossEntropyLoss(),
-                                      metrics=[Accuracy()],
-                                      backend="torch_distributed",
-                                      config={"lr": 2e-5})
+if args.backend == "bigdl":
+    net = model_creator({})
+    optimizer = optim_creator(model=net,config={})
+    orca_estimator = Estimator.from_torch(model=net,
+                                          optimizer=optimizer,
+                                          loss=criterion,
+                                          metrics=[Accuracy()],
+                                          backend="bigdl")
 
-orca_estimator.fit(data=train_loader_creator, epochs=2, batch_size=batch_size,)
+    orca_estimator.fit(data=train_iter, epochs=2, validation_data=test_iter,
+                       checkpoint_trigger=EveryEpoch())
 
-res = orca_estimator.evaluate(data=test_loader_creator)
-for r in res:
-    print(r, ":", res[r])
-# else:
-#     raise NotImplementedError("Only bigdl and torch_distributed are supported as the backend,"
-#                               " but got {}".format(args.backend))
+    res = orca_estimator.evaluate(data=test_iter)
+    print("Accuracy of the network on the test images: %s" % res)
+elif args.backend == "torch_distributed":
+    orca_estimator = Estimator.from_torch(model=model_creator,
+                                          optimizer=optim_creator,
+                                          loss=nn.CrossEntropyLoss(),
+                                          metrics=[Accuracy()],
+                                          backend="torch_distributed",
+                                          config={"lr": 2e-5})
+
+    orca_estimator.fit(data=train_loader_creator, epochs=2, batch_size=batch_size,)
+
+    res = orca_estimator.evaluate(data=test_loader_creator)
+    for r in res:
+        print(r, ":", res[r])
+else:
+    raise NotImplementedError("Only bigdl and torch_distributed are supported as the backend,"
+                              " but got {}".format(args.backend))
 
 stop_orca_context()
 
