@@ -45,21 +45,6 @@ class SearchEngine(ABC):
         pass
 
 
-class GridSearch(object):
-    def __init__(self, values):
-        self.values = values
-
-
-class RandomSample(object):
-    def __init__(self, func):
-        self.func = func
-
-
-class BayersianOpt(object):
-    def __init__(self):
-        pass
-
-
 class TrialOutput(object):
     def __init__(self, config, model_path):
         self.config = config
