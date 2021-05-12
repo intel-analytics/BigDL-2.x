@@ -13,10 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-import json
-import logging
-import cv2
 import numpy as np
 from PIL import Image
 from os import path as osp
@@ -128,7 +124,3 @@ class COCODetection:
             return img
         except FileNotFoundError as e:
             return e
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/coco
