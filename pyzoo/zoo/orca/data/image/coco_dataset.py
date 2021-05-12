@@ -48,9 +48,8 @@ class COCODetection:
         self.data_root = data_root
         self.ann_file = ann_file
         if classes:
-            self.classes = classes
-        else:
-            self.classes = self.CLASSES
+            self.CLASSES = classes
+            
         self.data_infos = self.load_annotations(self.ann_file)
         self._ann_info = [self._load_label(idx) for idx in range(len(self))]
         self._img_path = [osp.join(self.data_root, img_info['filename'])
@@ -70,7 +69,7 @@ class COCODetection:
         """
 
         self.coco = COCO(ann_file)
-        self.cat_ids = self.coco.getCatIds(catNms=self.classes)
+        self.cat_ids = self.coco.getCatIds(catNms=self.CLASSES)
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
         self.img_ids = self.coco.getImgIds()
 
@@ -130,11 +129,3 @@ class COCODetection:
         except FileNotFoundError as e:
             return e
 
-
-if __name__ == "__main__":
-    data_dir = "/home/gtf/Datasets/VOC2007/JPEGImages"
-    ann_info = '/home/gtf/Datasets/VOC2007/VOC2007.json'
-    coco_data = COCODetection(data_dir, ann_info, classes=None)
-    img, label = coco_data[0]
-    print('label', label)
-    print('data_len', len(coco_data))
