@@ -28,8 +28,9 @@ def get_data():
         return x, y
     train_x, train_y = get_x_y(1000)
     val_x, val_y = get_x_y(400)
-    data = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
-    return data
+    data = (train_x, train_y)
+    validation_data = (val_x, val_y)
+    return data, validation_data
 
 
 class XGBRecipe(Recipe):
@@ -61,8 +62,9 @@ class TestAutoXGBRegressor(TestCase):
         auto_xgb_reg = AutoXGBRegressor(cpus_per_trial=2,
                                         name="auto_xgb_regressor",
                                         tree_method='hist')
-        data = get_data()
-        auto_xgb_reg.fit(data,
+        data, validation_data = get_data()
+        auto_xgb_reg.fit(data=data,
+                         validation_data=validation_data,
                          recipe=XGBRecipe(),
                          metric="mse")
         best_model = auto_xgb_reg.get_best_model()
