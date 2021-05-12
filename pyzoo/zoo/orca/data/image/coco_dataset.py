@@ -122,4 +122,4 @@ class COCODetection:
             img = img.astype(np.uint8)
             return img
         except FileNotFoundError as e:
-            return e
+            raise e
