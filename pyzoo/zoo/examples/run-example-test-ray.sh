@@ -134,6 +134,22 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBo
 now=$(date "+%s")
 time10=$((now-start))
 
+echo "#11 Start orca sentiment example"
+start=$(date "+%s")
+
+if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/.data ]
+then
+    echo "IMDB dataset already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/sentiment.tar -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/
+    tar -xf ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/sentiment.tar
+fi
+
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/main.py --backend torch_distributed
+now=$(date "+%s")
+time11=$((now-start))
+
 
 echo "Ray example tests finished"
 echo "#1 orca rl_pong time used:$time1 seconds"
@@ -146,3 +162,4 @@ echo "#7 orca super-resolution example time used:$time7 seconds"
 echo "#8 orca cifar10 example time used:$time8 seconds"
 echo "#9 orca auto-xgboost-classifier time used:$time9 seconds"
 echo "#10 orca auto-xgboost-regressor time used:$time10 seconds"
+echo "#11 orca sentiment time used:$time11 seconds"
