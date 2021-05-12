@@ -117,10 +117,6 @@ class XGBoost(BaseModel):
         Fit on the training data from scratch.
         Since the rolling process is very customized in this model,
         we enclose the rolling process inside this method.
-        :param data: could be a tuple with numpy ndarray with form (x, y)
-               x: training data, an array in shape (nd, Td),
-                  nd is the number of series, Td is the time dimension
-               y: None. target is extracted from x directly
         :param verbose:
         :return: the evaluation metric value
         """
