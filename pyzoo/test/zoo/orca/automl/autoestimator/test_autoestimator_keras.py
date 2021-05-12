@@ -41,8 +41,9 @@ def get_train_val_data():
         return x, y
     train_x, train_y = get_x_y(size=1000)
     val_x, val_y = get_x_y(size=400)
-    data = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
-    return data
+    data = (train_x, train_y)
+    validation_data = (val_x, val_y)
+    return data, validation_data
 
 
 class LinearRecipe(Recipe):
@@ -75,8 +76,9 @@ class TestTFKerasAutoEstimator(TestCase):
                                             logs_dir="/tmp/zoo_automl_logs",
                                             resources_per_trial={"cpu": 2},
                                             name="test_fit")
-        data = get_train_val_data()
-        auto_est.fit(data,
+        data, validation_data = get_train_val_data()
+        auto_est.fit(data=data,
+                     validation_data=validation_data,
                      recipe=LinearRecipe(),
                      metric="mse")
         best_model = auto_est.get_best_model()
@@ -87,12 +89,14 @@ class TestTFKerasAutoEstimator(TestCase):
                                             logs_dir="/tmp/zoo_automl_logs",
                                             resources_per_trial={"cpu": 2},
                                             name="test_fit")
-        data = get_train_val_data()
-        auto_est.fit(data,
+        data, validation_data = get_train_val_data()
+        auto_est.fit(data=data,
+                     validation_data=validation_data,
                      recipe=LinearRecipe(),
                      metric="mse")
         with pytest.raises(RuntimeError):
-            auto_est.fit(data,
+            auto_est.fit(data=data,
+                         validation_data=validation_data,
                          recipe=LinearRecipe(),
                          metric="mse")
 
