@@ -30,8 +30,6 @@ from zoo.zouwu.feature.identity_transformer import IdentityTransformer
 from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
 import pandas as pd
 
-SEARCH_ALG_ALLOWED = ("skopt", "bayesopt", "sigopt")
-
 
 class RayTuneSearchEngine(SearchEngine):
     """
@@ -88,7 +86,10 @@ class RayTuneSearchEngine(SearchEngine):
         :param model_create_func: model creation function
         :param recipe: search recipe
         :param search_space: search_space, required if recipe is not provided
-        :param search_alg: str, one of "skopt", "bayesopt" and "sigopt"
+        :param search_alg: str, all supported searcher provided by ray tune
+               (i.e."variant_generator", "random", "ax", "dragonfly", "skopt",
+               "hyperopt", "bayesopt", "bohb", "nevergrad", "optuna", "zoopt" and
+               "sigopt")
         :param search_alg_params: extra parameters for searcher algorithm
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
@@ -177,15 +178,8 @@ class RayTuneSearchEngine(SearchEngine):
             if not isinstance(search_alg, str):
                 raise ValueError(f"search_alg should be of type str."
                                  f" Got {search_alg.__class__.__name__}")
-            search_alg = search_alg.lower()
             if search_alg_params is None:
                 search_alg_params = dict()
-            if search_alg not in SEARCH_ALG_ALLOWED:
-                raise ValueError(f"search_alg must be one of {SEARCH_ALG_ALLOWED}. "
-                                 f"Got: {search_alg}")
-            elif search_alg == "bayesopt":
-                search_alg_params.update({"space": recipe.manual_search_space()})
-
             search_alg_params.update(dict(
                 metric=metric,
                 mode=mode,
