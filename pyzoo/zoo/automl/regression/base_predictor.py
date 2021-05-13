@@ -160,13 +160,13 @@ class BasePredictor(object):
         self.search_space = recipe.search_space()
 
         stop = recipe.runtime_params()
+        self.metric_threshold = None
         if "reward_metric" in stop.keys():
             self.mode = Evaluator.get_metric_mode(self.metric)
-            stop["reward_metric"] = -stop["reward_metric"] if \
+            self.metric_threshold = -stop["reward_metric"] if \
                 self.mode == "min" else stop["reward_metric"]
+        self.max_epochs = stop["training_iteration"]
         self.num_samples = stop["num_samples"]
-        del stop["num_samples"]
-        self.stop = stop
 
     def _hp_search(self,
                    input_df,
@@ -193,8 +193,9 @@ class BasePredictor(object):
                          model_create_func=model_fn,
                          validation_data=validation_df,
                          search_space=self.search_space,
-                         num_samples=self.num_samples,
-                         stop=self.stop,
+                         n_sampling=self.num_samples,
+                         max_epochs=self.max_epochs,
+                         metric_threshold=self.metric_threshold,
                          search_alg=self.search_alg,
                          search_alg_params=self.search_alg_params,
                          scheduler=self.scheduler,

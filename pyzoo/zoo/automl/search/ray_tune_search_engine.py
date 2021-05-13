@@ -61,8 +61,9 @@ class RayTuneSearchEngine(SearchEngine):
                 model_create_func,
                 search_space,
                 validation_data=None,
-                num_samples=1,
-                stop=None,
+                metric_threshold=None,
+                n_sampling=1,
+                max_epochs=1,
                 search_alg=None,
                 search_alg_params=None,
                 scheduler=None,
@@ -80,7 +81,10 @@ class RayTuneSearchEngine(SearchEngine):
                         x: ndarray for training input
                         y: ndarray for training output
         :param model_create_func: model creation function
-        :param recipe: search recipe
+        :param search_space: a dict for search space
+        :param metric_threshold: a trial will be terminated when metric threshold is met
+        :param n_sampling: number of sampling
+        :param max_epochs: max epoch for training
         :param validation_data: data for validation
                Pandas Dataframe:
                    a Pandas dataframe for validation
@@ -104,22 +108,11 @@ class RayTuneSearchEngine(SearchEngine):
         # metric and metric's mode
         self.metric = metric
         self.mode = Evaluator.get_metric_mode(metric)
-
-        self.num_samples = num_samples
-
-        # early stop
-        if stop is None:
-            stop = {}
-        redundant_stop_keys = stop.keys() - {"reward_metric", "training_iteration"}
-        assert len(redundant_stop_keys) == 0, \
-            f"{redundant_stop_keys} is not expected in stop criteria, \
-             only \"reward_metric\", \"training_iteration\" are expected."
-        if "reward_metric" in stop.keys():
-            stop[self.metric] = stop["reward_metric"]
-            del stop["reward_metric"]
-        stop.setdefault("training_iteration", 1)
-
-        self.stopper = TrialStopper(stop=stop, metric=self.metric, mode=self.mode)
+        self.num_samples = n_sampling
+        self.stopper = TrialStopper(metric_threshold=metric_threshold,
+                                    max_epochs=max_epochs,
+                                    metric=self.metric,
+                                    mode=self.mode)
 
         if search_space is None:
             search_space = recipe.search_space()
@@ -365,20 +358,20 @@ class RayTuneSearchEngine(SearchEngine):
 
 # stopper
 class TrialStopper(Stopper):
-    def __init__(self, stop, metric, mode):
+    def __init__(self, metric_threshold, max_epochs, metric, mode):
         self._mode = mode
         self._metric = metric
-        self._stop = stop
+        self._metric_threshold = metric_threshold
+        self._max_epochs = max_epochs
 
     def __call__(self, trial_id, result):
-        if self._metric in self._stop.keys():
-            if self._mode == "max" and result[self._metric] >= self._stop[self._metric]:
+        if self._metric_threshold is not None:
+            if self._mode == "max" and result[self._metric] >= self._metric_threshold:
                 return True
-            if self._mode == "min" and result[self._metric] <= self._stop[self._metric]:
+            if self._mode == "min" and result[self._metric] <= self._metric_threshold:
                 return True
-        if "training_iteration" in self._stop.keys():
-            if result["training_iteration"] >= self._stop["training_iteration"]:
-                return True
+        if result["training_iteration"] >= self._max_epochs:
+            return True
         return False
 
     def stop_all(self):
