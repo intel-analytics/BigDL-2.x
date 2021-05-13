@@ -665,7 +665,7 @@ class ServableManager {
       }
     }
   }
-  def retriveAllServables(): List[Servable] = {
+  def retriveAllServables: List[Servable] = {
     val result = modelVersionMap.values.flatMap(
       maps => maps.values.toList
     ).toList
