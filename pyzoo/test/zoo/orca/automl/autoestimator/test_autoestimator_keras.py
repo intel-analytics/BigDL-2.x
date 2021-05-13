@@ -53,12 +53,6 @@ def create_linear_search_space():
     }
 
 
-def create_stop():
-    return {
-        "training_iteration": 1
-    }
-
-
 class TestTFKerasAutoEstimator(TestCase):
     def setUp(self) -> None:
         from zoo.orca import init_orca_context
@@ -78,8 +72,8 @@ class TestTFKerasAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     num_samples=4,
-                     early_stop=create_stop(),
+                     n_sampling=4,
+                     max_epochs=1,
                      metric="mse")
         best_model = auto_est.get_best_model()
         assert "hidden_size" in best_model.config
@@ -94,15 +88,15 @@ class TestTFKerasAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     num_samples=4,
-                     early_stop=create_stop(),
+                     n_sampling=4,
+                     max_epochs=1,
                      metric="mse")
         with pytest.raises(RuntimeError):
             auto_est.fit(data=data,
                          validation_data=validation_data,
                          search_space=create_linear_search_space(),
-                         num_samples=4,
-                         early_stop=create_stop(),
+                         n_sampling=4,
+                         max_epochs=1,
                          metric="mse")
 
 

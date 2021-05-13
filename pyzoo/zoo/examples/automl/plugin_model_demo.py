@@ -51,17 +51,11 @@ def loss_creator(config):
     return nn.MSELoss()
 
 
-class SimpleRecipe(Recipe):
-    def __init__(self):
-        super().__init__()
-        self.num_samples = 2
-        self.training_iteration = 20
-
-    def search_space(self):
-        return {
-            "lr": hp.uniform(0.01, 0.02),
-            "batch_size": hp.choice([16, 32, 64])
-        }
+def create_simple_recipe():
+    return {
+        "lr": hp.uniform(0.01, 0.02),
+        "batch_size": hp.choice([16, 32, 64])
+    }
 
 
 def get_data():
@@ -94,7 +88,9 @@ if __name__ == "__main__":
     searcher.compile(data=data,
                      validation_data=validation_data,
                      model_create_func=modelBuilder,
-                     recipe=SimpleRecipe())
+                     search_space=create_simple_recipe(),
+                     n_sampling=2,
+                     max_epochs=20)
 
     searcher.run()
     best_trials = searcher.get_best_trials(k=1)

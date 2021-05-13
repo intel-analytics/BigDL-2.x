@@ -38,8 +38,7 @@ def create_stop(stop_metric=None):
     stop = {
         "training_iteration": 20
     }
-    if stop_metric is not None:
-        stop.update({"reward_metric": stop_metric})
+    stop.update({"reward_metric": stop_metric})
     return stop
 
 
@@ -87,8 +86,9 @@ def prepare_searcher(data,
                      validation_data=validation_data,
                      model_create_func=modelBuilder,
                      search_space=search_space,
-                     num_samples=2,
-                     stop=stop,
+                     n_sampling=2,
+                     max_epochs=stop["training_iteration"],
+                     metric_threshold=stop["reward_metric"],
                      feature_transformers=feature_transformer,
                      metric=metric)
     return searcher
