@@ -46,7 +46,7 @@ if __name__ == "__main__":
         .withColumnRenamed('reviewerID', 'user') \
         .withColumnRenamed('asin', 'item') \
         .withColumnRenamed('unixReviewTime', 'time')\
-        .dropna("any").sample(0.20).persist(storageLevel=StorageLevel.DISK_ONLY)
+        .dropna("any").sample(1.00).persist(storageLevel=StorageLevel.DISK_ONLY)
     transaction_tbl = FeatureTable(transaction_df)
     print("transaction_tbl, ", transaction_tbl.size())
 
@@ -54,10 +54,11 @@ if __name__ == "__main__":
     def get_category(x):
         cat = x[0][-1] if x[0][-1] is not None else "default"
         return cat.strip().lower()
-    spark.udf.register("get_cat_udf", get_category, StringType())
+    get_cat_udf = udf(lambda x: get_category(x), StringType())
+
     item_df = spark.read.json(options.meta_file).select(['asin', 'categories'])\
         .dropna(subset=['asin', 'categories']) \
-        .selectExpr("*", "get_cat_udf(categories) as category") \
+        .withColumn("category", get_cat_udf("categories")) \
         .withColumnRenamed("asin", "item").drop("categories").distinct()\
         .persist(storageLevel=StorageLevel.DISK_ONLY)
     item_tbl = FeatureTable(item_df)
@@ -65,35 +66,56 @@ if __name__ == "__main__":
     print("item_tbl, ", item_tbl.size())
 
     item_category_indices = item_tbl.gen_string_idx(["item", "category"], 1)
-    # cat_default = item_category_indices[1].df.filter("category == 'default'").collect()
-    # default_cat = cat_default[0][1] if cat_default else item_category_indices[1].size()
-    # new_row = spark.createDataFrame([("default", int(default_cat))], ["category", "id"])
-    # category_index = StringIndex(item_category_indices[1].df.union(new_row).distinct()
-    #                              .withColumn("id", col("id").cast("Integer")), "category")
     item_size = item_category_indices[0].size()
     category_index = item_category_indices[1]
 
     user_index = transaction_tbl.gen_string_idx(['user'], 1)
-    get_label = udf(lambda x: [float(x), 1 - float(x)], ArrayType(FloatType()))
-    item2cat = item_tbl\
+    trans_label = lambda x: [float(x), 1 - float(x)]
+    label_type =  ArrayType(FloatType())
+    item_tbl = item_tbl\
         .encode_string(["item", "category"], [item_category_indices[0], category_index])\
         .distinct()
 
     full_tbl = transaction_tbl\
-        .encode_string(['user', 'item'], [user_index[0], item_category_indices[0]])\
+        .encode_string(['user', 'item'], [user_index[0], item_category_indices[0]])
+    print(1, "****")
+    print(full_tbl.df.count())
+    full_tbl.show(10, False)
+
+    full_tbl = full_tbl.dropna(columns="item")
+    print(2, "****")
+    print(full_tbl.df.count())
+    full_tbl.show(10, False)
+
+    full_tbl = full_tbl\
         .add_hist_seq(user_col="user", cols=['item'],
                       sort_col='time', min_len=1, max_len=100)\
-        .add_neg_hist_seq(item_size, 'item_hist_seq', neg_num=5) \
-        .add_negative_samples(item_size, item_col='item', neg_num=1)\
-        .join(item_tbl, "item")\
-        .add_feature(["item_hist_seq", "neg_item_hist_seq"], item2cat)\
+        .add_neg_hist_seq(item_size, 'item_hist_seq', neg_num=5)
+
+    full_tbl = full_tbl.add_negative_samples(item_size, item_col='item', neg_num=1)
+    print(3, "****")
+    full_tbl.df.printSchema()
+    print(full_tbl.df.count())
+    full_tbl.show(10, False)
+
+    full_tbl = full_tbl.join(item_tbl, "item")
+
+    print(4, "****")
+    full_tbl.df.printSchema()
+
+    print(full_tbl.df.count())
+    full_tbl.show(10, False)
+    full_tbl = full_tbl.add_value_features(key_cols=["item_hist_seq", "neg_item_hist_seq"], tbl=item_tbl)\
         .pad(mask_cols=['item_hist_seq'],
              cols=['item_hist_seq', 'category_hist_seq',
              'neg_item_hist_seq', 'neg_category_hist_seq'],
              seq_len=100) \
         .add_length("item_hist_seq") \
-        .transform_python_udf("label", "label", get_label)
-
+        .apply("label", "label", trans_label, label_type)
+    print(5, "****")
+    print(full_tbl.df.count())
+    full_tbl.show(10, False)
+    sys.exit(1)
     # write out
     user_index[0].write_parquet(options.output+"user_index")
     item_category_indices[0].write_parquet(options.output+"item_index")

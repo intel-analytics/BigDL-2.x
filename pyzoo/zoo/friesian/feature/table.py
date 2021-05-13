@@ -16,7 +16,7 @@
 import os
 from functools import reduce
 
-from pyspark.sql.types import DoubleType, ArrayType
+from pyspark.sql.types import DoubleType, ArrayType, IntegerType
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
@@ -25,7 +25,6 @@ from pyspark.sql.functions import col, udf, array, broadcast, explode, struct, c
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
 from zoo.common.utils import callZooFunc
-
 
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
@@ -319,8 +318,7 @@ class FeatureTable(Table):
             col_name = columns[i]
             index_tbl.broadcast()
             data_df = data_df.join(index_tbl.df, col_name, how="left") \
-                .drop(col_name).withColumnRenamed("id", col_name)\
-                .dropna(subset=[col_name])
+                .drop(col_name).withColumnRenamed("id", col_name)
         return FeatureTable(data_df)
 
     def gen_string_idx(self, columns, freq_limit):
@@ -352,18 +350,6 @@ class FeatureTable(Table):
         string_idx_list = list(map(lambda x: StringIndex(x[0], x[1]),
                                    zip(df_id_list, columns)))
         return string_idx_list
-
-    def gen_ind2ind(self, cols, indices):
-        """
-        Generate a mapping between of indices
-
-        :param cols: a list of str, target columns to generate StringIndex.
-        :param indices:  list of StringIndex
-
-        :return: FeatureTable
-        """
-        df = self.encode_string(cols, indices).df.select(*cols).distinct()
-        return FeatureTable(df)
 
     def _clone(self, df):
         return FeatureTable(df)
@@ -440,7 +426,7 @@ class FeatureTable(Table):
         df = callZooFunc("float", "addNegSamples", self.df, item_size, item_col, label_col, neg_num)
         return FeatureTable(df)
 
-    def add_hist_seq(self, user_col, cols, sort_col='time', min_len=1, max_len=100):
+    def add_hist_seq(self, cols, user_col, sort_col='time', min_len=1, max_len=100):
         """
         Generate a list of item visits in history
 
@@ -452,7 +438,7 @@ class FeatureTable(Table):
 
         :return: FeatureTable
         """
-        df = callZooFunc("float", "addHistSeq", self.df, user_col, cols, sort_col, min_len, max_len)
+        df = callZooFunc("float", "addHistSeq", self.df, cols, user_col, sort_col, min_len, max_len)
         return FeatureTable(df)
 
     def add_neg_hist_seq(self, item_size, item_history_col, neg_num):
@@ -470,64 +456,56 @@ class FeatureTable(Table):
         df = callZooFunc("float", "addNegHisSeq", self.df, item_size, item_history_col, neg_num)
         return FeatureTable(df)
 
-    def pad(self, padding_cols, seq_len=100):
+    def pad(self, cols, seq_len=100):
         """
          Post padding padding columns
 
-         :param padding_cols: list of string, columns need to be padded with 0s.
+         :param cols: list of string, columns need to be padded with 0s.
          :param seq_len:  int, length of padded column
 
          :return: FeatureTable
          """
-        df = callZooFunc("float", "postPad", self.df, padding_cols, seq_len)
-        return FeatureTable(df)
-
-    def mask(self, mask_cols, seq_len=100):
-        """
-         Mask mask_cols columns
-
-         :param mask_cols: list of string, columns need to be masked with 1s and 0s.
-         :param seq_len:  int, length of masked column
-
-         :return: FeatureTable
-         """
-        df = callZooFunc("float", "mask", self.df, mask_cols, seq_len)
+        df = callZooFunc("float", "postPad", self.df, cols, seq_len)
         return FeatureTable(df)
 
     def add_length(self, col_name):
         """
-         Generagte length of a colum
+         Generagte length of a column
 
          :param col_name: string.
 
          :return: FeatureTable
          """
-        df = callZooFunc("float", "addLength", self.df, col_name)
+        size_udf = udf(lambda xs: len(xs), IntegerType())
+        df = self.df.withColumn(col_name + "_length", size_udf(col(col_name)))
         return FeatureTable(df)
 
-    def mask_pad(self, padding_cols, mask_cols, seq_len=100):
+    def pad(self, cols, seq_len=100, mask_cols=None):
         """
          Mask and pad columns
 
-         :param padding_cols: list of string, columns need to be padded with 0s.
+         :param cols: list of string, columns need to be padded with 0s.
          :param mask_cols: list of string, columns need to be masked with 1s and 0s.
          :param seq_len:  int, length of masked column
 
          :return: FeatureTable
          """
-        table = self.mask(mask_cols, seq_len)
-        return table.pad(padding_cols, seq_len)
+        df = callZooFunc("float", "mask", self.df, mask_cols, seq_len) if mask_cols else self.df
+        df = callZooFunc("float", "postPad", df, cols, seq_len)
+        return FeatureTable(df)
 
-    def transform_python_udf(self, in_col, out_col, udf_func):
+    def apply(self, in_col, out_col, func, data_type):
         """
          Transform a FeatureTable using a python udf
 
          :param in_col: string, name of column needed to be transformed.
-         :param out_col: string, output column.
-         :param udf_func: user defined python function
+         :param out_col: string, name of output column.
+         :param func: python function
+         :param data_type: data type of out_col
 
          :return: FeatureTable
          """
+        udf_func = udf(func, data_type)
         df = self.df.withColumn(out_col, udf_func(col(in_col)))
         return FeatureTable(df)
 
@@ -545,40 +523,45 @@ class FeatureTable(Table):
         joined_df = self.df.join(table.df, on=on, how=how)
         return FeatureTable(joined_df)
 
-    def add_feature(self, item_cols, feature_tbl, default_value):
+    def add_value_features(self, key_cols, tbl, key="item", value="category"):
         """
-         Get the category or other field from another map like FeatureTable
+         Add features based on key_cols and another key value table, it replaces
+         each element in key_cols using key-value pairs from tbl
 
-         :param item_cols: list[string]
-         :param feature_tbl: FeatureTable with two columns [category, item]
-         :param defalut_cat_index: default value for category if key does not exist
+         :param key_cols: list[string]
+         :param tbl: Table with only two columns [key, value]
+         :param key: string, name of key column in tbl
+         :param value: string, name of value valumn in tbl
 
          :return: FeatureTable
          """
-        item2cat_map = dict(feature_tbl.df.distinct().rdd.map(lambda row: (row[0], row[1]))
-                            .collect())
+        spark = OrcaContext.get_spark_session()
+        keyvalue_bc = spark.sparkContext.broadcast(dict(tbl.df.distinct().rdd.map(
+            lambda row: (row[0], row[1])).collect()))
 
-        def gen_cat(items):
-            getcat = lambda item: item2cat_map.get(item, default_value)
+        keyvalue_map = keyvalue_bc.value
+
+        def gen_values(items):
+            getvalue = lambda item: keyvalue_map.get(item)
             if isinstance(items, int):
-                cats = getcat(items)
+                values = getvalue(items)
             elif isinstance(items, list) and isinstance(items[0], int):
-                cats = [getcat(item) for item in items]
+                values = [getvalue(item) for item in items]
             elif isinstance(items, list) and isinstance(items[0], list) and isinstance(items[0][0],
                                                                                        int):
-                cats = []
+                values = []
                 for line in items:
-                    line_cats = [getcat(item) for item in line]
-                    cats.append(line_cats)
+                    line_cats = [getvalue(item) for item in line]
+                    values.append(line_cats)
             else:
                 raise ValueError('only int, list[int], and list[list[int]] are supported.')
-            return cats
+            return values
 
         df = self.df
-        for c in item_cols:
+        for c in key_cols:
             col_type = df.schema[c].dataType
-            cat_udf = udf(gen_cat, col_type)
-            df = df.withColumn(c.replace("item", "category"), cat_udf(col(c)))
+            cat_udf = udf(gen_values, col_type)
+            df = df.withColumn(c.replace(key, value), cat_udf(col(c)))
         return FeatureTable(df)
 
 

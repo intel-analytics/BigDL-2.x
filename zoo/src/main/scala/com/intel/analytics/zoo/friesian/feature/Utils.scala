@@ -23,6 +23,11 @@ import org.apache.spark.TaskContext
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
+import scala.collection.mutable
+import scala.collection.mutable.WrappedArray
+import reflect.runtime.universe._
+import scala.util.Random
+
 private[friesian] object Utils {
   def fillNaIndex(df: DataFrame, fillVal: Any, columns: Array[Int]): DataFrame = {
     val targetType = fillVal match {
@@ -142,7 +147,7 @@ private[friesian] object Utils {
   def getIndex(df: DataFrame, columns: Array[String]): Array[Int] = {
     columns.map(col_n => {
       val idx = df.columns.indexOf(col_n)
-      if(idx == -1) {
+      if (idx == -1) {
         throw new IllegalArgumentException(s"The column name $col_n does not exist")
       }
       idx
@@ -155,16 +160,97 @@ private[friesian] object Utils {
     //                 of the return value is either empty or a singleton
     df.stat.approxQuantile(columns, Array(0.5), relativeError).map(
       quantiles => {
-      if (quantiles.isEmpty) {
-        null
-      }
-      else {
-        quantiles(0)
-      }
-    })
+        if (quantiles.isEmpty) {
+          null
+        }
+        else {
+          quantiles(0)
+        }
+      })
   }
 
   def hashBucket(content: Any, bucketSize: Int = 1000, start: Int = 0): Int = {
     return (content.hashCode() % bucketSize + bucketSize) % bucketSize + start
+  }
+
+
+  def maskArr[T] = {
+    (maxLength: Int, history: WrappedArray[T]) => {
+      val n = history.length
+      val result: Seq[T] = if (maxLength > n) {
+        (0 to n - 1).map(_ => castValueFromNum(history(0), 1)) ++ (0 to (maxLength - n - 1)).map(_ => castValueFromNum(history(0)))
+      } else {
+        (0 to maxLength - 1).map(_ => castValueFromNum(history(0), 1))
+      }
+      result
+    }
+  }
+
+  def padArr[T] = {
+    (maxLength: Int, history: WrappedArray[T]) => {
+      val n = history.length
+      val padValue = castValueFromNum(history(0))
+      println(padValue)
+      val pads: mutable.Seq[T] = if (maxLength > n) {
+        history ++ (0 to maxLength - n - 1).map(_ => padValue)
+      } else {
+        history.slice(n - maxLength, n)
+      }
+      pads
+    }
+  }
+
+  def padMatrix[T]: (Int, WrappedArray[WrappedArray[T]]) => Seq[Seq[T]] = {
+    (maxLength: Int, history: WrappedArray[WrappedArray[T]]) => {
+      val n = history.length
+      if (maxLength > n) {
+        val hishead = history(0)
+        val padArray =
+          (0 to maxLength - n - 1).map(_ => (0 to hishead.length - 1).map(_ => castValueFromNum(history(0)(0))))
+        history ++ padArray
+      } else {
+        history.slice(n - maxLength, n)
+      }
+    }
+  }
+
+  def castValueFromNum[T](num: T, value: Int = 0): T = {
+    val out: Any = num match {
+      case _: Double => value.toDouble
+      case _: Int => value
+      case _: Float => value.toFloat
+      case _: Long => value.toLong
+    }
+    out.asInstanceOf[T]
+  }
+
+  def addNegtiveItem[T](negNum: Int, itemSize: Int): T => Seq[(T, T)] = {
+    val r = new Random()
+    (itemId: T) =>
+      (1 to negNum).map(x => {
+        var neg = 0
+        do {
+          neg = r.nextInt(itemSize)
+        } while (neg == itemId)
+        neg
+      }).map(x => (castValueFromNum(itemId, x), castValueFromNum(itemId, 0))) ++ Seq(
+        (itemId, castValueFromNum(itemId, 1)))
+  }
+
+  def addNegativeList[T](negNum: Int, itemSize: Int) = {
+    val r = new Random()
+    (history: WrappedArray[T]) => {
+      val r = new Random()
+      val negItemSeq: Seq[Seq[T]] = (0 to history.length - 1).map(i=> {
+        (0 to negNum - 1).map(j => {
+          var negItem = 0
+          do {
+            negItem = r.nextInt(itemSize)
+          } while (negItem == history(i))
+          castValueFromNum(history(0), negItem)
+        })
+      })
+      negItemSeq
+    }
   }
 }
