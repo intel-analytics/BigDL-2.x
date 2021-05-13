@@ -1,11 +1,23 @@
-# stage.1 jdk & spark
-FROM ubuntu:18.04 as spark
+# spark
 ARG SPARK_VERSION=2.4.3
+ARG SPARK_HOME=/opt/spark
+# jdk
 ARG JDK_VERSION=8u192
 ARG JDK_URL=your_jdk_url
+# bigdl
+ARG BIGDL_VERSION=0.12.2
+# az
+ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
+
+# stage.1 jdk & spark
+FROM ubuntu:18.04 as spark
+ARG SPARK_VERSION
+ARG JDK_VERSION
+ARG JDK_URL
+ARG SPARK_HOME
+ENV TINI_VERSION                        v0.18.0
 ENV SPARK_VERSION                       ${SPARK_VERSION}
-ENV SPARK_HOME                          /opt/spark
-ENV TINI_VERSION v0.18.0
+ENV SPARK_HOME                          ${SPARK_HOME}
 RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils vim curl nano wget unzip maven git && \
 # java
@@ -28,13 +40,15 @@ ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /sbin
 
 # stage.2 analytics-zoo
 FROM ubuntu:18.04 as analytics-zoo
-ARG BIGDL_VERSION=0.12.2
-ARG SPARK_VERSION=2.4.3
-ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
+ARG SPARK_VERSION
+ARG BIGDL_VERSION
+ARG ANALYTICS_ZOO_VERSION
+
 ENV SPARK_VERSION		${SPARK_VERSION}
 ENV BIGDL_VERSION		${BIGDL_VERSION}
 ENV ANALYTICS_ZOO_VERSION               ${ANALYTICS_ZOO_VERSION}
 ENV ANALYTICS_ZOO_HOME                  /opt/analytics-zoo-${ANALYTICS_ZOO_VERSION}
+
 RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils vim curl nano wget unzip maven git
 ADD ./download-analytics-zoo.sh /opt
@@ -64,8 +78,15 @@ RUN wget http://download.redis.io/releases/redis-5.0.5.tar.gz && \
 # stage.4 
 FROM ubuntu:18.04
 MAINTAINER The Analytics-Zoo Authors https://github.com/intel-analytics/analytics-zoo
-ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.2
+ARG ANALYTICS_ZOO_VERSION
+ARG BIGDL_VERSION
+ARG SPARK_VERSION
+ARG SPARK_HOME
+
+ENV ANALYTICS_ZOO_VERSION               ${ANALYTICS_ZOO_VERSION}
+ENV SPARK_HOME                          ${SPARK_HOME}
+ENV SPARK_VERSION                       ${SPARK_VERSION}
+ENV ANALYTICS_ZOO_HOME                  /opt/analytics-zoo-${ANALYTICS_ZOO_VERSION}
 ENV FLINK_HOME                          /opt/flink-${FLINK_VERSION}
 ENV OMP_NUM_THREADS                     4
 ENV NOTEBOOK_PORT                       12345
@@ -84,7 +105,7 @@ ENV RUNTIME_DRIVER_MEMORY               10g
 ENV RUNTIME_PERSISTENT_VOLUME_CLAIM     myvolumeclaim
 ENV SPARK_HOME                          /opt/spark
 ENV HADOOP_CONF_DIR                     /opt/hadoop-conf
-ENV BIGDL_VERSION                       ${BIGDL_VERSION}
+ENV BIGDL_VERSION                       0.12.2
 ENV BIGDL_CLASSPATH                     ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar
 ENV JAVA_HOME                           /opt/jdk
 ENV REDIS_HOME                          /opt/redis-5.0.5
