@@ -22,10 +22,12 @@ from zoo.orca.data import SparkXShards
 from zoo.orca.data.file import open_text, write_text
 from zoo.orca.data.image.utils import chunks, dict_to_row, row_to_dict, encode_schema, \
     decode_schema, SchemaField, FeatureType, DType, ndarray_dtype_to_dtype
+from zoo.orca.data.image.voc_dataset import VOCDatasets
 from bigdl.util.common import get_node_and_core_number
 import os
 import numpy as np
 import random
+import io
 
 
 class ParquetDataset:
@@ -91,7 +93,6 @@ class ParquetDataset:
         rdd, schema = ParquetDataset._read_as_dict_rdd(path)
 
         def merge_records(schema, iter):
-
             l = list(iter)
             result = {}
             for k in schema.keys():
@@ -165,7 +166,7 @@ def _extract_mnist_labels(labels_filepath):
         return labels
 
 
-def write_from_directory(directory, label_map, output_path, shuffle=True, **kwargs):
+def write_from_directory(directory, label_map, output_path, shuffle=True, label_str_map=None, **kwargs):
     labels = os.listdir(directory)
     valid_labels = [label for label in labels if label in label_map]
     generator = []
@@ -174,10 +175,11 @@ def write_from_directory(directory, label_map, output_path, shuffle=True, **kwar
         images = os.listdir(label_path)
         for image in images:
             image_path = os.path.join(label_path, image)
+            label_str = label_str_map[label] if label_str_map is not None else label
             generator.append({"image": image_path,
                               "label": label_map[label],
                               "image_id": image_path,
-                              "label_str": label})
+                              "label_str": label_str})
     if shuffle:
         random.shuffle(generator)
 
@@ -222,26 +224,66 @@ def write_mnist(image_file, label_file, output_path, **kwargs):
     _write_ndarrays(images, labels, output_path, **kwargs)
 
 
-def _check_arguments(kwargs, *args):
+def write_imagenet(data_dir, map_class_path, output_path, **kwargs):
+    label_map = {}
+    label_str_map = {}
+    with open(map_class_path, "r", encoding="utf-8") as f:
+        rows = f.readlines()
+        for row in rows:
+            class_info = row.strip().split(" ")
+            label_map[class_info[0]] = class_info[1]
+            label_str_map[class_info[0]] = class_info[2]
+    
+    write_from_directory(data_dir, label_map, output_path, label_str_map=label_str_map, **kwargs)
+        
+
+def write_voc(voc_root_path, splits_names, output_path, **kwargs):
+    custom_classes = kwargs.get("classes", None)
+    voc_datasets = VOCDatasets(voc_root_path, splits_names, classes=custom_classes)
+
+    def make_generator():
+        for img_path, label in voc_datasets:
+            yield {"image": img_path, "label": label, "image_id": img_path}
+
+    image, label = voc_datasets[0]
+    label_shape = (-1, label.shape[-1])
+    schema = {
+        "image": SchemaField(feature_type=FeatureType.IMAGE,
+                             dtype=DType.FLOAT32,
+                             shape=()),
+        "label": SchemaField(feature_type=FeatureType.NDARRAY,
+                             dtype=ndarray_dtype_to_dtype(label.dtype),
+                             shape=label_shape),
+        "image_id": SchemaField(feature_type=FeatureType.SCALAR,
+                                dtype=DType.STRING,
+                                shape=())
+    }
+    kwargs = {key: value for key, value in kwargs.items() if key not in ["classes"]}
+    ParquetDataset.write(output_path, make_generator(), schema, **kwargs)
+
+    
+def _check_arguments(_format, kwargs, *args):
     for keyword in args:
-        assert keyword in kwargs, keyword + " is not specified."
+        assert keyword in kwargs, keyword + " is not specified for format " + _format + "."
 
 
 def write_parquet(format, output_path, *args, **kwargs):
     supported_format = {"imagenet", "mnist", "image_folder", "voc"}
     if format not in supported_format:
-        raise ValueError("{} is not supported".format(format))
+        raise ValueError(format + " is not supported, should be one of 'imagenet', 'mnist',"
+                         "'image_folder' and 'voc'.")
 
     if format == "mnist":
-        _check_arguments(kwargs, "image_file", "label_file")
-        write_mnist(output_path=output_path, **kwargs)
+        _check_arguments(format, kwargs, "image_file", "label_file")
+        write_mnist(output_path=output_path, *args, **kwargs)
     elif format == "image_folder":
-        _check_arguments(kwargs, "directory", "label_map")
-        write_from_directory(output_path=output_path, **kwargs)
+        _check_arguments(format, kwargs, "directory", "label_map")
+        write_from_directory(output_path=output_path, *args, **kwargs)
     elif format == "imagenet":
-        raise NotImplementedError
+        _check_arguments(format, kwargs, "data_dir", "map_class_path")
+        write_imagenet(output_path=output_path, *args, **kwargs)
     else:
-        raise NotImplementedError
+        _check_arguments(format, kwargs, "voc_root_path", "splits_names")
+        write_voc(output_path=output_path, *args, **kwargs)
 
 
-    

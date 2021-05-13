@@ -61,19 +61,20 @@ class TCMF(BaseModel):
         )
         self.model_init = True
 
-    def fit_eval(self, x, y=None, verbose=0, num_workers=None, **config):
+    def fit_eval(self, data, verbose=0, num_workers=None, **config):
         """
         Fit on the training data from scratch.
         Since the rolling process is very customized in this model,
         we enclose the rolling process inside this method.
-
-        :param x: training data, an array in shape (nd, Td),
-            nd is the number of series, Td is the time dimension
-        :param y: None. target is extracted from x directly
+        :param data: could be a tuple with numpy ndarray with form (x, y)
+               x: training data, an array in shape (nd, Td),
+                  nd is the number of series, Td is the time dimension
+               y: None. target is extracted from x directly
         :param verbose:
         :param num_workers: number of workers to use.
         :return: the evaluation metric value
         """
+        x = data[0]
         if not self.model_init:
             self.build(config)
         if num_workers is None:
@@ -309,7 +310,7 @@ class TCMFXshardsModelWrapper(ModelWrapper):
             tcmf = TCMF()
             tcmf.build(config)
             id_arr, train_data = split_id_and_data(d, True)
-            tcmf.fit_eval(train_data, **fit_params)
+            tcmf.fit_eval((train_data, None), **fit_params)
             return [id_arr, tcmf]
 
         if isinstance(x, SparkXShards):
@@ -400,7 +401,7 @@ class TCMFNdarrayModelWrapper(ModelWrapper):
     def fit(self, x, num_workers=None, **fit_params):
         if isinstance(x, dict):
             self.id_arr, train_data = split_id_and_data(x, False)
-            self.internal.fit_eval(train_data, num_workers=num_workers, **fit_params)
+            self.internal.fit_eval((train_data, None), num_workers=num_workers, **fit_params)
         else:
             raise ValueError("value of x should be a dict of ndarray")
 

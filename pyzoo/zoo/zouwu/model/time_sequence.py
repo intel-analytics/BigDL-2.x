@@ -55,14 +55,15 @@ class TimeSequenceModel(BaseModel):
     #         if verbose == 1:
     #             print("Model selection: LSTM Seq2Seq model is selected.")
 
-    def fit_eval(self, x, y, validation_data=None, mc=False, metric="mse", verbose=0, **config):
+    def fit_eval(self, data, validation_data=None, mc=False, metric="mse", verbose=0, **config):
         """
         fit for one iteration
-        :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
+        :param data: could be a tuple with numpy ndarray with form (x, y)
+        x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
         in the last dimension, the 1st col is the time index (data type needs to be numpy datetime
         type, e.g. "datetime64"),
         the 2nd col is the target value (data type should be numeric)
-        :param y: 2-d numpy array in format (no. of samples, future sequence length)
+        y: 2-d numpy array in format (no. of samples, future sequence length)
         if future sequence length > 1, or 1-d numpy array in format (no. of samples, )
         if future sequence length = 1
         :param validation_data: tuple in format (x_test,y_test), data used for validation.
@@ -72,11 +73,12 @@ class TimeSequenceModel(BaseModel):
         :param config: optimization hyper parameters
         :return: the resulting metric
         """
+        x, y = data[0], data[1]
         if not self.model:
             config["output_dim"] = y.shape[-1]
             self._sel_model(config, verbose=1)
 
-        return self.model.fit_eval(x, y,
+        return self.model.fit_eval(data=(x, y),
                                    validation_data=validation_data,
                                    mc=mc,
                                    verbose=verbose,

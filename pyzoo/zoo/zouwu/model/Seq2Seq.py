@@ -204,14 +204,15 @@ class LSTMSeq2Seq(BaseModel):
             validation_data = ([val_x, val_decoder_input], val_y)
         return x, y, decoder_input_data, validation_data
 
-    def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, **config):
+    def fit_eval(self, data, validation_data=None, mc=False, verbose=0, **config):
         """
         fit for one iteration
-        :param x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
+        :param data: could be a tuple with numpy ndarray with form (x, y)
+        x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
         in the last dimension, the 1st col is the time index (data type needs to be numpy datetime
         type, e.g. "datetime64"),
         the 2nd col is the target value (data type should be numeric)
-        :param y: 2-d numpy array in format (no. of samples, future sequence length)
+        y: 2-d numpy array in format (no. of samples, future sequence length)
         if future sequence length > 1,
         or 1-d numpy array in format (no. of samples, ) if future sequence length = 1
         :param validation_data: tuple in format (x_test,y_test), data used for validation.
@@ -220,6 +221,7 @@ class LSTMSeq2Seq(BaseModel):
         :param config: optimization hyper parameters
         :return: the resulting metric
         """
+        x, y = data[0], data[1]
         x, y, decoder_input_data, validation_data = self._pre_processing(x, y, validation_data)
 
         # if model is not initialized, __build the model

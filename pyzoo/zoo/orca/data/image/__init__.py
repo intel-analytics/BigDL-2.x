@@ -15,4 +15,4 @@
 #
 
 
-from .parquet_dataset import write_mnist, write_from_directory, write_parquet
+from .parquet_dataset import write_mnist, write_from_directory, write_voc, write_parquet, write_imagenet
