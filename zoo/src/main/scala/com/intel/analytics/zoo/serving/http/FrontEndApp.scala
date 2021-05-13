@@ -258,6 +258,23 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               }
             }
           }
+        }~(get & path("models")) {
+          timing("get all model infos")(overallRequestTimer, servablesRetriveTimer) {
+            try {
+              val servables = servableManager.retriveAllServables
+              val metaData = servables.map(e => e.getMetaData)
+              val json = JsonUtil.toJson(metaData)
+              complete(200, json)
+            }
+            catch {
+              case e: ModelNotFoundException =>
+                complete(404, "Model Not Found")
+              case e: ServingRuntimeException =>
+                complete(405, "Serving Runtime Error Err: " + e)
+              case e =>
+                complete(500, "Internal Error: " + e)
+            }
+          }
         } ~ pathPrefix("models") {
           concat(
             (get & path(Segment)) {
@@ -271,7 +288,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                   }
                   catch {
                     case e: ModelNotFoundException =>
-                      complete(200, "Model Not Found")
+                      complete(404, "Model Not Found")
                     case e: ServingRuntimeException =>
                       complete(405, "Serving Runtime Error Err: " + e)
                     case e =>
@@ -290,7 +307,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                   }
                   catch {
                     case e: ModelNotFoundException =>
-                      complete(200, "Model Not Found")
+                      complete(404, "Model Not Found")
                     case e: ServingRuntimeException =>
                       complete(405, "Serving Runtime Error Err: " + e)
                     case e =>
@@ -302,7 +319,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               (modelName, modelVersion, contentType, content) => {
                 timing("backend inference timing")(overallRequestTimer, backendInferenceTimer) {
                   try {
-                    logger.info("model name: " + modelName + "\nmodel version: " + modelVersion)
+                    logger.info("model name: " + modelName + ", model version: " + modelVersion)
                     val servable = timing("retriving servable")() {
                       servableManager.retriveServable(modelName, modelVersion)
                     }
