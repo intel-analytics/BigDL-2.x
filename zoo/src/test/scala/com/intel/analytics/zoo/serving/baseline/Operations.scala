@@ -20,56 +20,69 @@ import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.TestUtils
 import com.intel.analytics.zoo.serving.serialization.JsonInputDeserializer
 import com.intel.analytics.zoo.serving.utils.TimerSupportive
+import com.intel.analytics.zoo.serving.serialization.JsonUtil
 import org.apache.log4j.Logger
 import com.codahale.metrics.MetricRegistry
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 object Operations extends TimerSupportive {
-//  val logger = Logger.getLogger(getClass)
+  // val logger = Logger.getLogger(getClass)
   def main(args: Array[String]): Unit = {
     // read file from zoo/src/test/resources/serving to String
     // this is a prepared json format input of DIEN recommendation model
     val string = TestUtils.getStrFromResourceFile("dien_json_str_bs16.json")
 
     // decode json string input to activity
-    val input = JsonInputDeserializer.deserialize(string)
+     val input = JsonInputDeserializer.deserialize(string)
 
-    // create a InferenceModel and predict
-    val model = new InferenceModel(1)
-    model.doLoadTensorflow("/home/lyubing/models/dien", "frozenModel")
-    val result = timing("predict")(predictRequestTimer) {
-      model.doPredict(input)
-    }
+    (1 until 4).foreach(threadNumber => {
+      // load model with concurrent number 1~4
 
-    // use 3 threads to predict each 100 times
-    val model3 = new InferenceModel(3)
-    model3.doLoadTensorflow("/home/lyubing/models/dien", "frozenModel")
-    (0 until 3).indices.toParArray.foreach(threadIndex => {
-      (0 until 100).foreach(i => {
-        val input = JsonInputDeserializer.deserialize(string)
-        timing(s"thread $threadIndex predict")(threadPredictRequestTimer) {
-          val result = model3.doPredict(input)
+      // set timer name
+      val keyTotal = s"zoo.serving.request.predict.${threadNumber}_threads"
+      // initialize timers
+      val predictTotalRequestTimer = metrics.timer(keyTotal)
+
+      val model = new InferenceModel(threadNumber)
+      model.doLoadTensorflow("/home/lyubing/models/dien", "frozenModel")
+
+      (0 until 10).foreach(iter =>  {
+        // set timer name
+        val key = s"zoo.serving.request.predict.${threadNumber}_threads.range_${iter}"
+        // initialize timers
+        val predictRequestTimer = metrics.timer(key)
+        silent(s"inference with $threadNumber threads without sleep predict")(predictTotalRequestTimer,predictRequestTimer){
+          // do a operation 0 to 10 times to mock preprocessing, the operation could be controlled around 1ms
+          (0 until iter).foreach(i => {
+            mockOperation()
+          })
+          // do predict
+          (0 until threadNumber).indices.toParArray.foreach(threadIndex => {
+            (0 until iter).foreach(i => {
+              val result = model.doPredict(input)
+            })
+          })
+          // do a operation 0 to 10 times to mock postprocessing
+          (0 until iter).foreach(i => {
+            mockOperation()
+          })
+          // sleep 0 to 10 ms
+          Thread.sleep(iter)
         }
+        val timer = metrics.getTimers().get(key)
+        val servingMetrics = ServingTimerMetrics(key, timer)
+        val jsonMetrics = JsonUtil.toJson(servingMetrics)
+        logger.info(jsonMetrics)
+        logger.info(s"inference with $threadNumber threads and range $iter benchmark test ended.\n")
       })
-    })
-    logger.info("inference without sleep benchmark test ended.\n\n\n")
-    // same operations above, but add some sleep after predict
-    (0 until 3).indices.toParArray.foreach(threadIndex => {
-      (0 until 100).foreach(i => {
-        val input = JsonInputDeserializer.deserialize(string)
-        timing(s"thread $threadIndex predict")(threadPredictRequestTimer) {
-          val result = model3.doPredict(input)
-          if (i % (threadIndex + 2) == 0) {
-            // sleep for 100 ms
-            Thread.sleep(100)
-          }
-        }
-      })
+      val timer = metrics.getTimers().get(keyTotal)
+      val servingMetrics = ServingTimerMetrics(keyTotal, timer)
+      val jsonMetrics = JsonUtil.toJson(servingMetrics)
+      logger.info(jsonMetrics)
+      logger.info(s"inference with $threadNumber threads benchmark test ended.\n\n\n")
     })
   }
 
   val metrics = new MetricRegistry
-  val predictRequestTimer = metrics.timer("zoo.serving.request.predict")
-  val threadPredictRequestTimer = metrics.timer("zoo.serving.request.predict.thread")
 
 }
