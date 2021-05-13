@@ -220,3 +220,28 @@ def write_mnist(image_file, label_file, output_path, **kwargs):
     images = _extract_mnist_images(image_filepath=image_file)
     labels = _extract_mnist_labels(labels_filepath=label_file)
     _write_ndarrays(images, labels, output_path, **kwargs)
+
+
+def _check_arguments(kwargs, *args):
+    for keyword in args:
+        assert keyword in kwargs, keyword + " is not specified."
+
+
+def write_parquet(format, output_path, *args, **kwargs):
+    supported_format = {"imagenet", "mnist", "image_folder", "voc"}
+    if format not in supported_format:
+        raise ValueError("{} is not supported".format(format))
+
+    if format == "mnist":
+        _check_arguments(kwargs, "image_file", "label_file")
+        write_mnist(output_path=output_path, **kwargs)
+    elif format == "image_folder":
+        _check_arguments(kwargs, "directory", "label_map")
+        write_from_directory(output_path=output_path, **kwargs)
+    elif format == "imagenet":
+        raise NotImplementedError
+    else:
+        raise NotImplementedError
+
+
+    

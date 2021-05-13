@@ -20,7 +20,7 @@ import shutil
 import numpy as np
 import os
 from zoo.orca.data.image.parquet_dataset import ParquetDataset
-from zoo.orca.data.image.parquet_dataset import _write_ndarrays, write_from_directory
+from zoo.orca.data.image.parquet_dataset import _write_ndarrays, write_from_directory, write_parquet
 from zoo.orca.data.image.utils import DType, FeatureType, SchemaField
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.orca.data.image import write_mnist
@@ -201,5 +201,27 @@ def test_write_from_directory(orca_context_fixture):
 
         assert image_bytes == data['image'][0]
 
+    finally:
+        shutil.rmtree(temp_dir)
+
+
+def test_write_parquet_api(orca_context_fixture):
+    sc = orca_context_fixture
+    temp_dir = tempfile.mkdtemp()
+    try:
+        label_map = {"cats": 0, "dogs": 1}
+        write_parquet("image_folder", "file://" + temp_dir,
+                      directory=os.path.join(resource_path, "cat_dog"),
+                      label_map=label_map)
+        train_xshard = ParquetDataset._read_as_xshards("file://" + temp_dir)
+
+        data = train_xshard.collect()[0]
+        image_path = data["image_id"][0]
+
+        with open(image_path, "rb") as f:
+            image_bytes = f.read()
+
+        assert image_bytes == data['image'][0]
+    
     finally:
         shutil.rmtree(temp_dir)
