@@ -105,7 +105,7 @@ ENV RUNTIME_DRIVER_MEMORY               10g
 ENV RUNTIME_PERSISTENT_VOLUME_CLAIM     myvolumeclaim
 ENV SPARK_HOME                          /opt/spark
 ENV HADOOP_CONF_DIR                     /opt/hadoop-conf
-ENV BIGDL_VERSION                       0.12.2
+ENV BIGDL_VERSION                       ${BIGDL_VERSION}
 ENV BIGDL_CLASSPATH                     ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-jar-with-dependencies.jar
 ENV JAVA_HOME                           /opt/jdk
 ENV REDIS_HOME                          /opt/redis-5.0.5
