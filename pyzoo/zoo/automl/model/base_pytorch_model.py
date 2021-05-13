@@ -97,6 +97,22 @@ class PytorchBaseModel(BaseModel):
         # todo: support input validation data None
         assert validation_data is not None, "You must input validation data!"
 
+        # update config settings
+        def update_config():
+            config.setdefault("past_seq_len", x.shape[-2])
+            config.setdefault("future_seq_len", y.shape[-2])
+            config.setdefault("input_feature_num", x.shape[-1])
+            config.setdefault("output_feature_num", y.shape[-1])
+
+        if not self.model_built:
+            update_config()
+            self.build(config)
+        else:
+            tmp_config = self.config.copy()
+            tmp_config.update(config)
+            self._check_config(**tmp_config)
+            self.config.update(config)
+
         # get train_loader
         if hasattr(data, '__call__'):
             train_loader = data(self.config)
@@ -114,22 +130,6 @@ class PytorchBaseModel(BaseModel):
             validation_loader = DataLoader(TensorDataset(val_x, val_y),
                                   batch_size=int(batch_size),
                                   shuffle=True)
-
-        # update config settings
-        def update_config():
-            config.setdefault("past_seq_len", x.shape[-2])
-            config.setdefault("future_seq_len", y.shape[-2])
-            config.setdefault("input_feature_num", x.shape[-1])
-            config.setdefault("output_feature_num", y.shape[-1])
-
-        if not self.model_built:
-            update_config()
-            self.build(config)
-        else:
-            tmp_config = self.config.copy()
-            tmp_config.update(config)
-            self._check_config(**tmp_config)
-            self.config.update(config)
 
         epoch_losses = []
         for i in range(epochs):
