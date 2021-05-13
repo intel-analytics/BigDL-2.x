@@ -155,7 +155,7 @@ class BasePredictor(object):
             2019-01-03  2           3                   9
         """
         return self.pipeline.predict(input_df)
-    
+
     def _detach_recipe(self, recipe):
         self.search_space = recipe.search_space()
 
@@ -167,7 +167,6 @@ class BasePredictor(object):
         self.num_samples = stop["num_samples"]
         del stop["num_samples"]
         self.stop = stop
-
 
     def _hp_search(self,
                    input_df,

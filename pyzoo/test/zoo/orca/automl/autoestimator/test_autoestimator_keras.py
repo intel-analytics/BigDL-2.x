@@ -52,6 +52,7 @@ def create_linear_search_space():
         "batch_size": hp.choice([32, 64])
     }
 
+
 def create_stop():
     return {
         "training_iteration": 1

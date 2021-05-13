@@ -106,8 +106,9 @@ def create_linear_search_space():
 
 def create_stop():
     return {
-            "training_iteration": 1
-        }
+        "training_iteration": 1
+    }
+
 
 class TestPyTorchAutoEstimator(TestCase):
     def setUp(self) -> None:

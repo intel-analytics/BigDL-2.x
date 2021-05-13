@@ -30,17 +30,15 @@ from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 
 
 def create_simple_search_space():
-    return {
-            "lr": hp.uniform(0.001, 0.01),
-            "batch_size": hp.choice([32, 64]),
-    }
+    return {"lr": hp.uniform(0.001, 0.01),
+            "batch_size": hp.choice([32, 64])}
 
 
 def create_stop(stop_metric=None):
     stop = {
         "training_iteration": 20
     }
-    if not stop_metric is None:
+    if stop_metric is not None:
         stop.update({"reward_metric": stop_metric})
     return stop
 
