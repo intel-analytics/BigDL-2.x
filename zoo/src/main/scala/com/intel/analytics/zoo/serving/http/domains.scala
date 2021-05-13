@@ -19,9 +19,10 @@ package com.intel.analytics.zoo.serving.http
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.util
 import java.util.concurrent.LinkedBlockingQueue
+
 import scala.concurrent.Await
 import java.util.{HashMap, UUID}
-import java.nio.file.{Paths, Files}
+import java.nio.file.{Files, Paths}
 
 import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
@@ -37,12 +38,11 @@ import org.apache.arrow.vector._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.ImmutableList
-import com.intel.analytics.zoo.serving.http.FrontEndApp.{overallRequestTimer, system, timeout, timing, waitRedisTimer, silent}
+import com.intel.analytics.zoo.serving.http.FrontEndApp.{metrics, overallRequestTimer, silent, system, timeout, timing, waitRedisTimer}
 
 
 sealed trait ServingMessage
@@ -651,6 +651,8 @@ class ServableManager {
       if (!modelVersionMap.contains(modelInfo.getModelName)) {
         val versionMapper = new mutable.HashMap[String, Servable]
         modelVersionMap(modelInfo.getModelName) = versionMapper
+        val timerMapper = new mutable.HashMap[String, Timer]
+        FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName) = timerMapper
       }
       if (modelVersionMap(modelInfo.getModelName).contains(modelInfo.getModelVersion)) {
         throw ServableLoadException("duplicated model info. Model Name: " + modelInfo.getModelName
@@ -662,6 +664,8 @@ class ServableManager {
           val servable = new ClusterServingServable(clusterServingModelInfo)
           servable.load()
           modelVersionMap(modelInfo.getModelName)(modelInfo.getModelVersion) = servable
+          FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
+            metrics.timer("zoo.serving.inference." + modelInfo.getModelName + "." + modelInfo.getModelVersion)
       }
     }
   }

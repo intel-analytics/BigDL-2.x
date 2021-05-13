@@ -28,13 +28,14 @@ import akka.http.scaladsl.server.Directives.{complete, path, _}
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.{MetricRegistry, Timer}
 import com.google.common.util.concurrent.RateLimiter
 import com.intel.analytics.zoo.pipeline.inference.EncryptSupportive
 import com.intel.analytics.zoo.serving.utils.Conventions
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
@@ -320,7 +321,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                 timing("backend inference timing")(overallRequestTimer, backendInferenceTimer) {
                   try {
                     logger.info("model name: " + modelName + ", model version: " + modelVersion)
-                    val servable = timing("retriving servable")() {
+                    val servable = timing("retriving servable")(servableRetriveTimer) {
                       servableManager.retriveServable(modelName, modelVersion)
                     }
                     servable match {
@@ -378,6 +379,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
   val getRedisTimer = metrics.timer("zoo.serving.redis.get")
   val waitRedisTimer = metrics.timer("zoo.serving.redis.wait")
   val metricsRequestTimer = metrics.timer("zoo.serving.request.metrics")
+  val modelInferenceTimersMap = new mutable.HashMap[String, mutable.HashMap[String, Timer]]
 
   val jacksonJsonSerializer = new JacksonJsonSerializer()
 
