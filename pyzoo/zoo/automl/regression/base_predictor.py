@@ -168,9 +168,6 @@ class BasePredictor(object):
         del stop["num_samples"]
         self.stop = stop
 
-        if self.search_alg and self.search_alg.lower() == "bayesopt":
-            self.search_alg_params.update({"space": recipe.manual_search_space()})
-
 
     def _hp_search(self,
                    input_df,
