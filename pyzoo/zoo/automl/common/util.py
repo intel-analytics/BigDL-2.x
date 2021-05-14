@@ -124,25 +124,40 @@ def get_remote_list(dir_in):
     return names
 
 
-def upload_ppl_hdfs(upload_dir, ckpt_name):
-    # The default upload_dir is {remote_root}/ray_results/automl
-    # The name of ray checkpoint_dir is train_func_0_{config}_{time}_{tmp},
-    # with a max identifier length of 130.
-    # If there is a list([]) in config and is truncated into part of [],
-    # then the path name can't be identified by hadoop command.
-    # Therefore we use the last IDENTIFIER_LEN=27 of checkpoint_dir as upload_dir_name,
-    # with a format of {time}_{tmp}, in order to avoid misinterpretation.
-    log_dir = os.path.abspath(".")
-    log_name = os.path.basename(log_dir)[-IDENTIFIER_LEN:]
-    remote_log_dir = os.path.join(upload_dir, log_name)
-    if log_name not in get_remote_list(upload_dir):
-        cmd = "hadoop fs -mkdir {remote_log_dir};" \
-              " hadoop fs -put -f {local_file} {remote_log_dir}"\
-            .format(local_file=ckpt_name, remote_log_dir=remote_log_dir)
+def put_ckpt_hdfs(remote_dir, ckpt_name):
+    """
+    Upload checkpoint file with name of ckpt_name to the hdfs directory
+    {remote_dir}/{ray_checkpoint_dir}[-IDENTIFIER_LEN:].
+
+    Note that ray_checkpoint_dir is like train_func_0_{config}_{time}_{tmp},
+    with a max identifier length of 130. However, if there is a list("[]") in config and is
+    truncated with half "[" remained, then the path name can't be identified by hadoop command.
+    Therefore we use the last IDENTIFIER_LEN=27 of ray_checkpoint_dir as remote_ckpt_basename,
+    with a format of {time}_{tmp}, in order to avoid misinterpretation.
+    """
+
+    local_ckpt_dir = os.path.abspath(".")
+    remote_ckpt_basename = os.path.basename(local_ckpt_dir)[-IDENTIFIER_LEN:]
+    remote_ckpt_dir = os.path.join(remote_dir, remote_ckpt_basename)
+    if remote_ckpt_basename not in get_remote_list(remote_dir):
+        cmd = f"hadoop fs -mkdir {remote_ckpt_dir};" \
+              f" hadoop fs -put -f {ckpt_name} {remote_ckpt_dir}"
     else:
-        cmd = " hadoop fs -put -f {local_file} {remote_log_dir}".format(
-            local_file=ckpt_name,
-            remote_log_dir=remote_log_dir)
+        cmd = f"hadoop fs -put -f {ckpt_name} {remote_ckpt_dir}"
+    process(cmd)
+
+
+def get_ckpt_hdfs(remote_dir, local_ckpt):
+    """
+    Get checkpoint file from hdfs as local_ckpt
+    Remote checkpoint dir is {remote_dir}/{ray_checkpoint_dir}[-IDENTIFIER_LEN:].
+    """
+    ckpt_name = os.path.basename(local_ckpt)
+    local_ckpt_dir = os.path.dirname(local_ckpt)
+    remote_ckpt_basename = os.path.basename(local_ckpt_dir)[-IDENTIFIER_LEN:]
+    remote_ckpt = os.path.join(remote_dir, remote_ckpt_basename, ckpt_name)
+
+    cmd = "hadoop fs -get {} {}".format(remote_ckpt, local_ckpt_dir)
     process(cmd)
 
 
