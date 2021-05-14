@@ -18,12 +18,13 @@ from zoo.orca.automl.auto_estimator import AutoEstimator
 from zoo.automl.model import ModelBuilder
 from zoo.zouwu.model import ProphetBuilder
 
+
 class AutoProphet(AutoEstimator):
-    
-   def __init__(self,
-             logs_dir="/tmp/auto_prophet_logs",
-             **prophet_config
-             ):
+
+    def __init__(self,
+                 logs_dir="/tmp/auto_prophet_logs",
+                 **prophet_config
+                 ):
     """
     Automated Prophet Model
     :param logs_dir: Local directory to save logs and results. It defaults to
