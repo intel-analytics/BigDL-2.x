@@ -20,6 +20,8 @@
 from __future__ import print_function
 import argparse
 import numpy as np
+from os.path import exists
+from os import makedirs
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -116,7 +118,7 @@ def load_dataset():
                         fix_length=200)
     LABEL = data.LabelField()
     train_dataset, _ = datasets.IMDB.splits(TEXT, LABEL)
-    TEXT.build_vocab(train_dataset, vectors=GloVe(name='6B', dim=300))
+    TEXT.build_vocab(train_dataset, vectors=GloVe(name='6B', dim=100))
     LABEL.build_vocab(train_dataset)
     word_embeddings = TEXT.vocab.vectors
     vocab_size = len(TEXT.vocab)
@@ -129,7 +131,7 @@ def model_creator(config):
     batch_size = 32
     output_size = 2
     hidden_size = 256
-    embedding_length = 300
+    embedding_length = 100
     model = LSTMClassifier(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
     return model
 
@@ -165,6 +167,10 @@ def test_loader_creator(config, batch_size):
     return test_dataloader
 
 
+model_dir = "model_save"
+if not exists(model_dir):
+    makedirs(model_dir)
+model_save_path = model_dir+"/model"
 criterion = F.cross_entropy
 batch_size = 32
 train_iter = train_loader_creator({}, batch_size)
@@ -178,8 +184,8 @@ if args.backend == "bigdl":
                                           loss=criterion,
                                           workers_per_node=2,
                                           metrics=[Accuracy()],
+                                          model_dir=model_dir,
                                           backend="bigdl")
-
     orca_estimator.fit(data=train_iter, epochs=5, validation_data=test_iter,
                        checkpoint_trigger=EveryEpoch())
     res = orca_estimator.evaluate(data=test_iter)
@@ -194,10 +200,12 @@ elif args.backend == "torch_distributed":
                                           config={"lr": 2e-5})
 
     orca_estimator.fit(data=train_loader_creator, epochs=5, batch_size=batch_size,)
-
+    model = orca_estimator.get_model()
+    torch.save(model.state_dict(), model_save_path)
     res = orca_estimator.evaluate(data=test_loader_creator)
     for r in res:
         print(r, ":", res[r])
+    
 else:
     raise NotImplementedError("Only bigdl and torch_distributed are supported as the backend,"
                               " but got {}".format(args.backend))
@@ -206,6 +214,8 @@ stop_orca_context()
 # start testing
 print("***Finish training, start testing***")
 model = model_creator({})
+model.load_state_dict(torch.load(model_save_path))
+model.eval()
 test_sen1 = "This is one of the best creation of Nolan. I can say, it's his magnum opus. Loved the soundtrack and especially those creative dialogues."
 test_sen2 = "Ohh, such a ridiculous movie. Not gonna recommend it to anyone. Complete waste of time and money."
 test_sen_set = [test_sen1, test_sen2]
@@ -216,7 +226,6 @@ for test_sen in test_sen_set:
     test_sen = np.asarray(test_sen)
     test_sen = torch.LongTensor(test_sen)
     test_tensor = Variable(test_sen, volatile=True)
-    model.eval()
     output = model(test_tensor, 1)
     out = F.softmax(output, 1)
     if (torch.argmax(out[0]) == 1):
