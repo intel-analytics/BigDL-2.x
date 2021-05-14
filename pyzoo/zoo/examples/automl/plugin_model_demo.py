@@ -90,7 +90,7 @@ if __name__ == "__main__":
                      model_create_func=modelBuilder,
                      search_space=create_simple_recipe(),
                      n_sampling=2,
-                     max_epochs=20)
+                     epochs=20)
 
     searcher.run()
     best_trials = searcher.get_best_trials(k=1)

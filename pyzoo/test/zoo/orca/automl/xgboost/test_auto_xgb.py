@@ -60,7 +60,7 @@ class TestAutoXGBRegressor(TestCase):
                          validation_data=validation_data,
                          search_space=create_XGB_recipe(),
                          n_sampling=4,
-                         max_epochs=1,
+                         epochs=1,
                          metric="mse")
         best_model = auto_xgb_reg.get_best_model()
         assert 5 <= best_model.model.n_estimators <= 10

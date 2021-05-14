@@ -59,18 +59,18 @@ class RayTuneSearchEngine(SearchEngine):
     def compile(self,
                 data,
                 model_create_func,
-                search_space,
+                epochs=1,
                 validation_data=None,
+                metric="mse",
                 metric_threshold=None,
                 n_sampling=1,
-                max_epochs=1,
+                search_space=None,
                 search_alg=None,
                 search_alg_params=None,
                 scheduler=None,
                 scheduler_params=None,
                 feature_transformers=None,
-                mc=False,
-                metric="mse"):
+                mc=False):
         """
         Do necessary preparations for the engine
         :param data: data for training
@@ -84,7 +84,7 @@ class RayTuneSearchEngine(SearchEngine):
         :param search_space: a dict for search space
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: number of sampling
-        :param max_epochs: max epoch for training
+        :param epochs: max epochs for training
         :param validation_data: data for validation
                Pandas Dataframe:
                    a Pandas dataframe for validation
@@ -92,7 +92,7 @@ class RayTuneSearchEngine(SearchEngine):
                    a tuple in form of (x, y)
                         x: ndarray for validation input
                         y: ndarray for validation output
-        :param search_space: search_space, required if recipe is not provided
+        :param search_space: search_space
         :param search_alg: str, all supported searcher provided by ray tune
                (i.e."variant_generator", "random", "ax", "dragonfly", "skopt",
                "hyperopt", "bayesopt", "bohb", "nevergrad", "optuna", "zoopt" and
@@ -110,12 +110,10 @@ class RayTuneSearchEngine(SearchEngine):
         self.mode = Evaluator.get_metric_mode(metric)
         self.num_samples = n_sampling
         self.stopper = TrialStopper(metric_threshold=metric_threshold,
-                                    max_epochs=max_epochs,
+                                    epochs=epochs,
                                     metric=self.metric,
                                     mode=self.mode)
 
-        if search_space is None:
-            search_space = recipe.search_space()
         self.search_space = search_space
 
         self._search_alg = RayTuneSearchEngine._set_search_alg(search_alg, search_alg_params,
@@ -358,11 +356,11 @@ class RayTuneSearchEngine(SearchEngine):
 
 # stopper
 class TrialStopper(Stopper):
-    def __init__(self, metric_threshold, max_epochs, metric, mode):
+    def __init__(self, metric_threshold, epochs, metric, mode):
         self._mode = mode
         self._metric = metric
         self._metric_threshold = metric_threshold
-        self._max_epochs = max_epochs
+        self._epochs = epochs
 
     def __call__(self, trial_id, result):
         if self._metric_threshold is not None:
@@ -370,7 +368,7 @@ class TrialStopper(Stopper):
                 return True
             if self._mode == "min" and result[self._metric] <= self._metric_threshold:
                 return True
-        if result["training_iteration"] >= self._max_epochs:
+        if result["training_iteration"] >= self._epochs:
             return True
         return False
 

@@ -108,7 +108,7 @@ class TestPyTorchAutoEstimator(TestCase):
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
                      n_sampling=4,
-                     max_epochs=1,
+                     epochs=1,
                      metric="accuracy")
         best_model = auto_est.get_best_model()
         assert best_model.optimizer.__class__.__name__ == "SGD"
@@ -127,7 +127,7 @@ class TestPyTorchAutoEstimator(TestCase):
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
                      n_sampling=4,
-                     max_epochs=1,
+                     epochs=1,
                      metric="accuracy")
         best_model = auto_est.get_best_model()
         assert isinstance(best_model.loss_creator, nn.BCELoss)
@@ -145,7 +145,7 @@ class TestPyTorchAutoEstimator(TestCase):
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
                      n_sampling=4,
-                     max_epochs=1,
+                     epochs=1,
                      metric="accuracy")
         best_model = auto_est.get_best_model()
         assert best_model.optimizer.__class__.__name__ == "SGD"
@@ -185,14 +185,14 @@ class TestPyTorchAutoEstimator(TestCase):
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
                      n_sampling=4,
-                     max_epochs=1,
+                     epochs=1,
                      metric="accuracy")
         with pytest.raises(RuntimeError):
             auto_est.fit(data=data,
                          validation_data=validation_data,
                          search_space=create_linear_search_space(),
                          n_sampling=4,
-                         max_epochs=1,
+                         epochs=1,
                          metric="accuracy")
 
 

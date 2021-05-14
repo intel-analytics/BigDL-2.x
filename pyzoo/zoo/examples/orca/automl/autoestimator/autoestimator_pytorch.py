@@ -98,11 +98,11 @@ def train_example(args):
         name="test_fit")
     train_data, val_data = get_train_val_data()
     auto_est.fit(data=train_data,
+                 epochs=args.epochs,
                  validation_data=val_data,
-                 search_space=create_linear_search_space(),
-                 max_epochs=args.epochs,
+                 metric="accuracy",
                  n_sampling=args.trials,
-                 metric="accuracy")
+                 search_space=create_linear_search_space())
     # Choose the best model
     best_model = auto_est.get_best_model()
     best_model_accuracy = best_model.evaluate(x=val_data[0],

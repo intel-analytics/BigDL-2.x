@@ -87,7 +87,7 @@ def prepare_searcher(data,
                      model_create_func=modelBuilder,
                      search_space=search_space,
                      n_sampling=2,
-                     max_epochs=stop["training_iteration"],
+                     epochs=stop["training_iteration"],
                      metric_threshold=stop["reward_metric"],
                      feature_transformers=feature_transformer,
                      metric=metric)

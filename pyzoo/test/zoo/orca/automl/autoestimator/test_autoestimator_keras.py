@@ -73,7 +73,7 @@ class TestTFKerasAutoEstimator(TestCase):
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
                      n_sampling=4,
-                     max_epochs=1,
+                     epochs=1,
                      metric="mse")
         best_model = auto_est.get_best_model()
         assert "hidden_size" in best_model.config
@@ -89,14 +89,14 @@ class TestTFKerasAutoEstimator(TestCase):
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
                      n_sampling=4,
-                     max_epochs=1,
+                     epochs=1,
                      metric="mse")
         with pytest.raises(RuntimeError):
             auto_est.fit(data=data,
                          validation_data=validation_data,
                          search_space=create_linear_search_space(),
                          n_sampling=4,
-                         max_epochs=1,
+                         epochs=1,
                          metric="mse")
 
 

@@ -165,7 +165,7 @@ class BasePredictor(object):
             self.mode = Evaluator.get_metric_mode(self.metric)
             self.metric_threshold = -stop["reward_metric"] if \
                 self.mode == "min" else stop["reward_metric"]
-        self.max_epochs = stop["training_iteration"]
+        self.epochs = stop["training_iteration"]
         self.num_samples = stop["num_samples"]
 
     def _hp_search(self,
@@ -194,7 +194,7 @@ class BasePredictor(object):
                          validation_data=validation_df,
                          search_space=self.search_space,
                          n_sampling=self.num_samples,
-                         max_epochs=self.max_epochs,
+                         epochs=self.epochs,
                          metric_threshold=self.metric_threshold,
                          search_alg=self.search_alg,
                          search_alg_params=self.search_alg_params,
