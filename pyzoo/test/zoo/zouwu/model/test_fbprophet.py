@@ -23,20 +23,17 @@ import os
 from numpy.testing import assert_array_almost_equal
 import pandas as pd
 
-print(np.exp(np.random.uniform(np.log(1e-3), np.log(0.5))))
-print(np.random.choice(["a","b"]))
-
 
 class TestProphetModel(ZooTestCase):
 
     def setup_method(self, method):
         self.seq_len = 480
         self.config = {
-            "changepoint_prior_scale" : np.exp(np.random.uniform(np.log(0.001), np.log(0.5))),
-            "seasonality_prior_scale" : np.exp(np.random.uniform(np.log(0.01), np.log(10))),
-            "holidays_prior_scale" : np.exp(np.random.uniform(np.log(0.01), np.log(10))),
-            "seasonality_mode" : np.random.choice(['additive', 'multiplicative']),
-            "changepoint_range" : np.random.uniform(0.8, 0.95)
+            "changepoint_prior_scale": np.exp(np.random.uniform(np.log(0.001), np.log(0.5))),
+            "seasonality_prior_scale": np.exp(np.random.uniform(np.log(0.01), np.log(10))),
+            "holidays_prior_scale": np.exp(np.random.uniform(np.log(0.01), np.log(10))),
+            "seasonality_mode": np.random.choice(['additive', 'multiplicative']),
+            "changepoint_range": np.random.uniform(0.8, 0.95)
         }
         self.model = ProphetModel()
         self.x = pd.DataFrame(pd.date_range('20130101', periods=self.seq_len), columns=['ds'])
@@ -78,7 +75,7 @@ class TestProphetModel(ZooTestCase):
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling evaluate"):
             self.model.evaluate(x=None, target=self.target)
-            
+
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling save"):
             model_file = "tmp.pkl"
