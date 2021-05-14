@@ -40,6 +40,3 @@ class Recipe(metaclass=ABCMeta):
         if self.reward_metric is not None:
             runtime_config["reward_metric"] = self.reward_metric
         return runtime_config
-
-    def manual_search_space(self):
-        return None

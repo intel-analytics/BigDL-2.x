@@ -29,35 +29,26 @@ from zoo.orca import init_orca_context, stop_orca_context
 from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 
 
-class SimpleRecipe(Recipe):
-    def __init__(self, stop_metric=0):
-        super().__init__()
-        self.num_samples = 2
-        self.training_iteration = 20
-        self.reward_metric = stop_metric
-
-    def search_space(self):
-        return {
-            "lr": hp.uniform(0.001, 0.01),
-            "batch_size": hp.choice([32, 64]),
-        }
+def create_simple_search_space():
+    return {"lr": hp.uniform(0.001, 0.01),
+            "batch_size": hp.choice([32, 64])}
 
 
-def create_lstm_recipe(input_dim):
-    class LSTMRecipe(Recipe):
-        def __init__(self):
-            super().__init__()
-            self.num_samples = 2
-            self.training_iteration = 20
+def create_stop(stop_metric=None):
+    stop = {
+        "training_iteration": 20
+    }
+    stop.update({"reward_metric": stop_metric})
+    return stop
 
-        def search_space(self):
-            return {
-                "lr": hp.uniform(0.001, 0.01),
-                "batch_size": hp.choice([32, 64]),
-                "input_dim": input_dim,
-                "output_dim": 1
-            }
-    return LSTMRecipe()
+
+def create_lstm_search_space(input_dim):
+    return {
+        "lr": hp.uniform(0.001, 0.01),
+        "batch_size": hp.choice([32, 64]),
+        "input_dim": input_dim,
+        "output_dim": 1
+    }
 
 
 def linear_model_creator(config):
@@ -75,11 +66,13 @@ def loss_creator(config):
 
 
 def prepare_searcher(data,
+                     search_space,
+                     stop,
+                     validation_data=None,
                      model_creator=linear_model_creator,
                      optimizer_creator=optimizer_creator,
                      loss_creator=loss_creator,
                      feature_transformer=None,
-                     recipe=SimpleRecipe(),
                      metric="mse",
                      name="demo"):
     modelBuilder = PytorchModelBuilder(model_creator=model_creator,
@@ -90,8 +83,12 @@ def prepare_searcher(data,
                                                  resources_per_trial={"cpu": 2},
                                                  name=name)
     searcher.compile(data=data,
+                     validation_data=validation_data,
                      model_create_func=modelBuilder,
-                     recipe=recipe,
+                     search_space=search_space,
+                     n_sampling=2,
+                     epochs=stop["training_iteration"],
+                     metric_threshold=stop["reward_metric"],
                      feature_transformers=feature_transformer,
                      metric=metric)
     return searcher
@@ -128,38 +125,29 @@ class TestRayTuneSearchEngine(ZooTestCase):
 
     def test_numpy_input(self):
         train_x, train_y, val_x, val_y = get_np_input()
-        data_with_val = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
-        searcher = prepare_searcher(data=data_with_val,
+        data = (train_x, train_y)
+        val_data = (val_x, val_y)
+        searcher = prepare_searcher(data=data,
+                                    validation_data=val_data,
                                     name='test_ray_numpy_with_val',
-                                    recipe=SimpleRecipe())
-        searcher.run()
-        best_trials = searcher.get_best_trials(k=1)
-        assert best_trials is not None
-
-    def test_dataframe_input(self):
-        train_x, train_y, val_x, val_y = get_np_input()
-        dataframe_with_val = {'df': pd.DataFrame({'x': train_x, 'y': train_y}),
-                              'val_df': pd.DataFrame({'x': val_x, 'y': val_y}),
-                              'feature_cols': ['x'],
-                              'target_col': 'y'}
-        searcher = prepare_searcher(data=dataframe_with_val,
-                                    name='test_ray_dataframe_with_val',
-                                    recipe=SimpleRecipe())
+                                    search_space=create_simple_search_space(),
+                                    stop=create_stop())
         searcher.run()
         best_trials = searcher.get_best_trials(k=1)
         assert best_trials is not None
 
     def test_dataframe_input_with_datetime(self):
         train_df, validation_df, future_seq_len = get_ts_input()
-        dataframe_with_datetime = {'df': train_df, 'val_df': validation_df}
         ft = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len,
                                             dt_col="datetime",
                                             target_col="value")
         input_dim = len(ft.get_feature_list()) + 1
-        searcher = prepare_searcher(data=dataframe_with_datetime,
+        searcher = prepare_searcher(data=train_df,
+                                    validation_data=validation_df,
                                     model_creator=LSTM_model_creator,
                                     name='test_ray_dateframe_with_datetime_with_val',
-                                    recipe=create_lstm_recipe(input_dim),
+                                    search_space=create_lstm_search_space(input_dim),
+                                    stop=create_stop(),
                                     feature_transformer=ft)
         searcher.run()
         best_trials = searcher.get_best_trials(k=1)
@@ -167,13 +155,16 @@ class TestRayTuneSearchEngine(ZooTestCase):
 
     def test_searcher_metric(self):
         train_x, train_y, val_x, val_y = get_np_input()
-        data_with_val = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
+        data = (train_x, train_y)
+        val_data = (val_x, val_y)
 
         # test metric name is returned and max mode can be stopped
-        searcher = prepare_searcher(data=data_with_val,
+        searcher = prepare_searcher(data=data,
+                                    validation_data=val_data,
                                     name='test_searcher_metric_name',
                                     metric='mse',
-                                    recipe=SimpleRecipe(stop_metric=float('-inf')))  # stop at once
+                                    search_space=create_simple_search_space(),
+                                    stop=create_stop(float('inf')))
         analysis = searcher.run()
         sorted_results = list(map(lambda x: x.last_result['mse'],
                                   RayTuneSearchEngine._get_sorted_trials(analysis.trials,
@@ -194,10 +185,12 @@ class TestRayTuneSearchEngine(ZooTestCase):
         assert analysis.trials[0].last_result['iterations_since_restore'] == 1
 
         # max mode metric with stop
-        searcher = prepare_searcher(data=data_with_val,
+        searcher = prepare_searcher(data=data,
+                                    validation_data=val_data,
                                     name='test_searcher_metric_name',
                                     metric='r2',
-                                    recipe=SimpleRecipe(stop_metric=0))  # stop at once
+                                    search_space=create_simple_search_space(),
+                                    stop=create_stop(0))  # stop at once
         analysis = searcher.run()
         sorted_results = list(map(lambda x: x.last_result['r2'],
                                   RayTuneSearchEngine._get_sorted_trials(analysis.trials,
@@ -218,10 +211,12 @@ class TestRayTuneSearchEngine(ZooTestCase):
         assert analysis.trials[0].last_result['iterations_since_restore'] == 1
 
         # test min mode metric without stop
-        searcher = prepare_searcher(data=data_with_val,
+        searcher = prepare_searcher(data=data,
+                                    validation_data=val_data,
                                     name='test_searcher_metric_name',
                                     metric='mae',
-                                    recipe=SimpleRecipe(stop_metric=0))  # never stop by metric
+                                    search_space=create_simple_search_space(),
+                                    stop=create_stop(0))  # never stop by metric
         analysis = searcher.run()
         sorted_results = list(map(lambda x: x.last_result['mae'],
                                   RayTuneSearchEngine._get_sorted_trials(analysis.trials,

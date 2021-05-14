@@ -28,24 +28,18 @@ def get_data():
         return x, y
     train_x, train_y = get_x_y(1000)
     val_x, val_y = get_x_y(400)
-    data = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
-    return data
+    data = (train_x, train_y)
+    validation_data = (val_x, val_y)
+    return data, validation_data
 
 
-class XGBRecipe(Recipe):
-    def search_space(self):
-        from zoo.orca.automl import hp
-        return {
-            "n_estimators": hp.randint(5, 10),
-            "max_depth": hp.randint(2, 5),
-            "lr": hp.loguniform(1e-4, 1e-1),
-        }
-
-    def runtime_params(self):
-        return {
-            "training_iteration": 1,
-            "num_samples": 4
-        }
+def create_XGB_recipe():
+    from zoo.orca.automl import hp
+    return {
+        "n_estimators": hp.randint(5, 10),
+        "max_depth": hp.randint(2, 5),
+        "lr": hp.loguniform(1e-4, 1e-1),
+    }
 
 
 class TestAutoXGBRegressor(TestCase):
@@ -61,9 +55,12 @@ class TestAutoXGBRegressor(TestCase):
         auto_xgb_reg = AutoXGBRegressor(cpus_per_trial=2,
                                         name="auto_xgb_regressor",
                                         tree_method='hist')
-        data = get_data()
-        auto_xgb_reg.fit(data,
-                         recipe=XGBRecipe(),
+        data, validation_data = get_data()
+        auto_xgb_reg.fit(data=data,
+                         validation_data=validation_data,
+                         search_space=create_XGB_recipe(),
+                         n_sampling=4,
+                         epochs=1,
                          metric="mse")
         best_model = auto_xgb_reg.get_best_model()
         assert 5 <= best_model.model.n_estimators <= 10
