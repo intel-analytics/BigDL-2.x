@@ -78,26 +78,6 @@ def save(file_path, feature_transformers=None, model=None, config=None):
         save_config(config_path, config)
 
 
-def save_zip(file, feature_transformers=None, model=None, config=None):
-    file_dirname = os.path.dirname(os.path.abspath(file))
-    if file_dirname and not os.path.exists(file_dirname):
-        os.makedirs(file_dirname)
-
-    dirname = tempfile.mkdtemp(prefix="automl_save_")
-    try:
-        save(dirname,
-             feature_transformers=feature_transformers,
-             model=model,
-             config=config)
-        with zipfile.ZipFile(file, 'w') as f:
-            for dirpath, dirnames, filenames in os.walk(dirname):
-                for filename in filenames:
-                    f.write(os.path.join(dirpath, filename), filename)
-        assert os.path.isfile(file)
-    finally:
-        shutil.rmtree(dirname)
-
-
 def process(cmd):
     import subprocess
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -174,18 +154,6 @@ def restore(file, feature_transformers=None, model=None, config=None):
         model.restore(model_path, **all_config)
     if feature_transformers:
         feature_transformers.restore(**all_config)
-    return all_config
-
-
-def restore_zip(file, feature_transformers=None, model=None, config=None):
-    dirname = tempfile.mkdtemp(prefix="automl_save_")
-    try:
-        with zipfile.ZipFile(file) as zf:
-            zf.extractall(dirname)
-
-        all_config = restore(dirname, feature_transformers, model, config)
-    finally:
-        shutil.rmtree(dirname)
     return all_config
 
 
