@@ -118,7 +118,7 @@ def load_dataset():
                         fix_length=200)
     LABEL = data.LabelField()
     train_dataset, _ = datasets.IMDB.splits(TEXT, LABEL)
-    TEXT.build_vocab(train_dataset, vectors=GloVe(name='6B', dim=100))
+    TEXT.build_vocab(train_dataset, vectors=GloVe(name='6B', dim=300))
     LABEL.build_vocab(train_dataset)
     word_embeddings = TEXT.vocab.vectors
     vocab_size = len(TEXT.vocab)
@@ -131,7 +131,7 @@ def model_creator(config):
     batch_size = 32
     output_size = 2
     hidden_size = 256
-    embedding_length = 100
+    embedding_length = 300
     model = LSTMClassifier(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
     return model
 
