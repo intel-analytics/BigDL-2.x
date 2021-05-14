@@ -125,11 +125,11 @@ class PytorchBaseModel(BaseModel):
             val_y = self._reshape_input(validation_data[1])
             batch_size = self.config["batch_size"]
             train_loader = DataLoader(TensorDataset(x, y),
-                                  batch_size=int(batch_size),
-                                  shuffle=True)
+                                      batch_size=int(batch_size),
+                                      shuffle=True)
             validation_loader = DataLoader(TensorDataset(val_x, val_y),
-                                  batch_size=int(batch_size),
-                                  shuffle=True)
+                                           batch_size=int(batch_size),
+                                           shuffle=True)
 
         epoch_losses = []
         for i in range(epochs):

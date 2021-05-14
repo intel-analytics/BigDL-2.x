@@ -34,6 +34,7 @@ def get_data(train_size=1000, valid_size=400):
     data = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
     return data
 
+
 class CustomDataset(Dataset):
     def __init__(self, mode="train", train_size=1000, valid_size=400):
         self.data = get_data(train_size=train_size, valid_size=valid_size)
@@ -51,10 +52,10 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         if self.mode == "train":
             return torch.from_numpy(self.data['x'][idx].reshape(-1, 1)),\
-                   torch.from_numpy(self.data['y'][idx].reshape(-1, 1))
+                torch.from_numpy(self.data['y'][idx].reshape(-1, 1))
         if self.mode == "valid":
             return torch.from_numpy(self.data['val_x'][idx].reshape(-1, 1)),\
-                   torch.from_numpy(self.data['val_y'][idx].reshape(-1, 1))
+                torch.from_numpy(self.data['val_y'][idx].reshape(-1, 1))
         return None, None
 
 

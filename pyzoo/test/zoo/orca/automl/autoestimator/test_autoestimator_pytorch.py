@@ -51,6 +51,7 @@ class Net(nn.Module):
         y = self.out_act(a3)
         return y
 
+
 class CustomDataset(Dataset):
     def __init__(self, mode="train", train_size=1000, valid_size=400):
         self.data, self.valid_data = get_train_val_data(train_size=train_size,
@@ -75,10 +76,10 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         if self.mode == "train":
             return torch.from_numpy(self.data[0][idx]).float(),\
-                   torch.from_numpy(self.data[1][idx]).float()
+                torch.from_numpy(self.data[1][idx]).float()
         if self.mode == "valid":
             return torch.from_numpy(self.valid_data[0][idx]).float(),\
-                   torch.from_numpy(self.valid_data[1][idx]).float()
+                torch.from_numpy(self.valid_data[1][idx]).float()
         return None, None
 
 
@@ -94,6 +95,7 @@ def valid_dataloader_creator(config):
                                     valid_size=config["valid_size"]),
                       batch_size=config["batch_size"],
                       shuffle=True)
+
 
 def model_creator(config):
     return Net(dropout=config["dropout"],
@@ -166,8 +168,8 @@ class TestPyTorchAutoEstimator(TestCase):
                                             resources_per_trial={"cpu": 2},
                                             name="test_fit")
         search_space = create_linear_search_space()
-        search_space.update({"train_size": hp.qrandint(800,1000,q=2),
-                             "valid_size": hp.qrandint(400,500,q=2)})
+        search_space.update({"train_size": hp.qrandint(800, 1000, q=2),
+                             "valid_size": hp.qrandint(400, 500, q=2)})
         auto_est.fit(data=train_dataloader_creator,
                      validation_data=valid_dataloader_creator,
                      search_space=search_space,
