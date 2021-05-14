@@ -21,9 +21,11 @@ import pytest
 
 import torch
 import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
 from zoo.orca.automl.auto_estimator import AutoEstimator
 from zoo.automl.recipe.base import Recipe
 from zoo.orca.automl.pytorch_utils import LR_NAME
+from zoo.orca.automl import hp
 
 os.environ["KMP_SETTINGS"] = "0"
 
@@ -49,6 +51,49 @@ class Net(nn.Module):
         y = self.out_act(a3)
         return y
 
+class CustomDataset(Dataset):
+    def __init__(self, mode="train", train_size=1000, valid_size=400):
+        self.data, self.valid_data = get_train_val_data(train_size=train_size,
+                                                        valid_size=valid_size)
+        if mode == "train":
+            print(self.data[0].shape)
+            print(self.data[1].shape)
+        else:
+            print(self.valid_data[0].shape)
+            print(self.valid_data[1].shape)
+        self.mode = mode
+        self.train_size = train_size
+        self.valid_size = valid_size
+
+    def __len__(self):
+        if self.mode == "train":
+            return self.train_size
+        if self.mode == "valid":
+            return self.valid_size
+        return None
+
+    def __getitem__(self, idx):
+        if self.mode == "train":
+            return torch.from_numpy(self.data[0][idx]).float(),\
+                   torch.from_numpy(self.data[1][idx]).float()
+        if self.mode == "valid":
+            return torch.from_numpy(self.valid_data[0][idx]).float(),\
+                   torch.from_numpy(self.valid_data[1][idx]).float()
+        return None, None
+
+
+def train_dataloader_creator(config):
+    return DataLoader(CustomDataset(mode="train",
+                                    train_size=config["train_size"]),
+                      batch_size=config["batch_size"],
+                      shuffle=True)
+
+
+def valid_dataloader_creator(config):
+    return DataLoader(CustomDataset(mode="valid",
+                                    valid_size=config["valid_size"]),
+                      batch_size=config["batch_size"],
+                      shuffle=True)
 
 def model_creator(config):
     return Net(dropout=config["dropout"],
@@ -60,7 +105,7 @@ def get_optimizer(model, config):
     return torch.optim.SGD(model.parameters(), lr=config["lr"])
 
 
-def get_train_val_data():
+def get_train_val_data(train_size=1000, valid_size=400):
     def get_x_y(size):
         input_size = 50
         x1 = np.random.randn(size // 2, input_size)
@@ -70,13 +115,12 @@ def get_train_val_data():
         y2 = np.ones((size // 2, 1))
         y = np.concatenate([y1, y2], axis=0)
         return x, y
-    data = get_x_y(size=1000)
-    validation_data = get_x_y(size=400)
+    data = get_x_y(size=train_size)
+    validation_data = get_x_y(size=valid_size)
     return data, validation_data
 
 
 def create_linear_search_space():
-    from zoo.orca.automl import hp
     return {
         "dropout": hp.uniform(0.2, 0.3),
         "fc1_size": hp.choice([50, 64]),
@@ -107,6 +151,26 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
+                     n_sampling=4,
+                     epochs=1,
+                     metric="accuracy")
+        best_model = auto_est.get_best_model()
+        assert best_model.optimizer.__class__.__name__ == "SGD"
+        assert isinstance(best_model.loss_creator, nn.BCELoss)
+
+    def test_fit_data_creator(self):
+        auto_est = AutoEstimator.from_torch(model_creator=model_creator,
+                                            optimizer=get_optimizer,
+                                            loss=nn.BCELoss(),
+                                            logs_dir="/tmp/zoo_automl_logs",
+                                            resources_per_trial={"cpu": 2},
+                                            name="test_fit")
+        search_space = create_linear_search_space()
+        search_space.update({"train_size": hp.qrandint(800,1000,q=2),
+                             "valid_size": hp.qrandint(400,500,q=2)})
+        auto_est.fit(data=train_dataloader_creator,
+                     validation_data=valid_dataloader_creator,
+                     search_space=search_space,
                      n_sampling=4,
                      epochs=1,
                      metric="accuracy")

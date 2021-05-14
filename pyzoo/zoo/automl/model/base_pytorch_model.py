@@ -113,7 +113,7 @@ class PytorchBaseModel(BaseModel):
             self._check_config(**tmp_config)
             self.config.update(config)
 
-        # get train_loader
+        # get train_loader and validation_loader
         if hasattr(data, '__call__'):
             train_loader = data(self.config)
             validation_loader = validation_data(self.config)
