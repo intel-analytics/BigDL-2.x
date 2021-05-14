@@ -36,9 +36,6 @@ class ProphetModel(BaseModel):
         self.seasonality_mode = config.get('seasonality_mode', 'additive')
         self.changepoint_range = config.get('changepoint_range', 0.8)
         self.metric = config.get('metric', 'mse')
-        self.train_data = None
-        self.train_mode = True
-        self.fit_done = False
         self.model = None
         self.model_init = False
 
@@ -63,28 +60,21 @@ class ProphetModel(BaseModel):
                              seasonality_mode=self.seasonality_mode)
         self.model_init = True
 
-    def fit_eval(self, x, y=None, **config):
+    def fit_eval(self, x, target, **config):
         """
         Fit on the training data from scratch.
-        Since the rolling process is very customized in this model,
-        we enclose the rolling process inside this method.
 
         :param x: training data, an dataframe with Td rows,
             and 2 columns, with column 'ds' indicating date and column 'y' indicating target
             and Td is the time dimension
-        :param y: None. target is extracted from x directly
+        :param target: target for evaluation.
         :return: the evaluation metric value
         """
-        if self.train_data is None:
-            self.train_data = x.copy()
-        
         if not self.model_init:
             self._build(**config)
-        val_len = config.get("val_len", 24)
-        self.model.fit(x[:-val_len])
         
-        val_pred = self.predict(horizon=val_len)
-        val_metric = Evaluator.evaluate(self.metric, x[['y']].values[-val_len:], val_pred[['yhat']].values)
+        self.model.fit(x)
+        val_metric = self.evaluate(x=None, target=target, metrics=[self.metric])[0].item()
         return val_metric
 
     def predict(self, x=None, horizon=24):
@@ -94,15 +84,6 @@ class ProphetModel(BaseModel):
         :param horizon: horizon length to predict
         :return: predicted result of length horizon
         """
-        if not self.train_mode and not self.fit_done:
-            self.model = Prophet(changepoint_prior_scale=self.changepoint_prior_scale,
-                                 seasonality_prior_scale=self.seasonality_prior_scale,
-                                 holidays_prior_scale=self.holidays_prior_scale,
-                                 changepoint_range=self.changepoint_range,
-                                 seasonality_mode=self.seasonality_mode)
-            self.model.fit(self.train_data)
-            self.fit_done = True
-
         if x is not None:
             raise Exception("We don't support input x currently")
         if self.model is None:
@@ -112,41 +93,32 @@ class ProphetModel(BaseModel):
 
         return out
 
-    def evaluate(self, x, y, metrics=['mse']):
+    def evaluate(self, x, target, metrics=['mse']):
         """
         Evaluate on the prediction results and y. We predict horizon time-points ahead the input x
         in fit_eval before evaluation, where the horizon length equals the second dimension size of
         y.
         :param x: We don't support input x currently.
-        :param y: target for evaluation.
+        :param target: target for evaluation.
         :param metrics: a list of metrics in string format
         :return: a list of metric evaluation results
         """
         if x is not None:
             raise ValueError("We don't support input x currently")
-        if y is None:
-            raise ValueError("Input invalid y of None")
+        if target is None:
+            raise ValueError("Input invalid target of None")
         if self.model is None:
-            raise Exception("Needs to call fit_eval or restore first before calling predict")
-
-        self.train_mode = False        
-        horizon = len(y)
-        y = y[['y']]
+            raise Exception("Needs to call fit_eval or restore first before calling evaluate")
+      
+        horizon = len(target)
+        target = target[['y']]
         future = self.model.make_future_dataframe(periods=horizon)
-        y_pred = self.predict(horizon=horizon)[['yhat']]
-        return [Evaluator.evaluate(m, y.values, y_pred.values) for m in metrics]
+        target_pred = self.predict(horizon=horizon)[['yhat']]
+        return [Evaluator.evaluate(m, target.values, target_pred.values) for m in metrics]
 
     def save(self, checkpoint_file):
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling save")
-        if not self.fit_done:
-            self.model = Prophet(changepoint_prior_scale=self.changepoint_prior_scale,
-                                 seasonality_prior_scale=self.seasonality_prior_scale,
-                                 holidays_prior_scale=self.holidays_prior_scale,
-                                 changepoint_range=self.changepoint_range,
-                                 seasonality_mode=self.seasonality_mode)
-            self.model.fit(self.train_data)
-            self.fit_done = True
         with open(checkpoint_file, 'w') as fout:
             json.dump(model_to_json(self.model), fout)
 
@@ -154,8 +126,6 @@ class ProphetModel(BaseModel):
         with open(checkpoint_file, 'r') as fin:
             self.model = model_from_json(json.load(fin))
         self.model_init = True
-        self.train_mode = False
-        self.fit_done = True
 
     def _get_required_parameters(self):
         return {}
