@@ -112,7 +112,7 @@ class AutoEstimator:
         if self._fitted:
             raise RuntimeError("This AutoEstimator has already been fitted and cannot fit again.")
         self.searcher.compile(data=data,
-                              model_create_func=self.model_builder,
+                              model_builder=self.model_builder,
                               validation_data=validation_data,
                               search_space=search_space,
                               metric_threshold=metric_threshold,

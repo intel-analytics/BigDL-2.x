@@ -84,7 +84,7 @@ def prepare_searcher(data,
                                                  name=name)
     searcher.compile(data=data,
                      validation_data=validation_data,
-                     model_create_func=modelBuilder,
+                     model_builder=modelBuilder,
                      search_space=search_space,
                      n_sampling=2,
                      epochs=stop["training_iteration"],
