@@ -261,8 +261,8 @@ def write_voc(voc_root_path, splits_names, output_path, **kwargs):
     kwargs = {key: value for key, value in kwargs.items() if key not in ["classes"]}
     ParquetDataset.write(output_path, make_generator(), schema, **kwargs)
 
-    
-def _check_arguments(_format, kwargs, *args):
+
+def _check_arguments(_format, kwargs, args):
     for keyword in args:
         assert keyword in kwargs, keyword + " is not specified for format " + _format + "."
 
@@ -273,17 +273,10 @@ def write_parquet(format, output_path, *args, **kwargs):
         raise ValueError(format + " is not supported, should be one of 'imagenet', 'mnist',"
                          "'image_folder' and 'voc'.")
 
-    if format == "mnist":
-        _check_arguments(format, kwargs, "image_file", "label_file")
-        write_mnist(output_path=output_path, *args, **kwargs)
-    elif format == "image_folder":
-        _check_arguments(format, kwargs, "directory", "label_map")
-        write_from_directory(output_path=output_path, *args, **kwargs)
-    elif format == "imagenet":
-        _check_arguments(format, kwargs, "data_dir", "map_class_path")
-        write_imagenet(output_path=output_path, *args, **kwargs)
-    else:
-        _check_arguments(format, kwargs, "voc_root_path", "splits_names")
-        write_voc(output_path=output_path, *args, **kwargs)
-
-
+    format_to_function = {"mnist": (write_mnist, ["image_file", "label_file"]),
+                          "image_folder": (write_from_directory, ["directory", "label_map"]),
+                          "voc": (write_voc, ["voc_root_path", "splits_names"]),
+                          "imagenet": (write_imagenet, ["data_dir", "map_class_path"])}
+    func, required_args = format_to_function[format]
+    _check_arguments(format, kwargs, required_args)
+    func(output_path=output_path, *args, **kwargs)
