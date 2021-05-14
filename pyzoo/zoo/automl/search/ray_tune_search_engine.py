@@ -58,7 +58,7 @@ class RayTuneSearchEngine(SearchEngine):
 
     def compile(self,
                 data,
-                model_create_func,
+                model_builder,
                 epochs=1,
                 validation_data=None,
                 metric="mse",
@@ -69,8 +69,8 @@ class RayTuneSearchEngine(SearchEngine):
                 search_alg_params=None,
                 scheduler=None,
                 scheduler_params=None,
-                feature_transformers=None,
-                mc=False):
+                mc=False,
+                metric="mse"):
         """
         Do necessary preparations for the engine
         :param data: data for training
@@ -80,7 +80,7 @@ class RayTuneSearchEngine(SearchEngine):
                    a tuple in form of (x, y)
                         x: ndarray for training input
                         y: ndarray for training output
-        :param model_create_func: model creation function
+        :param model_builder: model creation function
         :param search_space: a dict for search space
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: number of sampling
@@ -100,7 +100,6 @@ class RayTuneSearchEngine(SearchEngine):
         :param search_alg_params: extra parameters for searcher algorithm
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
-        :param feature_transformers: feature transformer instance
         :param mc: if calculate uncertainty
         :param metric: metric name
         """
@@ -122,8 +121,7 @@ class RayTuneSearchEngine(SearchEngine):
                                                              self.metric, self.mode)
 
         self.train_func = self._prepare_train_func(data=data,
-                                                   model_create_func=model_create_func,
-                                                   feature_transformers=feature_transformers,
+                                                   model_builder=model_builder,
                                                    validation_data=validation_data,
                                                    metric=metric,
                                                    mc=mc,
@@ -208,8 +206,11 @@ class RayTuneSearchEngine(SearchEngine):
         return [self._make_trial_output(t) for t in best_trials]
 
     def _make_trial_output(self, trial):
+        model_path = os.path.join(trial.logdir, trial.last_result["checkpoint"])
+        if self.remote_dir:
+            get_ckpt_hdfs(self.remote_dir, model_path)
         return TrialOutput(config=trial.config,
-                           model_path=os.path.join(trial.logdir, trial.last_result["checkpoint"]))
+                           model_path=model_path)
 
     @staticmethod
     def _get_best_trial(trial_list, metric, mode):
@@ -254,8 +255,7 @@ class RayTuneSearchEngine(SearchEngine):
 
     @staticmethod
     def _prepare_train_func(data,
-                            model_create_func,
-                            feature_transformers,
+                            model_builder,
                             metric,
                             validation_data=None,
                             mc=False,
@@ -264,8 +264,7 @@ class RayTuneSearchEngine(SearchEngine):
         """
         Prepare the train function for ray tune
         :param data: input data
-        :param model_create_func: model create function
-        :param feature_transformers: feature transformers
+        :param model_builder: model create function
         :param metric: the rewarding metric
         :param validation_data: validation data
         :param mc: if calculate uncertainty
@@ -275,45 +274,15 @@ class RayTuneSearchEngine(SearchEngine):
         """
         data_id = ray.put(data)
         validation_data_id = ray.put(validation_data)
-        ft_id = ray.put(feature_transformers)
 
         def train_func(config):
-            if isinstance(model_create_func, ModelBuilder):
-                trial_model = model_create_func.build(config)
-            else:
-                trial_model = model_create_func()
+            if not isinstance(model_builder, ModelBuilder):
+                raise ValueError(f"You must input a ModelBuilder instance for model_builder")
+            trial_model = model_builder.build(config)
 
-            global_ft = ray.get(ft_id)
-            if global_ft:
-                trial_ft = deepcopy(global_ft)
-                imputer = None
-                if "imputation" in config:
-                    if config["imputation"] == "LastFillImpute":
-                        imputer = LastFillImpute()
-                    elif config["imputation"] == "FillZeroImpute":
-                        imputer = FillZeroImpute()
-
-                # handling input
-                global_input_df = ray.get(data_id)
-                trial_input_df = deepcopy(global_input_df)
-                if imputer:
-                    trial_input_df = imputer.impute(trial_input_df)
-                config = convert_bayes_configs(config).copy()
-                train_data = trial_ft.fit_transform(trial_input_df, **config)
-
-                # handling validation data
-                global_validation_df = ray.get(validation_data_id)
-                is_val_valid = isinstance(global_validation_df, pd.DataFrame) \
-                    and not global_validation_df.empty
-                if is_val_valid:
-                    trial_validation_df = deepcopy(global_validation_df)
-                    val_data = trial_ft.transform(trial_validation_df)
-                else:
-                    val_data = None
-            else:
-                train_data = ray.get(data_id)
-                val_data = ray.get(validation_data_id)
-                trial_ft = None
+            train_data = ray.get(data_id)
+            val_data = ray.get(validation_data_id)
+            config = convert_bayes_configs(config).copy()
 
             # no need to call build since it is called the first time fit_eval is called.
             # callbacks = [TuneCallback(tune_reporter)]
@@ -337,13 +306,10 @@ class RayTuneSearchEngine(SearchEngine):
 
                 if has_best_reward:
                     best_reward = reward
-                    if isinstance(model_create_func, ModelBuilder):
-                        trial_model.save(checkpoint_filename)
-                    else:
-                        save_zip(checkpoint_filename, trial_ft, trial_model, config)
+                    trial_model.save(checkpoint_filename)
                     # Save to hdfs
                     if remote_dir is not None:
-                        upload_ppl_hdfs(remote_dir, checkpoint_filename)
+                        put_ckpt_hdfs(remote_dir, checkpoint_filename)
 
                 report_dict = {"training_iteration": i,
                                metric: reward,
