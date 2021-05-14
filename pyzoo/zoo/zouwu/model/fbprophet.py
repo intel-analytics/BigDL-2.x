@@ -40,15 +40,13 @@ class ProphetModel(BaseModel):
         self.model_init = False
 
     def set_params(self, **config):
-        self.changepoint_prior_scale = config.get('changepoint_prior_scale',
-                                                  self.changepoint_prior_scale)
-        self.seasonality_prior_scale = config.get('seasonality_prior_scale',
-                                                  self.seasonality_prior_scale)
+        self.changepoint_prior_scale = config.get('changepoint_prior_scale', self.changepoint_prior_scale)
+        self.seasonality_prior_scale = config.get('seasonality_prior_scale', self.seasonality_prior_scale)
         self.holidays_prior_scale = config.get('holidays_prior_scale', self.holidays_prior_scale)
         self.seasonality_mode = config.get('seasonality_mode', self.seasonality_mode)
         self.changepoint_range = config.get('changepoint_range', self.changepoint_range)
         self.metric = config.get('metric', self.metric)
-
+        
     def _build(self, **config):
         """
         build the models and initialize.
@@ -74,7 +72,7 @@ class ProphetModel(BaseModel):
         """
         if not self.model_init:
             self._build(**config)
- 
+        
         self.model.fit(x)
         val_metric = self.evaluate(x=None, target=target, metrics=[self.metric])[0].item()
         return val_metric
@@ -87,7 +85,7 @@ class ProphetModel(BaseModel):
         :return: predicted result of length horizon
         """
         if x is not None:
-            raise Exception("We don't support input x currently")
+            raise ValueError("We don't support input x currently")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
         future = self.model.make_future_dataframe(periods=horizon)
@@ -111,7 +109,7 @@ class ProphetModel(BaseModel):
             raise ValueError("Input invalid target of None")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling evaluate")
- 
+      
         horizon = len(target)
         target = target[['y']]
         future = self.model.make_future_dataframe(periods=horizon)
@@ -135,7 +133,6 @@ class ProphetModel(BaseModel):
     def _get_optional_parameters(self):
         return {}
 
-
 class ProphetBuilder(ModelBuilder):
 
     def __init__(self, **prophet_config):
@@ -146,7 +143,7 @@ class ProphetBuilder(ModelBuilder):
         model = ProphetModel(config=self.model_config)
         model._build(**config)
         return model
- 
+    
     def build_from_ckpt(self, checkpoint_filename):
         from Prophet import ProphetModel
         model = ProphetModel(config=self.model_config)
