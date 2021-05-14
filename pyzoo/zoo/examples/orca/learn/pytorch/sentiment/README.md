@@ -9,8 +9,8 @@ We recommend you to use Anaconda to prepare the environment, especially if you w
 ```
 conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
-pip install torch
-pip install torchtext==0.2.3
+pip install torch==1.7.1
+pip install torchtext==0.8.0
 
 # For bigdl backend:
 pip install analytics-zoo  # 0.10.0.dev3 or above
@@ -57,9 +57,8 @@ Final test results will be printed at the end:
 Final test results will be printed at the end:
 
 ```
-num_samples : 24992
-Accuracy : tensor(0.5851)
-val_loss : 0.6760138604460849
-Stopping orca context
+num_samples : 24960
+Accuracy : tensor(0.8286)
+val_loss : 0.387816492582743
 ```
 
