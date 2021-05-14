@@ -140,15 +140,31 @@ class ProphetModel(BaseModel):
 class ProphetBuilder(ModelBuilder):
 
     def __init__(self, **prophet_config):
+        """
+        Initialize Prophet Model
+        :param prophet_config: Other prophet hyperparameters. You may refer to
+           https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+        for the parameter names to specify.
+        """
         self.model_config = prophet_config.copy()
 
     def build(self, config):
+        """
+        Build Prophet Model
+        :param config: Other prophet hyperparameters. You may refer to
+           https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+        for the parameter names to specify.
+        """
         from zoo.zouwu.model.fbprophet import ProphetModel
         model = ProphetModel(config=self.model_config)
         model._build(**config)
         return model
 
     def build_from_ckpt(self, checkpoint_filename):
+        """
+        Build Prophet Model from checkpoint
+        :param checkpoint_filename: model checkpoint filename
+        """
         from zoo.zouwu.model.fbprophet import ProphetModel
         model = ProphetModel(config=self.model_config)
         model.restore(checkpoint_filename)
