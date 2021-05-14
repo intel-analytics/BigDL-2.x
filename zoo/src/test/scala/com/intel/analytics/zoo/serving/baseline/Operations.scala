@@ -19,13 +19,14 @@ package com.intel.analytics.zoo.serving.baseline
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.TestUtils
 import com.intel.analytics.zoo.serving.serialization.JsonInputDeserializer
-import com.intel.analytics.zoo.serving.utils.TimerSupportive
-import com.intel.analytics.zoo.serving.serialization.JsonUtil
+import com.intel.analytics.zoo.serving.http.Supportive
+import com.intel.analytics.zoo.serving.http.JsonUtil
+import com.intel.analytics.zoo.serving.http.ServingTimerMetrics
 import org.apache.log4j.Logger
 import com.codahale.metrics.MetricRegistry
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-object Operations extends TimerSupportive {
+object Operations extends Supportive {
   // val logger = Logger.getLogger(getClass)
   def main(args: Array[String]): Unit = {
     // read file from zoo/src/test/resources/serving to String
@@ -33,53 +34,61 @@ object Operations extends TimerSupportive {
     val string = TestUtils.getStrFromResourceFile("dien_json_str_bs16.json")
 
     // decode json string input to activity
-     val input = JsonInputDeserializer.deserialize(string)
+    val input = JsonInputDeserializer.deserialize(string)
 
-    (1 until 4).foreach(threadNumber => {
+
+    (1 to 4).foreach(threadNumber => {
       // load model with concurrent number 1~4
-
-      // set timer name
-      val keyTotal = s"zoo.serving.request.predict.${threadNumber}_threads"
-      // initialize timers
-      val predictTotalRequestTimer = metrics.timer(keyTotal)
-
       val model = new InferenceModel(threadNumber)
       model.doLoadTensorflow("/home/lyubing/models/dien", "frozenModel")
 
-      (0 until 10).foreach(iter =>  {
+      (0 to 10).foreach(range => {
+        logger.info(s"inference with $threadNumber threads and range $range benchmark test starts.\n")
         // set timer name
-        val key = s"zoo.serving.request.predict.${threadNumber}_threads.range_${iter}"
+        val preprocessingKey = s"preprocessing.${threadNumber}_thread.${range}_range"
+        val postprocessingKey = s"postprocessing.${threadNumber}_thread.${range}_range"
+        val predictKey = s"predict.${threadNumber}_thread.${range}_range"
         // initialize timers
-        val predictRequestTimer = metrics.timer(key)
-        silent(s"inference with $threadNumber threads without sleep predict")(predictTotalRequestTimer,predictRequestTimer){
-          // do a operation 0 to 10 times to mock preprocessing, the operation could be controlled around 1ms
-          (0 until iter).foreach(i => {
-            mockOperation()
-          })
-          // do predict
-          (0 until threadNumber).indices.toParArray.foreach(threadIndex => {
-            (0 until iter).foreach(i => {
+        val preprocessingTimer = metrics.timer(preprocessingKey)
+        val postprocessingTimer = metrics.timer(postprocessingKey)
+        val predictTimer = metrics.timer(predictKey)
+
+        (0 until threadNumber).indices.toParArray.foreach(threadIndex => {
+
+          (0 until 100).foreach(iter => {
+            // do a operation 0 to 10 times to mock preprocessing, the operation could be controlled around 1ms
+            timing("preprocessing")(preprocessingTimer) {
+              (0 until range).foreach(iter => {
+                var num = 0
+                for (i <- 0 to 200000) {
+                  num += 1
+                }
+              })
+            }
+
+            // do predict
+            timing(s"thread $threadIndex predict")(predictTimer) {
               val result = model.doPredict(input)
-            })
+            }
+
+            // do a operation 0 to 10 times to mock postprocessing
+            timing("postprocessing")(postprocessingTimer) {
+              (0 until range).foreach(iter => {
+                var num = 0
+                for (i <- 0 to 200000) {
+                  num += 1
+                }
+              })
+            }
+            // sleep 0 to 10 ms
+            Thread.sleep(range)
           })
-          // do a operation 0 to 10 times to mock postprocessing
-          (0 until iter).foreach(i => {
-            mockOperation()
-          })
-          // sleep 0 to 10 ms
-          Thread.sleep(iter)
-        }
-        val timer = metrics.getTimers().get(key)
-        val servingMetrics = ServingTimerMetrics(key, timer)
-        val jsonMetrics = JsonUtil.toJson(servingMetrics)
+        })
+        // output metrics
+        val servingMetricsList = List(ServingTimerMetrics(preprocessingKey, preprocessingTimer), ServingTimerMetrics(predictKey, predictTimer), ServingTimerMetrics(postprocessingKey, postprocessingTimer))
+        val jsonMetrics = JsonUtil.toJson(servingMetricsList)
         logger.info(jsonMetrics)
-        logger.info(s"inference with $threadNumber threads and range $iter benchmark test ended.\n")
       })
-      val timer = metrics.getTimers().get(keyTotal)
-      val servingMetrics = ServingTimerMetrics(keyTotal, timer)
-      val jsonMetrics = JsonUtil.toJson(servingMetrics)
-      logger.info(jsonMetrics)
-      logger.info(s"inference with $threadNumber threads benchmark test ended.\n\n\n")
     })
   }
 
