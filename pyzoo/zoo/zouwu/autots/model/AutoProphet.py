@@ -25,14 +25,14 @@ class AutoProphet(AutoEstimator):
                  logs_dir="/tmp/auto_prophet_logs",
                  **prophet_config
                  ):
-    """
-    Automated Prophet Model
-    :param logs_dir: Local directory to save logs and results. It defaults to
-        "/tmp/auto_prophet_logs"
-    :param prophet_config: Other prophet hyperparameters. You may refer to
-       https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
-       for the parameter names to specify.
-    """
-    prophet_model_builder = ProphetBuilder(**prophet_config)
-    super().__init__(model_builder=prophet_model_builder,
-                     logs_dir=logs_dir,)
+        """
+        Automated Prophet Model
+        :param logs_dir: Local directory to save logs and results. It defaults to
+            "/tmp/auto_prophet_logs"
+        :param prophet_config: Other prophet hyperparameters. You may refer to
+           https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+        for the parameter names to specify.
+        """
+        prophet_model_builder = ProphetBuilder(**prophet_config)
+        super().__init__(model_builder=prophet_model_builder,
+                         logs_dir=logs_dir,)
