@@ -99,10 +99,13 @@ class PytorchBaseModel(BaseModel):
 
         # update config settings
         def update_config():
-            config.setdefault("past_seq_len", x.shape[-2])
-            config.setdefault("future_seq_len", y.shape[-2])
-            config.setdefault("input_feature_num", x.shape[-1])
-            config.setdefault("output_feature_num", y.shape[-1])
+            if not hasattr(data, '__call__'):
+                x = self._reshape_input(data[0])
+                y = self._reshape_input(data[1])
+                config.setdefault("past_seq_len", x.shape[-2])
+                config.setdefault("future_seq_len", y.shape[-2])
+                config.setdefault("input_feature_num", x.shape[-1])
+                config.setdefault("output_feature_num", y.shape[-1])
 
         if not self.model_built:
             update_config()
