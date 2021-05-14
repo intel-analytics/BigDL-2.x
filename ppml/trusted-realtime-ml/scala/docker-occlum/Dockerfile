@@ -119,7 +119,7 @@ RUN echo 'deb [arch=amd64] https://occlum.io/occlum-package-repos/debian bionic 
 
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
-        build-essential ca-certificates openjdk-11-jdk curl wget netcat net-tools && \
+        build-essential ca-certificates openjdk-11-jdk curl wget netcat net-tools \
         gnupg2 jq make gdb libfuse-dev libtool \
         libsgx-dcap-ql libsgx-epid libsgx-urts libsgx-quote-ex \
         occlum && \
