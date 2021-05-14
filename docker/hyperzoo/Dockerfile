@@ -1,13 +1,10 @@
-# spark
 ARG SPARK_VERSION=2.4.3
 ARG SPARK_HOME=/opt/spark
-# jdk
 ARG JDK_VERSION=8u192
 ARG JDK_URL=your_jdk_url
-# bigdl
 ARG BIGDL_VERSION=0.12.2
-# az
 ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
+ARG TINI_VERSION=v0.18.0
 
 # stage.1 jdk & spark
 FROM ubuntu:18.04 as spark
@@ -82,6 +79,7 @@ ARG ANALYTICS_ZOO_VERSION
 ARG BIGDL_VERSION
 ARG SPARK_VERSION
 ARG SPARK_HOME
+ARG TINI_VERSION
 
 ENV ANALYTICS_ZOO_VERSION               ${ANALYTICS_ZOO_VERSION}
 ENV SPARK_HOME                          ${SPARK_HOME}
@@ -112,7 +110,7 @@ ENV REDIS_HOME                          /opt/redis-5.0.5
 ENV CS_HOME                             /opt/work/cluster-serving
 ENV PYTHONPATH                          ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip:${SPARK_HOME}/python/lib/pyspark.zip:${SPARK_HOME}/python/lib/py4j-*.zip:${CS_HOME}/serving-python.zip:/opt/models/research/slim
 ENV PATH                                ${ANALYTICS_ZOO_HOME}/bin/cluster-serving:${JAVA_HOME}/bin:/root/miniconda3/bin:${PATH}
-ENV TINI_VERSION v0.18.0
+ENV TINI_VERSION                        ${TINI_VERSION}
 
 RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils vim curl nano wget unzip maven git && \
