@@ -13,11 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from copy import deepcopy
+
+from zoo.automl.model import ModelBuilder
 from zoo.automl.model.abstract import BaseModel
 from zoo.zouwu.model.VanillaLSTM import VanillaLSTM
 from zoo.zouwu.model.Seq2Seq import LSTMSeq2Seq
 from zoo.zouwu.model.MTNet_keras import MTNetKeras
 from zoo.automl.common.util import *
+from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
+from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
+from zoo.automl.common.metrics import Evaluator
+import pandas as pd
 
 MODEL_MAP = {"LSTM": VanillaLSTM,
              "Seq2seq": LSTMSeq2Seq,
@@ -25,74 +32,144 @@ MODEL_MAP = {"LSTM": VanillaLSTM,
              }
 
 
+class TSModelBuilder(ModelBuilder):
+    def __init__(self,
+                 dt_col,
+                 target_cols,
+                 future_seq_len=1,
+                 extra_features_col=None,
+                 drop_missing=True,
+                 add_dt_features=True,
+                 ):
+        self.params = dict(
+            dt_col=dt_col,
+            target_cols=target_cols,
+            future_seq_len=future_seq_len,
+            extra_features_col=extra_features_col,
+            drop_missing=drop_missing,
+            add_dt_features=add_dt_features)
+
+    def build(self, config):
+        model = TimeSequenceModel.create(**self.params)
+        model.setup(config)
+        return model
+
+    @staticmethod
+    def build_from_ckpt(checkpoint_filename):
+        model = TimeSequenceModel()
+        model.restore(checkpoint_filename)
+        return model
+
+
 class TimeSequenceModel(BaseModel):
     """
-    Time Sequence Model is used to do model selection.
+    Time Sequence Model integrates feature transformation model selection for time series
+    forecasting.
+    It has similar functionality with the TimeSequencePipeline.
+    Note that to be compatible with load_ts_pipeline in TimeSequencePipeline,
+    TSModelBuilder.build_from_ckpt is a static method and TimeSequenceModel doesn't require
+    parameters to instantiate. TimeSequenceModel could be optimized if we deprecate load_ts_pipeline
+     in future version.
     """
-    def __init__(self, check_optional_config=False, future_seq_len=None):
+    def __init__(self,
+                 feature_transformer=None):
         """
-        Contructor of time sequence model
-        :param check_optional_config:
-        :param future_seq_len:
+        Constructor of time sequence model
         """
-        self.check_optional_config = check_optional_config
-        self.future_seq_len = future_seq_len
+        self.ft = feature_transformer if feature_transformer else TimeSequenceFeatureTransformer()
         self.model = None
-        self.selected_model = None
+        self.built = False
+        self.config = None
 
-    #     if future_seq_len:
-    #         self._model_selection(future_seq_len, check_optional_config)
-    #
-    # def _model_selection(self, future_seq_len, check_optional_config=False, verbose=1):
-    #     if future_seq_len == 1:
-    #         self.model = VanillaLSTM(check_optional_config=check_optional_config,
-    #                                  future_seq_len=future_seq_len)
-    #         if verbose == 1:
-    #             print("Model selection: Vanilla LSTM model is selected.")
-    #     else:
-    #         self.model = LSTMSeq2Seq(check_optional_config=check_optional_config,
-    #                                  future_seq_len=future_seq_len)
-    #         if verbose == 1:
-    #             print("Model selection: LSTM Seq2Seq model is selected.")
+    @classmethod
+    def create(cls,
+               dt_col,
+               target_cols,
+               future_seq_len=1,
+               extra_features_col=None,
+               drop_missing=True,
+               add_dt_features=True):
+        ft = TimeSequenceFeatureTransformer(
+            future_seq_len=future_seq_len,
+            dt_col=dt_col,
+            target_col=target_cols,
+            extra_features_col=extra_features_col,
+            drop_missing=drop_missing,
+            time_features=add_dt_features)
+        return cls(feature_transformer=ft)
 
-    def fit_eval(self, data, validation_data=None, mc=False, metric="mse", verbose=0, **config):
+    def setup(self, config):
+        # setup self.config, self.model, self.built
+        self.config = config.copy()
+        # add configs for model
+        self.config["future_seq_len"] = self.ft.future_seq_len
+        self.config["check_optional_config"] = False
+
+        if not self.model:
+            self.model = TimeSequenceModel._sel_model(self.config)
+        self.model.build(self.config)
+        self.built = True
+
+    def _process_data(self, data, config=None, mode="test"):
+        df = deepcopy(data)
+        imputer = None
+        if "imputation" in config:
+            if config["imputation"] == "LastFillImpute":
+                imputer = LastFillImpute()
+            elif config["imputation"] == "FillZeroImpute":
+                imputer = FillZeroImpute()
+        if imputer:
+            df = imputer.impute(df)
+
+        if mode == "train":
+            data_np = self.ft.fit_transform(df, **config)
+        elif mode == "val":
+            data_np = self.ft.transform(df, is_train=True)
+        elif mode == "test":
+            x, _ = self.ft.transform(df, is_train=False)
+            data_np = x
+        else:
+            raise ValueError(f"Mode should be among ['train', 'val', 'test']. Got {mode}")
+        return data_np
+
+    def fit_eval(self, data, validation_data=None, **kwargs):
         """
         fit for one iteration
-        :param data: could be a tuple with numpy ndarray with form (x, y)
-        x: 3-d array in format (no. of samples, past sequence length, 2+feature length),
-        in the last dimension, the 1st col is the time index (data type needs to be numpy datetime
-        type, e.g. "datetime64"),
-        the 2nd col is the target value (data type should be numeric)
-        y: 2-d numpy array in format (no. of samples, future sequence length)
-        if future sequence length > 1, or 1-d numpy array in format (no. of samples, )
-        if future sequence length = 1
-        :param validation_data: tuple in format (x_test,y_test), data used for validation.
+        :param data: pandas DataFrame
+        :param validation_data: pandas DataFrame, data used for validation.
         If this is specified, validation result will be the optimization target for automl.
         Otherwise, train metric will be the optimization target.
-        :param metric: the way to measure the performance of model
-        :param config: optimization hyper parameters
         :return: the resulting metric
         """
-        x, y = data[0], data[1]
-        if not self.model:
-            config["output_dim"] = y.shape[-1]
-            self._sel_model(config, verbose=1)
+        assert self.built, "You must call setup or restore before calling fit_eval"
+        if not isinstance(data, pd.DataFrame):
+            raise ValueError(f"We only support data of pd.DataFrame. "
+                             f"Got data of {data.__class__.__name__}")
+        if validation_data and not isinstance(validation_data, pd.DataFrame):
+            raise ValueError(f"We only support validation_data of pd.DataFrame. "
+                             f"Got validation_data of {data.__class__.__name__}")
+        data_np = self._process_data(data, self.config, mode="train")
+        is_val_valid = isinstance(validation_data, pd.DataFrame) and not validation_data.empty
+        if is_val_valid:
+            val_data_np = self._process_data(data, mode="val")
+        else:
+            val_data_np = None
 
-        return self.model.fit_eval(data=(x, y),
-                                   validation_data=validation_data,
-                                   mc=mc,
-                                   verbose=verbose,
-                                   **config)
+        return self.model.fit_eval(data=data_np,
+                                   validation_data=val_data_np,
+                                   **kwargs)
 
-    def _sel_model(self, config, verbose=0):
-        self.selected_model = config.get("model", "LSTM")
-        self.model = MODEL_MAP[self.selected_model](
-            check_optional_config=self.check_optional_config,
-            future_seq_len=self.future_seq_len)
+    @staticmethod
+    def _sel_model(config, verbose=0):
+        model_name = config.get("model", "LSTM")
+        model = MODEL_MAP[model_name](
+            check_optional_config=config.get(["check_optional_config"], False),
+            future_seq_len=config["future_seq_len"])
         if verbose != 0:
-            print(self.selected_model, "is selected.")
+            print(model_name, "is selected.")
+        return model
 
-    def evaluate(self, x, y, metric=['mse']):
+    def evaluate(self, df, metric=['mse']):
         """
         Evaluate on x, y
         :param x: input
@@ -100,38 +177,73 @@ class TimeSequenceModel(BaseModel):
         :param metric: a list of metrics in string format
         :return: a list of metric evaluation results
         """
-        return self.model.evaluate(x, y, metric)
+        if isinstance(metric, str):
+            metric = [metric]
+        x, y = self._process_data(df, mode="val")
+        y_pred = self.model.predict(x)
+        y_unscale, y_pred_unscale = self.ft.post_processing(df, y_pred, is_train=True)
+        if len(y_pred.shape) > 1 and y_pred.shape[1] == 1:
+            multioutput = 'uniform_average'
+        else:
+            multioutput = 'raw_values'
+        return [Evaluator.evaluate(m, y_unscale, y_pred_unscale, multioutput=multioutput)
+                for m in metric]
 
-    def predict(self, x, mc=False):
+    def predict(self, df):
         """
         Prediction on x.
-        :param x: input
+        :param df: input
         :return: predicted y
         """
-        return self.model.predict(x)
+        data_np = self._process_data(df, mode="test")
+        y_pred = self.model.predict(data_np)
+        output = self.ft.post_processing(df, y_pred, is_train=False)
+        return output
 
-    def predict_with_uncertainty(self, x, n_iter=100):
-        return self.model.predict_with_uncertainty(x, n_iter)
+    def predict_with_uncertainty(self, df, n_iter=100):
+        data_np = self._process_data(df, mode="test")
+        y_pred, y_pred_uncertainty = self.model.predict_with_uncertainty(x=data_np, n_iter=n_iter)
+        output = self.ft.post_processing(df, y_pred, is_train=False)
+        uncertainty = self.ft.unscale_uncertainty(y_pred_uncertainty)
+        return output, uncertainty
 
-    def save(self, model_path, config_path):
-        """
-        save model to file.
-        :param model_path: the model file.
-        :param config_path: the config file
-        :return:
-        """
-        model_config = {"future_seq_len": self.future_seq_len,
-                        "model": self.selected_model}
-        save_config(config_path, model_config)
-        self.model.save(model_path, config_path)
+    def save(self, checkpoint_file):
+        file_dirname = os.path.dirname(os.path.abspath(checkpoint_file))
+        if file_dirname and not os.path.exists(file_dirname):
+            os.makedirs(file_dirname)
 
-    def restore(self, model_path, **config):
-        # assert "future_seq_len" in config
-        assert "model" in config
-        self.future_seq_len = config.get("future_seq_len", 0)
-        self._sel_model(config=config, verbose=0)
-        # self._model_selection(future_seq_len=config["future_seq_len"], verbose=0)
-        self.model.restore(model_path, **config)
+        dirname = tempfile.mkdtemp(prefix="automl_save_")
+        try:
+            ppl_model = os.path.join(dirname, "model.ckpt")
+            ppl_config = os.path.join(dirname, "config.json")
+            self.ft.save(ppl_config, replace=True)
+            self.model.save(ppl_model)
+            save_config(ppl_config, self.config)
+
+            with zipfile.ZipFile(checkpoint_file, 'w') as f:
+                for dirpath, dirnames, filenames in os.walk(dirname):
+                    for filename in filenames:
+                        f.write(os.path.join(dirpath, filename), filename)
+            assert os.path.isfile(checkpoint_file)
+        finally:
+            shutil.rmtree(dirname)
+
+    def restore(self, checkpoint_file):
+        dirname = tempfile.mkdtemp(prefix="automl_save_")
+        try:
+            with zipfile.ZipFile(checkpoint_file) as zf:
+                zf.extractall(dirname)
+            ppl_model = os.path.join(dirname, "model.ckpt")
+            ppl_config = os.path.join(dirname, "config.json")
+
+            with open(ppl_config, "r") as input_file:
+                self.config = json.load(input_file)
+            self.model = TimeSequenceModel._sel_model(self.config)
+            self.model.restore(ppl_model)
+            self.ft.restore(**self.config)
+            self.built = True
+        finally:
+            shutil.rmtree(dirname)
 
     def _get_required_parameters(self):
         return self.model._get_required_parameters()
