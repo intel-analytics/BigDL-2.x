@@ -44,6 +44,7 @@ class TestProphetModel(ZooTestCase):
         self.horizon = np.random.randint(2, 50)
         self.target = pd.DataFrame(pd.date_range('20140426', periods=self.horizon), columns=['ds'])
         self.target.insert(1, 'y', np.random.rand(self.horizon))
+        self.data = {'x': self.x, 'y': None, 'val_x': None, 'val_y': self.target}
 
     def teardown_method(self, method):
         del self.model
@@ -52,7 +53,7 @@ class TestProphetModel(ZooTestCase):
 
     def test_prophet(self):
         # test fit_eval
-        evaluate_result = self.model.fit_eval(x=self.x, target=self.target, **self.config)
+        evaluate_result = self.model.fit_eval(data=self.data, **self.config)
         # test predict
         result = self.model.predict(horizon=self.horizon)
         assert result.shape[0] == self.horizon
@@ -84,7 +85,7 @@ class TestProphetModel(ZooTestCase):
             self.model.save(model_file)
 
     def test_save_restore(self):
-        self.model.fit_eval(x=self.x, target=self.target, **self.config)
+        self.model.fit_eval(data=self.data, **self.config)
         result_save = self.model.predict(x=None, horizon=self.horizon)
         model_file = "tmp.pkl"
         self.model.save(model_file)

@@ -60,7 +60,7 @@ class ProphetModel(BaseModel):
                              seasonality_mode=self.seasonality_mode)
         self.model_init = True
 
-    def fit_eval(self, x, target, **config):
+    def fit_eval(self, data, **config):
         """
         Fit on the training data from scratch.
 
@@ -73,6 +73,8 @@ class ProphetModel(BaseModel):
         if not self.model_init:
             self._build(**config)
         
+        x = data['x']
+        target = data['val_y']
         self.model.fit(x)
         val_metric = self.evaluate(x=None, target=target, metrics=[self.metric])[0].item()
         return val_metric
@@ -139,13 +141,13 @@ class ProphetBuilder(ModelBuilder):
         self.model_config = prophet_config.copy()
 
     def build(self, config):
-        from Prophet import ProphetModel
+        from zoo.zouwu.model.fbprophet import ProphetModel
         model = ProphetModel(config=self.model_config)
         model._build(**config)
         return model
     
     def build_from_ckpt(self, checkpoint_filename):
-        from Prophet import ProphetModel
+        from zoo.zouwu.model.fbprophet import ProphetModel
         model = ProphetModel(config=self.model_config)
         model.restore(checkpoint_filename)
         return model

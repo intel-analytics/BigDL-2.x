@@ -1,3 +1,4 @@
+# +
 #
 # Copyright 2018 Analytics Zoo Authors.
 #
@@ -14,10 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from zoo.orca.automl.auto_estimator import AutoEstimator
-from zoo.automl.model import ModelBuilder
-from zoo.zouwu.model import ProphetBuilder
 
+from zoo.orca.automl.auto_estimator import AutoEstimator
+from zoo.zouwu.model.fbprophet import ProphetBuilder
+
+
+# -
 
 class AutoProphet(AutoEstimator):
 
