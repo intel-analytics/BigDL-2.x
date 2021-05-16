@@ -258,7 +258,7 @@ def write_parquet(format, output_path, *args, **kwargs):
     if format not in supported_format:
         raise ValueError(format + " is not supported, should be one of 'imagenet', 'mnist',"
                          "'image_folder' and 'voc'.")
-    
+
     format_to_function = {"mnist": (write_mnist, ["image_file", "label_file"]),
                           "image_folder": (write_from_directory, ["directory", "label_map"]),
                           "voc": (write_voc, ["voc_root_path", "splits_names"])}

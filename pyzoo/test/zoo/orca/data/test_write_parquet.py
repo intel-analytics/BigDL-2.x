@@ -154,7 +154,7 @@ def test_write_voc(orca_context_fixture, use_api=False):
         dataset_path = os.path.join(resource_path, "VOCdevkit")
         output_path = os.path.join(temp_dir, "output_dataset")
         if use_api:
-            write_parquet("voc", "file://" + output_path, voc_root_path=dataset_path, 
+            write_parquet("voc", "file://" + output_path, voc_root_path=dataset_path,
                           splits_names=[(2007, "trainval")])
         else:
             write_voc(dataset_path, splits_names=[(2007, "trainval")],
