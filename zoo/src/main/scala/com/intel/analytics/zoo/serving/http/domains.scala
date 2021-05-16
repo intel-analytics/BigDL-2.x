@@ -781,6 +781,14 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
     result
   }
 
+  override def getMetaData: ModelMetaData = {
+     ClusterServingMetaData(clusterServingMetaData.modelName, clusterServingMetaData.modelVersion,
+      clusterServingMetaData.redisHost, clusterServingMetaData.redisPort, clusterServingMetaData.redisInputQueue,
+      clusterServingMetaData.redisOutputQueue, clusterServingMetaData.timeWindow, clusterServingMetaData.countWindow,
+      clusterServingMetaData.redisSecureEnabled,
+      "*******", "*******", clusterServingMetaData.features)
+  }
+
 }
 
 
