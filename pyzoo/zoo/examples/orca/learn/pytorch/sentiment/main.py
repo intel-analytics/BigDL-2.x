@@ -201,8 +201,9 @@ elif args.backend == "torch_distributed":
                                           use_tqdm=True,
                                           config={"lr": 2e-5,
                                           "TEXT_LABEL": text_label_creator()})
-    orca_estimator.fit(data=train_loader_creator, epochs=5, batch_size=batch_size,)
-    orca_estimator.save(model_save_path)
+    orca_estimator.fit(data=train_loader_creator, epochs=5, batch_size=batch_size)
+    model = orca_estimator.get_model()
+    torch.save(model.state_dict(), model_save_path)
     res = orca_estimator.evaluate(data=test_loader_creator)
     for r in res:
         print(r, ":", res[r])
@@ -213,7 +214,8 @@ stop_orca_context()
 
 # start testing
 print("***Finish training, start testing***")
-model = torch.load(model_save_path)
+model = model_creator({"TEXT_LABEL": text_label_creator()})
+model.load_state_dict(torch.load(model_save_path))
 model.eval()
 test_sen1 = "This is one of the best creation of Nolan. I can say, it's his magnum opus. Loved the soundtrack and especially those creative dialogues."
 test_sen2 = "Ohh, such a ridiculous movie. Not gonna recommend it to anyone. Complete waste of time and money."
