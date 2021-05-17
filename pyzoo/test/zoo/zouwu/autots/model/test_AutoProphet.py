@@ -56,7 +56,7 @@ class ProphetRecipe(Recipe):
         }
 
 
-class TestAutoProhet(TestCase):
+class TestAutoProphet(TestCase):
     def setUp(self) -> None:
         from zoo.orca import init_orca_context
         init_orca_context(cores=8, init_ray_on_spark=True)
