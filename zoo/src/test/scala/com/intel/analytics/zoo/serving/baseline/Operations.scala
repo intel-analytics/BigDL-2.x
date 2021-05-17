@@ -25,11 +25,25 @@ import com.intel.analytics.zoo.serving.http.ServingTimerMetrics
 import org.apache.log4j.Logger
 import com.codahale.metrics.MetricRegistry
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
+import scopt.OptionParser
 
 object Operations extends Supportive {
+  // initialize the parser
+  case class Config(modelPath: String = null)
+  val parser = new OptionParser[Config]("DIEN benchmark test Usage") {
+    opt[String]('m', "modelPath")
+      .text("Model Path for Test")
+      .action((x, params) => params.copy(modelPath = x))
+      .required()
+  }
+
   // val logger = Logger.getLogger(getClass)
   def main(args: Array[String]): Unit = {
-    // read file from zoo/src/test/resources/serving to String
+    // read the path of model
+    val arg = parser.parse(args, Config()).head
+    val path = arg.modelPath
+
+    // read file from path to String
     // this is a prepared json format input of DIEN recommendation model
     val string = TestUtils.getStrFromResourceFile("dien_json_str_bs16.json")
 
@@ -40,7 +54,7 @@ object Operations extends Supportive {
     (1 to 4).foreach(threadNumber => {
       // load model with concurrent number 1~4
       val model = new InferenceModel(threadNumber)
-      model.doLoadTensorflow("/home/lyubing/models/dien", "frozenModel")
+      model.doLoadTensorflow(path, "frozenModel")
 
       (0 to 10).foreach(range => {
         logger.info(s"inference with $threadNumber threads and range $range benchmark test starts.\n")
@@ -56,13 +70,10 @@ object Operations extends Supportive {
         (0 until threadNumber).indices.toParArray.foreach(threadIndex => {
 
           (0 until 100).foreach(iter => {
-            // do a operation 0 to 10 times to mock preprocessing, the operation could be controlled around 1ms
+            // do the mock operation 0 to 10 times to mock preprocessing
             timing("preprocessing")(preprocessingTimer) {
               (0 until range).foreach(iter => {
-                var num = 0
-                for (i <- 0 to 200000) {
-                  num += 1
-                }
+                mockOperation1ms()
               })
             }
 
@@ -71,13 +82,10 @@ object Operations extends Supportive {
               val result = model.doPredict(input)
             }
 
-            // do a operation 0 to 10 times to mock postprocessing
+            // do the mock operation 0 to 10 times to mock postprocessing
             timing("postprocessing")(postprocessingTimer) {
               (0 until range).foreach(iter => {
-                var num = 0
-                for (i <- 0 to 200000) {
-                  num += 1
-                }
+                mockOperation1ms()
               })
             }
             // sleep 0 to 10 ms
@@ -90,6 +98,16 @@ object Operations extends Supportive {
         logger.info(jsonMetrics)
       })
     })
+  }
+
+  // This function will take around 1ms to run
+  // Run different times of the function to mock different
+  // pre- and post-processing time
+  def mockOperation1ms() : Unit = {
+    var num = 0
+    for (i <- 0 to 200000) {
+      num += 1
+    }
   }
 
   val metrics = new MetricRegistry
