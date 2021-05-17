@@ -68,9 +68,11 @@ class TestAutoProphet(TestCase):
     def test_fit(self):
         auto_prophet = AutoProphet()
         data = get_data()
+        recipe = ProphetRecipe()
         auto_prophet.fit(data=data,
-                         recipe=ProphetRecipe(),
-                         metric="mse")
+                         metric="mse",
+                         search_space=recipe.search_space()
+                         )
         best_model = auto_prophet.get_best_model()
         assert 0.001 <= best_model.model.changepoint_prior_scale <= 0.5
         assert 0.01 <= best_model.model.seasonality_prior_scale <= 10
