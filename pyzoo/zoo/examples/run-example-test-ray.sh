@@ -134,7 +134,18 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBo
 now=$(date "+%s")
 time10=$((now-start))
 
-echo "#11 Start orca sentiment example"
+
+echo "#11 start example for orca autoestimator-pytorch"
+start=$(date "+%s")
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoestimator/autoestimator_pytorch.py \
+    --trials 5 --epochs 2
+
+now=$(date "+%s")
+time11=$((now-start))
+
+
+echo "#12 Start orca sentiment example"
 start=$(date "+%s")
 
 if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/.data ]
@@ -153,10 +164,11 @@ else
     tar -xf ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/vector.tar
 fi
 
-
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/main.py --backend torch_distributed
+sed 's/300/100/' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/main.py > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/main_100.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/main_100.py --backend torch_distributed
+rm ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/main_100.py
 now=$(date "+%s")
-time11=$((now-start))
+time12=$((now-start))
 
 
 echo "Ray example tests finished"
@@ -170,4 +182,5 @@ echo "#7 orca super-resolution example time used:$time7 seconds"
 echo "#8 orca cifar10 example time used:$time8 seconds"
 echo "#9 orca auto-xgboost-classifier time used:$time9 seconds"
 echo "#10 orca auto-xgboost-regressor time used:$time10 seconds"
-echo "#11 orca sentiment time used:$time11 seconds"
+echo "#11 orca autoestimator-pytorch time used:$time11 second"
+echo "#12 orca sentiment time used:$time12 seconds"
