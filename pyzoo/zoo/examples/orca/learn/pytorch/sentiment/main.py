@@ -214,19 +214,21 @@ stop_orca_context()
 
 # start testing
 print("***Finish training, start testing***")
-model = model_creator({"TEXT_LABEL": text_label_creator()})
+config = {"TEXT_LABEL": text_label_creator()}
+model = model_creator(config)
 model.load_state_dict(torch.load(model_save_path))
 model.eval()
 test_sen1 = "This is one of the best creation of Nolan. I can say, it's his magnum opus. Loved the soundtrack and especially those creative dialogues."
 test_sen2 = "Ohh, such a ridiculous movie. Not gonna recommend it to anyone. Complete waste of time and money."
 test_sen_set = [test_sen1, test_sen2]
+TEXT = config.get("TEXT_LABEL")[0]
 for test_sen in test_sen_set:
     print(test_sen)
     test_sen = TEXT.preprocess(test_sen)
     test_sen = [[TEXT.vocab.stoi[x] for x in test_sen]]
     test_sen = np.asarray(test_sen)
     test_sen = torch.LongTensor(test_sen)
-    test_tensor = Variable(test_sen, volatile=True)
+    test_tensor = Variable(test_sen)
     output = model(test_tensor, 1)
     out = F.softmax(output, 1)
     if (torch.argmax(out[0]) == 1):
