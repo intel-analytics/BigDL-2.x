@@ -66,7 +66,7 @@ class CustomDataset(Dataset):
 
 
 def train_dataloader_creator(config):
-    return DataLoader(CustomDataset(size=config["train_size"]),
+    return DataLoader(CustomDataset(size=1000),
                       batch_size=config["batch_size"],
                       shuffle=config["shuffle"])
 
@@ -150,8 +150,7 @@ class TestPyTorchAutoEstimator(TestCase):
                                             resources_per_trial={"cpu": 2},
                                             name="test_fit")
         search_space = create_linear_search_space()
-        search_space.update({"train_size": hp.qrandint(800, 1000, q=2),
-                             "shuffle": hp.grid_search([True, False])})
+        search_space.update({"shuffle": hp.grid_search([True, False])})
         auto_est.fit(data=train_dataloader_creator,
                      validation_data=valid_dataloader_creator,
                      search_space=search_space,
