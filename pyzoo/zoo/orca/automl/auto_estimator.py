@@ -22,11 +22,13 @@ class AutoEstimator:
                  model_builder,
                  logs_dir="/tmp/auto_estimator_logs",
                  resources_per_trial=None,
+                 remote_dir=None,
                  name=None):
         self.model_builder = model_builder
         self.searcher = SearchEngineFactory.create_engine(backend="ray",
                                                           logs_dir=logs_dir,
                                                           resources_per_trial=resources_per_trial,
+                                                          remote_dir=remote_dir,
                                                           name=name)
         self._fitted = False
 

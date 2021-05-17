@@ -72,7 +72,6 @@ def prepare_searcher(data,
                      model_creator=linear_model_creator,
                      optimizer_creator=optimizer_creator,
                      loss_creator=loss_creator,
-                     feature_transformer=None,
                      metric="mse",
                      name="demo"):
     modelBuilder = PytorchModelBuilder(model_creator=model_creator,
@@ -89,7 +88,6 @@ def prepare_searcher(data,
                      n_sampling=2,
                      epochs=stop["training_iteration"],
                      metric_threshold=stop["reward_metric"],
-                     feature_transformers=feature_transformer,
                      metric=metric)
     return searcher
 
@@ -147,8 +145,8 @@ class TestRayTuneSearchEngine(ZooTestCase):
                                     model_creator=LSTM_model_creator,
                                     name='test_ray_dateframe_with_datetime_with_val',
                                     search_space=create_lstm_search_space(input_dim),
-                                    stop=create_stop(),
-                                    feature_transformer=ft)
+                                    stop=create_stop()
+                                    )
         searcher.run()
         best_trials = searcher.get_best_trials(k=1)
         assert best_trials is not None

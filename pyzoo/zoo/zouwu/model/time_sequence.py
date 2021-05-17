@@ -17,8 +17,9 @@ from copy import deepcopy
 
 from zoo.automl.model import ModelBuilder
 from zoo.automl.model.abstract import BaseModel
-from zoo.zouwu.model.VanillaLSTM import VanillaLSTM
-from zoo.zouwu.model.Seq2Seq import LSTMSeq2Seq
+from zoo.zouwu.model.VanillaLSTM_pytorch import VanillaLSTMPytorch
+from zoo.zouwu.model.Seq2Seq_pytorch import Seq2SeqPytorch
+from zoo.zouwu.model.tcn import TCNPytorch
 from zoo.zouwu.model.MTNet_keras import MTNetKeras
 from zoo.automl.common.util import *
 from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
@@ -26,9 +27,10 @@ from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
 from zoo.automl.common.metrics import Evaluator
 import pandas as pd
 
-MODEL_MAP = {"LSTM": VanillaLSTM,
-             "Seq2seq": LSTMSeq2Seq,
+MODEL_MAP = {"LSTM": VanillaLSTMPytorch,
+             "Seq2seq": Seq2SeqPytorch,
              "MTNet": MTNetKeras,
+             "TCN": TCNPytorch
              }
 
 
@@ -104,15 +106,22 @@ class TimeSequenceModel(BaseModel):
         # add configs for model
         self.config["future_seq_len"] = self.ft.future_seq_len
         self.config["check_optional_config"] = False
+        # for base keras model
+        self.config["input_dim"] = self.ft.get_feature_dim()
+        self.config["output_dim"] = self.ft.get_target_dim()
+        # for base pytorch model
+        self.config["input_feature_num"] = self.ft.get_feature_dim()
+        self.config["output_feature_num"] = self.ft.get_target_dim()
 
         if not self.model:
             self.model = TimeSequenceModel._sel_model(self.config)
         self.model.build(self.config)
         self.built = True
 
-    def _process_data(self, data, config=None, mode="test"):
+    def _process_data(self, data, mode="test"):
         df = deepcopy(data)
         imputer = None
+        config = self.config.copy()
         if "imputation" in config:
             if config["imputation"] == "LastFillImpute":
                 imputer = LastFillImpute()
@@ -145,10 +154,10 @@ class TimeSequenceModel(BaseModel):
         if not isinstance(data, pd.DataFrame):
             raise ValueError(f"We only support data of pd.DataFrame. "
                              f"Got data of {data.__class__.__name__}")
-        if validation_data and not isinstance(validation_data, pd.DataFrame):
+        if validation_data is not None and not isinstance(validation_data, pd.DataFrame):
             raise ValueError(f"We only support validation_data of pd.DataFrame. "
                              f"Got validation_data of {data.__class__.__name__}")
-        data_np = self._process_data(data, self.config, mode="train")
+        data_np = self._process_data(data, mode="train")
         is_val_valid = isinstance(validation_data, pd.DataFrame) and not validation_data.empty
         if is_val_valid:
             val_data_np = self._process_data(data, mode="val")
@@ -163,8 +172,7 @@ class TimeSequenceModel(BaseModel):
     def _sel_model(config, verbose=0):
         model_name = config.get("model", "LSTM")
         model = MODEL_MAP[model_name](
-            check_optional_config=config.get(["check_optional_config"], False),
-            future_seq_len=config["future_seq_len"])
+            check_optional_config=config.get("check_optional_config", False))
         if verbose != 0:
             print(model_name, "is selected.")
         return model

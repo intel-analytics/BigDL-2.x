@@ -345,6 +345,12 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             feature_list += self.extra_features_col
         return feature_list
 
+    def get_feature_dim(self):
+        return len(self.get_feature_list()) + len(self.target_col)
+
+    def get_target_dim(self):
+        return len(self.target_col)
+
     def _get_feat_config(self, **config):
         """
         Get feature related arguments from global hyper parameter config and do necessary error
