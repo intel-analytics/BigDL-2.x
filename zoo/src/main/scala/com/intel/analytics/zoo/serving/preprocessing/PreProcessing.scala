@@ -37,6 +37,9 @@ import redis.clients.jedis.Jedis
 class PreProcessing()
   extends EncryptSupportive with InferenceSupportive {
   val logger = Logger.getLogger(getClass)
+  if (ClusterServing.helper == null) {
+    ClusterServing.helper = new ClusterServingHelper
+  }
   val helper = ClusterServing.helper
 
   var byteBuffer: Array[Byte] = null
@@ -123,14 +126,7 @@ class PreProcessing()
   }
   def decodeTensor(info: (ArrayBuffer[Int], ArrayBuffer[Float],
     ArrayBuffer[Int], ArrayBuffer[Int])): Tensor[Float] = {
-    val data = if (info._2.isInstanceOf[ArrayBuffer[Double]]) {
-      var a = new ArrayBuffer[Float]()
-      info._2.asInstanceOf[ArrayBuffer[Double]].foreach(x => a.append(x.toFloat))
-      a.toArray
-    }
-    else {
-      info._2.asInstanceOf[ArrayBuffer[Float]].toArray
-    }
+    val data = info._2.toArray
 
     val shape = info._1.toArray
     if (info._3.size == 0) {
