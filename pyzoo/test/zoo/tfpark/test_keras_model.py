@@ -63,9 +63,11 @@ class TestTFParkModel(ZooTestCase):
         x, y = self.create_training_data()
 
         val_x, val_y = self.create_training_data()
+        with pytest.raises(AssertionError) as excinfo:
+            model.fit([x, x], [y, y], validation_data=([val_x, val_x], [val_y, val_y]),
+                      batch_size=4, distributed=True)
 
-        model.fit([x, x], [y, y], validation_data=([val_x, val_x], [val_y, val_y]),
-                  batch_size=4, distributed=True)
+        assert "data does not match model_input" in str(excinfo.value)
 
 
 if __name__ == "__main__":

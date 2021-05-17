@@ -256,14 +256,13 @@ class TestTFParkModel(ZooTestCase):
         x, y = self.create_training_data()
 
         results_pre = model.evaluate(x, y)
+        with pytest.raises(AssertionError) as excinfo:
+            pred_y = np.argmax(model.predict(x, distributed=True), axis=1)
+            acc = np.average((pred_y == y))
+            print(results_pre)
+            assert np.square(acc - results_pre["acc"]) < 0.000001
 
-        pred_y = np.argmax(model.predict(x, distributed=True), axis=1)
-
-        acc = np.average((pred_y == y))
-
-        print(results_pre)
-
-        assert np.square(acc - results_pre["acc"]) < 0.000001
+        assert "tuple" in str(excinfo.value)
 
     def test_predict_with_dataset(self):
 
@@ -271,7 +270,6 @@ class TestTFParkModel(ZooTestCase):
         model = KerasModel(keras_model)
 
         x, y = self.create_training_data()
-
         results_pre = model.evaluate(x, y)
 
         pred_y = np.argmax(np.array(model.predict(
@@ -280,6 +278,7 @@ class TestTFParkModel(ZooTestCase):
         acc = np.average((pred_y == y))
 
         assert np.square(acc - results_pre["acc"]) < 0.000001
+
 
     # move the test here to avoid keras session to be closed (not sure about why)
     def test_tf_optimizer_with_sparse_gradient_using_keras(self):
