@@ -54,9 +54,6 @@
 
 # default: false
 # modelEncrypted:
-<<<<<<< HEAD
 
 # default: false
 # recordEncrypted:
-=======
->>>>>>> Merge branch 'master' of github.com:intel-analytics/analytics-zoo into ref-0412
