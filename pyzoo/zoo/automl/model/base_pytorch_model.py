@@ -16,6 +16,8 @@
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
+import types
+
 from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
@@ -78,6 +80,16 @@ class PytorchBaseModel(BaseModel):
             x = x.reshape(-1, 1)
         return x
 
+    def _np_to_creator(self, data):
+        def data_creator(config):
+                x, y = PytorchBaseModel.covert_input(data)
+                x = self._reshape_input(x)
+                y = self._reshape_input(y)
+                return DataLoader(TensorDataset(x, y),
+                                  batch_size=int(config["batch_size"]),
+                                  shuffle=True)
+        return data_creator
+
     def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
         """
@@ -99,7 +111,7 @@ class PytorchBaseModel(BaseModel):
 
         # update config settings
         def update_config():
-            if not hasattr(data, '__call__'):
+            if not isinstance(data, types.FunctionType):
                 x = self._reshape_input(data[0])
                 y = self._reshape_input(data[1])
                 config.setdefault("past_seq_len", x.shape[-2])
@@ -117,22 +129,21 @@ class PytorchBaseModel(BaseModel):
             self.config.update(config)
 
         # get train_loader and validation_loader
-        if hasattr(data, '__call__'):
+        if isinstance(data, types.FunctionType):
             train_loader = data(self.config)
             validation_loader = validation_data(self.config)
         else:
-            x = self._reshape_input(data[0])
-            y = self._reshape_input(data[1])
-            x, y, validation_data = PytorchBaseModel.covert_input(x, y, validation_data)
-            val_x = self._reshape_input(validation_data[0])
-            val_y = self._reshape_input(validation_data[1])
-            batch_size = self.config["batch_size"]
-            train_loader = DataLoader(TensorDataset(x, y),
-                                      batch_size=int(batch_size),
-                                      shuffle=True)
-            validation_loader = DataLoader(TensorDataset(val_x, val_y),
-                                           batch_size=int(batch_size),
-                                           shuffle=True)
+            assert isinstance(data, tuple) and isinstance(validation_data, tuple),\
+                f"data/validation_data should be a tuple or\
+                 data creator function but found {type(data)}"
+            assert isinstance(data[0], np.ndarray) and isinstance(validation_data[0], np.ndarray),\
+                f"x should be a np.ndarray but found {type(x)}"
+            assert isinstance(data[1], np.ndarray) and isinstance(validation_data[1], np.ndarray),\
+                f"y should be a np.ndarray but found {type(y)}"
+            train_data_creator = self._np_to_creator(data)
+            valid_data_creator = self._np_to_creator(validation_data)
+            train_loader = train_data_creator(self.config)
+            validation_loader = valid_data_creator(self.config)
 
         epoch_losses = []
         for i in range(epochs):
@@ -152,13 +163,10 @@ class PytorchBaseModel(BaseModel):
         return inp
 
     @staticmethod
-    def covert_input(x, y, validation_data):
-        x = PytorchBaseModel.to_torch(x).float()
-        y = PytorchBaseModel.to_torch(y).float()
-        if validation_data is not None:
-            validation_data = (PytorchBaseModel.to_torch(validation_data[0]).float(),
-                               PytorchBaseModel.to_torch(validation_data[1]).float())
-        return x, y, validation_data
+    def covert_input(data):
+        x = PytorchBaseModel.to_torch(data[0]).float()
+        y = PytorchBaseModel.to_torch(data[1]).float()
+        return x, y
 
     def _train_epoch(self, train_loader):
         self.model.train()

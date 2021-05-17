@@ -53,46 +53,26 @@ class Net(nn.Module):
 
 
 class CustomDataset(Dataset):
-    def __init__(self, mode="train", train_size=1000, valid_size=400):
-        self.data, self.valid_data = get_train_val_data(train_size=train_size,
-                                                        valid_size=valid_size)
-        if mode == "train":
-            print(self.data[0].shape)
-            print(self.data[1].shape)
-        else:
-            print(self.valid_data[0].shape)
-            print(self.valid_data[1].shape)
-        self.mode = mode
-        self.train_size = train_size
-        self.valid_size = valid_size
+    def __init__(self, size=1000):
+        x, y = get_x_y(size=size)
+        self.x = torch.from_numpy(x).float()
+        self.y = torch.from_numpy(y).float()
 
     def __len__(self):
-        if self.mode == "train":
-            return self.train_size
-        if self.mode == "valid":
-            return self.valid_size
-        return None
+        return self.x.shape[0]
 
     def __getitem__(self, idx):
-        if self.mode == "train":
-            return torch.from_numpy(self.data[0][idx]).float(),\
-                torch.from_numpy(self.data[1][idx]).float()
-        if self.mode == "valid":
-            return torch.from_numpy(self.valid_data[0][idx]).float(),\
-                torch.from_numpy(self.valid_data[1][idx]).float()
-        return None, None
+        return self.x[idx], self.y[idx]
 
 
 def train_dataloader_creator(config):
-    return DataLoader(CustomDataset(mode="train",
-                                    train_size=config["train_size"]),
+    return DataLoader(CustomDataset(size=config["train_size"]),
                       batch_size=config["batch_size"],
-                      shuffle=True)
+                      shuffle=config["shuffle"])
 
 
 def valid_dataloader_creator(config):
-    return DataLoader(CustomDataset(mode="valid",
-                                    valid_size=config["valid_size"]),
+    return DataLoader(CustomDataset(size=400),
                       batch_size=config["batch_size"],
                       shuffle=True)
 
@@ -107,16 +87,18 @@ def get_optimizer(model, config):
     return torch.optim.SGD(model.parameters(), lr=config["lr"])
 
 
+def get_x_y(size):
+    input_size = 50
+    x1 = np.random.randn(size // 2, input_size)
+    x2 = np.random.randn(size // 2, input_size) + 1.5
+    x = np.concatenate([x1, x2], axis=0)
+    y1 = np.zeros((size // 2, 1))
+    y2 = np.ones((size // 2, 1))
+    y = np.concatenate([y1, y2], axis=0)
+    return x, y
+
+
 def get_train_val_data(train_size=1000, valid_size=400):
-    def get_x_y(size):
-        input_size = 50
-        x1 = np.random.randn(size // 2, input_size)
-        x2 = np.random.randn(size // 2, input_size) + 1.5
-        x = np.concatenate([x1, x2], axis=0)
-        y1 = np.zeros((size // 2, 1))
-        y2 = np.ones((size // 2, 1))
-        y = np.concatenate([y1, y2], axis=0)
-        return x, y
     data = get_x_y(size=train_size)
     validation_data = get_x_y(size=valid_size)
     return data, validation_data
@@ -169,7 +151,7 @@ class TestPyTorchAutoEstimator(TestCase):
                                             name="test_fit")
         search_space = create_linear_search_space()
         search_space.update({"train_size": hp.qrandint(800, 1000, q=2),
-                             "valid_size": hp.qrandint(400, 500, q=2)})
+                             "shuffle": hp.grid_search([True, False])})
         auto_est.fit(data=train_dataloader_creator,
                      validation_data=valid_dataloader_creator,
                      search_space=search_space,
