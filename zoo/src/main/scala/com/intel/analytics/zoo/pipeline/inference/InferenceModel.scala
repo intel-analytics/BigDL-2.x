@@ -529,9 +529,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   def doRelease(): Unit = {
     clearModelQueue()
   }
-  import org.scalameter._
   private def predict(inputActivity: Activity): Activity = {
-    var model = retrieveModel()
+    val model = retrieveModel()
     try {
       val begin = System.nanoTime()
       val result = model.predict(inputActivity)
