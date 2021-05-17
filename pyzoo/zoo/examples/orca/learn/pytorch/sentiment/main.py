@@ -1,5 +1,4 @@
 
-#
 # Copyright 2018 Analytics Zoo Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +25,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torch.nn import functional as F
-from torch.utils.data import  DataLoader
+from torch.utils.data import DataLoader
 from torchtext.vocab import GloVe
 from torchtext import data, datasets
 from zoo.orca import init_orca_context, stop_orca_context
@@ -34,14 +33,14 @@ from zoo.orca.learn.pytorch import Estimator
 from zoo.orca.learn.metrics import Accuracy
 from zoo.orca.learn.trigger import EveryEpoch
 
+
 parser = argparse.ArgumentParser(description='PyTorch Sentiment Example')
 parser.add_argument('--cluster_mode', type=str, default="local",
                     help='The cluster mode, local or yarn')
-parser.add_argument('--backend', type=str, default="bigdl",
+parser.add_argument('--backend', type=str, default="torch_distributed",
                     help='The backend of PyTorch Estimator; '
                          'bigdl and torch_distributed are supported')
 args = parser.parse_args()
-
 if args.cluster_mode == "local":
     init_orca_context(memory="4g")
 elif args.cluster_mode == "yarn":
@@ -111,7 +110,7 @@ class LSTMClassifier(nn.Module):
         return final_output
 
 
-def load_dataset():
+def text_label_creator():
     # load the dataset and build the vocabulary
     tokenize = lambda x: x.split()
     TEXT = data.Field(sequential=True, tokenize=tokenize, lower=True, include_lengths=True, batch_first=True,
@@ -120,14 +119,13 @@ def load_dataset():
     train_dataset, _ = datasets.IMDB.splits(TEXT, LABEL)
     TEXT.build_vocab(train_dataset, vectors=GloVe(name='6B', dim=300))
     LABEL.build_vocab(train_dataset)
-    word_embeddings = TEXT.vocab.vectors
-    vocab_size = len(TEXT.vocab)
-    return vocab_size, word_embeddings, TEXT
-
-vocab_size, word_embeddings, TEXT = load_dataset()
+    return TEXT, LABEL
 
 
 def model_creator(config):
+    TEXT = config.get("TEXT_LABEL")[0]
+    word_embeddings = TEXT.vocab.vectors
+    vocab_size = len(TEXT.vocab)
     batch_size = 32
     output_size = 2
     hidden_size = 256
@@ -141,29 +139,32 @@ def optim_creator(model, config):
     return optim
 
 
-def collate_fn(data):
-    label_list = [int(d.label=='pos') for d in data]
-    label_tensor = torch.LongTensor(label_list)
-    txt_list = [d.text for d in data]
-    txt_tensor = TEXT.process(txt_list)[0]
-    return txt_tensor, label_tensor
+class MyCollator(object):
+    def __init__(self, TEXT):
+        self.TEXT = TEXT
+    def __call__(self, data):
+        label_list = [int(d.label=='pos') for d in data]
+        label_tensor = torch.LongTensor(label_list)
+        txt_list = [d.text for d in data]
+        txt_tensor = self.TEXT.process(txt_list)[0]
+        return txt_tensor, label_tensor
 
 
 def train_loader_creator(config, batch_size):
-    TEXT = data.Field(sequential=True, tokenize=lambda x: x.split(), lower=True, include_lengths=True, batch_first=True,
-                        fix_length=200)
-    LABEL = data.LabelField()
+    TEXT_LABEL = config.get("TEXT_LABEL")
+    TEXT = TEXT_LABEL[0]
+    LABEL = TEXT_LABEL[1]
     train_dataset, _ = datasets.IMDB.splits(TEXT, LABEL)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, collate_fn=collate_fn, drop_last=True, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, collate_fn=MyCollator(TEXT), drop_last=True, shuffle=True)
     return train_dataloader
 
 
 def test_loader_creator(config, batch_size):
-    TEXT = data.Field(sequential=True, tokenize=lambda x: x.split(), lower=True, include_lengths=True, batch_first=True,
-                        fix_length=200)
-    LABEL = data.LabelField()
+    TEXT_LABEL = config.get("TEXT_LABEL")
+    TEXT = TEXT_LABEL[0]
+    LABEL = TEXT_LABEL[1]
     _, test_dataset = datasets.IMDB.splits(TEXT, LABEL)
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, collate_fn=collate_fn, drop_last=True, shuffle=True)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, collate_fn=MyCollator(TEXT), drop_last=True, shuffle=True)
     return test_dataloader
 
 
@@ -171,13 +172,11 @@ model_dir = "model_save"
 if not exists(model_dir):
     makedirs(model_dir)
 model_save_path = model_dir+"/model"
-criterion = F.cross_entropy
+criterion = nn.CrossEntropyLoss()
 batch_size = 32
-train_iter = train_loader_creator({}, batch_size)
-test_iter = test_loader_creator({}, batch_size)
 
 if args.backend == "bigdl":
-    net = model_creator({})
+    net = model_creator({"TEXT_LABEL": text_label_creator()})
     optimizer = optim_creator(model=net,config={})
     orca_estimator = Estimator.from_torch(model=net,
                                           optimizer=optimizer,
@@ -185,27 +184,28 @@ if args.backend == "bigdl":
                                           workers_per_node=2,
                                           metrics=[Accuracy()],
                                           model_dir=model_dir,
-                                          backend="bigdl")
-    orca_estimator.fit(data=train_iter, epochs=5, validation_data=test_iter,
+                                          backend="bigdl",
+                                          config={"lr": 2e-5,
+                                          "TEXT_LABEL": text_label_creator()})
+    orca_estimator.fit(data=train_loader_creator, epochs=5, validation_data=test_loader_creator,
                        checkpoint_trigger=EveryEpoch())
-    res = orca_estimator.evaluate(data=test_iter)
+    res = orca_estimator.evaluate(data=test_loader_creator)
     print("Accuracy of the network on the test images: %s" % res)
 elif args.backend == "torch_distributed":
     orca_estimator = Estimator.from_torch(model=model_creator,
                                           optimizer=optim_creator,
-                                          loss=nn.CrossEntropyLoss(),
+                                          loss=criterion,
                                           workers_per_node=2,
                                           metrics=[Accuracy()],
                                           backend="torch_distributed",
-                                          config={"lr": 2e-5})
-
+                                          use_tqdm=True,
+                                          config={"lr": 2e-5,
+                                          "TEXT_LABEL": text_label_creator()})
     orca_estimator.fit(data=train_loader_creator, epochs=5, batch_size=batch_size,)
-    model = orca_estimator.get_model()
-    torch.save(model.state_dict(), model_save_path)
+    orca_estimator.save(model_save_path)
     res = orca_estimator.evaluate(data=test_loader_creator)
     for r in res:
         print(r, ":", res[r])
-    
 else:
     raise NotImplementedError("Only bigdl and torch_distributed are supported as the backend,"
                               " but got {}".format(args.backend))
@@ -213,8 +213,7 @@ stop_orca_context()
 
 # start testing
 print("***Finish training, start testing***")
-model = model_creator({})
-model.load_state_dict(torch.load(model_save_path))
+model = torch.load(model_save_path)
 model.eval()
 test_sen1 = "This is one of the best creation of Nolan. I can say, it's his magnum opus. Loved the soundtrack and especially those creative dialogues."
 test_sen2 = "Ohh, such a ridiculous movie. Not gonna recommend it to anyone. Complete waste of time and money."

@@ -23,16 +23,16 @@ pip install analytics-zoo[ray]  # 0.10.0.dev3 or above
 
 ## Run on local after pip install
 
-The default backend is `bigdl`.
+The default backend is `torch_distributed`.
 
 ```
-python main.PU
+python main.py
 ```
 
-You can also run with `torch_distributed` backend via:
+You can also run with `bigdl` backend via:
 
 ```
-python main.py --backend torch_distributed
+python main.py --backend bigdl
 ```
 
 ## Run on yarn cluster for yarn-client mode after pip install
@@ -42,7 +42,7 @@ export HADOOP_CONF_DIR=the directory of the hadoop and yarn configurations
 python main.py --cluster_mode yarn-client
 ```
 
-The default backend is `bigdl`. You can also run with `torch_distributed` by specifying the backend.
+The default backend is `torch_distributed`. You can also run with `bigdl` by specifying the backend.
 
 ## Results
 
