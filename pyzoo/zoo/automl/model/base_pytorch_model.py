@@ -78,17 +78,19 @@ class PytorchBaseModel(BaseModel):
             x = x.reshape(-1, 1)
         return x
 
-    def fit_eval(self, x, y, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
+    def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
         """
+        :param data: could be a tuple with numpy ndarray with form (x, y)
+        :param validation_data: could be a tuple with numpy ndarray with form (x, y)
         fit_eval will build a model at the first time it is built
         config will be updated for the second or later times with only non-model-arch
         params be functional
         TODO: check the updated params and decide if the model is needed to be rebuilt
         """
         # reshape 1dim input
-        x = self._reshape_input(x)
-        y = self._reshape_input(y)
+        x = self._reshape_input(data[0])
+        y = self._reshape_input(data[1])
 
         # update config settings
         def update_config():

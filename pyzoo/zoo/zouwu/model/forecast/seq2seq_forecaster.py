@@ -99,8 +99,7 @@ class Seq2SeqForecaster(Forecaster):
             validation_data = (x, y)
         self.model_config["batch_size"] = batch_size
         self._check_data(x, y)
-        return self.internal.fit_eval(x,
-                                      y,
+        return self.internal.fit_eval(data=(x, y),
                                       validation_data=validation_data,
                                       epochs=epochs,
                                       metric=metric,

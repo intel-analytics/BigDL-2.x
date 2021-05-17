@@ -70,28 +70,20 @@ def get_train_val_data():
         y2 = np.ones((size // 2, 1))
         y = np.concatenate([y1, y2], axis=0)
         return x, y
-    train_x, train_y = get_x_y(size=1000)
-    val_x, val_y = get_x_y(size=400)
-    data = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
-    return data
+    data = get_x_y(size=1000)
+    validation_data = get_x_y(size=400)
+    return data, validation_data
 
 
-class LinearRecipe(Recipe):
-    def search_space(self):
-        from zoo.orca.automl import hp
-        return {
-            "dropout": hp.uniform(0.2, 0.3),
-            "fc1_size": hp.choice([50, 64]),
-            "fc2_size": hp.choice([100, 128]),
-            LR_NAME: hp.choice([0.001, 0.003, 0.01]),
-            "batch_size": hp.choice([32, 64])
-        }
-
-    def runtime_params(self):
-        return {
-            "training_iteration": 1,
-            "num_samples": 4
-        }
+def create_linear_search_space():
+    from zoo.orca.automl import hp
+    return {
+        "dropout": hp.uniform(0.2, 0.3),
+        "fc1_size": hp.choice([50, 64]),
+        "fc2_size": hp.choice([100, 128]),
+        LR_NAME: hp.choice([0.001, 0.003, 0.01]),
+        "batch_size": hp.choice([32, 64])
+    }
 
 
 class TestPyTorchAutoEstimator(TestCase):
@@ -110,9 +102,13 @@ class TestPyTorchAutoEstimator(TestCase):
                                             logs_dir="/tmp/zoo_automl_logs",
                                             resources_per_trial={"cpu": 2},
                                             name="test_fit")
-        data = get_train_val_data()
-        auto_est.fit(data,
-                     recipe=LinearRecipe(),
+
+        data, validation_data = get_train_val_data()
+        auto_est.fit(data=data,
+                     validation_data=validation_data,
+                     search_space=create_linear_search_space(),
+                     n_sampling=4,
+                     epochs=1,
                      metric="accuracy")
         best_model = auto_est.get_best_model()
         assert best_model.optimizer.__class__.__name__ == "SGD"
@@ -125,9 +121,13 @@ class TestPyTorchAutoEstimator(TestCase):
                                             logs_dir="/tmp/zoo_automl_logs",
                                             resources_per_trial={"cpu": 2},
                                             name="test_fit")
-        data = get_train_val_data()
-        auto_est.fit(data,
-                     recipe=LinearRecipe(),
+
+        data, validation_data = get_train_val_data()
+        auto_est.fit(data=data,
+                     validation_data=validation_data,
+                     search_space=create_linear_search_space(),
+                     n_sampling=4,
+                     epochs=1,
                      metric="accuracy")
         best_model = auto_est.get_best_model()
         assert isinstance(best_model.loss_creator, nn.BCELoss)
@@ -139,9 +139,13 @@ class TestPyTorchAutoEstimator(TestCase):
                                             logs_dir="/tmp/zoo_automl_logs",
                                             resources_per_trial={"cpu": 2},
                                             name="test_fit")
-        data = get_train_val_data()
-        auto_est.fit(data,
-                     recipe=LinearRecipe(),
+
+        data, validation_data = get_train_val_data()
+        auto_est.fit(data=data,
+                     validation_data=validation_data,
+                     search_space=create_linear_search_space(),
+                     n_sampling=4,
+                     epochs=1,
                      metric="accuracy")
         best_model = auto_est.get_best_model()
         assert best_model.optimizer.__class__.__name__ == "SGD"
@@ -175,13 +179,20 @@ class TestPyTorchAutoEstimator(TestCase):
                                             logs_dir="/tmp/zoo_automl_logs",
                                             resources_per_trial={"cpu": 2},
                                             name="test_fit")
-        data = get_train_val_data()
-        auto_est.fit(data,
-                     recipe=LinearRecipe(),
+
+        data, validation_data = get_train_val_data()
+        auto_est.fit(data=data,
+                     validation_data=validation_data,
+                     search_space=create_linear_search_space(),
+                     n_sampling=4,
+                     epochs=1,
                      metric="accuracy")
         with pytest.raises(RuntimeError):
-            auto_est.fit(data,
-                         recipe=LinearRecipe(),
+            auto_est.fit(data=data,
+                         validation_data=validation_data,
+                         search_space=create_linear_search_space(),
+                         n_sampling=4,
+                         epochs=1,
                          metric="accuracy")
 
 

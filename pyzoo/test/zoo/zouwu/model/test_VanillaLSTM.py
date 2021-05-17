@@ -47,7 +47,7 @@ class TestVanillaLSTM(TestCase):
 
     def test_fit_evaluate(self):
         config = {"batch_size": 128}
-        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        self.model.fit_eval((self.train_data[0], self.train_data[1]), self.val_data, **config)
         mse, smape = self.model.evaluate(self.val_data[0], self.val_data[1],
                                          metrics=["mse", "smape"])
         assert len(mse) == self.val_data[1].shape[-1]
@@ -56,33 +56,33 @@ class TestVanillaLSTM(TestCase):
     def test_config(self):
         config = {"lstm_units": [128] * 2,
                   "dropouts": [0.2] * 2}
-        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        self.model.fit_eval((self.train_data[0], self.train_data[1]), self.val_data, **config)
 
         config = {"lstm_units": 128,
                   "dropouts": 0.2}
-        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        self.model.fit_eval((self.train_data[0], self.train_data[1]), self.val_data, **config)
 
         with pytest.raises(ValueError):
             config = {"lstm_units": 0.1,
                       "dropouts": 0.2}
-            self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+            self.model.fit_eval((self.train_data[0], self.train_data[1]), self.val_data, **config)
 
         with pytest.raises(ValueError):
             config = {"lstm_units": [128] * 2,
                       "dropouts": [0.2] * 3}
-            self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+            self.model.fit_eval((self.train_data[0], self.train_data[1]), self.val_data, **config)
 
         with pytest.raises(ValueError):
             config = {"lstm_units": 128,
                       "dropouts": [0.2] * 2}
-            self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+            self.model.fit_eval((self.train_data[0], self.train_data[1]), self.val_data, **config)
 
     def test_predict_save_restore(self):
         model = VanillaLSTM()
         config = {"lstm_units": [128] * 2,
                   "dropouts": [0.2] * 2,
                   "batch_size": 128}
-        model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        model.fit_eval((self.train_data[0], self.train_data[1]), self.val_data, **config)
         pred = model.predict(self.test_data[0])
         assert pred.shape == self.test_data[1].shape
         with tempfile.TemporaryDirectory() as tmp_dir_name:
@@ -95,7 +95,7 @@ class TestVanillaLSTM(TestCase):
 
     def test_predict_with_uncertainty(self):
         config = {"batch_size": 128}
-        self.model.fit_eval(self.train_data[0], self.train_data[1], self.val_data, **config)
+        self.model.fit_eval((self.train_data[0], self.train_data[1]), self.val_data, **config)
         prediction, uncertainty = self.model.predict_with_uncertainty(self.test_data[0], n_iter=100)
         assert prediction.shape == self.test_data[1].shape
         assert uncertainty.shape == self.test_data[1].shape

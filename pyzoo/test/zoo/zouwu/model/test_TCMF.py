@@ -45,7 +45,7 @@ class TestTCMF(ZooTestCase):
         del self.Ymat
 
     def test_tcmf(self):
-        self.model.fit_eval(x=self.Ymat, y=None, **self.config)
+        self.model.fit_eval(data=(self.Ymat, None), **self.config)
         # test predict
         result = self.model.predict(horizon=self.horizon)
         assert result.shape[1] == self.horizon
@@ -66,34 +66,34 @@ class TestTCMF(ZooTestCase):
     def test_tcmf_covariates_dti(self):
         # test wrong format in fit
         with pytest.raises(ValueError, match="Input covariates must be a ndarray. Got"):
-            self.model.fit_eval(x=self.Ymat,
+            self.model.fit_eval(data=(self.Ymat, None),
                                 covariates='None',
                                 **self.config)
 
         with pytest.raises(ValueError, match="The second dimension shape of covariates should be"):
-            self.model.fit_eval(x=self.Ymat,
+            self.model.fit_eval(data=(self.Ymat, None),
                                 covariates=np.random.randn(3, self.seq_len - 1),
                                 **self.config)
 
         with pytest.raises(ValueError, match="You should input a 2-D ndarray of covariates."):
-            self.model.fit_eval(x=self.Ymat,
+            self.model.fit_eval(data=(self.Ymat, None),
                                 covariates=np.random.randn(3, 4, 5),
                                 **self.config)
 
         with pytest.raises(ValueError, match="Input dti must be a pandas DatetimeIndex. Got"):
-            self.model.fit_eval(x=self.Ymat,
+            self.model.fit_eval(data=(self.Ymat, None),
                                 covariates=np.random.randn(3, self.seq_len),
                                 dti='None',
                                 **self.config)
 
         with pytest.raises(ValueError, match="Input dti length should be equal to"):
-            self.model.fit_eval(x=self.Ymat,
+            self.model.fit_eval(data=(self.Ymat, None),
                                 covariates=np.random.randn(3, self.seq_len),
                                 dti=pd.date_range('20130101', periods=self.seq_len-1),
                                 **self.config)
 
         # valid covariates and dti in fit_eval
-        self.model.fit_eval(x=self.Ymat, y=None,
+        self.model.fit_eval(data=(self.Ymat, None),
                             covariates=np.random.rand(3, self.seq_len),
                             dti=pd.date_range('20130101', periods=self.seq_len),
                             **self.config)
@@ -156,7 +156,7 @@ class TestTCMF(ZooTestCase):
                                             "calling fit_incremental"):
             self.model.fit_incremental(x=np.random.rand(self.num_samples, self.horizon))
 
-        self.model.fit_eval(x=self.Ymat, y=None, **self.config)
+        self.model.fit_eval(data=(self.Ymat, None), **self.config)
         with pytest.raises(Exception, match=f"Expected incremental input with {self.num_samples} "
                                             f"time series, got {self.num_samples - 1} instead"):
             self.model.fit_incremental(x=np.random.rand(self.num_samples - 1, self.horizon))
@@ -177,7 +177,7 @@ class TestTCMF(ZooTestCase):
                                        dti_new=pd.date_range('20130101', periods=self.horizon), )
 
     def test_save_restore(self):
-        self.model.fit_eval(x=self.Ymat, y=None, **self.config)
+        self.model.fit_eval(data=(self.Ymat, None), **self.config)
         result_save = self.model.predict(horizon=self.horizon)
         model_file = "tmp.pkl"
         self.model.save(model_file)
