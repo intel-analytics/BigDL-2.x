@@ -155,7 +155,7 @@ class ProphetBuilder(ModelBuilder):
            https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
         for the parameter names to specify.
         """
-        from zoo.zouwu.model.fbprophet import ProphetModel
+        from zoo.zouwu.model.prophet import ProphetModel
         model = ProphetModel(config=self.model_config)
         model._build(**config)
         return model
@@ -165,7 +165,7 @@ class ProphetBuilder(ModelBuilder):
         Build Prophet Model from checkpoint
         :param checkpoint_filename: model checkpoint filename
         """
-        from zoo.zouwu.model.fbprophet import ProphetModel
+        from zoo.zouwu.model.prophet import ProphetModel
         model = ProphetModel(config=self.model_config)
         model.restore(checkpoint_filename)
         return model
