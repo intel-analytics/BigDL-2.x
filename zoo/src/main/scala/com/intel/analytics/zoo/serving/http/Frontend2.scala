@@ -61,7 +61,8 @@ object Frontend2 extends Supportive with EncryptSupportive {
           case None => argumentsParser.failure("miss args, please see the usage info"); null
         }
       }
-      val jedisPool = new JedisPool(ClusterServing.jedisPoolConfig, arguments.redisHost, arguments.redisPort)
+      val jedisPool = new JedisPool(
+        ClusterServing.jedisPoolConfig, arguments.redisHost, arguments.redisPort)
       val rateLimiter: RateLimiter = arguments.tokenBucketEnabled match {
         case true => RateLimiter.create(arguments.tokensPerSecond)
         case false => null
@@ -104,11 +105,13 @@ object Frontend2 extends Supportive with EncryptSupportive {
             }).toList
             complete(jacksonJsonSerializer.serialize(servingMetrics))
           }
-        } ~ (post & path("predict") & extract(_.request.entity.contentType) & entity(as[String])) {
+        } ~ (post & path("predict") &
+          extract(_.request.entity.contentType) & entity(as[String])) {
           (contentType, content) => {
             val rejected = arguments.tokenBucketEnabled match {
               case true =>
-                if (!rateLimiter.tryAcquire(arguments.tokenAcquireTimeout, TimeUnit.MILLISECONDS)) {
+                if (!rateLimiter.tryAcquire(
+                  arguments.tokenAcquireTimeout, TimeUnit.MILLISECONDS)) {
                   true
                 } else {
                   false
@@ -288,7 +291,8 @@ case class FrontEndApp2Arguments(
                                  redisPort: Int = 6379,
                                  redisInputQueue: String = Conventions.SERVING_STREAM_DEFAULT_NAME,
                                  redisOutputQueue: String =
-                                 Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":",
+                                 Conventions.RESULT_PREFIX +
+                                   Conventions.SERVING_STREAM_DEFAULT_NAME + ":",
                                  parallelism: Int = 1000,
                                  timeWindow: Int = 0,
                                  countWindow: Int = 56,
