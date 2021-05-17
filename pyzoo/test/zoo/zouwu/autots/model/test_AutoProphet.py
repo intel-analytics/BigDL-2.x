@@ -37,18 +37,18 @@ def get_data():
 class ProphetRecipe(Recipe):
     def __init__(self):
         super().__init__()
-        self.training_iteration = 1 # period of report metric in fit_eval
-        self.num_samples = 10 # sample hyperparameters
+        self.training_iteration = 1  # period of report metric in fit_eval
+        self.num_samples = 10  # sample hyperparameters
 
     def search_space(self):
         return {
-            "changepoint_prior_scale" : hp.loguniform(0.001, 0.5),
-            "seasonality_prior_scale" : hp.loguniform(0.01, 10),
-            "holidays_prior_scale" : hp.loguniform(0.01, 10),
-            "seasonality_mode" : hp.choice(['additive', 'multiplicative']),
-            "changepoint_range" : hp.uniform(0.8, 0.95)
+            "changepoint_prior_scale": hp.loguniform(0.001, 0.5),
+            "seasonality_prior_scale": hp.loguniform(0.01, 10),
+            "holidays_prior_scale": hp.loguniform(0.01, 10),
+            "seasonality_mode": hp.choice(['additive', 'multiplicative']),
+            "changepoint_range": hp.uniform(0.8, 0.95)
         }
-    
+
     def runtime_params(self):
         return {
             "training_iteration": self.training_iteration,

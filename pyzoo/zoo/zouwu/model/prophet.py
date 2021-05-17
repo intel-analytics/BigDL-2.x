@@ -137,6 +137,7 @@ class ProphetModel(BaseModel):
     def _get_optional_parameters(self):
         return {}
 
+
 class ProphetBuilder(ModelBuilder):
 
     def __init__(self, **prophet_config):
