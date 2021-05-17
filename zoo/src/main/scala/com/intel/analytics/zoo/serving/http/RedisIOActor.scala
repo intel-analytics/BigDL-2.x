@@ -51,21 +51,21 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX +
         requestMap += (Conventions.RESULT_PREFIX +
           Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + message.id -> sender())
       }
-    case message: DequeueMessage => {
-        if (!requestMap.isEmpty) {
-          dequeue(redisOutputQueue).foreach(result => {
-            logger.info(s"${System.currentTimeMillis()} Get redis result at time ")
-            val queryOption = requestMap.get(result._1)
-            if (queryOption != None) {
-              val queryResult = result._2.asScala
-              queryOption.get ! ModelOutputMessage(queryResult)
-              requestMap -= result._1
-              logger.info(s"${System.currentTimeMillis()} Send ${result._1} back at time ")
-            }
+    case message: DequeueMessage =>
+      if (!requestMap.isEmpty) {
+        dequeue(redisOutputQueue).foreach(result => {
+          logger.info(s"${System.currentTimeMillis()} Get redis result at time ")
+          val queryOption = requestMap.get(result._1)
+          if (queryOption != None) {
+            val queryResult = result._2.asScala
+            queryOption.get ! ModelOutputMessage(queryResult)
+            requestMap -= result._1
+            logger.info(s"${System.currentTimeMillis()} Send ${result._1} back at time ")
+          }
 
-          })
-        }
+        })
       }
+
   }
   def enqueue(queue: String, input: DataInputMessage): Unit = {
     timing(s"${self.path.name} put request to redis")(FrontEndApp.putRedisTimer) {
