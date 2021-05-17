@@ -362,7 +362,7 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
-            <scope>compile</scope>
+            <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.intel.analytics.bigdl</groupId>
@@ -581,23 +581,6 @@
             <groupId>org.codehaus.janino</groupId>
             <artifactId>commons-compiler</artifactId>
             <version>3.0.9</version>
-        </dependency>
-        <dependency>
-            <groupId>com.storm-enroute</groupId>
-            <artifactId>scalameter_2.11</artifactId>
-            <version>0.18</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.mongodb</groupId>
-                    <artifactId>casbah_2.11</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>casbah_2.11</artifactId>
-            <version>3.1.1</version>
-            <type>pom</type>
         </dependency>
     </dependencies>
 
