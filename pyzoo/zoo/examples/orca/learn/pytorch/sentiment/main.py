@@ -198,7 +198,6 @@ elif args.backend == "torch_distributed":
                                           workers_per_node=2,
                                           metrics=[Accuracy()],
                                           backend="torch_distributed",
-                                          use_tqdm=True,
                                           config={"lr": 2e-5,
                                           "TEXT_LABEL": text_label_creator()})
     orca_estimator.fit(data=train_loader_creator, epochs=5, batch_size=batch_size)
