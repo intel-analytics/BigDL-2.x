@@ -17,7 +17,7 @@
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.zouwu.model.fbprophet import ProphetModel
+from zoo.zouwu.model.prophet import ProphetModel
 import numpy as np
 import os
 from numpy.testing import assert_array_almost_equal

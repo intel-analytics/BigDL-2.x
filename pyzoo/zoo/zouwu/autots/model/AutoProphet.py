@@ -17,7 +17,7 @@
 #
 
 from zoo.orca.automl.auto_estimator import AutoEstimator
-from zoo.zouwu.model.fbprophet import ProphetBuilder
+from zoo.zouwu.model.prophet import ProphetBuilder
 
 
 # -
