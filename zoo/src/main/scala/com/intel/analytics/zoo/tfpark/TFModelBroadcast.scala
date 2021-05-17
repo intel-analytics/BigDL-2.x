@@ -41,12 +41,12 @@ import scala.reflect.ClassTag
 
 class TFModelBroadcast[T: ClassTag]()
                                    (implicit ev: TensorNumeric[T]) extends ModelBroadcast[T] {
-//    private type NativeType = (String, (Array[TensorMMap], Array[TensorMMap]))
+  //  private type NativeType = (String, (Array[TensorMMap], Array[TensorMMap]))
   private var broadcastModel: Broadcast[ModelInfo[T]] = _
   private var broadcastConsts: Broadcast[Map[String, Tensor[_]]] = _
   private var broadcastParameters: Broadcast[Array[Tensor[T]]] = _
   private var broadcastExtraParameters: Broadcast[Array[Tensor[T]]] = _
-//    private var broadcastParametersNative: Broadcast[Array[NativeType]] = _
+  //  private var broadcastParametersNative: Broadcast[Array[NativeType]] = _
   private var nodeNumber: Int = _
   private var coreNumber: Int = _
 
@@ -71,10 +71,10 @@ class TFModelBroadcast[T: ClassTag]()
 
     // broadcast Consts
     if (model.isInstanceOf[Container[_, _, T]]) {
-          val moduleConsts = getAndClearConsts(model.asInstanceOf[Container[_, _, T]])
-          // TODO: broadcast Const, model structure and weight in the same broadcast.
-          broadcastConsts = sc.broadcast(moduleConsts)
-        }
+      val moduleConsts = getAndClearConsts(model.asInstanceOf[Container[_, _, T]])
+      // TODO: broadcast Const, model structure and weight in the same broadcast.
+      broadcastConsts = sc.broadcast(moduleConsts)
+    }
     // broadcast weight and model
     val weightsBias = getAndClearWeightBias(model.parameters())
     val extraParams = getAndClearExtraParameters(model.getExtraParameter())
