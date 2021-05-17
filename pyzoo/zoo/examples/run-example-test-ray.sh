@@ -145,6 +145,14 @@ else
     tar -xf ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/sentiment.tar
 fi
 
+if [ -d ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/.vector_cache ]
+then
+    echo "Glove Vectors already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/vector.tar -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/
+    tar -xf ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/vector.tar
+fi
+
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/main.py --backend torch_distributed
 now=$(date "+%s")
