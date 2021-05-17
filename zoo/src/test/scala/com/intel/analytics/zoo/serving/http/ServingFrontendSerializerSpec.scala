@@ -4,17 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.serving.TestUtils
+import com.intel.analytics.zoo.serving.serialization.JsonInputDeserializer
 import com.intel.analytics.zoo.serving.utils.ConfigParser
 import org.scalatest.{FlatSpec, Matchers}
 
-class ServingFrontendSerializerSpec extends FlatSpec with Matchers with Supportive {
+class JsonInputDeserializerSpec extends FlatSpec with Matchers with Supportive {
   val configPath = getClass.getClassLoader.getResource("serving").getPath + "/config-test.yaml"
 
   val configParser = new ConfigParser(configPath)
   "read json string" should "work" in {
     val mapper = new ObjectMapper()
     val module = new SimpleModule()
-    module.addDeserializer(classOf[Activity], new ServingFrontendSerializer())
+    module.addDeserializer(classOf[Activity], new JsonInputDeserializer())
     mapper.registerModule(module)
 
     val jsonStr = """{
@@ -52,7 +53,7 @@ class ServingFrontendSerializerSpec extends FlatSpec with Matchers with Supporti
   "read dien string" should "work" in {
     val mapper = new ObjectMapper()
     val module = new SimpleModule()
-    module.addDeserializer(classOf[Activity], new ServingFrontendSerializer())
+    module.addDeserializer(classOf[Activity], new JsonInputDeserializer())
     mapper.registerModule(module)
     val jsonStr = TestUtils.getStrFromResourceFile("dien_json_str.json")
     val a = mapper.readValue(jsonStr, classOf[Activity])

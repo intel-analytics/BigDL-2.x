@@ -124,7 +124,7 @@ object Frontend2 extends Supportive with EncryptSupportive {
 //                  val input = timing("json deserialization")() {
 ////                    JsonUtil.fromJson(classOf[Instances], content)
 //                    logger.info(s"json string received, start deserialize")
-//                    ServingFrontendSerializer.deserialize(content)
+//                    JsonInputDeserializer.deserialize(content)
 //                  }
                   val outputs = processPredictionInput(content)
                   Predictions(outputs)
