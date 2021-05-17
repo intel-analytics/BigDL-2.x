@@ -156,6 +156,18 @@ class BasePredictor(object):
         """
         return self.pipeline.predict(input_df)
 
+    def _detach_recipe(self, recipe):
+        self.search_space = recipe.search_space()
+
+        stop = recipe.runtime_params()
+        self.metric_threshold = None
+        if "reward_metric" in stop.keys():
+            self.mode = Evaluator.get_metric_mode(self.metric)
+            self.metric_threshold = -stop["reward_metric"] if \
+                self.mode == "min" else stop["reward_metric"]
+        self.epochs = stop["training_iteration"]
+        self.num_samples = stop["num_samples"]
+
     def _hp_search(self,
                    input_df,
                    validation_df,
@@ -168,6 +180,8 @@ class BasePredictor(object):
 
         model_fn = self.make_model_fn(resources_per_trial)
 
+        self._detach_recipe(recipe)
+
         # prepare parameters for search engine
 
         searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
@@ -177,8 +191,11 @@ class BasePredictor(object):
                                        )
         searcher.compile(data=input_df,
                          model_create_func=model_fn,
-                         recipe=recipe,
                          validation_data=validation_df,
+                         search_space=self.search_space,
+                         n_sampling=self.num_samples,
+                         epochs=self.epochs,
+                         metric_threshold=self.metric_threshold,
                          search_alg=self.search_alg,
                          search_alg_params=self.search_alg_params,
                          scheduler=self.scheduler,

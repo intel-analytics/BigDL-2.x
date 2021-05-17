@@ -44,20 +44,13 @@ def get_train_val_data():
     return data, validation_data
 
 
-class LinearRecipe(Recipe):
-    def search_space(self):
-        from zoo.orca.automl import hp
-        return {
-            "hidden_size": hp.choice([5, 10]),
-            "lr": hp.choice([0.001, 0.003, 0.01]),
-            "batch_size": hp.choice([32, 64])
-        }
-
-    def runtime_params(self):
-        return {
-            "training_iteration": 1,
-            "num_samples": 4
-        }
+def create_linear_search_space():
+    from zoo.orca.automl import hp
+    return {
+        "hidden_size": hp.choice([5, 10]),
+        "lr": hp.choice([0.001, 0.003, 0.01]),
+        "batch_size": hp.choice([32, 64])
+    }
 
 
 class TestTFKerasAutoEstimator(TestCase):
@@ -74,10 +67,13 @@ class TestTFKerasAutoEstimator(TestCase):
                                             logs_dir="/tmp/zoo_automl_logs",
                                             resources_per_trial={"cpu": 2},
                                             name="test_fit")
+
         data, validation_data = get_train_val_data()
         auto_est.fit(data=data,
                      validation_data=validation_data,
-                     recipe=LinearRecipe(),
+                     search_space=create_linear_search_space(),
+                     n_sampling=4,
+                     epochs=1,
                      metric="mse")
         best_model = auto_est.get_best_model()
         assert "hidden_size" in best_model.config
@@ -87,15 +83,20 @@ class TestTFKerasAutoEstimator(TestCase):
                                             logs_dir="/tmp/zoo_automl_logs",
                                             resources_per_trial={"cpu": 2},
                                             name="test_fit")
+
         data, validation_data = get_train_val_data()
         auto_est.fit(data=data,
                      validation_data=validation_data,
-                     recipe=LinearRecipe(),
+                     search_space=create_linear_search_space(),
+                     n_sampling=4,
+                     epochs=1,
                      metric="mse")
         with pytest.raises(RuntimeError):
             auto_est.fit(data=data,
                          validation_data=validation_data,
-                         recipe=LinearRecipe(),
+                         search_space=create_linear_search_space(),
+                         n_sampling=4,
+                         epochs=1,
                          metric="mse")
 
 
