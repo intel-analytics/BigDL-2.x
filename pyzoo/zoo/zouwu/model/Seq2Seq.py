@@ -26,7 +26,7 @@ from zoo.automl.common.metrics import Evaluator
 
 class LSTMSeq2Seq(BaseModel):
 
-    def __init__(self, check_optional_config=True, future_seq_len=2):
+    def __init__(self, check_optional_config=False, future_seq_len=2):
         """
         Constructor of LSTM Seq2Seq model
         """
@@ -339,6 +339,7 @@ class LSTMSeq2Seq(BaseModel):
         self.latent_dim = config["latent_dim"]
         self.batch_size = config["batch_size"]
 
+        self._build_train(**config)
         self.model.set_weights(state_dict["weights"])
         self._restore_model()
         # self.model.load_weights(file_path)
@@ -352,8 +353,8 @@ class LSTMSeq2Seq(BaseModel):
 
     def _get_optional_parameters(self):
         return {
-            'past_seq_len'
-            'latent_dim'
+            'past_seq_len',
+            'latent_dim',
             'dropout',
             'metric',
             'lr',
