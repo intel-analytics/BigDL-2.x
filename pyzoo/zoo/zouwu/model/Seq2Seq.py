@@ -241,14 +241,24 @@ class LSTMSeq2Seq(BaseModel):
                               verbose=verbose,
                               # callbacks=[tensorboard]
                               )
-        # print(hist.history)
-
-        if validation_data is None:
-            # get train metrics
-            # results = self.model.evaluate(x, y)
-            result = hist.history.get(self.metric)[-1]
+        # check input metric value
+        hist_metric_name = keras.metrics.get(self.metric).__name__
+        # model.metrics_names are available only after a keras model has been trained/evaluated
+        compiled_metric_names = self.model.metrics_names.copy()
+        print(compiled_metric_names)
+        compiled_metric_names.remove("loss")
+        if hist_metric_name in compiled_metric_names:
+            metric_name = hist_metric_name
+        elif self.metric in compiled_metric_names:
+            metric_name = self.metric
         else:
-            result = hist.history.get('val_' + str(self.metric))[-1]
+            raise ValueError(f"Input metric in fit_eval should be one of the metrics that are used "
+                             f"to compile the model. Got metric value of {metric} and the metrics "
+                             f"in compile are {compiled_metric_names}")
+        if validation_data is None:
+            result = hist.history.get(metric_name)[-1]
+        else:
+            result = hist.history.get('val_' + metric_name)[-1]
         return result
 
     def evaluate(self, x, y, metric=['mse']):
