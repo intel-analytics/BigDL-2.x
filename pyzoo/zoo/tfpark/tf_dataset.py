@@ -1291,8 +1291,8 @@ def _check_compatible(names, structure, data_type="model_input"):
 def check_data_compatible(dataset, model, mode):
     input_names = model.input_names
     output_names = model.output_names
-    err_msg = f"each element is dataset should a tuple for {mode}, " \
-              f"but got {dataset.tensor_structure}"
+    err_msg = f"each element in dataset should be a tuple for {mode}, " \
+              f"but got {type(dataset.tensor_structure).__name__}"
     assert isinstance(dataset.tensor_structure, tuple), err_msg
 
     feature = dataset.tensor_structure[0]
