@@ -119,33 +119,20 @@ class AutoEstimator:
             scheduler_params=None,
             ):
         """
-        Automaically fit the model and search for the best hyperparameters.
+        Automatically fit the model and search for the best hyperparameters.
 
-        :param data: data for training
-               Pandas Dataframe:
-                   a Pandas dataframe for training
-               Numpy ndarray:
-                   a tuple in form of (x, y)
-                        x: ndarray for training input
-                        y: ndarray for training output
-               Pytorch Data Creater:
-                   a Function which takes a config dict and returns a
-                   torch.utils.data.DataLoader. torch.Tensor should be generated from the
-                   dataloader.
+        :param data: train data.
+            If the AutoEstimator is created with from_torch, data can be a tuple of 
+                ndarrays or a function that takes a config dictionary as parameter 
+                and returns a PyTorch DataLoader.
+            If the AutoEstimator is created with from_keras, data can be a tuple of 
+                ndarrays.
+            If data is a tuple of ndarrays, it should be in the form of (x, y), 
+                where x is training input data and y is training target data.
         :param epochs: Max number of epochs to train in each trial. Defaults to 1.
             If you have also set metric_threshold, a trial will stop if either it has been
             optimized to the metric_threshold or it has been trained for {epochs} epochs.
         :param validation_data: data for validation, should be the same type as data
-               Pandas Dataframe:
-                   a Pandas dataframe for validation
-               Numpy ndarray:
-                   a tuple in form of (x, y)
-                        x: ndarray for validation input
-                        y: ndarray for validation output
-               Pytorch Data Creater:
-                   a Function which takes a config dict and returns a
-                   torch.utils.data.DataLoader. torch.Tensor should be generated from the
-                   dataloader.
         :param metric: str, metric name, e.g. "mse"
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: Number of times to sample from the search_space. Defaults to 1. 
