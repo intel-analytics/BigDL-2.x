@@ -35,6 +35,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
+import pickle
+
 import numpy as np
 import time
 from tensorflow.keras.models import Model
@@ -233,7 +235,7 @@ class AttentionRNNWrapper(Wrapper):
 
 class MTNetKeras(BaseModel):
 
-    def __init__(self, check_optional_config=False, future_seq_len=1):
+    def __init__(self, check_optional_config=False):
 
         """
         Constructor of MTNet model
@@ -304,7 +306,7 @@ class MTNetKeras(BaseModel):
         #     "Invalid configuration value. 'cnn_hid_size' must be equal to the last element of " \
         #     "'rnn_hid_sizes'"
 
-    def build(self):
+    def build(self, config):
         """
         build MTNet model
         :param config:
@@ -491,7 +493,7 @@ class MTNetKeras(BaseModel):
         # if model is not initialized, __build the model
         if self.model is None:
             st = time.time()
-            self.build()
+            self.build(config)
             end = time.time()
             if verbose == 1:
                 print("Build model took {}s".format(end - st))
@@ -542,30 +544,35 @@ class MTNetKeras(BaseModel):
         uncertainty = result.std(axis=0)
         return prediction, uncertainty
 
-    def save(self, model_path, config_path):
-        self.model.save_weights(model_path)
-        config_to_save = {"cnn_height": self.cnn_height,
-                          "long_num": self.long_num,
-                          "time_step": self.time_step,
-                          "ar_window": self.ar_window,
-                          "cnn_hid_size": self.cnn_hid_size,
-                          "rnn_hid_sizes": self.rnn_hid_sizes,
-                          "cnn_dropout": self.cnn_dropout,
-                          "rnn_dropout": self.rnn_dropout,
-                          "lr": self.lr,
-                          "batch_size": self.batch_size,
-                          # for fit eval
-                          "epochs": self.epochs,
-                          # todo: can not serialize metrics unless all elements are str
-                          "metrics": self.metrics,
-                          "mc": self.mc,
-                          "feature_num": self.feature_num,
-                          "output_dim": self.output_dim,
-                          "loss": self.loss
-                          }
-        assert set(config_to_save.keys()) == self.saved_configs, \
-            "The keys in config_to_save is not the same as self.saved_configs." \
-            "Please keep them consistent"
+    def state_dict(self):
+        state = {
+            "weights": self.model.get_weights(),
+            "config": {"cnn_height": self.cnn_height,
+                       "long_num": self.long_num,
+                       "time_step": self.time_step,
+                       "ar_window": self.ar_window,
+                       "cnn_hid_size": self.cnn_hid_size,
+                       "rnn_hid_sizes": self.rnn_hid_sizes,
+                       "cnn_dropout": self.cnn_dropout,
+                       "rnn_dropout": self.rnn_dropout,
+                       "lr": self.lr,
+                       "batch_size": self.batch_size,
+                       # for fit eval
+                       "epochs": self.epochs,
+                       # todo: can not serialize metrics unless all elements are str
+                       "metrics": self.metrics,
+                       "mc": self.mc,
+                       "feature_num": self.feature_num,
+                       "output_dim": self.output_dim,
+                       "loss": self.loss
+                       }
+        }
+        return state
+
+    def save(self, checkpoint_file, config_path=None):
+        state_dict = self.state_dict()
+        with open(checkpoint_file, "wb") as f:
+            pickle.dump(state_dict, f)
         # if self.decay_epochs > 0:
         #     lr_decay_configs = {"min_lr": self.min_lr,
         #                         "max_lr": self.max_lr}
@@ -580,18 +587,18 @@ class MTNetKeras(BaseModel):
         #         "Please keep them consistent"
         #     config_to_save.update(lr_configs)
 
-        save_config(config_path, config_to_save)
-
-    def restore(self, model_path, **config):
+    def restore(self, checkpoint_file, **config):
         """
         restore model from file
-        :param model_path: the model file
+        :param checkpoint_file: the model file
         :param config: the trial config
         """
-        self.config = config
-        self.apply_config(rs=True, config=config)
-        self.build()
-        self.model.load_weights(model_path)
+        with open(checkpoint_file, "rb") as f:
+            state_dict = pickle.load(f)
+        self.config = state_dict["config"]
+        self.apply_config(rs=True, config=self.config)
+        self.build(self.config)
+        self.model.set_weights(state_dict["weights"])
 
     def _get_optional_parameters(self):
         return {

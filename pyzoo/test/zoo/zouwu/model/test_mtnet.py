@@ -23,7 +23,6 @@ from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-from zoo.automl.common.util import save, restore
 from numpy.testing import assert_array_almost_equal
 
 
@@ -76,24 +75,24 @@ class TestMTNetKeras(ZooTestCase):
         self.model.evaluate(self.x_val, self.y_val)
 
     def test_save_restore(self):
+        import os
         self.model.fit_eval(data=(self.x_train, self.y_train),
                             validation_data=(self.x_val, self.y_val),
                             **self.config)
         y_pred = self.model.predict(self.x_test)
         assert y_pred.shape == (self.x_test.shape[0], self.y_train.shape[1])
-        dirname = "tmp"
+        dirname = "/tmp"
         restored_model = MTNetKeras()
-        try:
-            save(dirname, model=self.model)
-            restore(dirname, model=restored_model, config=self.config)
-            predict_after = restored_model.predict(self.x_test)
-            assert_array_almost_equal(y_pred, predict_after, decimal=2), \
-                "Prediction values are not the same after restore: " \
-                "predict before is {}, and predict after is {}".format(y_pred, predict_after)
-            restored_model.fit_eval((self.x_train, self.y_train), epochs=1)
-            restored_model.evaluate(self.x_val, self.y_val)
-        finally:
-            shutil.rmtree("tmp")
+        ckpt = os.path.join(dirname, "mtnet.ckpt")
+        self.model.save(checkpoint_file=ckpt)
+        restored_model.restore(checkpoint_file=ckpt)
+        predict_after = restored_model.predict(self.x_test)
+        assert_array_almost_equal(y_pred, predict_after, decimal=2), \
+            "Prediction values are not the same after restore: " \
+            "predict before is {}, and predict after is {}".format(y_pred, predict_after)
+        restored_model.fit_eval((self.x_train, self.y_train), epochs=1)
+        restored_model.evaluate(self.x_val, self.y_val)
+        os.remove(ckpt)
 
     def test_predict_with_uncertainty(self):
         self.model.fit_eval(data=(self.x_train, self.y_train),
