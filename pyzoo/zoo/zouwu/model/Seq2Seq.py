@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import pickle
 
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, LSTM, Dense
@@ -295,32 +296,40 @@ class LSTMSeq2Seq(BaseModel):
         uncertainty = result.var(axis=0)
         return prediction, uncertainty
 
-    def save(self, model_path, config_path):
+    def state_dict(self):
+        state = {
+            "weights": self.model.get_weights(),
+            "config": {"past_seq_len": self.past_seq_len,
+                       "feature_num": self.feature_num,
+                       "future_seq_len": self.future_seq_len,
+                       "target_col_num": self.target_col_num,
+                       "metric": self.metric,
+                       "latent_dim": self.latent_dim,
+                       "batch_size": self.batch_size}
+        }
+        return state
+
+    def save(self, checkpoint_file, config_path=None):
         """
         save model to file.
-        :param model_path: the model file path to be saved to.
+        :param checkpoint_file: the model file path to be saved to.
         :param config_path: the config file path to be saved to.
         :return:
         """
+        state_dict = self.state_dict()
+        with open(checkpoint_file, "wb") as f:
+            pickle.dump(state_dict, f)
 
-        self.model.save(model_path)
-
-        config_to_save = {"past_seq_len": self.past_seq_len,
-                          "feature_num": self.feature_num,
-                          "future_seq_len": self.future_seq_len,
-                          "target_col_num": self.target_col_num,
-                          "metric": self.metric,
-                          "latent_dim": self.latent_dim,
-                          "batch_size": self.batch_size}
-        save_config(config_path, config_to_save)
-
-    def restore(self, model_path, **config):
+    def restore(self, checkpoint_file, **config):
         """
         restore model from file
-        :param model_path: the model file
+        :param checkpoint_file: the model file
         :param config: the trial config
         :return: the restored model
         """
+        with open(checkpoint_file, "rb") as f:
+            state_dict = pickle.load(f)
+        config = state_dict["config"]
 
         self.past_seq_len = config["past_seq_len"]
         self.feature_num = config["feature_num"]
@@ -330,7 +339,7 @@ class LSTMSeq2Seq(BaseModel):
         self.latent_dim = config["latent_dim"]
         self.batch_size = config["batch_size"]
 
-        self.model = keras.models.load_model(model_path)
+        self.model.set_weights(state_dict["weights"])
         self._restore_model()
         # self.model.load_weights(file_path)
 
