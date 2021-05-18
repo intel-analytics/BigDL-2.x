@@ -34,28 +34,6 @@ def get_data():
     return data
 
 
-class ProphetRecipe(Recipe):
-    def __init__(self):
-        super().__init__()
-        self.training_iteration = 1  # period of report metric in fit_eval
-        self.num_samples = 10  # sample hyperparameters
-
-    def search_space(self):
-        return {
-            "changepoint_prior_scale": hp.loguniform(0.001, 0.5),
-            "seasonality_prior_scale": hp.loguniform(0.01, 10),
-            "holidays_prior_scale": hp.loguniform(0.01, 10),
-            "seasonality_mode": hp.choice(['additive', 'multiplicative']),
-            "changepoint_range": hp.uniform(0.8, 0.95)
-        }
-
-    def runtime_params(self):
-        return {
-            "training_iteration": self.training_iteration,
-            "num_samples": self.num_samples
-        }
-
-
 class TestAutoProphet(TestCase):
     def setUp(self) -> None:
         from zoo.orca import init_orca_context
@@ -68,10 +46,18 @@ class TestAutoProphet(TestCase):
     def test_fit(self):
         auto_prophet = AutoProphet()
         data = get_data()
-        recipe = ProphetRecipe()
+        search_space = {
+            "changepoint_prior_scale": hp.loguniform(0.001, 0.5),
+            "seasonality_prior_scale": hp.loguniform(0.01, 10),
+            "holidays_prior_scale": hp.loguniform(0.01, 10),
+            "seasonality_mode": hp.choice(['additive', 'multiplicative']),
+            "changepoint_range": hp.uniform(0.8, 0.95)
+        }
         auto_prophet.fit(data=data,
+                         epochs=1
                          metric="mse",
-                         search_space=recipe.search_space()
+                         n_sampling=10,
+                         search_space=search_space,
                          )
         best_model = auto_prophet.get_best_model()
         assert 0.001 <= best_model.model.changepoint_prior_scale <= 0.5
