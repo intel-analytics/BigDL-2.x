@@ -58,13 +58,13 @@ class LSTMClassifier(nn.Module):
         """
         Arguments
         ---------
-        batch_size : Size of the batch which is same as 
+        batch_size : Size of the batch which is same as
         the batch_size of the data returned by the TorchText BucketIterator
         output_size : 2 = (pos, neg)
         hidden_sie : Size of the hidden_state of the LSTM
         vocab_size : Size of the vocabulary containing unique words
         embedding_length : Embeddding dimension of GloVe word embeddings
-        weights : Pre-trained GloVe word_embeddings which 
+        weights : Pre-trained GloVe word_embeddings which
         we will use to create our word_embedding look-up table
 
         """
@@ -87,22 +87,22 @@ class LSTMClassifier(nn.Module):
         Parameters
         ----------
         input_sentence: input_sentence of shape = (batch_size, num_sequences)
-        batch_size : default = None. Used only for prediction 
+        batch_size : default = None. Used only for prediction
         on a single sentence after training (batch_size = 1)
 
         Returns
         -------
-        Output of the linear layer containing logits for positive & negative class 
+        Output of the linear layer containing logits for positive & negative class
         which receives its input as the final_hidden_state of the LSTM
         final_output.shape = (batch_size, output_size)
 
         """
 
-        ''' Here we will map all the indexes present in the input sequence to 
+        ''' Here we will map all the indexes present in the input sequence to
         the corresponding word vector using our pre-trained word_embedddins.'''
         input = self.word_embeddings(
             input_sentence)
-        input = input.permute(1, 0, 2)  
+        input = input.permute(1, 0, 2)
         if batch_size is None:
             h_0 = Variable(torch.zeros(1, self.batch_size, self.hidden_size))
             c_0 = Variable(torch.zeros(1, self.batch_size, self.hidden_size))
@@ -117,8 +117,8 @@ class LSTMClassifier(nn.Module):
 def text_label_creator():
     # load the dataset and build the vocabulary
     tokenize = lambda x: x.split()
-    TEXT = data.Field(sequential=True, tokenize=tokenize, lower=True, include_lengths=True, batch_first=True,
-                      fix_length=200)
+    TEXT = data.Field(sequential=True, tokenize=tokenize, lower=True,
+                      include_lengths=True, batch_first=True, fix_length=200)
     LABEL = data.LabelField()
     train_dataset, _ = datasets.IMDB.splits(TEXT, LABEL)
     TEXT.build_vocab(train_dataset, vectors=GloVe(name='6B', dim=300))
@@ -134,7 +134,7 @@ def model_creator(config):
     output_size = 2
     hidden_size = 256
     embedding_length = 300
-    model = LSTMClassifier(batch_size, output_size, hidden_size, 
+    model = LSTMClassifier(batch_size, output_size, hidden_size,
                            vocab_size, embedding_length, word_embeddings)
     return model
 
@@ -161,7 +161,7 @@ def train_loader_creator(config, batch_size):
     TEXT = TEXT_LABEL[0]
     LABEL = TEXT_LABEL[1]
     train_dataset, _ = datasets.IMDB.splits(TEXT, LABEL)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, 
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size,
                                   collate_fn=MyCollator(TEXT), drop_last=True, shuffle=True)
     return train_dataloader
 
@@ -171,7 +171,7 @@ def test_loader_creator(config, batch_size):
     TEXT = TEXT_LABEL[0]
     LABEL = TEXT_LABEL[1]
     _, test_dataset = datasets.IMDB.splits(TEXT, LABEL)
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, 
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size,
                                  collate_fn=MyCollator(TEXT), drop_last=True, shuffle=True)
     return test_dataloader
 
@@ -225,9 +225,9 @@ config = {"TEXT_LABEL": text_label_creator()}
 model = model_creator(config)
 model.load_state_dict(torch.load(model_save_path))
 model.eval()
-test_sen1 = '''This is one of the best creation of Nolan. I can say, it's his magnum opus. 
+test_sen1 = '''This is one of the best creation of Nolan. I can say, it's his magnum opus.
                 Loved the soundtrack and especially those creative dialogues.'''
-test_sen2 = '''Ohh, such a ridiculous movie. Not gonna recommend it to anyone. 
+test_sen2 = '''Ohh, such a ridiculous movie. Not gonna recommend it to anyone.
                 Complete waste of time and money.'''
 test_sen_set = [test_sen1, test_sen2]
 TEXT = config.get("TEXT_LABEL")[0]
