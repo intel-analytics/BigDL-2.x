@@ -187,10 +187,8 @@ criterion = nn.CrossEntropyLoss()
 batch_size = 32
 
 if args.backend == "bigdl":
-    net = model_creator({"TEXT_LABEL": text_label_creator()})
-    optimizer = optim_creator(model=net, config={})
-    orca_estimator = Estimator.from_torch(model=net,
-                                          optimizer=optimizer,
+    orca_estimator = Estimator.from_torch(model=model_creator,
+                                          optimizer=optim_creator,
                                           loss=criterion,
                                           workers_per_node=2,
                                           metrics=[Accuracy()],
