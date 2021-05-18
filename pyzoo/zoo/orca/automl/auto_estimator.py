@@ -24,11 +24,13 @@ class AutoEstimator:
                  resources_per_trial=None,
                  name=None):
         """
-        Constructor
-        :param model_builder: model builder for target model
-        :param logs_dir: local dir to save training results
-        :param resources_per_trial: resources for each trial
-        :param name: searcher name
+        Create an AutoEstimator.
+
+        :param model_builder: A ModelBuilder instance, from which we will 
+            build the target model for hyperparameter optimization.
+        :param logs_dir: local dir to save training results, defaults to /tmp/auto_estimator_logs
+        :param resources_per_trial: Dict. resources for each trial. e.g. {"cpu": 2}.
+        :param name: AutoEstimator name.
         """
         self.model_builder = model_builder
         self.searcher = SearchEngineFactory.create_engine(backend="ray",
@@ -105,8 +107,8 @@ class AutoEstimator:
 
     def fit(self,
             data,
-            validation_data=None,
             epochs=1,
+            validation_data=None,
             metric=None,
             metric_threshold=None,
             n_sampling=1,
@@ -117,7 +119,8 @@ class AutoEstimator:
             scheduler_params=None,
             ):
         """
-        Do necessary preparations for the engine
+        Automaically fit the model and search for the best hyperparameters.
+
         :param data: data for training
                Pandas Dataframe:
                    a Pandas dataframe for training
@@ -125,23 +128,37 @@ class AutoEstimator:
                    a tuple in form of (x, y)
                         x: ndarray for training input
                         y: ndarray for training output
-        :param validation_data: data for validation
+               Pytorch Data Creater:
+                   a Function which takes a config dict and returns a
+                   torch.utils.data.DataLoader. torch.Tensor should be generated from the
+                   dataloader.
+        :param epochs: Max number of epochs to train in each trial. Defaults to 1.
+            If you have also set metric_threshold, a trial will stop if either it has been
+            optimized to the metric_threshold or it has been trained for {epochs} epochs.
+        :param validation_data: data for validation, should be the same type as data
                Pandas Dataframe:
                    a Pandas dataframe for validation
                Numpy ndarray:
                    a tuple in form of (x, y)
                         x: ndarray for validation input
                         y: ndarray for validation output
-        :param epochs: max epochs for training
-        :param metric: metric name
+               Pytorch Data Creater:
+                   a Function which takes a config dict and returns a
+                   torch.utils.data.DataLoader. torch.Tensor should be generated from the
+                   dataloader.
+        :param metric: str, metric name, e.g. "mse"
         :param metric_threshold: a trial will be terminated when metric threshold is met
-        :param n_sampling: number of sampling
+        :param n_sampling: Number of times to sample from the search_space. Defaults to 1. 
+            If hp.grid_search is in search_space, the grid will be repeated n_sampling of times. 
+            If this is -1, (virtually) infinite samples are generated 
+            until a stopping condition is met.
         :param search_space: a dict for search space
         :param search_alg: str, all supported searcher provided by ray tune
                (i.e."variant_generator", "random", "ax", "dragonfly", "skopt",
                "hyperopt", "bayesopt", "bohb", "nevergrad", "optuna", "zoopt" and
                "sigopt")
-        :param search_alg_params: extra parameters for searcher algorithm
+        :param search_alg_params: extra parameters for searcher algorithm besides search_space, 
+            metric and searcher mode
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
         """
