@@ -58,12 +58,14 @@ class LSTMClassifier(nn.Module):
         """
         Arguments
         ---------
-        batch_size : Size of the batch which is same as the batch_size of the data returned by the TorchText BucketIterator
+        batch_size : Size of the batch which is same as 
+        the batch_size of the data returned by the TorchText BucketIterator
         output_size : 2 = (pos, neg)
         hidden_sie : Size of the hidden_state of the LSTM
         vocab_size : Size of the vocabulary containing unique words
         embedding_length : Embeddding dimension of GloVe word embeddings
-        weights : Pre-trained GloVe word_embeddings which we will use to create our word_embedding look-up table
+        weights : Pre-trained GloVe word_embeddings which 
+        we will use to create our word_embedding look-up table
 
         """
 
@@ -73,9 +75,9 @@ class LSTMClassifier(nn.Module):
         self.vocab_size = vocab_size
         self.embedding_length = embedding_length
 
-        self.word_embeddings = nn.Embedding(vocab_size, embedding_length)  # Initializing the look-up table.
+        self.word_embeddings = nn.Embedding(vocab_size, embedding_length)
         self.word_embeddings.weight = nn.Parameter(weights,
-                                                   requires_grad=False)  # Assigning the look-up table to the pre-trained GloVe word embedding.
+                                                   requires_grad=False)
         self.lstm = nn.LSTM(embedding_length, hidden_size)
         self.label = nn.Linear(hidden_size, output_size)
 
@@ -85,28 +87,30 @@ class LSTMClassifier(nn.Module):
         Parameters
         ----------
         input_sentence: input_sentence of shape = (batch_size, num_sequences)
-        batch_size : default = None. Used only for prediction on a single sentence after training (batch_size = 1)
+        batch_size : default = None. Used only for prediction 
+        on a single sentence after training (batch_size = 1)
 
         Returns
         -------
-        Output of the linear layer containing logits for positive & negative class which receives its input as the final_hidden_state of the LSTM
+        Output of the linear layer containing logits for positive & negative class 
+        which receives its input as the final_hidden_state of the LSTM
         final_output.shape = (batch_size, output_size)
 
         """
 
-        ''' Here we will map all the indexes present in the input sequence to the corresponding word vector using our pre-trained word_embedddins.'''
+        ''' Here we will map all the indexes present in the input sequence to 
+        the corresponding word vector using our pre-trained word_embedddins.'''
         input = self.word_embeddings(
-            input_sentence)  # embedded input of shape = (batch_size, num_sequences,  embedding_length)
-        input = input.permute(1, 0, 2)  # input.size() = (num_sequences, batch_size, embedding_length)
+            input_sentence)
+        input = input.permute(1, 0, 2)  
         if batch_size is None:
-            h_0 = Variable(torch.zeros(1, self.batch_size, self.hidden_size))  # Initial hidden state of the LSTM
-            c_0 = Variable(torch.zeros(1, self.batch_size, self.hidden_size))  # Initial cell state of the LSTM
+            h_0 = Variable(torch.zeros(1, self.batch_size, self.hidden_size))
+            c_0 = Variable(torch.zeros(1, self.batch_size, self.hidden_size))
         else:
             h_0 = Variable(torch.zeros(1, batch_size, self.hidden_size))
             c_0 = Variable(torch.zeros(1, batch_size, self.hidden_size))
         output, (final_hidden_state, final_cell_state) = self.lstm(input, (h_0, c_0))
-        final_output = self.label(final_hidden_state[
-                                      -1])  # final_hidden_state.size() = (1, batch_size, hidden_size) & final_output.size() = (batch_size, output_size)
+        final_output = self.label(final_hidden_state[-1])
         return final_output
 
 
@@ -114,7 +118,7 @@ def text_label_creator():
     # load the dataset and build the vocabulary
     tokenize = lambda x: x.split()
     TEXT = data.Field(sequential=True, tokenize=tokenize, lower=True, include_lengths=True, batch_first=True,
-                        fix_length=200)
+                      fix_length=200)
     LABEL = data.LabelField()
     train_dataset, _ = datasets.IMDB.splits(TEXT, LABEL)
     TEXT.build_vocab(train_dataset, vectors=GloVe(name='6B', dim=300))
@@ -130,7 +134,8 @@ def model_creator(config):
     output_size = 2
     hidden_size = 256
     embedding_length = 300
-    model = LSTMClassifier(batch_size, output_size, hidden_size, vocab_size, embedding_length, word_embeddings)
+    model = LSTMClassifier(batch_size, output_size, hidden_size, 
+                           vocab_size, embedding_length, word_embeddings)
     return model
 
 
@@ -142,8 +147,9 @@ def optim_creator(model, config):
 class MyCollator(object):
     def __init__(self, TEXT):
         self.TEXT = TEXT
+
     def __call__(self, data):
-        label_list = [int(d.label=='pos') for d in data]
+        label_list = [int(d.label == 'pos') for d in data]
         label_tensor = torch.LongTensor(label_list)
         txt_list = [d.text for d in data]
         txt_tensor = self.TEXT.process(txt_list)[0]
@@ -155,7 +161,8 @@ def train_loader_creator(config, batch_size):
     TEXT = TEXT_LABEL[0]
     LABEL = TEXT_LABEL[1]
     train_dataset, _ = datasets.IMDB.splits(TEXT, LABEL)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, collate_fn=MyCollator(TEXT), drop_last=True, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, 
+                                  collate_fn=MyCollator(TEXT), drop_last=True, shuffle=True)
     return train_dataloader
 
 
@@ -164,7 +171,8 @@ def test_loader_creator(config, batch_size):
     TEXT = TEXT_LABEL[0]
     LABEL = TEXT_LABEL[1]
     _, test_dataset = datasets.IMDB.splits(TEXT, LABEL)
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, collate_fn=MyCollator(TEXT), drop_last=True, shuffle=True)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, 
+                                 collate_fn=MyCollator(TEXT), drop_last=True, shuffle=True)
     return test_dataloader
 
 
@@ -177,7 +185,7 @@ batch_size = 32
 
 if args.backend == "bigdl":
     net = model_creator({"TEXT_LABEL": text_label_creator()})
-    optimizer = optim_creator(model=net,config={})
+    optimizer = optim_creator(model=net, config={})
     orca_estimator = Estimator.from_torch(model=net,
                                           optimizer=optimizer,
                                           loss=criterion,
@@ -186,7 +194,7 @@ if args.backend == "bigdl":
                                           model_dir=model_dir,
                                           backend="bigdl",
                                           config={"lr": 2e-5,
-                                          "TEXT_LABEL": text_label_creator()})
+                                                  "TEXT_LABEL": text_label_creator()})
     orca_estimator.fit(data=train_loader_creator, epochs=5, validation_data=test_loader_creator,
                        checkpoint_trigger=EveryEpoch())
     res = orca_estimator.evaluate(data=test_loader_creator)
@@ -199,7 +207,7 @@ elif args.backend == "torch_distributed":
                                           metrics=[Accuracy()],
                                           backend="torch_distributed",
                                           config={"lr": 2e-5,
-                                          "TEXT_LABEL": text_label_creator()})
+                                                  "TEXT_LABEL": text_label_creator()})
     orca_estimator.fit(data=train_loader_creator, epochs=5, batch_size=batch_size)
     model = orca_estimator.get_model()
     torch.save(model.state_dict(), model_save_path)
@@ -217,8 +225,10 @@ config = {"TEXT_LABEL": text_label_creator()}
 model = model_creator(config)
 model.load_state_dict(torch.load(model_save_path))
 model.eval()
-test_sen1 = "This is one of the best creation of Nolan. I can say, it's his magnum opus. Loved the soundtrack and especially those creative dialogues."
-test_sen2 = "Ohh, such a ridiculous movie. Not gonna recommend it to anyone. Complete waste of time and money."
+test_sen1 = '''This is one of the best creation of Nolan. I can say, it's his magnum opus. 
+                Loved the soundtrack and especially those creative dialogues.'''
+test_sen2 = '''Ohh, such a ridiculous movie. Not gonna recommend it to anyone. 
+                Complete waste of time and money.'''
 test_sen_set = [test_sen1, test_sen2]
 TEXT = config.get("TEXT_LABEL")[0]
 for test_sen in test_sen_set:
@@ -231,6 +241,6 @@ for test_sen in test_sen_set:
     output = model(test_tensor, 1)
     out = F.softmax(output, 1)
     if (torch.argmax(out[0]) == 1):
-        print ("Sentiment: Positive")
+        print("Sentiment: Positive")
     else:
-        print ("Sentiment: Negative")
+        print("Sentiment: Negative")
