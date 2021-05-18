@@ -1170,7 +1170,8 @@ class TFNdarrayDataset(TFDataset):
                 tensor_structure.append(TensorMeta(types[i], name=names[i], shape=shapes[i]))
         else:
             tensor_structure = [TensorMeta(dtype=tf.float32), TensorMeta(dtype=tf.float32)]
-
+        
+        tensor_structure = tuple(tensor_structure)
         return TFNdarrayDataset(rdd, tensor_structure,
                                 batch_size, batch_per_thread,
                                 hard_code_batch_size, val_rdd,
@@ -1278,14 +1279,13 @@ def _check_compatible(names, structure, data_type="model_input"):
         err_msg = f"all {data_type} names should exist in data, " \
                   f"got {data_type} {names}, data {structure}"
         assert all([name in structure for name in names]), err_msg
-
-    if isinstance(structure, list) or isinstance(structure, tuple):
+    elif isinstance(structure, list) or isinstance(structure, tuple):
         err_msg = f"{data_type} number does not match data number, " \
                   f"got {data_type} {names}, data {structure}"
         assert len(structure) == len(names), err_msg
-
-    assert len(names) == 1, f"data does not match {data_type}, " \
-                                  f"data {structure}, {data_type} {names}"
+    else:
+        assert len(names) == 1, f"data does not match {data_type}, " \
+                                    f"data {structure}, {data_type} {names}"
 
 
 def check_data_compatible(dataset, model, mode):

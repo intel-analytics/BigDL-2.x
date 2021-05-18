@@ -256,13 +256,11 @@ class TestTFParkModel(ZooTestCase):
         x, y = self.create_training_data()
 
         results_pre = model.evaluate(x, y)
-        with pytest.raises(AssertionError) as excinfo:
-            pred_y = np.argmax(model.predict(x, distributed=True), axis=1)
-            acc = np.average((pred_y == y))
-            print(results_pre)
-            assert np.square(acc - results_pre["acc"]) < 0.000001
 
-        assert "tuple" in str(excinfo.value)
+        pred_y = np.argmax(model.predict(x, distributed=True), axis=1)
+        acc = np.average((pred_y == y))
+        print(results_pre)
+        assert np.square(acc - results_pre["acc"]) < 0.000001
 
     def test_predict_with_dataset(self):
 
