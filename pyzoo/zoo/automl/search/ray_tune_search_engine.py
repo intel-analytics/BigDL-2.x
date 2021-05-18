@@ -69,8 +69,7 @@ class RayTuneSearchEngine(SearchEngine):
                 search_alg_params=None,
                 scheduler=None,
                 scheduler_params=None,
-                mc=False,
-                metric="mse"):
+                mc=False):
         """
         Do necessary preparations for the engine
         :param data: data for training
