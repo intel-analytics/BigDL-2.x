@@ -23,6 +23,13 @@ class AutoEstimator:
                  logs_dir="/tmp/auto_estimator_logs",
                  resources_per_trial=None,
                  name=None):
+        """
+        Constructor
+        :param model_builder: model builder for target model
+        :param logs_dir: local dir to save training results
+        :param resources_per_trial: resources for each trial
+        :param name: searcher name
+        """
         self.model_builder = model_builder
         self.searcher = SearchEngineFactory.create_engine(backend="ray",
                                                           logs_dir=logs_dir,
@@ -98,8 +105,8 @@ class AutoEstimator:
 
     def fit(self,
             data,
-            epochs=1,
             validation_data=None,
+            epochs=1,
             metric=None,
             metric_threshold=None,
             n_sampling=1,
@@ -109,6 +116,35 @@ class AutoEstimator:
             scheduler=None,
             scheduler_params=None,
             ):
+        """
+        Do necessary preparations for the engine
+        :param data: data for training
+               Pandas Dataframe:
+                   a Pandas dataframe for training
+               Numpy ndarray:
+                   a tuple in form of (x, y)
+                        x: ndarray for training input
+                        y: ndarray for training output
+        :param validation_data: data for validation
+               Pandas Dataframe:
+                   a Pandas dataframe for validation
+               Numpy ndarray:
+                   a tuple in form of (x, y)
+                        x: ndarray for validation input
+                        y: ndarray for validation output
+        :param epochs: max epochs for training
+        :param metric: metric name
+        :param metric_threshold: a trial will be terminated when metric threshold is met
+        :param n_sampling: number of sampling
+        :param search_space: a dict for search space
+        :param search_alg: str, all supported searcher provided by ray tune
+               (i.e."variant_generator", "random", "ax", "dragonfly", "skopt",
+               "hyperopt", "bayesopt", "bohb", "nevergrad", "optuna", "zoopt" and
+               "sigopt")
+        :param search_alg_params: extra parameters for searcher algorithm
+        :param scheduler: str, all supported scheduler provided by ray tune
+        :param scheduler_params: parameters for scheduler
+        """
         if self._fitted:
             raise RuntimeError("This AutoEstimator has already been fitted and cannot fit again.")
         self.searcher.compile(data=data,
@@ -127,6 +163,9 @@ class AutoEstimator:
         self._fitted = True
 
     def get_best_model(self):
+        """
+        Return the best model found by the AutoEstimator
+        """
         best_trial = self.searcher.get_best_trials(k=1)[0]
         best_model_path = best_trial.model_path
         best_model = self.model_builder.build_from_ckpt(best_model_path)
