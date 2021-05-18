@@ -1276,16 +1276,22 @@ class DataFrameDataset(TFNdarrayDataset):
 
 def _check_compatible(names, structure, data_type="model_input"):
     if isinstance(structure, dict):
+        structure_simplified = {}
+        for s in structure:
+            if isinstance(structure[s], list) or isinstance(structure[s], tuple):
+                structure_simplified[s] = [type(typ).__name__ for typ in structure[s]]
+            else:
+                structure_simplified[s] = type(structure[s]).__name__
         err_msg = f"all {data_type} names should exist in data, " \
-                  f"got {data_type} {names}, data {structure}"
+                  f"got {data_type} {names}, data {structure_simplified}"
         assert all([name in structure for name in names]), err_msg
     elif isinstance(structure, list) or isinstance(structure, tuple):
         err_msg = f"{data_type} number does not match data number, " \
-                  f"got {data_type} {names}, data {structure}"
+                  f"got {data_type} {names}, data {[type(s).__name__ for s in structure]}"
         assert len(structure) == len(names), err_msg
     else:
         assert len(names) == 1, f"data does not match {data_type}, " \
-                                    f"data {structure}, {data_type} {names}"
+                                    f"data {type(structure).__name__}, {data_type} {names}"
 
 
 def check_data_compatible(dataset, model, mode):
