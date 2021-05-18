@@ -19,6 +19,7 @@ from zoo.automl.pipeline.base import Pipeline
 from zoo.automl.common.util import save_config
 from zoo.zouwu.model.time_sequence import TSModelBuilder
 from zoo.automl.common.parameters import DEFAULT_CONFIG_DIR, DEFAULT_PPL_DIR
+import os
 
 
 class TimeSequencePipeline(Pipeline):
@@ -29,6 +30,7 @@ class TimeSequencePipeline(Pipeline):
         :param model: the internal model
         """
         self.model = model
+        self.config = self.model.config
         self.name = name
         self.time = time.strftime("%Y%m%d-%H%M%S")
 
@@ -40,7 +42,7 @@ class TimeSequencePipeline(Pipeline):
         print("")
 
     def fit(self, input_df, validation_df=None, mc=False, epoch_num=20):
-        self.model.fit_eval(input_df, validation_df, mc=mc, verbose=1, epochs=epoch_num)
+        self.model.fit_incr(input_df, validation_df, mc=mc, verbose=1, epochs=epoch_num)
         print('Fit done!')
 
     def fit_with_fixed_configs(self, input_df, validation_df=None, mc=False, **user_configs):
@@ -57,7 +59,7 @@ class TimeSequencePipeline(Pipeline):
         :return:
         """
         # self._check_configs()
-        config = self.model.config.copy()
+        config = self.config.copy()
         config.update(user_configs)
 
         self.model.setup(config)
@@ -113,7 +115,7 @@ class TimeSequencePipeline(Pipeline):
         """
         config_file = config_file or os.path.join(DEFAULT_CONFIG_DIR, "{}_{}.json".
                                                   format(self.name, self.time))
-        save_config(config_file, self.model.config, replace=True)
+        save_config(config_file, self.config, replace=True)
         return config_file
 
 

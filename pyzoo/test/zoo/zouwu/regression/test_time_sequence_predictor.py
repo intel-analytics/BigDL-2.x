@@ -16,12 +16,11 @@
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.model.abstract import BaseModel
+from zoo.zouwu.model.time_sequence import TimeSequenceModel
 from zoo.zouwu.regression.time_sequence_predictor import TimeSequencePredictor
 import pandas as pd
 import numpy as np
 from zoo.zouwu.pipeline.time_sequence import TimeSequencePipeline
-from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 
 
 class TestTimeSequencePredictor(ZooTestCase):
@@ -50,11 +49,7 @@ class TestTimeSequencePredictor(ZooTestCase):
                                     extra_features_col=None, )
         pipeline = tsp.fit(train_df, validation_df)
         assert isinstance(pipeline, TimeSequencePipeline)
-        assert isinstance(
-            pipeline.feature_transformers,
-            TimeSequenceFeatureTransformer)
-        assert isinstance(pipeline.model, BaseModel)
-        assert pipeline.config is not None
+        assert isinstance(pipeline.model, TimeSequenceModel)
 
     def test_fit_LSTMGridRandomRecipe(self):
         from zoo.zouwu.config.recipe import LSTMGridRandomRecipe
@@ -72,10 +67,7 @@ class TestTimeSequencePredictor(ZooTestCase):
                                training_iteration=1,
                                epochs=1))
         assert isinstance(pipeline, TimeSequencePipeline)
-        assert isinstance(
-            pipeline.feature_transformers,
-            TimeSequenceFeatureTransformer)
-        assert isinstance(pipeline.model, BaseModel)
+        assert isinstance(pipeline.model, TimeSequenceModel)
         assert pipeline.config is not None
         assert 'past_seq_len' in pipeline.config
         assert pipeline.config["past_seq_len"] == 2
@@ -104,10 +96,7 @@ class TestTimeSequencePredictor(ZooTestCase):
                 look_back=(3, 5)
             ))
         assert isinstance(pipeline, TimeSequencePipeline)
-        assert isinstance(
-            pipeline.feature_transformers,
-            TimeSequenceFeatureTransformer)
-        assert isinstance(pipeline.model, BaseModel)
+        assert isinstance(pipeline.model, TimeSequenceModel)
         assert pipeline.config is not None
         assert "epochs" in pipeline.config
         assert [config_name for config_name in pipeline.config

@@ -276,13 +276,12 @@ class RayTuneSearchEngine(SearchEngine):
         validation_data_id = ray.put(validation_data)
 
         def train_func(config):
-            if not isinstance(model_builder, ModelBuilder):
-                raise ValueError(f"You must input a ModelBuilder instance for model_builder")
-            trial_model = model_builder.build(config)
-
             train_data = ray.get(data_id)
             val_data = ray.get(validation_data_id)
             config = convert_bayes_configs(config).copy()
+            if not isinstance(model_builder, ModelBuilder):
+                raise ValueError(f"You must input a ModelBuilder instance for model_builder")
+            trial_model = model_builder.build(config)
 
             # no need to call build since it is called the first time fit_eval is called.
             # callbacks = [TuneCallback(tune_reporter)]

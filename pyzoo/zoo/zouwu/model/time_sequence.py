@@ -17,9 +17,8 @@ from copy import deepcopy
 
 from zoo.automl.model import ModelBuilder
 from zoo.automl.model.abstract import BaseModel
-from zoo.zouwu.model.VanillaLSTM_pytorch import VanillaLSTMPytorch
-from zoo.zouwu.model.Seq2Seq_pytorch import Seq2SeqPytorch
-from zoo.zouwu.model.tcn import TCNPytorch
+from zoo.zouwu.model.VanillaLSTM import VanillaLSTM
+from zoo.zouwu.model.Seq2Seq import LSTMSeq2Seq
 from zoo.zouwu.model.MTNet_keras import MTNetKeras
 from zoo.automl.common.util import *
 from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
@@ -27,10 +26,9 @@ from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
 from zoo.automl.common.metrics import Evaluator
 import pandas as pd
 
-MODEL_MAP = {"LSTM": VanillaLSTMPytorch,
-             "Seq2seq": Seq2SeqPytorch,
+MODEL_MAP = {"LSTM": VanillaLSTM,
+             "Seq2seq": LSTMSeq2Seq,
              "MTNet": MTNetKeras,
-             "TCN": TCNPytorch
              }
 
 
@@ -115,7 +113,7 @@ class TimeSequenceModel(BaseModel):
 
         if not self.model:
             self.model = TimeSequenceModel._sel_model(self.config)
-        self.model.build(self.config)
+        # self.model.build(self.config)
         self.built = True
 
     def _process_data(self, data, mode="test"):
@@ -163,6 +161,27 @@ class TimeSequenceModel(BaseModel):
             val_data_np = self._process_data(data, mode="val")
         else:
             val_data_np = None
+
+        return self.model.fit_eval(data=data_np,
+                                   validation_data=val_data_np,
+                                   **kwargs)
+
+    def fit_incr(self, data, validation_data=None, **kwargs):
+        assert self.built, "You must call setup or restore before calling fit_eval"
+        if not isinstance(data, pd.DataFrame):
+            raise ValueError(f"We only support data of pd.DataFrame. "
+                             f"Got data of {data.__class__.__name__}")
+        if validation_data is not None and not isinstance(validation_data, pd.DataFrame):
+            raise ValueError(f"We only support validation_data of pd.DataFrame. "
+                             f"Got validation_data of {data.__class__.__name__}")
+        data_np = self._process_data(data, mode="val")
+        is_val_valid = isinstance(validation_data, pd.DataFrame) and not validation_data.empty
+        if is_val_valid:
+            val_data_np = self._process_data(data, mode="val")
+        else:
+            # this is a work around since pytorch base model must include validation data for
+            # fit_eval. We may need to optimize automl base model interface.
+            val_data_np = data_np
 
         return self.model.fit_eval(data=data_np,
                                    validation_data=val_data_np,

@@ -107,7 +107,6 @@ class TestTimeSequencePipeline(ZooTestCase):
             assert os.path.isfile(save_pipeline_file)
             new_pipeline = load_ts_pipeline(save_pipeline_file)
             assert new_pipeline.config is not None
-            assert isinstance(new_pipeline.feature_transformers, TimeSequenceFeatureTransformer)
             assert isinstance(new_pipeline.model, TimeSequenceModel)
             new_pipeline.describe()
             new_pred = new_pipeline.predict(test_df)
