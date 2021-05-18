@@ -123,4 +123,3 @@ def load_ts_pipeline(file):
     model = TSModelBuilder.build_from_ckpt(file)
     print("Restore pipeline from", file)
     return TimeSequencePipeline(model)
-
