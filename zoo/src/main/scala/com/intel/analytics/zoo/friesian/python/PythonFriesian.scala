@@ -369,8 +369,6 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     val leftCols = df.columns.filter(x => !cols.contains(x)).mkString(",")
 
-    println(selectStatement)
-
     df.sqlContext.sql(s"select $leftCols, $selectStatement from tmp")
   }
 

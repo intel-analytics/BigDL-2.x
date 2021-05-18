@@ -468,7 +468,7 @@ class FeatureTable(Table):
         df = callZooFunc("float", "postPad", self.df, cols, seq_len)
         return FeatureTable(df)
 
-    def add_length(self, col_name):
+    def add_col_length(self, col_name):
         """
          Generagte length of a column
 

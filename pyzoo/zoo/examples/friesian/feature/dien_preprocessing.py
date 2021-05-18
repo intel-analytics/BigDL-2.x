@@ -32,9 +32,9 @@ from pyspark.sql.types import StringType, IntegerType, ArrayType, FloatType
 
 if __name__ == "__main__":
     parser = OptionParser()
-    parser.add_option("--meta", dest="meta_file", default="/Users/guoqiong/intelWork/git/friesian/data/book_review/meta_Books.json")
-    parser.add_option("--review", dest="review_file", default="/Users/guoqiong/intelWork/git/friesian/data/book_review/point02reviews.json")
-    parser.add_option("--output", dest="output", default="preprocessed_small")
+    parser.add_option("--meta", dest="meta_file")
+    parser.add_option("--review", dest="review_file")
+    parser.add_option("--output", dest="output")
     (options, args) = parser.parse_args(sys.argv)
     begin = time.time()
     sc = init_orca_context()
@@ -110,7 +110,7 @@ if __name__ == "__main__":
              cols=['item_hist_seq', 'category_hist_seq',
              'neg_item_hist_seq', 'neg_category_hist_seq'],
              seq_len=100) \
-        .add_length("item_hist_seq") \
+        .add_col_length("item_hist_seq") \
         .apply("label", "label", trans_label, label_type)
     print(5, "****")
     print(full_tbl.df.count())
