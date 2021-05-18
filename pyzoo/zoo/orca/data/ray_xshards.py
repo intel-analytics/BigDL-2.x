@@ -331,6 +331,9 @@ class RayXShards(XShards):
                 # if running in cluster, filter out driver ip
                 if ray_ctx.is_local or key != f"node:{driver_ip}":
                     nodes.append(key)
+        # for the case of single node spark standalone
+        if not nodes:
+            nodes.append(f"node:{driver_ip}")
 
         partition_stores = {}
         for node in nodes:
