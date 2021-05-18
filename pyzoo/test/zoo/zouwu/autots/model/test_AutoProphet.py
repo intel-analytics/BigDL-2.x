@@ -54,7 +54,7 @@ class TestAutoProphet(TestCase):
             "changepoint_range": hp.uniform(0.8, 0.95)
         }
         auto_prophet.fit(data=data,
-                         epochs=1
+                         epochs=1,
                          metric="mse",
                          n_sampling=10,
                          search_space=search_space,
