@@ -78,13 +78,14 @@ class TestProphetModel(ZooTestCase):
 
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling save"):
-            model_file = "tmp.pkl"
+            model_file = "tmp.json"
             self.model.save(model_file)
 
     def test_save_restore(self):
         self.model.fit_eval(data=self.data, **self.config)
         result_save = self.model.predict(x=None, horizon=self.horizon)
-        model_file = "tmp.pkl"
+        model_file = "tmp.json"
+
         self.model.save(model_file)
         assert os.path.isfile(model_file)
         new_model = ProphetModel()
