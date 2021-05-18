@@ -113,6 +113,9 @@ class TensorMeta(object):
         self.name = name
         self.shape = shape
 
+    def __repr__(self):
+        return "TensorMeta(dtype: " + self.dtype.name + ", name: " + self.name + \
+                   ", shape: " + str(self.shape) + ")"
 
 class TFDataset(object):
     def __init__(self, tensor_structure, batch_size,
@@ -1276,29 +1279,23 @@ class DataFrameDataset(TFNdarrayDataset):
 
 def _check_compatible(names, structure, data_type="model_input"):
     if isinstance(structure, dict):
-        structure_simplified = {}
-        for s in structure:
-            if isinstance(structure[s], list) or isinstance(structure[s], tuple):
-                structure_simplified[s] = [type(typ).__name__ for typ in structure[s]]
-            else:
-                structure_simplified[s] = type(structure[s]).__name__
         err_msg = f"all {data_type} names should exist in data, " \
-                  f"got {data_type} {names}, data {structure_simplified}"
+                  f"got {data_type} {names}, data {structure}"
         assert all([name in structure for name in names]), err_msg
     elif isinstance(structure, list) or isinstance(structure, tuple):
         err_msg = f"{data_type} number does not match data number, " \
-                  f"got {data_type} {names}, data {[type(s).__name__ for s in structure]}"
+                  f"got {data_type} {names}, data {structure}"
         assert len(structure) == len(names), err_msg
     else:
         assert len(names) == 1, f"data does not match {data_type}, " \
-                                    f"data {type(structure).__name__}, {data_type} {names}"
+                                    f"data {structure}, {data_type} {names}"
 
 
 def check_data_compatible(dataset, model, mode):
     input_names = model.input_names
     output_names = model.output_names
     err_msg = f"each element in dataset should be a tuple for {mode}, " \
-              f"but got {type(dataset.tensor_structure).__name__}"
+              f"but got {dataset.tensor_structure}"
     assert isinstance(dataset.tensor_structure, tuple), err_msg
 
     feature = dataset.tensor_structure[0]
