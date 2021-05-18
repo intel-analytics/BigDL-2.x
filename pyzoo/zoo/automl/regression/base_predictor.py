@@ -174,6 +174,7 @@ class BasePredictor(object):
 
         model_builder = self.get_model_builder()
 
+        self.metric = metric
         self._detach_recipe(recipe)
 
         # prepare parameters for search engine
