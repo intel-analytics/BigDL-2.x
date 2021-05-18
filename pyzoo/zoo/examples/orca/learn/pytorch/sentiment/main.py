@@ -20,7 +20,7 @@ from __future__ import print_function
 import argparse
 from random import shuffle
 import numpy as np
-from os.path import exists, split
+from os.path import exists
 from os import makedirs
 import torch
 import torch.nn as nn
@@ -122,7 +122,7 @@ def text_label_creator():
                       include_lengths=True, batch_first=True, fix_length=200)
     LABEL = data.LabelField()
     train_dataset, _ = datasets.IMDB.splits(TEXT, LABEL)
-    TEXT.build_vocab(train_dataset, vectors=GloVe(name='6B', dim=100))
+    TEXT.build_vocab(train_dataset, vectors=GloVe(name='6B', dim=300))
     LABEL.build_vocab(train_dataset)
     return TEXT, LABEL
 
@@ -134,7 +134,7 @@ def model_creator(config):
     batch_size = 32
     output_size = 2
     hidden_size = 256
-    embedding_length = 100
+    embedding_length = 300
     model = LSTMClassifier(batch_size, output_size, hidden_size,
                            vocab_size, embedding_length, word_embeddings)
     return model
