@@ -262,6 +262,14 @@ class LSTMSeq2Seq(BaseModel):
             result = hist.history.get('val_' + metric_name)[-1]
         return result
 
+        # if validation_data is None:
+        #     # get train metrics
+        #     # results = self.model.evaluate(x, y)
+        #     result = hist.history.get(self.metric)[-1]
+        # else:
+        #     result = hist.history.get('val_' + str(self.metric))[-1]
+        # return result
+
     def evaluate(self, x, y, metric=['mse']):
         """
         Evaluate on x, y
