@@ -18,7 +18,6 @@
 
 from __future__ import print_function
 import argparse
-from random import shuffle
 import numpy as np
 from os.path import exists
 from os import makedirs
@@ -32,15 +31,11 @@ from torchtext import data, datasets
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.pytorch import Estimator
 from zoo.orca.learn.metrics import Accuracy
-from zoo.orca.learn.trigger import EveryEpoch
 
 
 parser = argparse.ArgumentParser(description='PyTorch Sentiment Example')
 parser.add_argument('--cluster_mode', type=str, default="local",
                     help='The cluster mode, local or yarn')
-parser.add_argument('--backend', type=str, default="torch_distributed",
-                    help='The backend of PyTorch Estimator; '
-                         'bigdl and torch_distributed are supported')
 args = parser.parse_args()
 if args.cluster_mode == "local":
     init_orca_context(memory="4g")
@@ -162,7 +157,7 @@ def train_loader_creator(config, batch_size):
     TEXT = TEXT_LABEL[0]
     LABEL = TEXT_LABEL[1]
     train_dataset, _ = datasets.IMDB.splits(TEXT, LABEL)
-    train_dataset,_ = train_dataset.split(split_ratio=0.8)
+    train_dataset, _ = train_dataset.split(split_ratio=0.8)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size,
                                   collate_fn=MyCollator(TEXT), drop_last=True, shuffle=True)
     return train_dataloader
@@ -173,7 +168,7 @@ def test_loader_creator(config, batch_size):
     TEXT = TEXT_LABEL[0]
     LABEL = TEXT_LABEL[1]
     _, test_dataset = datasets.IMDB.splits(TEXT, LABEL)
-    test_dataset,_ = test_dataset.split(split_ratio=0.8)
+    test_dataset, _ = test_dataset.split(split_ratio=0.8)
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size,
                                  collate_fn=MyCollator(TEXT), drop_last=True, shuffle=True)
     return test_dataloader
@@ -186,38 +181,20 @@ model_save_path = model_dir+"/model"
 criterion = nn.CrossEntropyLoss()
 batch_size = 32
 
-if args.backend == "bigdl":
-    orca_estimator = Estimator.from_torch(model=model_creator,
-                                          optimizer=optim_creator,
-                                          loss=criterion,
-                                          workers_per_node=2,
-                                          metrics=[Accuracy()],
-                                          model_dir=model_dir,
-                                          backend="bigdl",
-                                          config={"lr": 2e-5,
-                                                  "TEXT_LABEL": text_label_creator()})
-    orca_estimator.fit(data=train_loader_creator, epochs=5, validation_data=test_loader_creator,
-                       checkpoint_trigger=EveryEpoch())
-    res = orca_estimator.evaluate(data=test_loader_creator)
-    print("Accuracy of the network on the test images: %s" % res)
-elif args.backend == "torch_distributed":
-    orca_estimator = Estimator.from_torch(model=model_creator,
-                                          optimizer=optim_creator,
-                                          loss=criterion,
-                                          workers_per_node=2,
-                                          metrics=[Accuracy()],
-                                          backend="torch_distributed",
-                                          config={"lr": 2e-5,
-                                                  "TEXT_LABEL": text_label_creator()})
-    orca_estimator.fit(data=train_loader_creator, epochs=5, batch_size=batch_size)
-    model = orca_estimator.get_model()
-    torch.save(model.state_dict(), model_save_path)
-    res = orca_estimator.evaluate(data=test_loader_creator)
-    for r in res:
-        print(r, ":", res[r])
-else:
-    raise NotImplementedError("Only bigdl and torch_distributed are supported as the backend,"
-                              " but got {}".format(args.backend))
+orca_estimator = Estimator.from_torch(model=model_creator,
+                                      optimizer=optim_creator,
+                                      loss=criterion,
+                                      workers_per_node=2,
+                                      metrics=[Accuracy()],
+                                      backend="torch_distributed",
+                                      config={"lr": 2e-5,
+                                              "TEXT_LABEL": text_label_creator()})
+orca_estimator.fit(data=train_loader_creator, epochs=5, batch_size=batch_size)
+model = orca_estimator.get_model()
+torch.save(model.state_dict(), model_save_path)
+res = orca_estimator.evaluate(data=test_loader_creator)
+for r in res:
+    print(r, ":", res[r])
 stop_orca_context()
 
 # start testing
