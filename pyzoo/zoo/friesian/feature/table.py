@@ -627,9 +627,10 @@ class FeatureTable(Table):
         check_col_exists(self.df, cat_cols)
         check_col_exists(self.df, cont_cols)
 
+        # calculate global mean for each continuous column
         global_mean_list = [F.mean(F.col(cont_col)).alias(cont_col) for cont_col in cont_cols]
         cont_mean = self.df.select(*global_mean_list).collect()
-        # TODO it needs cont_mean in transform
+        cont_mean_dict = {cont_col:cont_mean[0][cont_col] for cont_col in cont_cols}
 
         def target_func(cat_col):
             mean_count_list = \
@@ -637,17 +638,36 @@ class FeatureTable(Table):
                     [F.count(cat_col).alias(cat_col + "_count")]
             target_df = self.df.groupBy(cat_col).agg(*mean_count_list)
             for cont_col in cont_cols:
+                global_cont_mean = cont_mean_dict[cont_col]
                 target_func = udf(lambda mean, count: None if mean is None else \
-                        (mean * count + cont_mean[0][cont_col] * smooth) / (count + smooth))
+                        (mean * count + global_cont_mean * smooth) / (count + smooth))
                 # TODO output column names
                 target_df = target_df.withColumn(cat_col + "_te_" + cont_col, \
                         target_func(cat_col + "_mean_" + cont_col, cat_col + "_count")) \
                         .drop(cat_col + "_mean_" + cont_col)
             target_df = target_df.drop(cat_col + "_count")
-            return target_df  # TODO
+            return TargetCode(target_df, cont_mean_dict)
 
         return list(map(target_func, cat_cols))
 
+    def encode_target(self, cat_cols, cont_cols, targets):
+        # TODO out_cols; out_dtype
+        cat_cols = str_to_list("cat_cols", cat_cols)
+        cont_cols = str_to_list("cont_cols", cont_cols)
+        check_col_exists(self.df, cat_cols)
+        check_col_exists(self.df, cont_cols)
+        assert len(cat_cols) == len(targets)
+
+        result_df = self.df
+        # TODO select part of continuous column
+        for i in range(len(cat_cols)):
+            target_code = targets[i]
+            cat_col = cat_cols[i]
+            result_df = result_df.join(target_code.df, cat_col, how="left") \
+                    .fillna({(cat_col + "_te_" + cont_col):target_code.means[cont_col] \
+                    for cont_col in cont_cols})
+
+        return FeatureTable(result_df)
 
 class StringIndex(Table):
     def __init__(self, df, col_name):
@@ -692,3 +712,12 @@ class StringIndex(Table):
         """
         path = path + "/" + self.col_name + ".parquet"
         self.df.write.parquet(path, mode=mode)
+
+
+class TargetCode(Table):
+    def __init__(self, df, means):
+        super().__init__(df)
+        self.means = means
+        # TODO check columns in df are all in means
+        # TODO force the columns to be: cat_col, cat_col + "_te_" + cont_col
+        # TODO rename
