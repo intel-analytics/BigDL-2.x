@@ -19,9 +19,11 @@ from collections import namedtuple
 from io import BytesIO
 import numpy as np
 from itertools import chain, islice
+from zoo.orca.data.file import open_text, write_text
 
 from enum import Enum
 import json
+import os
 
 
 class DType(Enum):
@@ -144,6 +146,16 @@ def dict_to_row(schema, row_dict):
         else:
             row[k] = v
     return pyspark.Row(**row)
+
+
+def decode_feature_type_ndarray(path, df):
+    schema_path = os.path.join(path, "_orca_metadata")
+    j_str = open_text(schema_path)[0]
+    schema = decode_schema(j_str)
+    for n, field in schema.items():
+        if field.feature_type == FeatureType.NDARRAY:
+            df[n] = df[n].map(lambda k: decode_ndarray(k))
+    return df
 
 
 def chunks(iterable, size=10):
