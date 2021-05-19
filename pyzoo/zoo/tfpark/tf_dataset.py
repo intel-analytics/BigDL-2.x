@@ -1175,7 +1175,6 @@ class TFNdarrayDataset(TFDataset):
         else:
             tensor_structure = [TensorMeta(dtype=tf.float32), TensorMeta(dtype=tf.float32)]
 
-        tensor_structure = tuple(tensor_structure)
         return TFNdarrayDataset(rdd, tensor_structure,
                                 batch_size, batch_per_thread,
                                 hard_code_batch_size, val_rdd,
@@ -1298,13 +1297,17 @@ def check_data_compatible(dataset, model, mode):
     output_names = model.output_names
     err_msg = f"each element in dataset should be a tuple for {mode}, " \
               f"but got {dataset.tensor_structure}"
-    assert isinstance(dataset.tensor_structure, tuple), err_msg
-
-    feature = dataset.tensor_structure[0]
-    _check_compatible(input_names, feature, data_type="model_input")
     if mode == "train" or mode == "evaluate":
+        assert isinstance(dataset.tensor_structure, tuple), err_msg
+
+        feature = dataset.tensor_structure[0]
+        _check_compatible(input_names, feature, data_type="model_input")
+
         label = dataset.tensor_structure[1]
         _check_compatible(output_names, label, data_type="model_target")
+    else:
+        _check_compatible(input_names, dataset.tensor_structure, data_type="model_input")
+
 
 
 def _standarize_feature_label_dataset(dataset, model):
