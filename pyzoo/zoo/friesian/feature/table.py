@@ -21,11 +21,11 @@ from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql.functions import col, udf, array, broadcast, explode, struct, collect_list
+import pyspark.sql.functions as F
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
 from zoo.common.utils import callZooFunc
-
 
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
@@ -580,6 +580,73 @@ class FeatureTable(Table):
             cat_udf = udf(gen_cat, col_type)
             df = df.withColumn(c.replace("item", "category"), cat_udf(col(c)))
         return FeatureTable(df)
+
+    def join_groupby(self, cat_cols, cont_cols, stats="count"):
+        """
+        Create new column by grouping the data by the specified categorical columns and calculating
+        the desired statistics of specified continuous columns.
+
+        :param cat_cols: str or list of str. Categorical columns to group the table.
+        :param cont_cols: str or list of str. Continuous columns to calculate the statistics.
+        :param stats: str or list of str. Statistics to be calculated. "count", "sum", "mean", "std" and
+               "var" are supported. Default is ["count"].
+
+        :return: A new Table with new columns.
+        """
+        stats = str_to_list("stats", stats)
+        stats_func = {"count": F.count, "sum": F.sum, "mean": F.mean, "std": F.stddev, \
+                "var": F.variance}
+        for stat in stats:
+            assert stat in stats_func, "Only \"count\", \"sum\", \"mean\", \"std\" and " \
+                                       "\"var\" are supported for stats, but get " + stat
+        cat_cols = str_to_list("cat_cols", cat_cols)
+        cont_cols = str_to_list("cont_cols", cont_cols)
+        check_col_exists(self.df, cat_cols)
+        check_col_exists(self.df, cont_cols)
+
+        result_df = self.df
+        for cat_col in cat_cols:
+            agg_list = []
+            for cont_col in cont_cols:
+                agg_list += [(stats_func[stat])(cont_col) for stat in stats]
+            merge_df = self.df.groupBy(cat_col).agg(*agg_list)
+            for column in merge_df.columns:
+                if column != cat_col:
+                    merge_df = merge_df.withColumnRenamed(column, cat_col + "_" + column)
+            result_df = result_df.join(merge_df, on=cat_col, how="left")
+        return FeatureTable(result_df)
+
+    def gen_target(self, cat_cols, cont_cols, smooth):
+        """
+        :param kfold: int. Specifies number of folds for cross validation. The mean values within
+               the i-th fold are calculated with data from all other folds. If kfold is 1,
+               global-mean statistics are applied. Default is None.
+        """
+        cat_cols = str_to_list("cat_cols", cat_cols)  # TODO element in cat_cols can be list
+        cont_cols = str_to_list("cont_cols", cont_cols)  # TODO check numeric
+        check_col_exists(self.df, cat_cols)
+        check_col_exists(self.df, cont_cols)
+
+        global_mean_list = [F.mean(F.col(cont_col)).alias(cont_col) for cont_col in cont_cols]
+        cont_mean = self.df.select(*global_mean_list).collect()
+        # cont_mean[0][cont_col]
+        # TODO it needs cont_mean in transform
+
+        def target_func(cat_col):
+            mean_count_list = \
+                    [F.mean(cont_col).alias(cat_col + "_mean_" + cont_col) for cont_col in cont_cols] + \
+                    [F.count(cat_col).alias(cat_col + "_count")]
+            target_df = self.df.groupBy(cat_col).agg(*mean_count_list)
+            for cont_col in cont_cols:
+                target_func = udf(lambda mean, count: \
+                        (mean * count + cont_mean[0][cont_col] * smooth) / (count + smooth))
+                # TODO output column names
+                target_df.withColumn(cat_col + "_te_" + cont_col, \
+                        target_func(array(cat_col + "_mean_" + cont_col, cat_col + "_count"))) \
+                        .drop(cat_col + "_mean_" + cont_col, cat_col + "_count")
+            return target_df  # TODO
+
+        return list(map(target_func, cat_cols))
 
 
 class StringIndex(Table):
