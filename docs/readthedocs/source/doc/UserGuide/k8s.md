@@ -125,6 +125,16 @@ init_orca_context(cluster_mode="k8s", master="k8s://https://<k8s-apiserver-host>
 
 Execute `python script.py` to run your program on k8s cluster directly.
 
+**Note**: The k8s client and cluster mode do not support download files to local, logging callback, tensorboard callback, etc. If you have these requirements, it's a good idea to use network file system (NFS).
+
+**Note**: The k8s would delete the pod once the worker failed. If you want to get the content of of worker log, you could set an "temp-dir" to change the log dir to replace the former one. Please note that in this case you should set num-nodes to 1 if you use network file system (NFS).  Otherwise, it would cause error because the temp-dir and NFS are not point to the same directory.
+
+```python
+init_orca_context(..., extra_params = {"temp-dir": "/tmp/ray/"})
+```
+
+**Note**: If you training with more than 1 executor, please make sure you set proper "steps_per_epoch" and "validation steps".
+
 #### **3.2 K8s cluster mode**
 
 For k8s [cluster mode](https://spark.apache.org/docs/2.4.5/running-on-kubernetes.html#cluster-mode), you can call `init_orca_context` and specify cluster_mode to be "spark-submit" in your python script (e.g. in script.py):
