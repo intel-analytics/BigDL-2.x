@@ -280,7 +280,8 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           concat(
             (get & path(Segment)) {
               (modelName) => {
-                timing("get model infos with model name")(overallRequestTimer, servablesRetriveTimer) {
+                timing("get model infos with model name")(overallRequestTimer,
+                  servablesRetriveTimer) {
                   try {
                     val servables = servableManager.retriveServables(modelName)
                     val metaData = servables.map(e => e.getMetaData)
@@ -299,7 +300,8 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               }
             } ~ (get & path(Segment / "versions" / Segment)) {
               (modelName, modelVersion) => {
-                timing("get model info with model name and model version")(overallRequestTimer, servableRetriveTimer) {
+                timing("get model info with model name and model version")(overallRequestTimer,
+                  servableRetriveTimer) {
                   try {
                     val servables = servableManager.retriveServable(modelName, modelVersion)
                     val metaData = servables.getMetaData
@@ -316,7 +318,8 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                   }
                 }
               }
-            } ~ (post & path(Segment / "versions" / Segment / "predict") & extract(_.request.entity.contentType) & entity(as[String])) {
+            } ~ (post & path(Segment / "versions" / Segment / "predict")
+              & extract(_.request.entity.contentType) & entity(as[String])) {
               (modelName, modelVersion, contentType, content) => {
                 timing("backend inference timing")(overallRequestTimer, backendInferenceTimer) {
                   try {
@@ -330,7 +333,8 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                           val instances = timing("json deserialization")() {
                             JsonUtil.fromJson(classOf[Instances], content)
                           }
-                          val outputs = timing("model predict total")(modelInferenceTimersMap(modelName)(modelVersion)) {
+                          val outputs = timing("model predict total")(modelInferenceTimersMap
+                          (modelName)(modelVersion)) {
                             servable.predict(instances)
                           }
                           Predictions(outputs)
@@ -481,7 +485,8 @@ case class FrontEndAppArguments(
                                  redisPort: Int = 6379,
                                  redisInputQueue: String = Conventions.SERVING_STREAM_DEFAULT_NAME,
                                  redisOutputQueue: String =
-                                 Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":",
+                                 Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME
+                                   + ":",
                                  parallelism: Int = 1000,
                                  timeWindow: Int = 0,
                                  countWindow: Int = 0,

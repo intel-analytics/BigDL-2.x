@@ -147,7 +147,8 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
 
   def makeSchema(
                   tensors: Seq[mutable.LinkedHashMap[String, (
-                    (mutable.ArrayBuffer[Int], Any), (mutable.ArrayBuffer[Int], mutable.ArrayBuffer[Any])
+                    (mutable.ArrayBuffer[Int], Any),
+                      (mutable.ArrayBuffer[Int], mutable.ArrayBuffer[Any])
                     )]]): Schema = {
     assert(instances.size > 0, "must have instances, and each should have the same schema")
     val sample = tensors(0)
@@ -642,11 +643,12 @@ class ServableManager {
   private var modelVersionMap = new mutable.HashMap[String, mutable.HashMap[String, Servable]]
 
   def load(servableManagerConfigDir: String): Unit = {
-    if (!Files.exists(Paths.get(servableManagerConfigDir))){
+    if (!Files.exists(Paths.get(servableManagerConfigDir))) {
       throw ServableLoadException("servable Manager config dir not exist", null)
     }
     val servableManagerConfYaml = scala.io.Source.fromFile(servableManagerConfigDir).mkString
-    val modelInfoList = YamlUtil.fromYaml(classOf[ServableManagerConf], servableManagerConfYaml).modelMetaDataList
+    val modelInfoList = YamlUtil.fromYaml(classOf[ServableManagerConf],
+      servableManagerConfYaml).modelMetaDataList
     for (modelInfo <- modelInfoList) {
       if (!modelVersionMap.contains(modelInfo.getModelName)) {
         val versionMapper = new mutable.HashMap[String, Servable]
@@ -665,7 +667,8 @@ class ServableManager {
           servable.load()
           modelVersionMap(modelInfo.getModelName)(modelInfo.getModelVersion) = servable
           FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
-            metrics.timer("zoo.serving.inference." + modelInfo.getModelName + "." + modelInfo.getModelVersion)
+            metrics.timer("zoo.serving.inference." + modelInfo.getModelName + "."
+              + modelInfo.getModelVersion)
       }
     }
   }
@@ -684,8 +687,10 @@ class ServableManager {
   }
 
   def retriveServable(modelName: String, modelVersion: String): Servable = {
-    if (!modelVersionMap.contains(modelName) || !modelVersionMap(modelName).contains(modelVersion)) {
-      throw ModelNotFoundException("model not exist. Model Name: " + modelName + ", Model Version: " + modelVersion, null)
+    if (!modelVersionMap.contains(modelName) || !modelVersionMap(modelName).contains(modelVersion))
+    {
+      throw ModelNotFoundException("model not exist. Model Name: " + modelName +
+        ", Model Version: " + modelVersion, null)
     }
     modelVersionMap(modelName)(modelVersion)
   }
@@ -700,13 +705,15 @@ abstract class Servable(modelMetaData: ModelMetaData) {
 }
 
 
-class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) extends Servable(clusterServingMetaData) with Supportive {
+class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
+  extends Servable(clusterServingMetaData) with Supportive {
   var redisPutter: ActorRef = _
   var redisGetter: ActorRef = _
   var querierQueue: LinkedBlockingQueue[ActorRef] = _
 
   def load(): Unit = {
-    val redisPutterName = s"redis-putter-${clusterServingMetaData.modelName}-${clusterServingMetaData.modelVersion}"
+    val redisPutterName = s"redis-putter-${clusterServingMetaData.modelName}" +
+      s"-${clusterServingMetaData.modelVersion}"
     redisPutter = timing(s"$redisPutterName initialized.")() {
       val redisPutterProps = Props(new RedisPutActor(
         clusterServingMetaData.redisHost,
@@ -721,7 +728,8 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
       system.actorOf(redisPutterProps, name = redisPutterName)
     }
 
-    val redisGetterName = s"redis-getter-${clusterServingMetaData.modelName}-${clusterServingMetaData.modelVersion}"
+    val redisGetterName = s"redis-getter-${clusterServingMetaData.modelName}" +
+      s"-${clusterServingMetaData.modelVersion}"
     redisGetter = timing(s"$redisGetterName initialized.")() {
       val redisGetterProps = Props(new RedisGetActor(
         clusterServingMetaData.redisHost,
@@ -740,7 +748,8 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
       val querierQueue = new LinkedBlockingQueue[ActorRef](querierNum)
       val querierProps = Props(new QueryActor(redisGetter))
       List.range(0, querierNum).map(index => {
-        val querierName = s"querier-$index-${clusterServingMetaData.modelName}-${clusterServingMetaData.modelVersion}"
+        val querierName = s"querier-$index-${clusterServingMetaData.modelName}" +
+          s"-${clusterServingMetaData.modelVersion}"
         val querier = system.actorOf(querierProps, name = querierName)
         querierQueue.put(querier)
       })
@@ -783,8 +792,9 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData) ext
 
   override def getMetaData: ModelMetaData = {
      ClusterServingMetaData(clusterServingMetaData.modelName, clusterServingMetaData.modelVersion,
-      clusterServingMetaData.redisHost, clusterServingMetaData.redisPort, clusterServingMetaData.redisInputQueue,
-      clusterServingMetaData.redisOutputQueue, clusterServingMetaData.timeWindow, clusterServingMetaData.countWindow,
+      clusterServingMetaData.redisHost, clusterServingMetaData.redisPort,
+       clusterServingMetaData.redisInputQueue, clusterServingMetaData.redisOutputQueue,
+       clusterServingMetaData.timeWindow, clusterServingMetaData.countWindow,
       clusterServingMetaData.redisSecureEnabled,
       "*******", "*******", clusterServingMetaData.features)
   }

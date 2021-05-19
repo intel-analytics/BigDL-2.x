@@ -66,7 +66,8 @@ class JacksonJsonSerializer extends SerializeSuported {
 object YamlUtil {
   val jacksonYamlSerializer = new JacksonYamlSerializer()
 
-  def fromYaml[T](clazz: Class[T], data: String)(implicit m: Manifest[T]): T = jacksonYamlSerializer.deSerialize[T](clazz, data)
+  def fromYaml[T](clazz: Class[T], data: String)(implicit m: Manifest[T]): T =
+    jacksonYamlSerializer.deSerialize[T](clazz, data)
 
   def toYaml(value: Object): String = jacksonYamlSerializer.serialize(value)
 }
