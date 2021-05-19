@@ -1286,7 +1286,7 @@ def _check_compatible(names, structure, data_type="model_input"):
     elif isinstance(structure, list) or isinstance(structure, tuple):
         err_msg = f"{data_type} number does not match data number, " \
                   f"got {data_type} {names}, data {structure}"
-        assert len(structure) == len(names), err_msg
+        assert len(nest.flatten(structure)) == len(names), err_msg
     else:
         assert len(names) == 1, f"data does not match {data_type}, " \
                                 f"data {structure}, {data_type} {names}"
