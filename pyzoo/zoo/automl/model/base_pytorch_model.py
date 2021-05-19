@@ -16,6 +16,8 @@
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
+import types
+
 from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
@@ -78,26 +80,44 @@ class PytorchBaseModel(BaseModel):
             x = x.reshape(-1, 1)
         return x
 
+    def _np_to_creator(self, data):
+        def data_creator(config):
+                x, y = PytorchBaseModel.covert_input(data)
+                x = self._reshape_input(x)
+                y = self._reshape_input(y)
+                return DataLoader(TensorDataset(x, y),
+                                  batch_size=int(config["batch_size"]),
+                                  shuffle=True)
+        return data_creator
+
     def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
                  **config):
         """
-        :param data: could be a tuple with numpy ndarray with form (x, y)
-        :param validation_data: could be a tuple with numpy ndarray with form (x, y)
+        :param data: data could be a tuple with numpy ndarray with form (x, y) or a
+               data creator which takes a config dict and returns a
+               torch.utils.data.DataLoader. torch.Tensor should be generated from the
+               dataloader.
+        :param validation_data: validation data could be a tuple with numpy ndarray
+               with form (x, y) or a data creator which takes a config dict and returns a
+               torch.utils.data.DataLoader. torch.Tensor should be generated from the
+               dataloader.
         fit_eval will build a model at the first time it is built
         config will be updated for the second or later times with only non-model-arch
         params be functional
         TODO: check the updated params and decide if the model is needed to be rebuilt
         """
-        # reshape 1dim input
-        x = self._reshape_input(data[0])
-        y = self._reshape_input(data[1])
+        # todo: support input validation data None
+        assert validation_data is not None, "You must input validation data!"
 
         # update config settings
         def update_config():
-            config.setdefault("past_seq_len", x.shape[-2])
-            config.setdefault("future_seq_len", y.shape[-2])
-            config.setdefault("input_feature_num", x.shape[-1])
-            config.setdefault("output_feature_num", y.shape[-1])
+            if not isinstance(data, types.FunctionType):
+                x = self._reshape_input(data[0])
+                y = self._reshape_input(data[1])
+                config.setdefault("past_seq_len", x.shape[-2])
+                config.setdefault("future_seq_len", y.shape[-2])
+                config.setdefault("input_feature_num", x.shape[-1])
+                config.setdefault("output_feature_num", y.shape[-1])
 
         if not self.model_built:
             update_config()
@@ -108,15 +128,29 @@ class PytorchBaseModel(BaseModel):
             self._check_config(**tmp_config)
             self.config.update(config)
 
+        # get train_loader and validation_loader
+        if isinstance(data, types.FunctionType):
+            train_loader = data(self.config)
+            validation_loader = validation_data(self.config)
+        else:
+            assert isinstance(data, tuple) and isinstance(validation_data, tuple),\
+                f"data/validation_data should be a tuple or\
+                 data creator function but found {type(data)}"
+            assert isinstance(data[0], np.ndarray) and isinstance(validation_data[0], np.ndarray),\
+                f"x should be a np.ndarray but found {type(x)}"
+            assert isinstance(data[1], np.ndarray) and isinstance(validation_data[1], np.ndarray),\
+                f"y should be a np.ndarray but found {type(y)}"
+            train_data_creator = self._np_to_creator(data)
+            valid_data_creator = self._np_to_creator(validation_data)
+            train_loader = train_data_creator(self.config)
+            validation_loader = valid_data_creator(self.config)
+
         epoch_losses = []
-        x, y, validation_data = PytorchBaseModel.covert_input(x, y, validation_data)
         for i in range(epochs):
-            train_loss = self._train_epoch(x, y)
+            train_loss = self._train_epoch(train_loader)
             epoch_losses.append(train_loss)
         train_stats = {"loss": np.mean(epoch_losses), "last_loss": epoch_losses[-1]}
-        # todo: support input validation data None
-        assert validation_data is not None, "You must input validation data!"
-        val_stats = self._validate(validation_data[0], validation_data[1], metric=metric)
+        val_stats = self._validate(validation_loader, metric=metric)
         self.onnx_model_built = False
         return val_stats[metric]
 
@@ -129,21 +163,14 @@ class PytorchBaseModel(BaseModel):
         return inp
 
     @staticmethod
-    def covert_input(x, y, validation_data):
-        x = PytorchBaseModel.to_torch(x).float()
-        y = PytorchBaseModel.to_torch(y).float()
-        if validation_data is not None:
-            validation_data = (PytorchBaseModel.to_torch(validation_data[0]).float(),
-                               PytorchBaseModel.to_torch(validation_data[1]).float())
-        return x, y, validation_data
+    def covert_input(data):
+        x = PytorchBaseModel.to_torch(data[0]).float()
+        y = PytorchBaseModel.to_torch(data[1]).float()
+        return x, y
 
-    def _train_epoch(self, x, y):
-        batch_size = self.config["batch_size"]
+    def _train_epoch(self, train_loader):
         self.model.train()
         total_loss = 0
-        train_loader = DataLoader(TensorDataset(x, y),
-                                  batch_size=int(batch_size),
-                                  shuffle=True)
         batch_idx = 0
         tqdm = None
         try:
@@ -170,18 +197,21 @@ class PytorchBaseModel(BaseModel):
     def _forward(self, x, y):
         return self.model(x)
 
-    def _validate(self, x, y, metric):
-        x = self._reshape_input(x)
-        y = self._reshape_input(y)
+    def _validate(self, validation_loader, metric):
         self.model.eval()
         with torch.no_grad():
-            yhat = self.model(x)
-            val_loss = self.criterion(yhat, y)
-            eval_result = Evaluator.evaluate(metric=metric,
-                                             y_true=y.numpy(), y_pred=yhat.numpy(),
-                                             multioutput='uniform_average')
-        return {"val_loss": val_loss.item(),
-                metric: eval_result}
+            yhat_list = []
+            y_list = []
+            for x_valid_batch, y_valid_batch in validation_loader:
+                yhat_list.append(self.model(x_valid_batch).numpy())
+                y_list.append(y_valid_batch.numpy())
+            yhat = np.concatenate(yhat_list, axis=0)
+            y = np.concatenate(y_list, axis=0)
+        # val_loss = self.criterion(yhat, y)
+        eval_result = Evaluator.evaluate(metric=metric,
+                                         y_true=y, y_pred=yhat,
+                                         multioutput='uniform_average')
+        return {metric: eval_result}
 
     def _print_model(self):
         # print model and parameters
