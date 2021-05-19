@@ -235,7 +235,7 @@ class AttentionRNNWrapper(Wrapper):
 
 class MTNetKeras(BaseModel):
 
-    def __init__(self, check_optional_config=False):
+    def __init__(self, check_optional_config=False, future_seq_len=1):
 
         """
         Constructor of MTNet model
