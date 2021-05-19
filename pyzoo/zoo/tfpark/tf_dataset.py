@@ -1309,7 +1309,6 @@ def check_data_compatible(dataset, model, mode):
         _check_compatible(input_names, dataset.tensor_structure, data_type="model_input")
 
 
-
 def _standarize_feature_label_dataset(dataset, model):
     input_names = model.input_names
     output_names = model.output_names
