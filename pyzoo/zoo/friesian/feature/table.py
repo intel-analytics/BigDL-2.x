@@ -629,7 +629,6 @@ class FeatureTable(Table):
 
         global_mean_list = [F.mean(F.col(cont_col)).alias(cont_col) for cont_col in cont_cols]
         cont_mean = self.df.select(*global_mean_list).collect()
-        # cont_mean[0][cont_col]
         # TODO it needs cont_mean in transform
 
         def target_func(cat_col):
@@ -638,12 +637,13 @@ class FeatureTable(Table):
                     [F.count(cat_col).alias(cat_col + "_count")]
             target_df = self.df.groupBy(cat_col).agg(*mean_count_list)
             for cont_col in cont_cols:
-                target_func = udf(lambda mean, count: \
+                target_func = udf(lambda mean, count: None if mean is None else \
                         (mean * count + cont_mean[0][cont_col] * smooth) / (count + smooth))
                 # TODO output column names
-                target_df.withColumn(cat_col + "_te_" + cont_col, \
-                        target_func(array(cat_col + "_mean_" + cont_col, cat_col + "_count"))) \
-                        .drop(cat_col + "_mean_" + cont_col, cat_col + "_count")
+                target_df = target_df.withColumn(cat_col + "_te_" + cont_col, \
+                        target_func(cat_col + "_mean_" + cont_col, cat_col + "_count")) \
+                        .drop(cat_col + "_mean_" + cont_col)
+            target_df = target_df.drop(cat_col + "_count")
             return target_df  # TODO
 
         return list(map(target_func, cat_cols))
