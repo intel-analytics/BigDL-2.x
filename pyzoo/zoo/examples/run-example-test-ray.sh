@@ -165,7 +165,7 @@ else
 fi
 
 cat ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/main.py | sed 's/300/100/' | sed 's/=5/=1/' | sed 's/0.8/0.03/' > ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/main_100.py
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/main_100.py --backend torch_distributed
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/main_100.py 
 rm ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/pytorch/sentiment/main_100.py
 now=$(date "+%s")
 time12=$((now-start))
