@@ -169,6 +169,7 @@ RUN apt-get install -y python3-minimal && \
     pip install --no-cache-dir ray[rllib] && \
     pip install --no-cache-dir cmake==3.16.3 && \
     pip install --no-cache-dir horovod==0.19.2 && \
+    pip install --no-cache-dir tf_slim && \
     git clone https://github.com/tensorflow/models/ /opt/models
 
 ADD ./start-notebook-spark.sh /opt
