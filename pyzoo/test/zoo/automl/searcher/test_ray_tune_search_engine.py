@@ -46,8 +46,8 @@ def create_lstm_search_space(input_dim):
     return {
         "lr": hp.uniform(0.001, 0.01),
         "batch_size": hp.choice([32, 64]),
-        "input_dim": input_dim,
-        "output_dim": 1
+        "input_feature_num": input_dim,
+        "output_feature_num": 1
     }
 
 
