@@ -115,7 +115,8 @@ class TensorMeta(object):
 
     def __repr__(self):
         return "TensorMeta(dtype: " + self.dtype.name + ", name: " + self.name + \
-                   ", shape: " + str(self.shape) + ")"
+               ", shape: " + str(self.shape) + ")"
+
 
 class TFDataset(object):
     def __init__(self, tensor_structure, batch_size,
@@ -1173,7 +1174,7 @@ class TFNdarrayDataset(TFDataset):
                 tensor_structure.append(TensorMeta(types[i], name=names[i], shape=shapes[i]))
         else:
             tensor_structure = [TensorMeta(dtype=tf.float32), TensorMeta(dtype=tf.float32)]
-        
+
         tensor_structure = tuple(tensor_structure)
         return TFNdarrayDataset(rdd, tensor_structure,
                                 batch_size, batch_per_thread,
@@ -1277,6 +1278,7 @@ class DataFrameDataset(TFNdarrayDataset):
                                                batch_per_thread, hard_code_batch_size,
                                                val_rdd, memory_type, sequential_order, shuffle)
 
+
 def _check_compatible(names, structure, data_type="model_input"):
     if isinstance(structure, dict):
         err_msg = f"all {data_type} names should exist in data, " \
@@ -1288,7 +1290,7 @@ def _check_compatible(names, structure, data_type="model_input"):
         assert len(structure) == len(names), err_msg
     else:
         assert len(names) == 1, f"data does not match {data_type}, " \
-                                    f"data {structure}, {data_type} {names}"
+                                f"data {structure}, {data_type} {names}"
 
 
 def check_data_compatible(dataset, model, mode):

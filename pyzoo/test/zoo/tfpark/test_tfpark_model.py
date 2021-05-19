@@ -277,7 +277,6 @@ class TestTFParkModel(ZooTestCase):
 
         assert np.square(acc - results_pre["acc"]) < 0.000001
 
-
     # move the test here to avoid keras session to be closed (not sure about why)
     def test_tf_optimizer_with_sparse_gradient_using_keras(self):
         import tensorflow as tf
