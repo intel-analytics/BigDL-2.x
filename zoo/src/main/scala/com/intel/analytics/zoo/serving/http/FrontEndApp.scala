@@ -326,11 +326,11 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                     }
                     servable match {
                       case _: ClusterServingServable =>
-                        val result = timing("cluster serving predict")(predictRequestTimer, modelInferenceTimersMap(modelName)(modelVersion)) {
+                        val result = timing("cluster serving predict")(predictRequestTimer) {
                           val instances = timing("json deserialization")() {
                             JsonUtil.fromJson(classOf[Instances], content)
                           }
-                          val outputs = timing("cluster serving predict total")() {
+                          val outputs = timing("model predict total")(modelInferenceTimersMap(modelName)(modelVersion)) {
                             servable.predict(instances)
                           }
                           Predictions(outputs)
