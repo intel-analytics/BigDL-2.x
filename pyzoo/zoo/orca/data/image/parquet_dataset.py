@@ -291,13 +291,17 @@ def read_as_tfdataset(path, output_types, output_shapes=None, *args, **kwargs):
     path, _ = pa_fs(path)
     import tensorflow as tf
 
+    schema_path = os.path.join(path, "_orca_metadata")
+    j_str = open_text(schema_path)[0]
+    schema = decode_schema(j_str)
+
     def generator():
         for root, dirs, files in os.walk(path):
             for name in dirs:
                 if name.startswith("chunk="):
                     chunk_path = os.path.join(path, name)
                     pq_table = pq.read_table(chunk_path)
-                    df = decode_feature_type_ndarray(path, pq_table.to_pandas())
+                    df = decode_feature_type_ndarray(pq_table.to_pandas(), schema)
                     for record in df.to_dict("records"):
                         yield record
 
@@ -314,4 +318,4 @@ def read_parquet(format, input_path, *args, **kwargs):
     format_to_function = {"tf_dataset": (read_as_tfdataset, ["output_types"])}
     func, required_args = format_to_function[format]
     _check_arguments(format, kwargs, required_args)
-    func(path=input_path, *args, **kwargs)
+    return func(path=input_path, *args, **kwargs)
