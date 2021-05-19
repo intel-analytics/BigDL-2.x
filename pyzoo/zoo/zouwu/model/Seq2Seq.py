@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import pickle
 
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, LSTM, Dense
@@ -25,7 +26,7 @@ from zoo.automl.common.metrics import Evaluator
 
 class LSTMSeq2Seq(BaseModel):
 
-    def __init__(self, check_optional_config=True, future_seq_len=2):
+    def __init__(self, check_optional_config=False, future_seq_len=2):
         """
         Constructor of LSTM Seq2Seq model
         """
@@ -241,14 +242,24 @@ class LSTMSeq2Seq(BaseModel):
                               verbose=verbose,
                               # callbacks=[tensorboard]
                               )
-        # print(hist.history)
-
-        if validation_data is None:
-            # get train metrics
-            # results = self.model.evaluate(x, y)
-            result = hist.history.get(self.metric)[-1]
+        # check input metric value
+        hist_metric_name = keras.metrics.get(self.metric).__name__
+        # model.metrics_names are available only after a keras model has been trained/evaluated
+        compiled_metric_names = self.model.metrics_names.copy()
+        print(compiled_metric_names)
+        compiled_metric_names.remove("loss")
+        if hist_metric_name in compiled_metric_names:
+            metric_name = hist_metric_name
+        elif self.metric in compiled_metric_names:
+            metric_name = self.metric
         else:
-            result = hist.history.get('val_' + str(self.metric))[-1]
+            raise ValueError(f"Input metric in fit_eval should be one of the metrics that are used "
+                             f"to compile the model. Got metric value of {metric} and the metrics "
+                             f"in compile are {compiled_metric_names}")
+        if validation_data is None:
+            result = hist.history.get(metric_name)[-1]
+        else:
+            result = hist.history.get('val_' + metric_name)[-1]
         return result
 
     def evaluate(self, x, y, metric=['mse']):
@@ -285,32 +296,40 @@ class LSTMSeq2Seq(BaseModel):
         uncertainty = result.var(axis=0)
         return prediction, uncertainty
 
-    def save(self, model_path, config_path):
+    def state_dict(self):
+        state = {
+            "weights": self.model.get_weights(),
+            "config": {"past_seq_len": self.past_seq_len,
+                       "feature_num": self.feature_num,
+                       "future_seq_len": self.future_seq_len,
+                       "target_col_num": self.target_col_num,
+                       "metric": self.metric,
+                       "latent_dim": self.latent_dim,
+                       "batch_size": self.batch_size}
+        }
+        return state
+
+    def save(self, checkpoint_file, config_path=None):
         """
         save model to file.
-        :param model_path: the model file path to be saved to.
+        :param checkpoint_file: the model file path to be saved to.
         :param config_path: the config file path to be saved to.
         :return:
         """
+        state_dict = self.state_dict()
+        with open(checkpoint_file, "wb") as f:
+            pickle.dump(state_dict, f)
 
-        self.model.save(model_path)
-
-        config_to_save = {"past_seq_len": self.past_seq_len,
-                          "feature_num": self.feature_num,
-                          "future_seq_len": self.future_seq_len,
-                          "target_col_num": self.target_col_num,
-                          "metric": self.metric,
-                          "latent_dim": self.latent_dim,
-                          "batch_size": self.batch_size}
-        save_config(config_path, config_to_save)
-
-    def restore(self, model_path, **config):
+    def restore(self, checkpoint_file, **config):
         """
         restore model from file
-        :param model_path: the model file
+        :param checkpoint_file: the model file
         :param config: the trial config
         :return: the restored model
         """
+        with open(checkpoint_file, "rb") as f:
+            state_dict = pickle.load(f)
+        config = state_dict["config"]
 
         self.past_seq_len = config["past_seq_len"]
         self.feature_num = config["feature_num"]
@@ -320,7 +339,8 @@ class LSTMSeq2Seq(BaseModel):
         self.latent_dim = config["latent_dim"]
         self.batch_size = config["batch_size"]
 
-        self.model = keras.models.load_model(model_path)
+        self._build_train(**config)
+        self.model.set_weights(state_dict["weights"])
         self._restore_model()
         # self.model.load_weights(file_path)
 
@@ -333,8 +353,8 @@ class LSTMSeq2Seq(BaseModel):
 
     def _get_optional_parameters(self):
         return {
-            'past_seq_len'
-            'latent_dim'
+            'past_seq_len',
+            'latent_dim',
             'dropout',
             'metric',
             'lr',

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+import os
 import shutil
 import tempfile
 
@@ -160,76 +160,77 @@ class TestSeq2Seq(ZooTestCase):
         predict_2 = self.model_2.predict(x_test_2)
         assert predict_2.shape == (x_test_2.shape[0], self.future_seq_len_2)
 
-    def test_save_restore_1(self):
-        x_train_1, y_train_1 = self.feat._roll_train(self.train_data,
-                                                     past_seq_len=self.past_seq_len,
-                                                     future_seq_len=self.future_seq_len_1)
-        x_test_1 = self.feat._roll_test(self.test_data, past_seq_len=self.past_seq_len)
-        self.model_1.fit_eval((x_train_1, y_train_1), **self.config)
+    def test_save_restore_single_step(self):
+        future_seq_len = 1
+        x_train, y_train = self.feat._roll_train(self.train_data,
+                                                 past_seq_len=self.past_seq_len,
+                                                 future_seq_len=future_seq_len)
+        x_test = self.feat._roll_test(self.test_data, past_seq_len=self.past_seq_len)
+        model = LSTMSeq2Seq(future_seq_len=future_seq_len)
+        model.fit_eval((x_train, y_train), **self.config)
 
-        predict_1_before = self.model_1.predict(x_test_1)
-        new_model_1 = LSTMSeq2Seq(check_optional_config=False)
+        predict_before = model.predict(x_test)
+        new_model = LSTMSeq2Seq()
 
-        dirname = tempfile.mkdtemp(prefix="automl_test_feature")
-        try:
-            save(dirname, model=self.model_1)
-            restore(dirname, model=new_model_1, config=self.config)
-            predict_1_after = new_model_1.predict(x_test_1)
-            assert_array_almost_equal(predict_1_before, predict_1_after, decimal=2), \
-                "Prediction values are not the same after restore: " \
-                "predict before is {}, and predict after is {}".format(predict_1_before,
-                                                                       predict_1_after)
-            new_config = {'epochs': 1}
-            new_model_1.fit_eval((x_train_1, y_train_1), **new_config)
-        finally:
-            shutil.rmtree(dirname)
+        ckpt = os.path.join("/tmp", "seq2seq.ckpt")
+        model.save(ckpt)
+        new_model.restore(ckpt)
+        predict_after = new_model.predict(x_test)
+        assert_array_almost_equal(predict_before, predict_after, decimal=2), \
+            "Prediction values are not the same after restore: " \
+            "predict before is {}, and predict after is {}".format(predict_before, predict_after)
+        new_config = {'epochs': 1}
+        new_model.fit_eval((x_train, y_train), **new_config)
+        os.remove(ckpt)
 
-    def test_save_restore_2(self):
-        x_train_2, y_train_2 = self.feat._roll_train(self.train_data,
-                                                     past_seq_len=self.past_seq_len,
-                                                     future_seq_len=self.future_seq_len_2)
-        x_test_2 = self.feat._roll_test(self.test_data, past_seq_len=self.past_seq_len)
-        self.model_2.fit_eval((x_train_2, y_train_2), **self.config)
+    def test_save_restore_multistep(self):
+        future_seq_len = np.random.randint(2, 6)
+        x_train, y_train = self.feat._roll_train(self.train_data,
+                                                 past_seq_len=self.past_seq_len,
+                                                 future_seq_len=future_seq_len)
+        x_test = self.feat._roll_test(self.test_data, past_seq_len=self.past_seq_len)
+        model = LSTMSeq2Seq(future_seq_len=future_seq_len)
+        model.fit_eval((x_train, y_train), **self.config)
 
-        predict_2_before = self.model_2.predict(x_test_2)
-        new_model_2 = LSTMSeq2Seq(check_optional_config=False)
+        predict_before = model.predict(x_test)
+        new_model = LSTMSeq2Seq()
 
-        dirname = tempfile.mkdtemp(prefix="automl_test_feature")
-        try:
-            save(dirname, model=self.model_2)
-            restore(dirname, model=new_model_2, config=self.config)
-            predict_2_after = new_model_2.predict(x_test_2)
-            assert_array_almost_equal(predict_2_before, predict_2_after, decimal=2), \
-                "Prediction values are not the same after restore: " \
-                "predict before is {}, and predict after is {}".format(predict_2_before,
-                                                                       predict_2_after)
-            new_config = {'epochs': 2}
-            new_model_2.fit_eval((x_train_2, y_train_2), **new_config)
-        finally:
-            shutil.rmtree(dirname)
+        ckpt = os.path.join("/tmp", "seq2seq.ckpt")
+        model.save(ckpt)
+        new_model.restore(ckpt)
+        predict_after = new_model.predict(x_test)
+        assert_array_almost_equal(predict_before, predict_after, decimal=2), \
+            "Prediction values are not the same after restore: " \
+            "predict before is {}, and predict after is {}".format(predict_before, predict_after)
+        new_config = {'epochs': 1}
+        new_model.fit_eval((x_train, y_train), **new_config)
+        os.remove(ckpt)
 
     def test_predict_with_uncertainty(self,):
-        x_train_2, y_train_2 = self.feat._roll_train(self.train_data,
-                                                     past_seq_len=self.past_seq_len,
-                                                     future_seq_len=self.future_seq_len_2)
-        x_test_2 = self.feat._roll_test(self.test_data, past_seq_len=self.past_seq_len)
-        self.model_2.fit_eval((x_train_2, y_train_2), mc=True, **self.config)
-        prediction, uncertainty = self.model_2.predict_with_uncertainty(x_test_2, n_iter=2)
-        assert prediction.shape == (x_test_2.shape[0], self.future_seq_len_2)
-        assert uncertainty.shape == (x_test_2.shape[0], self.future_seq_len_2)
+        future_seq_len = np.random.randint(2, 6)
+        x_train, y_train = self.feat._roll_train(self.train_data,
+                                                 past_seq_len=self.past_seq_len,
+                                                 future_seq_len=future_seq_len)
+        x_test = self.feat._roll_test(self.test_data, past_seq_len=self.past_seq_len)
+        model = LSTMSeq2Seq(future_seq_len=future_seq_len)
+        model.fit_eval((x_train, y_train), mc=True, **self.config)
+
+        prediction, uncertainty = model.predict_with_uncertainty(x_test, n_iter=2)
+        assert prediction.shape == (x_test.shape[0], future_seq_len)
+        assert uncertainty.shape == (x_test.shape[0], future_seq_len)
         assert np.any(uncertainty)
 
-        new_model_2 = LSTMSeq2Seq(check_optional_config=False)
-        dirname = tempfile.mkdtemp(prefix="automl_test_feature")
-        try:
-            save(dirname, model=self.model_2)
-            restore(dirname, model=new_model_2, config=self.config)
-            prediction, uncertainty = new_model_2.predict_with_uncertainty(x_test_2, n_iter=2)
-            assert prediction.shape == (x_test_2.shape[0], self.future_seq_len_2)
-            assert uncertainty.shape == (x_test_2.shape[0], self.future_seq_len_2)
-            assert np.any(uncertainty)
-        finally:
-            shutil.rmtree(dirname)
+        new_model = LSTMSeq2Seq()
+
+        ckpt = os.path.join("/tmp", "seq2seq.ckpt")
+        model.save(ckpt)
+        new_model.restore(ckpt)
+        prediction_after, uncertainty_after = new_model.predict_with_uncertainty(x_test, n_iter=2)
+        assert prediction_after.shape == (x_test.shape[0], future_seq_len)
+        assert uncertainty_after.shape == (x_test.shape[0], future_seq_len)
+        assert np.any(uncertainty_after)
+
+        os.remove(ckpt)
 
 
 if __name__ == '__main__':
