@@ -1175,7 +1175,7 @@ class TFNdarrayDataset(TFDataset):
         else:
             tensor_structure = [TensorMeta(dtype=tf.float32), TensorMeta(dtype=tf.float32)]
 
-        tensor_structure = tuple(tensor_structure)
+        tensor_structure = tuple([tensor_structure])
         return TFNdarrayDataset(rdd, tensor_structure,
                                 batch_size, batch_per_thread,
                                 hard_code_batch_size, val_rdd,
