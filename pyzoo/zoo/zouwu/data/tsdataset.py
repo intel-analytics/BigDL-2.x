@@ -96,13 +96,6 @@ class TSDataset:
         '''
         return self
     
-    def deduplicate(self, mode="mean"):
-        '''
-        Merge those rows whose timestamp are seconds apart
-        :param mode: str, One of "max", "min", "mean", "sum".
-        '''
-        return self
-    
     def gen_dt_feature(self):
         '''
         Generate datetime feature for each row. 
