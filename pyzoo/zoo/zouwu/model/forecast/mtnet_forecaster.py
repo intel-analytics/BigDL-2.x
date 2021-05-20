@@ -86,10 +86,9 @@ class MTNetForecaster(TFParkForecaster):
         """
         # TODO change this function call after MTNet fixes
         self.internal = MTNetKerasModel(
-            check_optional_config=self.check_optional_config,
-            future_seq_len=self.model_config.get('output_dim'))
+            check_optional_config=self.check_optional_config)
         self.internal.apply_config(config=self.model_config)
-        return self.internal.build()
+        return self.internal.build(config=self.model_config)
 
     def preprocess_input(self, x):
         """
