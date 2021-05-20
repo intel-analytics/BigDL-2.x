@@ -14,10 +14,10 @@ sgx.debug = 0
 sgx.isvprodid = 1
 sgx.isvsvn = 3
 
-loader.env.LD_LIBRARY_PATH = "$(PYTHONHOME)/lib:/lib:/lib/x86_64-linux-gnu:/usr/lib:/usr/lib/x86_64-linux-gnu"
-loader.env.PATH = "$(PYTHONHOME)/bin:/:$(EXECDIR):/usr/sbin:/usr/bin:/sbin:/bin"
-loader.env.PYTHONHOME = "$(PYTHONHOME)"
-loader.env.PYTHONPATH = "$(PYTHONHOME):$(PYTHONHOME)/plat-$(SYS):$(PYTHONDISTHOME):$(PYTHONHOME)/lib-dynload"
+loader.env.LD_LIBRARY_PATH = "/usr/lib/python3.6/lib:/lib:/lib/x86_64-linux-gnu:/usr/lib:/usr/lib/x86_64-linux-gnu"
+loader.env.PATH = "/usr/lib/python3.6/bin:/:$(EXECDIR):/usr/sbin:/usr/bin:/sbin:/bin"
+loader.env.PYTHONHOME = "/usr/lib/python3.6"
+loader.env.PYTHONPATH = "/usr/lib/python36.zip:/usr/lib/python3.6:/usr/lib/python3.6/lib-dynload:/usr/local/lib/python3.6/dist-packages:/usr/lib/python3/dist-packages"
 
 fs.mount.lib.type = "chroot"
 fs.mount.lib.path = "/lib"
@@ -34,6 +34,10 @@ fs.mount.lib3.uri = "file:/usr$(ARCH_LIBDIR)"
 fs.mount.usrbin.type = "chroot"
 fs.mount.usrbin.path = "/usr/bin"
 fs.mount.usrbin.uri = "file:/usr/bin"
+
+fs.mount.usrlocal.type = "chroot"
+fs.mount.usrlocal.path = "/usr/local"
+fs.mount.usrlocal.uri = "file:/usr/local"
 
 fs.mount.etc.type = "chroot"
 fs.mount.etc.path = "/etc"
@@ -53,8 +57,8 @@ fs.mount.tmp.uri = "file:/tmp"
 
 # Mount $PYTHONHOME
 fs.mount.pyhome.type = "chroot"
-fs.mount.pyhome.path = "$(PYTHONHOME)"
-fs.mount.pyhome.uri = "file:$(PYTHONHOME)"
+fs.mount.pyhome.path = "/usr/lib/python3.6"
+fs.mount.pyhome.uri = "file:/usr/lib/python3.6"
 
 # Mount $PYTHONDISTHOME
 fs.mount.pydisthome.type = "chroot"
@@ -117,7 +121,7 @@ sgx.allowed_files.tmp       = "file:/tmp"
 sgx.allowed_files.jdk       = "file:$(JDK_HOME)"
 sgx.allowed_files.sparkjars = "file:$(SPARK_HOME)/jars"
 sgx.allowed_files.work      = "file:/ppml/trusted-big-data-ml/work"
-sgx.allowed_files.pyhome    = "file:$(PYTHONHOME)"
-sgx.allowed_files.pydisthome = "file:$(PYTHONDISTHOME)"
+sgx.allowed_files.pyhome    = "file:/usr/lib/python3.6"
+sgx.allowed_files.pydisthome = "file:/usr/local/lib/python3.6/dist-packages"
 
 sgx.nonpie_binary = 1
