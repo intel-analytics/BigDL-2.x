@@ -832,6 +832,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
         }
       })
   }
+
   private def tensorToNdArrayString(tensor: Tensor[Float]): String = {
     val outputShape = tensor.size()
     // Share Tensor Storage
