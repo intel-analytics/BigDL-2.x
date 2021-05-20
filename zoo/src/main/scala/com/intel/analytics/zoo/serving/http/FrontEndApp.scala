@@ -342,6 +342,20 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                         timing("cluster serving response complete")() {
                           complete(200, result.toString)
                         }
+                      case _: InferenceModelServable =>
+                        val result = timing("inference model predict")(predictRequestTimer) {
+                          val instances = timing("json deserialization")() {
+                            JsonUtil.fromJson(classOf[Instances], content)
+                          }
+                          val outputs = timing("model predict total")(modelInferenceTimersMap
+                          (modelName)(modelVersion)) {
+                            servable.predict(instances)
+                          }
+                          JsonUtil.toJson(outputs.map(_.result))
+                        }
+                        timing("inference model response complete")() {
+                          complete(200, result)
+                        }
                     }
                   }
                   catch {
@@ -384,6 +398,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
   val waitRedisTimer = metrics.timer("zoo.serving.redis.wait")
   val metricsRequestTimer = metrics.timer("zoo.serving.request.metrics")
   val modelInferenceTimersMap = new mutable.HashMap[String, mutable.HashMap[String, Timer]]
+  val makingActivityTimer = metrics.timer("zoo.serving.activity.make")
 
   val jacksonJsonSerializer = new JacksonJsonSerializer()
 

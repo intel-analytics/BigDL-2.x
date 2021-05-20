@@ -42,8 +42,17 @@ import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.ImmutableList
-import com.intel.analytics.zoo.serving.http.FrontEndApp.{metrics, overallRequestTimer, silent, system, timeout, timing, waitRedisTimer}
-
+import com.intel.analytics.zoo.serving.http.FrontEndApp.{
+  metrics, overallRequestTimer, silent,
+  system, timeout, timing, waitRedisTimer, makingActivityTimer
+}
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
+import org.opencv.imgcodecs.Imgcodecs
+import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
+import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.zoo.feature.image.OpenCVMethod
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 
 sealed trait ServingMessage
 
@@ -115,6 +124,93 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
   if (instances == null) {
     throw new ServingRuntimeException("no instance can be found, " +
       "please check your input or json(keyword should be 'instances')")
+  }
+
+  def makeActivities(features: Array[String]): Seq[Activity] = {
+    if (instances.isEmpty) {
+      Seq[Activity]()
+    } else {
+      instances.flatMap(insMap => {
+        val oneInsMap = insMap.map {
+          kv => {
+            if (!features.contains(kv._1)) {
+              throw ServingRuntimeException("Cannot Find the feature " + kv._1 + ", Please Check " +
+                "Your Input Data")
+            }
+            kv._2 match {
+              case (value: List[_]) =>
+                transferListToTensor(value)
+              case (value: Map[_, _]) =>
+                val map = value.asInstanceOf[Map[String, Any]]
+                var result: Tensor[Float] = null
+                for ((key, value) <- map) {
+                  if (key == "b64") {
+                    val byteBuffer = timing("decode")() {
+                      java.util.Base64.getDecoder.decode(value.toString)
+                    }
+                    val mat = timing("load byte buffer")() {
+                      OpenCVMethod.fromImageBytes(byteBuffer, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
+                    }
+                    val (height, width, channel) = (mat.height(), mat.width(), mat.channels())
+                    val arrayBuffer = new Array[Float](height * width * channel)
+                    timing("to float pixels")() {
+                      OpenCVMat.toFloatPixels(mat, arrayBuffer)
+                    }
+                    val imageTensor = timing("retrive image tensors")() {
+                      Tensor[Float](arrayBuffer, Array(1, 1, height, width, channel))
+                    }
+                    result = imageTensor
+                  }
+                }
+                result
+            }
+          }
+
+        }.toList
+        timing("convert to Seq of T array")() {
+          Seq(T.array(oneInsMap.toArray))
+        }
+      })
+    }
+  }
+
+
+  private def transferListToTensor(eleList: List[_]): Tensor[Float] = {
+    if (eleList.isEmpty)
+      return Tensor[Float]()
+    eleList.head match {
+      case _: Int =>
+        val tensor = Tensor[Float](eleList.length)
+        (1 to eleList.length).foreach(i => {
+          tensor.setValue(i, eleList(i - 1).asInstanceOf[Int].toFloat)
+        })
+        tensor
+      case _: Float =>
+        val tensor = Tensor[Float](eleList.length)
+        (1 to eleList.length).foreach(i => {
+          tensor.setValue(i, eleList(i - 1).asInstanceOf[Float])
+        })
+        tensor
+      case _: List[_] =>
+        val length = eleList.size
+        val width = eleList.head.asInstanceOf[List[_]].size
+        val tensor = Tensor[Float](length, width)
+        (1 to eleList.length).foreach(i => {
+          (1 to eleList(i - 1).asInstanceOf[List[_]].length).foreach(
+            j => {
+              val value = eleList(i - 1).asInstanceOf[List[_]](j - 1) match {
+                case num: Int =>
+                  num.toFloat
+                case num: Float =>
+                  num
+              }
+              tensor.setValue(i, j, value)
+            }
+          )
+        })
+        tensor
+    }
+
   }
 
   def constructTensors(): Seq[mutable.LinkedHashMap[String, (
@@ -660,18 +756,20 @@ class ServableManager {
         throw ServableLoadException("duplicated model info. Model Name: " + modelInfo.getModelName
           + ", Model Version: " + modelInfo.getModelVersion, null)
       }
-      modelInfo match {
-        case _: ClusterServingMetaData =>
-          var clusterServingModelInfo = modelInfo.asInstanceOf[ClusterServingMetaData]
-          val servable = new ClusterServingServable(clusterServingModelInfo)
-          servable.load()
-          modelVersionMap(modelInfo.getModelName)(modelInfo.getModelVersion) = servable
-          FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
-            metrics.timer("zoo.serving.inference." + modelInfo.getModelName + "."
-              + modelInfo.getModelVersion)
+      val servable = modelInfo match {
+        case clusterServingModelInfo: ClusterServingMetaData =>
+          new ClusterServingServable(clusterServingModelInfo)
+        case inferenceModelModelInfo: InferenceModelMetaData =>
+          new InferenceModelServable(inferenceModelModelInfo)
       }
+      servable.load()
+      modelVersionMap(modelInfo.getModelName)(modelInfo.getModelVersion) = servable
+      FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
+        metrics.timer("zoo.serving.inference." + modelInfo.getModelName + "."
+          + modelInfo.getModelVersion)
     }
   }
+
   def retriveAllServables: List[Servable] = {
     val result = modelVersionMap.values.flatMap(
       maps => maps.values.toList
@@ -687,8 +785,8 @@ class ServableManager {
   }
 
   def retriveServable(modelName: String, modelVersion: String): Servable = {
-    if (!modelVersionMap.contains(modelName) || !modelVersionMap(modelName).contains(modelVersion))
-    {
+    if (!modelVersionMap.contains(modelName) || !modelVersionMap(modelName).contains
+    (modelVersion)) {
       throw ModelNotFoundException("model not exist. Model Name: " + modelName +
         ", Model Version: " + modelVersion, null)
     }
@@ -704,6 +802,44 @@ abstract class Servable(modelMetaData: ModelMetaData) {
   def getMetaData: ModelMetaData = modelMetaData
 }
 
+class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
+  extends Servable(inferenceModelMetaData) {
+  var model: InferenceModel = _
+
+  def load(): Unit = {
+    model = new InferenceModel(1)
+    inferenceModelMetaData.modelType match {
+      case "OpenVINO" =>
+        model.doLoadOpenVINO(inferenceModelMetaData.modelPath,
+          inferenceModelMetaData.weightPath)
+      case "frozenModel" =>
+        model.doLoadTensorflow(inferenceModelMetaData.modelPath, inferenceModelMetaData.modelType)
+    }
+  }
+
+  def predict(inputs: Instances): Seq[PredictionOutput[String]] = {
+    val activities = timing("make Activity total")(makingActivityTimer) {
+      inputs.makeActivities(inferenceModelMetaData.features)
+    }
+    activities.map(
+      activity => {
+        var result = timing("predict single activity")() {
+          model.doPredict(activity)
+        }
+        timing("handle response")() {
+          val responses = tensorToNdArrayString(result.toTensor[Float])
+          PredictionOutput[String]("", responses)
+        }
+      })
+  }
+  private def tensorToNdArrayString(tensor: Tensor[Float]): String = {
+    val outputShape = tensor.size()
+    // Share Tensor Storage
+    val jTensor = new com.intel.analytics.zoo.pipeline.inference.JTensor(tensor.storage().array(), outputShape, false)
+    """{ "data":""" + jTensor.getData.mkString(",") + """, "shape":""" + jTensor.getShape.mkString(",") + "}"
+  }
+
+}
 
 class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
   extends Servable(clusterServingMetaData) with Supportive {
@@ -791,10 +927,10 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
   }
 
   override def getMetaData: ModelMetaData = {
-     ClusterServingMetaData(clusterServingMetaData.modelName, clusterServingMetaData.modelVersion,
+    ClusterServingMetaData(clusterServingMetaData.modelName, clusterServingMetaData.modelVersion,
       clusterServingMetaData.redisHost, clusterServingMetaData.redisPort,
-       clusterServingMetaData.redisInputQueue, clusterServingMetaData.redisOutputQueue,
-       clusterServingMetaData.timeWindow, clusterServingMetaData.countWindow,
+      clusterServingMetaData.redisInputQueue, clusterServingMetaData.redisOutputQueue,
+      clusterServingMetaData.timeWindow, clusterServingMetaData.countWindow,
       clusterServingMetaData.redisSecureEnabled,
       "*******", "*******", clusterServingMetaData.features)
   }
@@ -808,6 +944,7 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
   property = "type"
 )
 @JsonSubTypes(Array(
+  new Type(value = classOf[InferenceModelMetaData], name = "InferenceModelMetaData"),
   new Type(value = classOf[ClusterServingMetaData], name = "ClusterServingMetaData")
 ))
 abstract class ModelMetaData(modelName: String, modelVersion: String, features: Array[String]) {
@@ -820,6 +957,13 @@ abstract class ModelMetaData(modelName: String, modelVersion: String, features: 
   }
 }
 
+case class InferenceModelMetaData(modelName: String,
+                                  modelVersion: String,
+                                  modelPath: String,
+                                  modelType: String,
+                                  weightPath: String,
+                                  features: Array[String])
+  extends ModelMetaData(modelName, modelVersion, features)
 
 case class ClusterServingMetaData(modelName: String,
                                   modelVersion: String,
