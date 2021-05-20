@@ -61,6 +61,7 @@ class TSDataset:
                    target_idx,
                    extra_feature_idx=None):
         '''
+        (Might not be implemented for now)
         Initialize a tsdataset from numpy ndarray.
         We currently only support rolling operation on tsdataset initialized from numpy ndarray
         TODO: design id_idx API
