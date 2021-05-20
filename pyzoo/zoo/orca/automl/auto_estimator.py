@@ -132,8 +132,8 @@ class AutoEstimator:
         :param epochs: Max number of epochs to train in each trial. Defaults to 1.
             If you have also set metric_threshold, a trial will stop if either it has been
             optimized to the metric_threshold or it has been trained for {epochs} epochs.
-        :param validation_data: data for validation, should be the same type as data
-        :param metric: str, metric name, e.g. "mse"
+        :param validation_data: Validation data. Validation data type should be the same as data.
+        :param metric: String. The evaluation metric name to optimize, e.g. "mse"
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: Number of times to sample from the search_space. Defaults to 1. 
             If hp.grid_search is in search_space, the grid will be repeated n_sampling of times. 
@@ -169,6 +169,7 @@ class AutoEstimator:
     def get_best_model(self):
         """
         Return the best model found by the AutoEstimator
+        :return the best model instance
         """
         best_trial = self.searcher.get_best_trials(k=1)[0]
         best_model_path = best_trial.model_path
