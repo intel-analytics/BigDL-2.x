@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.arrow
+package com.intel.analytics.zoo.serving.serialization
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 

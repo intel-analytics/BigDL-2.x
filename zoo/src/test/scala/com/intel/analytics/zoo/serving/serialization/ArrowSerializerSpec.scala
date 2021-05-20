@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.arrow
+package com.intel.analytics.zoo.serving.serialization
 
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectOutputStream}
@@ -27,7 +27,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import org.apache.arrow.vector.{BitVector, FieldVector, Float4Vector, IntVector, VarCharVector, VectorSchemaRoot}
 import java.nio.charset.StandardCharsets
 
-import com.intel.analytics.zoo.serving.arrow.ArrowSerializer.getSchema
+import com.intel.analytics.zoo.serving.serialization.ArrowSerializer.getSchema
 import org.apache.arrow.vector.dictionary.DictionaryProvider
 
 import scala.collection.JavaConverters._

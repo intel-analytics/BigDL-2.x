@@ -17,11 +17,23 @@
 package com.intel.analytics.zoo.serving.pipeline
 
 import com.intel.analytics.zoo.serving.ClusterServing
-import com.intel.analytics.zoo.serving.utils.Conventions
-import org.apache.log4j.Logger
-import redis.clients.jedis.Jedis
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
+
+import scala.collection.JavaConverters._
+import redis.clients.jedis.exceptions.JedisConnectionException
+import redis.clients.jedis.{Jedis, JedisPool, Pipeline, StreamEntryID}
 
 object RedisUtils {
+  def createRedisGroupIfNotExist(jedis: Jedis, streamName: String): Unit = {
+    try {
+      jedis.xgroupCreate(streamName,
+        "serving", new StreamEntryID(0, 0), true)
+    } catch {
+      case e: Exception =>
+        ClusterServing.logger.info(s"xgroupCreate raise [$e], " +
+          s"will not create new group.")
+    }
+  }
   def checkMemory(db: Jedis, inputThreshold: Double, cutRatio: Double): Unit = {
     var redisInfo = RedisUtils.getMapFromInfo(db.info())
     if (redisInfo("used_memory").toLong >=
@@ -70,5 +82,65 @@ object RedisUtils {
     }
 
     return infoMap
+  }
+  def getRedisClient(redisPool: JedisPool): Jedis = {
+    var jedis: Jedis = null
+    var cnt: Int = 0
+    while (jedis == null) {
+      try {
+        jedis = redisPool.getResource
+      }
+      catch {
+        case e: JedisConnectionException =>
+          ClusterServing.logger.info(
+            s"Redis client can not connect, maybe max number of clients is reached." +
+            "Waiting, if you always receive this, please stop your service and report bug.")
+          e.printStackTrace()
+          cnt += 1
+          if (cnt >= 10) {
+            throw new Error("can not get redis from the pool")
+          }
+          Thread.sleep(500)
+      }
+      Thread.sleep(10)
+    }
+    jedis
+  }
+  def writeHashMap(ppl: Pipeline, key: String, value: String, name: String): Unit = {
+    val hKey = Conventions.RESULT_PREFIX + name + ":" + key
+    val hValue = Map[String, String]("value" -> value).asJava
+    ppl.hmset(hKey, hValue)
+  }
+  def initializeRedis(): Unit = {
+    val params = ClusterServing.helper
+    if (params.redisSecureEnabled) {
+      System.setProperty("javax.net.ssl.trustStore", params.redisSecureTrustStorePath)
+      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStoreToken)
+      System.setProperty("javax.net.ssl.keyStoreType", "JKS")
+      System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
+      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStoreToken)
+    }
+    if (ClusterServing.jedisPool == null) {
+      ClusterServing.synchronized {
+        if (ClusterServing.jedisPool == null) {
+          ClusterServing.jedisPool = new JedisPool(ClusterServing.jedisPoolConfig,
+            params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
+        }
+      }
+    }
+
+    ClusterServing.logger.info(
+      s"FlinkRedisSource connect to Redis: redis://${params.redisHost}:${params.redisPort} " +
+        s"with timeout: ${params.redisTimeout} and redisSecureEnabled: " +
+        s"${params.redisSecureEnabled}")
+    params.redisSecureEnabled match {
+      case true => ClusterServing.logger.info(
+        s"FlinkRedisSource connect to secured Redis successfully.")
+      case false => ClusterServing.logger.info(
+        s"FlinkRedisSource connect to plain Redis successfully.")
+    }
+    // add Redis configuration here if necessary
+    val jedis = RedisUtils.getRedisClient(ClusterServing.jedisPool)
+    jedis.close()
   }
 }
