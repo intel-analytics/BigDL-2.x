@@ -106,6 +106,7 @@ class TimeSequencePipeline(Pipeline):
         ppl_file = ppl_file or os.path.join(DEFAULT_PPL_DIR, "{}_{}.ppl".
                                             format(self.name, self.time))
         self.model.save(ppl_file)
+        return ppl_file
 
     def config_save(self, config_file=None):
         """
