@@ -176,8 +176,9 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
 
 
   private def transferListToTensor(eleList: List[_]): Tensor[Float] = {
-    if (eleList.isEmpty)
+    if (eleList.isEmpty) {
       return Tensor[Float]()
+    }
     eleList.head match {
       case _: Int =>
         val tensor = Tensor[Float](eleList.length)
@@ -836,8 +837,10 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   private def tensorToNdArrayString(tensor: Tensor[Float]): String = {
     val outputShape = tensor.size()
     // Share Tensor Storage
-    val jTensor = new com.intel.analytics.zoo.pipeline.inference.JTensor(tensor.storage().array(), outputShape, false)
-    """{ "data":""" + jTensor.getData.mkString(",") + """, "shape":""" + jTensor.getShape.mkString(",") + "}"
+    val jTensor = new com.intel.analytics.zoo.pipeline.inference.JTensor(tensor.storage().array(),
+      outputShape, false)
+    """{ "data":""" + jTensor.getData.mkString(",") + """, "shape":""" +
+      jTensor.getShape.mkString(",") + "}"
   }
 
 }
