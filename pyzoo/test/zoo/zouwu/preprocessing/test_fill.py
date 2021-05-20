@@ -56,8 +56,9 @@ class TestDataImputation(ZooTestCase):
         data = [[np.nan, 1], [np.nan, 2]]
         df = pd.DataFrame(data)
         imputor = FillZeroImpute()
-        imputor.impute(df)
-        assert df.isna().sum().sum()== 0
+        imputed_df = imputor.impute(df)
+        assert df.isna().sum().sum() != 0
+        assert imputed_df.isna().sum().sum() == 0
 
 if __name__ == "__main__":
     pytest.main([__file__])

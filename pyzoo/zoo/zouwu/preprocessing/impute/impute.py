@@ -39,8 +39,8 @@ class FillZeroImpute(BaseImputation):
     FillZero imputation
     """
     def impute(self, input_df):
-        input_df.fillna(0, inplace=True)
-        return input_df
+        df = input_df.fillna(0)
+        return df
 
 
 class TimeMergeImputor(BaseImputation):
