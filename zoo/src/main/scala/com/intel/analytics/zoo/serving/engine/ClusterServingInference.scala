@@ -28,24 +28,24 @@ import org.apache.log4j.Logger
 /**
  * Inference Logic of Cluster Serving
  */
-class ClusterServingInference(preProcessing: PreProcessing,
-                              helper: ClusterServingHelper,
-                              recordEncrypted: Boolean = false) {
+class ClusterServingInference() {
   val logger = Logger.getLogger(getClass)
+  val helper = ClusterServing.helper
+  val preProcessing = new PreProcessing()
 
-  def singleThreadPipeline(in: List[(String, String)]): List[(String, String)] = {
+  def singleThreadPipeline(in: List[(String, String, String)]): List[(String, String)] = {
     singleThreadInference(preProcess(in))
   }
-  def multiThreadPipeline(in: List[(String, String)]): List[(String, String)] = {
+  def multiThreadPipeline(in: List[(String, String, String)]): List[(String, String)] = {
     multiThreadInference(preProcess(in, true))
   }
 
-  def preProcess(in: List[(String, String)],
+  def preProcess(in: List[(String, String, String)],
                  multiThread: Boolean = false): List[(String, Activity)] = {
     val preProcessed = if (!multiThread) {
       in.map(item => {
         val uri = item._1
-        val input = preProcessing.decodeArrowBase64(uri, item._2)
+        val input = preProcessing.decodeArrowBase64(uri, item._2, item._3)
         (uri, input)
       })
     } else {
@@ -53,7 +53,7 @@ class ClusterServingInference(preProcessing: PreProcessing,
       in.grouped(size).flatMap(itemBatch => {
         (0 until size).toParArray.map(i => {
           val uri = itemBatch(i)._1
-          val input = preProcessing.decodeArrowBase64(uri, itemBatch(i)._2)
+          val input = preProcessing.decodeArrowBase64(uri, itemBatch(i)._2, itemBatch(i)._3)
           (uri, input)
         })
       }).toList

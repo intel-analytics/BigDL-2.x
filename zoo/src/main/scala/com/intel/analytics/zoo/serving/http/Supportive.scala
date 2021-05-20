@@ -23,13 +23,13 @@ trait Supportive {
   val logger = LoggerFactory.getLogger(getClass)
 
   def timing[T](name: String)(timers: Timer*)(f: => T): T = {
-    val begin = System.currentTimeMillis
+    val begin = System.nanoTime()
     val contexts = timers.map(_.time())
     val result = f
     contexts.map(_.stop())
-    val end = System.currentTimeMillis
+    val end = System.nanoTime()
     val cost = (end - begin)
-    logger.info(s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms].")
+    logger.info(s"$name time elapsed [${cost / 1e6} ms]")
     result
   }
 

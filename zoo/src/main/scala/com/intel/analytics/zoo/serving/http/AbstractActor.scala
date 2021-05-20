@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.utils
+package com.intel.analytics.zoo.serving.http
 
-import org.apache.log4j.Logger
+import akka.actor.ActorRef
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 
-trait Supportive {
-  def timing[T](name: String)(f: => T): T = {
-    val begin = System.nanoTime()
-    val result = f
-    val end = System.nanoTime()
-    val cost = (end - begin)
-    Logger.getLogger(getClass).info(s"$name time elapsed [${cost / 1e6} ms].")
-    result
-  }
+import scala.collection.mutable
+
+class AbstractActor {
+
 }
+case class DequeueMessage()
+case class ModelOutputMessage(valueMap: mutable.Map[String, String])
+case class DataInputMessage(id: String, inputs: String)
