@@ -431,6 +431,61 @@ class TestTable(TestCase):
         assert median_tbl.df.filter("column == 'col_2'").filter("median == 1.0").count() == 1, \
             "the median of col_2 should be 1.0"
 
+    def test_create_from_list(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", [1, 2, 3, 4, 5]),
+                ("alice", [4, 5, 6, 7, 8]),
+                ("rose", [1, 2])]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("history", ArrayType(IntegerType()), True)])
+        feature_tbl = FeatureTable.from_list(data, schema)
+        spark_df = spark.createDataFrame(data, schema)
+        assert feature_tbl.df.schema == spark_df.schema, "wrong schema"
+        assert feature_tbl.size() == spark_df.count(), "wrong number of rows"
+
+    def test_cast(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14, 8),
+                ("alice", "34", 25, 9),
+                ("rose", "25344", 23, 10)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("a", StringType(), True),
+                             StructField("b", IntegerType(), True),
+                             StructField("c", IntegerType(), True)])
+        df = spark.createDataFrame(data, schema)
+        tbl = FeatureTable(df)
+        tbl = tbl.cast("a", "int")
+        assert dict(tbl.df.dtypes)['a'] == "int", "column a should be now be cast to integer type"
+        tbl = tbl.cast("a", "float")
+        assert dict(tbl.df.dtypes)['a'] == "float", "column a should be now be cast to float type"
+        tbl = tbl.cast(["b", "c"], "double")
+        assert dict(tbl.df.dtypes)['b'] == dict(tbl.df.dtypes)['c'] == "double", \
+            "column b and c should be now be cast to double type"
+        tbl = tbl.cast(None, "float")
+        assert dict(tbl.df.dtypes)['name'] == dict(tbl.df.dtypes)['a'] == dict(tbl.df.dtypes)['b'] \
+            == dict(tbl.df.dtypes)['c'] == "float", \
+            "all the columns should now be cast to float type"
+
+    def test_select(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        select_tbl = feature_tbl.select("col_1", "col_2")
+        assert "col_1" in select_tbl.df.columns, "col_1 shoul be selected"
+        assert "col_2" in select_tbl.df.columns, "col_2 shoud be selected"
+        assert "col_3" not in select_tbl.df.columns, "col_3 shoud not be selected"
+        assert feature_tbl.size() == select_tbl.size(), \
+            "the selected table should have the same rows"
+        with self.assertRaises(Exception) as context:
+            feature_tbl.select("col_8")
+        print(str(context.exception))
+        self.assertTrue("['col_8'] do not exist in this Table"
+                        in str(context.exception))
+        with self.assertRaises(Exception) as context:
+            feature_tbl.select()
+        print(str(context.exception))
+        self.assertTrue("col should be str or a sequence of str, but got none."
+                        in str(context.exception))
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

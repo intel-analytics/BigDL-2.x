@@ -16,7 +16,7 @@
 import os
 from functools import reduce
 
-from pyspark.sql.types import DoubleType, ArrayType
+from pyspark.sql.types import DoubleType, ArrayType, DataType
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
@@ -58,6 +58,12 @@ class Table:
                 raise Exception("cols should be a column name or list of column names")
         return df
 
+    @staticmethod
+    def _from_list(data, schema):
+        spark = OrcaContext.get_spark_session()
+        df = spark.createDataFrame(data, schema)
+        return df
+
     def _clone(self, df):
         return Table(df)
 
@@ -90,6 +96,21 @@ class Table:
         Marks a Table as small enough for use in broadcast joins
         """
         self.df = broadcast(self.df)
+
+    def select(self, *cols):
+        """
+        Select specific columns
+
+        :param cols: a string or a sequence of strings that specifies column names. If it is '*',
+        select all the columns. If it is none, return an empty table
+
+        :return: A new Table that contains the specified columns.
+        """
+        if cols == ():
+            raise ValueError("col should be str or a sequence of str, but got none.")
+        columns = [*cols]
+        check_col_exists(self.df, columns)
+        return self._clone(self.df.select(*cols))
 
     def drop(self, *cols):
         """
@@ -279,6 +300,28 @@ class Table:
     def write_parquet(self, path, mode="overwrite"):
         self.df.write.mode(mode).parquet(path)
 
+    def cast(self, columns, type):
+        """
+        Cast columns to the specified type
+
+        :param columns: a string or a list of strings that specifies column names. If it is none,
+        then cast all of the columns
+        :type: pyspark.sql.types or a string that specifies the type
+
+        :return: A new Table that casts all of the specified columns to the specified type
+        """
+        if columns is None:
+            columns = self.df.columns
+        elif not isinstance(columns, list):
+            columns = [columns]
+            check_col_exists(self.df, columns)
+        if not isinstance(type, str) and not isinstance(type, DataType):
+            raise ValueError("type should be a string or a dataype in pyspark.sql.types")
+        df_cast = self._clone(self.df)
+        for i in columns:
+            df_cast.df = df_cast.df.withColumn(i, col(i).cast(type))
+        return df_cast
+
 
 class FeatureTable(Table):
     @classmethod
@@ -295,6 +338,10 @@ class FeatureTable(Table):
     @classmethod
     def read_json(cls, paths, cols=None):
         return cls(Table._read_json(paths, cols))
+
+    @classmethod
+    def from_list(cls, data, schema):
+        return cls(Table._from_list(data, schema))
 
     def encode_string(self, columns, indices):
         """
