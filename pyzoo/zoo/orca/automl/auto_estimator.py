@@ -26,7 +26,7 @@ class AutoEstimator:
         """
         Create an AutoEstimator.
 
-        :param model_builder: A ModelBuilder instance, from which we will 
+        :param model_builder: A ModelBuilder instance, from which we will
             build the target model for hyperparameter optimization.
         :param logs_dir: local dir to save training results, defaults to /tmp/auto_estimator_logs
         :param resources_per_trial: Dict. resources for each trial. e.g. {"cpu": 2}.
@@ -122,12 +122,12 @@ class AutoEstimator:
         Automatically fit the model and search for the best hyperparameters.
 
         :param data: train data.
-            If the AutoEstimator is created with from_torch, data can be a tuple of 
-                ndarrays or a function that takes a config dictionary as parameter 
+            If the AutoEstimator is created with from_torch, data can be a tuple of
+                ndarrays or a function that takes a config dictionary as parameter
                 and returns a PyTorch DataLoader.
-            If the AutoEstimator is created with from_keras, data can be a tuple of 
+            If the AutoEstimator is created with from_keras, data can be a tuple of
                 ndarrays.
-            If data is a tuple of ndarrays, it should be in the form of (x, y), 
+            If data is a tuple of ndarrays, it should be in the form of (x, y),
                 where x is training input data and y is training target data.
         :param epochs: Max number of epochs to train in each trial. Defaults to 1.
             If you have also set metric_threshold, a trial will stop if either it has been
@@ -135,16 +135,16 @@ class AutoEstimator:
         :param validation_data: Validation data. Validation data type should be the same as data.
         :param metric: String. The evaluation metric name to optimize, e.g. "mse"
         :param metric_threshold: a trial will be terminated when metric threshold is met
-        :param n_sampling: Number of times to sample from the search_space. Defaults to 1. 
-            If hp.grid_search is in search_space, the grid will be repeated n_sampling of times. 
-            If this is -1, (virtually) infinite samples are generated 
+        :param n_sampling: Number of times to sample from the search_space. Defaults to 1.
+            If hp.grid_search is in search_space, the grid will be repeated n_sampling of times.
+            If this is -1, (virtually) infinite samples are generated
             until a stopping condition is met.
         :param search_space: a dict for search space
         :param search_alg: str, all supported searcher provided by ray tune
                (i.e."variant_generator", "random", "ax", "dragonfly", "skopt",
                "hyperopt", "bayesopt", "bohb", "nevergrad", "optuna", "zoopt" and
                "sigopt")
-        :param search_alg_params: extra parameters for searcher algorithm besides search_space, 
+        :param search_alg_params: extra parameters for searcher algorithm besides search_space,
             metric and searcher mode
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
