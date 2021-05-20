@@ -155,6 +155,7 @@ ADD ./bash.manifest.template /ppml/trusted-big-data-ml/bash.manifest.template
 ADD ./Makefile /ppml/trusted-big-data-ml/Makefile
 ADD ./init.sh /ppml/trusted-big-data-ml/init.sh
 ADD ./clean.sh /ppml/trusted-big-data-ml/clean.sh
+ADD ./examples /ppml/trusted-big-data-ml/work/examples
 
 RUN chmod a+x /ppml/trusted-big-data-ml/init.sh && \
     chmod a+x /ppml/trusted-big-data-ml/clean.sh
