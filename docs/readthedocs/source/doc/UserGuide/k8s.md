@@ -133,6 +133,8 @@ Execute `python script.py` to run your program on k8s cluster directly.
 init_orca_context(..., extra_params = {"temp-dir": "/tmp/ray/"})
 ```
 
+ if there are more than 1 executor, please remove `extra_params = {"temp-dir": "/tmp/ray/"}` since conflicts of writes would happen and JSONDecodeError would happen.
+
 **Note**: If you training with more than 1 executor, please make sure you set proper "steps_per_epoch" and "validation steps".
 
 **Note**: "spark.kubernetes.container.image.pullPolicy" needs to be specified as "always"
