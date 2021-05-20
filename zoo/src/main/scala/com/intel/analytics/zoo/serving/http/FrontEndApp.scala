@@ -398,7 +398,8 @@ object FrontEndApp extends Supportive with EncryptSupportive {
   val waitRedisTimer = metrics.timer("zoo.serving.redis.wait")
   val metricsRequestTimer = metrics.timer("zoo.serving.request.metrics")
   val modelInferenceTimersMap = new mutable.HashMap[String, mutable.HashMap[String, Timer]]
-  val makingActivityTimer = metrics.timer("zoo.serving.activity.make")
+  val makeActivityTimer = metrics.timer("zoo.serving.activity.make")
+  val handleResponseTimer = metrics.timer("zoo.serving.response.handling")
 
   val jacksonJsonSerializer = new JacksonJsonSerializer()
 

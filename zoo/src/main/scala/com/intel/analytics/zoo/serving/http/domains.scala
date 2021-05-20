@@ -44,7 +44,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.ImmutableList
 import com.intel.analytics.zoo.serving.http.FrontEndApp.{
   metrics, overallRequestTimer, silent,
-  system, timeout, timing, waitRedisTimer, makingActivityTimer
+  system, timeout, timing, waitRedisTimer, makeActivityTimer, handleResponseTimer
 }
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
@@ -819,7 +819,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   }
 
   def predict(inputs: Instances): Seq[PredictionOutput[String]] = {
-    val activities = timing("make Activity total")(makingActivityTimer) {
+    val activities = timing("make Activity total")(makeActivityTimer) {
       inputs.makeActivities(inferenceModelMetaData.features)
     }
     activities.map(
@@ -827,7 +827,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
         var result = timing("predict single activity")() {
           model.doPredict(activity)
         }
-        timing("handle response")() {
+        timing("handle response")(handleResponseTimer) {
           val responses = tensorToNdArrayString(result.toTensor[Float])
           PredictionOutput[String]("", responses)
         }
