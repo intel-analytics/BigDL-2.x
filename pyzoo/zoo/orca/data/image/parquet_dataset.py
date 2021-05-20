@@ -22,14 +22,13 @@ from zoo.orca.data import SparkXShards
 from zoo.orca.data.file import open_text, write_text
 from zoo.orca.data.image.utils import chunks, dict_to_row, row_to_dict, encode_schema, \
     decode_schema, SchemaField, FeatureType, DType, ndarray_dtype_to_dtype, \
-    decode_feature_type_ndarray
+    decode_feature_type_ndarray, pa_fs
 from zoo.orca.data.image.voc_dataset import VOCDatasets
 from bigdl.util.common import get_node_and_core_number
 import os
 import numpy as np
 import random
 import pyarrow.parquet as pq
-import pyarrow as pa
 import io
 
 
@@ -268,18 +267,6 @@ def write_parquet(format, output_path, *args, **kwargs):
     func, required_args = format_to_function[format]
     _check_arguments(format, kwargs, required_args)
     func(output_path=output_path, *args, **kwargs)
-
-def pa_fs(path):
-    if path.startswith("hdfs"):  # hdfs://url:port/file_path
-        fs = pa.hdfs.connect()
-        path = path[len("hdfs://"):]
-        return path, fs
-    elif path.startswith("s3"):
-        raise ValueError("aws s3 is not supported for now")
-    else:  # Local path
-        if path.startswith("file://"):
-            path = path[len("file://"):]
-        return path, pa.LocalFileSystem()
 
 
 def read_as_tfdataset(path, output_types, output_shapes=None, *args, **kwargs):

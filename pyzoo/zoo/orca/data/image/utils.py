@@ -19,7 +19,7 @@ import os
 from collections import namedtuple
 from io import BytesIO
 import numpy as np
-from zoo.orca.data.file import open_text
+import pyarrow as pa
 from itertools import chain, islice
 
 from enum import Enum
@@ -159,3 +159,16 @@ def chunks(iterable, size=10):
     iterator = iter(iterable)
     for first in iterator:
         yield chain([first], islice(iterator, size - 1))
+
+
+def pa_fs(path):
+    if path.startswith("hdfs"):  # hdfs://url:port/file_path
+        fs = pa.hdfs.connect()
+        path = path[len("hdfs://"):]
+        return path, fs
+    elif path.startswith("s3"):
+        raise ValueError("aws s3 is not supported for now")
+    else:  # Local path
+        if path.startswith("file://"):
+            path = path[len("file://"):]
+        return path, pa.LocalFileSystem()

@@ -55,7 +55,7 @@ class TestReadParquet(TestCase):
             output_types = {"id": tf.string, "image": tf.string, "label": tf.float32}
             dataset = read_parquet("tf_dataset", input_path=path,
                                output_types=output_types)
-            for dt in dataset:
+            for dt in dataset.take(1):
                 print(dt.keys())
 
         finally:
