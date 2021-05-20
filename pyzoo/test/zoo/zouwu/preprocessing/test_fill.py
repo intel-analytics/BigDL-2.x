@@ -23,6 +23,7 @@ from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 from zoo.zouwu.preprocessing.impute.LastFill import LastFill
 from zoo.zouwu.preprocessing.impute import FillZeroImpute
 
+
 class TestDataImputation(ZooTestCase):
 
     def setup_method(self, method):
@@ -41,7 +42,10 @@ class TestDataImputation(ZooTestCase):
         data[mask == 0] = None
         data[mask == 1] = np.nan
         df = pd.DataFrame(data)
-        idx = pd.date_range(start='2020-07-01 00:00:00', end='2020-07-01 08:00:00', freq='2H')
+        idx = pd.date_range(
+            start='2020-07-01 00:00:00',
+            end='2020-07-01 08:00:00',
+            freq='2H')
         df.index = idx
         self.data = df
 
@@ -59,6 +63,7 @@ class TestDataImputation(ZooTestCase):
         imputed_df = imputor.impute(df)
         assert df.isna().sum().sum() != 0
         assert imputed_df.isna().sum().sum() == 0
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
