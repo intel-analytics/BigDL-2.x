@@ -22,6 +22,7 @@ class TSDataset:
         '''
         TSDataset is an abstract of time series dataset.
         '''
+        self.df = None
     
     @staticmethod
     def from_pandas(df,
@@ -171,5 +172,14 @@ class TSDataset:
         '''
         # return self.df
     
+    def _check_basic_invariants(self):
+        '''
+        This function contains a bunch of assertions to make sure strict rules(the invariants)
+        for the internal dataframe(self.df) must stands. If not, clear and user-friendly error
+        or warning message should be provided to the users.
+        This function will be called after each method(e.g. impute, deduplicate ...)
+        '''
+        pass
+
 
 
