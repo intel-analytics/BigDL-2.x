@@ -623,14 +623,19 @@ class FeatureTable(Table):
                global-mean statistics are applied. Default is None.
         """
         cat_cols = str_to_list("cat_cols", cat_cols)  # TODO element in cat_cols can be list
-        cont_cols = str_to_list("cont_cols", cont_cols)  # TODO check numeric
         check_col_exists(self.df, cat_cols)
+        cont_cols = str_to_list("cont_cols", cont_cols)  # TODO check numeric
         check_col_exists(self.df, cont_cols)
+        nonnumeric_cont_col_type = get_nonnumeric_col_type(self.df, cont_cols)
+        assert not nonnumeric_cont_col_type, "cont_cols should be numeric but get " + \
+                                         ", ".join(list(map(
+                                             lambda x: x[0] + " of type " + x[1],
+                                             nonnumeric_cont_col_type)))
 
         # calculate global mean for each continuous column
         global_mean_list = [F.mean(F.col(cont_col)).alias(cont_col) for cont_col in cont_cols]
         cont_mean = self.df.select(*global_mean_list).collect()
-        cont_mean_dict = {cont_col:cont_mean[0][cont_col] for cont_col in cont_cols}
+        cont_mean_dict = {cont_col:cont_mean[0][cont_col] for cont_col in cont_cols} 
 
         def target_func(cat_col):
             mean_count_list = \
@@ -640,18 +645,21 @@ class FeatureTable(Table):
             for cont_col in cont_cols:
                 global_cont_mean = cont_mean_dict[cont_col]
                 target_func = udf(lambda mean, count: None if mean is None else \
-                        (mean * count + global_cont_mean * smooth) / (count + smooth))
+                        (mean * count + global_cont_mean * smooth) / (count + smooth),
+                        DoubleType())
                 # TODO output column names
                 target_df = target_df.withColumn(cat_col + "_te_" + cont_col, \
                         target_func(cat_col + "_mean_" + cont_col, cat_col + "_count")) \
                         .drop(cat_col + "_mean_" + cont_col)
             target_df = target_df.drop(cat_col + "_count")
-            return TargetCode(target_df, cont_mean_dict)
+            cont_dict = {cont_col:cat_col + "_te_" + cont_col for cont_col in cont_cols}
+            cat_cont_mean_dict = {(cat_col + "_te_" + cont_col):(cont_col, cont_mean_dict[cont_col]) \
+                    for cont_col in cont_cols}
+            return TargetCode(target_df, cat_col, cont_dict, cat_cont_mean_dict)
 
         return list(map(target_func, cat_cols))
 
     def encode_target(self, cat_cols, cont_cols, targets):
-        # TODO out_cols; out_dtype
         cat_cols = str_to_list("cat_cols", cat_cols)
         cont_cols = str_to_list("cont_cols", cont_cols)
         check_col_exists(self.df, cat_cols)
@@ -659,13 +667,18 @@ class FeatureTable(Table):
         assert len(cat_cols) == len(targets)
 
         result_df = self.df
-        # TODO select part of continuous column
         for i in range(len(cat_cols)):
             target_code = targets[i]
             cat_col = cat_cols[i]
-            result_df = result_df.join(target_code.df, cat_col, how="left") \
-                    .fillna({(cat_col + "_te_" + cont_col):target_code.means[cont_col] \
-                    for cont_col in cont_cols})
+            result_df = result_df.join(target_code.df, cat_col, how="left")
+            cont_mean = target_code.out_cont_mean
+            for target_col in target_code.df.columns:
+                if target_col != cat_col:
+                    target_cont_mean = cont_mean[target_col]
+                    if target_cont_mean[0] in cont_cols:
+                        result_df = result_df.fillna(target_cont_mean[1], target_col)
+                    else:
+                        result_df = result_df.drop(target_col)
 
         return FeatureTable(result_df)
 
@@ -715,9 +728,29 @@ class StringIndex(Table):
 
 
 class TargetCode(Table):
-    def __init__(self, df, means):
+    def __init__(self, df, cat_col, cont_out, out_cont_mean):
+        """
+        :param cat_col: str. Categorical column that of this TargetCode.
+        :param cont_dict: dictionary. cont_col:out_col, i.e.
+               (continuous column's name in original Table):
+               (continuous column's name in TargetCode.df)
+        :param means: dictionary. out_col:(cont_col, global_mean), i.e.
+               (continuous column's name in TargetCode.df):
+               (continuous column's name in original Table,
+               continuous column's global mean in original Table)
+        """
         super().__init__(df)
-        self.means = means
-        # TODO check columns in df are all in means
-        # TODO force the columns to be: cat_col, cat_col + "_te_" + cont_col
-        # TODO rename
+        self.out_cont_mean = out_cont_mean
+        self.cont_out = cont_out
+        self.cat_col = cat_col
+        assert cat_col in df.columns, "cat_col should be one of the columns in df"
+
+        # (keys of out_cont_mean) includes (continuous df.columns) includes (values of cont_out)
+        for cont_col in cont_out:
+            assert cont_out[cont_col] in df.columns
+        for column in df.columns:
+            if column != cat_col:
+                assert column in out_cont_mean, column + "should be in means"
+        
+        # TODO list in cat_col
+        # TODO rename rename_cont clone

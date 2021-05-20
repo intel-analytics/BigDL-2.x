@@ -63,6 +63,14 @@ def check_col_exists(df, columns):
     if len(col_not_exist) > 0:
         raise ValueError(str(col_not_exist) + " do not exist in this Table")
 
+
+def get_nonnumeric_col_type(df, columns):
+    return list(filter(
+        lambda x: x[0] in columns and not (x[1] == "smallint" or x[1] == "int" or \
+                x[1] == "bigint" or x[1] == "float" or x[1] == "double"),
+        df.dtypes))
+
+
 def str_to_list(arg_name, arg):
     if isinstance(arg, str):
         return [arg]
