@@ -133,7 +133,7 @@ Execute `python script.py` to run your program on k8s cluster directly.
 init_orca_context(..., extra_params = {"temp-dir": "/tmp/ray/"})
 ```
 
-If you training with more than 1 executor and use NFS, please remove `extra_params = {"temp-dir": "/tmp/ray/"}`. Because there would be conflict if multiple executors write files in the same directory at the same time.
+If you training with more than 1 executor and use NFS, please remove `extra_params = {"temp-dir": "/tmp/ray/"}`. Because there would be conflict if multiple executors write files in the same directory at the same time. It may cause JSONDecodeError.
 
 **Note**: If you training with more than 1 executor, please make sure you set proper "steps_per_epoch" and "validation steps".
 
