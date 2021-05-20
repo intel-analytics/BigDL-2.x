@@ -89,7 +89,9 @@ class TSDataset:
         :param reindex: indicates if we need to reindex the datetime to fill in the
                missing datetime.
         '''
+        # split the internal dataframe(self.df) to sub-df wrt id_col
         # call impute function in zouwu.preprocessing(transform).impute on each sub-df.
+        # concat the result back to self.df
         return self
     
     def deduplicate(self, mode="mean"):
@@ -97,7 +99,9 @@ class TSDataset:
         Merge those rows whose timestamp are seconds apart
         :param mode: str, One of "max", "min", "mean", "sum".
         '''
+        # split the internal dataframe(self.df) to sub-df wrt id_col
         # call deduplicate function in zouwu.preprocessing(transform).deduplicate on each sub-df.
+        # concat the result back to self.df
         return self
     
     def gen_dt_feature(self):
@@ -108,7 +112,9 @@ class TSDataset:
             "WEEKOFYEAR", "MONTH", "IS_AWAKE", "IS_BUSY_HOURS",
             "IS_WEEKEND"
         '''
+        # split the internal dataframe(self.df) to sub-df wrt id_col
         # call feature gen function in zouwu.preprocessing(transform).feature on each sub-df.
+        # concat the result back to self.df
         return self
     
     def gen_global_feature(self):
