@@ -49,8 +49,10 @@ class TSDataset:
         tsdataset = TSDataset.from_pandas(df, datetime_col="datetime",
                                           target_col="value", id_col="id",
                                           extra_feature_col=["extra feature 1",""extra feature 2"])
-       ```
+        ```
         '''
+        # check input
+        # map input to required internal dataframe structure
         pass
 
     @staticmethod
@@ -87,6 +89,7 @@ class TSDataset:
         :param reindex: indicates if we need to reindex the datetime to fill in the
                missing datetime.
         '''
+        # call impute function in zouwu.preprocessing(transform).impute on each sub-df.
         return self
     
     def deduplicate(self, mode="mean"):
@@ -94,6 +97,7 @@ class TSDataset:
         Merge those rows whose timestamp are seconds apart
         :param mode: str, One of "max", "min", "mean", "sum".
         '''
+        # call deduplicate function in zouwu.preprocessing(transform).deduplicate on each sub-df.
         return self
     
     def gen_dt_feature(self):
@@ -104,9 +108,23 @@ class TSDataset:
             "WEEKOFYEAR", "MONTH", "IS_AWAKE", "IS_BUSY_HOURS",
             "IS_WEEKEND"
         '''
+        # call feature gen function in zouwu.preprocessing(transform).feature on each sub-df.
+        return self
+    
+    def gen_global_feature(self):
+        '''
+        Generate datetime feature for each time series.
+        This method will be implemented by tsfresh
+        '''
+        # call feature gen function in zouwu.preprocessing(transform).feature on each sub-df.
         return self
 
-    def rolling(self, lookback, horizon, feature_col=None, target_col=None, inplace=False):
+    def rolling(self,
+                lookback,
+                horizon,
+                feature_col=None,
+                target_col=None,
+                id_sensitive=False):
         '''
         Sampling by rolling
         :param lookback: int, lookback value
@@ -117,20 +135,35 @@ class TSDataset:
                avaliable feature in rolling.
         :param target_col: str or list, indicate the target col name. Default to None, where we will take all
                target in rolling.
-        :param inplace: bool,
-               if True, we will save the rolling result for future to_numpy() calling.
-               if False, we will return the rolling result directly.
+        :param id_sensitive: bool,
+               if `id_sensitive` is False, we will rolling on each id's sub dataframe and fuse the sampings.
+               The shape of rolling will be 
+               x: (num_sample, lookback, num_feature_col)
+               y: (num_sample, horizon, num_target_col)
+               where num_sample is the summation of sample number of each dataframe
+               if `id_sensitive` is True, we will rolling on the wide dataframe whose columns are cartesian product
+               of id_col and feature_col
+               The shape of rolling will be
+               x: (num_sample, lookback, num_feature_col)
+               y: (num_sample, horizon, num_target_col)
+               where num_sample is the sample number of the wide dataframe, num_feature_col is the product of the number
+               of id and the number of feature_col, num_target_col is the product of the number
+               of id and the number of target_col.
         '''
+        # call rolling function in zouwu.preprocessing(transform).feature on each sub-df/wide df.
+        return self
 
     def to_numpy(self):
         '''
         export rolling result in form of a tuple of numpy ndarray (x, y)
         '''
+        # return self.numpy_x, self.numpy_y
 
     def to_pandas(self):
         '''
         export the pandas dataframe 
         '''
+        # return self.df
     
 
 
