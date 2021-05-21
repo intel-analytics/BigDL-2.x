@@ -87,7 +87,7 @@ if __name__ == "__main__":
     data, validation_data = get_data()
     searcher.compile(data=data,
                      validation_data=validation_data,
-                     model_create_func=modelBuilder,
+                     model_builder=modelBuilder,
                      search_space=create_simple_recipe(),
                      n_sampling=2,
                      epochs=20)

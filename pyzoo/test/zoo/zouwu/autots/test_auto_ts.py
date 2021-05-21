@@ -115,6 +115,26 @@ class TestZouwuAutoTS(ZooTestCase):
         predict_df = pipeline.predict(self.validation_df)
         assert not predict_df.empty
 
+    def test_save_load(self):
+        import tempfile
+        horizon = np.random.randint(1, 6)
+        tsp = AutoTSTrainer(dt_col="datetime",
+                            target_col="value",
+                            horizon=horizon,
+                            extra_features_col=None
+                            )
+        pipeline = tsp.fit(self.train_df,
+                           self.validation_df,
+                           )
+        assert isinstance(pipeline, TSPipeline)
+        # save & restore the pipeline
+        with tempfile.TemporaryDirectory() as tempdirname:
+            my_ppl_file_path = pipeline.save(tempdirname + "saved_pipeline/nyc_taxi.ppl")
+            loaded_ppl = TSPipeline.load(my_ppl_file_path)
+        loaded_ppl.evaluate(self.validation_df)
+        predict_df = loaded_ppl.predict(self.validation_df)
+        assert not predict_df.empty
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
