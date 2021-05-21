@@ -63,14 +63,10 @@ class TestEstimatorForSparkCreator(TestCase):
             model = SimpleModel(momentum=config.get("momentum", 0.1))
             return model
 
-        def optim_creator(model, config):
-            return optim.Adam(model.parameters(), lr=config.get("lr", 0.01))
-
         estimator = Estimator.from_torch(model=model_creator, loss=nn.BCELoss(),
                                          metrics=[Accuracy()],
-                                         optimizer=optim_creator,
-                                         config={"lr": 0.001,
-                                                 "momentum": 0.9})
+                                         optimizer=Adam(),
+                                         config={"momentum": 0.9})
 
         def get_dataloader(config, batch_size):
             inputs = torch.Tensor([[1, 2], [1, 3], [3, 2], [5, 6], [8, 9], [1, 9]])
