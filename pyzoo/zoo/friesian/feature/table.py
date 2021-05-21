@@ -616,15 +616,26 @@ class FeatureTable(Table):
             result_df = result_df.join(merge_df, on=cat_col, how="left")
         return FeatureTable(result_df)
 
-    def gen_target(self, cat_cols, cont_cols, smooth, out_cols=None):
+    def gen_target(self, cat_cols, cont_cols, smooth, out_cols=None, name_sep="_"):
         """
+        :param cat_cols: str, or list of (str or list of str). Categorical columns / column groups
+               to target encode. If an element in the list is a str, then it is a categorical
+               column; otherwise if it is a list of str, then it is a categorical column group.
+        :param cont_cols: str, or list of str. Continuous column to calculate the mean.
+        :param smooth: int. The mean of each category is smoothed by the overall mean.
         :param kfold: int. Specifies number of folds for cross validation. The mean values within
                the i-th fold are calculated with data from all other folds. If kfold is 1,
                global-mean statistics are applied. Default is None.
-        :param out_cols: list of dict.
+        :param out_cols: list of dict. Each element corresponds to the element in cat_cols in the
+               same position. For each categorical column / column group, element in the dict is
+               in the format of {continuous column : output column}. If it is None, the output
+               column will be cat_col + "_te_" + cont_col. Default is None.
+        :param name_sep: str. When out_cols is None, for group of categorical columns, concatenate
+               them with name_sep to generate output columns. Default is "_".
         """
-        cat_cols = str_to_list("cat_cols", cat_cols)  # TODO element in cat_cols can be list
-        check_col_exists(self.df, cat_cols)
+        cat_cols = str_to_list("cat_cols", cat_cols)
+        for cat_col in cat_cols:
+            check_col_str_list_exists(self.df, cat_col, "cat_cols")
         cont_cols = str_to_list("cont_cols", cont_cols)
         check_col_exists(self.df, cont_cols)
         nonnumeric_cont_col_type = get_nonnumeric_col_type(self.df, cont_cols)
@@ -632,8 +643,8 @@ class FeatureTable(Table):
                 list(map(lambda x: x[0] + " of type " + x[1], nonnumeric_cont_col_type)))
         
         if out_cols is None:
-            out_cols = [{cont_col:cat_col + "_te_" + cont_col for cont_col in cont_cols} \
-                    for cat_col in cat_cols]
+            out_cols = [{cont_col:gen_target_name(cat_col, name_sep) + "_te_" + cont_col \
+                    for cont_col in cont_cols} for cat_col in cat_cols]
         else:
             if isinstance(out_cols, dict):
                 out_cols = [out_cols]
@@ -643,8 +654,8 @@ class FeatureTable(Table):
             for cat_col, out_col in zip(cat_cols, out_cols):
                 assert isinstance(out_col, dict), "elements in out_cols should be dict"
                 for cont_col in cont_cols:
-                    assert cont_col in out_col, "out_cols for categorical column " + cat_col  + \
-                            " lacks key " + cont_col
+                    assert cont_col in out_col, str(out_col) + "in out_cols for " + \
+                            str(cat_col) + " lacks key " + cont_col
 
         # calculate global mean for each continuous column
         global_mean_list = [F.mean(F.col(cont_col)).alias(cont_col) for cont_col in cont_cols]
@@ -654,19 +665,26 @@ class FeatureTable(Table):
         def gen_target_code(cat_out):
             cat_col = cat_out[0]
             out_col_dict = cat_out[1]
-            mean_count_list = \
-                    [F.mean(cont_col).alias(cat_col + "_mean_" + cont_col) for cont_col in cont_cols] + \
-                    [F.count(cat_col).alias(cat_col + "_count")]
-            target_df = self.df.groupBy(cat_col).agg(*mean_count_list)
+            cat_col_name = gen_target_name(cat_col, name_sep)
+
+            mean_list = [F.mean(cont_col).alias(cat_col_name + "_mean_" + cont_col) 
+                    for cont_col in cont_cols]
+            if isinstance(cat_col, str):
+                target_df = self.df.groupBy(cat_col).agg(*mean_list,
+                        F.count("*").alias(cat_col_name + "_count"))
+            else:
+                target_df = self.df.groupBy(*cat_col).agg(*mean_list,
+                        F.count("*").alias(cat_col_name + "_count"))
+
             for cont_col in cont_cols:
                 global_cont_mean = cont_mean_dict[cont_col]
                 target_func = udf(lambda mean, count: None if mean is None else \
                         (mean * count + global_cont_mean * smooth) / (count + smooth),
                         DoubleType())
-                target_df = target_df.withColumn(out_col_dict[cont_col], \
-                        target_func(cat_col + "_mean_" + cont_col, cat_col + "_count")) \
-                        .drop(cat_col + "_mean_" + cont_col)
-            target_df = target_df.drop(cat_col + "_count")
+                target_df = target_df.withColumn(out_col_dict[cont_col],
+                        target_func(cat_col_name + "_mean_" + cont_col, cat_col_name + "_count")) \
+                        .drop(cat_col_name + "_mean_" + cont_col)
+            target_df = target_df.drop(cat_col_name + "_count")
             out_cont_mean_dict = {out_col_dict[cont_col]:(cont_col, cont_mean_dict[cont_col]) \
                     for cont_col in cont_cols}
             return TargetCode(target_df, cat_col, out_col_dict, out_cont_mean_dict)
@@ -676,7 +694,8 @@ class FeatureTable(Table):
     def encode_target(self, cat_cols, cont_cols, targets):
         cat_cols = str_to_list("cat_cols", cat_cols)
         cont_cols = str_to_list("cont_cols", cont_cols)
-        check_col_exists(self.df, cat_cols)
+        for cat_col in cat_cols:
+            check_col_str_list_exists(self.df, cat_col, "cat_cols")
         check_col_exists(self.df, cont_cols)
         assert len(cat_cols) == len(targets)
 
@@ -687,7 +706,7 @@ class FeatureTable(Table):
             result_df = result_df.join(target_code.df, cat_col, how="left")
             cont_mean = target_code.out_cont_mean
             for target_col in target_code.df.columns:
-                if target_col != cat_col:
+                if target_col in cont_mean:
                     target_cont_mean = cont_mean[target_col]
                     if target_cont_mean[0] in cont_cols:
                         result_df = result_df.fillna(target_cont_mean[1], target_col)
@@ -744,11 +763,13 @@ class StringIndex(Table):
 class TargetCode(Table):
     def __init__(self, df, cat_col, cont_out, out_cont_mean):
         """
-        :param cat_col: str. Categorical column that of this TargetCode.
-        :param cont_dict: dictionary. cont_col:out_col, i.e.
+        :param df: DataFrame.
+        :param cat_col: str or list of (str or list). Categorical column(s) that of this
+               TargetCode.
+        :param cont_out: dictionary. cont_col:out_col, i.e.
                (continuous column's name in original Table):
                (continuous column's name in TargetCode.df)
-        :param means: dictionary. out_col:(cont_col, global_mean), i.e.
+        :param out_cont_mean: dictionary. out_col:(cont_col, global_mean), i.e.
                (continuous column's name in TargetCode.df):
                (continuous column's name in original Table,
                continuous column's global mean in original Table)
@@ -757,14 +778,14 @@ class TargetCode(Table):
         self.out_cont_mean = out_cont_mean
         self.cont_out = cont_out
         self.cat_col = cat_col
-        assert cat_col in df.columns, "cat_col should be one of the columns in df"
+        check_col_str_list_exists(df, cat_col, "cat_col")
 
         # (keys of out_cont_mean) includes (continuous df.columns) includes (values of cont_out)
         for cont_col in cont_out:
             assert cont_out[cont_col] in df.columns
         for column in df.columns:
-            if column != cat_col:
-                assert column in out_cont_mean, column + "should be in means"
+            if (isinstance(cat_col, str) and column != cat_col) or \
+                    (isinstance(cat_col, list) and column not in cat_col):
+                assert column in out_cont_mean, column + " should be in means"
         
-        # TODO list in cat_col
-        # TODO rename rename_cont clone
+        # TODO rename clone
