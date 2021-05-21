@@ -43,6 +43,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.ImmutableList
 import com.intel.analytics.zoo.serving.http.FrontEndApp.{metrics, overallRequestTimer, silent, system, timeout, timing, waitRedisTimer}
+import com.intel.analytics.zoo.serving.serialization.StreamSerializer
 
 
 sealed trait ServingMessage
