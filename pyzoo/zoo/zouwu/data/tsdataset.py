@@ -22,7 +22,11 @@ class TSDataset:
         '''
         TSDataset is an abstract of time series dataset.
         '''
-        self.df = None
+        self.df = None # internal dataframe
+        self.id_col = None # column name of id
+        self.dt_col = None # column name of time
+        self.feature_col = None # column name of feature
+        self.target_col = None # column name of target
     
     @staticmethod
     def from_pandas(df,
