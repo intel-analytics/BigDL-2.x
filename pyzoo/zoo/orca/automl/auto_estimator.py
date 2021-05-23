@@ -59,11 +59,7 @@ class AutoEstimator:
 
         :return: an AutoEstimator object.
         """
-        from zoo.orca.automl.pytorch_utils import validate_pytorch_loss, \
-            validate_pytorch_optim
         from zoo.automl.model import PytorchModelBuilder
-        loss = validate_pytorch_loss(loss)
-        optimizer = validate_pytorch_optim(optimizer)
         model_builder = PytorchModelBuilder(model_creator=model_creator,
                                             optimizer_creator=optimizer,
                                             loss_creator=loss)
