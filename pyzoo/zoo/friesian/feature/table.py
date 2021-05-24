@@ -101,15 +101,15 @@ class Table:
         """
         Select specific columns
 
-        :param cols: a string or a sequence of strings that specifies column names. If it is '*',
-        select all the columns. If it is none, return an empty table
+        :param cols: a string or a list of strings that specifies column names. If it is '*',
+        select all the columns. If it is none, raise error
 
         :return: A new Table that contains the specified columns.
         """
-        if cols == ():
-            raise ValueError("col should be str or a sequence of str, but got none.")
-        columns = [*cols]
-        check_col_exists(self.df, columns)
+        # spark will return an empty table when cols is None,
+        # therefore we raise the error if cols is None
+        if not cols:
+            raise ValueError("cols should be str or a list of str, but got none.")
         return self._clone(self.df.select(*cols))
 
     def drop(self, *cols):
@@ -351,6 +351,8 @@ class FeatureTable(Table):
         :param indices: StringIndex or a list of StringIndex, StringIndexes of target columns.
                The StringIndex should at least have two columns: id and the corresponding
                categorical column.
+               Or it can be a dict or a list of dicts. The key of the dict should be the
+               corresponding categorical column and the value is the id.
 
         :return: A new FeatureTable which transforms categorical features into unique integer
                  values with provided StringIndexes.
@@ -360,6 +362,9 @@ class FeatureTable(Table):
         if not isinstance(indices, list):
             indices = [indices]
         assert len(columns) == len(indices)
+        if isinstance(indices[0], dict):
+            indices = list(map(lambda x: StringIndex.from_dict(x[1], columns[x[0]]),
+                               enumerate(indices)))
         data_df = self.df
         for i in range(len(columns)):
             index_tbl = indices[i]
@@ -655,6 +660,29 @@ class StringIndex(Table):
         if col_name is None and len(paths) >= 1:
             col_name = os.path.basename(paths[0]).split(".")[0]
         return cls(Table._read_parquet(paths), col_name)
+
+    @classmethod
+    def from_dict(cls, indices, col_name):
+        """
+        Create the StringIndex from a dict of indices.
+
+        :param indices: dict. The key is the categorical column,
+                        the value is the corresponding index.
+                        We assume that the key is a str and the value is a int/float.
+        :param col_name: str. The column name of the corresponding categorical column.
+                         Cannot be None.
+        :return: A StringIndex.
+        """
+        spark = OrcaContext.get_spark_session()
+        if not isinstance(indices, dict):
+            raise ValueError('indices should be dict, but get ' + indices.__class__.__name__)
+        if not col_name:
+            raise ValueError('col_name should be str, but get None')
+        if not isinstance(col_name, str):
+            raise ValueError('col_name should be str, but get ' + col_name.__class__.__name__)
+        indices = map(lambda x: {col_name: x[0], 'id': x[1]}, indices.items())
+        df = spark.createDataFrame(indices)
+        return cls(df, col_name)
 
     def _clone(self, df):
         return StringIndex(df, self.col_name)
