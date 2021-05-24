@@ -89,7 +89,7 @@ else
     wget -nv $FTP_URI/analytics-zoo-data/airline_14col.data -P ${ANALYTICS_ZOO_ROOT}/data/
 fi
 
-execute_ray_test auto-xgboost-classifier ""${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostClassifier.py -p ${ANALYTICS_ZOO_ROOT}/data/airline_14col.data"
+execute_ray_test auto-xgboost-classifier "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostClassifier.py -p ${ANALYTICS_ZOO_ROOT}/data/airline_14col.data"
 time9=$?
 
 if [ -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/incd.csv ]
