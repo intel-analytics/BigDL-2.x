@@ -476,16 +476,30 @@ class TestTable(TestCase):
         assert feature_tbl.size() == select_tbl.size(), \
             "the selected table should have the same rows"
         with self.assertRaises(Exception) as context:
-            feature_tbl.select("col_8")
-        print(str(context.exception))
-        self.assertTrue("['col_8'] do not exist in this Table"
-                        in str(context.exception))
-        with self.assertRaises(Exception) as context:
             feature_tbl.select()
-        print(str(context.exception))
-        self.assertTrue("col should be str or a sequence of str, but got none."
+        self.assertTrue("cols should be str or a list of str, but got none."
                         in str(context.exception))
 
+    def test_create_from_dict(self):
+        spark = OrcaContext.get_spark_session()
+        indices = {'a': 1, 'b': 2, 'c': 3}
+        col_name = 'letter'
+        tbl = StringIndex.from_dict(indices, col_name)
+        assert 'id' in tbl.df.columns, "id should be one column in the stringindex"
+        assert 'letter' in tbl.df.columns, "letter should be one column in the stringindex"
+        assert tbl.size() == 3, "the StringIndex should have three rows"
+        with self.assertRaises(Exception) as context:
+            StringIndex.from_dict(indices, None)
+        self.assertTrue("col_name should be str, but get None"
+                        in str(context.exception))
+        with self.assertRaises(Exception) as context:
+            StringIndex.from_dict(indices, 12)
+        self.assertTrue("col_name should be str, but get int"
+                        in str(context.exception))
+        with self.assertRaises(Exception) as context:
+            StringIndex.from_dict([indices], col_name)
+        self.assertTrue("indices should be dict, but get list"
+                        in str(context.exception))
 
 if __name__ == "__main__":
     pytest.main([__file__])
