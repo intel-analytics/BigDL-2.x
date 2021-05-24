@@ -92,11 +92,11 @@ fi
 execute_ray_test auto-xgboost-classifier ""${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostClassifier.py -p ${ANALYTICS_ZOO_ROOT}/data/airline_14col.data"
 time9=$?
 
-if [ -f ${ANALYTICS_ZOO_ROOT}/data/incd.csv ]
+if [ -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/incd.csv ]
 then
     echo "incd.csv already exists"
 else
-    wget -nv $FTP_URI/analytics-zoo-data/incd.csv -P ${ANALYTICS_ZOO_ROOT}/data/
+    wget -nv $FTP_URI/analytics-zoo-data/incd.csv -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/
 fi
 
 execute_ray_test auto-xgboost-regressor "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostRegressor.py -p ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/incd.csv"
