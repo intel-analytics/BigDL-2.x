@@ -259,7 +259,7 @@ def write_parquet(format, output_path, *args, **kwargs):
     supported_format = {"imagenet", "mnist", "image_folder", "voc"}
     if format not in supported_format:
         raise ValueError(format + " is not supported, should be one of 'imagenet', 'mnist',"
-                         "'image_folder' and 'voc'.")
+                                  "'image_folder' and 'voc'.")
 
     format_to_function = {"mnist": (write_mnist, ["image_file", "label_file"]),
                           "image_folder": (write_from_directory, ["directory", "label_map"]),
@@ -293,7 +293,7 @@ def read_as_tfdataset(path, output_types, output_shapes=None, *args, **kwargs):
                         yield record
 
     dataset = tf.data.Dataset.from_generator(generator, output_types=output_types,
-                                                 output_shapes=output_shapes)
+                                             output_shapes=output_shapes)
     return dataset
 
 
