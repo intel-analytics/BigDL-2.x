@@ -250,7 +250,7 @@ class PytorchBaseModel(BaseModel):
         return yhat
 
     def predict_with_uncertainty(self, x, n_iter=100):
-        result = np.zeros((n_iter,) + (x.shape[0], self.config["output_size"]))
+        result = np.zeros((n_iter,) + (x.shape[0], self.config["output_feature_num"]))
         for i in range(n_iter):
             result[i, :, :] = self.predict(x, mc=True)
 

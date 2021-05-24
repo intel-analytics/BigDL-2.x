@@ -47,11 +47,11 @@ class LSTMModel(nn.Module):
 
 
 def model_creator(config):
-    return LSTMModel(input_dim=config["input_dim"],
+    return LSTMModel(input_dim=config["input_feature_num"],
                      hidden_dim=config.get("hidden_dim", 32),
                      layer_num=config.get("layer_num", 2),
                      dropout=config.get("dropout", 0.2),
-                     output_dim=config["output_dim"])
+                     output_dim=config["output_feature_num"],)
 
 
 def optimizer_creator(model, config):
@@ -65,25 +65,24 @@ def loss_creator(config):
 
 class VanillaLSTMPytorch(PytorchBaseModel):
 
-    def __init__(self, config, check_optional_config=True, future_seq_len=1):
+    def __init__(self, check_optional_config=True):
         """
         Constructor of Vanilla LSTM model
         """
         super().__init__(model_creator=model_creator,
                          optimizer_creator=optimizer_creator,
                          loss_creator=loss_creator,
-                         config=config,
                          check_optional_config=check_optional_config)
 
     def _get_required_parameters(self):
         return {
-            "input_dim"
-            "ouput_dim"
+            "input_feature_num",
+            "future_seq_len",
+            "output_feature_num"
         }
 
     def _get_optional_parameters(self):
         return {
             'hidden_dim',
             'layer_num',
-            'hidden_dim',
         } | super()._get_optional_parameters()

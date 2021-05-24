@@ -256,10 +256,10 @@ def _check_arguments(_format, kwargs, args):
 
 
 def write_parquet(format, output_path, *args, **kwargs):
-    supported_format = {"imagenet", "mnist", "image_folder", "voc"}
+    supported_format = {"mnist", "image_folder", "voc"}
     if format not in supported_format:
-        raise ValueError(format + " is not supported, should be one of 'imagenet', 'mnist',"
-                                  "'image_folder' and 'voc'.")
+        raise ValueError(format + " is not supported, should be one of 'mnist',"
+                         "'image_folder' and 'voc'.")
 
     format_to_function = {"mnist": (write_mnist, ["image_file", "label_file"]),
                           "image_folder": (write_from_directory, ["directory", "label_map"]),

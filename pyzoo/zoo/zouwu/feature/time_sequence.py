@@ -345,6 +345,12 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
             feature_list += self.extra_features_col
         return feature_list
 
+    def get_feature_dim(self):
+        return len(self.get_feature_list()) + len(self.target_col)
+
+    def get_target_dim(self):
+        return len(self.target_col)
+
     def _get_feat_config(self, **config):
         """
         Get feature related arguments from global hyper parameter config and do necessary error
@@ -360,7 +366,7 @@ class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
                 continue
                 # raise KeyError("Can not find " + name + " in config!")
             feat_config[name] = config[name]
-        self.past_seq_len = feat_config.get("past_seq_len", 1)
+        self.past_seq_len = feat_config.get("past_seq_len", 2)
         return feat_config
 
     def _check_input(self, input_df, mode="train"):

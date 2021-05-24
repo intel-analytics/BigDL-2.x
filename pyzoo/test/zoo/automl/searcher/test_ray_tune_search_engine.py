@@ -18,15 +18,12 @@ from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.search import SearchEngineFactory
 from zoo.automl.search.ray_tune_search_engine import RayTuneSearchEngine
 from zoo.automl.model import PytorchModelBuilder
-from zoo.zouwu.model.VanillaLSTM_pytorch import model_creator as LSTM_model_creator
 import torch
 import torch.nn as nn
-from zoo.automl.recipe.base import Recipe
 from zoo.orca.automl import hp
 import pandas as pd
 import numpy as np
 from zoo.orca import init_orca_context, stop_orca_context
-from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
 
 
 def create_simple_search_space():
@@ -40,15 +37,6 @@ def create_stop(stop_metric=None):
     }
     stop.update({"reward_metric": stop_metric})
     return stop
-
-
-def create_lstm_search_space(input_dim):
-    return {
-        "lr": hp.uniform(0.001, 0.01),
-        "batch_size": hp.choice([32, 64]),
-        "input_dim": input_dim,
-        "output_dim": 1
-    }
 
 
 def linear_model_creator(config):
@@ -72,7 +60,6 @@ def prepare_searcher(data,
                      model_creator=linear_model_creator,
                      optimizer_creator=optimizer_creator,
                      loss_creator=loss_creator,
-                     feature_transformer=None,
                      metric="mse",
                      name="demo"):
     modelBuilder = PytorchModelBuilder(model_creator=model_creator,
@@ -84,12 +71,11 @@ def prepare_searcher(data,
                                                  name=name)
     searcher.compile(data=data,
                      validation_data=validation_data,
-                     model_create_func=modelBuilder,
+                     model_builder=modelBuilder,
                      search_space=search_space,
                      n_sampling=2,
                      epochs=stop["training_iteration"],
                      metric_threshold=stop["reward_metric"],
-                     feature_transformers=feature_transformer,
                      metric=metric)
     return searcher
 
@@ -102,17 +88,6 @@ def get_np_input():
     train_x, train_y = get_linear_data(2, 5, 1000)
     val_x, val_y = get_linear_data(2, 5, 400)
     return train_x, train_y, val_x, val_y
-
-
-def get_ts_input():
-    sample_num = np.random.randint(100, 200)
-    train_df = pd.DataFrame({"datetime": pd.date_range(
-        '1/1/2019', periods=sample_num), "value": np.random.randn(sample_num)})
-    val_sample_num = np.random.randint(20, 30)
-    validation_df = pd.DataFrame({"datetime": pd.date_range(
-        '1/1/2019', periods=val_sample_num), "value": np.random.randn(val_sample_num)})
-    future_seq_len = 1
-    return train_df, validation_df, future_seq_len
 
 
 class TestRayTuneSearchEngine(ZooTestCase):
@@ -132,23 +107,6 @@ class TestRayTuneSearchEngine(ZooTestCase):
                                     name='test_ray_numpy_with_val',
                                     search_space=create_simple_search_space(),
                                     stop=create_stop())
-        searcher.run()
-        best_trials = searcher.get_best_trials(k=1)
-        assert best_trials is not None
-
-    def test_dataframe_input_with_datetime(self):
-        train_df, validation_df, future_seq_len = get_ts_input()
-        ft = TimeSequenceFeatureTransformer(future_seq_len=future_seq_len,
-                                            dt_col="datetime",
-                                            target_col="value")
-        input_dim = len(ft.get_feature_list()) + 1
-        searcher = prepare_searcher(data=train_df,
-                                    validation_data=validation_df,
-                                    model_creator=LSTM_model_creator,
-                                    name='test_ray_dateframe_with_datetime_with_val',
-                                    search_space=create_lstm_search_space(input_dim),
-                                    stop=create_stop(),
-                                    feature_transformer=ft)
         searcher.run()
         best_trials = searcher.get_best_trials(k=1)
         assert best_trials is not None
