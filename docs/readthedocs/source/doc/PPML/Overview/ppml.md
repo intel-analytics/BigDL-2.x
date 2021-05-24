@@ -324,5 +324,5 @@ input_api.enqueue('my-image1', user_define_key={"path: 'path/to/image1'})
 Cluster Serving service is a long running service in container, you can stop it as follows:
 
 ```bash
-docker stop trusted-cluster-servinglocal
+docker stop trusted-cluster-serving-local
 ```
