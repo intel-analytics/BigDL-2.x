@@ -24,7 +24,6 @@ from zoo.automl.common.metrics import Evaluator
 import pandas as pd
 
 from zoo.orca.automl.pytorch_utils import LR_NAME, DEFAULT_LR
-from zoo.orca.automl.pytorch_utils import validate_pytorch_loss, validate_pytorch_optim
 
 PYTORCH_REGRESSION_LOSS_MAP = {"mse": "MSELoss",
                                "mae": "L1Loss",
@@ -36,10 +35,8 @@ class PytorchBaseModel(BaseModel):
                  check_optional_config=False):
         self.check_optional_config = check_optional_config
         self.model_creator = model_creator
-        optimizer = validate_pytorch_optim(optimizer_creator)
-        self.optimizer_creator = optimizer
-        loss = validate_pytorch_loss(loss_creator)
-        self.loss_creator = loss
+        self.optimizer_creator = optimizer_creator
+        self.loss_creator = loss_creator
         self.config = None
         self.model = None
         self.model_built = False
