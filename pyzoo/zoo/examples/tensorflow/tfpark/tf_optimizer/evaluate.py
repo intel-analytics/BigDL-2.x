@@ -30,10 +30,11 @@ slim = tf.contrib.slim
 
 def main(options, data_num):
 
+    data_path = '/tmp/mnist' if not options.data_path else options.data_path
     sc = init_nncontext()
 
     # get data, pre-process and create TFDataset
-    (images_data, labels_data) = mnist.read_data_sets(options.data_path, "test")
+    (images_data, labels_data) = mnist.read_data_sets(data_path, "test")
     images_data = (images_data[:data_num] - mnist.TRAIN_MEAN) / mnist.TRAIN_STD
     labels_data = labels_data[:data_num].astype(np.int32)
     dataset = TFDataset.from_ndarrays((images_data, labels_data), batch_per_thread=20)
@@ -71,6 +72,6 @@ if __name__ == '__main__':
 
     parser = OptionParser()
     parser.add_option("--data_path", dest="data_path")
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(sys.argv)
 
     main(options, data_num)
