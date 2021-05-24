@@ -25,7 +25,6 @@ import pandas as pd
 
 from zoo.orca.automl.pytorch_utils import LR_NAME, DEFAULT_LR
 
-
 PYTORCH_REGRESSION_LOSS_MAP = {"mse": "MSELoss",
                                "mae": "L1Loss",
                                "huber_loss": "SmoothL1Loss"}
