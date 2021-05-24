@@ -43,10 +43,10 @@ def images_generator():
 
 
 images_schema = {
-            "image": SchemaField(feature_type=FeatureType.IMAGE, dtype=DType.FLOAT32, shape=()),
-            "label": SchemaField(feature_type=FeatureType.SCALAR, dtype=DType.FLOAT32, shape=()),
-            "id": SchemaField(feature_type=FeatureType.SCALAR, dtype=DType.STRING, shape=())
-        }
+    "image": SchemaField(feature_type=FeatureType.IMAGE, dtype=DType.FLOAT32, shape=()),
+    "label": SchemaField(feature_type=FeatureType.SCALAR, dtype=DType.FLOAT32, shape=()),
+    "id": SchemaField(feature_type=FeatureType.SCALAR, dtype=DType.STRING, shape=())
+}
 
 
 def parse_data_train(image, label):
@@ -59,13 +59,13 @@ def parse_data_train(image, label):
 def model_creator(config):
     import tensorflow as tf
     model = tf.keras.Sequential([
-    tf.keras.layers.Flatten(input_shape=(224, 224,3)),
-    tf.keras.layers.Dense(64, activation='relu'),
-    tf.keras.layers.Dense(2)
-])
+        tf.keras.layers.Flatten(input_shape=(224, 224, 3)),
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dense(2)
+    ])
     model.compile(optimizer='adam',
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-              metrics=['accuracy'])
+                  loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                  metrics=['accuracy'])
     return model
 
 
@@ -91,7 +91,7 @@ class TestReadParquet(TestCase):
             ParquetDataset.write("file://" + temp_dir, images_generator(), images_schema)
             path = "file://" + temp_dir
             output_types = {"id": tf.string, "image": tf.string, "label": tf.float32}
-            output_shapes={"id": (), "image": (), "label": ()}
+            output_shapes = {"id": (), "image": (), "label": ()}
 
             def data_creator(config, batch_size):
                 dataset = read_parquet("tf_dataset", input_path=path,
