@@ -1,9 +1,6 @@
 #!/bin/bash
 set -x
 
-bash /opt/occlum/start_aesm.sh
-echo "Starting AESM service..."
-
 cd /opt
 ./init-occlum-taskmanager.sh
 echo "occlum flink jobmanager image built"
