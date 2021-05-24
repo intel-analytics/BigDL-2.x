@@ -67,8 +67,8 @@ class TestAutoLSTM(TestCase):
         stop_orca_context()
 
     def test_fit_np(self):
-        auto_lstm = AutoLSTM(input_dim=10,
-                             output_dim=2,
+        auto_lstm = AutoLSTM(input_feature_num=10,
+                             output_target_num=2,
                              optimizer=torch.optim.Adam,
                              loss=torch.nn.MSELoss(),
                              metric="mse",
@@ -91,8 +91,8 @@ class TestAutoLSTM(TestCase):
         assert 1 <= best_model.config['layer_num'] < 3
 
     def test_fit_data_creator(self):
-        auto_lstm = AutoLSTM(input_dim=10,
-                             output_dim=2,
+        auto_lstm = AutoLSTM(input_feature_num=10,
+                             output_target_num=2,
                              optimizer=torch.optim.Adam,
                              loss=torch.nn.MSELoss(),
                              metric="mse",
