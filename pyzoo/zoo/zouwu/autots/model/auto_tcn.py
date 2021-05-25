@@ -28,8 +28,8 @@ class AutoTCN:
                  optimizer,
                  loss,
                  metric,
-                 hidden_units=30,
-                 levels=8,
+                 hidden_units=None,
+                 levels=None,
                  num_channels=None,
                  kernel_size=7,
                  lr=0.001,
@@ -51,10 +51,12 @@ class AutoTCN:
         :param metric: String. The evaluation metric name to optimize. e.g. "mse"
         :param hidden_units: Int or hp sampling function from an integer space. The number of hidden
                units or filters for each convolutional layer. It is similar to `units` for LSTM.
-               It defaults to 30. For hp sampling, see zoo.zouwu.orca.automl.hp for more details.
+               It defaults to 30. We will omit the hidden_units value if num_channels is specified.
+               For hp sampling, see zoo.zouwu.orca.automl.hp for more details.
                e.g. hp.grid_search([32, 64]).
         :param levels: Int or hp sampling function from an integer space. The number of levels of
-               TemporalBlocks to use. It defaults to 8.
+               TemporalBlocks to use. It defaults to 8. We will omit the levels value if
+               num_channels is specified.
         :param num_channels: List of integers. A list of hidden_units for each level. You could
                specify num_channels if you want different hidden_units for different levels.
                By default, num_channels equals to
@@ -71,6 +73,7 @@ class AutoTCN:
         :param name: name of the AutoTCN. It defaults to "auto_tcn"
         """
         # todo: support search for past_seq_len.
+        # todo: add input check.
         if backend != "torch":
             raise ValueError(f"We only support backend as torch. Got {backend}")
         self.search_space = dict(
