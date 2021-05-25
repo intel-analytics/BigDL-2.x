@@ -28,6 +28,7 @@ class TSDataset:
         self.dt_col = None  # column name of time
         self.feature_col = None  # column name of feature
         self.target_col = None  # column name of target
+        raise NotImplementedError("TSDataset is developing for now.")
 
     @staticmethod
     def from_pandas(df,
@@ -59,7 +60,7 @@ class TSDataset:
         '''
         # check input
         # map input to required internal dataframe structure
-        pass
+        raise NotImplementedError("TSDataset is developing for now.")
 
     def impute(self, mode="last"):
         '''
@@ -158,12 +159,14 @@ class TSDataset:
         export rolling result in form of a tuple of numpy ndarray (x, y)
         '''
         # return self.numpy_x, self.numpy_y
+        pass
 
     def to_pandas(self):
         '''
         export the pandas dataframe
         '''
         # return self.df
+        pass
 
     def _check_basic_invariants(self):
         '''
