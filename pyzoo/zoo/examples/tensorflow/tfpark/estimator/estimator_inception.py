@@ -88,6 +88,6 @@ if __name__ == '__main__':
     parser.add_option("--image-path", dest="image_path")
     parser.add_option("--num-classes", dest="num_classes")
     parser.add_option("--batch_size", dest="batch_size")
-    
+
     (options, args) = parser.parse_args(sys.argv)
     main(options)
