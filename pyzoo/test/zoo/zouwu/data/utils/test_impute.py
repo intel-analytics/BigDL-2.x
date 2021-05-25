@@ -49,18 +49,40 @@ class TestImputeTimeSeries(ZooTestCase):
         with pytest.raises(AssertionError):
             impute_timeseries_dataframe(self.df, dt_col="z")
         with pytest.raises(AssertionError):
-            impute_timeseries_dataframe(self.df, dt_col="datetime", mode="dummy")
+            impute_timeseries_dataframe(
+                self.df, dt_col="datetime", mode="dummy")
         with pytest.raises(AssertionError):
             impute_timeseries_dataframe(self.df, dt_col="a")
+        last_res_df = impute_timeseries_dataframe(
+            self.df, dt_col="datetime", mode="last")
+        assert self.df.isna().sum().sum() != 0
+        assert last_res_df.isna().sum().sum() == 0
+        const_res_df = impute_timeseries_dataframe(
+            self.df, dt_col="datetime", mode="const")
+        assert self.df.isna().sum().sum() != 0
+        assert const_res_df.isna().sum().sum() == 0
+        linear_res_df = impute_timeseries_dataframe(
+            self.df, dt_col="datetime", mode="linear")
+        assert self.df.isna().sum().sum() != 0
+        assert linear_res_df.isna().sum().sum() == 0
 
     def test_last_impute_timeseries_dataframe(self):
-        with pytest.raises(NotImplementedError):
-            _last_impute_timeseries_dataframe(self.df)
+        data = {'data': [np.nan, 1, np.nan, 2, 3]}
+        df = pd.DataFrame(data)
+        res_df = _last_impute_timeseries_dataframe(df)
+        assert res_df['data'][0] == 0
+        assert res_df['data'][2] == 1
 
     def test_const_impute_timeseries_dataframe(self):
-        with pytest.raises(NotImplementedError):
-            _const_impute_timeseries_dataframe(self.df, const_num=0)
+        data = {'data': [np.nan, 1, np.nan, 2, 3]}
+        df = pd.DataFrame(data)
+        res_df = _const_impute_timeseries_dataframe(df, 1)
+        assert res_df['data'][0] == 1
+        assert res_df['data'][2] == 1
 
     def test_linear_timeseries_dataframe(self):
-        with pytest.raises(NotImplementedError):
-            _linear_impute_timeseries_dataframe(self.df)
+        data = {'data': [np.nan, 1, np.nan, 2, 3]}
+        df = pd.DataFrame(data)
+        res_df = _linear_impute_timeseries_dataframe(df)
+        assert res_df['data'][0] == 1
+        assert res_df['data'][2] == 1.5
