@@ -19,7 +19,7 @@ import pandas as pd
 import numpy as np
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.zouwu.transform.impute import impute_timeseries_dataframe, \
+from zoo.zouwu.data.utils.impute import impute_timeseries_dataframe, \
     _last_impute_timeseries_dataframe, _const_impute_timeseries_dataframe, \
     _linear_impute_timeseries_dataframe
 
