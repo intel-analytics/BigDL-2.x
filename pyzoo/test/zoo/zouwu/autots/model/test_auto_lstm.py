@@ -21,12 +21,13 @@ import pytest
 from zoo.zouwu.autots.model.auto_lstm import AutoLSTM
 from zoo.orca.automl import hp
 
+input_feature_dim = 10
+output_feature_dim = 2
+past_seq_len = 5
+future_seq_len = 1
+
 
 def get_x_y(size):
-    input_feature_dim = 10
-    output_feature_dim = 2
-    past_seq_len = 5
-    future_seq_len = 1
     x = np.random.randn(size, past_seq_len, input_feature_dim)
     y = np.random.randn(size, future_seq_len, output_feature_dim)
     return x, y
@@ -67,9 +68,9 @@ class TestAutoLSTM(TestCase):
         stop_orca_context()
 
     def test_fit_np(self):
-        auto_lstm = AutoLSTM(input_feature_num=10,
-                             output_target_num=2,
-                             optimizer=torch.optim.Adam,
+        auto_lstm = AutoLSTM(input_feature_num=input_feature_dim,
+                             output_target_num=output_feature_dim,
+                             optimizer='Adam',
                              loss=torch.nn.MSELoss(),
                              metric="mse",
                              hidden_dim=hp.grid_search([32, 64]),
@@ -91,9 +92,9 @@ class TestAutoLSTM(TestCase):
         assert 1 <= best_model.config['layer_num'] < 3
 
     def test_fit_data_creator(self):
-        auto_lstm = AutoLSTM(input_feature_num=10,
-                             output_target_num=2,
-                             optimizer=torch.optim.Adam,
+        auto_lstm = AutoLSTM(input_feature_num=input_feature_dim,
+                             output_target_num=output_feature_dim,
+                             optimizer='Adam',
                              loss=torch.nn.MSELoss(),
                              metric="mse",
                              hidden_dim=hp.grid_search([32, 64]),
