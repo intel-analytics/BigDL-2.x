@@ -108,7 +108,7 @@ COPY --from=analytics-zoo /opt/analytics-zoo/zoo/target/analytics-zoo-bigdl_${BI
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
         build-essential ca-certificates openjdk-11-jdk \
-        curl wget netcat gnupg2 jq make gdb libfuse-dev libtool \
+        curl tzdata wget netcat gnupg2 jq make gdb libfuse-dev libtool \
         libprotobuf-c-dev protobuf-c-compiler libcurl4-openssl-dev libprotobuf-dev
 # Add 01.org & key
 RUN echo 'deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu bionic main' | tee /etc/apt/sources.list.d/intelsgx.list && \
@@ -120,8 +120,9 @@ RUN echo 'deb [arch=amd64] https://occlum.io/occlum-package-repos/debian bionic 
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
         build-essential ca-certificates openjdk-11-jdk curl wget netcat net-tools \
-        gnupg2 jq make gdb libfuse-dev libtool \
-        libsgx-dcap-ql libsgx-epid libsgx-urts libsgx-quote-ex \
+        gnupg2 vim jq make gdb libfuse-dev libtool \
+        libsgx-dcap-ql libsgx-epid libsgx-urts libsgx-quote-ex libsgx-uae-service \
+        libsgx-dcap-quote-verify-dev \
         occlum && \
     apt-get clean
 
