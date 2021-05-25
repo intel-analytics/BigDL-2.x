@@ -329,7 +329,7 @@
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-reflect</artifactId>
             <version>${scala.version}</version>
-            <scope>${spark-scope}</scope>
+            <scope>${scala-library-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>
@@ -350,19 +350,19 @@
             <scope>${spark-scope}</scope>
         </dependency>
 
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.spark</groupId>-->
-        <!--            <artifactId>spark-core_${scala.major.version}</artifactId>-->
-        <!--            <version>${spark.version}</version>-->
-        <!--            <scope>${spark-scope}</scope>-->
-        <!--        </dependency>-->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.major.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>${scala-library-scope}</scope>
+        </dependency>
 
 
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
-            <scope>${spark-scope}</scope>
+            <scope>${scala-library-scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.intel.analytics.bigdl</groupId>
@@ -502,6 +502,31 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>15.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.esotericsoftware.kryo</groupId>
+            <artifactId>kryo</artifactId>
+            <version>2.24.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-ast_2.11</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-core_2.11</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-jackson_2.11</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-scalap_2.11</artifactId>
+            <version>3.5.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.arrow</groupId>
@@ -843,6 +868,7 @@
                             <artifactSet>
                                 <excludes>
                                     <exclude>org.scala-lang:scala-library</exclude>
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -871,24 +897,13 @@
                             </transformers>
                             <artifactSet>
                                 <excludes>
-                                    <exclude>com.intel.analytics.bigdl:bigdl-SPARK_2.4</exclude>
                                     <exclude>ml.dmlc:xgboost4j</exclude>
-                                    <exclude>org.spark-project.spark:unused</exclude>
-                                    <exclude>org.tensorflow:libtensorflow</exclude>
-                                    <exclude>org.tensorflow:proto</exclude>
                                     <exclude>black.ninia:jep</exclude>
                                     <exclude>org.tensorflow:tensorflow-hadoop</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-dist-all</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-linux</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-pmem-java-linux</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-tfnet-linux</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-mkl-linux</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-dist-mac</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
-                                    <exclude>com.intel.analytics.bigdl.core.dist:all</exclude>
-                                    <exclude>com.intel.analytics.bigdl.spark-version</exclude>
-                                    <exclude>org.scalanlp:breeze_${scala.major.version}</exclude>
                                     <exclude>it.unimi.dsi:fastutil</exclude>
                                 </excludes>
                             </artifactSet>

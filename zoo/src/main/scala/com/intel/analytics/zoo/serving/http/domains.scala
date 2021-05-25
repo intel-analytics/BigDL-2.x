@@ -808,13 +808,20 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   var model: InferenceModel = _
 
   def load(): Unit = {
-    model = new InferenceModel(1)
+    model = new InferenceModel()
     inferenceModelMetaData.modelType match {
       case "OpenVINO" =>
         model.doLoadOpenVINO(inferenceModelMetaData.modelPath,
           inferenceModelMetaData.weightPath)
-      case "frozenModel" =>
-        model.doLoadTensorflow(inferenceModelMetaData.modelPath, inferenceModelMetaData.modelType)
+      case "tf.frozenModel" =>
+        model.doLoadTensorflow(inferenceModelMetaData.modelPath, "frozenModel")
+      case "BigDL" =>
+        model.doLoadBigDL(inferenceModelMetaData.modelPath, inferenceModelMetaData.weightPath)
+      case "Caffe" =>
+        model.doLoadCaffe(inferenceModelMetaData.modelPath, inferenceModelMetaData.weightPath)
+      case "PyTorch" =>
+        model.doLoadPyTorch(inferenceModelMetaData.modelPath)
+
     }
   }
 
