@@ -67,11 +67,12 @@ class TestImputeTimeSeries(ZooTestCase):
         assert linear_res_df.isna().sum().sum() == 0
 
     def test_last_impute_timeseries_dataframe(self):
-        data = {'data': [np.nan, 1, np.nan, 2, 3]}
+        data = {'data': [np.nan, np.nan, 1, np.nan, 2, 3]}
         df = pd.DataFrame(data)
         res_df = _last_impute_timeseries_dataframe(df)
         assert res_df['data'][0] == 0
-        assert res_df['data'][2] == 1
+        assert res_df['data'][1] == 0
+        assert res_df['data'][3] == 1
 
     def test_const_impute_timeseries_dataframe(self):
         data = {'data': [np.nan, 1, np.nan, 2, 3]}

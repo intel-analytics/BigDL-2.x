@@ -49,8 +49,9 @@ def impute_timeseries_dataframe(df,
 
 
 def _last_impute_timeseries_dataframe(df):
-    res_df = df.fillna(method='pad')
+    res_df = df.copy()
     res_df.iloc[0] = res_df.iloc[0].fillna(0)
+    res_df = res_df.fillna(method='pad')
     return res_df
 
 
