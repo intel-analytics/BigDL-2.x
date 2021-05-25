@@ -77,7 +77,6 @@ class VanillaLSTMPytorch(PytorchBaseModel):
     def _get_required_parameters(self):
         return {
             "input_feature_num",
-            "future_seq_len",
             "output_feature_num"
         }
 
@@ -85,4 +84,5 @@ class VanillaLSTMPytorch(PytorchBaseModel):
         return {
             'hidden_dim',
             'layer_num',
+            'dropout',
         } | super()._get_optional_parameters()
