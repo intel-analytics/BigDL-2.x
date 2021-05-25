@@ -16,7 +16,7 @@
 import os
 from functools import reduce
 
-from pyspark.sql.types import DoubleType, ArrayType
+from pyspark.sql.types import DoubleType, ArrayType, IntegerType
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
@@ -616,7 +616,8 @@ class FeatureTable(Table):
             result_df = result_df.join(merge_df, on=cat_col, how="left")
         return FeatureTable(result_df)
 
-    def gen_target(self, cat_cols, cont_cols, smooth, out_cols=None, name_sep="_"):
+    def gen_target(self, cat_cols, cont_cols, smooth, kfold=1, fold_seed=42, fold_col="__fold__",
+            out_cols=None, name_sep="_"):
         """
         :param cat_cols: str, or list of (str or list of str). Categorical columns / column groups
                to target encode. If an element in the list is a str, then it is a categorical
@@ -625,7 +626,9 @@ class FeatureTable(Table):
         :param smooth: int. The mean of each category is smoothed by the overall mean.
         :param kfold: int. Specifies number of folds for cross validation. The mean values within
                the i-th fold are calculated with data from all other folds. If kfold is 1,
-               global-mean statistics are applied. Default is None.
+               global-mean statistics are applied. Default is 1.
+        :param fold_seed:
+        :param fold_col: 
         :param out_cols: list of dict. Each element corresponds to the element in cat_cols in the
                same position. For each categorical column / column group, element in the dict is
                in the format of {continuous column : output column}. If it is None, the output
@@ -633,6 +636,7 @@ class FeatureTable(Table):
         :param name_sep: str. When out_cols is None, for group of categorical columns, concatenate
                them with name_sep to generate output columns. Default is "_".
         """
+        assert isinstance(kfold, int) and kfold > 0, "kfold should be an integer larger than 0"
         cat_cols = str_to_list("cat_cols", cat_cols)
         for cat_col in cat_cols:
             check_col_str_list_exists(self.df, cat_col, "cat_cols")
@@ -660,38 +664,80 @@ class FeatureTable(Table):
         # calculate global mean for each continuous column
         global_mean_list = [F.mean(F.col(cont_col)).alias(cont_col) for cont_col in cont_cols]
         cont_mean = self.df.select(*global_mean_list).collect()
-        cont_mean_dict = {cont_col:cont_mean[0][cont_col] for cont_col in cont_cols} 
+        cont_mean_dict = {cont_col:cont_mean[0][cont_col] for cont_col in cont_cols}
+
+        result_df = self.df
+        if kfold > 1:
+            if fold_col not in self.df.columns:
+                result_df = result_df.withColumn(fold_col,
+                        (F.rand(seed=fold_seed) * kfold).cast(IntegerType()))
+            else:
+                assert list(filter(lambda x: x[0] == fold_col and x[1] == "int",
+                    self.df.dtypes), "fold_col " + fold_col + " should be integer type")
 
         def gen_target_code(cat_out):
             cat_col = cat_out[0]
             out_col_dict = cat_out[1]
             cat_col_name = gen_target_name(cat_col, name_sep)
 
-            mean_list = [F.mean(cont_col).alias(cat_col_name + "_mean_" + cont_col) 
-                    for cont_col in cont_cols]
-            if isinstance(cat_col, str):
-                target_df = self.df.groupBy(cat_col).agg(*mean_list,
-                        F.count("*").alias(cat_col_name + "_count"))
-            else:
-                target_df = self.df.groupBy(*cat_col).agg(*mean_list,
-                        F.count("*").alias(cat_col_name + "_count"))
+            # calculate mean_cat
+            target_df = result_df
+            if kfold == 1:
+                mean_list = [F.mean(cont_col).alias(cat_col_name + "_mean_" + cont_col) 
+                        for cont_col in cont_cols]
+                if isinstance(cat_col, str):
+                    target_df = target_df.groupBy(cat_col)
+                else:
+                    target_df = target_df.groupBy(*cat_col)
+                target_df = target_df.agg(*mean_list, F.count("*").alias(cat_col_name + "_count"))
 
-            for cont_col in cont_cols:
-                global_cont_mean = cont_mean_dict[cont_col]
-                target_func = udf(lambda mean, count: None if mean is None else \
-                        (mean * count + global_cont_mean * smooth) / (count + smooth),
-                        DoubleType())
-                target_df = target_df.withColumn(out_col_dict[cont_col],
-                        target_func(cat_col_name + "_mean_" + cont_col, cat_col_name + "_count")) \
-                        .drop(cat_col_name + "_mean_" + cont_col)
-            target_df = target_df.drop(cat_col_name + "_count")
+                for cont_col in cont_cols:
+                    global_cont_mean = cont_mean_dict[cont_col]
+                    target_func = udf(lambda mean, count: None if mean is None else \
+                            (mean * count + global_cont_mean * smooth) / (count + smooth),
+                            DoubleType())
+                    target_df = target_df.withColumn(out_col_dict[cont_col],
+                            target_func(cat_col_name + "_mean_" + cont_col,
+                                cat_col_name + "_count")) \
+                            .drop(cat_col_name + "_mean_" + cont_col)
+                target_df = target_df.drop(cat_col_name + "_count")
+            else:
+                fold_sum_list = [F.sum(cont_col).alias(cat_col_name + "_sum_" + cont_col)
+                        for cont_col in cont_cols]
+                sum_list = [F.sum(cont_col).alias(cat_col_name + "_all_sum_" + cont_col)
+                        for cont_col in cont_cols]
+                if isinstance(cat_col, str):
+                    fold_df = target_df.groupBy(cat_col, fold_col)
+                    all_df = target_df.groupBy(cat_col)
+                else:
+                    fold_df = target_df.groupBy(*cat_col, fold_col)
+                    all_df = target_df.groupBy(*cat_col)
+                fold_df = fold_df.agg(*fold_sum_list, F.count("*").alias(cat_col_name + "_count"))
+                all_df = all_df.agg(*sum_list, F.count("*").alias(cat_col_name + "_all_count"))
+                target_df = fold_df.join(all_df, cat_col, how="left")
+                for cont_col in cont_cols:
+                    global_cont_mean = cont_mean_dict[cont_col]
+                    target_func = udf(lambda s_all, s, c_all, c: \
+                            None if c_all == c or s_all == None or s == None else \
+                            ((s_all - s) + global_cont_mean * smooth) / ((c_all - c) + smooth),
+                            DoubleType())
+                    target_df = target_df.withColumn(out_col_dict[cont_col],
+                            target_func(cat_col_name + "_all_sum_" + cont_col,
+                                cat_col_name + "_sum_" + cont_col,
+                                cat_col_name + "_all_count",
+                                cat_col_name + "_count"))
+                    target_df = target_df.drop(cat_col_name + "_sum_" + cont_col,
+                            cat_col_name + "_all_sum_" + cont_col)
+                target_df = target_df.drop(cat_col_name + "_count", cat_col_name + "_all_count")
+
             out_cont_mean_dict = {out_col_dict[cont_col]:(cont_col, cont_mean_dict[cont_col]) \
                     for cont_col in cont_cols}
-            return TargetCode(target_df, cat_col, out_col_dict, out_cont_mean_dict)
+            return TargetCode(target_df, cat_col, out_col_dict, out_cont_mean_dict, kfold,
+                    fold_col)
 
-        return list(map(gen_target_code, zip(cat_cols, out_cols)))
+        return FeatureTable(result_df), list(map(gen_target_code, zip(cat_cols, out_cols)))
 
-    def encode_target(self, cat_cols, cont_cols, targets):
+    def encode_target(self, cat_cols, cont_cols, targets, drop_folds=True):
         cat_cols = str_to_list("cat_cols", cat_cols)
         cont_cols = str_to_list("cont_cols", cont_cols)
         for cat_col in cat_cols:
@@ -703,7 +749,15 @@ class FeatureTable(Table):
         for i in range(len(cat_cols)):
             target_code = targets[i]
             cat_col = cat_cols[i]
-            result_df = result_df.join(target_code.df, cat_col, how="left")
+            if target_code.kfold == 1:
+                result_df = result_df.join(target_code.df, cat_col, how="left")
+            else:
+                if isinstance(cat_col, str):
+                    result_df = result_df.join(target_code.df, [cat_col, target_code.fold_col],
+                            how="left")
+                else:
+                    result_df = result_df.join(target_code.df, cat_col + [target_code.fold_col],
+                            how="left")
             cont_mean = target_code.out_cont_mean
             for target_col in target_code.df.columns:
                 if target_col in cont_mean:
@@ -712,6 +766,9 @@ class FeatureTable(Table):
                         result_df = result_df.fillna(target_cont_mean[1], target_col)
                     else:
                         result_df = result_df.drop(target_col)
+        if target_code.kfold > 1 and drop_folds:
+            for target_code in targets:
+                result_df = result_df.drop(target_code.fold_col)
 
         return FeatureTable(result_df)
 
@@ -761,7 +818,7 @@ class StringIndex(Table):
 
 
 class TargetCode(Table):
-    def __init__(self, df, cat_col, cont_out, out_cont_mean):
+    def __init__(self, df, cat_col, cont_out, out_cont_mean, kfold, fold_col):
         """
         :param df: DataFrame.
         :param cat_col: str or list of (str or list). Categorical column(s) that of this
@@ -773,19 +830,31 @@ class TargetCode(Table):
                (continuous column's name in TargetCode.df):
                (continuous column's name in original Table,
                continuous column's global mean in original Table)
+        :param kfold:
+        :param fold_col:
         """
         super().__init__(df)
+        self.cat_col = cat_col
         self.out_cont_mean = out_cont_mean
         self.cont_out = cont_out
-        self.cat_col = cat_col
+        self.kfold = kfold
+        self.fold_col = fold_col
+
         check_col_str_list_exists(df, cat_col, "cat_col")
+        assert isinstance(kfold, int) and kfold > 0, "kfold should be an integer larger than 0"
+        if kfold > 1:
+            assert isinstance(fold_col, str) and fold_col in df.columns, "fold_col {} should be" \
+                    " one of the columns in {} in TargetCode".format(fold_col, df.columns)
 
         # (keys of out_cont_mean) includes (continuous df.columns) includes (values of cont_out)
         for cont_col in cont_out:
-            assert cont_out[cont_col] in df.columns
+            assert cont_out[cont_col] in df.columns, "output column {} of continuous column {} " \
+                    "in cont_out should be one of the columns {} in TargetCode" \
+                    .format(cont_out[cont_col], cont_col, str(df.columns))
         for column in df.columns:
             if (isinstance(cat_col, str) and column != cat_col) or \
                     (isinstance(cat_col, list) and column not in cat_col):
-                assert column in out_cont_mean, column + " should be in means"
+                if column != fold_col:
+                    assert column in out_cont_mean, column + " should be in means"
         
-        # TODO rename clone
+        # TODO rename clone; delete cont_out?
