@@ -19,10 +19,10 @@ import pandas as pd
 import numpy as np
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.zouwu.preprocessing.feature import generate_dt_features
+from zoo.zouwu.transform.feature import generate_dt_features
 
 
-class TestImpute(ZooTestCase):
+class TestFeature(ZooTestCase):
     def setup_method(self, method):
         pass
 
@@ -35,3 +35,17 @@ class TestImpute(ZooTestCase):
         df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
                            "A": data[:, 1], "B": data[:, 2]})
         df = generate_dt_features(df, dt_col="datetime")
+        assert set(df.columns) == {'IS_AWAKE(datetime)',
+                                   'IS_BUSY_HOURS(datetime)',
+                                   'HOUR(datetime)',
+                                   'DAY(datetime)',
+                                   'IS_WEEKEND(datetime)',
+                                   'WEEKDAY(datetime)',
+                                   'MONTH(datetime)',
+                                   'DAYOFYEAR(datetime)',
+                                   'WEEKOFYEAR(datetime)',
+                                   'MINUTE(datetime)',
+                                   'A',
+                                   'B',
+                                   'values',
+                                   'datetime'}
