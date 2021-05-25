@@ -128,6 +128,11 @@ RUN apt-get update && \
 
 RUN echo "source /etc/profile" >> $HOME/.bashrc
 
+# Hotfix for occlum mount aesm
+RUN sed -i "s|pgrep \"|if [ -S /var/run/aesmd/aesm.socket ]; then\n            return\n        else\n            pgrep \"|g" /opt/occlum/build/bin/occlum
+RUN sed -i "/pgrep \"/a \ \ \ \ fi" /opt/occlum/build/bin/occlum
+
+
 # Cluster Serving config
 ADD ./cluster-serving-config.yaml /opt/config.yaml
 # PPML scripts
