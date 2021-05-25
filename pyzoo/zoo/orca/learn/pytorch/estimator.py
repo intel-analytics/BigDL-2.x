@@ -271,7 +271,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         else:
             self.loss = TorchLoss.from_pytorch(loss)
         if isinstance(model, types.FunctionType):
-            def model_creator(self):
+            def model_creator():
                 return model(config)
             model = model_creator
         if self.optimizer is None:
