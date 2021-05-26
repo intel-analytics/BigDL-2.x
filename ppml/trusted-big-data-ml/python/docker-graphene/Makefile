@@ -34,6 +34,8 @@ bash.manifest: bash.manifest.template
              -e 's|$$(ARCH_LIBDIR)|'"$(ARCH_LIBDIR)"'|g' \
              -e 's|$$(JDK_HOME)|'"$(JDK_HOME)"'|g' \
              -e 's|$$(SPARK_HOME)|'"$(SPARK_HOME)"'|g' \
+             -e 's|$$(SPARK_LOCAL_IP)|'"$(SPARK_LOCAL_IP)"'|g' \
+             -e 's|$$(SPARK_USER)|'"$(SPARK_USER)"'|g' \
              -e 's|$$(WORK_DIR)|'"$(WORK_DIR)"'|g' \
              -e 's|$$(PYTHONDISTHOME)|'"$(PYTHONDISTHOME)"'|g' \
              -e 's|$$(PYTHONHOME)|'"$(PYTHONHOME)"'|g' \
