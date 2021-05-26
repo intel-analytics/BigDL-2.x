@@ -1,13 +1,13 @@
 # stage.1 graphene
 FROM ubuntu:18.04 AS graphene
-ENV GRAPHENE_BRANCH=branch-210510
+ENV GRAPHENE_BRANCH=branch-0.6
 
 RUN env DEBIAN_FRONTEND=noninteractive apt-get update && \
     env DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf bison build-essential coreutils gawk git libcurl4-openssl-dev libprotobuf-c-dev protobuf-c-compiler python3-protobuf wget
 RUN apt-get install -y build-essential autoconf gawk bison wget python3 libcurl4-openssl-dev python3-protobuf libprotobuf-c-dev protobuf-c-compiler python3-pip
 RUN pip3 install ninja meson && \
     python3 -m pip install toml==0.10.2 click jinja2
-RUN git clone https://github.com/analytics-zoo/graphene.git /graphene
+RUN git clone https://github.com/DiegoCao/graphene.git /graphene
 RUN cd /graphene && \
     git fetch origin $GRAPHENE_BRANCH && \
     git checkout $GRAPHENE_BRANCH
