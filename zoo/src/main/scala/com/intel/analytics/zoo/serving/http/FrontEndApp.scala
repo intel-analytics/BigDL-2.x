@@ -58,7 +58,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
         }
       }
       val servableManager = new ServableManager
-      if (FrontEndAppArguments().multiServingMode) {
+      if (arguments.multiServingMode) {
         logger.info("Multi Serving Mode")
         timing("load servable manager")() {
           try servableManager.load(arguments.servableManagerPath)
@@ -96,7 +96,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
       var redisPutter: ActorRef = null
       var redisGetter: ActorRef = null
       var querierQueue: LinkedBlockingQueue[ActorRef] = null
-      if (!FrontEndAppArguments().multiServingMode) {
+      if (!arguments.multiServingMode) {
         logger.info("Single Serving Mode. Starting Redis")
         rateLimiter = arguments.tokenBucketEnabled match {
           case true => RateLimiter.create(arguments.tokensPerSecond)
@@ -288,7 +288,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           concat(
             (get & path(Segment)) {
               (modelName) => {
-                if (!FrontEndAppArguments().multiServingMode){
+                if (arguments.multiServingMode){
                   complete(404, "Serving Not In MultiServing Mode. Current Path not Supported")
                 }
                 timing("get model infos with model name")(overallRequestTimer,
@@ -311,7 +311,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               }
             } ~ (get & path(Segment / "versions" / Segment)) {
               (modelName, modelVersion) => {
-                if (!FrontEndAppArguments().multiServingMode){
+                if (arguments.multiServingMode){
                   complete(404, "Serving Not In MultiServing Mode. Current Path not Supported")
                 }
                 timing("get model info with model name and model version")(overallRequestTimer,
@@ -335,7 +335,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
             } ~ (post & path(Segment / "versions" / Segment / "predict")
               & extract(_.request.entity.contentType) & entity(as[String])) {
               (modelName, modelVersion, contentType, content) => {
-                if (!FrontEndAppArguments().multiServingMode){
+                if (arguments.multiServingMode){
                   complete(404, "Serving Not In MultiServing Mode. Current Path not Supported")
                 }
                 timing("backend inference timing")(overallRequestTimer, backendInferenceTimer) {
