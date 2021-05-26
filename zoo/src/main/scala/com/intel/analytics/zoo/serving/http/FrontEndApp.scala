@@ -57,16 +57,17 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           case None => argumentsParser.failure("miss args, please see the usage info"); null
         }
       }
-
       val servableManager = new ServableManager
-      timing("load servable manager")() {
-        try servableManager.load(arguments.servableManagerPath)
-        catch {
-          case e: ServableLoadException =>
-            throw e
-          case e =>
-            val exampleYaml =
-              """
+      if (FrontEndAppArguments().multiServingMode) {
+        logger.info("Multi Serving Mode")
+        timing("load servable manager")() {
+          try servableManager.load(arguments.servableManagerPath)
+          catch {
+            case e: ServableLoadException =>
+              throw e
+            case e =>
+              val exampleYaml =
+                """
                 ---
                  modelMetaDataList:
                  - !<ClusterServingMetaData>
@@ -85,52 +86,59 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                       - "a"
                       - "b"
               """
-            logger.info("Example Format of Input:" + exampleYaml)
-            throw e
+              logger.info("Example Format of Input:" + exampleYaml)
+              throw e
+          }
         }
+        logger.info("Servable Manager Load Success!")
       }
-      logger.info("Servable Manager Load Success!")
+      var rateLimiter: RateLimiter = null
+      var redisPutter: ActorRef = null
+      var redisGetter: ActorRef = null
+      var querierQueue: LinkedBlockingQueue[ActorRef] = null
+      if (!FrontEndAppArguments().multiServingMode) {
+        logger.info("Single Serving Mode. Starting Redis")
+        rateLimiter = arguments.tokenBucketEnabled match {
+          case true => RateLimiter.create(arguments.tokensPerSecond)
+          case false => null
+        }
 
-      val rateLimiter: RateLimiter = arguments.tokenBucketEnabled match {
-        case true => RateLimiter.create(arguments.tokensPerSecond)
-        case false => null
-      }
+        val redisPutterName = s"redis-putter"
+        redisPutter = timing(s"$redisPutterName initialized.")() {
+          val redisPutterProps = Props(new RedisPutActor(
+            arguments.redisHost, arguments.redisPort,
+            arguments.redisInputQueue, arguments.redisOutputQueue,
+            arguments.timeWindow, arguments.countWindow,
+            arguments.redisSecureEnabled,
+            arguments.redissTrustStorePath,
+            arguments.redissTrustStoreToken))
+          system.actorOf(redisPutterProps, name = redisPutterName)
+        }
 
-      val redisPutterName = s"redis-putter"
-      val redisPutter = timing(s"$redisPutterName initialized.")() {
-        val redisPutterProps = Props(new RedisPutActor(
-          arguments.redisHost, arguments.redisPort,
-          arguments.redisInputQueue, arguments.redisOutputQueue,
-          arguments.timeWindow, arguments.countWindow,
-          arguments.redisSecureEnabled,
-          arguments.redissTrustStorePath,
-          arguments.redissTrustStoreToken))
-        system.actorOf(redisPutterProps, name = redisPutterName)
-      }
+        val redisGetterName = s"redis-getter"
+        redisGetter = timing(s"$redisGetterName initialized.")() {
+          val redisGetterProps = Props(new RedisGetActor(
+            arguments.redisHost,
+            arguments.redisPort,
+            arguments.redisInputQueue,
+            arguments.redisOutputQueue,
+            arguments.redisSecureEnabled,
+            arguments.redissTrustStorePath,
+            arguments.redissTrustStoreToken))
+          system.actorOf(redisGetterProps, name = redisGetterName)
+        }
 
-      val redisGetterName = s"redis-getter"
-      val redisGetter = timing(s"$redisGetterName initialized.")() {
-        val redisGetterProps = Props(new RedisGetActor(
-          arguments.redisHost,
-          arguments.redisPort,
-          arguments.redisInputQueue,
-          arguments.redisOutputQueue,
-          arguments.redisSecureEnabled,
-          arguments.redissTrustStorePath,
-          arguments.redissTrustStoreToken))
-        system.actorOf(redisGetterProps, name = redisGetterName)
-      }
-
-      val querierNum = arguments.parallelism
-      val querierQueue = timing(s"queriers initialized.")() {
-        val querierQueue = new LinkedBlockingQueue[ActorRef](querierNum)
-        val querierProps = Props(new QueryActor(redisGetter))
-        List.range(0, querierNum).map(index => {
-          val querierName = s"querier-$index"
-          val querier = system.actorOf(querierProps, name = querierName)
-          querierQueue.put(querier)
-        })
-        querierQueue
+        val querierNum = arguments.parallelism
+        querierQueue = timing(s"queriers initialized.")() {
+          val querierQueue = new LinkedBlockingQueue[ActorRef](querierNum)
+          val querierProps = Props(new QueryActor(redisGetter))
+          List.range(0, querierNum).map(index => {
+            val querierName = s"querier-$index"
+            val querier = system.actorOf(querierProps, name = querierName)
+            querierQueue.put(querier)
+          })
+          querierQueue
+        }
       }
 
       def processPredictionInput(inputs: Seq[PredictionInput]):
@@ -280,6 +288,9 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           concat(
             (get & path(Segment)) {
               (modelName) => {
+                if (!FrontEndAppArguments().multiServingMode){
+                  complete(404, "Serving Not In MultiServing Mode. Current Path not Supported")
+                }
                 timing("get model infos with model name")(overallRequestTimer,
                   servablesRetriveTimer) {
                   try {
@@ -300,6 +311,9 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               }
             } ~ (get & path(Segment / "versions" / Segment)) {
               (modelName, modelVersion) => {
+                if (!FrontEndAppArguments().multiServingMode){
+                  complete(404, "Serving Not In MultiServing Mode. Current Path not Supported")
+                }
                 timing("get model info with model name and model version")(overallRequestTimer,
                   servableRetriveTimer) {
                   try {
@@ -321,6 +335,9 @@ object FrontEndApp extends Supportive with EncryptSupportive {
             } ~ (post & path(Segment / "versions" / Segment / "predict")
               & extract(_.request.entity.contentType) & entity(as[String])) {
               (modelName, modelVersion, contentType, content) => {
+                if (!FrontEndAppArguments().multiServingMode){
+                  complete(404, "Serving Not In MultiServing Mode. Current Path not Supported")
+                }
                 timing("backend inference timing")(overallRequestTimer, backendInferenceTimer) {
                   try {
                     logger.info("model name: " + modelName + ", model version: " + modelVersion)
@@ -470,7 +487,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
       .text("servableManagerConfPath")
     opt[Boolean]('m', "multiServingMode")
       .action((x, c) => c.copy(multiServingMode = x))
-      .text("multiServingMode")
+      .text("multiServingMode enabled or not")
   }
 
   def defineServerContext(httpsKeyStoreToken: String,

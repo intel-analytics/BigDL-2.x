@@ -25,6 +25,8 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
@@ -42,12 +44,25 @@ object MockMultipleServingHttpClient extends App with Supportive {
     //loads
     val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
     val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
-    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "Caffe", weightPath, null)
+    val features = Array("floatTensor")
+    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "Caffe", weightPath, features)
 
     val inferenceServable = new InferenceModelServable(inferenceModelMetaData)
     inferenceServable.load()
+    val content =
+      """{
+  "instances" : [ {
+    "floatTensor" : [ [ [0.6804766, 0.30136853, 0.17394465, 0.44770062, 0.20275897] ] ]
+  } ]
+}"""
+
     val instance = JsonUtil.fromJson(classOf[Instances], content)
     inferenceServable.predict(instance)
+//    val inputTensor = Tensor[Float](3, 5, 5).rand()
+//    val model = new InferenceModel()
+//    model.doLoadCaffe(modelPath, weightPath)
+//    model.doPredict(inputTensor)
+
   }
 
   def testBigDL() : Unit = {

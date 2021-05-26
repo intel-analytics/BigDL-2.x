@@ -192,6 +192,12 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
           tensor.setValue(i, eleList(i - 1).asInstanceOf[Float])
         })
         tensor
+      case _: Double =>
+        val tensor = Tensor[Float](eleList.length)
+        (1 to eleList.length).foreach(i => {
+          tensor.setValue(i, eleList(i - 1).asInstanceOf[Double].toFloat)
+        })
+        tensor
       case _: List[_] =>
         val length = eleList.size
         val width = eleList.head.asInstanceOf[List[_]].size
