@@ -399,8 +399,10 @@ object FrontEndApp extends Supportive with EncryptSupportive {
       }
       Http().bindAndHandle(route, arguments.interface, arguments.port)
       logger.info(s"http started at http://${arguments.interface}:${arguments.port}")
-      system.scheduler.schedule(10 milliseconds, 1 milliseconds,
-        redisPutter, PredictionInputFlushMessage())(system.dispatcher)
+      if (!arguments.multiServingMode) {
+        system.scheduler.schedule(10 milliseconds, 1 milliseconds,
+          redisPutter, PredictionInputFlushMessage())(system.dispatcher)
+      }
     }
   }
 

@@ -53,6 +53,7 @@ import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.zoo.serving.serialization.StreamSerializer
 
 sealed trait ServingMessage
 
