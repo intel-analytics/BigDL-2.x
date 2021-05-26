@@ -16,7 +16,7 @@
 #
 from zoo.automl.model import PytorchModelBuilder
 from zoo.orca.automl.auto_estimator import AutoEstimator
-from zoo.zouwu.model.tcn import model_creator
+from zoo.chronos.model.tcn import model_creator
 
 
 class AutoTCN:
@@ -52,7 +52,7 @@ class AutoTCN:
         :param hidden_units: Int or hp sampling function from an integer space. The number of hidden
                units or filters for each convolutional layer. It is similar to `units` for LSTM.
                It defaults to 30. We will omit the hidden_units value if num_channels is specified.
-               For hp sampling, see zoo.zouwu.orca.automl.hp for more details.
+               For hp sampling, see zoo.orca.automl.hp for more details.
                e.g. hp.grid_search([32, 64]).
         :param levels: Int or hp sampling function from an integer space. The number of levels of
                TemporalBlocks to use. It defaults to 8. We will omit the levels value if

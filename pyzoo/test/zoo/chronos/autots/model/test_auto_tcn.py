@@ -18,7 +18,7 @@ import torch
 import numpy as np
 from unittest import TestCase
 import pytest
-from zoo.zouwu.autots.model.auto_tcn import AutoTCN
+from zoo.chronos.autots.model.auto_tcn import AutoTCN
 from zoo.orca.automl import hp
 
 input_feature_dim = 10
