@@ -21,6 +21,7 @@ from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql.functions import col, udf, array, broadcast, explode, struct, collect_list
+from pyspark.sql import Row
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
@@ -300,7 +301,7 @@ class Table:
 
         :param columns: a string or a list of strings that specifies column names. If it is None,
                         then cast all of the columns.
-        :param type: a string ("string", "int", "float", "double")
+        :param type: a string ("string", "int", "long", "float", "double")
                      or one of pyspark.sql.types that specifies the type.
 
         :return: A new Table that casts all of the specified columns to the specified type.
@@ -661,6 +662,7 @@ class StringIndex(Table):
         :param indices: dict. The key is the categorical column,
                         the value is the corresponding index.
                         We assume that the key is a str and the value is a int.
+        :param col_name: str. The column name of the categorical column.
 
         :return: A StringIndex.
         """
@@ -672,7 +674,7 @@ class StringIndex(Table):
         if not isinstance(col_name, str):
             raise ValueError('col_name should be str, but get ' + col_name.__class__.__name__)
         indices = map(lambda x: {col_name: x[0], 'id': x[1]}, indices.items())
-        df = spark.createDataFrame(indices)
+        df = spark.createDataFrame(Row(**x) for x in indices)
         return cls(df, col_name)
 
     def _clone(self, df):
