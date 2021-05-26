@@ -15,9 +15,6 @@
 # limitations under the License.
 #
 from zoo.automl.regression.base_predictor import BasePredictor
-from zoo.zouwu.feature.time_sequence import TimeSequenceFeatureTransformer
-
-from zoo.zouwu.model.time_sequence import TimeSequenceModel
 
 
 class TimeSequencePredictor(BasePredictor):
@@ -62,23 +59,16 @@ class TimeSequencePredictor(BasePredictor):
                          scheduler=scheduler,
                          scheduler_params=scheduler_params)
 
-    def create_feature_transformer(self):
-        ft = TimeSequenceFeatureTransformer(self.future_seq_len,
-                                            self.dt_col,
-                                            self.target_col,
-                                            self.extra_features_col,
-                                            self.drop_missing)
-        return ft
-
-    def make_model_fn(self, resources_per_trial):
-        future_seq_len = self.future_seq_len
-
-        def create_model():
-            _model = TimeSequenceModel(
-                check_optional_config=False,
-                future_seq_len=future_seq_len)
-            return _model
-        return create_model
+    def get_model_builder(self):
+        from zoo.zouwu.model.time_sequence import TSModelBuilder
+        model_builder = TSModelBuilder(
+            dt_col=self.dt_col,
+            target_cols=self.target_col,
+            future_seq_len=self.future_seq_len,
+            extra_features_col=self.extra_features_col,
+            drop_missing=self.drop_missing,
+        )
+        return model_builder
 
     def _check_missing_col(self, df):
         cols_list = [self.dt_col] + self.target_col

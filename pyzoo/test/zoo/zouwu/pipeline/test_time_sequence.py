@@ -107,7 +107,6 @@ class TestTimeSequencePipeline(ZooTestCase):
             assert os.path.isfile(save_pipeline_file)
             new_pipeline = load_ts_pipeline(save_pipeline_file)
             assert new_pipeline.config is not None
-            assert isinstance(new_pipeline.feature_transformers, TimeSequenceFeatureTransformer)
             assert isinstance(new_pipeline.model, TimeSequenceModel)
             new_pipeline.describe()
             new_pred = new_pipeline.predict(test_df)
@@ -178,20 +177,6 @@ class TestTimeSequencePipeline(ZooTestCase):
     #     print("Evaluation result after restore and fit: "
     #           "Mean square error is: {}, R square is: {}.".format(new_mse, new_rs))
 
-    # def test_predict_df_list(self):
-    #    target_col = "values"
-    #    future_seq_len = np.random.randint(2, 6)
-    #    train_df, test_df, tsp, test_sample_num = self.get_input_tsp(future_seq_len, target_col)
-    #    df_num = 2
-    #    train_df_list = [train_df] * df_num
-    #    test_df_list = [test_df] * df_num
-    #    pipeline = tsp.fit(train_df_list, test_df_list)
-    #    y_pred = pipeline.predict(test_df_list)
-    #    assert len(y_pred) == df_num
-    #    assert_frame_equal(y_pred[0], y_pred[1], check_exact=False, check_less_precise=2)
-    #    assert y_pred[0].shape == (test_sample_num - default_past_seq_len + 1,
-    #                               future_seq_len + 1)
-
     # def test_look_back_future_1(self):
     #     target_col = "values"
     #     min_past_seq_len = np.random.randint(3, 5)
@@ -252,33 +237,6 @@ class TestTimeSequencePipeline(ZooTestCase):
         with pytest.raises(ValueError, match=r".*look_back should be either*."):
             tsp.fit(train_df, test_df, recipe=RandomRecipe(look_back=(2.5, 3)))
 
-    def test_get_default_configs(self):
-        ppl = TimeSequencePipeline(name='test')
-        ppl.get_default_configs()
-
-    # def test_fit_with_fixed_configs_save(self):
-    #     target_col = "values"
-    #     future_seq_len = np.random.randint(2, 6)
-    #     train_df, test_df, tsp, test_sample_num = self.get_input_tsp(future_seq_len, target_col)
-    #     ppl = TimeSequencePipeline(name='test')
-    #     ppl.fit_with_fixed_configs(train_df, test_df, target_col=target_col,
-    #                                batch_size=64, epochs=1, future_seq_len=future_seq_len)
-    #     mse, rs = ppl.evaluate(test_df, metrics=["mse", "r2"])
-    #     assert len(mse) == future_seq_len
-    #     assert len(rs) == future_seq_len
-    #     y_pred = ppl.predict(test_df)
-    #     ppl_file = ppl.save()
-    #     config_file = ppl.config_save()
-    #     assert os.path.isfile(config_file)
-    #     reload_configs = load_config(config_file)
-    #     reload_ppl = load_ts_pipeline(ppl_file)
-    #     os.remove(ppl_file)
-    #     os.remove(config_file)
-    #     os.rmdir(os.path.dirname(os.path.abspath(ppl_file)))
-    #     reload_y_pred = reload_ppl.predict(test_df)
-    #     assert reload_configs["batch_size"] == 64
-    #     assert_frame_equal(y_pred, reload_y_pred, check_exact=False, check_less_precise=5)
-
     def test_predict_with_uncertainty(self):
         target_col = "values"
         future_seq_len = np.random.randint(2, 6)
@@ -330,38 +288,6 @@ class TestTimeSequencePipeline(ZooTestCase):
     #                                         self.future_seq_len_3)
     #     assert np.any(y_pred_uncertainty)
     #
-    # def test_fit_fixed_configs_predict_with_uncertainty(self):
-    #     # test future_seq_len = 1
-    #     self.pipeline_1 = self.tsp_1.fit(self.train_df, validation_df=self.validation_df)
-    #     config_file = self.pipeline_1.config_save()
-    #     assert os.path.isfile(config_file)
-    #     configs = load_config(config_file)
-    #     os.remove(config_file)
-    #     os.rmdir(os.path.dirname(os.path.abspath(config_file)))
-    #     ppl = TimeSequencePipeline(name='test', config=configs)
-    #     ppl.fit_with_fixed_configs(self.train_df, self.validation_df, mc=True)
-    #     y_out, y_pred_uncertainty = ppl.predict_with_uncertainty(self.test_df, n_iter=2)
-    #     assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
-    #                            self.future_seq_len_1 + 1)
-    #     assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
-    #                                         self.future_seq_len_1)
-    #     assert np.any(y_pred_uncertainty)
-    #
-    #     # test future_seq_len = 3
-    #     self.pipeline_3 = self.tsp_3.fit(self.train_df, validation_df=self.validation_df)
-    #     config_file = self.pipeline_3.config_save()
-    #     assert os.path.isfile(config_file)
-    #     configs = load_config(config_file)
-    #     os.remove(config_file)
-    #     os.rmdir(os.path.dirname(os.path.abspath(config_file)))
-    #     ppl = TimeSequencePipeline(name='test', config=configs)
-    #     ppl.fit_with_fixed_configs(self.train_df, self.validation_df, mc=True)
-    #     y_out, y_pred_uncertainty = ppl.predict_with_uncertainty(self.test_df, n_iter=2)
-    #     assert y_out.shape == (self.test_sample_num - self.default_past_seq_len + 1,
-    #                            self.future_seq_len_3 + 1)
-    #     assert y_pred_uncertainty.shape == (self.test_sample_num - self.default_past_seq_len + 1,
-    #                                         self.future_seq_len_3)
-    #     assert np.any(y_pred_uncertainty)
 
 
 if __name__ == '__main__':

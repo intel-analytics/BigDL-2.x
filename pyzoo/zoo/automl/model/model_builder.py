@@ -50,9 +50,12 @@ class PytorchModelBuilder(ModelBuilder):
     def __init__(self, model_creator,
                  optimizer_creator,
                  loss_creator):
+        from zoo.orca.automl.pytorch_utils import validate_pytorch_loss, validate_pytorch_optim
         self.model_creator = model_creator
-        self.optimizer_creator = optimizer_creator
-        self.loss_creator = loss_creator
+        optimizer = validate_pytorch_optim(optimizer_creator)
+        self.optimizer_creator = optimizer
+        loss = validate_pytorch_loss(loss_creator)
+        self.loss_creator = loss
 
     def build(self, config):
         from zoo.automl.model.base_pytorch_model import PytorchBaseModel

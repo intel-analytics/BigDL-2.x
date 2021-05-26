@@ -38,6 +38,7 @@
 # This file is adapted from
 # https://github.com/locuslab/TCN/blob/master/TCN/tcn.py
 # https://github.com/locuslab/TCN/blob/master/TCN/adding_problem/add_test.py
+import warnings
 
 import torch
 import torch.nn as nn
@@ -127,11 +128,15 @@ class TemporalConvNet(nn.Module):
 
 
 def model_creator(config):
-    if "num_channels" in config and any(k in config for k in ["nhid", "levels"]):
-        print("WARNING: You set both num_channels and (nhid, levels) for TCN,\
-              only num_channels will be effective.")
-    num_channels = config.get("num_channels",
-                              [config.get("nhid", 30)] * (config.get("levels", 8)-1))
+    if config.get("num_channels") and (config.get("nhid") and config.get("levels")):
+        warnings.warn(f"WARNING: You set both num_channels and (nhid, levels) for TCN. "
+                      f"Only num_channels={config['num_channels']} will be effective.")
+    if config.get("num_channels"):
+        num_channels = config["num_channels"]
+    else:
+        n_hid = config["nhid"] if config.get("nhid") else 30
+        levels = config["levels"] if config.get("levels") else 8
+        num_channels = [n_hid] * (levels - 1)
     return TemporalConvNet(past_seq_len=config["past_seq_len"],
                            input_feature_num=config["input_feature_num"],
                            future_seq_len=config["future_seq_len"],

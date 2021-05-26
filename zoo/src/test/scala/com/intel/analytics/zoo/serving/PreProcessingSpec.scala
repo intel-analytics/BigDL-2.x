@@ -19,6 +19,8 @@ package com.intel.analytics.zoo.serving
 import com.intel.analytics.zoo.serving.http.{Instances, JsonUtil}
 import org.scalatest.{FlatSpec, Matchers}
 import com.intel.analytics.zoo.serving.PreProcessing
+import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
+
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 

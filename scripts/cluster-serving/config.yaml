@@ -23,7 +23,7 @@
 # modelParallelism:
 
 # default: number of cores (or threads) used per model in serving
-# threadPerModel
+# threadPerModel:
 
 # default: OFF
 # performance_mode:
