@@ -1,10 +1,12 @@
+import os
+
 from torch.utils.data import Dataset, DataLoader
 import torch
 import numpy as np
-from zoo.automl.common import metrics
+import argparse
+
 from zoo.zouwu.autots.model.auto_lstm import AutoLSTM
 from zoo.orca.automl import hp
-import argparse
 from zoo.orca import init_orca_context, stop_orca_context
 
 
@@ -13,6 +15,7 @@ output_feature_dim = 2
 past_seq_len = 5
 future_seq_len = 1
 
+# os.environ["KMP_AFFINITY"] = "disabled"
 
 def get_x_y(size):
     x = np.random.randn(size, past_seq_len, input_feature_dim)
@@ -68,7 +71,7 @@ def test_fit_np(args):
     best_model = auto_lstm.get_best_model()
     best_model_mse = best_model.evaluate(
         x=get_x_y(400)[0], y=get_x_y(400)[1], metrics=['mse'])
-    print(f"best model mse is {np.mean(best_model_mse[0][0]):.2f}")
+    print(f"Evaluation result is {np.mean(best_model_mse[0][0]):.2f}")
 
 
 def test_fit_data_creator(args):
@@ -91,19 +94,17 @@ def test_fit_data_creator(args):
                   n_sampling=args.n_sampling,
                   )
     best_model = auto_lstm.get_best_model()
-    val_x, val_y = next(iter(valid_dataloader_creator(best_model.config)))
-    best_model_mse = best_model.evaluate(x=val_x.numpy(), y=val_y.numpy(), metrics=['mse'])
-    print(f'best modle mse is {np.mean(best_model_mse[0][0]):.2f}')
-    print(f"best_model config is {best_model.config}")
+    best_model_mse = best_model._validate(valid_dataloader_creator(best_model.config), metric="mse")
+    print(f'Evaluation result is {best_model_mse["mse"]:.2f}')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_nodes', type=int, default=1,
+    parser.add_argument('--num_works', type=int, default=2,
                         help="The number of nodes to be used in the cluster. "
                             "You can change it depending on your own cluster setting.")
-    parser.add_argument('--cluster_mode', type=str,
-                        default='local', help="The mode for the Spark cluster.")
+    parser.add_argument('--cluster_mode', type=str, default='local', 
+                        help="The mode for the Spark cluster.")
     parser.add_argument('--cores', type=int, default=4,
                         help="The number of cpu cores you want to use on each node."
                             "You can change it depending on your own cluster setting.")
@@ -113,60 +114,15 @@ if __name__ == '__main__':
 
     parser.add_argument('--epoch', type=int, default=1, 
                         help="Max number of epochs to train in each trial.")
-    parser.add_argument('--cpus_per_trial', type=int,
-                        default=2, help="Int. Number of cpus for each trial")
+    parser.add_argument('--cpus_per_trial', type=int, default=2, 
+                        help="Int. Number of cpus for each trial")
     parser.add_argument('--n_sampling', type=int, default=1, 
                         help=" Number of times to sample from the search_space.")
-    parser.add_argument("--workers_per_node",
-                        type=int,
-                        default=2,
-                        help="The number of workers to run on each node")
-    parser.add_argument('--k8s_master',
-                        type=str,
-                        default="",
-                        help="The k8s master. "
-                        "It should be k8s://https://<k8s-apiserver-host>: "
-                        "<k8s-apiserver-port>.")
-    parser.add_argument("--container_image",
-                        type=str,
-                        default="",
-                        help="The runtime k8s image. "
-                        "You can change it with your k8s image.")
-    parser.add_argument('--k8s_driver_host',
-                        type=str,
-                        default="",
-                        help="The k8s driver localhost. ")
-    parser.add_argument('--k8s_driver_port',
-                        type=str,
-                        default="",
-                        help="The k8s driver port.")
+
     args = parser.parse_args()
-    if args.cluster_mode == "local":
-        init_orca_context(cluster_mode="local",
-                          cores=args.cores,
-                          num_nodes=args.num_nodes,
-                          memory=args.memory,
-                          init_ray_on_spark=True)
-    elif args.cluster_mode == "yarn":
-        init_orca_context(cluster_mode="yarn-client",
-                          cores=args.cores,
-                          memory=args.memory,
-                          init_ray_on_spark=True)
-    elif args.cluster_mode == "k8s":
-        if not args.k8s_master or not args.container_image \
-                or not args.k8s_driver_host or not args.k8s_driver_port:
-            parser.print_help()
-            parser.error('k8s_master, container_image,'
-                         'k8s_driver_host/port are required not to be empty')
-        init_orca_context(cluster_mode="k8s",
-                          master=args.k8s_master,
-                          container_image=args.container_image,
-                          cores=args.cores,
-                          init_ray_on_spark=True,
-                          conf={
-                              "spark.driver.host": args.k8s_driver_host,
-                              "spark.driver.port": args.k8s_driver_port
-                          })
+    num_nodes = 1 if args.cluster_mode == "local" else args.num_workers            
+    init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores, 
+                        memory=args.memory, num_nodes=num_nodes, init_ray_on_spark=True)
     test_fit_np(args)
     test_fit_data_creator(args)
     stop_orca_context()
