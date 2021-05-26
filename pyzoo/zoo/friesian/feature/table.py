@@ -618,7 +618,6 @@ class FeatureTable(Table):
 
     def gen_target(self, cat_cols, cont_cols, cont_mean=None, smooth=2, kfold=1, fold_seed=42,
             fold_col="__fold__", out_cols=None, name_sep="_"):
-        # TODO for cross validation, fill na with mean of that category?
         """
         For each categorical column / column group in cat_cols, calculate the mean of continuous
         columns in cont_cols.
@@ -685,6 +684,9 @@ class FeatureTable(Table):
             global_mean_list = [F.mean(F.col(cont_col)).alias(cont_col) for cont_col in cont_cols]
             cont_mean = self.df.select(*global_mean_list).collect()[0]
             cont_mean_dict = {cont_col:cont_mean[cont_col] for cont_col in cont_cols}
+        for cont_col in cont_mean_dict:
+            assert cont_mean_dict[cont_col] is not None, "mean of continuous column {} should " \
+                    "not be None".format(cont_col)
 
         # generate fold_col
         result_df = self.df
@@ -703,23 +705,23 @@ class FeatureTable(Table):
 
             target_df = result_df
             if kfold == 1:
-                mean_list = [F.mean(cont_col).alias(cat_col_name + "_mean_" + cont_col) 
+                sum_list = [F.sum(cont_col).alias(cat_col_name + "_sum_" + cont_col)
                         for cont_col in cont_cols]
                 if isinstance(cat_col, str):
                     target_df = target_df.groupBy(cat_col)
                 else:
                     target_df = target_df.groupBy(*cat_col)
-                target_df = target_df.agg(*mean_list, F.count("*").alias(cat_col_name + "_count"))
+                target_df = target_df.agg(*sum_list, F.count("*").alias(cat_col_name + "_count"))
 
+                target_func = udf(lambda s, count: None if s is None else \
+                        (s + global_cont_mean * smooth) / (count + smooth),
+                        DoubleType())
                 for cont_col in cont_cols:
                     global_cont_mean = cont_mean_dict[cont_col]
-                    target_func = udf(lambda mean, count: None if mean is None else \
-                            (mean * count + global_cont_mean * smooth) / (count + smooth),
-                            DoubleType())
                     target_df = target_df.withColumn(out_col_dict[cont_col],
-                            target_func(cat_col_name + "_mean_" + cont_col,
+                            target_func(cat_col_name + "_sum_" + cont_col,
                                 cat_col_name + "_count")) \
-                            .drop(cat_col_name + "_mean_" + cont_col)
+                            .drop(cat_col_name + "_sum_" + cont_col)
                 target_df = target_df.drop(cat_col_name + "_count")
             else:
                 fold_sum_list = [F.sum(cont_col).alias(cat_col_name + "_sum_" + cont_col)
@@ -735,12 +737,18 @@ class FeatureTable(Table):
                 fold_df = fold_df.agg(*fold_sum_list, F.count("*").alias(cat_col_name + "_count"))
                 all_df = all_df.agg(*sum_list, F.count("*").alias(cat_col_name + "_all_count"))
                 target_df = fold_df.join(all_df, cat_col, how="left")
+
+                def target_func(s_all, s, c_all, c):
+                    if s == None or c_all == c:
+                        if s_all == None:
+                            return None
+                        else:
+                            return (s_all + global_cont_mean * smooth) / (c_all + smooth)
+                    else:
+                        return (s_all - s + global_cont_mean * smooth) / (c_all - c + smooth)
+                target_func = udf(target_func, DoubleType())
                 for cont_col in cont_cols:
                     global_cont_mean = cont_mean_dict[cont_col]
-                    target_func = udf(lambda s_all, s, c_all, c: \
-                            None if c_all == c or s_all == None or s == None else \
-                            ((s_all - s) + global_cont_mean * smooth) / ((c_all - c) + smooth),
-                            DoubleType())
                     target_df = target_df.withColumn(out_col_dict[cont_col],
                             target_func(cat_col_name + "_all_sum_" + cont_col,
                                 cat_col_name + "_sum_" + cont_col,
@@ -756,7 +764,7 @@ class FeatureTable(Table):
 
         return FeatureTable(result_df), list(map(gen_target_code, zip(cat_cols, out_cols)))
 
-    def encode_target(self, cat_cols, targets, cont_cols=None, drop_cat=True, drop_folds=True):
+    def encode_target(self, targets, cont_cols=None, drop_cat=True, drop_folds=True):
         """
         Encode columns with provided list of TargetCode.
 
@@ -773,26 +781,19 @@ class FeatureTable(Table):
         :return: A new FeatureTable which transforms each categorical column into group-specific
                  mean of continuous columns with provided TargetCodes.
         """
-        cat_cols = str_to_list("cat_cols", cat_cols)
-        for cat_col, target_code in zip(cat_cols, targets):
-            check_col_str_list_exists(self.df, cat_col, "cat_cols")
-            if isinstance(cat_col, str):
-                assert cat_col == target_code.cat_col
-            elif isinstance(cat_col, list):
-                assert sorted(cat_col) == sorted(target_code.cat_col)
-        assert len(cat_cols) == len(targets)
+        for target_code in targets:
+            check_col_str_list_exists(self.df, target_code.cat_col, "TargetCode.cat_col in targets")
         if cont_cols is not None:
             cont_cols = str_to_list("cont_cols", cont_cols)
 
         result_df = self.df
-        for i in range(len(cat_cols)):
-            target_code = targets[i]
-            cat_col = cat_cols[i]
+        for target_code in targets:
+            cat_col = target_code.cat_col
 
             if target_code.kfold == 1:
                 result_df = result_df.join(target_code.df, cat_col, how="left")
             else:
-                assert target_code.fold_col in df.columns, "fold_col {} in TargetCode " \
+                assert target_code.fold_col in self.df.columns, "fold_col {} in TargetCode " \
                         "corresponding to categorical columns {} should exists in Table" \
                         .format(target_code.fold_col, str(cat_col))
                 if isinstance(cat_col, str):
@@ -880,7 +881,8 @@ class TargetCode(Table):
         and fold column.
 
         :param df: DataFrame.
-        :param cat_col: str or list of str. Categorical column/column group of this TargetCode.
+        :param cat_col: str or list of str. Categorical column/column group to be encoded in the
+               original Table.
         :param out_cont_mean: dictionary. out_col:(cont_col, global_mean), i.e.
                (continuous column's name in TargetCode):
                (continuous column's name in original Table,
