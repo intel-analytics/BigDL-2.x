@@ -431,18 +431,6 @@ class TestTable(TestCase):
         assert median_tbl.df.filter("column == 'col_2'").filter("median == 1.0").count() == 1, \
             "the median of col_2 should be 1.0"
 
-    def test_create_from_list(self):
-        spark = OrcaContext.get_spark_session()
-        data = [("jack", [1, 2, 3, 4, 5]),
-                ("alice", [4, 5, 6, 7, 8]),
-                ("rose", [1, 2])]
-        schema = StructType([StructField("name", StringType(), True),
-                             StructField("history", ArrayType(IntegerType()), True)])
-        feature_tbl = FeatureTable.from_list(data, schema)
-        spark_df = spark.createDataFrame(data, schema)
-        assert feature_tbl.df.schema == spark_df.schema, "wrong schema"
-        assert feature_tbl.size() == spark_df.count(), "wrong number of rows"
-
     def test_cast(self):
         spark = OrcaContext.get_spark_session()
         data = [("jack", "123", 14, 8),
@@ -477,7 +465,7 @@ class TestTable(TestCase):
             "the selected table should have the same rows"
         with self.assertRaises(Exception) as context:
             feature_tbl.select()
-        self.assertTrue("cols should be str or a list of str, but got none."
+        self.assertTrue("cols should be str or a list of str, but got None."
                         in str(context.exception))
 
     def test_create_from_dict(self):

@@ -58,12 +58,6 @@ class Table:
                 raise Exception("cols should be a column name or list of column names")
         return df
 
-    @staticmethod
-    def _from_list(data, schema):
-        spark = OrcaContext.get_spark_session()
-        df = spark.createDataFrame(data, schema)
-        return df
-
     def _clone(self, df):
         return Table(df)
 
@@ -102,14 +96,14 @@ class Table:
         Select specific columns
 
         :param cols: a string or a list of strings that specifies column names. If it is '*',
-        select all the columns. If it is none, raise error
+        select all the columns.
 
         :return: A new Table that contains the specified columns.
         """
-        # spark will return an empty table when cols is None,
-        # therefore we raise the error if cols is None
+        # If cols is None, it makes more sense to raise error
+        # instead of returning an empty Table.
         if not cols:
-            raise ValueError("cols should be str or a list of str, but got none.")
+            raise ValueError("cols should be str or a list of str, but got None.")
         return self._clone(self.df.select(*cols))
 
     def drop(self, *cols):
@@ -338,10 +332,6 @@ class FeatureTable(Table):
     @classmethod
     def read_json(cls, paths, cols=None):
         return cls(Table._read_json(paths, cols))
-
-    @classmethod
-    def from_list(cls, data, schema):
-        return cls(Table._from_list(data, schema))
 
     def encode_string(self, columns, indices):
         """
