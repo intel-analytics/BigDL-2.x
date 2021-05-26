@@ -32,7 +32,7 @@ def impute_timeseries_dataframe(df,
            "linear": impute by linear interpolation.
     :param const_num: only effective when mode is set to "const".
     '''
-    assert dt_col in df.columns, "dt_col {dt_col} can not be found in df."
+    assert dt_col in df.columns, f"dt_col {dt_col} can not be found in df."
     assert pd.isna(df[dt_col]).sum() == 0, "There is N/A in datetime col"
     assert mode in ["last", "const", "linear"],\
         f"mode should be one of [\"last\", \"const\", \"linear\"], but found {mode}."
@@ -49,17 +49,17 @@ def impute_timeseries_dataframe(df,
 
 
 def _last_impute_timeseries_dataframe(df):
-    # impute the df with pd.fillna
-    # refer to LastFillImpute
-    raise NotImplementedError("_last_impute_timeseries_dataframe has not been implemented.")
+    res_df = df.copy()
+    res_df.iloc[0] = res_df.iloc[0].fillna(0)
+    res_df = res_df.fillna(method='pad')
+    return res_df
 
 
 def _const_impute_timeseries_dataframe(df, const_num):
-    # impute the df with pd.fillna
-    # refer to FillZeroImpute
-    raise NotImplementedError("_const_impute_timeseries_dataframe has not been implemented.")
+    res_df = df.fillna(const_num)
+    return res_df
 
 
 def _linear_impute_timeseries_dataframe(df):
-    # impute the df with pandas.DataFrame.interpolate
-    raise NotImplementedError("_linear_impute_timeseries_dataframe has not been implemented")
+    res_df = df.interpolate(axis=0, limit_direction='both')
+    return res_df
