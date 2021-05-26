@@ -93,10 +93,10 @@ class Table:
 
     def select(self, *cols):
         """
-        Select specific columns
+        Select specific columns.
 
         :param cols: a string or a list of strings that specifies column names. If it is '*',
-        select all the columns.
+                     select all the columns.
 
         :return: A new Table that contains the specified columns.
         """
@@ -296,13 +296,14 @@ class Table:
 
     def cast(self, columns, type):
         """
-        Cast columns to the specified type
+        Cast columns to the specified type.
 
-        :param columns: a string or a list of strings that specifies column names. If it is none,
-        then cast all of the columns
-        :type: pyspark.sql.types or a string that specifies the type
+        :param columns: a string or a list of strings that specifies column names. If it is None,
+                        then cast all of the columns.
+        :param type: a string ("string", "int", "float", "double")
+                     or one of pyspark.sql.types that specifies the type.
 
-        :return: A new Table that casts all of the specified columns to the specified type
+        :return: A new Table that casts all of the specified columns to the specified type.
         """
         if columns is None:
             columns = self.df.columns
@@ -335,14 +336,15 @@ class FeatureTable(Table):
 
     def encode_string(self, columns, indices):
         """
-        Encode columns with provided list of StringIndex
+        Encode columns with provided list of StringIndex.
 
         :param columns: str or a list of str, target columns to be encoded.
         :param indices: StringIndex or a list of StringIndex, StringIndexes of target columns.
                The StringIndex should at least have two columns: id and the corresponding
                categorical column.
-               Or it can be a dict or a list of dicts. The key of the dict should be the
-               corresponding categorical column and the value is the id.
+               Or it can be a dict or a list of dicts. In this case,
+               the keys of the dict should be within the categorical column
+               and the values are the target ids to be encoded.
 
         :return: A new FeatureTable which transforms categorical features into unique integer
                  values with provided StringIndexes.
@@ -658,9 +660,8 @@ class StringIndex(Table):
 
         :param indices: dict. The key is the categorical column,
                         the value is the corresponding index.
-                        We assume that the key is a str and the value is a int/float.
-        :param col_name: str. The column name of the corresponding categorical column.
-                         Cannot be None.
+                        We assume that the key is a str and the value is a int.
+
         :return: A StringIndex.
         """
         spark = OrcaContext.get_spark_session()
