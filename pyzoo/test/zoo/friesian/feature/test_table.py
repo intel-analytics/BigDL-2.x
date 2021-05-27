@@ -469,7 +469,6 @@ class TestTable(TestCase):
                         in str(context.exception))
 
     def test_create_from_dict(self):
-        spark = OrcaContext.get_spark_session()
         indices = {'a': 1, 'b': 2, 'c': 3}
         col_name = 'letter'
         tbl = StringIndex.from_dict(indices, col_name)
@@ -488,6 +487,28 @@ class TestTable(TestCase):
             StringIndex.from_dict([indices], col_name)
         self.assertTrue("indices should be dict, but get list"
                         in str(context.exception))
+
+    def test_encode_string_from_dict(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14, 8),
+                ("alice", "34", 25, 9),
+                ("rose", "25344", 23, 10)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True),
+                             StructField("height", IntegerType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        columns = ["name", "num"]
+        indices = []
+        indices.append({"jack": 1, "alice": 2, "rose": 3})
+        indices.append({"123": 3, "34": 1, "25344": 2})
+        tbl = tbl.encode_string(columns, indices)
+        assert 'name' in tbl.df.columns, "name should be still in the columns"
+        assert 'num' in tbl.df.columns, "num should be still in the columns"
+        assert tbl.df.where(tbl.df.age == 14).select("name").collect()[0]["name"] == 1, \
+            "the first row of name should be 1"
+        assert tbl.df.where(tbl.df.height == 10).select("num").collect()[0]["num"] == 2, \
+            "the third row of num should be 2"
 
 if __name__ == "__main__":
     pytest.main([__file__])
