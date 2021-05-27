@@ -24,7 +24,7 @@ from zoo.chronos.model.forecast.lstm_forecaster import LSTMForecaster
 from unittest import TestCase
 
 
-class TestchronosModelLSTMForecaster(TestCase):
+class TestChronosModelLSTMForecaster(TestCase):
 
     def setUp(self):
         tf.keras.backend.clear_session()

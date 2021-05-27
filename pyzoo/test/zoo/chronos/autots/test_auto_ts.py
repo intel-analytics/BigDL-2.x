@@ -26,10 +26,10 @@ import pandas as pd
 
 
 @pytest.mark.usefixtures("init_ray_context_fixture")
-class TestchronosAutoTS(ZooTestCase):
+class TestChronosAutoTS(ZooTestCase):
 
     def setup_method(self, method):
-        # super(TestchronosAutoTS, self).setup_method(method)
+        # super(TestChronosAutoTS, self).setup_method(method)
         self.create_data()
 
     def teardown_method(self, method):

@@ -69,7 +69,7 @@ class TSDataset:
                "last", "const" and "linear" are supported for now.
         '''
         # split the internal dataframe(self.df) to sub-df wrt id_col
-        # call impute function in zouwu.transform.impute on each sub-df.
+        # call impute function in chronos.transform.impute on each sub-df.
         # concat the result back to self.df
         return self
 
@@ -78,7 +78,7 @@ class TSDataset:
         Remove those duplicated rows.
         '''
         # split the internal dataframe(self.df) to sub-df wrt id_col
-        # call deduplicate function in zouwu.transform.deduplicate on each sub-df.
+        # call deduplicate function in chronos.transform.deduplicate on each sub-df.
         # concat the result back to self.df
         return self
 
@@ -93,7 +93,7 @@ class TSDataset:
                timestamp with all other column is N/A.
         '''
         # split the internal dataframe(self.df) to sub-df wrt id_col
-        # call deduplicate function in zouwu.transform.resample on each sub-df.
+        # call deduplicate function in chronos.transform.resample on each sub-df.
         return self
 
     def gen_dt_feature(self):
@@ -105,7 +105,7 @@ class TSDataset:
             "IS_WEEKEND"
         '''
         # split the internal dataframe(self.df) to sub-df wrt id_col
-        # call feature gen function in zouwu.transform.feature on each sub-df.
+        # call feature gen function in chronos.transform.feature on each sub-df.
         # concat the result back to self.df
         return self
 
@@ -114,7 +114,7 @@ class TSDataset:
         Generate per-time-series feature for each time series.
         This method will be implemented by tsfresh.
         '''
-        # call feature gen function in zouwu.transform.feature on each sub-df.
+        # call feature gen function in chronos.transform.feature on each sub-df.
         return self
 
     def roll(self,
@@ -151,7 +151,7 @@ class TSDataset:
                num_feature_col is the product of the number of id and the number of feature_col,
                num_target_col is the product of the number of id and the number of target_col.
         '''
-        # call rolling function in zouwu.transform.feature on each sub-df/wide df.
+        # call rolling function in chronos.transform.feature on each sub-df/wide df.
         return self
 
     def to_numpy(self):

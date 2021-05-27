@@ -23,7 +23,7 @@ from zoo.chronos.model.forecast.lstm_forecaster import LSTMForecaster
 from zoo.chronos.model.anomaly import ThresholdDetector, ThresholdEstimator
 
 
-class TestchronosModelAnomaly(ZooTestCase):
+class TestChronosModelAnomaly(ZooTestCase):
 
     def gen_data(self, feature_num=6, sample_num=100):
         return pd.DataFrame(data=np.random.randn(sample_num, feature_num))

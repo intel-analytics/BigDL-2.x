@@ -22,7 +22,7 @@ import tempfile
 import pandas as pd
 
 
-class TestchronosModelTCMFForecaster(TestCase):
+class TestChronosModelTCMFForecaster(TestCase):
 
     def setUp(self):
         self.model = TCMFForecaster()

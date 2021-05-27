@@ -24,7 +24,7 @@ from zoo.chronos.model.forecast.mtnet_forecaster import MTNetForecaster
 from unittest import TestCase
 
 
-class TestchronosModelMTNetForecaster(TestCase):
+class TestChronosModelMTNetForecaster(TestCase):
 
     def setUp(self):
         tf.keras.backend.clear_session()
