@@ -19,7 +19,23 @@ from zoo.chronos.model.tcn import TCNPytorch
 
 
 class TCNForecaster(Forecaster):
-
+    """
+        Example:
+            >>> #The dataset is split into x_train, x_val, x_test, y_train, y_val, y_test
+            >>> forecaster = TCNForecaster(past_seq_len=24,
+                                   future_seq_len=5,
+                                   input_feature_num=1,
+                                   output_feature_num=1,
+                                   kernel_size=4,
+                                   num_channels=[16, 16],
+                                   loss="mae",
+                                   lr=0.01)
+            >>> train_loss = forecaster.fit(x_train, x_val, epochs=3)
+            >>> test_pred = forecaster.predict(x_test)
+            >>> test_mse = forecaster.evaluate(x_test, y_test)
+            >>> forecaster.save({ckpt_name})
+            >>> forecaster.restore({ckpt_name})
+    """
     def __init__(self,
                  past_seq_len,
                  future_seq_len,

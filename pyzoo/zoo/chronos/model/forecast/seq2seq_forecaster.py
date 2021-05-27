@@ -22,7 +22,19 @@ import os
 
 
 class Seq2SeqForecaster(Forecaster):
-
+    """
+        Example:
+            >>> #The dataset is split into x_train, x_val, x_test, y_train, y_val, y_test
+            >>> forecaster = Seq2SeqForecaster(future_seq_len=5,
+                                       input_feature_num=3,
+                                       output_feature_num=2,
+                                       lstm_layer_num=2)
+            >>> train_mse = forecaster.fit(x_train, x_val, epochs=10)
+            >>> test_pred = forecaster.predict(x_test)
+            >>> test_mse = forecaster.evaluate(x_test, y_test)
+            >>> forecaster.save({ckpt_name})
+            >>> forecaster.restore({ckpt_name})
+    """
     def __init__(self,
                  input_feature_num,
                  future_seq_len,

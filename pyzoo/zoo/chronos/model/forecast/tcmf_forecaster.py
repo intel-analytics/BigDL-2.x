@@ -21,6 +21,7 @@ from zoo.chronos.model.forecast.abstract import Forecaster
 
 
 class TCMFForecaster(Forecaster):
+
     def __init__(self,
                  vbsize=128,
                  hbsize=256,
@@ -35,7 +36,7 @@ class TCMFForecaster(Forecaster):
                  use_time=True,
                  svd=True,):
         """
-        Initialize
+        Build a TCMF Forecast Model.
 
         :param vbsize: int, default is 128.
             Vertical batch size, which is the number of cells per batch.
