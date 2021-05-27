@@ -46,4 +46,10 @@ zouwu.model.forecast.mtnet_forecaster
     :show-inheritance:
 
 
+zouwu.model.forecast.tfpark_forecaster
+----------------------------------------
 
+.. automodule:: zoo.zouwu.model.forecast.tfpark_forecaster
+    :members:
+    :undoc-members:
+    :show-inheritance:

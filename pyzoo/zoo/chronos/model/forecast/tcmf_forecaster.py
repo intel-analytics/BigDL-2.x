@@ -124,7 +124,6 @@ class TCMFForecaster(Forecaster):
             Number of iterations while alternate training.
         :param num_workers: the number of workers you want to use for fit. If None, it defaults to
             num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
-        :return: None
         """
         if self.internal is None:
             if isinstance(x, SparkXShards):
@@ -175,7 +174,6 @@ class TCMFForecaster(Forecaster):
         :param dti_incr: dti corresponding to the x_incr. DatetimeIndex or None.
             If None, use default fixed frequency DatetimeIndex generated with the last date of x in
             fit and freq.
-        :return: None.
         """
         self.internal.fit_incremental(x_incr,
                                       covariates_incr=covariates_incr,
@@ -237,6 +235,7 @@ class TCMFForecaster(Forecaster):
             fit and freq.
         :param num_workers: the number of workers to use in predict. If None, it defaults to
             num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
+
         :return:
         """
         if self.internal is None:
@@ -248,24 +247,46 @@ class TCMFForecaster(Forecaster):
                                          num_workers=num_workers)
 
     def save(self, path):
+        """
+        Save the forecaster.
+
+        :param path: Path to target saved file.
+        """
         if self.internal is None:
             raise Exception("You should run fit before calling save()")
         else:
             self.internal.save(path)
 
     def is_xshards_distributed(self):
+        """
+        Check whether model is distributed by input xshards.
+
+        :return: True if the model is distributed by input xshards
+        """
         if self.internal is None:
-            raise ValueError("You should run fit before calling is_xshards_distributed()")
+            raise ValueError(
+                "You should run fit before calling is_xshards_distributed()")
         else:
             return self.internal.is_xshards_distributed()
 
     @classmethod
     def load(cls, path, is_xshards_distributed=False, minPartitions=None):
+        """
+        Load a saved model.
+
+        :param path: The location you want to save the forecaster.
+        :param is_xshards_distributed: Whether the model is distributed trained with input of dict of SparkXshards.
+        :param minPartitions: The minimum partitions for the XShards.
+
+        :return: the model loaded
+        """
         loaded_model = TCMFForecaster()
         if is_xshards_distributed:
-            loaded_model.internal = TCMFXshardsModelWrapper(loaded_model.config)
+            loaded_model.internal = TCMFXshardsModelWrapper(
+                loaded_model.config)
             loaded_model.internal.load(path, minPartitions=minPartitions)
         else:
-            loaded_model.internal = TCMFNdarrayModelWrapper(loaded_model.config)
+            loaded_model.internal = TCMFNdarrayModelWrapper(
+                loaded_model.config)
             loaded_model.internal.load(path)
         return loaded_model

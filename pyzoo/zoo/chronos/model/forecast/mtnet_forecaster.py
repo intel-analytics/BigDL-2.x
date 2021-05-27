@@ -84,7 +84,7 @@ class MTNetForecaster(TFParkForecaster):
         """
         build a MTNet model in tf.keras
 
-       :return: a tf.keras MTNet model
+        :return: a tf.keras MTNet model
         """
         # TODO change this function call after MTNet fixes
         self.internal = MTNetKerasModel(
@@ -98,6 +98,7 @@ class MTNetForecaster(TFParkForecaster):
         This should be called before train_x, validation_x, and test_x
 
         :param x: the original samples from rolling
+
         :return: a tuple (long_term_x, short_term_x) which are long term and short term history respectively
         """
         return self.internal._reshape_input_x(x)

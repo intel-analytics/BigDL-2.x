@@ -38,6 +38,7 @@ class TFParkForecaster(TFParkKerasModel, Forecaster, metaclass=ABCMeta):
     def _build(self):
         """
         Build a tf.keras model.
-       :return: a tf.keras model (compiled)
+
+        :return: a tf.keras model (compiled)
         """
         pass

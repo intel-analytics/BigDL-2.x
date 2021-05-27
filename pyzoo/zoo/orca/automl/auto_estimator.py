@@ -18,6 +18,23 @@ from zoo.automl.search import SearchEngineFactory
 
 
 class AutoEstimator:
+    """
+    Example:
+        >>> auto_est = AutoEstimator.from_torch(model_creator=model_creator,
+                                            optimizer=get_optimizer,
+                                            loss=nn.BCELoss(),
+                                            logs_dir="/tmp/zoo_automl_logs",
+                                            resources_per_trial={"cpu": 2},
+                                            name="test_fit")
+        >>> auto_est.fit(data=data,
+                     validation_data=validation_data,
+                     search_space=create_linear_search_space(),
+                     n_sampling=4,
+                     epochs=1,
+                     metric="accuracy")
+        >>> best_model = auto_est.get_best_model()
+    """
+
     def __init__(self,
                  model_builder,
                  logs_dir="/tmp/auto_estimator_logs",
@@ -34,11 +51,12 @@ class AutoEstimator:
         :param name: AutoEstimator name.
         """
         self.model_builder = model_builder
-        self.searcher = SearchEngineFactory.create_engine(backend="ray",
-                                                          logs_dir=logs_dir,
-                                                          resources_per_trial=resources_per_trial,
-                                                          remote_dir=remote_dir,
-                                                          name=name)
+        self.searcher = SearchEngineFactory.create_engine(
+            backend="ray",
+            logs_dir=logs_dir,
+            resources_per_trial=resources_per_trial,
+            remote_dir=remote_dir,
+            name=name)
         self._fitted = False
 
     @staticmethod
@@ -148,7 +166,8 @@ class AutoEstimator:
         :param scheduler_params: parameters for scheduler
         """
         if self._fitted:
-            raise RuntimeError("This AutoEstimator has already been fitted and cannot fit again.")
+            raise RuntimeError(
+                "This AutoEstimator has already been fitted and cannot fit again.")
         self.searcher.compile(data=data,
                               model_builder=self.model_builder,
                               validation_data=validation_data,
