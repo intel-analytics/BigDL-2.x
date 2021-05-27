@@ -19,19 +19,11 @@ import numpy as np
 import pandas as pd
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
-<<<<<<< HEAD:pyzoo/test/zoo/chronos/model/anomaly/test_model_anomaly.py
 from zoo.chronos.model.forecast.lstm_forecaster import LSTMForecaster
-from zoo.chronos.model.anomaly import ThresholdDetector, ThresholdEstimator
-
-
-class TestChronosModelAnomaly(ZooTestCase):
-=======
-from zoo.zouwu.model.forecast.lstm_forecaster import LSTMForecaster
-from zoo.zouwu.model.anomaly import ThresholdDetector
+from zoo.chronos.model.anomaly import ThresholdDetector
 
 
 class TestThresholdDetector(ZooTestCase):
->>>>>>> refactor threshold detector:pyzoo/test/zoo/zouwu/model/anomaly/test_th_detector.py
 
     def gen_data(self, feature_num=6, sample_num=100):
         return pd.DataFrame(data=np.random.randn(sample_num, feature_num))
