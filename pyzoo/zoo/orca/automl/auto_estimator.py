@@ -121,12 +121,12 @@ class AutoEstimator:
 
         :param data: train data.
             If the AutoEstimator is created with from_torch, data can be a tuple of
-                ndarrays or a function that takes a config dictionary as parameter
-                and returns a PyTorch DataLoader.
+            ndarrays or a function that takes a config dictionary as parameter
+            and returns a PyTorch DataLoader.
             If the AutoEstimator is created with from_keras, data can be a tuple of
-                ndarrays.
+            ndarrays.
             If data is a tuple of ndarrays, it should be in the form of (x, y),
-                where x is training input data and y is training target data.
+            where x is training input data and y is training target data.
         :param epochs: Max number of epochs to train in each trial. Defaults to 1.
             If you have also set metric_threshold, a trial will stop if either it has been
             optimized to the metric_threshold or it has been trained for {epochs} epochs.
