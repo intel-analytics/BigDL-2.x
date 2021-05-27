@@ -36,6 +36,7 @@ class TCMFForecaster(Forecaster):
                  svd=True,):
         """
         Initialize
+
         :param vbsize: int, default is 128.
             Vertical batch size, which is the number of cells per batch.
         :param hbsize: int, default is 256.
@@ -92,6 +93,7 @@ class TCMFForecaster(Forecaster):
             num_workers=None):
         """
         fit the model on x from scratch
+
         :param x: the input for fit. Only dict of ndarray and SparkXShards of dict of ndarray
             are supported. Example: {'id': id_arr, 'y': data_ndarray}, and data_ndarray is of shape
             (n, T), where n is the number f target time series and T is the number of time steps.
@@ -121,7 +123,7 @@ class TCMFForecaster(Forecaster):
         :param alt_iters: int, default is 10.
             Number of iterations while alternate training.
         :param num_workers: the number of workers you want to use for fit. If None, it defaults to
-        num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
+            num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
         :return: None
         """
         if self.internal is None:
@@ -158,12 +160,13 @@ class TCMFForecaster(Forecaster):
     def fit_incremental(self, x_incr, covariates_incr=None, dti_incr=None):
         """
         incrementally fit the model. Note that we only incrementally fit X_seq (TCN in global model)
+
         :param x_incr: incremental data to be fitted. It should be of the same format as input x in
-         fit, which is a dict of ndarray or SparkXShards of dict of ndarray.
-        Example: {'id': id_arr, 'y': incr_ndarray}, and incr_ndarray is of shape (n, T_incr), where
-        n is the number of target time series, T_incr is the number of time steps incremented. You
-        can choose not to input 'id' in x_incr, but if you do, the elements of id in x_incr should
-        be the same as id in x of fit.
+            fit, which is a dict of ndarray or SparkXShards of dict of ndarray.
+            Example: {'id': id_arr, 'y': incr_ndarray}, and incr_ndarray is of shape (n, T_incr), where
+            n is the number of target time series, T_incr is the number of time steps incremented. You
+            can choose not to input 'id' in x_incr, but if you do, the elements of id in x_incr should
+            be the same as id in x of fit.
         :param covariates_incr: covariates corresponding to x_incr. 2-D ndarray or None.
             The shape of ndarray should be (r, T_incr), where r is the number of covariates.
             Global covariates for all time series. If None, only default time coveriates will be
@@ -187,8 +190,9 @@ class TCMFForecaster(Forecaster):
                  ):
         """
         evaluate the model
+
         :param target_value: target value for evaluation. We interpret its second dimension of
-        as the horizon length for evaluation.
+               as the horizon length for evaluation.
         :param metric: the metrics. A list of metric names.
         :param target_covariates: covariates corresponding to target_value.
             2-D ndarray or None.
@@ -201,7 +205,8 @@ class TCMFForecaster(Forecaster):
             If None, use default fixed frequency DatetimeIndex generated with the last date of x in
             fit and freq.
         :param num_workers: the number of workers to use in evaluate. If None, it defaults to
-        num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
+            num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
+
         :return:
         """
         return self.internal.evaluate(y=target_value,
@@ -218,6 +223,7 @@ class TCMFForecaster(Forecaster):
                 ):
         """
         predict
+
         :param horizon: horizon length to look forward.
         :param future_covariates: covariates corresponding to future horizon steps data to predict.
             2-D ndarray or None.
@@ -230,7 +236,7 @@ class TCMFForecaster(Forecaster):
             If None, use default fixed frequency DatetimeIndex generated with the last date of x in
             fit and freq.
         :param num_workers: the number of workers to use in predict. If None, it defaults to
-        num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
+            num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
         :return:
         """
         if self.internal is None:

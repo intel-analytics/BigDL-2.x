@@ -167,7 +167,8 @@ class AutoEstimator:
     def get_best_model(self):
         """
         Return the best model found by the AutoEstimator
-        :return the best model instance
+
+        :return: the best model instance
         """
         best_trial = self.searcher.get_best_trials(k=1)[0]
         best_model_path = best_trial.model_path

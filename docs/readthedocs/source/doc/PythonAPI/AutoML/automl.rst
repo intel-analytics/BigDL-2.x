@@ -1,5 +1,5 @@
 AutoML API
-=========
+===========
 
 orca.automl.auto_estimator
 ---------------------------

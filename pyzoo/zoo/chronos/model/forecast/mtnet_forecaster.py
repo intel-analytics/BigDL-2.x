@@ -41,6 +41,7 @@ class MTNetForecaster(TFParkForecaster):
                  ):
         """
         Build a MTNet Forecast Model.
+
         :param target_dim: the dimension of model output
         :param feature_dim: the dimension of input feature
         :param long_series_num: the number of series for the long-term memory series
@@ -82,6 +83,7 @@ class MTNetForecaster(TFParkForecaster):
     def _build(self):
         """
         build a MTNet model in tf.keras
+
        :return: a tf.keras MTNet model
         """
         # TODO change this function call after MTNet fixes
@@ -94,8 +96,8 @@ class MTNetForecaster(TFParkForecaster):
         """
         The original rolled features needs an extra step to process.
         This should be called before train_x, validation_x, and test_x
+
         :param x: the original samples from rolling
-        :return: a tuple (long_term_x, short_term_x)
-                which are long term and short term history respectively
+        :return: a tuple (long_term_x, short_term_x) which are long term and short term history respectively
         """
         return self.internal._reshape_input_x(x)
