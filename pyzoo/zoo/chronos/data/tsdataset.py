@@ -64,11 +64,11 @@ class TSDataset:
                                           extra_feature_col=["extra feature 1",""extra feature 2"])
         ```
         '''
-        check_type(df, "df", pd.DataFrame)
+        _check_type(df, "df", pd.DataFrame)
 
         tsdataset_df = df.copy(deep=True)
-        target_col = to_list(target_col, name="target_col")
-        feature_col = to_list(extra_feature_col, name="extra_feature_col")
+        target_col = _to_list(target_col, name="target_col")
+        feature_col = _to_list(extra_feature_col, name="extra_feature_col")
 
         if id_col is None:
             tsdataset_df[_DEFAULT_ID_COL_NAME] = _DEFAULT_ID_PLACEHOLDER
@@ -194,33 +194,33 @@ class TSDataset:
         This function will be called after each method(e.g. impute, deduplicate ...)
         '''
         # check type
-        check_type(self.df, "df", pd.DataFrame)
-        check_type(self.id_col, "id_col", str)
-        check_type(self.dt_col, "dt_col", str)
-        check_type(self.target_col, "target_col", list)
-        check_type(self.feature_col, "feature_col", list)
+        _check_type(self.df, "df", pd.DataFrame)
+        _check_type(self.id_col, "id_col", str)
+        _check_type(self.dt_col, "dt_col", str)
+        _check_type(self.target_col, "target_col", list)
+        _check_type(self.feature_col, "feature_col", list)
 
         # check valid name
-        check_col_within(self.df, self.id_col)
-        check_col_within(self.df, self.dt_col)
+        _check_col_within(self.df, self.id_col)
+        _check_col_within(self.df, self.dt_col)
         for target_col_name in self.target_col:
-            check_col_within(self.df, target_col_name)
+            _check_col_within(self.df, target_col_name)
         for feature_col_name in self.feature_col:
-            check_col_within(self.df, feature_col_name)
+            _check_col_within(self.df, feature_col_name)
 
 
-def to_list(item, name, expect_type=str):
+def _to_list(item, name, expect_type=str):
     if isinstance(item, list):
         return item
     if item is None:
         return []
-    check_type(item, name, expect_type)
+    _check_type(item, name, expect_type)
     return [item]
 
-def check_type(item, name, expect_type):
+def _check_type(item, name, expect_type):
     assert isinstance(item, expect_type),\
         f"a {str(expect_type)} is expected for {name} but found {type(item)}"
 
-def check_col_within(df, col_name):
+def _check_col_within(df, col_name):
     assert col_name in df.columns,\
         f"{col_name} is expected in dataframe while not found"
