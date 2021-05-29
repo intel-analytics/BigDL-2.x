@@ -61,17 +61,18 @@ def roll_timeseries_dataframe(df,
                                                feature_col,
                                                target_col)
 
+
 def _roll_timeseries_dataframe_test(df,
                                     lookback,
                                     feature_col,
                                     target_col):
-    max_horizon = horizon if isinstance(horizon, int) else max(horizon)
     x = df.loc[:,feature_col+target_col].values
 
     output_x, mask_x = _roll_timeseries_ndarray(x, lookback)
     mask = (mask_x == 1)
 
     return output_x[mask]
+
 
 def _roll_timeseries_dataframe_train(df,
                                      lookback,
