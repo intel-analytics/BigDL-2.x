@@ -873,6 +873,27 @@
                                     <exclude>org.apache.spark:spark-mllib_${scala.major.version}</exclude>
                                     <exclude>com.esotericsoftware.kryo:kryo</exclude>
                                     <exclude>org.json4s:*</exclude>
+                                    <exclude>org.apache.hadoop:*</exclude>
+                                    <exclude>org.apache.parquet:*</exclude>
+                                    <exclude>org.apache.spark:spark-sql_${scala.major.version}</exclude>
+                                    <exclude>org.apache.spark:spark-catalyst_${scala.major.version}</exclude>
+                                    <exclude>org.apache.spark:spark-graphx_${scala.major.version}</exclude>
+                                    <exclude>org.apache.spark:spark-network-common_${scala.major.version}</exclude>
+                                    <exclude>org.apache.spark:spark-network-shuffle_${scala.major.version}</exclude>
+                                    <exclude>org.apache.ivy:ivy</exclude>
+                                    <exclude>org.apache.commons:commons-math3</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>org.apache.orc:*</exclude>
+                                    <exclude>org.apache.avro:*</exclude>
+                                    <exclude>org.apache.zookeeper:*</exclude>
+                                    <exclude>org.apache.directory.api:*</exclude>
+                                    <exclude>org.apache.directory.server:*</exclude>
+                                    <exclude>commons-digester:*</exclude>
+                                    <exclude>org.xerial.snappy:*</exclude>
+                                    <exclude>org.spark-project.spark:*</exclude>
+                                    <exclude>org.glassfish.hk2:*</exclude>
+                                    <exclude>org.glassfish.jersey.core:*</exclude>
+                                    <exclude>org.codehaus.jackson:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -949,6 +970,25 @@
                                     <exclude>org.json4s:*</exclude>
                                     <exclude>org.apache.hadoop:*</exclude>
                                     <exclude>org.apache.parquet:*</exclude>
+                                    <exclude>org.apache.spark:spark-sql_${scala.major.version}</exclude>
+                                    <exclude>org.apache.spark:spark-catalyst_${scala.major.version}</exclude>
+                                    <exclude>org.apache.spark:spark-streaming_${scala.major.version}</exclude>
+                                    <exclude>org.apache.spark:spark-graphx_${scala.major.version}</exclude>
+                                    <exclude>org.apache.spark:spark-network-common_${scala.major.version}</exclude>
+                                    <exclude>org.apache.spark:spark-network-shuffle_${scala.major.version}</exclude>
+                                    <exclude>org.apache.ivy:ivy</exclude>
+                                    <exclude>org.apache.commons:commons-math3</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>org.apache.orc:*</exclude>
+                                    <exclude>org.apache.avro:*</exclude>
+                                    <exclude>org.apache.directory.api:*</exclude>
+                                    <exclude>org.apache.directory.server:*</exclude>
+                                    <exclude>commons-digester:commons-digester</exclude>
+                                    <exclude>org.xerial.snappy:snappy-java</exclude>
+                                    <exclude>org.spark-project.spark:*</exclude>
+                                    <exclude>org.glassfish.hk2:*</exclude>
+                                    <exclude>org.glassfish.jersey.core:*</exclude>
+                                    <exclude>org.codehaus.jackson:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
