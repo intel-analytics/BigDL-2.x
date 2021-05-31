@@ -10,5 +10,5 @@ A general estimator supports automatic model tuning. It allows users to fit and 
     :members:
     :undoc-members:
     :show-inheritance:
-    :no-special-members: __init__
+    :exclude-members: __init__
 

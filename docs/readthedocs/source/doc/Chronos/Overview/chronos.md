@@ -198,7 +198,7 @@ View High-dimensional Electricity Data Forecasting [example](https://github.com/
 
 Seq2SeqForecaster wraps a sequence to sequence model based on LSTM, and is suitable for multivariant & multistep time series forecasting.
 
-View [SEQ2SEQForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-seq2seq-forecaster) for more details.
+View [Seq2SeqForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-seq2seq-forecaster) for more details.
 
 ##### **4.2.5 TCNForecaster**
 
