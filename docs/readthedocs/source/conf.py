@@ -210,3 +210,4 @@ epub_title = project
 epub_exclude_files = ['search.html']
 
 autoclass_content = 'both'
+autodoc_member_order = 'bysource'
