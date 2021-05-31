@@ -43,13 +43,14 @@ def roll_timeseries_dataframe(df,
     assert isinstance(lookback, int)
     assert isinstance(feature_col, list)
     assert isinstance(target_col, list)
-    horizon_int_flag = isinstance(horizon, int)
-    horizon_list_flag = isinstance(horizon, list) and\
-                        isinstance(horizon[0], int) and\
-                        min(horizon) > 0
-    assert horizon_int_flag or horizon_list_flag
-    test_flag = True if (horizon_int_flag and horizon == 0) else False
-    if not test_flag:
+    is_horizon_int = isinstance(horizon, int)
+    is_horizon_list = isinstance(horizon, list) and\
+        isinstance(horizon[0], int) and\
+        min(horizon) > 0
+    assert is_horizon_int or is_horizon_list
+
+    is_test = True if (is_horizon_int and horizon == 0) else False
+    if not is_test:
         return _roll_timeseries_dataframe_train(df,
                                                 lookback,
                                                 horizon,
@@ -66,7 +67,7 @@ def _roll_timeseries_dataframe_test(df,
                                     lookback,
                                     feature_col,
                                     target_col):
-    x = df.loc[:,feature_col+target_col].values
+    x = df.loc[:, feature_col+target_col].values
 
     output_x, mask_x = _roll_timeseries_ndarray(x, lookback)
     mask = (mask_x == 1)
@@ -80,15 +81,14 @@ def _roll_timeseries_dataframe_train(df,
                                      feature_col,
                                      target_col):
     max_horizon = horizon if isinstance(horizon, int) else max(horizon)
-    x = df[:-max_horizon].loc[:,feature_col+target_col].values
-    y = df.iloc[lookback:].loc[:,target_col].values
+    x = df[:-max_horizon].loc[:, feature_col+target_col].values
+    y = df.iloc[lookback:].loc[:, target_col].values
 
     output_x, mask_x = _roll_timeseries_ndarray(x, lookback)
     output_y, mask_y = _roll_timeseries_ndarray(y, horizon)
     mask = (mask_x == 1) & (mask_y == 1)
 
     return output_x[mask], output_y[mask]
-
 
 
 def _roll_timeseries_ndarray(data, window):
