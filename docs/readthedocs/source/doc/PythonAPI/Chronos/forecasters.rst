@@ -1,55 +1,55 @@
-Zouwu Forecasters API
+Chronos Forecasters API
 =====================
 
-zouwu.model.forecast.lstm_forecaster
+chronos.model.forecast.lstm_forecaster
 ----------------------------------------
 
-.. automodule:: zoo.zouwu.model.forecast.lstm_forecaster
+.. automodule:: zoo.chronos.model.forecast.lstm_forecaster
     :members:
     :undoc-members:
     :show-inheritance:
 
 
-zouwu.model.forecast.seq2seq_forecaster
+chronos.model.forecast.seq2seq_forecaster
 ----------------------------------------
 
-.. automodule:: zoo.zouwu.model.forecast.seq2seq_forecaster
+.. automodule:: zoo.chronos.model.forecast.seq2seq_forecaster
     :members:
     :undoc-members:
     :show-inheritance:
 
 
-zouwu.model.forecast.tcn_forecaster
+chronos.model.forecast.tcn_forecaster
 ----------------------------------------
 
-.. automodule:: zoo.zouwu.model.forecast.tcn_forecaster
+.. automodule:: zoo.chronos.model.forecast.tcn_forecaster
     :members:
     :undoc-members:
     :show-inheritance:
 
 
-zouwu.model.forecast.tcmf_forecaster
+chronos.model.forecast.tcmf_forecaster
 ----------------------------------------
 
-.. automodule:: zoo.zouwu.model.forecast.tcmf_forecaster
+.. automodule:: zoo.chronos.model.forecast.tcmf_forecaster
     :members:
     :undoc-members:
     :show-inheritance:
 
 
-zouwu.model.forecast.mtnet_forecaster
+chronos.model.forecast.mtnet_forecaster
 ----------------------------------------
 
-.. automodule:: zoo.zouwu.model.forecast.mtnet_forecaster
+.. automodule:: zoo.chronos.model.forecast.mtnet_forecaster
     :members:
     :undoc-members:
     :show-inheritance:
 
 
-zouwu.model.forecast.tfpark_forecaster
+chronos.model.forecast.tfpark_forecaster
 ----------------------------------------
 
-.. automodule:: zoo.zouwu.model.forecast.tfpark_forecaster
+.. automodule:: zoo.chronos.model.forecast.tfpark_forecaster
     :members:
     :undoc-members:
     :show-inheritance:
