@@ -125,26 +125,6 @@ init_orca_context(cluster_mode="k8s", master="k8s://https://<k8s-apiserver-host>
 
 Execute `python script.py` to run your program on k8s cluster directly.
 
-**Note**: The k8s client and cluster mode do not support download files to local, logging callback, tensorboard callback, etc. If you have these requirements, it's a good idea to use network file system (NFS).
-
-**Note**: The k8s would delete the pod once the worker failed in client mode and cluster mode. If you want to get the content of of worker log, you could set an "temp-dir" to change the log dir to replace the former one. Please note that in this case you should set num-nodes to 1 if you use network file system (NFS).  Otherwise, it would cause error because the temp-dir and NFS are not point to the same directory.
-
-```python
-init_orca_context(..., extra_params = {"temp-dir": "/tmp/ray/"})
-```
-
-If you training with more than 1 executor and use NFS, please remove `extra_params = {"temp-dir": "/tmp/ray/"}`. Because there would be conflict if multiple executors write files in the same directory at the same time. It may cause JSONDecodeError.
-
-**Note**: If you training with more than 1 executor, please make sure you set proper "steps_per_epoch" and "validation steps".
-
-**Note**: "spark.kubernetes.container.image.pullPolicy" needs to be specified as "always"
-
-**Note**: if  "RayActorError" occurs, try to increase the memory
-
-```python
-init_orca_context(..., memory=10g, exra_executor_memory_for_ray=100g)
-```
-
 #### **3.2 K8s cluster mode**
 
 For k8s [cluster mode](https://spark.apache.org/docs/2.4.5/running-on-kubernetes.html#cluster-mode), you can call `init_orca_context` and specify cluster_mode to be "spark-submit" in your python script (e.g. in script.py):
@@ -171,7 +151,34 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
   file:///path/script.py
 ```
 
-**Note**: You should specify the spark driver and spark executor when you use NFS
+#### 3.3 Common topics for both client mode and cluster mode
+
+This section shows some common topics for both client mode and cluster mode.
+
+##### 3.3.1 How to debug ray issues?
+
+The k8s would delete the pod once the worker failed in client mode and cluster mode.  If you want to get the content of worker log, you could set an "temp-dir" mount network file system (NFS) storage to change the log dir to replace the former one. In this case, you may meet `JSONDecodeError` because multiple executors would write logs to the same physical folder and cause conflicts. The solutions are in the next section.
+
+```python
+init_orca_context(..., extra_params = {"temp-dir": "/zoo/"})
+```
+
+##### 3.3.2 How to deal with "JSONDecodeError" ?
+
+If you use `temp-dir` to mount to a nfs storage and use multiple executors , you may meet `JSONDecodeError` since multiple executors would write to the same physical folder and cause conflicts. There are two ways to avoid this. One option is do not mount `temp-dir` to shared storage. But if you debug ray on k8s, you need to output logs to a shared storage. In this case, you could set num-nodes to 1. Another choice is to append some random info after the path of `temp-dir` when ray start, such as `"/zoo/ray/tempXXX"` , to avoid conflicts.
+
+##### 3.3.3 How to use NFS?
+
+If you want to save some files out of pod's lifecycle, such as logging callbacks or tensorboard callbacks, you need to let the output dir mount persistent volume dir. Let NFS be a simple example.
+
+Use NFS in client mode:
+
+```python
+init_orca_context(cluster_mode="k8s", ...,
+                  conf={...,                     "spark.kubernetes.executor.volumes.persistentVolumeClaim.nfsvolumeclaim.options.claimName": "nfsvolumeclaim",                     "spark.kubernetes.executor.volumes.persistentVolumeClaim.nfsvolumeclaim.mount.path": "/zoo" })
+```
+
+Use NFS in cluster mode:
 
 ```bash
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
@@ -183,7 +190,23 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
   file:///path/script.py
 ```
 
-#### **3.3 Run Jupyter Notebooks**
+##### 3.3.4 How to deal with  "RayActorError" ?
+
+"RayActorError" may caused by running out of the ray memory. If you meet this error, try to increase the memory for ray.
+
+```python
+init_orca_context(..., exra_executor_memory_for_ray=100g)
+```
+
+#####  3.3.5 How to set proper "steps_per_epoch" and "validation steps" ?
+
+The `steps_per_epoch` and `validation_steps` equal to numbers of dataset divided by batch size. The `steps_per_epoch` and `validation_steps` do not relate to the `num_nodes`. For example, you set `num_nodes` to 1, and set `steps_per_epoch` to 6. If you change the `num_nodes` to 3, the `steps_per_epoch` should still be 6.
+
+##### 3.3.6 Others
+
+`spark.kubernetes.container.image.pullPolicy` needs to be specified as `always`.
+
+#### **3.4 Run Jupyter Notebooks**
 
 After a Docker container is launched and user login into the container, you can start the Jupyter Notebook service inside the container.
 
@@ -203,7 +226,7 @@ You will see the output message like below. This means the Jupyter Notebook serv
 
 Then, refer [docker guide](./docker.md) to open Jupyter Notebook service from a browser and run notebook.
 
-#### **3.4 Run Scala programs**
+#### **3.5 Run Scala programs**
 
 Use spark-submit to submit your Analytics Zoo program.  e.g., run [anomalydetection](https://github.com/intel-analytics/analytics-zoo/tree/master/zoo/src/main/scala/com/intel/analytics/zoo/examples/anomalydetection) example (running in either local mode or cluster mode) as follows:
 
