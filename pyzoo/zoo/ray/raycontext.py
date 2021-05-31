@@ -145,9 +145,9 @@ class RayServiceFuncGenerator(object):
         self.labels = \
             """--resources '{"_mxnet_worker": %s, "_mxnet_server": %s, "_reserved": %s}'""" \
             % (1, 1, 2)
-        base_path = tempfile.gettempdir()  # Temp path to save lock and flag files for launching ray.
+        base_path = tempfile.gettempdir()  # Temp path for lock and flag files when launching ray.
         import uuid
-        # Add a unique id to the flag so that this won't affect other programs even if it is not removed.
+        # Add a unique id to the flag so that it won't affect other programs even if not removed.
         self.ray_master_flag = os.path.join(base_path, "ray_master_" + uuid.uuid4().hex)
         self.ray_master_lock = os.path.join(base_path, "ray_master_start.lock")
         self.raylet_lock = os.path.join(base_path, "raylet_start.lock")
@@ -556,7 +556,8 @@ class RayContext(object):
             process_infos = ray_rdd.barrier().mapPartitions(
                 self.ray_service.gen_ray_start(self.cluster_ips[0])).collect()
         else:
-            master_process_infos = ray_rdd.mapPartitionsWithIndex(self.ray_service.gen_ray_master_start()).collect()
+            master_process_infos = ray_rdd.mapPartitionsWithIndex(
+                self.ray_service.gen_ray_master_start()).collect()
             master_process_infos = [process for process in master_process_infos if process]
             assert len(master_process_infos) == 1
             master_process_info = master_process_infos[0]
