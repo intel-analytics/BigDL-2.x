@@ -17,6 +17,7 @@
 import pytest
 import pandas as pd
 import numpy as np
+import random
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.chronos.data.utils.roll import roll_timeseries_dataframe
@@ -28,26 +29,27 @@ class TestRollTimeSeries(ZooTestCase):
                                        "B": np.random.randn(10),
                                        "C": np.random.randn(10),
                                        "datetime": pd.date_range('1/1/2019', periods=10)})
+        self.lookback = random.randint(1, 5)
 
     def teardown_method(self, method):
         pass
 
     def test_roll_timeseries_dataframe(self):
         x, y = roll_timeseries_dataframe(self.easy_data,
-                                         lookback=3,
+                                         lookback=self.lookback,
                                          horizon=[1, 3],
                                          feature_col=["A"],
                                          target_col=["B"])
-        assert x.shape == (5, 3, 2)
-        assert y.shape == (5, 2, 1)
+        assert x.shape == (8-self.lookback, self.lookback, 2)
+        assert y.shape == (8-self.lookback, 2, 1)
 
         x, y = roll_timeseries_dataframe(self.easy_data,
-                                         lookback=2,
+                                         lookback=self.lookback,
                                          horizon=4,
                                          feature_col=["A", "C"],
                                          target_col=["B"])
-        assert x.shape == (5, 2, 3)
-        assert y.shape == (5, 4, 1)
+        assert x.shape == (7-self.lookback, self.lookback, 3)
+        assert y.shape == (7-self.lookback, 4, 1)
 
         x = roll_timeseries_dataframe(self.easy_data,
                                       lookback=2,
@@ -55,3 +57,11 @@ class TestRollTimeSeries(ZooTestCase):
                                       feature_col=[],
                                       target_col=["A"])
         assert x.shape == (9, 2, 1)
+
+        self.easy_data["A"][0] = None
+        x = roll_timeseries_dataframe(self.easy_data,
+                                      lookback=2,
+                                      horizon=0,
+                                      feature_col=[],
+                                      target_col=["A"])
+        assert x.shape == (8, 2, 1)
