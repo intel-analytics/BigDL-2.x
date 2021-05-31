@@ -2,7 +2,10 @@
 This guide provides all supported quick start choices of Cluster Serving.
 
 ### Docker
-Docker quick start is provided in [Programming Guide Quick Start](ProgrammingGuide.md#quick-start)
+Docker quick start is provided in [Programming Guide Quick Start](ProgrammingGuide.md#quick-start).
+
+### IDE
+Cluster Serving supports running in IDE, please refer to [ContributionGuide](ContributeGuide.md#debug-in-ide).
 
 ### Manually Install
 #### Prerequisites
