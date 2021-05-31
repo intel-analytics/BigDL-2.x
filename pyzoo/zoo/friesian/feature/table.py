@@ -312,7 +312,6 @@ class Table:
         elif not isinstance(columns, list):
             columns = [columns]
             check_col_exists(self.df, columns)
-        print(type)
         valid_types = ["string", "boolean", "int", "long", "short", "float", "double"]
         if (not isinstance(type, str) or (type not in valid_types)) \
            and not isinstance(type, DataType):
