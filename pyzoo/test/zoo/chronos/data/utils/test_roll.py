@@ -65,3 +65,11 @@ class TestRollTimeSeries(ZooTestCase):
                                       feature_col=[],
                                       target_col=["A"])
         assert x.shape == (8, 2, 1)
+
+        x, y = roll_timeseries_dataframe(self.easy_data,
+                                         lookback=2,
+                                         horizon=2,
+                                         feature_col=["C"],
+                                         target_col=["A"])
+        assert x.shape == (6, 2, 2)
+        assert y.shape == (6, 2, 1)
