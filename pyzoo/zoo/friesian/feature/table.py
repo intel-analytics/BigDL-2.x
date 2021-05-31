@@ -300,10 +300,10 @@ class Table:
         """
         Cast columns to the specified type.
 
-        :param columns: a string or a list of strings that specifies column names. If it is None,
-                        then cast all of the columns.
-        :param type: a string ("string", "boolean", "int", "long", "short", "float", "double")
-                     that specifies the type.
+        :param columns: a string or a list of strings that specifies column names.
+                        If it is None, then cast all of the columns.
+        :param type: a string ("str/string", "bool/boolean", "int/integer", "long", "short",
+                               "float", "double") that specifies the type.
 
         :return: A new Table that casts all of the specified columns to the specified type.
         """
@@ -312,11 +312,15 @@ class Table:
         elif not isinstance(columns, list):
             columns = [columns]
             check_col_exists(self.df, columns)
-        valid_types = ["string", "boolean", "int", "long", "short", "float", "double"]
+        valid_types = ["str", "string", "bool", "boolean", "int",
+                       "integer", "long", "short", "float", "double"]
         if (not isinstance(type, str) or (type not in valid_types)) \
            and not isinstance(type, DataType):
             raise ValueError(
-                "type should be a string in (string, boolean, int, long, short, float, double).")
+                "type should be a string in (str/string, bool/boolean, int/integer, "
+                "long, short, float, double).")
+        valid_dict = {"str": "string", "bool": "boolean", "integer": "int"}
+        type = valid_dict[type] if type in valid_dict.keys() else type
         df_cast = self._clone(self.df)
         for i in columns:
             df_cast.df = df_cast.df.withColumn(i, col(i).cast(type))

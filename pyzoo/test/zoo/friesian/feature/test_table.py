@@ -454,9 +454,10 @@ class TestTable(TestCase):
             == dict(tbl.df.dtypes)['c'] == "float", \
             "all the columns should now be cast to float type"
         with self.assertRaises(Exception) as context:
-            tbl = tbl.cast("a", "bool")
+            tbl = tbl.cast("a", "notvalid")
         self.assertTrue(
-            "type should be a string in (string, boolean, int, long, short, float, double)."
+            "type should be a string in (str/string, bool/boolean, int/integer, "
+            "long, short, float, double)."
             in str(context.exception))
 
     def test_select(self):
