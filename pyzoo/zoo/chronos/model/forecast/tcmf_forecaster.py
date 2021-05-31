@@ -116,7 +116,7 @@ class TCMFForecaster(Forecaster):
             alt_iters=10,
             num_workers=None):
         """
-        fit the model on x from scratch
+        Fit the model on x from scratch
 
         :param x: the input for fit. Only dict of ndarray and SparkXShards of dict of ndarray
             are supported. Example: {'id': id_arr, 'y': data_ndarray}, and data_ndarray
@@ -183,7 +183,7 @@ class TCMFForecaster(Forecaster):
 
     def fit_incremental(self, x_incr, covariates_incr=None, dti_incr=None):
         """
-        incrementally fit the model. Note that we only incrementally fit X_seq (TCN in global model)
+        Incrementally fit the model. Note that we only incrementally fit X_seq (TCN in global model)
 
         :param x_incr: incremental data to be fitted. It should be of the same format as input x in
             fit, which is a dict of ndarray or SparkXShards of dict of ndarray.
@@ -212,7 +212,7 @@ class TCMFForecaster(Forecaster):
                  num_workers=None,
                  ):
         """
-        evaluate the model
+        Evaluate the model
 
         :param target_value: target value for evaluation. We interpret its second dimension of
                as the horizon length for evaluation.
@@ -245,7 +245,7 @@ class TCMFForecaster(Forecaster):
                 num_workers=None,
                 ):
         """
-        predict
+        Predict using a trained forecaster.
 
         :param horizon: horizon length to look forward.
         :param future_covariates: covariates corresponding to future horizon steps data to predict.
