@@ -82,7 +82,7 @@ def get_nonnumeric_col_type(df, columns):
         df.dtypes))
 
 
-def gen_target_name(columns, name_sep="_"):
+def gen_cols_name(columns, name_sep="_"):
     if isinstance(columns, str):
         return columns
     elif isinstance(columns, list):
