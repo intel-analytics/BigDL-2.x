@@ -68,12 +68,32 @@ object MockMultipleServingHttpClient extends App with Supportive {
   def testBigDL() : Unit = {
     val resource = getClass().getClassLoader().getResource("models")
     //loads
-    val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
-    val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
-    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "Caffe", weightPath, null)
+    val modelPath = resource.getPath + "/bigdl/bigdl_lenet.model"
+    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "BigDL", null, null)
 
     val inferenceServable = new InferenceModelServable(inferenceModelMetaData)
     inferenceServable.load()
+  }
+
+  def testPyTorch() : Unit = {
+    val resource = getClass().getClassLoader().getResource("models")
+    //loads
+    val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
+    val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
+    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "BigDL", weightPath, null)
+
+    val inferenceServable = new InferenceModelServable(inferenceModelMetaData)
+    inferenceServable.load()
+  }
+
+  // Test Model Retrive Path. Starting FrontEnd App with MultiServing Tag
+  /* example yaml
+
+   */
+  def testMultiModelFunction() : Unit = {
+    val rawRequest = HttpRequest(
+      method = HttpMethods.GET,
+      uri = Uri(s"http://localhost:10020/predict"))
   }
 
 }
