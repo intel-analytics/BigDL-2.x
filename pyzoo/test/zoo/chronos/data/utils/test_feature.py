@@ -19,7 +19,7 @@ import pandas as pd
 import numpy as np
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.zouwu.data.utils.feature import generate_dt_features
+from zoo.chronos.data.utils.feature import generate_dt_features
 
 
 class TestFeature(ZooTestCase):
