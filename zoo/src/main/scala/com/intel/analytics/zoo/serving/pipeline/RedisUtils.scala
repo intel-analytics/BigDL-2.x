@@ -111,6 +111,11 @@ object RedisUtils {
     val hValue = Map[String, String]("value" -> value).asJava
     ppl.hmset(hKey, hValue)
   }
+  def writeXstream(ppl: Pipeline, key: String, value: String, name: String): Unit = {
+    val streamKey = Conventions.RESULT_PREFIX + name + ":" + key
+    val streamValue = Map[String, String]("value" -> value).asJava
+    ppl.xadd(streamKey, StreamEntryID.NEW_ENTRY, streamValue)
+  }
   def initializeRedis(): Unit = {
     val params = ClusterServing.helper
     if (params.redisSecureEnabled) {

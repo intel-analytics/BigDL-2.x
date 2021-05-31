@@ -30,7 +30,7 @@ import com.intel.analytics.zoo.serving.http.{PredictionInputMessage, _}
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import redis.clients.jedis.{Jedis, ScanParams, ScanResult, StreamEntryID}
-import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
+import com.intel.analytics.zoo.serving.pipeline.{RedisUtils}
 import org.apache.commons.io.IOUtils
 import redis.embedded.exceptions.EmbeddedRedisException
 import redis.embedded.{AbstractRedisInstance, Redis, RedisExecProvider, RedisServer, RedisServerBuilder}
@@ -238,7 +238,7 @@ class RedisIOSpec extends FlatSpec with Matchers with BeforeAndAfter with Suppor
     val ppl = jedis.pipelined()
     var cnt = 0
     value.foreach(v => {
-      RedisIO.writeHashMap(ppl, v._1, v._2, "test")
+      RedisUtils.writeHashMap(ppl, v._1, v._2, "test")
       if (v._2 != "NaN") {
         cnt += 1
       }
