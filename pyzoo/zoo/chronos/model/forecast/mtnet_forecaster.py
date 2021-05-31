@@ -114,6 +114,7 @@ class MTNetForecaster(TFParkForecaster):
 
         :param x: the original samples from rolling
 
-        :return: a tuple (long_term_x, short_term_x) which are long term and short term history respectively
+        :return: a tuple (long_term_x, short_term_x) which are long term and short term
+            history respectively
         """
         return self.internal._reshape_input_x(x)

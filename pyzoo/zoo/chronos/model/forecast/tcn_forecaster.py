@@ -96,7 +96,7 @@ class TCNForecaster(Forecaster):
         :param metric: The metric for training data.
         :param batch_size: Number of batch size you want to train.
 
-        :return:
+        :return: Evaluation results on validation data.
         """
         if validation_data is None:
             validation_data = (x, y)
@@ -132,7 +132,7 @@ class TCNForecaster(Forecaster):
 
         :param x: A numpy array with shape (num_samples, lookback, feature_dim).
 
-        :return:
+        :return: A numpy array with shape (num_samples, lookback, feature_dim).
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling predict!")
@@ -146,7 +146,7 @@ class TCNForecaster(Forecaster):
         :param dirname: The directory to save onnx model file. This value defaults
                to None for no saving file.
 
-        :return:
+        :return: A numpy array with shape (num_samples, lookback, feature_dim).
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling predict!")
@@ -163,7 +163,7 @@ class TCNForecaster(Forecaster):
                String in ['raw_values', 'uniform_average']. The value defaults to
                'raw_values'.
 
-        :return:
+        :return: A list of evaluation results. Each item represents a metric.
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
@@ -185,7 +185,7 @@ class TCNForecaster(Forecaster):
                String in ['raw_values', 'uniform_average']. The value defaults to
                'raw_values'.
 
-        :return:
+        :return: A list of evaluation results. Each item represents a metric.
         """
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")

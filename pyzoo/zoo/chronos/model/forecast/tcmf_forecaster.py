@@ -21,6 +21,29 @@ from zoo.chronos.model.forecast.abstract import Forecaster
 
 
 class TCMFForecaster(Forecaster):
+    """
+        Example:
+            >>> import numpy as np
+            >>> model = TCMFForecaster()
+            >>> fit_params = dict(val_len=12,
+                               start_date="2020-1-1",
+                               freq="5min",
+                               y_iters=1,
+                               init_FX_epoch=1,
+                               max_FX_epoch=1,
+                               max_TCN_epoch=1,
+                               alt_iters=2)
+            >>> ndarray_input = {'id': np.arange(300), 'y': np.random.rand(300, 480)}
+            >>> model.fit(ndarray_input, fit_params)
+            >>> horizon = np.random.randint(1, 50)
+            >>> yhat = model.predict(horizon=horizon)
+            >>> model.save({tempdirname})
+            >>> loaded_model = TCMFForecaster.load({tempdirname}, is_xshards_distributed=False)
+            >>> data_new = np.random.rand(300, horizon)
+            >>> model.evaluate(target_value=dict({"y": data_new}), metric=['mse'])
+            >>> model.fit_incremental({"y": data_new})
+            >>> yhat_incr = model.predict(horizon=horizon)
+    """
 
     def __init__(self,
                  vbsize=128,
@@ -96,8 +119,9 @@ class TCMFForecaster(Forecaster):
         fit the model on x from scratch
 
         :param x: the input for fit. Only dict of ndarray and SparkXShards of dict of ndarray
-            are supported. Example: {'id': id_arr, 'y': data_ndarray}, and data_ndarray is of shape
-            (n, T), where n is the number f target time series and T is the number of time steps.
+            are supported. Example: {'id': id_arr, 'y': data_ndarray}, and data_ndarray
+            is of shape (n, T), where n is the number f target time series and T is the
+            number of time steps.
         :param val_len: int, default is 24.
             Validation length. We will use the last val_len time points as validation data.
         :param start_date: str or datetime-like.
@@ -163,10 +187,10 @@ class TCMFForecaster(Forecaster):
 
         :param x_incr: incremental data to be fitted. It should be of the same format as input x in
             fit, which is a dict of ndarray or SparkXShards of dict of ndarray.
-            Example: {'id': id_arr, 'y': incr_ndarray}, and incr_ndarray is of shape (n, T_incr), where
-            n is the number of target time series, T_incr is the number of time steps incremented. You
-            can choose not to input 'id' in x_incr, but if you do, the elements of id in x_incr should
-            be the same as id in x of fit.
+            Example: {'id': id_arr, 'y': incr_ndarray}, and incr_ndarray is of shape (n, T_incr)
+            , where n is the number of target time series, T_incr is the number of time steps
+            incremented. You can choose not to input 'id' in x_incr, but if you do, the elements
+            of id in x_incr should be the same as id in x of fit.
         :param covariates_incr: covariates corresponding to x_incr. 2-D ndarray or None.
             The shape of ndarray should be (r, T_incr), where r is the number of covariates.
             Global covariates for all time series. If None, only default time coveriates will be
@@ -206,7 +230,7 @@ class TCMFForecaster(Forecaster):
         :param num_workers: the number of workers to use in evaluate. If None, it defaults to
             num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
 
-        :return:
+        :return: A list of evaluation results. Each item represents a metric.
         """
         return self.internal.evaluate(y=target_value,
                                       metric=metric,
@@ -237,7 +261,8 @@ class TCMFForecaster(Forecaster):
         :param num_workers: the number of workers to use in predict. If None, it defaults to
             num_ray_nodes in the created RayContext or 1 if there is no active RayContext.
 
-        :return:
+        :return: A numpy ndarray with shape of (nd, horizon), where nd is the same number
+            of time series as input x in fit_eval.
         """
         if self.internal is None:
             raise Exception("You should run fit before calling predict()")
@@ -276,7 +301,8 @@ class TCMFForecaster(Forecaster):
         Load a saved model.
 
         :param path: The location you want to save the forecaster.
-        :param is_xshards_distributed: Whether the model is distributed trained with input of dict of SparkXshards.
+        :param is_xshards_distributed: Whether the model is distributed trained with
+            input of dict of SparkXshards.
         :param minPartitions: The minimum partitions for the XShards.
 
         :return: the model loaded
