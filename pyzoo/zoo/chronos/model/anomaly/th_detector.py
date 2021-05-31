@@ -124,7 +124,8 @@ def detect_anomaly(y,
         """
     if isinstance(th, int) or isinstance(th, float):
         if yhat is None:
-            raise ValueError("Please specify a threshold range (min,max) if forecast values are not available")
+            raise ValueError("Please specify a threshold range (min,max) ",
+                "if forecast values are not available")
         return detect_all(y, yhat, th, dist_measure)
     elif isinstance(th, tuple) and len(th) == 2:
         # min max values are scalars
@@ -136,7 +137,8 @@ def detect_anomaly(y,
         # min max values are arrays
         elif th[0].shape == y.shape and th[-1].shape == y.shape:
             if np.any((th[1] - th[0]) < 0):
-                raise ValueError("In threshold (min,max) each data point in max tensor should be larger than min")
+                raise ValueError("In threshold (min,max) ",
+                    "each data point in max tensor should be larger than min")
             return detect_range_arr(y, th)
         else:
             raise ValueError("Threshold format", str(th), "is not supported")
