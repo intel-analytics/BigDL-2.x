@@ -35,6 +35,7 @@ class TSDataset:
         self._check_basic_invariants()
 
         self._id_list = list(np.unique(self.df[self.id_col]))
+        self._is_pd_datetime = pd.api.types.is_datetime64_any_dtype(self.df[self.dt_col].dtypes)
 
     @staticmethod
     def from_pandas(df,
