@@ -10,5 +10,7 @@ A general estimator supports automatic model tuning. It allows users to fit and 
     :members:
     :undoc-members:
     :show-inheritance:
-    :exclude-members: __init__
+
+    .. autoclass:: zoo.orca.automl.auto_estimator.AutoEstimator
+        :exclude-members: __init__
 
