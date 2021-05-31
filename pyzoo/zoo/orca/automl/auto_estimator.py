@@ -21,17 +21,17 @@ class AutoEstimator:
     """
     Example:
         >>> auto_est = AutoEstimator.from_torch(model_creator=model_creator,
-                                            optimizer=get_optimizer,
-                                            loss=nn.BCELoss(),
-                                            logs_dir="/tmp/zoo_automl_logs",
-                                            resources_per_trial={"cpu": 2},
-                                            name="test_fit")
+                                                optimizer=get_optimizer,
+                                                loss=nn.BCELoss(),
+                                                logs_dir="/tmp/zoo_automl_logs",
+                                                resources_per_trial={"cpu": 2},
+                                                name="test_fit")
         >>> auto_est.fit(data=data,
-                     validation_data=validation_data,
-                     search_space=create_linear_search_space(),
-                     n_sampling=4,
-                     epochs=1,
-                     metric="accuracy")
+                         validation_data=validation_data,
+                         search_space=create_linear_search_space(),
+                         n_sampling=4,
+                         epochs=1,
+                         metric="accuracy")
         >>> best_model = auto_est.get_best_model()
     """
 

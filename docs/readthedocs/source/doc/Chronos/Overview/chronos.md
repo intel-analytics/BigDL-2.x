@@ -145,7 +145,7 @@ Chronos also provides a set of standalone time series forecaster, which are base
 * LSTMForecaster
 * MTNetForecaster
 * TCMFForecaster
-* SEQ2SEQForecaster
+* Seq2SeqForecaster
 * TCNForecaster
 
 View [Network Traffic Prediction](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [Datacenter AIOps](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/chronos/use-case/AIOps) notebooks for some examples.
@@ -194,7 +194,7 @@ TCMFForecaster wraps a model architecture that follows implementation of the pap
 
 View High-dimensional Electricity Data Forecasting [example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/tcmf/run_electricity.py) and [TCMFForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-tcmf-forecaster) for more details.
 
-##### **4.2.4 SEQ2SEQForecaster**
+##### **4.2.4 Seq2SeqForecaster**
 
 Seq2SeqForecaster wraps a sequence to sequence model based on LSTM, and is suitable for multivariant & multistep time series forecasting.
 
