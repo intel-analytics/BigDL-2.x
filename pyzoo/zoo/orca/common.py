@@ -25,6 +25,7 @@ class OrcaContextMeta(type):
     _serialize_data_creator = False
     _train_data_store = "DRAM"
     __shard_size = None
+    _barrier_mode = True
 
     @property
     def log_output(cls):
@@ -119,6 +120,20 @@ class OrcaContextMeta(type):
             assert isinstance(value, int) and value > 0, \
                 "shard size should be either None or a positive integer."
         cls.__shard_size = value
+
+    @property
+    def barrier_mode(cls):
+        """
+        Whether to use Spark barrier mode to launch Ray, which is supported in Spark 2.4+ and when
+        dynamic allocation is disabled.
+        Default to be True.
+        """
+        return cls._barrier_mode
+
+    @barrier_mode.setter
+    def barrier_mode(cls, value):
+        assert isinstance(value, bool), "barrier_mode should either be True or False"
+        cls._barrier_mode = value
 
 
 class OrcaContext(metaclass=OrcaContextMeta):
@@ -242,9 +257,11 @@ def init_orca_context(cluster_mode="local", cores=2, memory="2g", num_nodes=1,
                          "but got: %s".format(cluster_mode))
     ray_args = {}
     for key in ["redis_port", "password", "object_store_memory", "verbose", "env",
-                "extra_params", "num_ray_nodes", "ray_node_cpu_cores", "include_webui"]:
+                "extra_params", "num_ray_nodes", "ray_node_cpu_cores", "include_webui", "barrier_mode"]:
         if key in kwargs:
             ray_args[key] = kwargs[key]
+    if "barrier_mode" not in ray_args:
+        ray_args["barrier_mode"] = OrcaContext.barrier_mode
     from zoo.ray import RayContext
     ray_ctx = RayContext(sc, **ray_args)
     if init_ray_on_spark:
