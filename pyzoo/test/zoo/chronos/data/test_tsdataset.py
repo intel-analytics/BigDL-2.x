@@ -30,6 +30,7 @@ def get_ts_df():
                              "extra feature": np.random.randn(sample_num)})
     return train_df
 
+
 class TestTSDataset(ZooTestCase):
     def setup_method(self, method):
         pass
@@ -42,7 +43,7 @@ class TestTSDataset(ZooTestCase):
 
         # legal input
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
-                        extra_feature_col=["extra feature"], id_col="id")
+                                       extra_feature_col=["extra feature"], id_col="id")
         assert tsdata._id_list == ['00']
         assert tsdata.feature_col == ["extra feature"]
         assert tsdata.target_col == ["value"]
@@ -50,7 +51,7 @@ class TestTSDataset(ZooTestCase):
         assert tsdata._is_pd_datetime
 
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=["value"],
-                        extra_feature_col="extra feature", id_col="id")
+                                       extra_feature_col="extra feature", id_col="id")
         assert tsdata._id_list == ['00']
         assert tsdata.feature_col == ["extra feature"]
         assert tsdata.target_col == ["value"]
@@ -58,7 +59,7 @@ class TestTSDataset(ZooTestCase):
         assert tsdata._is_pd_datetime
 
         tsdata = TSDataset.from_pandas(df.drop(columns=["id"]), dt_col="datetime",
-                        target_col=["value"], extra_feature_col="extra feature")
+                                       target_col=["value"], extra_feature_col="extra feature")
         assert tsdata._id_list == ['0']
         assert tsdata.feature_col == ["extra feature"]
         assert tsdata.target_col == ["value"]
@@ -68,18 +69,16 @@ class TestTSDataset(ZooTestCase):
         # illegal input
         with pytest.raises(AssertionError):
             tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=["value"],
-                            extra_feature_col="extra feature", id_col=0)
+                                           extra_feature_col="extra feature", id_col=0)
         with pytest.raises(AssertionError):
             tsdata = TSDataset.from_pandas(df, dt_col=0, target_col=["value"],
-                            extra_feature_col="extra feature", id_col="id")
+                                           extra_feature_col="extra feature", id_col="id")
         with pytest.raises(AssertionError):
             tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=0,
-                            extra_feature_col="extra feature", id_col="id")
+                                           extra_feature_col="extra feature", id_col="id")
         with pytest.raises(AssertionError):
             tsdata = TSDataset.from_pandas(0, dt_col="datetime", target_col=["value"],
-                            extra_feature_col="extra feature", id_col="id")
+                                           extra_feature_col="extra feature", id_col="id")
         with pytest.raises(AssertionError):
-            tsdata = TSDataset.from_pandas(0, dt_col="datetime", target_col=["value1"],
-                            extra_feature_col="extra feature", id_col="id")
-        
-        
+            tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=["value1"],
+                                           extra_feature_col="extra feature", id_col="id")

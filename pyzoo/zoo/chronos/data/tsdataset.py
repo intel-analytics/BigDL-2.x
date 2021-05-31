@@ -81,7 +81,6 @@ class TSDataset:
                          target_col=target_col,
                          feature_col=feature_col)
 
-
     def impute(self, mode="last"):
         '''
         Impute the tsdataset
@@ -218,9 +217,11 @@ def _to_list(item, name, expect_type=str):
     _check_type(item, name, expect_type)
     return [item]
 
+
 def _check_type(item, name, expect_type):
     assert isinstance(item, expect_type),\
         f"a {str(expect_type)} is expected for {name} but found {type(item)}"
+
 
 def _check_col_within(df, col_name):
     assert col_name in df.columns,\
