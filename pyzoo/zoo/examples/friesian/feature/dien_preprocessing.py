@@ -46,7 +46,7 @@ if __name__ == "__main__":
         .withColumnRenamed('reviewerID', 'user') \
         .withColumnRenamed('asin', 'item') \
         .withColumnRenamed('unixReviewTime', 'time')\
-        .dropna("any").sample(1.00).persist(storageLevel=StorageLevel.DISK_ONLY)
+        .dropna("any").persist(storageLevel=StorageLevel.DISK_ONLY)
     transaction_tbl = FeatureTable(transaction_df)
     print("transaction_tbl, ", transaction_tbl.size())
 
@@ -71,56 +71,34 @@ if __name__ == "__main__":
 
     user_index = transaction_tbl.gen_string_idx(['user'], 1)
     trans_label = lambda x: [float(x), 1 - float(x)]
-    label_type =  ArrayType(FloatType())
+    label_type = ArrayType(FloatType())
+
     item_tbl = item_tbl\
         .encode_string(["item", "category"], [item_category_indices[0], category_index])\
         .distinct()
 
-    full_tbl = transaction_tbl\
-        .encode_string(['user', 'item'], [user_index[0], item_category_indices[0]])
-    print(1, "****")
-    print(full_tbl.df.count())
-    full_tbl.show(10, False)
-
-    full_tbl = full_tbl.dropna(columns="item")
-    print(2, "****")
-    print(full_tbl.df.count())
-    full_tbl.show(10, False)
-
-    full_tbl = full_tbl\
+    transaction_tbl = transaction_tbl\
+        .encode_string(['user', 'item'], [user_index[0], item_category_indices[0]])\
+        .dropna(columns="item")\
         .add_hist_seq(user_col="user", cols=['item'],
                       sort_col='time', min_len=1, max_len=100)\
-        .add_neg_hist_seq(item_size, 'item_hist_seq', neg_num=5)
+        .add_neg_hist_seq(item_size, 'item_hist_seq', neg_num=5)\
+        .add_negative_samples(item_size, item_col='item', neg_num=1)
 
-    full_tbl = full_tbl.add_negative_samples(item_size, item_col='item', neg_num=1)
-    print(3, "****")
-    full_tbl.df.printSchema()
-    print(full_tbl.df.count())
-    full_tbl.show(10, False)
-
-    full_tbl = full_tbl.join(item_tbl, "item")
-
-    print(4, "****")
-    full_tbl.df.printSchema()
-
-    print(full_tbl.df.count())
-    full_tbl.show(10, False)
-    full_tbl = full_tbl.add_value_features(key_cols=["item_hist_seq", "neg_item_hist_seq"], tbl=item_tbl)\
+    full_tbl = transaction_tbl.join(item_tbl, "item")\
+        .add_value_features(key_cols=["item_hist_seq", "neg_item_hist_seq"], tbl=item_tbl)\
         .pad(mask_cols=['item_hist_seq'],
              cols=['item_hist_seq', 'category_hist_seq',
              'neg_item_hist_seq', 'neg_category_hist_seq'],
              seq_len=100) \
         .add_col_length("item_hist_seq") \
         .apply("label", "label", trans_label, label_type)
-    print(5, "****")
-    print(full_tbl.df.count())
-    full_tbl.show(10, False)
-    sys.exit(1)
+
     # write out
     user_index[0].write_parquet(options.output+"user_index")
     item_category_indices[0].write_parquet(options.output+"item_index")
     category_index.write_parquet(options.output+"category_index")
-    item2cat.write_parquet(options.output+"item2cat")
+    item_tbl.write_parquet(options.output+"item2cat")
     full_tbl.write_parquet(options.output + "data")
 
     print("final output count, ", full_tbl.size())

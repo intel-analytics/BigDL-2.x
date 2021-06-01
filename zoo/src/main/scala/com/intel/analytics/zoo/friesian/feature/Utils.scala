@@ -174,11 +174,13 @@ private[friesian] object Utils {
   }
 
 
-  def maskArr[T] = {
+  def maskArr[T]: (Int, mutable.WrappedArray[T]) => Seq[T] = {
     (maxLength: Int, history: WrappedArray[T]) => {
       val n = history.length
       val result: Seq[T] = if (maxLength > n) {
-        (0 to n - 1).map(_ => castValueFromNum(history(0), 1)) ++ (0 to (maxLength - n - 1)).map(_ => castValueFromNum(history(0)))
+        (0 to n - 1).map(_ =>
+          castValueFromNum(history(0), 1)) ++ (0 to (maxLength - n - 1)).map(_ =>
+          castValueFromNum(history(0)))
       } else {
         (0 to maxLength - 1).map(_ => castValueFromNum(history(0), 1))
       }
@@ -186,11 +188,10 @@ private[friesian] object Utils {
     }
   }
 
-  def padArr[T] = {
+  def padArr[T]: (Int, mutable.WrappedArray[T]) => mutable.Seq[T] = {
     (maxLength: Int, history: WrappedArray[T]) => {
       val n = history.length
       val padValue = castValueFromNum(history(0))
-      println(padValue)
       val pads: mutable.Seq[T] = if (maxLength > n) {
         history ++ (0 to maxLength - n - 1).map(_ => padValue)
       } else {
@@ -206,7 +207,8 @@ private[friesian] object Utils {
       if (maxLength > n) {
         val hishead = history(0)
         val padArray =
-          (0 to maxLength - n - 1).map(_ => (0 to hishead.length - 1).map(_ => castValueFromNum(history(0)(0))))
+          (0 to maxLength - n - 1).map(_
+          => (0 to hishead.length - 1).map(_ => castValueFromNum(history(0)(0))))
         history ++ padArray
       } else {
         history.slice(n - maxLength, n)
@@ -241,7 +243,7 @@ private[friesian] object Utils {
     val r = new Random()
     (history: WrappedArray[T]) => {
       val r = new Random()
-      val negItemSeq: Seq[Seq[T]] = (0 to history.length - 1).map(i=> {
+      val negItemSeq: Seq[Seq[T]] = (0 to history.length - 1).map(i => {
         (0 to negNum - 1).map(j => {
           var negItem = 0
           do {

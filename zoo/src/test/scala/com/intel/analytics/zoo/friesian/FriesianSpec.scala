@@ -234,14 +234,12 @@ class FriesianSpec extends ZooSpecHelper {
       StructField("history_list", ArrayType(ArrayType(LongType)), true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
-    df.show(10, false)
     val dft = friesian.postPad(df, Array("history", "history_list").toList.asJava, 4)
-    dft.schema.fields.map(x => x.dataType).foreach(println(_))
-    dft.show(10, false)
-//    assert(dft.filter("size(history) = 4").count() == 3)
-//    assert(dft.filter("size(history_list) = 4").count() == 3)
-//    assert(dft.filter(dft("name") === "rose").select("history").collect()(0)(0).toString()
-//      == "WrappedArray(1, 2, 0, 0)")
+//    dft.schema.fields.map(x => x.dataType).foreach(println(_))
+    assert(dft.filter("size(history) = 4").count() == 3)
+    assert(dft.filter("size(history_list) = 4").count() == 3)
+    assert(dft.filter(dft("name") === "rose").select("history").collect()(0)(0).toString()
+      == "WrappedArray(1, 2, 0, 0)")
   }
 
   "addHisSeq int and float" should "work properly" in {
@@ -276,17 +274,17 @@ class FriesianSpec extends ZooSpecHelper {
 
   "addHisSeq double long" should "work properly" in {
     val data = sc.parallelize(Seq(
-      Row("rose", 1l, 2.0, "2019-07-01 12:01:19.000"),
-      Row("jack", 1l, 2.0, "2019-07-01 12:01:19.000"),
-      Row("jack", 2l, 2.0, "2019-08-01 12:01:19.000"),
-      Row("jack", 3l, 2.0, "2019-09-01 12:01:19.000"),
-      Row("jack", 4l, 1.0, "2019-10-01 12:01:19.000"),
-      Row("jack", 5l, 1.0, "2019-11-01 12:01:19.000"),
-      Row("jack", 6l, 1.0, "2019-12-01 12:01:19.000"),
-      Row("jack", 7l, 0.0, "2019-12-02 12:01:19.000"),
-      Row("alice", 4l, 0.0, "2019-09-01 12:01:19.000"),
-      Row("alice", 5l, 1.0, "2019-10-01 12:01:19.000"),
-      Row("alice", 6l, 0.0, "2019-11-01 12:01:19.000")))
+      Row("rose", 1L, 2.0, "2019-07-01 12:01:19.000"),
+      Row("jack", 1L, 2.0, "2019-07-01 12:01:19.000"),
+      Row("jack", 2L, 2.0, "2019-08-01 12:01:19.000"),
+      Row("jack", 3L, 2.0, "2019-09-01 12:01:19.000"),
+      Row("jack", 4L, 1.0, "2019-10-01 12:01:19.000"),
+      Row("jack", 5L, 1.0, "2019-11-01 12:01:19.000"),
+      Row("jack", 6L, 1.0, "2019-12-01 12:01:19.000"),
+      Row("jack", 7L, 0.0, "2019-12-02 12:01:19.000"),
+      Row("alice", 4L, 0.0, "2019-09-01 12:01:19.000"),
+      Row("alice", 5L, 1.0, "2019-10-01 12:01:19.000"),
+      Row("alice", 6L, 0.0, "2019-11-01 12:01:19.000")))
     val schema = StructType(Array(
       StructField("name", StringType, true),
       StructField("item", LongType, true),

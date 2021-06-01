@@ -236,7 +236,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     df.sparkSession.conf.set("spark.sql.legacy.allowUntypedScalaUDF", "true")
     val colNames: Array[String] = cols.asScala.toArray
-    val colsWithType = df.schema.fields.filter(x=> colNames.contains(x.name))
+    val colsWithType = df.schema.fields.filter(x => colNames.contains(x.name))
     val schema = ArrayType(StructType(colsWithType.flatMap(c =>
       Seq(c, StructField(c.name + "_hist_seq", ArrayType(c.dataType))))))
 
@@ -257,7 +257,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
             case "double" => get1row[Double](full_rows, col.name, i, lowerBound)
             case "float" => get1row[Float](full_rows, col.name, i, lowerBound)
             case "long" => get1row[Long](full_rows, col.name, i, lowerBound)
-            case _ =>  throw new IllegalArgumentException(
+            case _ => throw new IllegalArgumentException(
               s"Unsupported data type ${col.dataType.typeName} in addHistSeq")
           }
         })
@@ -274,30 +274,31 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       .select(userCol, "friesian_history.*")
   }
 
-  private def get1row[T](full_rows: Array[Row], colName:String, index:Int, lowerBound:Int) ={
+  private def get1row[T](full_rows: Array[Row], colName: String, index: Int, lowerBound: Int) = {
     val colValue = full_rows(index).getAs[T](colName)
     val historySeq = full_rows.slice(lowerBound, index).map(row => row.getAs[T](colName))
     Seq(colValue, historySeq)
   }
 
   def mask(df: DataFrame, cols: JList[String], maxLength: Int): DataFrame = {
-    val colDataTypes = df.schema.fields.filter(x=> cols.contains(x.name))
+    val colDataTypes = df.schema.fields.filter(x => cols.contains(x.name))
       .map(x => x.dataType).distinct
     require(colDataTypes.length == 1, "dataTypes should be the same at each operation")
 
     colDataTypes(0) match {
       case ArrayType(IntegerType, _) =>
-        df.sqlContext.udf.register("mask",  Utils.maskArr[Int])
+        df.sqlContext.udf.register("mask", Utils.maskArr[Int])
       case ArrayType(LongType, _) =>
-        df.sqlContext.udf.register("mask",  Utils.maskArr[Long])
+        df.sqlContext.udf.register("mask", Utils.maskArr[Long])
       case ArrayType(DoubleType, _) =>
         df.sqlContext.udf.register("mask", Utils.maskArr[Double])
-      case _ =>  throw new IllegalArgumentException(s"Unsupported data type $colDataTypes in mask")
+      case _ => throw new IllegalArgumentException(s"Unsupported data type $colDataTypes in mask")
     }
 
     df.createOrReplaceTempView("tmp")
 
-    val selectStatement = cols.toArray().map(c => s"mask($maxLength, $c) as $c" + "_mask").mkString(",")
+    val selectStatement = cols.toArray().map(c =>
+      s"mask($maxLength, $c) as $c" + "_mask").mkString(",")
 
     df.sqlContext.sql(s"select *, $selectStatement from tmp")
   }
@@ -337,7 +338,8 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def postPad(df: DataFrame, cols: JList[String], maxLength: Int = 100): DataFrame = {
-    val colDataTypes = df.schema.fields.filter(x=> cols.contains(x.name)).map(x => x.dataType).distinct
+    val colDataTypes = df.schema.fields.filter(x =>
+      cols.contains(x.name)).map(x => x.dataType).distinct
     colDataTypes.map(dataType =>
       dataType match {
         case ArrayType(IntegerType, _) =>
@@ -350,7 +352,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
           df.sqlContext.udf.register("pad_matrix", Utils.padMatrix[Int])
         case ArrayType(ArrayType(LongType, _), _) =>
           df.sqlContext.udf.register("pad_matrix", Utils.padMatrix[Long])
-        case ArrayType(ArrayType(DoubleType, _), _)=>
+        case ArrayType(ArrayType(DoubleType, _), _) =>
           df.sqlContext.udf.register("pad_matrix", Utils.padMatrix[Double])
         case _ => throw new IllegalArgumentException(s"Unsupported data type $dataType in postPad")
       })
