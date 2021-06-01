@@ -157,7 +157,7 @@ This section shows some common topics for both client mode and cluster mode.
 
 ##### 3.3.1 How to debug ray issues?
 
-The k8s would delete the pod once the worker failed in client mode and cluster mode.  If you want to get the content of worker log, you could set an "temp-dir" mount network file system (NFS) storage to change the log dir to replace the former one. In this case, you may meet `JSONDecodeError` because multiple executors would write logs to the same physical folder and cause conflicts. The solutions are in the next section.
+The k8s would delete the pod once the executor failed in client mode and cluster mode.  If you want to get the content of executor log, you could set "temp-dir" to a mounted network file system (NFS) storage to change the log dir to replace the former one. In this case, you may meet `JSONDecodeError` because multiple executors would write logs to the same physical folder and cause conflicts. The solutions are in the next section.
 
 ```python
 init_orca_context(..., extra_params = {"temp-dir": "/zoo/"})
@@ -165,11 +165,11 @@ init_orca_context(..., extra_params = {"temp-dir": "/zoo/"})
 
 ##### 3.3.2 How to deal with "JSONDecodeError" ?
 
-If you use `temp-dir` to mount to a nfs storage and use multiple executors , you may meet `JSONDecodeError` since multiple executors would write to the same physical folder and cause conflicts. There are two ways to avoid this. One option is do not mount `temp-dir` to shared storage. But if you debug ray on k8s, you need to output logs to a shared storage. In this case, you could set num-nodes to 1. Another choice is to append some random info after the path of `temp-dir` when ray start, such as `"/zoo/ray/tempXXX"` , to avoid conflicts.
+If you set `temp-dir` to a mounted nfs storage and use multiple executors , you may meet `JSONDecodeError` since multiple executors would write to the same physical folder and cause conflicts. Do not mount `temp-dir` to shared storage is one option to avoid conflicts. But if you debug ray on k8s, you need to output logs to a shared storage. In this case, you could set num-nodes to 1. After testing, you can remove `temp-dir` setting and run multiple executors.
 
 ##### 3.3.3 How to use NFS?
 
-If you want to save some files out of pod's lifecycle, such as logging callbacks or tensorboard callbacks, you need to let the output dir mount persistent volume dir. Let NFS be a simple example.
+If you want to save some files out of pod's lifecycle, such as logging callbacks or tensorboard callbacks, you need to set the output dir to a mounted persistent volume dir. Let NFS be a simple example.
 
 Use NFS in client mode:
 
@@ -204,7 +204,7 @@ The `steps_per_epoch` and `validation_steps` equal to numbers of dataset divided
 
 ##### 3.3.6 Others
 
-`spark.kubernetes.container.image.pullPolicy` needs to be specified as `always`.
+`spark.kubernetes.container.image.pullPolicy` needs to be specified as `always` if you need to update your spark executor image for k8s.
 
 #### **3.4 Run Jupyter Notebooks**
 
