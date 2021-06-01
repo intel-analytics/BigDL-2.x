@@ -32,7 +32,7 @@ def get_duplicated_ugly_ts_df():
     return df
 
 
-class TestImputeTimeSeries(ZooTestCase):
+class TestDeduplicateTimeSeries(ZooTestCase):
     def setup_method(self, method):
         self.df = get_duplicated_ugly_ts_df()
 
