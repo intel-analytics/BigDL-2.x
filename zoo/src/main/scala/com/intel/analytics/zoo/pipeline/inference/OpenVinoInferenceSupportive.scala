@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.pipeline.inference
 import java.io.{File, FileOutputStream, InputStream}
 import java.nio.channels.Channels
 import java.nio.file.{Files, Paths}
+import java.util.{List => JList}
 
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 import com.intel.analytics.zoo.core.openvino.OpenvinoNativeLoader
@@ -52,6 +53,10 @@ class OpenVinoInferenceSupportive extends InferenceSupportive with Serializable 
   @native def predictInt8(executableNetworkReference: Long,
                       data: Array[Byte],
                       shape: Array[Int]): JTensor
+
+  @native def predictMulti(executableNetworkReference: Long,
+                      data: Array[Float],
+                      shape: Array[Int]): JList[JTensor]
 
   @native def releaseOpenVINOIR(executableNetworkReference: Long): Unit
 }
