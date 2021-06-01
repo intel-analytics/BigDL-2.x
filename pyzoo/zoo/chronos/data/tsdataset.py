@@ -236,6 +236,9 @@ class TSDataset:
         '''
         export rolling result in form of a tuple of numpy ndarray (x, y)
         '''
+        if self.numpy_x is None:
+            raise RuntimeError("Please call \"roll\" method\
+                    before transform a TSDataset to numpy ndarray!")
         return self.numpy_x, self.numpy_y
 
     def to_pandas(self):

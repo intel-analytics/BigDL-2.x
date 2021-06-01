@@ -118,6 +118,9 @@ class TestTSDataset(ZooTestCase):
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
 
+        with pytest.raises(RuntimeError):
+            tsdata.to_numpy()
+
         # roll train
         tsdata.roll(lookback=lookback, horizon=horizon)
         x, y = tsdata.to_numpy()
