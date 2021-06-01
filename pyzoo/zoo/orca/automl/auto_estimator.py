@@ -18,27 +18,36 @@ from zoo.automl.search import SearchEngineFactory
 
 
 class AutoEstimator:
+    """
+    Example:
+        >>> auto_est = AutoEstimator.from_torch(model_creator=model_creator,
+                                                optimizer=get_optimizer,
+                                                loss=nn.BCELoss(),
+                                                logs_dir="/tmp/zoo_automl_logs",
+                                                resources_per_trial={"cpu": 2},
+                                                name="test_fit")
+        >>> auto_est.fit(data=data,
+                         validation_data=validation_data,
+                         search_space=create_linear_search_space(),
+                         n_sampling=4,
+                         epochs=1,
+                         metric="accuracy")
+        >>> best_model = auto_est.get_best_model()
+    """
+
     def __init__(self,
                  model_builder,
                  logs_dir="/tmp/auto_estimator_logs",
                  resources_per_trial=None,
                  remote_dir=None,
                  name=None):
-        """
-        Create an AutoEstimator.
-
-        :param model_builder: A ModelBuilder instance, from which we will
-            build the target model for hyperparameter optimization.
-        :param logs_dir: local dir to save training results, defaults to /tmp/auto_estimator_logs
-        :param resources_per_trial: Dict. resources for each trial. e.g. {"cpu": 2}.
-        :param name: AutoEstimator name.
-        """
         self.model_builder = model_builder
-        self.searcher = SearchEngineFactory.create_engine(backend="ray",
-                                                          logs_dir=logs_dir,
-                                                          resources_per_trial=resources_per_trial,
-                                                          remote_dir=remote_dir,
-                                                          name=name)
+        self.searcher = SearchEngineFactory.create_engine(
+            backend="ray",
+            logs_dir=logs_dir,
+            resources_per_trial=resources_per_trial,
+            remote_dir=remote_dir,
+            name=name)
         self._fitted = False
 
     @staticmethod
@@ -121,12 +130,12 @@ class AutoEstimator:
 
         :param data: train data.
             If the AutoEstimator is created with from_torch, data can be a tuple of
-                ndarrays or a function that takes a config dictionary as parameter
-                and returns a PyTorch DataLoader.
+            ndarrays or a function that takes a config dictionary as parameter
+            and returns a PyTorch DataLoader.
             If the AutoEstimator is created with from_keras, data can be a tuple of
-                ndarrays.
+            ndarrays.
             If data is a tuple of ndarrays, it should be in the form of (x, y),
-                where x is training input data and y is training target data.
+            where x is training input data and y is training target data.
         :param epochs: Max number of epochs to train in each trial. Defaults to 1.
             If you have also set metric_threshold, a trial will stop if either it has been
             optimized to the metric_threshold or it has been trained for {epochs} epochs.
@@ -148,7 +157,8 @@ class AutoEstimator:
         :param scheduler_params: parameters for scheduler
         """
         if self._fitted:
-            raise RuntimeError("This AutoEstimator has already been fitted and cannot fit again.")
+            raise RuntimeError(
+                "This AutoEstimator has already been fitted and cannot fit again.")
         self.searcher.compile(data=data,
                               model_builder=self.model_builder,
                               validation_data=validation_data,
@@ -167,7 +177,8 @@ class AutoEstimator:
     def get_best_model(self):
         """
         Return the best model found by the AutoEstimator
-        :return the best model instance
+
+        :return: the best model instance
         """
         best_trial = self.searcher.get_best_trials(k=1)[0]
         best_model_path = best_trial.model_path
