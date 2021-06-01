@@ -19,8 +19,8 @@ import os
 from sklearn.model_selection import train_test_split
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray import RayContext
-from zoo.orca.automl.xgboost import AutoXGBoost
-from zoo.zouwu.config.recipe import *
+from zoo.orca.automl.xgboost import AutoXGBRegressor
+from zoo.chronos.config.recipe import *
 
 
 class XgbSigOptRecipe(Recipe):
@@ -44,9 +44,11 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--path', type=str,
                         default="./incd.csv",
                         help='Training data path')
-    parser.add_argument('--hadoop_conf', type=str,
-                        help='The path to the hadoop configuration folder. Required if you '
-                             'wish to run on yarn clusters. Otherwise, run in local mode.')
+    parser.add_argument(
+        '--hadoop_conf',
+        type=str,
+        help='The path to the hadoop configuration folder. Required if you '
+        'wish to run on yarn clusters. Otherwise, run in local mode.')
     parser.add_argument('--conda_name', type=str,
                         help='The name of conda environment. Required if you '
                              'wish to run on yarn clusters.')
@@ -74,14 +76,44 @@ if __name__ == '__main__':
 
     import pandas as pd
     df = pd.read_csv(opt.path, encoding='latin-1')
-    feature_cols = ["FIPS", "Lower 95% Confidence Interval", "Upper 95% Confidence Interval",
-                    "Average Annual Count", "Recent 5-Year Trend"]
+    df.rename(
+        columns={
+            " FIPS": "FIPS",
+            "Age-Adjusted Incidence Rate(Ê) - cases per 100,000": "Age-Adjusted Incidence Rate",
+            "Recent 5-Year Trend () in Incidence Rates": "Recent 5-Year Trend"},
+        inplace=True)
+
+    # removes rows with cell value _, # or *
+    rows = [i for i, x in df.iterrows() if (df.iat[i, 2].find(
+        '_') != -1 or df.iat[i, 2].find('#') != -1 or df.iat[i, 6].find('*') != -1)]
+    df.drop(rows, inplace=True)
+    df.reset_index(drop=True, inplace=True)
+
+    num_rows = 1500  # number of rows to be used in this notebook; max: 2593
+    df = df[0:num_rows]
+    df["Lower 95% Confidence Interval"] = df["Lower 95% Confidence Interval"].astype(
+        "float")
+    df["Upper 95% Confidence Interval"] = df["Upper 95% Confidence Interval"].astype(
+        "float")
+    df["Average Annual Count"] = df["Average Annual Count"].astype("float")
+    df["Recent 5-Year Trend"] = df["Recent 5-Year Trend"].astype("float")
+    df["Age-Adjusted Incidence Rate"] = df["Age-Adjusted Incidence Rate"].astype(
+        "float")
+
+    feature_cols = [
+        "FIPS",
+        "Lower 95% Confidence Interval",
+        "Upper 95% Confidence Interval",
+        "Average Annual Count",
+        "Recent 5-Year Trend"]
     target_col = "Age-Adjusted Incidence Rate"
-    train_df, val_df = train_test_split(df, test_size=0.2, random_state=2)
+    X = df[feature_cols]
+    y = df[[target_col]]
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, y, test_size=0.2, random_state=2)
 
     config = {'random_state': 2,
-              'min_child_weight': 3,
-              'n_jobs': 2}
+              'min_child_weight': 3}
 
     recipe = None
 
@@ -98,19 +130,15 @@ if __name__ == '__main__':
                                          lr=lr,
                                          min_child_weight=min_child_weight
                                          )
-        estimator = AutoXGBoost().regressor(feature_cols=feature_cols,
-                                            target_col=target_col,
-                                            config=config,
-                                            search_alg="skopt",
-                                            search_alg_params=None,
-                                            scheduler="AsyncHyperBand",
-                                            scheduler_params=dict(
-                                                max_t=50,
-                                                grace_period=1,
-                                                reduction_factor=3,
-                                                brackets=3,
-                                            ),
-                                            )
+        search_alg = "skopt"
+        search_alg_params = None
+        scheduler = "AsyncHyperBand"
+        scheduler_params = dict(
+            max_t=50,
+            grace_period=1,
+            reduction_factor=3,
+            brackets=3,
+        )
     elif opt.mode == 'sigopt':
         if "SIGOPT_KEY" not in os.environ:
             raise RuntimeError("Environment Variable 'SIGOPT_KEY' is not set")
@@ -152,46 +180,51 @@ if __name__ == '__main__':
 
         # could customize by yourselves, make sure project_id exists
         experiment_name = "AutoXGBoost SigOpt Experiment"
-        search_alg_params = dict(space=space, name=experiment_name, max_concurrent=1)
+        search_alg_params = dict(
+            space=space,
+            name=experiment_name,
+            max_concurrent=1)
         recipe = XgbSigOptRecipe(num_rand_samples=num_rand_samples)
-
-        estimator = AutoXGBoost().regressor(feature_cols=feature_cols,
-                                            target_col=target_col,
-                                            config=config,
-                                            search_alg="sigopt",
-                                            search_alg_params=search_alg_params,
-                                            scheduler="AsyncHyperBand",
-                                            scheduler_params=dict(
-                                                max_t=50,
-                                                grace_period=1,
-                                                reduction_factor=3,
-                                                brackets=3,
-                                            ),
-                                            )
+        search_alg = "sigopt"
+        search_alg_params = search_alg_params
+        scheduler = "AsyncHyperBand"
+        scheduler_params = dict(
+            max_t=50,
+            grace_period=1,
+            reduction_factor=3,
+            brackets=3,
+        )
     else:
-        recipe = XgbRegressorGridRandomRecipe(num_rand_samples=num_rand_samples,
-                                              n_estimators=list(n_estimators_range),
-                                              max_depth=list(max_depth_range),
-                                              lr=lr,
-                                              min_child_weight=min_child_weight
-                                              )
+        recipe = XgbRegressorGridRandomRecipe(
+            num_rand_samples=num_rand_samples,
+            n_estimators=list(n_estimators_range),
+            max_depth=list(max_depth_range),
+            lr=lr,
+            min_child_weight=min_child_weight)
+        search_alg = None
+        search_alg_params = None
+        scheduler = None
+        scheduler_params = None
 
-        estimator = AutoXGBoost().regressor(feature_cols=feature_cols,
-                                            target_col=target_col,
-                                            config=config
-                                            )
-
-    pipeline = estimator.fit(train_df,
-                             validation_df=val_df,
-                             metric="rmse",
-                             recipe=recipe
-                             )
+    auto_xgb_reg = AutoXGBRegressor(
+        cpus_per_trial=2,
+        name="auto_xgb_regressor",
+        **config)
+    auto_xgb_reg.fit(data=(X_train, y_train),
+                     validation_data=(X_val, y_val),
+                     metric="rmse",
+                     n_sampling=recipe.num_samples,
+                     search_space=recipe.search_space(),
+                     search_alg=search_alg,
+                     search_alg_params=None,
+                     scheduler=scheduler,
+                     scheduler_params=scheduler_params)
 
     print("Training completed.")
+    best_model = auto_xgb_reg.get_best_model()
+    y_hat = best_model.predict(X_val)
 
-    pred_df = pipeline.predict(val_df)
-
-    rmse = pipeline.evaluate(val_df, metrics=["rmse"])
+    rmse = best_model.evaluate(X_val, y_val, metrics=["rmse"])
     print("Evaluate: the square root of mean square error is", rmse)
 
     ray_ctx.stop()

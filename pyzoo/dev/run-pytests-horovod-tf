@@ -27,6 +27,7 @@ ray stop -f
 
 echo "Running RayOnSpark tests"
 python -m pytest -v ../test/zoo/orca/learn/ray/tf/test_tf_ray_estimator.py
+python -m pytest -v ../test/zoo/orca/data/test_read_parquet_images.py
 exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
 then

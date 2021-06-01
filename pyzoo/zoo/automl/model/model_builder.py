@@ -15,6 +15,9 @@
 # limitations under the License.
 #
 from abc import ABC, abstractmethod
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ModelBuilder:
@@ -47,9 +50,12 @@ class PytorchModelBuilder(ModelBuilder):
     def __init__(self, model_creator,
                  optimizer_creator,
                  loss_creator):
+        from zoo.orca.automl.pytorch_utils import validate_pytorch_loss, validate_pytorch_optim
         self.model_creator = model_creator
-        self.optimizer_creator = optimizer_creator
-        self.loss_creator = loss_creator
+        optimizer = validate_pytorch_optim(optimizer_creator)
+        self.optimizer_creator = optimizer
+        loss = validate_pytorch_loss(loss_creator)
+        self.loss_creator = loss
 
     def build(self, config):
         from zoo.automl.model.base_pytorch_model import PytorchBaseModel
@@ -71,14 +77,25 @@ class PytorchModelBuilder(ModelBuilder):
 
 class XGBoostModelBuilder(ModelBuilder):
 
-    def __init__(self, model_type, n_cpus):
+    def __init__(self, model_type="regressor", cpus_per_trial=1, **xgb_configs):
         self.model_type = model_type
-        self.n_cpus = n_cpus
+        self.model_config = xgb_configs.copy()
+
+        if 'n_jobs' in xgb_configs and xgb_configs['n_jobs'] != cpus_per_trial:
+            logger.warning(f"Found n_jobs={xgb_configs['n_jobs']} in xgb_configs. It will not take "
+                           f"effect since we assign cpus_per_trials(={cpus_per_trial}) to xgboost "
+                           f"n_jobs. Please raise an issue if you do need different values for "
+                           f"xgboost n_jobs and cpus_per_trials.")
+        self.model_config['n_jobs'] = cpus_per_trial
 
     def build(self, config):
         from zoo.orca.automl.xgboost.XGBoost import XGBoost
-        model = XGBoost(model_type=self.model_type, config=config)
+        model = XGBoost(model_type=self.model_type, config=self.model_config)
+        model._build(**config)
+        return model
 
-        if self.n_cpus is not None:
-            model.set_params(n_jobs=self.n_cpus)
+    def build_from_ckpt(self, checkpoint_filename):
+        from zoo.orca.automl.xgboost.XGBoost import XGBoost
+        model = XGBoost(model_type=self.model_type, config=self.model_config)
+        model.restore(checkpoint_filename)
         return model

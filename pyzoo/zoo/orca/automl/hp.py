@@ -98,7 +98,7 @@ def qrandint(lower, upper, q=1):
     :param upper: Upper bound of the sampling range.
     :param q: Integer Granularity for increment.
     '''
-    return tune.randint(lower, upper, q)
+    return tune.qrandint(lower, upper, q)
 
 
 def choice(categories):

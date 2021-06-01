@@ -25,7 +25,7 @@ import com.intel.analytics.zoo.pipeline.api.net.TFNet
 import com.intel.analytics.zoo.pipeline.inference.{DeviceType, InferenceModelFactory, OpenVINOModel, OpenVinoInferenceSupportive}
 import com.intel.analytics.zoo.serving.ClusterServing.{argv, helper}
 import com.intel.analytics.zoo.serving.PreProcessing
-import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
+import com.intel.analytics.zoo.serving.serialization.{ArrowDeserializer, ArrowSerializer}
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Supportive}
 import scopt.OptionParser
@@ -86,7 +86,7 @@ object OpenVINOBaseline extends Supportive {
     val configParser = new ConfigParser(param.configPath)
     helper = configParser.loadConfig()
     val warmT = makeTensorFromShape(param.inputShape)
-    val clusterServingInference = new ClusterServingInference(null, helper)
+    val clusterServingInference = new ClusterServingInference()
     clusterServingInference.typeCheck(warmT)
     clusterServingInference.dimCheck(warmT, "add", helper.modelType)
 
@@ -114,7 +114,7 @@ object OpenVINOBaseline extends Supportive {
 
         val timer = new Timer()
         var a = Seq[(String, String)]()
-        val pre = new PreProcessing(true)
+        val pre = new PreProcessing()
         (0 until helper.threadPerModel).foreach(i =>
           a = a :+ (i.toString(), b64string)
         )
