@@ -31,6 +31,7 @@ def get_ts_df():
                              "extra feature": np.random.randn(sample_num)})
     return train_df
 
+
 def get_multi_id_ts_df():
     sample_num = 100
     train_df = pd.DataFrame({"value": np.random.randn(sample_num),
@@ -39,6 +40,7 @@ def get_multi_id_ts_df():
     train_df["datetime"] = pd.date_range('1/1/2019', periods=sample_num)
     train_df["datetime"][50:100] = pd.date_range('1/1/2019', periods=50)
     return train_df
+
 
 def get_ugly_ts_df():
     data = np.random.random_sample((100, 5))
@@ -54,6 +56,7 @@ def get_ugly_ts_df():
     df["datetime"][50:100] = pd.date_range('1/1/2019', periods=50)
     df["id"] = np.array(['00']*50 + ['01']*50)
     return df
+
 
 class TestTSDataset(ZooTestCase):
     def setup_method(self, method):
@@ -149,7 +152,7 @@ class TestTSDataset(ZooTestCase):
 
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
-        
+
         # roll train
         tsdata.roll(lookback=lookback, horizon=horizon)
         x, y = tsdata.to_numpy()
@@ -160,7 +163,7 @@ class TestTSDataset(ZooTestCase):
         x, y = tsdata.to_numpy()
         assert x.shape == ((50-lookback-horizon+1), lookback, 4)
         assert y.shape == ((50-lookback-horizon+1), horizon, 2)
-    
+
     def test_tsdataset_imputation(self):
         df = get_ugly_ts_df()
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="e",
@@ -168,7 +171,7 @@ class TestTSDataset(ZooTestCase):
         tsdata.impute(mode="last")
         assert tsdata.to_pandas().isna().sum().sum() == 0
         assert len(tsdata.to_pandas()) == 100
-    
+
     def test_tsdataset_datetime_feature(self):
         df = get_multi_id_ts_df()
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
@@ -199,8 +202,3 @@ class TestTSDataset(ZooTestCase):
                                            'WEEKOFYEAR(datetime)',
                                            'MINUTE(datetime)',
                                            'extra feature'}
-
-
-
-
-

@@ -98,11 +98,11 @@ class TSDataset:
            "linear": impute by linear interpolation.
         :param const_num: only effective when mode is set to "const".
         '''
-        df_list = [impute_timeseries_dataframe(df=self.df[self.df[self.id_col]==id_name],
+        df_list = [impute_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
                                                dt_col=self.dt_col,
                                                mode=mode,
-                                               const_num=const_num) 
-                for id_name in self._id_list]
+                                               const_num=const_num)
+                   for id_name in self._id_list]
         self.df = pd.concat(df_list)
         return self
 
@@ -137,15 +137,15 @@ class TSDataset:
             "WEEKOFYEAR", "MONTH", "IS_AWAKE", "IS_BUSY_HOURS",
             "IS_WEEKEND"
         '''
-        df_list = [generate_dt_features(input_df=self.df[self.df[self.id_col]==id_name],
+        df_list = [generate_dt_features(input_df=self.df[self.df[self.id_col] == id_name],
                                         dt_col=self.dt_col)
-                for id_name in self._id_list]
+                   for id_name in self._id_list]
         self.df = pd.concat(df_list)
         from zoo.chronos.data.utils.feature import TIME_FEATURE, \
             ADDITIONAL_TIME_FEATURE_HOUR, ADDITIONAL_TIME_FEATURE_WEEKDAY
         increased_attrbutes = list(TIME_FEATURE) +\
-                              list(ADDITIONAL_TIME_FEATURE_HOUR) +\
-                              list(ADDITIONAL_TIME_FEATURE_WEEKDAY)
+            list(ADDITIONAL_TIME_FEATURE_HOUR) +\
+            list(ADDITIONAL_TIME_FEATURE_WEEKDAY)
         self.feature_col += [attr + "({})".format(self.dt_col) for attr in increased_attrbutes]
         return self
 
@@ -201,31 +201,31 @@ class TSDataset:
         num_target_col = len(self.target_col)
 
         # get rolling result for each sub dataframe
-        rolling_result = [roll_timeseries_dataframe(df=self.df[self.df[self.id_col]==id_name],
-                                        lookback=lookback,
-                                        horizon=horizon,
-                                        feature_col=feature_col,
-                                        target_col=target_col)
-                        for id_name in self._id_list]
+        rolling_result = [roll_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
+                                                    lookback=lookback,
+                                                    horizon=horizon,
+                                                    feature_col=feature_col,
+                                                    target_col=target_col)
+                          for id_name in self._id_list]
 
         # concat the result on required axis
         concat_axis = 2 if id_sensitive else 0
         self.numpy_x = np.concatenate([rolling_result[i][0]
-                                        for i in range(num_id)],
-                                        axis=concat_axis)
+                                       for i in range(num_id)],
+                                      axis=concat_axis)
         if horizon != 0:
             self.numpy_y = np.concatenate([rolling_result[i][1]
-                                        for i in range(num_id)],
-                                        axis=concat_axis)
+                                           for i in range(num_id)],
+                                          axis=concat_axis)
         else:
             self.numpy_y = None
-        
+
         # target first
         if id_sensitive:
             feature_start_idx = num_target_col*num_id
-            reindex_list = [list(range(i*num_target_col, (i+1)*num_target_col)) +\
-                            list(range(feature_start_idx+i*num_feature_col, 
-                                      feature_start_idx+(i+1)*num_feature_col))
+            reindex_list = [list(range(i*num_target_col, (i+1)*num_target_col)) +
+                            list(range(feature_start_idx+i*num_feature_col,
+                                       feature_start_idx+(i+1)*num_feature_col))
                             for i in range(num_id)]
             reindex_list = functools.reduce(lambda a, b: a+b, reindex_list)
             self.numpy_x = self.numpy_x[:, :, reindex_list]
