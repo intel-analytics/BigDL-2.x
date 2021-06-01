@@ -266,6 +266,10 @@ class TSDataset:
         for feature_col_name in self.feature_col:
             _check_col_within(self.df, feature_col_name)
 
+        # check no n/a in critical col
+        _check_col_no_na(self.df, self.dt_col)
+        _check_col_no_na(self.df, self.id_col)
+
 
 def _to_list(item, name, expect_type=str):
     if isinstance(item, list):
@@ -284,3 +288,10 @@ def _check_type(item, name, expect_type):
 def _check_col_within(df, col_name):
     assert col_name in df.columns,\
         f"{col_name} is expected in dataframe while not found"
+
+
+def _check_col_no_na(df, col_name):
+    assert col_name in df.columns,\
+        f"{col_name} is expected in dataframe while not found"
+    assert df[col_name].isna().sum() == 0,\
+        f"{col_name} column should not have N/A."
