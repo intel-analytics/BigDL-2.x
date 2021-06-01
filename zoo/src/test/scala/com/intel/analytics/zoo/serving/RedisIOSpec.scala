@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Analytics Zoo Authors.
+ * Copyright 2018 Analytics Zoo Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ import redis.embedded.{AbstractRedisInstance, Redis, RedisExecProvider, RedisSer
 import redis.embedded.util.OS
 import scopt.OptionParser
 
-//The RedisServer implementation is based on:
-//  https://github.com/kstyrc/embedded-redis
+// The RedisServer implementation is based on:
+//    https://github.com/kstyrc/embedded-redis
 class PrintReaderRunnable(val reader: BufferedReader) extends Runnable {
   override def run(): Unit = {
     try
@@ -170,7 +170,8 @@ class RedisServer @throws[IOException]
   override protected def redisReadyPattern: String = ".*Ready to accept connections.*"
 }
 
-class RedisIOSpec(path : String) extends FlatSpec with Matchers with BeforeAndAfter with Supportive {
+class RedisIOSpec(path : String) extends FlatSpec
+  with Matchers with BeforeAndAfter with Supportive {
   val redisHost = "localhost"
   val redisPort = 6379
   val pathToRedisExecutable = path
