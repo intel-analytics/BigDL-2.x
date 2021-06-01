@@ -4,7 +4,7 @@ Chronos Forecasters API
 chronos.model.forecast.lstm_forecaster
 ----------------------------------------
 
-Long short-term memory(LSTM) is a special type of recurrent neural network(RNN). We implement the basic version of LSTM - VanillaLSTM for this forecaster for time-series forecasting task. It has two LSTM layers, two dropout layer and a dense layer. LSTMForecaster is derived from tfpark.KerasMode, and can use all methods of KerasModel. Refer to `tfpark.KerasModel API Doc <https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/APIGuide/TFPark/model.md>`__ for details.
+Long short-term memory(LSTM) is a special type of recurrent neural network(RNN). We implement the basic version of LSTM - VanillaLSTM for this forecaster for time-series forecasting task. It has two LSTM layers, two dropout layer and a dense layer.
 
 For the detailed algorithm description, please refer to `here <https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/Chronos/Algorithm/LSTMAlgorithm.md>`__.
 

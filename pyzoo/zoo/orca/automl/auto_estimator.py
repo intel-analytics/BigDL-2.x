@@ -41,15 +41,6 @@ class AutoEstimator:
                  resources_per_trial=None,
                  remote_dir=None,
                  name=None):
-        """
-        Create an AutoEstimator.
-
-        :param model_builder: A ModelBuilder instance, from which we will
-            build the target model for hyperparameter optimization.
-        :param logs_dir: local dir to save training results, defaults to /tmp/auto_estimator_logs
-        :param resources_per_trial: Dict. resources for each trial. e.g. {"cpu": 2}.
-        :param name: AutoEstimator name.
-        """
         self.model_builder = model_builder
         self.searcher = SearchEngineFactory.create_engine(
             backend="ray",
