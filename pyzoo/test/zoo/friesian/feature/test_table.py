@@ -456,8 +456,7 @@ class TestTable(TestCase):
         with self.assertRaises(Exception) as context:
             tbl = tbl.cast("a", "notvalid")
         self.assertTrue(
-            "type should be a string in (str/string, bool/boolean, int/integer, "
-            "long, short, float, double)."
+            "type should be string, boolean, int, long, short, float, double."
             in str(context.exception))
 
     def test_select(self):
