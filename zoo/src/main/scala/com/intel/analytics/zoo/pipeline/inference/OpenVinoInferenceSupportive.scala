@@ -43,19 +43,15 @@ class OpenVinoInferenceSupportive extends InferenceSupportive with Serializable 
                                  batchSize: Int): Long
 
   @native def predict(executableNetworkReference: Long,
-                      data: Array[Float],
-                      shape: Array[Int]): JTensor
+                           data: Array[Float],
+                           shape: Array[Int]): JList[JTensor]
 
   @native def predictInt8(executableNetworkReference: Long,
                       data: Array[Float],
-                      shape: Array[Int]): JTensor
+                      shape: Array[Int]): JList[JTensor]
 
   @native def predictInt8(executableNetworkReference: Long,
                       data: Array[Byte],
-                      shape: Array[Int]): JTensor
-
-  @native def predictMulti(executableNetworkReference: Long,
-                      data: Array[Float],
                       shape: Array[Int]): JList[JTensor]
 
   @native def releaseOpenVINOIR(executableNetworkReference: Long): Unit
