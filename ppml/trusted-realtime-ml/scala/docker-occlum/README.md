@@ -14,17 +14,13 @@ Before running the following command, please modify the paths in `build-docker-i
 
 ### Prepare the keys
 
-PPML in analytics zoo needs secured keys to enable Flink TLS, https and TLS enabled Redis. You need to prepare secure keys and keystores.
-
-This script is under `analytics-zoo/ppml/scripts`:
+PPML in analytics zoo needs secured keys to enable Flink TLS, https and TLS enabled Redis. In this tutorial, you can generate keys and keystores with root permission (test only, need input security password for keys).
 
 ```bash
-../../../scripts/generate-keys.sh
+sudo ../../../scripts/generate-keys.sh
 ```
 
-You also need to store password you used in the previous step in a secured file:
-
-This script is also under `/analytics-zoo/ppml/scripts`:
+You also need to store password you used for key generation, i.e., `generate-keys.sh`, in a secured file:
 
 ```bash
 ../../../scripts/generate-password.sh used_password_when_generate_keys
@@ -63,13 +59,13 @@ To test a specific component, pass one or more argument to it among the followin
 "redis", "flinkjm", "flinktm", "frontend", and "serving". For example, run the following command to check the status of the Flink job manager.
 
 ```bash
-docker exec -it trusted-realtime-mllocal bash /opt/check-status.sh flinkjm
+docker exec -it trusted-cluster-serving-local bash /opt/check-status.sh flinkjm
 ```
 
 To test all components, you can either pass no argument or pass the "all" argument.
 
 ```bash
-docker exec -it trusted-realtime-mllocal bash /opt/check-status.sh
+docker exec -it trusted-cluster-serving-local bash /opt/check-status.sh
 ```
 If all is well, the following results should be displayed:
 

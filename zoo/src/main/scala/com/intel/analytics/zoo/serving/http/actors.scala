@@ -30,7 +30,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import akka.pattern.ask
 import akka.util.Timeout
-import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
+import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.holders.NullableIntHolder
@@ -42,11 +42,11 @@ trait JedisEnabledActor extends Actor with Supportive {
   override val logger = LoggerFactory.getLogger(getClass)
 
   def retrieveJedis(
-      redisHost: String,
-      redisPort: Int,
-      redisSecureEnabled: Boolean,
-      redissTrustStorePath: String,
-      redissTrustStoreToken: String): Jedis =
+      redisHost: String = "localhost",
+      redisPort: Int = 6379,
+      redisSecureEnabled: Boolean = false,
+      redissTrustStorePath: String = "",
+      redissTrustStoreToken: String = ""): Jedis =
     timing(s"$actorName retrieve redis connection")() {
       if (redisSecureEnabled) {
         System.setProperty("javax.net.ssl.trustStore", redissTrustStorePath)
@@ -177,6 +177,7 @@ class RedisGetActor(
             case _: Exception =>
           }
         })
+
         sender() ! results
         // result get, remove in redis here
         message.ids.foreach(id =>

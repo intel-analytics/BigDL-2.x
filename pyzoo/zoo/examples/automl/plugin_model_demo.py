@@ -51,17 +51,11 @@ def loss_creator(config):
     return nn.MSELoss()
 
 
-class SimpleRecipe(Recipe):
-    def __init__(self):
-        super().__init__()
-        self.num_samples = 2
-        self.training_iteration = 20
-
-    def search_space(self, all_available_features):
-        return {
-            "lr": hp.uniform(0.01, 0.02),
-            "batch_size": hp.choice([16, 32, 64])
-        }
+def create_simple_recipe():
+    return {
+        "lr": hp.uniform(0.01, 0.02),
+        "batch_size": hp.choice([16, 32, 64])
+    }
 
 
 def get_data():
@@ -71,8 +65,9 @@ def get_data():
         return x, y
     train_x, train_y = get_linear_data(2, 5, 1000)
     val_x, val_y = get_linear_data(2, 5, 400)
-    data = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
-    return data
+    data = (train_x, train_y)
+    validation_data = (val_x, val_y)
+    return data, validation_data
 
 
 if __name__ == "__main__":
@@ -89,10 +84,13 @@ if __name__ == "__main__":
 
     # pass input data, modelbuilder and recipe into searcher.compile. Note that if user doesn't pass
     # feature transformer, the default identity feature transformer will be used.
-    data = get_data()
+    data, validation_data = get_data()
     searcher.compile(data=data,
-                     model_create_func=modelBuilder,
-                     recipe=SimpleRecipe())
+                     validation_data=validation_data,
+                     model_builder=modelBuilder,
+                     search_space=create_simple_recipe(),
+                     n_sampling=2,
+                     epochs=20)
 
     searcher.run()
     best_trials = searcher.get_best_trials(k=1)
@@ -100,7 +98,9 @@ if __name__ == "__main__":
 
     # rebuild this best config model and evaluate
     best_model = modelBuilder.build_from_ckpt(best_trials[0].model_path)
-    searched_best_model = best_model.evaluate(data["val_x"], data["val_y"], metrics=["rmse"])
+    searched_best_model = best_model.evaluate(x=validation_data[0],
+                                              y=validation_data[1],
+                                              metrics=['rmse'])
 
     # 2. you can also use the model builder with a fix config
     model = modelBuilder.build(config={
@@ -108,11 +108,12 @@ if __name__ == "__main__":
         "batch_size": 32,  # used in data_creator
     })
 
-    model.fit_eval(x=data["x"],
-                   y=data["y"],
-                   validation_data=(data["val_x"], data["val_y"]),
+    model.fit_eval(data=data,
+                   validation_data=validation_data,
                    epochs=20)
-    val_result_pytorch_manual = model.evaluate(x=data["x"], y=data["y"], metrics=['rmse'])
+    val_result_pytorch_manual = model.evaluate(x=validation_data[0],
+                                               y=validation_data[1],
+                                               metrics=['rmse'])
 
     # 3. try another modelbuilder based on tfkeras
     modelBuilder_keras = KerasModelBuilder(model_creator_keras)
@@ -122,11 +123,12 @@ if __name__ == "__main__":
         "metric": "mse"
     })
 
-    model.fit_eval(x=data["x"],
-                   y=data["y"],
-                   validation_data=(data["val_x"], data["val_y"]),
+    model.fit_eval(data=data,
+                   validation_data=validation_data,
                    epochs=20)
-    val_result_tensorflow_manual = model.evaluate(x=data["x"], y=data["y"], metrics=['rmse'])
+    val_result_tensorflow_manual = model.evaluate(x=validation_data[0],
+                                                  y=validation_data[1],
+                                                  metrics=['rmse'])
     print("Searched best model validation rmse:", searched_best_model)
     print("Pytorch model validation rmse:", val_result_pytorch_manual)
     print("Tensorflow model validation rmse:", val_result_tensorflow_manual)

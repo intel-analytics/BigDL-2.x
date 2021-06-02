@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.serving.ClusterServing.{argv, helper}
 import com.intel.analytics.zoo.serving.PreProcessing
-import com.intel.analytics.zoo.serving.arrow.{ArrowDeserializer, ArrowSerializer}
+import com.intel.analytics.zoo.serving.serialization.{ArrowDeserializer, ArrowSerializer}
 import com.intel.analytics.zoo.serving.engine.{ClusterServingInference, Timer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Supportive}
 import scopt.OptionParser
@@ -81,7 +81,7 @@ object MockMultipleThreadInferenceMultiplePipeline extends Supportive {
 
     val model = helper.loadInferenceModel()
     val warmT = makeTensorFromShape(param.inputShape)
-    val clusterServingInference = new ClusterServingInference(null, helper)
+    val clusterServingInference = new ClusterServingInference()
     clusterServingInference.typeCheck(warmT)
     clusterServingInference.dimCheck(warmT, "add", helper.modelType)
     (0 until 10).foreach(_ => {
@@ -97,7 +97,8 @@ object MockMultipleThreadInferenceMultiplePipeline extends Supportive {
     timing(s"Base line for single pipeline " +
       s"with input ${param.testNum.toString}") {
       var a = Seq[(String, String)]()
-      val pre = new PreProcessing(true)
+      val pre = new PreProcessing()
+      pre.helper.chwFlag = true
       (0 until helper.threadPerModel).foreach(i =>
         a = a :+ (i.toString(), b64string)
       )

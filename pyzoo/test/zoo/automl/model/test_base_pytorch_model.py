@@ -15,6 +15,7 @@
 #
 from unittest import TestCase
 from zoo.automl.model import PytorchModelBuilder
+from torch.utils.data import Dataset, DataLoader
 
 import pytest
 
@@ -23,15 +24,42 @@ import torch
 import torch.nn as nn
 
 
-def get_data():
-    def get_linear_data(a, b, size):
-        x = np.arange(0, 10, 10 / size, dtype=np.float32)
-        y = a*x + b
-        return x, y
-    train_x, train_y = get_linear_data(2, 5, 1000)
-    val_x, val_y = get_linear_data(2, 5, 400)
+def get_linear_data(a, b, size):
+    x = np.arange(0, 10, 10 / size, dtype=np.float32)
+    y = a*x + b
+    return x, y
+
+
+class LinearDataset(Dataset):
+    def __init__(self, size=1000, a=2, b=5):
+        x, y = get_linear_data(a, b, size)
+        self.x = torch.from_numpy(x.reshape(-1, 1))
+        self.y = torch.from_numpy(y.reshape(-1, 1))
+
+    def __len__(self):
+        return len(self.x)
+
+    def __getitem__(self, idx):
+        return self.x[idx, None], self.y[idx, None]
+
+
+def get_data(train_size=1000, valid_size=400):
+    train_x, train_y = get_linear_data(2, 5, train_size)
+    val_x, val_y = get_linear_data(2, 5, valid_size)
     data = {'x': train_x, 'y': train_y, 'val_x': val_x, 'val_y': val_y}
     return data
+
+
+def train_dataloader_creator(config):
+    return DataLoader(LinearDataset(size=config["train_size"]),
+                      batch_size=config["batch_size"],
+                      shuffle=config["shuffle"])
+
+
+def valid_dataloader_creator(config):
+    return DataLoader(LinearDataset(size=config["valid_size"]),
+                      batch_size=config["batch_size"],
+                      shuffle=False)
 
 
 def model_creator_pytorch(config):
@@ -59,8 +87,7 @@ class TestBasePytorchModel(TestCase):
             "lr": 1e-2,
             "batch_size": 32,
         })
-        val_result = model.fit_eval(x=self.data["x"],
-                                    y=self.data["y"],
+        val_result = model.fit_eval(data=(self.data["x"], self.data["y"]),
                                     validation_data=(self.data["val_x"], self.data["val_y"]),
                                     epochs=20)
         assert val_result is not None
@@ -73,8 +100,7 @@ class TestBasePytorchModel(TestCase):
             "lr": 1e-2,
             "batch_size": 32,
         })
-        model.fit_eval(x=self.data["x"],
-                       y=self.data["y"],
+        model.fit_eval(data=(self.data["x"], self.data["y"]),
                        validation_data=(self.data["val_x"], self.data["val_y"]),
                        epochs=20)
         mse_eval = model.evaluate(x=self.data["val_x"], y=self.data["val_y"])
@@ -86,8 +112,7 @@ class TestBasePytorchModel(TestCase):
         except ImportError:
             pass
         # incremental training test
-        model.fit_eval(x=self.data["x"],
-                       y=self.data["y"],
+        model.fit_eval(data=(self.data["x"], self.data["y"]),
                        validation_data=(self.data["val_x"], self.data["val_y"]),
                        epochs=20)
         mse_eval = model.evaluate(x=self.data["val_x"], y=self.data["val_y"])
@@ -107,11 +132,12 @@ class TestBasePytorchModel(TestCase):
             "lr": 1e-2,
             "batch_size": 32,
         })
-        model.fit_eval(x=self.data["x"],
-                       y=self.data["y"],
+        model.fit_eval(data=(self.data["x"], self.data["y"]),
                        validation_data=(self.data["val_x"], self.data["val_y"]),
                        epochs=20)
         pred = model.predict(x=self.data["val_x"])
+        pred_full_batch = model.predict(x=self.data["val_x"], batch_size=len(self.data["val_x"]))
+        np.testing.assert_almost_equal(pred, pred_full_batch)
         try:
             import onnx
             import onnxruntime
@@ -132,6 +158,25 @@ class TestBasePytorchModel(TestCase):
                 "lr": 1e-2,
                 "batch_size": 32,
             })
+
+    def test_dataloader_fit_evaluate(self):
+        modelBuilder = PytorchModelBuilder(model_creator=model_creator_pytorch,
+                                           optimizer_creator=optimizer_creator,
+                                           loss_creator=loss_creator)
+        model = modelBuilder.build(config={
+            "lr": 1e-2,
+            "batch_size": 32,
+            "train_size": 500,
+            "valid_size": 100,
+            "shuffle": True
+        })
+        val_result = model.fit_eval(data=train_dataloader_creator,
+                                    validation_data=valid_dataloader_creator,
+                                    epochs=20)
+        assert model.config["train_size"] == 500
+        assert model.config["valid_size"] == 100
+        assert model.config["shuffle"] is True
+        assert val_result is not None
 
 
 if __name__ == "__main__":

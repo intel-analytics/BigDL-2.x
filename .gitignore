@@ -51,3 +51,4 @@ pyspark/build/
 */.classpath
 */.project
 */.settings/
+*/.vscode
