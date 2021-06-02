@@ -62,7 +62,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
       if (arguments.multiServingMode) {
         logger.info("Multi Serving Mode")
         if (arguments.cocurrentNum != 1) {
-          curCurrentNum = arguments.cocurrentNum
+          conCurrentNum = arguments.cocurrentNum
         }
         timing("load servable manager")() {
           try servableManager.load(arguments.servableManagerPath)
@@ -271,7 +271,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               }
             }
           }
-        }~(get & path("models")) {
+        } ~ (get & path("models")) {
           timing("get all model infos")(overallRequestTimer, servablesRetriveTimer) {
             try {
               val servables = servableManager.retriveAllServables
@@ -292,7 +292,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           concat(
             (get & path(Segment)) {
               (modelName) => {
-                if (arguments.multiServingMode){
+                if (arguments.multiServingMode) {
                   complete(404, "Serving Not In MultiServing Mode. Current Path not Supported")
                 }
                 timing("get model infos with model name")(overallRequestTimer,
@@ -315,7 +315,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               }
             } ~ (get & path(Segment / "versions" / Segment)) {
               (modelName, modelVersion) => {
-                if (arguments.multiServingMode){
+                if (arguments.multiServingMode) {
                   complete(404, "Serving Not In MultiServing Mode. Current Path not Supported")
                 }
                 timing("get model info with model name and model version")(overallRequestTimer,
@@ -339,7 +339,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
             } ~ (post & path(Segment / "versions" / Segment / "predict")
               & extract(_.request.entity.contentType) & entity(as[String])) {
               (modelName, modelVersion, contentType, content) => {
-                if (arguments.multiServingMode){
+                if (arguments.multiServingMode) {
                   complete(404, "Serving Not In MultiServing Mode. Current Path not Supported")
                 }
                 timing("backend inference timing")(overallRequestTimer, backendInferenceTimer) {
@@ -411,7 +411,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
   }
 
   //arguments
-  var curCurrentNum : Int = 1
+  var conCurrentNum: Int = 1
 
   val metrics = new MetricRegistry
   val overallRequestTimer = metrics.timer("zoo.serving.request.overall")
@@ -498,8 +498,8 @@ object FrontEndApp extends Supportive with EncryptSupportive {
     opt[Boolean]('m', "multiServingMode")
       .action((x, c) => c.copy(multiServingMode = x))
       .text("multiServingMode enabled or not")
-    opt[Int]('c', "cocurrentNum")
-      .action((x, c) => c.copy(cocurrentNum = x))
+    opt[Int]('c', "concurrentNum")
+      .action((x, c) => c.copy(concurrentNum = x))
       .text("cocurrentNum enabled or not")
   }
 
@@ -550,5 +550,5 @@ case class FrontEndAppArguments(
                                  redissTrustStoreToken: String = "1234qwer",
                                  servableManagerPath: String = "./servables-conf.yaml",
                                  multiServingMode: Boolean = false,
-                                 cocurrentNum: Int = 1
+                                 concurrentNum: Int = 1
                                )
