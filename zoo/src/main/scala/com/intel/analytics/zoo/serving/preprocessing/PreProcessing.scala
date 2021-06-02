@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving
+package com.intel.analytics.zoo.serving.preprocessing
 
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
@@ -27,6 +27,7 @@ import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.pipeline.inference.{EncryptSupportive, InferenceSupportive}
+import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.http.Instances
 import com.intel.analytics.zoo.serving.serialization.{JsonInputDeserializer, StreamSerializer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
