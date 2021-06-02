@@ -585,12 +585,13 @@ class FeatureTable(Table):
     def join_groupby(self, cat_cols, cont_cols, stats="count"):
         """
         Create new column by grouping the data by the specified categorical columns and calculating
-        the desired statistics of specified continuous columns.
+        the desired statistics of specified continuous columns. Output column will be in the format
+        of cat_col + "_jg_" + stat + "_" + cont_col. 
 
         :param cat_cols: str or list of str. Categorical columns to group the table.
         :param cont_cols: str or list of str. Continuous columns to calculate the statistics.
-        :param stats: str or list of str. Statistics to be calculated. "count", "sum", "mean", "std" and
-               "var" are supported. Default is ["count"].
+        :param stats: str or list of str. Statistics to be calculated. "count", "sum", "mean",
+               "std" and "var" are supported. Default is ["count"].
 
         :return: A new FeatureTable with new columns.
         """
@@ -604,16 +605,17 @@ class FeatureTable(Table):
         cont_cols = str_to_list("cont_cols", cont_cols)
         check_col_exists(self.df, cat_cols)
         check_col_exists(self.df, cont_cols)
+        nonnumeric_cont_col_type = get_nonnumeric_col_type(self.df, cont_cols)
+        assert not nonnumeric_cont_col_type, "cont_cols should be numeric but get " + ", ".join(
+                list(map(lambda x: x[0] + " of type " + x[1], nonnumeric_cont_col_type)))
 
         result_df = self.df
         for cat_col in cat_cols:
             agg_list = []
             for cont_col in cont_cols:
-                agg_list += [(stats_func[stat])(cont_col) for stat in stats]
+                agg_list += [(stats_func[stat])(cont_col) \
+                        .alias(cat_col + "_jg_" + stat + "_" + cont_col) for stat in stats]
             merge_df = self.df.groupBy(cat_col).agg(*agg_list)
-            for column in merge_df.columns:
-                if column != cat_col:
-                    merge_df = merge_df.withColumnRenamed(column, cat_col + "_" + column)
             result_df = result_df.join(merge_df, on=cat_col, how="left")
         return FeatureTable(result_df)
 
@@ -666,7 +668,7 @@ class FeatureTable(Table):
             if isinstance(out_cols, dict):
                 out_cols = [out_cols]
             assert isinstance(out_cols, list), "out_cols should be a list of dict"
-            assert len(cat_cols) == len(out_cols), "cat_cols and out_cols should have" + \
+            assert len(cat_cols) == len(out_cols), "cat_cols and out_cols should have" \
                     " the same length"
             for cat_col, out_col in zip(cat_cols, out_cols):
                 assert isinstance(out_col, dict), "elements in out_cols should be dict"
@@ -865,11 +867,11 @@ class FeatureTable(Table):
                     for shift in shifts] for column in columns]
         else:
             assert isinstance(out_cols, list), "out_cols should be list of list of str"
-            assert len(out_cols) == len(columns), "length of out_cols should be equal to length " + \
+            assert len(out_cols) == len(columns), "length of out_cols should be equal to length " \
                     "of columns"
             for outs in out_cols:
                 assert isinstance(outs, list), "out_cols should be list of list of str"
-                assert len(outs) == len(shifts), "length of element in out_cols should be " + \
+                assert len(outs) == len(shifts), "length of element in out_cols should be " \
                         "equal to length of shifts"
 
         result_df = self.df
