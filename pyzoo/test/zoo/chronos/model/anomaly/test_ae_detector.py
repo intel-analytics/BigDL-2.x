@@ -45,4 +45,3 @@ class TestAEDetector(ZooTestCase):
         assert len(anomaly_scores) == len(y)
         anomaly_indexes = ad.anomaly_indexes()
         assert len(anomaly_indexes) == int(ad.ratio * len(y))
-
