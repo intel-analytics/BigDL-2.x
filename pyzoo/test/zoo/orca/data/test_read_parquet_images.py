@@ -71,10 +71,11 @@ def model_creator(config):
 
 class TestReadParquet(TestCase):
     def test_read_parquet_images_tf_dataset(self):
-        temp_dir = tempfile.mkdtemp()
+        # temp_dir = tempfile.mkdtemp()
+        temp_dir = "/home/arda/Project/analytics-zoo/pyzoo/test/zoo/orca/data/parquet"
 
         try:
-            ParquetDataset.write("file://" + temp_dir, images_generator(), images_schema)
+            ParquetDataset.write("file://" + temp_dir, images_generator(), images_schema,block_size=4)
             path = "file://" + temp_dir
             output_types = {"id": tf.string, "image": tf.string, "label": tf.float32}
             dataset = read_parquet("tf_dataset", input_path=path, output_types=output_types)
@@ -82,7 +83,8 @@ class TestReadParquet(TestCase):
                 print(dt.keys())
 
         finally:
-            shutil.rmtree(temp_dir)
+            # shutil.rmtree(temp_dir)
+            pass
 
     def test_parquet_images_training(self):
         from zoo.orca.learn.tf2 import Estimator

@@ -300,21 +300,21 @@ def read_as_tfdataset(path, output_types, output_shapes=None, *args, **kwargs):
     return dataset
 
 
-def read_as_dataloader(path, output_shapes=None,num_shard=None, rank=None, *args, **kwargs):
+def read_as_dataloader(path,num_shard=None, rank=None, *args, **kwargs):
     path, _ = pa_fs(path)
     import tensorflow as tf
 
     schema_path = os.path.join(path, "_orca_metadata")
     j_str = open_text(schema_path)[0]
     schema = decode_schema(j_str)
-    pqdataset = pq.ParquetDataset(path,schema=schema)
-    sorted_pieces = sorted(pqdataset.pieces, key=attrgetter('path'))
-    rowgroups=[]
-    for piece in sorted_pieces:
-        row_groups_key = os.path.relpath(piece.path, dataset.paths)
-        rowgroups.append(pq.ParquetDatasetPiece(piece.path, open_file_func=pqdataset.fs.open, # row_group=row_group, how to use this
-                                                        partition_keys=piece.partition_keys))
 
+    row_group=[]
+
+    for root, dirs, files in os.walk(path):
+        for name in dirs:
+            if name.startswith("chunk="):
+                chunk_path = os.path.join(path, name)
+                row_group.append(chunk_path)
 
     class ParquetIterableDataset(torch.utils.data.IterableDataset):
         def __init__(self, row_group, num_shards=None, rank=None):
@@ -328,18 +328,39 @@ def read_as_dataloader(path, output_shapes=None,num_shard=None, rank=None, *args
             if self.num_shards is None or self.rank is None:
                 filter_row_group_indexed = [index for index in list(range(len(self.row_group)))]
             else:
-                assert self.rank < self.num_shard, "shard index should be included in [0,num_shard)," \
+                assert self.num_shards <= len(self.row_group), "num_shards should be not larger than partitions."
+                assert self.rank < self.num_shards, "shard index should be included in [0,num_shard)," \
                                          "but got rank {} with num_shard {}.".format(self.rank,self.num_shards)
                 filter_row_group_indexed = [index for index in list(range(len(self.row_group))) 
                                             if index % self.num_shards == self.rank]
 
-            for piece in [self.row_group[i] for i in filter_row_group_indexed]:
-                # TODO: process row df data:
-                # merge all data in row_group[filter_row_group_indexed] into a list
-                pass
-            return iter()
+            results = []
+            for select_chunk_path in [self.row_group[i] for i in filter_row_group_indexed]:
+                print(select_chunk_path)
+                pq_table = pq.read_table(select_chunk_path)
+                df = decode_feature_type_ndarray(pq_table.to_pandas(), schema)
+                results.extend(df.to_dict("records"))
 
-    dataset=ParquetDataset(ParquetIterableDataset(row_group=rowgroups,num_shards=num_shard,rank=rank))
+            return iter(results)
+
+        # def __next__(self):
+        #     filter_row_group_indexed = []
+        #     if self.num_shards is None or self.rank is None:
+        #         filter_row_group_indexed = [index for index in list(range(len(self.row_group)))]
+        #     else:
+        #         assert self.rank < self.num_shards, "shard index should be included in [0,num_shard)," \
+        #                                  "but got rank {} with num_shard {}.".format(self.rank,self.num_shards)
+        #         filter_row_group_indexed = [index for index in list(range(len(self.row_group))) 
+        #                                     if index % self.num_shards == self.rank]
+ 
+        #     for select_chunk_path in [self.row_group[i] for i in filter_row_group_indexed]:
+        #         pq_table = pq.read_table(select_chunk_path)
+        #         df = decode_feature_type_ndarray(pq_table.to_pandas(), schema)
+        #         for record in df.to_dict("records"):
+        #             print(record)
+        #             return record
+
+    dataset=ParquetIterableDataset(row_group=row_group,num_shards=num_shard,rank=rank)
     return torch.utils.data.DataLoader(dataset, num_workers=0)
         
 
