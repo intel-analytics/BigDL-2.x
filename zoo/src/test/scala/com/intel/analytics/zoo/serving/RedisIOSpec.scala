@@ -16,166 +16,25 @@
 
 package com.intel.analytics.zoo.serving
 
-import java.io._
 import java.util
 import java.util.AbstractMap.SimpleEntry
-import java.util.concurrent.{ExecutorService, Executors}
 
-import scala.util.control.Breaks._
 import scala.collection.JavaConverters._
 import com.intel.analytics.zoo.serving.http.{PredictionInputMessage, _}
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import redis.clients.jedis.{Jedis, ScanParams, ScanResult, StreamEntryID}
-import com.intel.analytics.zoo.serving.pipeline.{RedisUtils}
-import org.apache.commons.io.IOUtils
-import redis.embedded.exceptions.EmbeddedRedisException
-import redis.embedded.{AbstractRedisInstance, Redis, RedisExecProvider, RedisServer, RedisServerBuilder}
+import com.intel.analytics.zoo.serving.pipeline.{RedisEmbedded, RedisUtils}
+import redis.embedded.RedisExecProvider
 import redis.embedded.util.OS
 import scopt.OptionParser
-
-// The RedisServer implementation is based on:
-//    https://github.com/kstyrc/embedded-redis
-class PrintReaderRunnable(val reader: BufferedReader) extends Runnable {
-  override def run(): Unit = {
-    try
-      this.readLines()
-    finally IOUtils.closeQuietly(this.reader)
-  }
-
-  def readLines(): Unit = {
-    breakable{
-      while ( {
-        true
-      }) {
-        try {
-          var line = this.reader.readLine()
-          if (line != null) {
-            System.out.println(line)
-            break()
-          }
-        } catch {
-          case var2: IOException =>
-            var2.printStackTrace()
-        }
-        return
-      }
-    }
-  }
-}
-
-abstract class AbstractRedisInstance protected(val port: Int) extends Redis {
-  protected var args: util.List[String] = _
-  private var active = false
-  private var redisProcess: Process = _
-  final private val executor = Executors.newSingleThreadExecutor
-
-  override def isActive: Boolean = this.active
-
-  @throws[EmbeddedRedisException]
-  override def start(): Unit = {
-    if (this.active) throw new EmbeddedRedisException(
-      "This redis server instance is already running...")
-    else try {
-      this.redisProcess = this.createRedisProcessBuilder.start
-      this.logErrors()
-      this.awaitRedisServerReady()
-      this.active = true
-    } catch {
-      case var2: IOException =>
-        throw new EmbeddedRedisException("Failed to start Redis instance", var2)
-    }
-  }
-
-  private def logErrors(): Unit = {
-    val errorStream = this.redisProcess.getErrorStream
-    val reader = new BufferedReader(new InputStreamReader(errorStream))
-    val printReaderTask = new PrintReaderRunnable(reader)
-    this.executor.submit(printReaderTask)
-  }
-
-  @throws[IOException]
-  private def awaitRedisServerReady(): Unit = {
-    val reader = new BufferedReader(new InputStreamReader(this.redisProcess.getInputStream))
-    var outputLine = ""
-    try
-        do {
-          outputLine = reader.readLine
-          if (outputLine == null) throw new RuntimeException(
-            "Can't start redis server. Check logs for details.")
-        } while ( {
-          !outputLine.matches(this.redisReadyPattern)
-        })
-    finally IOUtils.closeQuietly(reader)
-  }
-
-  protected def redisReadyPattern: String
-
-  private def createRedisProcessBuilder = {
-    val executable = new File(this.args.get(0).asInstanceOf[String])
-    val pb = new ProcessBuilder(this.args)
-    pb.directory(executable.getParentFile)
-    pb
-  }
-
-  @throws[EmbeddedRedisException]
-  override def stop(): Unit = {
-    if (this.active) {
-      this.redisProcess.destroy()
-      this.tryWaitFor()
-      this.active = false
-    }
-  }
-
-  private def tryWaitFor(): Unit = {
-    try
-      this.redisProcess.waitFor
-    catch {
-      case var2: InterruptedException =>
-        throw new EmbeddedRedisException("Failed to stop redis instance", var2)
-    }
-  }
-
-  override def ports: util.List[Integer] = util.Arrays.asList(this.port)
-}
-
-
-object RedisServer {
-  private val REDIS_READY_PATTERN = ".*The server is now ready to accept connections on port.*"
-  private val DEFAULT_REDIS_PORT = 6379
-
-  def builder : RedisServerBuilder = new RedisServerBuilder
-}
-
-class RedisServer @throws[IOException]
-(port : Int) extends AbstractRedisInstance(port) {
-  var executable: File = RedisExecProvider.defaultProvider.get
-  this.args = util.Arrays.asList(executable.getAbsolutePath,
-    "--port", Integer.toString(port.intValue))
-
-  def this(executable: File, port: Integer) {
-    this(port)
-    this.executable = executable
-    this.args = util.Arrays.asList(executable.getAbsolutePath,
-      "--port", Integer.toString(port.intValue))
-  }
-
-  def this(redisExecProvider: RedisExecProvider, port: Integer) {
-    this(port)
-    this.executable = redisExecProvider.get.getAbsoluteFile
-    this.args = util.Arrays.asList(redisExecProvider.get.getAbsolutePath,
-      "--port", Integer.toString(port.intValue))
-  }
-
-  override protected def redisReadyPattern: String = ".*Ready to accept connections.*"
-}
 
 class RedisIOSpec(path : String) extends FlatSpec
   with Matchers with BeforeAndAfter with Supportive {
   val redisHost = "localhost"
   val redisPort = 6379
   val pathToRedisExecutable = path
-  var redisServer: RedisServer = _
+  var redisServer: RedisEmbedded = _
   var jedis: Jedis = _
 
   val inputHash = List("index1" -> "data1", "index2" -> "data2")
@@ -184,7 +43,7 @@ class RedisIOSpec(path : String) extends FlatSpec
   before {
     val customProvider = RedisExecProvider.defaultProvider.`override`(OS.UNIX,
       pathToRedisExecutable)
-    redisServer = new RedisServer(customProvider, redisPort)
+    redisServer = new RedisEmbedded(customProvider, redisPort)
     redisServer.start()
 
     jedis = new Jedis(redisHost, redisPort)
