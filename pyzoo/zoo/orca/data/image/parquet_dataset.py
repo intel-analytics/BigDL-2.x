@@ -28,8 +28,11 @@ from bigdl.util.common import get_node_and_core_number
 import os
 import numpy as np
 import random
+from operator import attrgetter
 import pyarrow.parquet as pq
 import io
+import math
+import torch
 
 
 class ParquetDataset:
@@ -297,10 +300,53 @@ def read_as_tfdataset(path, output_types, output_shapes=None, *args, **kwargs):
     return dataset
 
 
-def read_parquet(format, input_path, *args, **kwargs):
-    supported_format = {"tf_dataset"}
+def read_as_dataloader(path, output_shapes=None,num_shard=None, rank=None, *args, **kwargs):
+    path, _ = pa_fs(path)
+    import tensorflow as tf
+
+    schema_path = os.path.join(path, "_orca_metadata")
+    j_str = open_text(schema_path)[0]
+    schema = decode_schema(j_str)
+    pqdataset = pq.ParquetDataset(path,schema=schema)
+    sorted_pieces = sorted(pqdataset.pieces, key=attrgetter('path'))
+    rowgroups=[]
+    for piece in sorted_pieces:
+        row_groups_key = os.path.relpath(piece.path, dataset.paths)
+        rowgroups.append(pq.ParquetDatasetPiece(piece.path, open_file_func=pqdataset.fs.open, # row_group=row_group, how to use this
+                                                        partition_keys=piece.partition_keys))
+
+
+    class ParquetIterableDataset(torch.utils.data.IterableDataset):
+        def __init__(self, row_group, num_shards=None, rank=None):
+            super(ParquetDataset).__init__()
+            self.row_group=row_group
+            self.num_shards=num_shards
+            self.rank=rank
+
+        def __iter__(self):
+            filter_row_group_indexed = []
+            if self.num_shards is None or self.rank is None:
+                filter_row_group_indexed = [index for index in list(range(len(self.row_group)))]
+            else:
+                assert self.rank < self.num_shard, "shard index should be included in [0,num_shard)," \
+                                         "but got rank {} with num_shard {}.".format(self.rank,self.num_shards)
+                filter_row_group_indexed = [index for index in list(range(len(self.row_group))) 
+                                            if index % self.num_shards == self.rank]
+
+            for piece in [self.row_group[i] for i in filter_row_group_indexed]:
+                # TODO: process row df data:
+                # merge all data in row_group[filter_row_group_indexed] into a list
+                pass
+            return iter()
+
+    dataset=ParquetDataset(ParquetIterableDataset(row_group=rowgroups,num_shards=num_shard,rank=rank))
+    return torch.utils.data.DataLoader(dataset, num_workers=0)
+        
+
+def read_parquet(format, input_path, transforms=None, config=None, *args, **kwargs):
+    supported_format = {"tf_dataset", "dataloader"}
     if format not in supported_format:
-        raise ValueError(format + " is not supported, should be 'tf_dataset'.")
+        raise ValueError(format + " is not supported, should be 'tf_dataset' or 'dataloader'.")
 
     format_to_function = {"tf_dataset": (read_as_tfdataset, ["output_types"])}
     func, required_args = format_to_function[format]
