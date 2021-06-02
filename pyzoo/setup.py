@@ -26,21 +26,21 @@ long_description = '''
 Analytics Zoo is an open source _**Big Data AI**_ platform, and includes the following
  features for scaling end-to-end AI to distributed Big Data:
 
-- [Orca](https://github.com/intel-analytics/analytics-zoo#getting-started-with-orca)
-: seamlessly scale out TensorFlow and PyTorch for Big Data (using Spark & Ray)
+- [Orca](https://github.com/intel-analytics/analytics-zoo#getting-started-with-orca):
+seamlessly scale out TensorFlow and PyTorch for Big Data (using Spark & Ray)
 
-- [RayOnSpark](https://github.com/intel-analytics/analytics-zoo#getting-started-with-rayonspark)
-: run Ray programs directly on Big Data clusters
+- [RayOnSpark](https://github.com/intel-analytics/analytics-zoo#getting-started-with-rayonspark):
+run Ray programs directly on Big Data clusters
 
-- [BigDL Extensions]
-(https://github.com/intel-analytics/analytics-zoo#getting-started-with-bigdl-extensions)
-: high-level Spark ML pipeline and Keras-like APIs for BigDL
+- [BigDL
+Extensions](https://github.com/intel-analytics/analytics-zoo#getting-started-with-bigdl-extensions):
+high-level Spark ML pipeline and Keras-like APIs for BigDL
 
-- [Chronos](https://github.com/intel-analytics/analytics-zoo#getting-started-with-chronos)
-: scalable time series analysis using AutoML
+- [Chronos](https://github.com/intel-analytics/analytics-zoo#getting-started-with-chronos):
+scalable time series analysis using AutoML
 
-- [PPML](https://github.com/intel-analytics/analytics-zoo#ppml-privacy-preserving-machine-learning)
-: privacy preserving big data analysis and machine learning (*experimental*)
+- [PPML](https://github.com/intel-analytics/analytics-zoo#ppml-privacy-preserving-machine-learning):
+privacy preserving big data analysis and machine learning (*experimental*)
 
 For more information, you may [read the docs](https://analytics-zoo.readthedocs.io/).
 '''
