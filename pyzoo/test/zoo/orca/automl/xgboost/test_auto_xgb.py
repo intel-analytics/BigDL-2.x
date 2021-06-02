@@ -65,3 +65,5 @@ class TestAutoXGBRegressor(TestCase):
         best_model = auto_xgb_reg.get_best_model()
         assert 5 <= best_model.model.n_estimators <= 10
         assert 2 <= best_model.model.max_depth <= 5
+        best_config = auto_xgb_reg.get_best_config()
+        assert all(k in best_config.keys() for k in create_XGB_recipe().keys())
