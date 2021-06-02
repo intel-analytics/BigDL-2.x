@@ -23,6 +23,8 @@ import os
 from zoo.orca.data.image.parquet_dataset import ParquetDataset, read_parquet
 from zoo.orca.data.image.utils import DType, FeatureType, SchemaField
 import tensorflow as tf
+import torch.optim as optim
+
 from zoo.ray import RayContext
 
 resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
@@ -69,6 +71,13 @@ def model_creator(config):
     return model
 
 
+def torch_optim_creator(model, config):
+    optimizer = optim.Adam(model.parameters(),
+                          lr=config.get("lr", 0.001))
+    return optimizer
+
+def 
+
 class TestReadParquet(TestCase):
     def test_read_parquet_images_tf_dataset(self):
         # temp_dir = tempfile.mkdtemp()
@@ -81,6 +90,15 @@ class TestReadParquet(TestCase):
             dataset = read_parquet("tf_dataset", input_path=path, output_types=output_types)
             for dt in dataset.take(1):
                 print(dt.keys())
+            
+            dataloader = read_parquet("dataloader", input_path=path)
+            cur_dl=iter(dataloader)
+            while True:
+                try:
+                    print(next(cur_dl)['label'])
+                except StopIteration:
+                    break
+
 
         finally:
             # shutil.rmtree(temp_dir)
@@ -111,6 +129,15 @@ class TestReadParquet(TestCase):
                         batch_size=2)
         finally:
             shutil.rmtree(temp_dir)
+
+    def test_parquet_torch_training(self):
+        from zoo.orca.learn.pytorch import Estimator
+        temp_dir = tempfile.mkdtemp()
+        try:
+            ParquetDataset.write("file://" + temp_dir, images_generator(), images_schema)
+            path = "file://" + temp_dir
+
+        pass
 
 
 if __name__ == "__main__":

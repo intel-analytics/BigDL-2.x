@@ -272,7 +272,7 @@ def write_parquet(format, output_path, *args, **kwargs):
     func(output_path=output_path, *args, **kwargs)
 
 
-def read_as_tfdataset(path, output_types, output_shapes=None, *args, **kwargs):
+def read_as_tfdataset(path, output_types, output_shapes=None, config=None,*args, **kwargs):
     """
     return a orca.data.tf.data.Dataset
     :param path:
@@ -300,7 +300,7 @@ def read_as_tfdataset(path, output_types, output_shapes=None, *args, **kwargs):
     return dataset
 
 
-def read_as_dataloader(path,num_shard=None, rank=None, *args, **kwargs):
+def read_as_dataloader(path, config=None, *args, **kwargs):
     path, _ = pa_fs(path)
     import tensorflow as tf
 
@@ -308,7 +308,7 @@ def read_as_dataloader(path,num_shard=None, rank=None, *args, **kwargs):
     j_str = open_text(schema_path)[0]
     schema = decode_schema(j_str)
 
-    row_group=[]
+    row_group = []
 
     for root, dirs, files in os.walk(path):
         for name in dirs:
@@ -319,49 +319,56 @@ def read_as_dataloader(path,num_shard=None, rank=None, *args, **kwargs):
     class ParquetIterableDataset(torch.utils.data.IterableDataset):
         def __init__(self, row_group, num_shards=None, rank=None):
             super(ParquetDataset).__init__()
-            self.row_group=row_group
-            self.num_shards=num_shards
-            self.rank=rank
+            self.row_group = row_group
+
+            # To get the indices we expect
+            self.row_group.sort()
+
+            self.num_shards = num_shards
+            self.rank = rank
 
         def __iter__(self):
             filter_row_group_indexed = []
+
             if self.num_shards is None or self.rank is None:
-                filter_row_group_indexed = [index for index in list(range(len(self.row_group)))]
+                filter_row_group_indexed = [
+                    index for index in list(range(len(self.row_group)))]
             else:
-                assert self.num_shards <= len(self.row_group), "num_shards should be not larger than partitions."
-                assert self.rank < self.num_shards, "shard index should be included in [0,num_shard)," \
-                                         "but got rank {} with num_shard {}.".format(self.rank,self.num_shards)
-                filter_row_group_indexed = [index for index in list(range(len(self.row_group))) 
+                assert self.num_shards <= len(
+                    self.row_group), "num_shards should be not larger than partitions." \
+                                     "but got num_shards {} with partitions {}." \
+                                         .format(self.num_shards,self.row_group)
+                assert self.rank < self.num_shards, \
+                    "shard index should be included in [0,num_shard)," \
+                    "but got rank {} with num_shard {}.".format(self.rank, self.num_shards)
+                filter_row_group_indexed = [index for index in list(range(len(self.row_group)))
                                             if index % self.num_shards == self.rank]
 
-            results = []
+            data_record = []
             for select_chunk_path in [self.row_group[i] for i in filter_row_group_indexed]:
-                print(select_chunk_path)
                 pq_table = pq.read_table(select_chunk_path)
                 df = decode_feature_type_ndarray(pq_table.to_pandas(), schema)
-                results.extend(df.to_dict("records"))
+                data_record.extend(df.to_dict("records"))
 
-            return iter(results)
+            rows_end = len(data_record)
+            worker_info = torch.utils.data.get_worker_info()
+            if worker_info is None:
+                iter_start = 0
+                iter_end = rows_end
+            else:
+                per_worker = int(
+                    math.ceil(rows_end / float(worker_info.num_workers)))
+                worker_id = worker_info.id
+                iter_start = 0 + worker_id * per_worker
+                iter_end = min(iter_start + per_worker, rows_end)
 
-        # def __next__(self):
-        #     filter_row_group_indexed = []
-        #     if self.num_shards is None or self.rank is None:
-        #         filter_row_group_indexed = [index for index in list(range(len(self.row_group)))]
-        #     else:
-        #         assert self.rank < self.num_shards, "shard index should be included in [0,num_shard)," \
-        #                                  "but got rank {} with num_shard {}.".format(self.rank,self.num_shards)
-        #         filter_row_group_indexed = [index for index in list(range(len(self.row_group))) 
-        #                                     if index % self.num_shards == self.rank]
- 
-        #     for select_chunk_path in [self.row_group[i] for i in filter_row_group_indexed]:
-        #         pq_table = pq.read_table(select_chunk_path)
-        #         df = decode_feature_type_ndarray(pq_table.to_pandas(), schema)
-        #         for record in df.to_dict("records"):
-        #             print(record)
-        #             return record
+            return iter(data_record[iter_start:iter_end])
 
-    dataset=ParquetIterableDataset(row_group=row_group,num_shards=num_shard,rank=rank)
-    return torch.utils.data.DataLoader(dataset, num_workers=0)
+
+    dataset = ParquetIterableDataset(
+        row_group=row_group, num_shards=config.get("num_shards"), rank=config.get("rank"))
+
+    return torch.utils.data.DataLoader(dataset, num_workers=config.get("num_workers",0))
         
 
 def read_parquet(format, input_path, transforms=None, config=None, *args, **kwargs):
@@ -369,7 +376,8 @@ def read_parquet(format, input_path, transforms=None, config=None, *args, **kwar
     if format not in supported_format:
         raise ValueError(format + " is not supported, should be 'tf_dataset' or 'dataloader'.")
 
-    format_to_function = {"tf_dataset": (read_as_tfdataset, ["output_types"])}
+    format_to_function = {"tf_dataset": (read_as_tfdataset, ["output_types"]),
+                          "dataloader": (read_as_dataloader, [])}
     func, required_args = format_to_function[format]
     _check_arguments(format, kwargs, required_args)
-    return func(path=input_path, *args, **kwargs)
+    return func(path= input_path, config= config or {}, *args, **kwargs)
