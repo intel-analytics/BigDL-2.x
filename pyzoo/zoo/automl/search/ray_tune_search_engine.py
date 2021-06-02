@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import warnings
 
 import ray
 from ray import tune
@@ -25,6 +26,7 @@ from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME
 from ray.tune import Trainable, Stopper
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model import ModelBuilder
+from typing import Any, Dict, List, Optional, Tuple
 from zoo.orca.automl import hp
 from zoo.chronos.feature.identity_transformer import IdentityTransformer
 from zoo.chronos.preprocessing.impute import LastFillImpute, FillZeroImpute
@@ -105,13 +107,18 @@ class RayTuneSearchEngine(SearchEngine):
 
         # metric and metric's mode
         self.metric = metric
-        self.mode = Evaluator.get_metric_mode(metric)
-        self.num_samples = n_sampling
+        try:
+            self.mode = Evaluator.get_metric_mode(metric)
+        except ValueError:
+            self.mode = None
+        if metric_threshold and not self.mode:
+            warnings.warn("metric_threshold will not take effect on early stop since we failed to "
+                          "infer metric mode with metric name of {metric}")
         self.stopper = TrialStopper(metric_threshold=metric_threshold,
                                     epochs=epochs,
                                     metric=self.metric,
                                     mode=self.mode)
-
+        self.num_samples = n_sampling
         self.search_space = search_space
 
         self._search_alg = RayTuneSearchEngine._set_search_alg(search_alg, search_alg_params,
@@ -133,13 +140,12 @@ class RayTuneSearchEngine(SearchEngine):
             if not isinstance(search_alg, str):
                 raise ValueError(f"search_alg should be of type str."
                                  f" Got {search_alg.__class__.__name__}")
-            if search_alg_params is None:
-                search_alg_params = dict()
-            search_alg_params.update(dict(
-                metric=metric,
-                mode=mode,
-            ))
-            search_alg = tune.create_searcher(search_alg, **search_alg_params)
+            params = search_alg_params.copy() if search_alg_params else dict()
+            if metric and "metric" not in params:
+                params["metric"] = metric
+            if mode and "mode" not in params:
+                params["mode"] = mode
+            search_alg = tune.create_searcher(search_alg, **params)
         return search_alg
 
     @staticmethod
@@ -148,14 +154,14 @@ class RayTuneSearchEngine(SearchEngine):
             if not isinstance(scheduler, str):
                 raise ValueError(f"Scheduler should be of type str. "
                                  f"Got {scheduler.__class__.__name__}")
-            if scheduler_params is None:
-                scheduler_params = dict()
-            scheduler_params.update(dict(
-                time_attr="training_iteration",
-                metric=metric,
-                mode=mode,
-            ))
-            scheduler = tune.create_scheduler(scheduler, **scheduler_params)
+            params = scheduler_params.copy() if scheduler_params else dict()
+            if metric and "metric" not in params:
+                params["metric"] = metric
+            if mode and "mode" not in params:
+                params["mode"] = mode
+            if "time_attr" not in params:
+                params["time_attr"] = "training_iteration"
+            scheduler = tune.create_scheduler(scheduler, **params)
         return scheduler
 
     def run(self):
