@@ -26,8 +26,8 @@ from ray.tune import Trainable, Stopper
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model import ModelBuilder
 from zoo.orca.automl import hp
-from zoo.zouwu.feature.identity_transformer import IdentityTransformer
-from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
+from zoo.chronos.feature.identity_transformer import IdentityTransformer
+from zoo.chronos.preprocessing.impute import LastFillImpute, FillZeroImpute
 import pandas as pd
 
 

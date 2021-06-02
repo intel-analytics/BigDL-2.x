@@ -16,9 +16,9 @@
 #
 
 from zoo.automl.common.metrics import Evaluator
-from zoo.zouwu.pipeline.time_sequence import TimeSequencePipeline
+from zoo.chronos.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
-from zoo.zouwu.config.recipe import *
+from zoo.chronos.config.recipe import *
 from zoo.ray import RayContext
 import pandas as pd
 from zoo.orca.automl.auto_estimator import AutoEstimator

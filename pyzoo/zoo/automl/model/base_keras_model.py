@@ -86,7 +86,6 @@ class KerasBaseModel(BaseModel):
         hist_metric_name = tf.keras.metrics.get(metric).__name__
         # model.metrics_names are available only after a keras model has been trained/evaluated
         compiled_metric_names = self.model.metrics_names.copy()
-        print(compiled_metric_names)
         compiled_metric_names.remove("loss")
         if hist_metric_name in compiled_metric_names:
             metric_name = hist_metric_name
