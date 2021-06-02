@@ -316,7 +316,7 @@ class TestTable(TestCase):
         df = spark.createDataFrame(data=data, schema=schema)
         df = df.withColumn("ts", col("time").cast("timestamp").cast("long"))
         tbl = FeatureTable(df.select("name", "item", "ts")) \
-            .add_hist_seq("name", ["item"], "ts", 1, 4)
+            .add_hist_seq(["item"], "name", "ts", 1, 4)
         assert tbl.size() == 8
         assert tbl.df.filter(col("name") == "alice").count() == 2
         assert tbl.df.filter("name like '%jack'").count() == 6
@@ -397,7 +397,7 @@ class TestTable(TestCase):
 
         df = spark.createDataFrame(data, schema)
         tbl = FeatureTable(df)
-        tbl = tbl.add_length("history")
+        tbl = tbl.add_col_length("history")
         assert "history_length" in tbl.df.columns
         assert tbl.df.filter("history_length = 5").count() == 2
         assert tbl.df.filter("history_length = 2").count() == 1

@@ -239,7 +239,7 @@ private[friesian] object Utils {
         (itemId, castValueFromNum(itemId, 1)))
   }
 
-  def addNegativeList[T](negNum: Int, itemSize: Int) = {
+  def addNegativeList[T](negNum: Int, itemSize: Int): mutable.WrappedArray[T] => Seq[Seq[T]] = {
     val r = new Random()
     (history: WrappedArray[T]) => {
       val r = new Random()
