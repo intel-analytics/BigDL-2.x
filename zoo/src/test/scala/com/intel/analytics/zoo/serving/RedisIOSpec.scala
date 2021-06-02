@@ -24,7 +24,7 @@ import com.intel.analytics.zoo.serving.http.{PredictionInputMessage, _}
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import redis.clients.jedis.{Jedis, ScanParams, ScanResult, StreamEntryID}
-import com.intel.analytics.zoo.serving.pipeline.{RedisEmbedded, RedisUtils}
+import com.intel.analytics.zoo.serving.pipeline.{RedisEmbeddedReImpl, RedisUtils}
 import redis.embedded.RedisExecProvider
 import redis.embedded.util.OS
 import scopt.OptionParser
@@ -34,7 +34,7 @@ class RedisIOSpec(path : String) extends FlatSpec
   val redisHost = "localhost"
   val redisPort = 6379
   val pathToRedisExecutable = path
-  var redisServer: RedisEmbedded = _
+  var redisServer: RedisEmbeddedReImpl = _
   var jedis: Jedis = _
 
   val inputHash = List("index1" -> "data1", "index2" -> "data2")
@@ -43,7 +43,7 @@ class RedisIOSpec(path : String) extends FlatSpec
   before {
     val customProvider = RedisExecProvider.defaultProvider.`override`(OS.UNIX,
       pathToRedisExecutable)
-    redisServer = new RedisEmbedded(customProvider, redisPort)
+    redisServer = new RedisEmbeddedReImpl(customProvider, redisPort)
     redisServer.start()
 
     jedis = new Jedis(redisHost, redisPort)
@@ -122,6 +122,9 @@ class RedisIOSpec(path : String) extends FlatSpec
   }
 
 }
+
+// If scalatest could not run successfully,
+// uncomment this part to run the test
 
 object RedisIOTest {
   // initialize the parser

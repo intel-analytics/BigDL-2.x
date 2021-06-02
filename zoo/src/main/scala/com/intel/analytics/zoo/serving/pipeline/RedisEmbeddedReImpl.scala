@@ -139,7 +139,7 @@ object RedisServer {
   def builder : RedisServerBuilder = new RedisServerBuilder
 }
 
-class RedisEmbedded @throws[IOException]
+class RedisEmbeddedReImpl @throws[IOException]
 (port : Int) extends AbstractRedisInstance(port) {
   var executable: File = RedisExecProvider.defaultProvider.get
   this.args = util.Arrays.asList(executable.getAbsolutePath,
