@@ -23,25 +23,26 @@ import fnmatch
 from setuptools import setup
 
 long_description = '''
-Analytics Zoo: A unified Data Analytics and AI platform for distributed TensorFlow,
- Keras, PyTorch, Apache Spark/Flink and Ray.
+Analytics Zoo is an open source _**Big Data AI**_ platform, and includes the following
+ features for scaling end-to-end AI to distributed Big Data:
 
-You may want to develop your AI solutions using Analytics Zoo if:
+- [Orca](https://github.com/intel-analytics/analytics-zoo#getting-started-with-orca)
+: seamlessly scale out TensorFlow and PyTorch for Big Data (using Spark & Ray)
 
-- You want to easily prototype the entire end-to-end pipeline that applies AI models
- (e.g., TensorFlow, Keras, PyTorch, BigDL, OpenVINO, etc.) to production big data.
-- You want to transparently scale your AI applications from a laptop to large clusters with "zero"
- code changes.
-- You want to deploy your AI pipelines to existing YARN or K8S clusters *WITHOUT* any modifications
- to the clusters.
-- You want to automate the process of applying machine learning (such as feature engineering,
- hyperparameter tuning, model selection and distributed inference).
+- [RayOnSpark](https://github.com/intel-analytics/analytics-zoo#getting-started-with-rayonspark)
+: run Ray programs directly on Big Data clusters
 
-Find instructions to install analytics-zoo via pip, please visit our documentation page:
- https://analytics-zoo.github.io/master/#PythonUserGuide/install/
+- [BigDL Extensions]
+(https://github.com/intel-analytics/analytics-zoo#getting-started-with-bigdl-extensions)
+: high-level Spark ML pipeline and Keras-like APIs for BigDL
 
-For source code and more information, please visit our GitHub page:
- https://github.com/intel-analytics/analytics-zoo
+- [Chronos](https://github.com/intel-analytics/analytics-zoo#getting-started-with-chronos)
+: scalable time series analysis using AutoML
+
+- [PPML](https://github.com/intel-analytics/analytics-zoo#ppml-privacy-preserving-machine-learning)
+: privacy preserving big data analysis and machine learning (*experimental*)
+
+For more information, you may [read the docs](https://analytics-zoo.readthedocs.io/).
 '''
 
 
