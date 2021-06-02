@@ -909,6 +909,18 @@
                         <configuration>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>flink-udf</shadedClassifierName>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>reference.conf</resource>
+                                </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <Main-Class>com.intel.analytics.zoo.serving.http.Frontend2</Main-Class>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
                             <artifactSet>
                                 <excludes>
                                     <exclude>ml.dmlc:xgboost4j</exclude>

@@ -59,7 +59,7 @@ class FlinkRedisSink(params: ClusterServingHelper)
 
 }
 
-class FlinkRedisSinkXstream(params: ClusterServingHelper) extends FlinkRedisSink(params) {
+class FlinkRedisXStreamSink(params: ClusterServingHelper) extends FlinkRedisSink(params) {
   override def invoke(value: List[(String, String)], context: SinkFunction.Context[_]): Unit = {
     val ppl = jedis.pipelined()
     var cnt = 0
