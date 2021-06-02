@@ -141,6 +141,8 @@ class TestPyTorchAutoEstimator(TestCase):
         best_model = auto_est.get_best_model()
         assert best_model.optimizer.__class__.__name__ == "SGD"
         assert isinstance(best_model.loss_creator, nn.BCELoss)
+        best_config = auto_est.get_best_config()
+        assert all(k in best_config.keys() for k in create_linear_search_space().keys())
 
     def test_fit_data_creator(self):
         auto_est = AutoEstimator.from_torch(model_creator=model_creator,
@@ -160,6 +162,8 @@ class TestPyTorchAutoEstimator(TestCase):
         best_model = auto_est.get_best_model()
         assert best_model.optimizer.__class__.__name__ == "SGD"
         assert isinstance(best_model.loss_creator, nn.BCELoss)
+        best_config = auto_est.get_best_config()
+        assert all(k in best_config.keys() for k in search_space.keys())
 
     def test_fit_loss_name(self):
         auto_est = AutoEstimator.from_torch(model_creator=model_creator,
