@@ -49,4 +49,3 @@ class TestDBScanDetector(ZooTestCase):
         # directly use dbscan may cause high local false positive/negatives
         # so the detected anomalies is probably more than the actual ones
         assert len(anomaly_indexes) >= 4
-

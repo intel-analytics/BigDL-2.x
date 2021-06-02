@@ -24,6 +24,7 @@ class DBScanDetector(AnomalyDetector):
     """
     Anomaly Detector by DBSCAN outlier detection
     """
+
     def __init__(self,
                  eps=0.01,
                  min_samples=6,
@@ -62,7 +63,8 @@ class DBScanDetector(AnomalyDetector):
         """
         self.check_data(y)
         self.anomaly_scores_ = np.zeros_like(y)
-        clusters = DBSCAN(eps=self.eps, min_samples=self.min_samples).fit(y.reshape(-1, 1), **self.argv)
+        clusters = DBSCAN(eps=self.eps, min_samples=self.min_samples).fit(
+            y.reshape(-1, 1), **self.argv)
         labels = clusters.labels_
         outlier_indexes = np.where(labels == -1)[0]
         self.anomaly_indexes_ = outlier_indexes
