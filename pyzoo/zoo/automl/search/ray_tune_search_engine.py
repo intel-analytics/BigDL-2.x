@@ -129,7 +129,8 @@ class RayTuneSearchEngine(SearchEngine):
         self.train_func = self._prepare_train_func(data=data,
                                                    model_builder=model_builder,
                                                    validation_data=validation_data,
-                                                   metric=metric,
+                                                   metric=self.metric,
+                                                   mode=self.mode,
                                                    mc=mc,
                                                    remote_dir=self.remote_dir
                                                    )
@@ -261,8 +262,9 @@ class RayTuneSearchEngine(SearchEngine):
     @staticmethod
     def _prepare_train_func(data,
                             model_builder,
-                            metric,
                             validation_data=None,
+                            metric=None,
+                            mode=None,
                             mc=False,
                             remote_dir=None,
                             ):
@@ -270,7 +272,8 @@ class RayTuneSearchEngine(SearchEngine):
         Prepare the train function for ray tune
         :param data: input data
         :param model_builder: model create function
-        :param metric: the rewarding metric
+        :param metric: the rewarding metric name
+        :param mode: metric mode
         :param validation_data: validation data
         :param mc: if calculate uncertainty
         :param remote_dir: checkpoint will be uploaded to remote_dir in hdfs
@@ -302,11 +305,12 @@ class RayTuneSearchEngine(SearchEngine):
                 checkpoint_filename = "best.ckpt"
 
                 # Save best reward iteration
-                mode = Evaluator.get_metric_mode(metric)
                 if mode == "max":
                     has_best_reward = best_reward is None or reward > best_reward
-                else:
+                elif mode == "min":
                     has_best_reward = best_reward is None or reward < best_reward
+                else:
+                    has_best_reward = True
 
                 if has_best_reward:
                     best_reward = reward
