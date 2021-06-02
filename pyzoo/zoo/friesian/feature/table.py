@@ -319,7 +319,7 @@ class Table:
             raise ValueError(
                 "type should be string, boolean, int, long, short, float, double.")
         transform_dict = {"str": "string", "bool": "boolean", "integer": "int"}
-        type = transform_dict[type] if type in transform_dict.keys() else type
+        type = transform_dict[type] if type in transform_dict else type
         df_cast = self._clone(self.df)
         for i in columns:
             df_cast.df = df_cast.df.withColumn(i, col(i).cast(type))
