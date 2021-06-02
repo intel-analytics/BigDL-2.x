@@ -849,8 +849,8 @@ class FeatureTable(Table):
         """
         columns = str_to_list("columns", columns)
         sort_cols = str_to_list("sort_cols", sort_cols)
-        nonnumeric_col_type = get_nonnumeric_col_type(self.df, columns + sort_cols)
-        assert not nonnumeric_col_type, "columns and sort_cols should be numeric but get " + \
+        nonnumeric_col_type = get_nonnumeric_col_type(self.df, columns)
+        assert not nonnumeric_col_type, "columns should be numeric but get " + \
                 ", ".join(list(map(lambda x: x[0] + " of type " + x[1], nonnumeric_col_type)))
         if isinstance(shifts, int):
             shifts = [shifts]

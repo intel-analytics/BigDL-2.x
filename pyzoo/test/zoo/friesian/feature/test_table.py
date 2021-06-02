@@ -436,17 +436,17 @@ class TestTable(TestCase):
         feature_tbl = FeatureTable.read_parquet(file_path)
         with self.assertRaises(Exception) as context:
             feature_tbl.join_groupby("col_1", "col_4")
-        self.assertTrue("cont_cols should be numeric")
+        self.assertTrue("cont_cols should be numeric" in str(context.exception))
         with self.assertRaises(Exception) as context:
             feature_tbl.join_groupby("col_1", "col_4", stats="unknown")
-        self.assertTrue("supported for stats")
+        self.assertTrue("supported for stats" in str(context.exception))
 
         join_tbl1 = feature_tbl.join_groupby("col_4", "col_1")
         assert len(join_tbl1.df.columns) == len(feature_tbl.df.columns) + 1, "join_tbl1 should " \
                 "have one more column than feature_tbl"
-        assert join_tbl1.df.filter("col_4 == \"d\" and col_4_jg_count_col_1 == 6").count() == \
-                feature_tbl.df.filter("col_4 == \"d\"").count(), \
-                "the count of col_1 group by \"d\" in col_4 should be 6 in join_tbl1"
+        assert join_tbl1.df.filter("col_4 == 'd' and col_4_jg_count_col_1 == 6").count() == \
+                feature_tbl.df.filter("col_4 == 'd'").count(), \
+                "the count of col_1 group by 'd' in col_4 should be 6 in join_tbl1"
 
         join_tbl2 = feature_tbl.join_groupby(["col_4", "col_5"], ["col_2", "col_3"],
                 stats=["sum", "mean", "std", "var"])
@@ -458,6 +458,28 @@ class TestTable(TestCase):
         assert join_tbl2.df.filter("col_5 == 'aa' and col_5_jg_sum_col_2 == 11").count() == \
                 join_tbl2.df.filter("col_5 == 'aa'").count(), "col_5_jg_sum_col_2 should all be" \
                 " 11 for col_5 = aa in join_tbl2"
+
+    def test_difference_lag(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data2.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        with self.assertRaises(Exception) as context:
+            feature_tbl.difference_lag("col_4", "col_4")
+        self.assertTrue("columns should be numeric" in str(context.exception))
+
+        diff_tbl1 = feature_tbl.difference_lag("col_1", "col_1")
+        assert diff_tbl1.df.filter("col_1_dl_col_1_1 == 1").count() == 5 and \
+                diff_tbl1.df.filter("col_1_dl_col_1_1 == 0").count() == 13 and \
+                diff_tbl1.df.filter("col_1_dl_col_1_1 is null").count() == 2, \
+                "col_1 has 6 different values and 1 null, so after sorted by col_1, there should" \
+                " be 5 rows with (lag of col_1) = 1, 2 rows with (lag of col_1) = null," \
+                " and other rows with (lag of col_1) = 0"
+
+        diff_tbl2 = feature_tbl.difference_lag(["col_1", "col_2"], ["col_3"], shifts=[1, -1],
+                partition_cols=["col_5"], out_cols=[["c1p1", "c1m1"], ["c2p1", "c2m1"]])
+        assert diff_tbl2.df.filter("col_3 == 8.0 and col_5 == 'cc'") \
+                .filter("c1p1 == 1 and c1m1 == 2 and c2p1 == -1 and c2m1 == -4") \
+                .count() == 1, "the row with col_3 = 8.0 and col_5 = 'cc' should have c1p1 = 1, " \
+                "c1m1 = 2, c2p1 = -1, c2m1 = -4 after difference_lag"
 
 
 if __name__ == "__main__":
