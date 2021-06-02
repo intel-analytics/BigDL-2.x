@@ -44,7 +44,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.ImmutableList
 import com.intel.analytics.zoo.serving.http.FrontEndApp.{
   metrics, overallRequestTimer, purePredictTimer,
-  system, timeout, timing, waitRedisTimer, makeActivityTimer, handleResponseTimer
+  system, timeout, timing, waitRedisTimer, makeActivityTimer, handleResponseTimer, curCurrentNum
 }
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
@@ -833,7 +833,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   var model: InferenceModel = _
 
   def load(): Unit = {
-    model = new InferenceModel()
+    model = new InferenceModel(curCurrentNum)
     inferenceModelMetaData.modelType match {
       case "OpenVINO" =>
         model.doLoadOpenVINO(inferenceModelMetaData.modelPath,

@@ -57,9 +57,13 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           case None => argumentsParser.failure("miss args, please see the usage info"); null
         }
       }
+
       val servableManager = new ServableManager
       if (arguments.multiServingMode) {
         logger.info("Multi Serving Mode")
+        if (arguments.cocurrentNum != 1) {
+          curCurrentNum = arguments.cocurrentNum
+        }
         timing("load servable manager")() {
           try servableManager.load(arguments.servableManagerPath)
           catch {
@@ -406,6 +410,9 @@ object FrontEndApp extends Supportive with EncryptSupportive {
     }
   }
 
+  //arguments
+  var curCurrentNum : Int = 1
+
   val metrics = new MetricRegistry
   val overallRequestTimer = metrics.timer("zoo.serving.request.overall")
   val predictRequestTimer = metrics.timer("zoo.serving.request.predict")
@@ -491,6 +498,9 @@ object FrontEndApp extends Supportive with EncryptSupportive {
     opt[Boolean]('m', "multiServingMode")
       .action((x, c) => c.copy(multiServingMode = x))
       .text("multiServingMode enabled or not")
+    opt[Int]('c', "cocurrentNum")
+      .action((x, c) => c.copy(cocurrentNum = x))
+      .text("cocurrentNum enabled or not")
   }
 
   def defineServerContext(httpsKeyStoreToken: String,
@@ -539,5 +549,6 @@ case class FrontEndAppArguments(
                                  redissTrustStorePath: String = null,
                                  redissTrustStoreToken: String = "1234qwer",
                                  servableManagerPath: String = "./servables-conf.yaml",
-                                 multiServingMode: Boolean = false
+                                 multiServingMode: Boolean = false,
+                                 cocurrentNum: Int = 1
                                )
