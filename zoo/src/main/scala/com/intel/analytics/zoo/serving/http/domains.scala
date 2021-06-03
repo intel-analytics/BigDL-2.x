@@ -43,7 +43,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.ImmutableList
 import com.intel.analytics.zoo.serving.http.FrontEndApp.{
-  metrics, overallRequestTimer, purePredictTimer,
+  metrics, overallRequestTimer, purePredictTimersMap,
   system, timeout, timing, waitRedisTimer, makeActivityTimer, handleResponseTimer, conCurrentNum
 }
 import com.intel.analytics.bigdl.tensor.Tensor
@@ -777,6 +777,7 @@ class ServableManager {
         modelVersionMap(modelInfo.getModelName) = versionMapper
         val timerMapper = new mutable.HashMap[String, Timer]
         FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName) = timerMapper
+        FrontEndApp.purePredictTimersMap(modelInfo.getModelName) = timerMapper
       }
       if (modelVersionMap(modelInfo.getModelName).contains(modelInfo.getModelVersion)) {
         throw ServableLoadException("duplicated model info. Model Name: " + modelInfo.getModelName
@@ -792,6 +793,9 @@ class ServableManager {
       modelVersionMap(modelInfo.getModelName)(modelInfo.getModelVersion) = servable
       FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
         metrics.timer("zoo.serving.inference." + modelInfo.getModelName + "."
+          + modelInfo.getModelVersion)
+      FrontEndApp.purePredictTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
+        metrics.timer("zoo.pure.predict." + modelInfo.getModelName + "."
           + modelInfo.getModelVersion)
     }
   }
@@ -833,7 +837,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   var model: InferenceModel = _
 
   def load(): Unit = {
-    model = new InferenceModel(conCurrentNum)
+    model = new InferenceModel(inferenceModelMetaData.modelConCurrentNum)
     inferenceModelMetaData.modelType match {
       case "OpenVINO" =>
         model.doLoadOpenVINO(inferenceModelMetaData.modelPath,
@@ -846,17 +850,18 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
         model.doLoadCaffe(inferenceModelMetaData.modelPath, inferenceModelMetaData.weightPath)
       case "PyTorch" =>
         model.doLoadPyTorch(inferenceModelMetaData.modelPath)
-
     }
   }
 
   def predict(inputs: Instances): Seq[PredictionOutput[String]] = {
-    val activities = timing("make Activity total")(makeActivityTimer) {
+    val activities = timing("activity make")(makeActivityTimer) {
       inputs.makeActivities(inferenceModelMetaData.features)
     }
+    println("activity:" + activities)
     activities.map(
       activity => {
-        var result = timing("predict single activity")(purePredictTimer) {
+        var result = timing("model predict")(purePredictTimersMap(inferenceModelMetaData.modelName)(
+          inferenceModelMetaData.modelVersion)) {
           model.doPredict(activity)
         }
         timing("handle response")(handleResponseTimer) {
@@ -998,6 +1003,7 @@ case class InferenceModelMetaData(modelName: String,
                                   modelPath: String,
                                   modelType: String,
                                   weightPath: String,
+                                  modelConCurrentNum: Int = 1,
                                   features: Array[String])
   extends ModelMetaData(modelName, modelVersion, features)
 

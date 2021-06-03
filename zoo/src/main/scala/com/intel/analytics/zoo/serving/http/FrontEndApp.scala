@@ -61,9 +61,6 @@ object FrontEndApp extends Supportive with EncryptSupportive {
       val servableManager = new ServableManager
       if (arguments.multiServingMode) {
         logger.info("Multi Serving Mode")
-        if (arguments.cocurrentNum != 1) {
-          conCurrentNum = arguments.cocurrentNum
-        }
         timing("load servable manager")() {
           try servableManager.load(arguments.servableManagerPath)
           catch {
@@ -342,15 +339,15 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                 if (arguments.multiServingMode) {
                   complete(404, "Serving Not In MultiServing Mode. Current Path not Supported")
                 }
-                timing("backend inference timing")(overallRequestTimer, backendInferenceTimer) {
+                timing("backend inference")(overallRequestTimer, backendInferenceTimer) {
                   try {
                     logger.info("model name: " + modelName + ", model version: " + modelVersion)
-                    val servable = timing("retriving servable")(servableRetriveTimer) {
+                    val servable = timing("servable retrive")(servableRetriveTimer) {
                       servableManager.retriveServable(modelName, modelVersion)
                     }
                     servable match {
                       case _: ClusterServingServable =>
-                        val result = timing("cluster serving predict")(predictRequestTimer) {
+                        val result = timing("cluster serving inference")(predictRequestTimer) {
                           val instances = timing("json deserialization")() {
                             JsonUtil.fromJson(classOf[Instances], content)
                           }
@@ -364,7 +361,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                           complete(200, result.toString)
                         }
                       case _: InferenceModelServable =>
-                        val result = timing("inference model predict")(predictRequestTimer) {
+                        val result = timing("inference model inference")(predictRequestTimer) {
                           val instances = timing("json deserialization")() {
                             JsonUtil.fromJson(classOf[Instances], content)
                           }
@@ -411,7 +408,6 @@ object FrontEndApp extends Supportive with EncryptSupportive {
   }
 
   //arguments
-  var conCurrentNum: Int = 1
 
   val metrics = new MetricRegistry
   val overallRequestTimer = metrics.timer("zoo.serving.request.overall")
@@ -425,7 +421,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
   val metricsRequestTimer = metrics.timer("zoo.serving.request.metrics")
   val modelInferenceTimersMap = new mutable.HashMap[String, mutable.HashMap[String, Timer]]
   val makeActivityTimer = metrics.timer("zoo.serving.activity.make")
-  val purePredictTimer = metrics.timer("zoo.serving.pure.predict")
+  val purePredictTimersMap= new mutable.HashMap[String, mutable.HashMap[String, Timer]]
   val handleResponseTimer = metrics.timer("zoo.serving.response.handling")
 
   val jacksonJsonSerializer = new JacksonJsonSerializer()
@@ -498,9 +494,6 @@ object FrontEndApp extends Supportive with EncryptSupportive {
     opt[Boolean]('m', "multiServingMode")
       .action((x, c) => c.copy(multiServingMode = x))
       .text("multiServingMode enabled or not")
-    opt[Int]('c', "concurrentNum")
-      .action((x, c) => c.copy(concurrentNum = x))
-      .text("cocurrentNum enabled or not")
   }
 
   def defineServerContext(httpsKeyStoreToken: String,
@@ -549,6 +542,5 @@ case class FrontEndAppArguments(
                                  redissTrustStorePath: String = null,
                                  redissTrustStoreToken: String = "1234qwer",
                                  servableManagerPath: String = "./servables-conf.yaml",
-                                 multiServingMode: Boolean = false,
-                                 concurrentNum: Int = 1
+                                 multiServingMode: Boolean = false
                                )

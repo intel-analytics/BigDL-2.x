@@ -93,7 +93,7 @@ object MockMultipleServingHttpClient extends App with Supportive {
   def testMultiModelFunction() : Unit = {
     val rawRequest = HttpRequest(
       method = HttpMethods.GET,
-      uri = Uri(s"http://localhost:10020/predict"))
+      uri = Uri(s"http://localhost:10020/models"))
   }
 
 }
