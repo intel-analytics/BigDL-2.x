@@ -24,6 +24,7 @@ from zoo.orca.data.image.parquet_dataset import ParquetDataset, read_parquet
 from zoo.orca.data.image.utils import DType, FeatureType, SchemaField
 import tensorflow as tf
 import torch.optim as optim
+import torch.nn as nn
 
 from zoo.ray import RayContext
 
@@ -71,12 +72,6 @@ def model_creator(config):
     return model
 
 
-def torch_optim_creator(model, config):
-    optimizer = optim.Adam(model.parameters(),
-                          lr=config.get("lr", 0.001))
-    return optimizer
-
-def 
 
 class TestReadParquet(TestCase):
     def test_read_parquet_images_tf_dataset(self):
@@ -132,10 +127,41 @@ class TestReadParquet(TestCase):
 
     def test_parquet_torch_training(self):
         from zoo.orca.learn.pytorch import Estimator
+        from zoo.orca.learn.metrics import Accuracy
+        from zoo.orca.data.utils import decode_imagebytes2ndarray
         temp_dir = tempfile.mkdtemp()
         try:
             ParquetDataset.write("file://" + temp_dir, images_generator(), images_schema)
             path = "file://" + temp_dir
+            
+
+            class Net(nn.Module):
+                def __init__(self):
+                    super(Net, self).__init__()
+                    self.model=nn.Sequential(
+                        nn.Linear(224*224*3,64),
+                        nn.ReLU(),
+                        nn.Linear(64,2)
+                    )
+
+                def forward(self,x):
+                    x = nn.Flatten(x)
+                    x = self.model(x)
+                    return x
+
+            class DecodeImage(object):
+                def __call__(self,imagebytes):
+                    image=decode_imagebytes2ndarray(elem['image'][0])
+                    return image
+
+
+            trainer = Estimator.from_torch(model=Net(),
+                                           optimizer=optim.Adam(model.parameters(),lr=0.0001),
+                                           loss=nn.CrossEntropyLoss(reduction='none'),
+                                           metrics=[Accuracy()],
+                                           backend="torch_distributed"
+                                           )
+
 
         pass
 

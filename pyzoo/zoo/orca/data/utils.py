@@ -331,3 +331,9 @@ def get_size(x):
         raise ValueError(
             "data should be an ndarray, a dict of ndarrays, a tuple of ndarrays"
             " or a list of ndarrays, please check your input")
+
+def decode_imagebytes2PIL(image_btyes):
+    from PIL import Image
+    from io import BytesIO
+    imagebs=BytesIO(image_btyes)
+    return Image.open(imagebs)

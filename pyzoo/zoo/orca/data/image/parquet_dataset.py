@@ -300,7 +300,7 @@ def read_as_tfdataset(path, output_types, output_shapes=None, config=None,*args,
     return dataset
 
 
-def read_as_dataloader(path, config=None, *args, **kwargs):
+def read_as_dataloader(path, config=None, transforms=None, *args, **kwargs):
     path, _ = pa_fs(path)
     import tensorflow as tf
 
@@ -364,6 +364,10 @@ def read_as_dataloader(path, config=None, *args, **kwargs):
 
             return iter(data_record[iter_start:iter_end])
 
+        def __next__(self):
+            # move iter here so we can do transforms
+            pass
+
 
     dataset = ParquetIterableDataset(
         row_group=row_group, num_shards=config.get("num_shards"), rank=config.get("rank"))
@@ -380,4 +384,4 @@ def read_parquet(format, input_path, transforms=None, config=None, *args, **kwar
                           "dataloader": (read_as_dataloader, [])}
     func, required_args = format_to_function[format]
     _check_arguments(format, kwargs, required_args)
-    return func(path= input_path, config= config or {}, *args, **kwargs)
+    return func(path= input_path, config= config or {}, transforms=transforms, *args, **kwargs)
