@@ -19,8 +19,7 @@ from prophet import Prophet
 from prophet.serialize import model_to_json, model_from_json
 
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.model.abstract import BaseModel
-from zoo.automl.model import ModelBuilder
+from zoo.automl.model.abstract import BaseModel, ModelBuilder
 
 
 class ProphetModel(BaseModel):

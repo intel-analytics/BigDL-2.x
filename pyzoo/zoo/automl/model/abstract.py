@@ -85,3 +85,10 @@ class BaseModel(ABC):
             raise ValueError("Missing optional parameters in configuration. " +
                              "Optional parameters are: " + str(self._get_optional_parameters()))
         return True
+
+
+class ModelBuilder:
+
+    @abstractmethod
+    def build(self, config):
+        pass
