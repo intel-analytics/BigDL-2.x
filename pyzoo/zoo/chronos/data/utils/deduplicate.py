@@ -14,4 +14,17 @@
 # limitations under the License.
 #
 
-from .th_detector import ThresholdDetector
+import pandas as pd
+
+
+def deduplicate_timeseries_dataframe(df,
+                                     dt_col):
+    '''
+    deduplicate and return a dataframe with no identical rows.
+    :param df: input dataframe.
+    :param dt_col: name of datetime colomn.
+    '''
+    assert dt_col in df.columns, f"dt_col {dt_col} can not be found in df."
+    assert pd.isna(df[dt_col]).sum() == 0, "There is N/A in datetime col"
+    res_df = df.drop_duplicates()
+    return res_df

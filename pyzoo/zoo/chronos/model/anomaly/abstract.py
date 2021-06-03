@@ -14,31 +14,25 @@
 # limitations under the License.
 #
 
-from abc import ABCMeta, abstractmethod
-from zoo.tfpark import KerasModel as TFParkKerasModel
-import tensorflow as tf
-from zoo.chronos.model.forecast.abstract import Forecaster
+from abc import ABC, abstractmethod
 
 
-class TFParkForecaster(TFParkKerasModel, Forecaster, metaclass=ABCMeta):
+class AnomalyDetector(ABC):
     """
-    Base class for TFPark KerasModel based Forecast models.
+    The Anomaly Detector Interface
     """
-
-    def __init__(self):
+    @abstractmethod
+    def fit(self, y):
         """
-        Build a tf.keras model.
-        Turns the tf.keras model returned from _build into a tfpark.KerasModel
+        fit the model to the input time series
+        :param y: input time series
         """
-        self.model = self._build()
-        assert (isinstance(self.model, tf.keras.Model))
-        super().__init__(self.model)
+        pass
 
     @abstractmethod
-    def _build(self):
+    def score(self):
         """
-        Build a tf.keras model.
-
-        :return: a tf.keras model (compiled)
+        calculate anomaly scores for each sample in input time series
+        :return: anomaly scores
         """
         pass
