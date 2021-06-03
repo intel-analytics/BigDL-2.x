@@ -82,18 +82,12 @@ class RayTuneSearchEngine(SearchEngine):
                         x: ndarray for training input
                         y: ndarray for training output
         :param model_builder: model creation function
-        :param search_space: a dict for search space
+        :param epochs: max epochs for training
+        :param validation_data: validation data
+        :param metric: metric name
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: number of sampling
-        :param epochs: max epochs for training
-        :param validation_data: data for validation
-               Pandas Dataframe:
-                   a Pandas dataframe for validation
-               Numpy ndarray:
-                   a tuple in form of (x, y)
-                        x: ndarray for validation input
-                        y: ndarray for validation output
-        :param search_space: search_space
+        :param search_space: a dictionary of search_space
         :param search_alg: str, all supported searcher provided by ray tune
                (i.e."variant_generator", "random", "ax", "dragonfly", "skopt",
                "hyperopt", "bayesopt", "bohb", "nevergrad", "optuna", "zoopt" and
@@ -102,7 +96,6 @@ class RayTuneSearchEngine(SearchEngine):
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
         :param mc: if calculate uncertainty
-        :param metric: metric name
         """
 
         # metric and metric's mode
