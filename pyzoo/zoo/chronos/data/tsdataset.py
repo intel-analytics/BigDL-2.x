@@ -22,6 +22,7 @@ from zoo.chronos.data.utils.feature import generate_dt_features
 from zoo.chronos.data.utils.impute import impute_timeseries_dataframe
 from zoo.chronos.data.utils.deduplicate import deduplicate_timeseries_dataframe
 from zoo.chronos.data.utils.roll import roll_timeseries_dataframe
+from zoo.chronos.data.utils.scale import unscale_timeseries_numpy
 
 _DEFAULT_ID_COL_NAME = "id"
 _DEFAULT_ID_PLACEHOLDER = "0"
@@ -44,6 +45,9 @@ class TSDataset:
         self._is_pd_datetime = pd.api.types.is_datetime64_any_dtype(self.df[self.dt_col].dtypes)
         self.numpy_x = None
         self.numpy_y = None
+        self.roll_feature = None
+        self.roll_target = None
+        self.scaler = None
 
     @staticmethod
     def from_pandas(df,
@@ -204,6 +208,9 @@ class TSDataset:
         num_id = len(self._id_list)
         num_feature_col = len(self.feature_col)
         num_target_col = len(self.target_col)
+        self.roll_feature = feature_col
+        self.roll_target = target_col
+        self.id_sensitive = id_sensitive
 
         # get rolling result for each sub dataframe
         rolling_result = [roll_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
@@ -226,7 +233,7 @@ class TSDataset:
             self.numpy_y = None
 
         # target first
-        if id_sensitive:
+        if self.id_sensitive:
             feature_start_idx = num_target_col*num_id
             reindex_list = [list(range(i*num_target_col, (i+1)*num_target_col)) +
                             list(range(feature_start_idx+i*num_feature_col,
@@ -251,6 +258,28 @@ class TSDataset:
         export the pandas dataframe
         '''
         return self.df
+
+    def scale(self, scaler, fit=True):
+        if fit:
+            self.df[self.target_col + self.feature_col] = \
+                scaler.fit_transform(self.df[self.target_col + self.feature_col])
+        else:
+            self.df[self.target_col + self.feature_col] = \
+                scaler.transform(self.df[self.target_col + self.feature_col])
+        self.scaler = scaler
+        return self
+
+    def unscale(self):
+        self.df[self.target_col + self.feature_col] = \
+            self.scaler.inverse_transform(self.df[self.target_col + self.feature_col])
+        return self
+
+    def _unscale_predict_numpy(self, pred):
+        num_roll_target = len(self.roll_target)
+        repeat_factor = len(self._id_list) if self.id_sensitive else 1
+        scaler_index = [self.target_col.index(self.roll_target[i]) 
+            for i in range(num_roll_target)] * repeat_factor
+        return unscale_timeseries_numpy(pred, self.scaler, scaler_index)
 
     def _check_basic_invariants(self):
         '''
