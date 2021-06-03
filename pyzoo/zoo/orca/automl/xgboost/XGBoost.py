@@ -170,11 +170,11 @@ class XGBoost(BaseModel):
         y_pred = self.predict(x)
         return [Evaluator.evaluate(m, y.values, y_pred.values) for m in metrics]
 
-    def save(self, model_file, config_path=None):
-        pickle.dump(self.model, open(model_file, "wb"))
+    def save(self, checkpoint):
+        pickle.dump(self.model, open(checkpoint, "wb"))
 
-    def restore(self, model_file, **config):
-        with open(model_file, 'rb') as f:
+    def restore(self, checkpoint):
+        with open(checkpoint, 'rb') as f:
             self.model = pickle.load(f)
         self.model_init = True
 

@@ -149,15 +149,15 @@ class KerasBaseModel(BaseModel):
         self.model_built = True
         # self.model.optimizer.set_weights(state["optimizer_weights"])
 
-    def save(self, checkpoint_file, config_path=None):
+    def save(self, checkpoint):
         if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling save!")
         state_dict = self.state_dict()
-        with open(checkpoint_file, "wb") as f:
+        with open(checkpoint, "wb") as f:
             pickle.dump(state_dict, f)
 
-    def restore(self, checkpoint_file, **config):
-        with open(checkpoint_file, "rb") as f:
+    def restore(self, checkpoint):
+        with open(checkpoint, "rb") as f:
             state_dict = pickle.load(f)
         self.load_state_dict(state_dict)
 

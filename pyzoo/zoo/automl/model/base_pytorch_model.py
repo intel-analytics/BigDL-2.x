@@ -274,14 +274,14 @@ class PytorchBaseModel(BaseModel):
         self.optimizer.load_state_dict(state["optimizer"])
         self._create_loss()
 
-    def save(self, checkpoint_file, config_path=None):
+    def save(self, checkpoint):
         if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling save!")
         state_dict = self.state_dict()
-        torch.save(state_dict, checkpoint_file)
+        torch.save(state_dict, checkpoint)
 
-    def restore(self, checkpoint_file):
-        state_dict = torch.load(checkpoint_file)
+    def restore(self, checkpoint):
+        state_dict = torch.load(checkpoint)
         self.load_state_dict(state_dict)
 
     def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None, multioutput="raw_values"):

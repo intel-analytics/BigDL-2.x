@@ -120,14 +120,14 @@ class ProphetModel(BaseModel):
         target_pred = self.predict(horizon=horizon)[['yhat']]
         return [Evaluator.evaluate(m, target.values, target_pred.values) for m in metrics]
 
-    def save(self, checkpoint_file):
+    def save(self, checkpoint):
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling save")
-        with open(checkpoint_file, 'w') as fout:
+        with open(checkpoint, 'w') as fout:
             json.dump(model_to_json(self.model), fout)
 
-    def restore(self, checkpoint_file):
-        with open(checkpoint_file, 'r') as fin:
+    def restore(self, checkpoint):
+        with open(checkpoint, 'r') as fin:
             self.model = model_from_json(json.load(fin))
         self.model_init = True
 
