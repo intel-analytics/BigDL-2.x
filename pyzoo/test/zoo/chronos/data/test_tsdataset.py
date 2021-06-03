@@ -218,14 +218,14 @@ class TestTSDataset(ZooTestCase):
                                            'WEEKOFYEAR(datetime)',
                                            'MINUTE(datetime)',
                                            'extra feature'}
-        
+
     def test_tsdataset_scale_unscale(self):
         df = get_ts_df()
         df_test = get_ts_df()
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
         tsdata_test = TSDataset.from_pandas(df_test, dt_col="datetime", target_col="value",
-                                       extra_feature_col=["extra feature"], id_col="id")
+                                            extra_feature_col=["extra feature"], id_col="id")
 
         from sklearn.preprocessing import StandardScaler
         scaler = StandardScaler()
@@ -249,7 +249,7 @@ class TestTSDataset(ZooTestCase):
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
         tsdata_test = TSDataset.from_pandas(df_test, dt_col="datetime", target_col="value",
-                                       extra_feature_col=["extra feature"], id_col="id")
+                                            extra_feature_col=["extra feature"], id_col="id")
 
         from sklearn.preprocessing import StandardScaler
         scaler = StandardScaler()
@@ -263,7 +263,7 @@ class TestTSDataset(ZooTestCase):
         _, _ = tsdata.to_numpy()
         _, y_test = tsdata_test.to_numpy()
 
-        pred = np.copy(y_test) # sanity check
+        pred = np.copy(y_test)  # sanity check
 
         unscaled_pred = tsdata._unscale_predict_numpy(pred)
         tsdata_test.unscale()\

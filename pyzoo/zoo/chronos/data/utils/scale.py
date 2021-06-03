@@ -35,5 +35,6 @@ UNSCALE_HELPER_MAP = {StandardScaler: _standard_scaler_unscale_timeseries_numpy,
                       MinMaxScaler: None,
                       RobustScaler: None}
 
+
 def unscale_timeseries_numpy(data, scaler, scaler_index):
     return UNSCALE_HELPER_MAP[type(scaler)](data, scaler, scaler_index)
