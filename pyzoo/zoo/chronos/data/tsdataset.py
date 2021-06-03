@@ -48,6 +48,7 @@ class TSDataset:
         self.roll_feature = None
         self.roll_target = None
         self.scaler = None
+        self.id_sensitive = None
 
     @staticmethod
     def from_pandas(df,
