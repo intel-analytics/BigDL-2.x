@@ -25,6 +25,7 @@ from zoo.orca.data.image.utils import DType, FeatureType, SchemaField
 import tensorflow as tf
 import torch.optim as optim
 import torch.nn as nn
+import torch
 
 from zoo.ray import RayContext
 
@@ -75,8 +76,7 @@ def model_creator(config):
 
 class TestReadParquet(TestCase):
     def test_read_parquet_images_tf_dataset(self):
-        # temp_dir = tempfile.mkdtemp()
-        temp_dir = "/home/arda/Project/analytics-zoo/pyzoo/test/zoo/orca/data/parquet"
+        temp_dir = tempfile.mkdtemp()
 
         try:
             ParquetDataset.write("file://" + temp_dir, images_generator(), images_schema,block_size=4)
@@ -96,8 +96,8 @@ class TestReadParquet(TestCase):
 
 
         finally:
-            # shutil.rmtree(temp_dir)
-            pass
+            shutil.rmtree(temp_dir)
+        
 
     def test_parquet_images_training(self):
         from zoo.orca.learn.tf2 import Estimator
@@ -128,10 +128,12 @@ class TestReadParquet(TestCase):
     def test_parquet_torch_training(self):
         from zoo.orca.learn.pytorch import Estimator
         from zoo.orca.learn.metrics import Accuracy
-        from zoo.orca.data.utils import decode_imagebytes2ndarray
+        from zoo.orca.data.image.utils import decode_imagebytes2PIL
+        from torchvision import transforms
         temp_dir = tempfile.mkdtemp()
         try:
-            ParquetDataset.write("file://" + temp_dir, images_generator(), images_schema)
+            ParquetDataset.write("file://" + temp_dir, images_generator(),
+                                  images_schema, block_size=4)
             path = "file://" + temp_dir
             
 
@@ -145,25 +147,54 @@ class TestReadParquet(TestCase):
                     )
 
                 def forward(self,x):
-                    x = nn.Flatten(x)
+                    print(x.shape)
+                    x = torch.flatten(x,start_dim=1)
                     x = self.model(x)
                     return x
 
             class DecodeImage(object):
-                def __call__(self,imagebytes):
-                    image=decode_imagebytes2ndarray(elem['image'][0])
-                    return image
+                def __init__(self):
+                    self.resize_func=transforms.Resize((WIDTH, HEIGHT))
+                    self.toTensor=transforms.ToTensor()
 
+                def __call__(self,records):
+                    image=decode_imagebytes2PIL(records['image'])
+                    image=self.resize_func(image)
+                    image=self.toTensor(image)
+                    return image, records['label']
 
-            trainer = Estimator.from_torch(model=Net(),
-                                           optimizer=optim.Adam(model.parameters(),lr=0.0001),
-                                           loss=nn.CrossEntropyLoss(reduction='none'),
+            def model_creator(config):
+                model=Net()
+                return model
+
+            def optim_creator(model,config):
+                optimizer=optim.Adam(model.parameters(),lr=0.0001)
+                return optimizer
+
+            def train_data_creator(config,batch_size):
+                train_dataloader=read_parquet("dataloader", path,
+                                            transforms=DecodeImage(),
+                                            config=config,
+                                            batch_size=batch_size
+                                            )
+                return train_dataloader
+
+            ray_ctx = RayContext.get()
+
+            trainer = Estimator.from_torch(model=model_creator,
+                                           optimizer=optim_creator,
+                                           loss=nn.CrossEntropyLoss(),
                                            metrics=[Accuracy()],
-                                           backend="torch_distributed"
+                                           backend="torch_distributed",
+                                           config={"num_shards":2, "rank":0, "num_workers":0}
                                            )
+            
+            trainer.fit(data=train_data_creator,epochs=1,batch_size=2)
 
+            
+        finally:
+            shutil.rmtree(temp_dir)
 
-        pass
 
 
 if __name__ == "__main__":

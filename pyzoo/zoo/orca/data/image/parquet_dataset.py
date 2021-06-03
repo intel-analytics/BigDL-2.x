@@ -300,7 +300,7 @@ def read_as_tfdataset(path, output_types, output_shapes=None, config=None,*args,
     return dataset
 
 
-def read_as_dataloader(path, config=None, transforms=None, *args, **kwargs):
+def read_as_dataloader(path, config=None, transforms=None,batch_size=1, *args, **kwargs):
     path, _ = pa_fs(path)
     import tensorflow as tf
 
@@ -317,7 +317,8 @@ def read_as_dataloader(path, config=None, transforms=None, *args, **kwargs):
                 row_group.append(chunk_path)
 
     class ParquetIterableDataset(torch.utils.data.IterableDataset):
-        def __init__(self, row_group, num_shards=None, rank=None):
+        def __init__(self, row_group, num_shards=None, 
+                     rank=None, transforms=None):
             super(ParquetDataset).__init__()
             self.row_group = row_group
 
@@ -328,6 +329,8 @@ def read_as_dataloader(path, config=None, transforms=None, *args, **kwargs):
             self.rank = rank
             self.datapiece=None
             self.cur=0
+
+            self.transforms=transforms
 
         def __iter__(self):
             filter_row_group_indexed = []
@@ -373,18 +376,22 @@ def read_as_dataloader(path, config=None, transforms=None, *args, **kwargs):
             if self.cur < len(self.datapiece):
                 elem = self.datapiece[self.cur]
                 self.cur+=1
-                return elem
+                if self.transforms:
+                    return self.transforms(elem)
+                else:
+                    return elem
             else:
                 raise StopIteration
 
 
     dataset = ParquetIterableDataset(
-        row_group=row_group, num_shards=config.get("num_shards"), rank=config.get("rank"))
+        row_group=row_group, num_shards=config.get("num_shards"),
+        rank=config.get("rank"),transforms=transforms)
 
-    return torch.utils.data.DataLoader(dataset, num_workers=config.get("num_workers",0))
+    return torch.utils.data.DataLoader(dataset, num_workers=config.get("num_workers",0),batch_size=batch_size)
         
 
-def read_parquet(format, input_path, transforms=None, config=None, *args, **kwargs):
+def read_parquet(format, input_path, transforms=None, config=None,batch_size=1, *args, **kwargs):
     supported_format = {"tf_dataset", "dataloader"}
     if format not in supported_format:
         raise ValueError(format + " is not supported, should be 'tf_dataset' or 'dataloader'.")
@@ -393,4 +400,4 @@ def read_parquet(format, input_path, transforms=None, config=None, *args, **kwar
                           "dataloader": (read_as_dataloader, [])}
     func, required_args = format_to_function[format]
     _check_arguments(format, kwargs, required_args)
-    return func(path= input_path, config= config or {}, transforms=transforms, *args, **kwargs)
+    return func(path= input_path, config= config or {}, transforms=transforms,batch_size=batch_size, *args, **kwargs)
