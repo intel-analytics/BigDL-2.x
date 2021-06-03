@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from zoo.automl.model import ModelBuilder
 from zoo.automl.model.abstract import BaseModel
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
@@ -166,3 +167,19 @@ class KerasBaseModel(BaseModel):
 
     def _get_optional_parameters(self):
         return {"batch_size"}
+
+
+class KerasModelBuilder(ModelBuilder):
+
+    def __init__(self, model_creator):
+        self.model_creator = model_creator
+
+    def build(self, config):
+        model = KerasBaseModel(self.model_creator)
+        model.build(config)
+        return model
+
+    def build_from_ckpt(self, checkpoint_filename):
+        model = KerasBaseModel(self.model_creator)
+        model.restore(checkpoint_filename)
+        return model

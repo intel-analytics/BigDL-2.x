@@ -24,21 +24,3 @@ class ModelBuilder:
         pass
 
 
-class KerasModelBuilder(ModelBuilder):
-
-    def __init__(self, model_creator):
-        self.model_creator = model_creator
-
-    def build(self, config):
-        from zoo.automl.model.base_keras_model import KerasBaseModel
-        model = KerasBaseModel(self.model_creator)
-        model.build(config)
-        return model
-
-    def build_from_ckpt(self, checkpoint_filename):
-        from zoo.automl.model.base_keras_model import KerasBaseModel
-        model = KerasBaseModel(self.model_creator)
-        model.restore(checkpoint_filename)
-        return model
-
-

@@ -105,7 +105,7 @@ class AutoEstimator:
 
         :return: an AutoEstimator object.
         """
-        from zoo.automl.model import KerasModelBuilder
+        from zoo.automl.model.base_keras_model import KerasModelBuilder
         model_builder = KerasModelBuilder(model_creator=model_creator)
         return AutoEstimator(model_builder=model_builder,
                              logs_dir=logs_dir,
