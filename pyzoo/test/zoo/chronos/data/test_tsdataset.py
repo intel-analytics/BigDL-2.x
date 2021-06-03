@@ -265,9 +265,11 @@ class TestTSDataset(ZooTestCase):
 
         pred = np.copy(y_test)  # sanity check
 
-        unscaled_pred = tsdata._unscale_predict_numpy(pred)
+        unscaled_pred = tsdata._unscale_numpy(pred)
+        unscaled_y_test = tsdata._unscale_numpy(y_test)
         tsdata_test.unscale()\
                    .roll(lookback=5, horizon=4, id_sensitive=True)
-        _, y_test_unscaled = tsdata_test.to_numpy()
+        _, unscaled_y_test_reproduce = tsdata_test.to_numpy()
 
-        assert_array_almost_equal(unscaled_pred, y_test_unscaled)
+        assert_array_almost_equal(unscaled_pred, unscaled_y_test_reproduce)
+        assert_array_almost_equal(unscaled_y_test, unscaled_y_test_reproduce)

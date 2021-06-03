@@ -286,17 +286,17 @@ class TSDataset:
             self.scaler.inverse_transform(self.df[self.target_col + self.feature_col])
         return self
 
-    def _unscale_predict_numpy(self, pred):
+    def _unscale_numpy(self, data):
         '''
-        unscale the time series forecasting's numpy prediction result.
-        :param pred: a numpy ndarray with 3 dim whose shape should be exactly the
+        unscale the time series forecastor's numpy prediction result/ground truth.
+        :param data: a numpy ndarray with 3 dim whose shape should be exactly the
                same with self.numpy_y.
         '''
         num_roll_target = len(self.roll_target)
         repeat_factor = len(self._id_list) if self.id_sensitive else 1
         scaler_index = [self.target_col.index(self.roll_target[i])
                         for i in range(num_roll_target)] * repeat_factor
-        return unscale_timeseries_numpy(pred, self.scaler, scaler_index)
+        return unscale_timeseries_numpy(data, self.scaler, scaler_index)
 
     def _check_basic_invariants(self):
         '''
