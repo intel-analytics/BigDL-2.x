@@ -63,7 +63,7 @@ class RayTuneSearchEngine(SearchEngine):
                 model_builder,
                 epochs=1,
                 validation_data=None,
-                metric="mse",
+                metric=None,
                 metric_mode=None,
                 metric_threshold=None,
                 n_sampling=1,
