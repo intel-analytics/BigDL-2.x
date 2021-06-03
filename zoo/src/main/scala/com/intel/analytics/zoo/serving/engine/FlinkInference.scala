@@ -37,9 +37,12 @@ class FlinkInference(helper: ClusterServingHelper)
 
   var logger: Logger = null
   var inference: ClusterServingInference = null
+  var timer: Timer = null
+  var cnt = 0
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
+    timer = new Timer()
 //    val t = Tensor[Float](1, 2, 3).rand()
 //    val x = T.array(Array(t))
 //    println(s"start directly deser --->")
@@ -70,18 +73,28 @@ class FlinkInference(helper: ClusterServingHelper)
   }
 
   override def map(in: List[(String, String, String)]): List[(String, String)] = {
+    if (cnt > 1000){
+      timer = new Timer()
+      cnt = 0
+    }
+    cnt += 1
+
     val t1 = System.nanoTime()
     val postProcessed = {
       if (helper.modelType == "openvino") {
         inference.multiThreadPipeline(in)
       } else {
-        inference.singleThreadPipeline(in)
+        timer.timing("backend", 1){
+          inference.singleThreadPipeline(in)
+        }
       }
     }
 
     val t2 = System.nanoTime()
     logger.info(s"${in.size} records backend time ${(t2 - t1) / 1e9} s. " +
       s"Throughput ${in.size / ((t2 - t1) / 1e9)}")
+
+    timer.print()
     postProcessed
   }
 }

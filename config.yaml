@@ -1,0 +1,25 @@
+## Analytics-zoo Cluster Serving Config
+#
+#
+## model path must be provided
+##modelPath: /home/litchy/models/tf_auto
+##modelPath: /home/litchy/models/openvino_res50
+modelPath: /home/lyubing/models/dien
+## name, default is serving_stream, you need to specify if running multiple servings
+## jobName:
+#
+## default, None
+## postProcessing:
+#
+## default, false, if input is already batched NdArray, set truei
+inputAlreadyBatched: true
+#
+######### Performance Configuration
+## default, number of cores per machine
+## if you set coreNumberPerMachine, Cluster Serving will auto config modelParallelism and threadPerModel
+## if you need to set modelParallelism and threadPerModel manually, do not set coreNumberPerMachine
+## coreNumberPerMachine:
+#
+## default: number of models used in serving
+modelParallelism: 2
+#

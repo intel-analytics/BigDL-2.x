@@ -32,6 +32,8 @@ class ClusterServingInference() {
   val logger = Logger.getLogger(getClass)
   val helper = ClusterServing.helper
   val preProcessing = new PreProcessing()
+  var timer = new Timer()
+  var cnt = 0
 
   def singleThreadPipeline(in: List[(String, String, String)]): List[(String, String)] = {
     singleThreadInference(preProcess(in))
@@ -61,22 +63,30 @@ class ClusterServingInference() {
     preProcessed.filter(x => x._2 != null)
   }
   def singleThreadInference(in: List[(String, Activity)]): List[(String, String)] = {
+    if (cnt > 1000){
+      timer = new Timer()
+      cnt = 0
+    }
+    cnt += 1
 
     val postProcessed = in.map(pathByte => {
-      try {
-        val t = typeCheck(pathByte._2)
-        val result = ClusterServing.model.doPredict(t)
-        dimCheck(result, "remove", helper.modelType)
-        val resultIndex = if (helper.inputAlreadyBatched) -1 else 1
-        val value = PostProcessing(result.toTensor[Float], helper.postProcessing, resultIndex)
-        (pathByte._1, value)
-      } catch {
-        case e: Exception =>
-          logger.error(s"${e.printStackTrace()}, " +
-            s"Your input ${pathByte._1} format is invalid to your model, this record is skipped")
-          (pathByte._1, "NaN")
+      timer.timing("predict", 1){
+        try {
+          val t = typeCheck(pathByte._2)
+          val result = ClusterServing.model.doPredict(t)
+          dimCheck(result, "remove", helper.modelType)
+          val resultIndex = if (helper.inputAlreadyBatched) -1 else 1
+          val value = PostProcessing(result.toTensor[Float], helper.postProcessing, resultIndex)
+          (pathByte._1, value)
+        } catch {
+          case e: Exception =>
+            logger.error(s"${e.printStackTrace()}, " +
+              s"Your input ${pathByte._1} format is invalid to your model, this record is skipped")
+            (pathByte._1, "NaN")
+        }
       }
     })
+    timer.print()
     postProcessed
   }
 
