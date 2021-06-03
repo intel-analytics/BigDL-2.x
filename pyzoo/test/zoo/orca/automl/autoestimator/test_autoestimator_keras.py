@@ -77,6 +77,8 @@ class TestTFKerasAutoEstimator(TestCase):
                      metric="mse")
         best_model = auto_est.get_best_model()
         assert "hidden_size" in best_model.config
+        best_config = auto_est.get_best_config()
+        assert all(k in best_config.keys() for k in create_linear_search_space().keys())
 
     def test_fit_multiple_times(self):
         auto_est = AutoEstimator.from_keras(model_creator=model_creator,

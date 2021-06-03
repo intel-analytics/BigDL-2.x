@@ -607,6 +607,11 @@
             <artifactId>commons-compiler</artifactId>
             <version>3.0.9</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.kstyrc</groupId>
+            <artifactId>embedded-redis</artifactId>
+            <version>0.6</version>
+        </dependency>
     </dependencies>
 
     <build>
