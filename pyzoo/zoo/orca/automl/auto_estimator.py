@@ -117,6 +117,7 @@ class AutoEstimator:
             epochs=1,
             validation_data=None,
             metric=None,
+            metric_mode=None,
             metric_threshold=None,
             n_sampling=1,
             search_space=None,
@@ -141,6 +142,9 @@ class AutoEstimator:
             optimized to the metric_threshold or it has been trained for {epochs} epochs.
         :param validation_data: Validation data. Validation data type should be the same as data.
         :param metric: String. The evaluation metric name to optimize, e.g. "mse"
+        :param metric_mode: One of ["min", "max"]. "max" means greater metric value is better.
+            You don't have to specify metric_mode if you use the built-in metric in
+            zoo.automl.common.metrics.Evaluator.
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: Number of times to sample from the search_space. Defaults to 1.
             If hp.grid_search is in search_space, the grid will be repeated n_sampling of times.
@@ -161,12 +165,13 @@ class AutoEstimator:
                 "This AutoEstimator has already been fitted and cannot fit again.")
         self.searcher.compile(data=data,
                               model_builder=self.model_builder,
+                              epochs=epochs,
                               validation_data=validation_data,
-                              search_space=search_space,
+                              metric=metric,
+                              metric_mode=metric_mode,
                               metric_threshold=metric_threshold,
                               n_sampling=n_sampling,
-                              epochs=epochs,
-                              metric=metric,
+                              search_space=search_space,
                               search_alg=search_alg,
                               search_alg_params=search_alg_params,
                               scheduler=scheduler,
@@ -180,7 +185,7 @@ class AutoEstimator:
 
         :return: the best model instance
         """
-        best_trial = self.searcher.get_best_trials(k=1)[0]
+        best_trial = self.searcher.get_best_trial()
         best_model_path = best_trial.model_path
         best_model = self.model_builder.build_from_ckpt(best_model_path)
         return best_model
@@ -191,6 +196,6 @@ class AutoEstimator:
 
         :return: A dictionary of best hyper parameters
         """
-        best_trial = self.searcher.get_best_trials(k=1)[0]
+        best_trial = self.searcher.get_best_trial()
         best_config = best_trial.config
         return best_config

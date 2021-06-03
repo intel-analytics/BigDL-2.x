@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import pytest
 
 from zoo.orca.automl.xgboost import AutoXGBRegressor
 
@@ -67,3 +68,24 @@ class TestAutoXGBRegressor(TestCase):
         assert 2 <= best_model.model.max_depth <= 5
         best_config = auto_xgb_reg.get_best_config()
         assert all(k in best_config.keys() for k in create_XGB_recipe().keys())
+
+    def test_metric(self):
+        auto_xgb_reg = AutoXGBRegressor(cpus_per_trial=2,
+                                        name="auto_xgb_regressor",
+                                        tree_method='hist')
+        data, validation_data = get_data()
+        with pytest.raises(ValueError) as exeinfo:
+            auto_xgb_reg.fit(data=data,
+                             epochs=1,
+                             validation_data=validation_data,
+                             metric="logloss",
+                             search_space=create_XGB_recipe(),
+                             n_sampling=4)
+        assert "metric_mode" in str(exeinfo)
+        auto_xgb_reg.fit(data=data,
+                         epochs=1,
+                         validation_data=validation_data,
+                         metric="logloss",
+                         metric_mode="min",
+                         search_space=create_XGB_recipe(),
+                         n_sampling=4)

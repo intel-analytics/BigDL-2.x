@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import warnings
 
 import ray
 from ray import tune
@@ -21,7 +22,7 @@ from copy import deepcopy
 from zoo.automl.search.base import *
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME
+from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME, DEFAULT_METRIC_NAME
 from ray.tune import Trainable, Stopper
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model.abstract import ModelBuilder
@@ -61,7 +62,8 @@ class RayTuneSearchEngine(SearchEngine):
                 model_builder,
                 epochs=1,
                 validation_data=None,
-                metric="mse",
+                metric=None,
+                metric_mode=None,
                 metric_threshold=None,
                 n_sampling=1,
                 search_space=None,
@@ -80,18 +82,14 @@ class RayTuneSearchEngine(SearchEngine):
                         x: ndarray for training input
                         y: ndarray for training output
         :param model_builder: model creation function
-        :param search_space: a dict for search space
+        :param epochs: max epochs for training
+        :param validation_data: validation data
+        :param metric: metric name
+        :param metric_mode: mode for metric. "min" or "max". We would infer metric_mode automated
+            if user used our built-in metric in zoo.automl.common.metric.Evaluator.
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: number of sampling
-        :param epochs: max epochs for training
-        :param validation_data: data for validation
-               Pandas Dataframe:
-                   a Pandas dataframe for validation
-               Numpy ndarray:
-                   a tuple in form of (x, y)
-                        x: ndarray for validation input
-                        y: ndarray for validation output
-        :param search_space: search_space
+        :param search_space: a dictionary of search_space
         :param search_alg: str, all supported searcher provided by ray tune
                (i.e."variant_generator", "random", "ax", "dragonfly", "skopt",
                "hyperopt", "bayesopt", "bohb", "nevergrad", "optuna", "zoopt" and
@@ -100,18 +98,18 @@ class RayTuneSearchEngine(SearchEngine):
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
         :param mc: if calculate uncertainty
-        :param metric: metric name
         """
 
         # metric and metric's mode
+        if metric_mode and not metric:
+            metric = DEFAULT_METRIC_NAME
         self.metric = metric
-        self.mode = Evaluator.get_metric_mode(metric)
-        self.num_samples = n_sampling
+        self.mode = RayTuneSearchEngine._validate_metric_mode(metric, metric_mode)
         self.stopper = TrialStopper(metric_threshold=metric_threshold,
                                     epochs=epochs,
                                     metric=self.metric,
                                     mode=self.mode)
-
+        self.num_samples = n_sampling
         self.search_space = search_space
 
         self._search_alg = RayTuneSearchEngine._set_search_alg(search_alg, search_alg_params,
@@ -122,10 +120,23 @@ class RayTuneSearchEngine(SearchEngine):
         self.train_func = self._prepare_train_func(data=data,
                                                    model_builder=model_builder,
                                                    validation_data=validation_data,
-                                                   metric=metric,
+                                                   metric=self.metric,
+                                                   mode=self.mode,
                                                    mc=mc,
                                                    remote_dir=self.remote_dir
                                                    )
+
+    @staticmethod
+    def _validate_metric_mode(metric, mode):
+        if not mode:
+            try:
+                mode = Evaluator.get_metric_mode(metric)
+            except ValueError:
+                raise ValueError(f"We cannot infer metric mode with metric name of {metric}."
+                                 f"Please specify the `metric_mode` parameter.")
+        if mode not in ["min", "max"]:
+            raise ValueError("`mode` has to be one of ['min', 'max']")
+        return mode
 
     @staticmethod
     def _set_search_alg(search_alg, search_alg_params, metric, mode):
@@ -133,13 +144,12 @@ class RayTuneSearchEngine(SearchEngine):
             if not isinstance(search_alg, str):
                 raise ValueError(f"search_alg should be of type str."
                                  f" Got {search_alg.__class__.__name__}")
-            if search_alg_params is None:
-                search_alg_params = dict()
-            search_alg_params.update(dict(
-                metric=metric,
-                mode=mode,
-            ))
-            search_alg = tune.create_searcher(search_alg, **search_alg_params)
+            params = search_alg_params.copy() if search_alg_params else dict()
+            if metric and "metric" not in params:
+                params["metric"] = metric
+            if mode and "mode" not in params:
+                params["mode"] = mode
+            search_alg = tune.create_searcher(search_alg, **params)
         return search_alg
 
     @staticmethod
@@ -148,14 +158,14 @@ class RayTuneSearchEngine(SearchEngine):
             if not isinstance(scheduler, str):
                 raise ValueError(f"Scheduler should be of type str. "
                                  f"Got {scheduler.__class__.__name__}")
-            if scheduler_params is None:
-                scheduler_params = dict()
-            scheduler_params.update(dict(
-                time_attr="training_iteration",
-                metric=metric,
-                mode=mode,
-            ))
-            scheduler = tune.create_scheduler(scheduler, **scheduler_params)
+            params = scheduler_params.copy() if scheduler_params else dict()
+            if metric and "metric" not in params:
+                params["metric"] = metric
+            if mode and "mode" not in params:
+                params["mode"] = mode
+            if "time_attr" not in params:
+                params["time_attr"] = "training_iteration"
+            scheduler = tune.create_scheduler(scheduler, **params)
         return scheduler
 
     def run(self):
@@ -191,6 +201,9 @@ class RayTuneSearchEngine(SearchEngine):
         self.logger.close()
 
         return analysis
+
+    def get_best_trial(self):
+        return self.get_best_trials(k=1)[0]
 
     def get_best_trials(self, k=1):
         """
@@ -255,8 +268,9 @@ class RayTuneSearchEngine(SearchEngine):
     @staticmethod
     def _prepare_train_func(data,
                             model_builder,
-                            metric,
                             validation_data=None,
+                            metric=None,
+                            mode=None,
                             mc=False,
                             remote_dir=None,
                             ):
@@ -264,7 +278,8 @@ class RayTuneSearchEngine(SearchEngine):
         Prepare the train function for ray tune
         :param data: input data
         :param model_builder: model create function
-        :param metric: the rewarding metric
+        :param metric: the rewarding metric name
+        :param mode: metric mode
         :param validation_data: validation data
         :param mc: if calculate uncertainty
         :param remote_dir: checkpoint will be uploaded to remote_dir in hdfs
@@ -296,11 +311,12 @@ class RayTuneSearchEngine(SearchEngine):
                 checkpoint_filename = "best.ckpt"
 
                 # Save best reward iteration
-                mode = Evaluator.get_metric_mode(metric)
                 if mode == "max":
                     has_best_reward = best_reward is None or reward > best_reward
-                else:
+                elif mode == "min":
                     has_best_reward = best_reward is None or reward < best_reward
+                else:
+                    has_best_reward = True
 
                 if has_best_reward:
                     best_reward = reward

@@ -354,11 +354,14 @@ class Evaluator(object):
 
     @staticmethod
     def check_metric(metric):
+        if not metric:
+            raise ValueError(f"Got invalid metric name of {metric}!")
         if metric not in Evaluator.metrics_func.keys():
             raise ValueError("metric " + metric + " is not supported")
 
     @staticmethod
     def get_metric_mode(metric):
+        Evaluator.check_metric(metric)
         if metric in Evaluator.max_mode_metrics:
             return "max"
         else:
