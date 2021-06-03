@@ -36,12 +36,12 @@ WIDTH, HEIGHT, NUM_CHANNELS = 224, 224, 3
 def images_generator():
     dataset_path = os.path.join(resource_path, "cat_dog")
     for root, dirs, files in os.walk(os.path.join(dataset_path, "cats")):
-        for name in files:
+        for name in files+files:
             image_path = os.path.join(root, name)
             yield {"image": image_path, "label": 1, "id": image_path}
 
     for root, dirs, files in os.walk(os.path.join(dataset_path, "dogs")):
-        for name in files:
+        for name in files+files:
             image_path = os.path.join(root, name)
             yield {"image": image_path, "label": 0, "id": image_path}
 
@@ -179,8 +179,6 @@ class TestReadParquet(TestCase):
                                             )
                 return train_dataloader
 
-            ray_ctx = RayContext.get()
-
             trainer = Estimator.from_torch(model=model_creator,
                                            optimizer=optim_creator,
                                            loss=nn.CrossEntropyLoss(),
@@ -190,8 +188,6 @@ class TestReadParquet(TestCase):
                                            )
             
             trainer.fit(data=train_data_creator,epochs=1,batch_size=2)
-
-            
         finally:
             shutil.rmtree(temp_dir)
 
