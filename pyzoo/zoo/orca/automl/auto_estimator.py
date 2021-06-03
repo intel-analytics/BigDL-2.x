@@ -117,6 +117,7 @@ class AutoEstimator:
             epochs=1,
             validation_data=None,
             metric=None,
+            metric_mode=None,
             metric_threshold=None,
             n_sampling=1,
             search_space=None,
@@ -141,6 +142,9 @@ class AutoEstimator:
             optimized to the metric_threshold or it has been trained for {epochs} epochs.
         :param validation_data: Validation data. Validation data type should be the same as data.
         :param metric: String. The evaluation metric name to optimize, e.g. "mse"
+        :param metric_mode: One of ["min", "max"]. "max" means greater metric value is better.
+            You don't have to specify metric_mode if you use the built-in metric in
+            zoo.automl.common.metrics.Evaluator.
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: Number of times to sample from the search_space. Defaults to 1.
             If hp.grid_search is in search_space, the grid will be repeated n_sampling of times.
@@ -164,6 +168,7 @@ class AutoEstimator:
                               epochs=epochs,
                               validation_data=validation_data,
                               metric=metric,
+                              metric_mode=metric_mode,
                               metric_threshold=metric_threshold,
                               n_sampling=n_sampling,
                               search_space=search_space,
