@@ -77,7 +77,7 @@ class AutoEstimator:
 
         :return: an AutoEstimator object.
         """
-        from zoo.automl.model import PytorchModelBuilder
+        from zoo.automl.model.base_pytorch_model import PytorchModelBuilder
         model_builder = PytorchModelBuilder(model_creator=model_creator,
                                             optimizer_creator=optimizer,
                                             loss_creator=loss)
