@@ -64,6 +64,7 @@ class RayTuneSearchEngine(SearchEngine):
                 epochs=1,
                 validation_data=None,
                 metric="mse",
+                metric_mode=None,
                 metric_threshold=None,
                 n_sampling=1,
                 search_space=None,
@@ -85,6 +86,8 @@ class RayTuneSearchEngine(SearchEngine):
         :param epochs: max epochs for training
         :param validation_data: validation data
         :param metric: metric name
+        :param metric_mode: mode for metric. "min" or "max". We would infer metric_mode automated
+            if user used our built-in metric in zoo.automl.common.metric.Evaluator.
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: number of sampling
         :param search_space: a dictionary of search_space
@@ -100,13 +103,7 @@ class RayTuneSearchEngine(SearchEngine):
 
         # metric and metric's mode
         self.metric = metric
-        try:
-            self.mode = Evaluator.get_metric_mode(metric)
-        except ValueError:
-            self.mode = None
-        if metric_threshold and not self.mode:
-            warnings.warn("metric_threshold will not take effect on early stop since we failed to "
-                          "infer metric mode with metric name of {metric}")
+        self.mode = RayTuneSearchEngine._validate_metric_mode(metric, metric_mode)
         self.stopper = TrialStopper(metric_threshold=metric_threshold,
                                     epochs=epochs,
                                     metric=self.metric,
@@ -127,6 +124,18 @@ class RayTuneSearchEngine(SearchEngine):
                                                    mc=mc,
                                                    remote_dir=self.remote_dir
                                                    )
+
+    @staticmethod
+    def _validate_metric_mode(metric, mode):
+        if not mode:
+            try:
+                mode = Evaluator.get_metric_mode(metric)
+            except ValueError:
+                raise ValueError(f"We cannot infer metric mode with metric name of {metric}."
+                                 f"Please specify the `metric_mode` parameter.")
+        if mode not in ["min", "max"]:
+            raise ValueError("`mode` has to be one of ['min', 'max']")
+        return mode
 
     @staticmethod
     def _set_search_alg(search_alg, search_alg_params, metric, mode):
