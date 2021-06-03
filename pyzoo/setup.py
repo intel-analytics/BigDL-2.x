@@ -23,8 +23,9 @@ import fnmatch
 from setuptools import setup
 
 long_description = '''
-Analytics Zoo is an open source _**Big Data AI**_ platform, and includes the following
- features for scaling end-to-end AI to distributed Big Data:
+[**Analytics Zoo**](https://github.com/intel-analytics/analytics-zoo/)
+is an open source _**Big Data AI**_ platform, and includes the following
+features for scaling end-to-end AI to distributed Big Data:
 
 - [Orca](https://github.com/intel-analytics/analytics-zoo#getting-started-with-orca):
 seamlessly scale out TensorFlow and PyTorch for Big Data (using Spark & Ray)
