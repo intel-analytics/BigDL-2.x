@@ -180,7 +180,7 @@ class AutoEstimator:
 
         :return: the best model instance
         """
-        best_trial = self.searcher.get_best_trials(k=1)[0]
+        best_trial = self.searcher.get_best_trial()
         best_model_path = best_trial.model_path
         best_model = self.model_builder.build_from_ckpt(best_model_path)
         return best_model
@@ -191,6 +191,6 @@ class AutoEstimator:
 
         :return: A dictionary of best hyper parameters
         """
-        best_trial = self.searcher.get_best_trials(k=1)[0]
+        best_trial = self.searcher.get_best_trial()
         best_config = best_trial.config
         return best_config

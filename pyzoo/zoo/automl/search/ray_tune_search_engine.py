@@ -199,6 +199,9 @@ class RayTuneSearchEngine(SearchEngine):
 
         return analysis
 
+    def get_best_trial(self):
+        return self.get_best_trials(k=1)[0]
+
     def get_best_trials(self, k=1):
         """
         get a list of best k trials
