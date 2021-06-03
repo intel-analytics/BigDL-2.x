@@ -44,7 +44,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.ImmutableList
 import com.intel.analytics.zoo.serving.http.FrontEndApp.{
   metrics, overallRequestTimer, purePredictTimersMap,
-  system, timeout, timing, waitRedisTimer, makeActivityTimer, handleResponseTimer, conCurrentNum
+  system, timeout, timing, waitRedisTimer, makeActivityTimer, handleResponseTimer
 }
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel

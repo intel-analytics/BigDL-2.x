@@ -45,7 +45,7 @@ object MockMultipleServingHttpClient extends App with Supportive {
     val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
     val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
     val features = Array("floatTensor")
-    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "Caffe", weightPath, features)
+    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "Caffe", weightPath, 1, features)
 
     val inferenceServable = new InferenceModelServable(inferenceModelMetaData)
     inferenceServable.load()
@@ -69,7 +69,7 @@ object MockMultipleServingHttpClient extends App with Supportive {
     val resource = getClass().getClassLoader().getResource("models")
     //loads
     val modelPath = resource.getPath + "/bigdl/bigdl_lenet.model"
-    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "BigDL", null, null)
+    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "BigDL", null, 1, null)
 
     val inferenceServable = new InferenceModelServable(inferenceModelMetaData)
     inferenceServable.load()
@@ -80,7 +80,7 @@ object MockMultipleServingHttpClient extends App with Supportive {
     //loads
     val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
     val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
-    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "BigDL", weightPath, null)
+    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "BigDL", weightPath, 1, null)
 
     val inferenceServable = new InferenceModelServable(inferenceModelMetaData)
     inferenceServable.load()
