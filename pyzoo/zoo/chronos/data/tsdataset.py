@@ -260,6 +260,14 @@ class TSDataset:
         return self.df
 
     def scale(self, scaler, fit=True):
+        '''
+        scale the time series dataset's feature column and target column.
+        :param scaler: sklearn scaler instance, StandardScaler, MaxAbsScaler,
+               MinMaxScaler and RobustScaler are supported.
+        :param fit: if we need to fit the scaler. Typically, the value should
+               be set to True for training set, while False for validation and
+               test set. The value is defaulted to True.
+        '''
         if fit:
             self.df[self.target_col + self.feature_col] = \
                 scaler.fit_transform(self.df[self.target_col + self.feature_col])
@@ -270,11 +278,19 @@ class TSDataset:
         return self
 
     def unscale(self):
+        '''
+        unscale the time series dataset's feature column and target column.
+        '''
         self.df[self.target_col + self.feature_col] = \
             self.scaler.inverse_transform(self.df[self.target_col + self.feature_col])
         return self
 
     def _unscale_predict_numpy(self, pred):
+        '''
+        unscale the time series forecasting's numpy prediction result.
+        :param pred: a numpy ndarray with 3 dim whose shape should be exactly the 
+               same with self.numpy_y.
+        '''
         num_roll_target = len(self.roll_target)
         repeat_factor = len(self._id_list) if self.id_sensitive else 1
         scaler_index = [self.target_col.index(self.roll_target[i]) 
@@ -328,7 +344,6 @@ def _check_col_within(df, col_name):
 
 
 def _check_col_no_na(df, col_name):
-    assert col_name in df.columns,\
-        f"{col_name} is expected in dataframe while not found"
+    _check_col_within(df, col_name)
     assert df[col_name].isna().sum() == 0,\
         f"{col_name} column should not have N/A."
