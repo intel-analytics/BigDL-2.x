@@ -326,6 +326,8 @@ def read_as_dataloader(path, config=None, transforms=None, *args, **kwargs):
 
             self.num_shards = num_shards
             self.rank = rank
+            self.datapiece=None
+            self.cur=0
 
         def __iter__(self):
             filter_row_group_indexed = []
@@ -361,12 +363,19 @@ def read_as_dataloader(path, config=None, transforms=None, *args, **kwargs):
                 worker_id = worker_info.id
                 iter_start = 0 + worker_id * per_worker
                 iter_end = min(iter_start + per_worker, rows_end)
+            
+            self.datapiece=data_record[iter_start:iter_end]
 
-            return iter(data_record[iter_start:iter_end])
+            return self
 
         def __next__(self):
             # move iter here so we can do transforms
-            pass
+            if self.cur < len(self.datapiece):
+                elem = self.datapiece[self.cur]
+                self.cur+=1
+                return elem
+            else:
+                raise StopIteration
 
 
     dataset = ParquetIterableDataset(
