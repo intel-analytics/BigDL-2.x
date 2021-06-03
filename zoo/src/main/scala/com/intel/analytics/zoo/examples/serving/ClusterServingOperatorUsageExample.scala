@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.examples.serving
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
+import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
 import com.intel.analytics.zoo.serving.operator.{ClusterServingInferenceOperator, ClusterServingInput, ClusterServingParams}
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
