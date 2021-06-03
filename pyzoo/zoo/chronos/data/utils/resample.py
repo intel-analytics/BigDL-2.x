@@ -42,13 +42,18 @@ def resample_timeseries_dataframe(df,
         f"merge_mode should be one of [\"max\", \"min\", \"mean\", \"sum\"]," \
         f" but found {merge_mode}."
 
+    start_time_stamp = pd.Timestamp(start_time)
+    end_time_stamp = pd.Timestamp(end_time)
+    zero_time_stamp = pd.Timestamp(0, unit='ms')
+
     res_df = df.copy()
     res_df[dt_col] = df.apply(
         lambda row: resample_helper(
             row[dt_col],
             interval,
-            pd.Timestamp(start_time),
-            pd.Timestamp(end_time)),
+            start_time_stamp,
+            end_time_stamp,
+            zero_time_stamp),
         axis=1)
     res_df = res_df[~res_df[dt_col].isin([None])]
 
@@ -61,10 +66,10 @@ def resample_timeseries_dataframe(df,
     if merge_mode == "sum":
         res_df = res_df.groupby([dt_col]).sum()
 
-    new_start = pd.Timestamp(
-        start_time) + (interval - divmod((pd.Timestamp(start_time) - pd.Timestamp(0)), interval)[1])
-    new_end = pd.Timestamp(
-        end_time) - divmod((pd.Timestamp(end_time) - pd.Timestamp(0)), interval)[1]
+    new_start = start_time_stamp + \
+        (interval - divmod(start_time_stamp - zero_time_stamp, pd.Timedelta(interval))[1])
+    new_end = end_time_stamp - \
+        divmod(end_time_stamp - zero_time_stamp, pd.Timedelta(interval))[1]
     new_end = new_start if new_start > new_end else new_end
     new_index = pd.date_range(start=new_start, end=new_end, freq=interval)
     res_df = res_df.reindex(new_index)
@@ -73,12 +78,16 @@ def resample_timeseries_dataframe(df,
     return res_df
 
 
-def resample_helper(curr_time, interval, start_time, end_time):
-    offset = divmod((curr_time - pd.Timestamp(0)), interval)[1]
+def resample_helper(curr_time,
+                    interval,
+                    start_time_stamp,
+                    end_time_stamp,
+                    zero_time_stamp):
+    offset = divmod((curr_time - zero_time_stamp), pd.Timedelta(interval))[1]
     if(offset / interval) >= 0.5:
         resampled_time = curr_time + (interval - offset)
     else:
         resampled_time = curr_time - offset
-    if (resampled_time < start_time or resampled_time > end_time):
+    if (resampled_time < start_time_stamp or resampled_time > end_time_stamp):
         return None
     return resampled_time

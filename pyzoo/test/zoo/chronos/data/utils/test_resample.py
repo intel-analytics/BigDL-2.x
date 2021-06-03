@@ -118,3 +118,24 @@ class TestResampleTimeSeries(ZooTestCase):
             merge_mode='sum')
         assert np.isnan(
             res_df['data'][0]) and res_df['data'][1] == 3 and res_df['data'][2] == 3
+
+    def test_resample_timeseries_dataframe_ms(self):
+        data = {
+            'data': [
+                1,
+                2,
+                3],
+            'datetime': [
+                "2020-11-09T07:52:00.007",
+                "2020-11-09T07:52:00.008",
+                "2020-11-09T07:52:00.010"]}
+        df = pd.DataFrame(data)
+        df['datetime'] = pd.to_datetime(df['datetime'])
+        res_df = resample_timeseries_dataframe(
+            df,
+            dt_col="datetime",
+            interval="2ms",
+            start_time='2020-11-09T07:52:00.005',
+            end_time='2020-11-09T07:52:00.010',
+            merge_mode='max')
+        assert len(res_df) == 3
