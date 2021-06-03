@@ -22,7 +22,7 @@ from copy import deepcopy
 from zoo.automl.search.base import *
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME
+from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME, DEFAULT_METRIC_NAME
 from ray.tune import Trainable, Stopper
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model import ModelBuilder
@@ -102,6 +102,8 @@ class RayTuneSearchEngine(SearchEngine):
         """
 
         # metric and metric's mode
+        if metric_mode and not metric:
+            metric = DEFAULT_METRIC_NAME
         self.metric = metric
         self.mode = RayTuneSearchEngine._validate_metric_mode(metric, metric_mode)
         self.stopper = TrialStopper(metric_threshold=metric_threshold,
