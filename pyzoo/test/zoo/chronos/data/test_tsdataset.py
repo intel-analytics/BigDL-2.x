@@ -253,8 +253,12 @@ class TestTSDataset(ZooTestCase):
 
         from sklearn.preprocessing import StandardScaler
         scaler = StandardScaler()
-        tsdata.scale(scaler).roll(lookback=5, horizon=4, id_sensitive=True)
-        tsdata_test.scale(scaler, fit=False).roll(lookback=5, horizon=4, id_sensitive=True)
+        tsdata.gen_dt_feature()\
+              .scale(scaler)\
+              .roll(lookback=5, horizon=4, id_sensitive=True)
+        tsdata_test.gen_dt_feature()\
+                   .scale(scaler, fit=False)\
+                   .roll(lookback=5, horizon=4, id_sensitive=True)
 
         _, _ = tsdata.to_numpy()
         _, y_test = tsdata_test.to_numpy()
@@ -262,12 +266,8 @@ class TestTSDataset(ZooTestCase):
         pred = np.copy(y_test) # sanity check
 
         unscaled_pred = tsdata._unscale_predict_numpy(pred)
-        tsdata_test.unscale().roll(lookback=5, horizon=4, id_sensitive=True)
+        tsdata_test.unscale()\
+                   .roll(lookback=5, horizon=4, id_sensitive=True)
         _, y_test_unscaled = tsdata_test.to_numpy()
 
         assert_array_almost_equal(unscaled_pred, y_test_unscaled)
-
-
-
-
-
