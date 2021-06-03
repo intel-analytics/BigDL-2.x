@@ -31,6 +31,15 @@ def create_tf_model(compress_rate, input_dim, optimizer='adadelta', loss='binary
     return autoencoder
 
 
+def create_torch_model(compress_rate, input_dim):
+    import torch.nn as nn
+    autoencoder = nn.Sequential(nn.Linear(input_dim, int(compress_rate * input_dim)),
+                                nn.ReLU(),
+                                nn.Linear(int(compress_rate * input_dim), input_dim),
+                                nn.Sigmoid())
+    return autoencoder
+
+
 class AEDetector(AnomalyDetector):
     """
     Anomaly Detector based on AutoEncoder
@@ -90,10 +99,11 @@ class AEDetector(AnomalyDetector):
         if len(arr.shape) > 1:
             raise ValueError("Only univariate time series is supported")
 
-    def fit(self, y):
+    def fit(self, y, backend="keras"):
         """
         fit the AutoEncoder model to the data
         :param y: the input time series
+        :param backend: the backend type, can be "keras" or "torch"
         :return
         """
         self.check_data(y)
@@ -106,15 +116,39 @@ class AEDetector(AnomalyDetector):
 
         y = scale_arr(y)
 
-        # TODO add pytorch model
-        ae_model = create_tf_model(self.compress_rate, len(y[0]))
-        ae_model.fit(y,
-                     y,
-                     batch_size=self.batch_size,
-                     epochs=self.epochs,
-                     verbose=self.verbose)
-        y_pred = ae_model.predict(y)
-
+        if backend == "keras":
+            ae_model = create_tf_model(self.compress_rate, len(y[0]))
+            ae_model.fit(y,
+                         y,
+                         batch_size=self.batch_size,
+                         epochs=self.epochs,
+                         verbose=self.verbose)
+            y_pred = ae_model.predict(y)
+        else:
+            import torch.optim as optim
+            import torch.nn as nn
+            import torch
+            from torch.utils.data import TensorDataset, DataLoader
+            ae_model = create_torch_model(self.compress_rate, len(y[0]))
+            optimizer = optim.Adadelta(ae_model.parameters())
+            criterion = nn.BCELoss()
+            y = torch.from_numpy(y).float()
+            if y.ndim == 1:
+                y = y.reshape(-1, 1)
+            train_loader = DataLoader(TensorDataset(y, y),
+                                      batch_size=int(self.batch_size),
+                                      shuffle=True)
+            for epochs in range(self.epochs):
+                for x_batch, y_batch in train_loader:
+                    optimizer.zero_grad()
+                    yhat = ae_model(x_batch)
+                    loss = criterion(yhat, y_batch)
+                    loss.backward()
+                    optimizer.step()
+            y_pred_list = []
+            for x_batch, y_batch in train_loader:
+                y_pred_list.append(ae_model(x_batch).detach().numpy())
+            y_pred = np.concatenate(y_pred_list, axis=0)
         # calculate the recon err for each data point in rolled array
         self.recon_err = abs(y - y_pred)
         # calculate the (aggregated) recon err for each sub sequence

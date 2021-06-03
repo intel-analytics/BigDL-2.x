@@ -37,10 +37,19 @@ class TestAEDetector(ZooTestCase):
         data[600:800] = 10
         return data
 
-    def test_ae_fit_score_rolled(self):
+    def test_ae_fit_score_rolled_keras(self):
         y = self.create_data()
         ad = AEDetector(roll_len=314)
         ad.fit(y)
+        anomaly_scores = ad.score()
+        assert len(anomaly_scores) == len(y)
+        anomaly_indexes = ad.anomaly_indexes()
+        assert len(anomaly_indexes) == int(ad.ratio * len(y))
+
+    def test_ae_fit_score_rolled_pytorch(self):
+        y = self.create_data()
+        ad = AEDetector(roll_len=314)
+        ad.fit(y, "torch")
         anomaly_scores = ad.score()
         assert len(anomaly_scores) == len(y)
         anomaly_indexes = ad.anomaly_indexes()
