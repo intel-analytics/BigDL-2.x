@@ -23,51 +23,35 @@ class BaseModel(ABC):
     """
 
     check_optional_config = False
-    future_seq_len = None
+    config = None
 
     @abstractmethod
-    def fit_eval(self, data, validation_data=None, mc=False, verbose=0, **config):
+    def fit_eval(self, data, validation_data=None):
         """
         optimize and evaluate for one iteration for tuning
-        :param config: tunable parameters for optimization
+        :param data: train data
+        :param validation_data: validation data
+
         :return:
         """
         raise NotImplementedError
 
     @abstractmethod
-    def evaluate(self, x, y, metric=None):
+    def save(self, checkpoint):
         """
-        Evaluate the model
-        :param x: input
-        :param y: target
-        :param metric:
-        :return: a list of metric evaluation results
-        """
-        raise NotImplementedError
+        Save the model at the provided checkpoint.
+        :param checkpoint: (str) Path to the target checkpoint file.
 
-    @abstractmethod
-    def predict(self, x):
-        """
-        Prediction.
-        :param x: input
-        :return: result
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def save(self, checkpoint_file):
-        """
-        save model to file.
-        :param checkpoint_file: checkpoint file name to be saved to.
-        :return:
+        :return: checkpoint path
         """
         pass
 
     @abstractmethod
-    def restore(self, checkpoint_file):
+    def restore(self, checkpoint):
         """
-        restore model from model file.
-        :param checkpoint_file: checkpoint file name to restore from.
+        Restore the model from the provided checkpoint.
+        :param checkpoint: (str) Path to target checkpoint file.
+
         :return:
         """
         pass
@@ -101,3 +85,10 @@ class BaseModel(ABC):
             raise ValueError("Missing optional parameters in configuration. " +
                              "Optional parameters are: " + str(self._get_optional_parameters()))
         return True
+
+
+class ModelBuilder:
+
+    @abstractmethod
+    def build(self, config):
+        pass

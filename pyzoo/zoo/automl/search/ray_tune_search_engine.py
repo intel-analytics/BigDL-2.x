@@ -24,7 +24,7 @@ from zoo.automl.common.metrics import Evaluator
 from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME
 from ray.tune import Trainable, Stopper
 from zoo.automl.logger import TensorboardXLogger
-from zoo.automl.model import ModelBuilder
+from zoo.automl.model.abstract import ModelBuilder
 from zoo.orca.automl import hp
 from zoo.chronos.feature.identity_transformer import IdentityTransformer
 from zoo.chronos.preprocessing.impute import LastFillImpute, FillZeroImpute

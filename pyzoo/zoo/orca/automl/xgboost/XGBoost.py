@@ -19,7 +19,10 @@ from xgboost.sklearn import XGBRegressor
 
 from xgboost.sklearn import XGBClassifier
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.model.abstract import BaseModel
+from zoo.automl.model.abstract import BaseModel, ModelBuilder
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class XGBoost(BaseModel):
@@ -170,11 +173,11 @@ class XGBoost(BaseModel):
         y_pred = self.predict(x)
         return [Evaluator.evaluate(m, y.values, y_pred.values) for m in metrics]
 
-    def save(self, model_file, config_path=None):
-        pickle.dump(self.model, open(model_file, "wb"))
+    def save(self, checkpoint):
+        pickle.dump(self.model, open(checkpoint, "wb"))
 
-    def restore(self, model_file, **config):
-        with open(model_file, 'rb') as f:
+    def restore(self, checkpoint):
+        with open(checkpoint, 'rb') as f:
             self.model = pickle.load(f)
         self.model_init = True
 
@@ -184,3 +187,27 @@ class XGBoost(BaseModel):
     def _get_optional_parameters(self):
         param = self.model.get_xgb_params
         return param
+
+
+class XGBoostModelBuilder(ModelBuilder):
+
+    def __init__(self, model_type="regressor", cpus_per_trial=1, **xgb_configs):
+        self.model_type = model_type
+        self.model_config = xgb_configs.copy()
+
+        if 'n_jobs' in xgb_configs and xgb_configs['n_jobs'] != cpus_per_trial:
+            logger.warning(f"Found n_jobs={xgb_configs['n_jobs']} in xgb_configs. It will not take "
+                           f"effect since we assign cpus_per_trials(={cpus_per_trial}) to xgboost "
+                           f"n_jobs. Please raise an issue if you do need different values for "
+                           f"xgboost n_jobs and cpus_per_trials.")
+        self.model_config['n_jobs'] = cpus_per_trial
+
+    def build(self, config):
+        model = XGBoost(model_type=self.model_type, config=self.model_config)
+        model._build(**config)
+        return model
+
+    def build_from_ckpt(self, checkpoint_filename):
+        model = XGBoost(model_type=self.model_type, config=self.model_config)
+        model.restore(checkpoint_filename)
+        return model
