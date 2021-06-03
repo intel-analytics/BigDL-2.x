@@ -16,7 +16,8 @@
 #
 
 from zoo.automl.search import SearchEngineFactory
-from zoo.automl.model import PytorchModelBuilder, KerasModelBuilder
+from zoo.automl.model.base_keras_model import KerasModelBuilder
+from zoo.automl.model.base_pytorch_model import PytorchModelBuilder
 import torch
 import tensorflow as tf
 import torch.nn as nn

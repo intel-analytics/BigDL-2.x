@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from zoo.automl.model.abstract import BaseModel
+from zoo.automl.model.abstract import BaseModel, ModelBuilder
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 import pickle
@@ -149,15 +149,15 @@ class KerasBaseModel(BaseModel):
         self.model_built = True
         # self.model.optimizer.set_weights(state["optimizer_weights"])
 
-    def save(self, checkpoint_file, config_path=None):
+    def save(self, checkpoint):
         if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling save!")
         state_dict = self.state_dict()
-        with open(checkpoint_file, "wb") as f:
+        with open(checkpoint, "wb") as f:
             pickle.dump(state_dict, f)
 
-    def restore(self, checkpoint_file, **config):
-        with open(checkpoint_file, "rb") as f:
+    def restore(self, checkpoint):
+        with open(checkpoint, "rb") as f:
             state_dict = pickle.load(f)
         self.load_state_dict(state_dict)
 
@@ -166,3 +166,19 @@ class KerasBaseModel(BaseModel):
 
     def _get_optional_parameters(self):
         return {"batch_size"}
+
+
+class KerasModelBuilder(ModelBuilder):
+
+    def __init__(self, model_creator):
+        self.model_creator = model_creator
+
+    def build(self, config):
+        model = KerasBaseModel(self.model_creator)
+        model.build(config)
+        return model
+
+    def build_from_ckpt(self, checkpoint_filename):
+        model = KerasBaseModel(self.model_creator)
+        model.restore(checkpoint_filename)
+        return model

@@ -13,3 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+import numpy as np
+
+
+def roll_arr(arr, stride):
+    return np.asarray([arr[i:i + stride] for i in range(len(arr) - stride + 1)])
+
+
+def scale_arr(arr, mode="minmax"):
+    if mode == "minmax":
+        from sklearn.preprocessing import MinMaxScaler
+        scaled = MinMaxScaler().fit_transform(arr).astype('float32')
+    elif mode == "standard":
+        from sklearn.preprocessing import StandardScaler
+        scaled = StandardScaler().fit_transform(arr).astype('float32')
+    else:
+        raise ValueError("Unrecognized Mode")
+    return scaled

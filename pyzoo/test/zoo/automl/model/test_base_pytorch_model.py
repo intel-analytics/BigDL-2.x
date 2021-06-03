@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from unittest import TestCase
-from zoo.automl.model import PytorchModelBuilder
+from zoo.automl.model.base_pytorch_model import PytorchModelBuilder
 from torch.utils.data import Dataset, DataLoader
 
 import pytest

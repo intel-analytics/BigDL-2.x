@@ -18,7 +18,7 @@ from torch.utils.data import TensorDataset, DataLoader
 
 import types
 
-from zoo.automl.model.abstract import BaseModel
+from zoo.automl.model.abstract import BaseModel, ModelBuilder
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 import pandas as pd
@@ -274,14 +274,14 @@ class PytorchBaseModel(BaseModel):
         self.optimizer.load_state_dict(state["optimizer"])
         self._create_loss()
 
-    def save(self, checkpoint_file, config_path=None):
+    def save(self, checkpoint):
         if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling save!")
         state_dict = self.state_dict()
-        torch.save(state_dict, checkpoint_file)
+        torch.save(state_dict, checkpoint)
 
-    def restore(self, checkpoint_file):
-        state_dict = torch.load(checkpoint_file)
+    def restore(self, checkpoint):
+        state_dict = torch.load(checkpoint)
         self.load_state_dict(state_dict)
 
     def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None, multioutput="raw_values"):
@@ -347,3 +347,31 @@ class PytorchBaseModel(BaseModel):
                 "optim",
                 "loss"
                 }
+
+
+class PytorchModelBuilder(ModelBuilder):
+
+    def __init__(self, model_creator,
+                 optimizer_creator,
+                 loss_creator):
+        from zoo.orca.automl.pytorch_utils import validate_pytorch_loss, validate_pytorch_optim
+        self.model_creator = model_creator
+        optimizer = validate_pytorch_optim(optimizer_creator)
+        self.optimizer_creator = optimizer
+        loss = validate_pytorch_loss(loss_creator)
+        self.loss_creator = loss
+
+    def build(self, config):
+        model = PytorchBaseModel(self.model_creator,
+                                 self.optimizer_creator,
+                                 self.loss_creator)
+        model.build(config)
+        return model
+
+    def build_from_ckpt(self, checkpoint_filename):
+        '''Restore from a saved model'''
+        model = PytorchBaseModel(self.model_creator,
+                                 self.optimizer_creator,
+                                 self.loss_creator)
+        model.restore(checkpoint_filename)
+        return model
