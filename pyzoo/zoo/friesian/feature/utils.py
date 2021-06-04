@@ -96,3 +96,30 @@ def ordinal_shuffle_partition(df):
 
 def write_parquet(df, path, mode):
     callZooFunc("float", "dfWriteParquet", df, path, mode)
+
+
+def check_col_str_list_exists(df, column, arg_name):
+    if isinstance(column, str):
+        assert column in df.columns, column + " in " + arg_name + " does not exist in Table"
+    elif isinstance(column, list):
+        for sing_column in column:
+            assert sing_column in df.columns, sing_column + " in " + arg_name + \
+                    " does not exist in Table"
+    else:
+        raise TypeError("elements in cat_cols should be str or list of str but get " + str(column))
+
+
+def get_nonnumeric_col_type(df, columns):
+    return list(filter(
+        lambda x: x[0] in columns and not (x[1] == "smallint" or x[1] == "int" or
+                x[1] == "bigint" or x[1] == "float" or x[1] == "double"),
+        df.dtypes))
+
+
+def gen_cols_name(columns, name_sep="_"):
+    if isinstance(columns, str):
+        return columns
+    elif isinstance(columns, list):
+        return name_sep.join(columns)
+    else:
+        raise ValueError("item should be either str or list of str")
