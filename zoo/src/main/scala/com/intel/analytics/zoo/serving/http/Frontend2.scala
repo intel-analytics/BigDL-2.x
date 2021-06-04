@@ -21,8 +21,8 @@ import java.security.{KeyStore, SecureRandom}
 import java.util
 import java.util.UUID
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
-
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
+
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.{ConnectionContext, Http}
 import akka.http.scaladsl.server.Directives.{complete, path, _}
@@ -38,7 +38,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.serving.ClusterServing
 import org.apache.log4j.Logger
 import org.slf4j.LoggerFactory
-import redis.clients.jedis.JedisPool
+import redis.clients.jedis.{JedisPool, JedisPoolConfig}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
@@ -62,7 +62,7 @@ object Frontend2 extends Supportive with EncryptSupportive {
         }
       }
       val jedisPool = new JedisPool(
-        ClusterServing.jedisPoolConfig, arguments.redisHost, arguments.redisPort)
+        new JedisPoolConfig(), arguments.redisHost, arguments.redisPort)
       val rateLimiter: RateLimiter = arguments.tokenBucketEnabled match {
         case true => RateLimiter.create(arguments.tokensPerSecond)
         case false => null
