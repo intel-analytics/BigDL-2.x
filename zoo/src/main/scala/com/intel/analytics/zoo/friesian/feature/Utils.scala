@@ -232,7 +232,7 @@ private[friesian] object Utils {
       (1 to negNum).map(x => {
         var neg = 0
         do {
-          neg = r.nextInt(itemSize)
+          neg = 1 + r.nextInt(itemSize - 1)
         } while (neg == itemId)
         neg
       }).map(x => (castValueFromNum(itemId, x), castValueFromNum(itemId, 0))) ++ Seq(
@@ -247,7 +247,7 @@ private[friesian] object Utils {
         (0 to negNum - 1).map(j => {
           var negItem = 0
           do {
-            negItem = r.nextInt(itemSize)
+            negItem = 1 + r.nextInt(itemSize - 1)
           } while (negItem == history(i))
           castValueFromNum(history(0), negItem)
         })
