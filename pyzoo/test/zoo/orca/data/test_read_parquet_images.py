@@ -36,12 +36,12 @@ WIDTH, HEIGHT, NUM_CHANNELS = 224, 224, 3
 def images_generator():
     dataset_path = os.path.join(resource_path, "cat_dog")
     for root, dirs, files in os.walk(os.path.join(dataset_path, "cats")):
-        for name in files+files:
+        for name in files:
             image_path = os.path.join(root, name)
             yield {"image": image_path, "label": 1, "id": image_path}
 
     for root, dirs, files in os.walk(os.path.join(dataset_path, "dogs")):
-        for name in files+files:
+        for name in files:
             image_path = os.path.join(root, name)
             yield {"image": image_path, "label": 0, "id": image_path}
 
@@ -73,13 +73,13 @@ def model_creator(config):
     return model
 
 
-
 class TestReadParquet(TestCase):
     def test_read_parquet_images_tf_dataset(self):
         temp_dir = tempfile.mkdtemp()
 
         try:
-            ParquetDataset.write("file://" + temp_dir, images_generator(), images_schema,block_size=4)
+            ParquetDataset.write("file://" + temp_dir, images_generator(),
+                                 images_schema,block_size=4)
             path = "file://" + temp_dir
             output_types = {"id": tf.string, "image": tf.string, "label": tf.float32}
             dataset = read_parquet("tf_dataset", input_path=path, output_types=output_types)
@@ -93,7 +93,6 @@ class TestReadParquet(TestCase):
                     print(next(cur_dl)['label'])
                 except StopIteration:
                     break
-
 
         finally:
             shutil.rmtree(temp_dir)
@@ -112,7 +111,8 @@ class TestReadParquet(TestCase):
                 dataset = read_parquet("tf_dataset", input_path=path,
                                        output_types=output_types, output_shapes=output_shapes)
                 dataset = dataset.shuffle(10)
-                dataset = dataset.map(lambda data_dict: (data_dict["image"], data_dict["label"]))
+                dataset = dataset.map(lambda data_dict:
+                                      (data_dict["image"], data_dict["label"]))
                 dataset = dataset.map(parse_data_train)
                 dataset = dataset.batch(batch_size)
                 return dataset
@@ -188,8 +188,80 @@ class TestReadParquet(TestCase):
                                            )
             
             trainer.fit(data=train_data_creator,epochs=1,batch_size=2)
+            
         finally:
             shutil.rmtree(temp_dir)
+
+    def test_pytorch_dataloader(self):
+        from zoo.orca.data.image.utils import decode_imagebytes2PIL
+        from torchvision import transforms
+        temp_dir = tempfile.mkdtemp()
+        try:
+            ParquetDataset.write("file://" + temp_dir, images_generator(),
+                                    images_schema, block_size=4)
+            path = "file://" + temp_dir
+            
+
+            class Net(nn.Module):
+                def __init__(self):
+                    super(Net, self).__init__()
+                    self.model=nn.Sequential(
+                        nn.Linear(224*224*3,64),
+                        nn.ReLU(),
+                        nn.Linear(64,2)
+                    )
+
+                def forward(self,x):
+                    print(x.shape)
+                    x = torch.flatten(x,start_dim=1)
+                    x = self.model(x)
+                    return x
+
+            class DecodeImage(object):
+                def __init__(self):
+                    self.resize_func=transforms.Resize((WIDTH, HEIGHT))
+                    self.toTensor=transforms.ToTensor()
+
+                def __call__(self,records):
+                    image=decode_imagebytes2PIL(records['image'])
+                    image=self.resize_func(image)
+                    image=self.toTensor(image)
+                    return image, records['label']
+
+            def model_creator(config):
+                model=Net()
+                return model
+
+            def optim_creator(model,config):
+                optimizer=optim.Adam(model.parameters(),lr=0.0001)
+                return optimizer
+
+            def train_data_creator(config,batch_size):
+                train_dataloader=read_parquet("dataloader", path,
+                                            transforms=DecodeImage(),
+                                            config=config,
+                                            batch_size=batch_size
+                                            )
+                return train_dataloader
+            
+            config={"num_shards":2, "rank":0, "num_workers":4}
+            model = model_creator(config)
+            optimizer = optim_creator(model, config)
+            criterion = nn.CrossEntropyLoss()
+            train_dataloader = train_data_creator(config, 2)
+
+            iter_count = 0
+            for i,data in enumerate(train_dataloader):
+                y_pred = model(data[0])
+                nnloss = criterion(y_pred,data[1])
+                nnloss.backward()
+                iter_count += 1
+            
+            assert iter_count > 1
+            
+        finally:
+            shutil.rmtree(temp_dir)
+
 
 
 

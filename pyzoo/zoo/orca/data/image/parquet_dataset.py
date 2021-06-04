@@ -28,7 +28,6 @@ from bigdl.util.common import get_node_and_core_number
 import os
 import numpy as np
 import random
-from operator import attrgetter
 import pyarrow.parquet as pq
 import io
 import math
@@ -276,7 +275,7 @@ def write_parquet(format, output_path, *args, **kwargs):
     func(output_path=output_path, *args, **kwargs)
 
 
-def read_as_tfdataset(path, output_types, output_shapes=None, config=None, *args, **kwargs):
+def read_as_tfdataset(path, output_types, output_shapes=None, *args, **kwargs):
     """
     return a orca.data.tf.data.Dataset
     :param path:
@@ -334,7 +333,6 @@ def read_as_dataloader(path, config=None, transforms=None, batch_size=1, *args, 
             self.rank = rank
             self.datapiece = None
 
-
             self.transforms = transforms
 
             filter_row_group_indexed = []
@@ -346,7 +344,7 @@ def read_as_dataloader(path, config=None, transforms=None, batch_size=1, *args, 
                 assert self.num_shards <= len(
                     self.row_group), "num_shards should be not larger than partitions." \
                                      "but got num_shards {} with partitions {}." \
-                    .format(self.num_shards, self.row_group)
+                    .format(self.num_shards, len(self.row_group))
                 assert self.rank < self.num_shards, \
                     "shard index should be included in [0,num_shard)," \
                     "but got rank {} with num_shard {}.".format(
@@ -394,7 +392,8 @@ def read_as_dataloader(path, config=None, transforms=None, batch_size=1, *args, 
         row_group=row_group, num_shards=config.get("num_shards"),
         rank=config.get("rank"), transforms=transforms)
 
-    return torch.utils.data.DataLoader(dataset, num_workers=config.get("num_workers", 0), batch_size=batch_size, worker_init_fn=worker_init_fn)
+    return torch.utils.data.DataLoader(dataset, num_workers=config.get("num_workers", 0), 
+                                       batch_size=batch_size, worker_init_fn=worker_init_fn)
 
 
 def read_parquet(format, input_path, transforms=None, config=None, batch_size=1, *args, **kwargs):
@@ -407,4 +406,5 @@ def read_parquet(format, input_path, transforms=None, config=None, batch_size=1,
                           "dataloader": (read_as_dataloader, [])}
     func, required_args = format_to_function[format]
     _check_arguments(format, kwargs, required_args)
-    return func(path=input_path, config=config or {}, transforms=transforms, batch_size=batch_size, *args, **kwargs)
+    return func(path=input_path, config=config or {},
+                transforms=transforms, batch_size=batch_size, *args, **kwargs)
