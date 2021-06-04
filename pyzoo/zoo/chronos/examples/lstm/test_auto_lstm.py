@@ -14,15 +14,17 @@
 # limitations under the License.
 #
 import os
+import time
+from matplotlib.pyplot import sca
 
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 import torch
 import numpy as np
 import argparse
 import seaborn as sns
 
+from sklearn.preprocessing import StandardScaler
 from zoo.chronos.autots.model.auto_lstm import AutoLSTM
 from zoo.orca.automl import hp
 from zoo.orca import init_orca_context, stop_orca_context
@@ -33,55 +35,54 @@ output_feature_dim = 2
 past_seq_len = 5
 future_seq_len = 1
 
-# Prepare dataset
-load_data = sns.load_dataset('mpg')
-dataset = load_data[['displacement', 'horsepower',
-                     'weight', 'acceleration', 'model_year', 'mpg']]
-dataset = dataset.loc[~np.isnan(dataset).any(axis=1), :]
-_train_data, _val_data = train_test_split(
-    dataset, train_size=0.8, test_size=0.2, shuffle=True)
-# standardization
-scaler = StandardScaler()
-train_data, val_data = scaler.fit_transform(
-    _train_data), scaler.fit_transform(_val_data)
+
+def get_random_data(size):
+    X = np.random.randn(size, past_seq_len, input_feature_dim)
+    y = np.random.randn(size, future_seq_len, output_feature_dim)
+    return np.array(X),np.array(y)
 
 
-def get_x_y(data):
-    X, y = [], []
-    for i in range(len(data) - past_seq_len - future_seq_len - 1):
-        X.append(data[i: i + past_seq_len, 0: input_feature_dim])
-        y.append(data[i + past_seq_len: i +
-                 past_seq_len + future_seq_len, -output_feature_dim:])
-    return np.array(X), np.array(y)
+def get_data(data_selection='train'):
+    load_data = sns.load_dataset('mpg')
+    dataset = load_data[['displacement', 'horsepower',
+                        'weight', 'acceleration', 'model_year', 'mpg']]
+    _dataset = dataset.loc[~np.isnan(dataset).any(axis=1), :]
+    train_dataset, valid_dataset = train_test_split(
+        _dataset, train_size=0.8, test_size=0.2, shuffle=True)
+    dataset = (train_dataset if data_selection == 'train' else valid_dataset)
+    scaler = StandardScaler()
+    dataset = scaler.fit_transform(dataset)
+    return dataset
 
 
-class RandomDataset(Dataset):
+class AutoLSTMDataset(Dataset):
 
-    def __init__(self, data):
-        x, y = get_x_y(data)
-        self.x = torch.from_numpy(x).float()
-        self.y = torch.from_numpy(y).float()
+    def __init__(self, data_selection):
+        self.data = get_data(data_selection)
 
     def __len__(self):
-        return self.x.shape[0]
+        return self.data.shape[0] - past_seq_len - future_seq_len - 1
 
     def __getitem__(self, idx):
-        return self.x[idx], self.y[idx]
+        X = self.data[idx:idx+past_seq_len, :input_feature_dim]
+        y = self.data[idx+past_seq_len:idx+past_seq_len +
+                      future_seq_len, -output_feature_dim:]
+        return torch.from_numpy(X).float(), torch.from_numpy(y).float()
 
 
 def train_dataloader_creator(config):
-    return DataLoader(RandomDataset(data=train_data),
+    return DataLoader(AutoLSTMDataset('train'),
                       batch_size=config["batch_size"],
                       shuffle=True)
 
 
 def valid_dataloader_creator(config):
-    return DataLoader(RandomDataset(data=val_data),
+    return DataLoader(AutoLSTMDataset('valid'),
                       batch_size=config["batch_size"],
                       shuffle=True)
 
 
-def test_fit_np(args):
+def test_fit_np_data(args):
     auto_lstm = AutoLSTM(input_feature_num=input_feature_dim,
                          output_target_num=output_feature_dim,
                          optimizer='Adam',
@@ -94,20 +95,26 @@ def test_fit_np(args):
                          logs_dir="/tmp/auto_lstm",
                          cpus_per_trial=args.cpus_per_trial,
                          name="auto_lstm")
-    auto_lstm.fit(data=get_x_y(train_data),
+    auto_lstm.fit(data=get_random_data(1000),
                   epochs=args.epoch,
                   batch_size=hp.choice([32, 64]),
-                  validation_data=get_x_y(val_data),
+                  validation_data=get_random_data(400),
                   n_sampling=args.n_sampling
                   )
     best_model = auto_lstm.get_best_model()
-    best_model_rmse = best_model.evaluate(
-        x=get_x_y(train_data)[0], y=get_x_y(train_data)[1], metrics=['rmse'])
-    print(f"Evaluation result is {np.mean(best_model_rmse[0][0]):.2f}")
-    print(f'Some hyperparameters of the model are {best_model.config}')
+    best_model_mse = best_model.evaluate(
+        x=get_random_data(1000)[0], y=get_random_data(1000)[1], metrics=['mse'])
+    print(f"Evaluation result is {np.mean(best_model_mse[0][0]):.2f}")
+    print(
+        f'The hyperparameters of the model include lr:{best_model.config["lr"]}, dropout:{best_model.config["dropout"]}, batch_size:{best_model.config["batch_size"]}')
+    best_model_path = '/tmp/Checkpoint/auto_lstm_best_model_' + \
+        str(time.time()) + '.ckpt'
+    if not os.path.exists('/tmp/Checkpoint'):
+        os.makedirs('/tmp/Checkpoint')
+    best_model.save(best_model_path)
 
 
-def test_fit_data_creator(args):
+def test_fit_mpg_data(args):
     auto_lstm = AutoLSTM(input_feature_num=input_feature_dim,
                          output_target_num=output_feature_dim,
                          optimizer='Adam',
@@ -129,9 +136,10 @@ def test_fit_data_creator(args):
                   )
     best_model = auto_lstm.get_best_model()
     best_model_mse = best_model._validate(
-        valid_dataloader_creator(best_model.config), metric='rmse')
-    print(f'Evaluation result is {best_model_mse["rmse"]:.2f}')
-    print(f'Some hyperparameters of the model are {best_model.config}')
+        valid_dataloader_creator(best_model.config), metric='mse')
+    print(f'Evaluation result is {best_model_mse["mse"]:.2f}')
+    print(
+        f'The hyperparameters of the model include lr:{best_model.config["lr"]}, dropout:{best_model.config["dropout"]}, batch_size:{best_model.config["batch_size"]}')
 
 
 if __name__ == '__main__':
@@ -162,6 +170,6 @@ if __name__ == '__main__':
     num_nodes = 1 if args.cluster_mode == "local" else args.num_workers
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
                       memory=args.memory, num_nodes=num_nodes, init_ray_on_spark=True)
-    test_fit_np(args)
-    test_fit_data_creator(args)
+    test_fit_np_data(args)
+    test_fit_mpg_data(args)
     stop_orca_context()

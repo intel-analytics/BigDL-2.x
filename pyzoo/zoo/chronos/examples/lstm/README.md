@@ -14,7 +14,6 @@ pip install torch==1.8.1 ray[tune]==1.2.0 seaborn scikit-learn
 mpg is the data describing the fuel economy of automobiles in the late 1970s and early 1980s. Here, only a few of these characteristics are selected for prediction.
 
 ## Run on local after pip install
-The default backend is torch.
 ```
 python test_auto_lstm.py
 ```
