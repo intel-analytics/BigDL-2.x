@@ -159,4 +159,3 @@ class ProphetBuilder(ModelBuilder):
         model = ProphetModel(config=self.model_config)
         model._build(**config)
         return model
-
