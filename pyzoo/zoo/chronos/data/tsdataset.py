@@ -23,6 +23,7 @@ from zoo.chronos.data.utils.impute import impute_timeseries_dataframe
 from zoo.chronos.data.utils.deduplicate import deduplicate_timeseries_dataframe
 from zoo.chronos.data.utils.roll import roll_timeseries_dataframe
 from zoo.chronos.data.utils.scale import unscale_timeseries_numpy
+from zoo.chronos.data.utils.resample import resample_timeseries_dataframe
 
 _DEFAULT_ID_COL_NAME = "id"
 _DEFAULT_ID_PLACEHOLDER = "0"
@@ -32,7 +33,7 @@ class TSDataset:
     def __init__(self, data, **schema):
         '''
         TSDataset is an abstract of time series dataset.
-        cascade call is supported for most of the transform methods.
+        Cascade call is supported for most of the transform methods.
         '''
         self.df = data
         self.id_col = schema["id_col"]
@@ -161,8 +162,18 @@ class TSDataset:
 
         Note: It if preferred to call `impute` right after `resample`.
         '''
-        # split the internal dataframe(self.df) to sub-df wrt id_col
-        # call deduplicate function in chronos.data.utils.resample on each sub-df.
+        df_list = []
+        for id_name in self._id_list:
+            df_id = resample_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name]\
+                                                    .drop(self.id_col, axis=1),
+                                                  dt_col=self.dt_col,
+                                                  interval=interval,
+                                                  start_time=start_time,
+                                                  end_time=end_time,
+                                                  merge_mode=merge_mode)
+            df_id[self.id_col] = id_name
+            df_list.append(df_id.copy())
+        self.df = pd.concat(df_list)
         return self
 
     def gen_dt_feature(self):
