@@ -130,7 +130,7 @@ class AEDetector(AnomalyDetector):
             import torch
             from torch.utils.data import TensorDataset, DataLoader
             ae_model = create_torch_model(self.compress_rate, len(y[0]))
-            optimizer = optim.Adadelta(ae_model.parameters())
+            optimizer = optim.Adadelta(ae_model.parameters(), lr=0.001)
             criterion = nn.BCELoss()
             y = torch.from_numpy(y).float()
             if y.ndim == 1:
