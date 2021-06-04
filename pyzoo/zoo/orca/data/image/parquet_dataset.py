@@ -392,7 +392,7 @@ def read_as_dataloader(path, config=None, transforms=None, batch_size=1, *args, 
         row_group=row_group, num_shards=config.get("num_shards"),
         rank=config.get("rank"), transforms=transforms)
 
-    return torch.utils.data.DataLoader(dataset, num_workers=config.get("num_workers", 0), 
+    return torch.utils.data.DataLoader(dataset, num_workers=config.get("num_workers", 0),
                                        batch_size=batch_size, worker_init_fn=worker_init_fn)
 
 

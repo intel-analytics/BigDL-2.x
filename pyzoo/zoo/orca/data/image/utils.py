@@ -173,8 +173,9 @@ def pa_fs(path):
             path = path[len("file://"):]
         return path, pa.LocalFileSystem()
 
+
 def decode_imagebytes2PIL(image_btyes):
     from PIL import Image
     from io import BytesIO
-    imagebs=BytesIO(image_btyes)
+    imagebs = BytesIO(image_btyes)
     return Image.open(imagebs)

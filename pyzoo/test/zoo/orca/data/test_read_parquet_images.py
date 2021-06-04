@@ -79,13 +79,13 @@ class TestReadParquet(TestCase):
 
         try:
             ParquetDataset.write("file://" + temp_dir, images_generator(),
-                                 images_schema,block_size=4)
+                                 images_schema, block_size=4)
             path = "file://" + temp_dir
             output_types = {"id": tf.string, "image": tf.string, "label": tf.float32}
             dataset = read_parquet("tf_dataset", input_path=path, output_types=output_types)
             for dt in dataset.take(1):
                 print(dt.keys())
-            
+
             dataloader = read_parquet("dataloader", input_path=path)
             cur_dl = iter(dataloader)
             while True:
@@ -96,7 +96,6 @@ class TestReadParquet(TestCase):
 
         finally:
             shutil.rmtree(temp_dir)
-        
 
     def test_parquet_images_training(self):
         from zoo.orca.learn.tf2 import Estimator
