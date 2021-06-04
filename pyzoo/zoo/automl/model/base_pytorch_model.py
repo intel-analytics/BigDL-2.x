@@ -367,11 +367,3 @@ class PytorchModelBuilder(ModelBuilder):
                                  self.loss_creator)
         model.build(config)
         return model
-
-    def build_from_ckpt(self, checkpoint_filename):
-        '''Restore from a saved model'''
-        model = PytorchBaseModel(self.model_creator,
-                                 self.optimizer_creator,
-                                 self.loss_creator)
-        model.restore(checkpoint_filename)
-        return model
