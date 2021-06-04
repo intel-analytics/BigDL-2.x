@@ -41,7 +41,7 @@ def get_multi_id_ts_df():
                              "id": np.array(['00']*50 + ['01']*50),
                              "extra feature": np.random.randn(sample_num)})
     train_df["datetime"] = pd.date_range('1/1/2019', periods=sample_num)
-    train_df.loc[50:100,"datetime"] = pd.date_range('1/1/2019', periods=50)
+    train_df.loc[50:100, "datetime"] = pd.date_range('1/1/2019', periods=50)
     return train_df
 
 
@@ -56,7 +56,7 @@ def get_ugly_ts_df():
     df = pd.DataFrame(data, columns=['a', 'b', 'c', 'd', 'e'])
     df['a'][0] = np.nan  # make sure column 'a' has a N/A
     df["datetime"] = pd.date_range('1/1/2019', periods=100)
-    df.loc[50:100,"datetime"] = pd.date_range('1/1/2019', periods=50)
+    df.loc[50:100, "datetime"] = pd.date_range('1/1/2019', periods=50)
     df["id"] = np.array(['00']*50 + ['01']*50)
     return df
 

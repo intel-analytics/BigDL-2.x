@@ -86,7 +86,7 @@ class TSDataset:
 
         >>> tsdataset = TSDataset.from_pandas(df, dt_col="datetime",
         >>>                                   target_col="value", id_col="id",
-        >>>                                   extra_feature_col=["extra feature 1", 
+        >>>                                   extra_feature_col=["extra feature 1",
         >>>                                                      "extra feature 2"])
         '''
 
@@ -108,7 +108,7 @@ class TSDataset:
 
     def impute(self, mode="last", const_num=0):
         '''
-        Impute the tsdataset by imputing each univariate time series 
+        Impute the tsdataset by imputing each univariate time series
         distinguished by id_col and feature_col
 
         :param mode: imputation mode, select from "last", "const" or "linear".
@@ -121,7 +121,7 @@ class TSDataset:
 
         :return: the tsdataset instance.
 
-        Note: It is preferred that `impute` is called after `resample` while before 
+        Note: It is preferred that `impute` is called after `resample` while before
               `roll` if needed.
         '''
         df_list = [impute_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
@@ -164,8 +164,8 @@ class TSDataset:
         '''
         df_list = []
         for id_name in self._id_list:
-            df_id = resample_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name]\
-                                                    .drop(self.id_col, axis=1),
+            df_id = resample_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name]
+                                                  .drop(self.id_col, axis=1),
                                                   dt_col=self.dt_col,
                                                   interval=interval,
                                                   start_time=start_time,
@@ -294,7 +294,7 @@ class TSDataset:
         '''
         export rolling result in form of a tuple of numpy ndarray (x, y)
 
-        :return: a 2-dim tuple. each item is a 3d numpy ndarray 
+        :return: a 2-dim tuple. each item is a 3d numpy ndarray
         '''
         if self.numpy_x is None:
             raise RuntimeError("Please call \"roll\" method\
