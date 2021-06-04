@@ -87,7 +87,7 @@ class TestReadParquet(TestCase):
                 print(dt.keys())
             
             dataloader = read_parquet("dataloader", input_path=path)
-            cur_dl=iter(dataloader)
+            cur_dl = iter(dataloader)
             while True:
                 try:
                     print(next(cur_dl)['label'])
@@ -133,50 +133,49 @@ class TestReadParquet(TestCase):
         temp_dir = tempfile.mkdtemp()
         try:
             ParquetDataset.write("file://" + temp_dir, images_generator(),
-                                  images_schema, block_size=4)
+                                 images_schema, block_size=4)
             path = "file://" + temp_dir
-            
 
             class Net(nn.Module):
                 def __init__(self):
                     super(Net, self).__init__()
-                    self.model=nn.Sequential(
-                        nn.Linear(224*224*3,64),
+                    self.model = nn.Sequential(
+                        nn.Linear(224*224*3, 64),
                         nn.ReLU(),
-                        nn.Linear(64,2)
+                        nn.Linear(64, 2)
                     )
 
-                def forward(self,x):
+                def forward(self, x):
                     print(x.shape)
-                    x = torch.flatten(x,start_dim=1)
+                    x = torch.flatten(x, start_dim=1)
                     x = self.model(x)
                     return x
 
             class DecodeImage(object):
                 def __init__(self):
-                    self.resize_func=transforms.Resize((WIDTH, HEIGHT))
-                    self.toTensor=transforms.ToTensor()
+                    self.resize_func = transforms.Resize((WIDTH, HEIGHT))
+                    self.toTensor = transforms.ToTensor()
 
-                def __call__(self,records):
-                    image=decode_imagebytes2PIL(records['image'])
-                    image=self.resize_func(image)
-                    image=self.toTensor(image)
+                def __call__(self, records):
+                    image = decode_imagebytes2PIL(records['image'])
+                    image = self.resize_func(image)
+                    image = self.toTensor(image)
                     return image, records['label']
 
             def model_creator(config):
-                model=Net()
+                model = Net()
                 return model
 
-            def optim_creator(model,config):
-                optimizer=optim.Adam(model.parameters(),lr=0.0001)
+            def optim_creator(model, config):
+                optimizer = optim.Adam(model.parameters(), lr=0.0001)
                 return optimizer
 
-            def train_data_creator(config,batch_size):
-                train_dataloader=read_parquet("dataloader", path,
-                                            transforms=DecodeImage(),
-                                            config=config,
-                                            batch_size=batch_size
-                                            )
+            def train_data_creator(config, batch_size):
+                train_dataloader = read_parquet("dataloader", path,
+                                                transforms=DecodeImage(),
+                                                config=config,
+                                                batch_size=batch_size
+                                                )
                 return train_dataloader
 
             trainer = Estimator.from_torch(model=model_creator,
@@ -184,11 +183,12 @@ class TestReadParquet(TestCase):
                                            loss=nn.CrossEntropyLoss(),
                                            metrics=[Accuracy()],
                                            backend="torch_distributed",
-                                           config={"num_shards":2, "rank":0, "num_workers":0}
+                                           config={"num_shards": 2,
+                                                   "rank": 0, "num_workers": 0}
                                            )
-            
-            trainer.fit(data=train_data_creator,epochs=1,batch_size=2)
-            
+
+            trainer.fit(data=train_data_creator, epochs=1, batch_size=2)
+
         finally:
             shutil.rmtree(temp_dir)
 
@@ -198,71 +198,68 @@ class TestReadParquet(TestCase):
         temp_dir = tempfile.mkdtemp()
         try:
             ParquetDataset.write("file://" + temp_dir, images_generator(),
-                                    images_schema, block_size=4)
+                                 images_schema, block_size=4)
             path = "file://" + temp_dir
-            
 
             class Net(nn.Module):
                 def __init__(self):
                     super(Net, self).__init__()
-                    self.model=nn.Sequential(
-                        nn.Linear(224*224*3,64),
+                    self.model = nn.Sequential(
+                        nn.Linear(224*224*3, 64),
                         nn.ReLU(),
-                        nn.Linear(64,2)
+                        nn.Linear(64, 2)
                     )
 
-                def forward(self,x):
+                def forward(self, x):
                     print(x.shape)
-                    x = torch.flatten(x,start_dim=1)
+                    x = torch.flatten(x, start_dim=1)
                     x = self.model(x)
                     return x
 
             class DecodeImage(object):
                 def __init__(self):
-                    self.resize_func=transforms.Resize((WIDTH, HEIGHT))
-                    self.toTensor=transforms.ToTensor()
+                    self.resize_func = transforms.Resize((WIDTH, HEIGHT))
+                    self.toTensor = transforms.ToTensor()
 
-                def __call__(self,records):
-                    image=decode_imagebytes2PIL(records['image'])
-                    image=self.resize_func(image)
-                    image=self.toTensor(image)
+                def __call__(self, records):
+                    image = decode_imagebytes2PIL(records['image'])
+                    image = self.resize_func(image)
+                    image = self.toTensor(image)
                     return image, records['label']
 
             def model_creator(config):
-                model=Net()
+                model = Net()
                 return model
 
-            def optim_creator(model,config):
-                optimizer=optim.Adam(model.parameters(),lr=0.0001)
+            def optim_creator(model, config):
+                optimizer = optim.Adam(model.parameters(), lr=0.0001)
                 return optimizer
 
-            def train_data_creator(config,batch_size):
-                train_dataloader=read_parquet("dataloader", path,
-                                            transforms=DecodeImage(),
-                                            config=config,
-                                            batch_size=batch_size
-                                            )
+            def train_data_creator(config, batch_size):
+                train_dataloader = read_parquet("dataloader", path,
+                                                transforms=DecodeImage(),
+                                                config=config,
+                                                batch_size=batch_size
+                                                )
                 return train_dataloader
-            
-            config={"num_shards":2, "rank":0, "num_workers":4}
+
+            config = {"num_shards": 2, "rank": 0, "num_workers": 4}
             model = model_creator(config)
             optimizer = optim_creator(model, config)
             criterion = nn.CrossEntropyLoss()
             train_dataloader = train_data_creator(config, 2)
 
             iter_count = 0
-            for i,data in enumerate(train_dataloader):
+            for i, data in enumerate(train_dataloader):
                 y_pred = model(data[0])
-                nnloss = criterion(y_pred,data[1])
+                nnloss = criterion(y_pred, data[1])
                 nnloss.backward()
                 iter_count += 1
-            
+
             assert iter_count > 1
-            
+
         finally:
             shutil.rmtree(temp_dir)
-
-
 
 
 if __name__ == "__main__":
