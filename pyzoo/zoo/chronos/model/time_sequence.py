@@ -53,12 +53,6 @@ class TSModelBuilder(ModelBuilder):
         model.setup(config)
         return model
 
-    @staticmethod
-    def build_from_ckpt(checkpoint_filename):
-        model = TimeSequenceModel()
-        model.restore(checkpoint_filename)
-        return model
-
 
 class TimeSequenceModel(BaseModel):
     """
