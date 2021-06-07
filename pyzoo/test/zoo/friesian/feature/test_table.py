@@ -20,6 +20,7 @@ import tempfile
 from unittest import TestCase
 
 from pyspark.sql.functions import col, max, min, array
+import pyspark.sql.functions as F
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
 
 from zoo.orca import OrcaContext
@@ -515,33 +516,29 @@ class TestTable(TestCase):
         assert tbl.df.where(tbl.df.height == 10).select("num").collect()[0]["num"] == 2, \
             "the third row of num should be 2"
 
-    def test_join_groupby(self):
+    def test_group_by(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data2.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
-        with self.assertRaises(Exception) as context:
-            feature_tbl.join_groupby("col_1", "col_4")
-        self.assertTrue("cont_cols should be numeric" in str(context.exception))
-        with self.assertRaises(Exception) as context:
-            feature_tbl.join_groupby("col_1", "col_4", stats="unknown")
-        self.assertTrue("supported for stats" in str(context.exception))
 
-        join_tbl1 = feature_tbl.join_groupby("col_4", "col_1")
-        assert len(join_tbl1.df.columns) == len(feature_tbl.df.columns) + 1, "join_tbl1 should " \
-                "have one more column than feature_tbl"
-        assert join_tbl1.df.filter("col_4 == 'd' and col_4_jg_count_col_1 == 6").count() == \
-                feature_tbl.df.filter("col_4 == 'd'").count(), \
-                "the count of col_1 group by 'd' in col_4 should be 6 in join_tbl1"
+        groupby_tbl1 = feature_tbl.group_by("col_4", agg_exprs={"col_1":"sum"})
+        assert groupby_tbl1.df.filter("col_4 == 'a' and sum(col_1) == 3").count() == 1, \
+                "the sum of col_1 with col_4 = 'a' should be 3"
 
-        join_tbl2 = feature_tbl.join_groupby(["col_4", "col_5"], ["col_2", "col_3"],
-                stats=["sum", "mean", "std", "var"])
-        assert len(join_tbl2.df.columns) == len(feature_tbl.df.columns) + 16, "join_tbl2 should " \
-                "have 16 more columns than feature_tbl"
-        assert join_tbl2.df.filter("col_5 == 'cc' and col_5_jg_mean_col_3 == 7.25").count() == \
+        groupby_tbl2 = feature_tbl.group_by(agg_exprs={"target":"mean"})
+        assert groupby_tbl2.df.collect()[0]["avg(target)"] == 0.9, \
+                "the mean of target should be 0.9"
+
+        groupby_tbl3 = feature_tbl.group_by("col_5",
+                agg_exprs=[F.max("col_2").alias("max_2"), F.min("col_3").alias("min_3")],
+                join=True)
+        assert len(groupby_tbl3.df.columns) == len(feature_tbl.df.columns) + 2, \
+                "groupby_tbl3 should have two more columns max_2 and min_3"
+        assert groupby_tbl3.df.filter("col_5 == 'cc' and max_2 == 9").count() == \
                 feature_tbl.df.filter("col_5 == 'cc'").count(), \
-                "the mean of col_3 group by 'cc' in col_5 should be 7.25 in join_tbl2"
-        assert join_tbl2.df.filter("col_5 == 'aa' and col_5_jg_sum_col_2 == 11").count() == \
-                join_tbl2.df.filter("col_5 == 'aa'").count(), "col_5_jg_sum_col_2 should all be" \
-                " 11 for col_5 = aa in join_tbl2"
+                "max of col_2 should 9 for all col_5 = 'cc' in group_by_tbl3"
+        assert groupby_tbl3.df.filter("col_5 == 'aa' and min_3 == 1.0").count() == \
+                feature_tbl.df.filter("col_5 == 'aa'").count(), \
+                "min of col_3 should 1.0 for all col_5 = 'aa' in group_by_tbl3"
 
 
 if __name__ == "__main__":

@@ -22,7 +22,6 @@ from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql.functions import col, udf, array, broadcast, explode, struct, collect_list
 from pyspark.sql import Row
-import pyspark.sql.functions as F
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
@@ -633,40 +632,37 @@ class FeatureTable(Table):
             df = df.withColumn(c.replace("item", "category"), cat_udf(col(c)))
         return FeatureTable(df)
 
-    def join_groupby(self, cat_cols, cont_cols, stats="count"):
+    def group_by(self, columns=None, agg_exprs={"*":"count"}, join=False):
         """
-        Create new column by grouping the data by the specified categorical columns and calculating
-        the desired statistics of specified continuous columns. Output column will be in the format
-        of cat_col + "_jg_" + stat + "_" + cont_col. 
-        :param cat_cols: str or list of str. Categorical columns to group the table.
-        :param cont_cols: str or list of str. Continuous columns to calculate the statistics.
-        :param stats: str or list of str. Statistics to be calculated. "count", "sum", "mean",
-               "std" and "var" are supported. Default is ["count"].
-        :return: A new FeatureTable with new columns.
-        """
-        stats = str_to_list(stats, "stats")
-        stats_func = {"count": F.count, "sum": F.sum, "mean": F.mean, "std": F.stddev, \
-                "var": F.variance}
-        for stat in stats:
-            assert stat in stats_func, "Only \"count\", \"sum\", \"mean\", \"std\" and " \
-                                       "\"var\" are supported for stats, but get " + stat
-        cat_cols = str_to_list(cat_cols, "cat_cols")
-        cont_cols = str_to_list(cont_cols, "cont_cols")
-        check_col_exists(self.df, cat_cols)
-        check_col_exists(self.df, cont_cols)
-        nonnumeric_cont_col_type = get_nonnumeric_col_type(self.df, cont_cols)
-        assert not nonnumeric_cont_col_type, "cont_cols should be numeric but get " + ", ".join(
-                list(map(lambda x: x[0] + " of type " + x[1], nonnumeric_cont_col_type)))
+        Group the Table with specified columns and then run aggregation. Optionally join the result
+        with the original Table.
 
-        result_df = self.df
-        for cat_col in cat_cols:
-            agg_list = []
-            for cont_col in cont_cols:
-                agg_list += [(stats_func[stat])(cont_col) \
-                        .alias(cat_col + "_jg_" + stat + "_" + cont_col) for stat in stats]
-            merge_df = self.df.groupBy(cat_col).agg(*agg_list)
-            result_df = result_df.join(merge_df, on=cat_col, how="left")
-        return FeatureTable(result_df)
+        :param columns: str or list of str. Columns to group the Table.
+        :param agg_exprs: dict or list. Aggragation functions to be applied to grouped Table.
+               If agg_exprs is a single dict mapping from string to string, then the key is
+               the column to perform aggregation on, and the value is the aggregate function.
+               Alternatively, agg_exprs can also be a list of aggregate Column expressions.
+        :param join: boolean. If join is True, join the aggragation result with original Table.
+
+        :return: A new Table.
+        """
+        if columns is None:
+            grouped_data = self.df.groupBy()
+        else:
+            grouped_data = self.df.groupBy(columns)
+
+        if isinstance(agg_exprs, dict):
+            agg_df = grouped_data.agg(agg_exprs)
+        elif isinstance(agg_exprs, list):
+            agg_df = grouped_data.agg(*agg_exprs)
+        else:
+            raise TypeError("agg_exprs should be dict or list")
+
+        if join:
+            result_df = self.df.join(agg_df, on=columns, how="left")
+            return FeatureTable(result_df)
+        else:
+            return FeatureTable(agg_df)
 
 
 class StringIndex(Table):
