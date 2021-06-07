@@ -15,6 +15,7 @@
 
 import json
 import pandas as pd
+import pickle
 from pmdarima.arima import ARIMA
 from pmdarima.arima import ndiffs
 from pmdarima.arima import nsdiffs
