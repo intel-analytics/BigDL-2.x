@@ -323,7 +323,7 @@ class RayContext(object):
 
     def __init__(self, sc, redis_port=None, password="123456", object_store_memory=None,
                  verbose=False, env=None, extra_params=None, include_webui=True,
-                 num_ray_nodes=None, ray_node_cpu_cores=None, barrier_mode=True):
+                 num_ray_nodes=None, ray_node_cpu_cores=None):
         """
         The RayContext would initiate a ray cluster on top of the configuration of SparkContext.
         After creating RayContext, call the init method to set up the cluster.
@@ -373,7 +373,6 @@ class RayContext(object):
         self.env = env
         self.extra_params = extra_params
         self.include_webui = include_webui
-        self.barrier_mode = barrier_mode
         self._address_info = None
         if self.is_local:
             self.num_ray_nodes = 1
@@ -561,7 +560,8 @@ class RayContext(object):
         print("Start to launch ray on cluster")
         ray_rdd = self.sc.range(0, self.num_ray_nodes,
                                 numSlices=self.num_ray_nodes)
-        if self.barrier_mode:
+        from zoo import ZooContext
+        if ZooContext.barrier_mode:
             # The first ip would be used to launch ray master.
             process_infos = ray_rdd.barrier().mapPartitions(
                 self.ray_service.gen_ray_start(self.cluster_ips[0])).collect()
