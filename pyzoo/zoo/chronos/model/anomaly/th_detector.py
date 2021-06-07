@@ -212,7 +212,7 @@ class ThresholdDetector(AnomalyDetector):
         """
         if y is None:
             if self.anomaly_scores_ is None:
-                raise ValueError("please call fit before calling score")
+                raise RuntimeError("please call fit before calling score")
             return self.anomaly_scores_
         else:
             return detect_anomaly(y,

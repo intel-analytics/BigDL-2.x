@@ -130,7 +130,7 @@ class AEDetector(AnomalyDetector):
         :return: the anomaly scores, in an array format with the same size as input
         """
         if self.anomaly_scores_ is None:
-            raise ValueError("please call fit before calling score")
+            raise RuntimeError("please call fit before calling score")
 
         # if input is rolled
         if self.recon_err_subseq is not None:
