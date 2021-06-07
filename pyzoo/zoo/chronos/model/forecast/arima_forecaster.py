@@ -27,7 +27,7 @@ class ARIMAForecaster(Forecaster):
                  horizon=1,
                  p=2,
                  q=2,
-                 seasonality_mode=True
+                 seasonality_mode=True,
                  P=1,
                  Q=1,
                  m=7,
@@ -62,9 +62,10 @@ class ARIMAForecaster(Forecaster):
             "seasonality_mode": seasonality_mode,
             "P": P,
             "Q": Q,
+            "m": m,
             "metric": metric,
         }
-        self.internal = None
+        self.internal = ARIMAModel()
 
         super().__init__()
 
@@ -81,9 +82,9 @@ class ARIMAForecaster(Forecaster):
         target = target.reshape(-1, 1)
         return self.internal.fit_eval(x=x,
                                       target=target,
-                                      **self.config)
+                                      **self.model_config)
 
-    def _check_data(self, x, y):
+    def _check_data(self, x, target):
         assert x.ndim == 1, \
             "x should be an 1-D array), \
             Got x dimension of {}."\

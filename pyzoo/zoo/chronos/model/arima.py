@@ -60,25 +60,27 @@ class ARIMAModel(BaseModel):
         """
         self.set_params(**config)
         order=(self.p, self.d, self.q)
-        seasonal_order=(self.P, self.D, self.Q, self.m)
+        if self.seasonal == False:
+            seasonal_order=(0, 0, 0, 0)
+        else:
+            seasonal_order=(self.P, self.D, self.Q, self.m)
         self.model = ARIMA(order=order, seasonal_order=seasonal_order, suppress_warnings=True)
         self.model_init = True
 
-    def fit_eval(self, data, **config):
+    def fit_eval(self, x, target, **config):
         """
         Fit on the training data from scratch.
 
-        :param x: training data, an numpy array
+        :param x: training data
+        :param target: evaluation data for evaluation
         :return: the evaluation metric value
         """
-        x = data['x']
-        target = data['val_y']
         
         # Estimating differencing term (d) and seasonal differencing term (D)
         kpss_diffs = ndiffs(x, alpha=0.05, test='kpss', max_d=6)
         adf_diffs = ndiffs(x, alpha=0.05, test='adf', max_d=6)
         d = max(adf_diffs, kpss_diffs)
-        D = nsdiffs(x, m=7, max_D=12)
+        D = 0 if self.seasonal == False else nsdiffs(x, m=7, max_D=12)
         config.update(d=d, D=D)        
 
         if not self.model_init:
