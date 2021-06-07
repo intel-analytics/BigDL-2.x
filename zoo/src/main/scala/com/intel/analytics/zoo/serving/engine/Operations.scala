@@ -14,26 +14,37 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.baseline
+package com.intel.analytics.zoo.serving.engine
 
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import com.intel.analytics.zoo.serving.TestUtils
 import com.intel.analytics.zoo.serving.serialization.JsonInputDeserializer
 import com.intel.analytics.zoo.serving.http.Supportive
 import com.intel.analytics.zoo.serving.http.JsonUtil
 import com.intel.analytics.zoo.serving.http.ServingTimerMetrics
 import org.apache.log4j.Logger
 import com.codahale.metrics.MetricRegistry
-import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import scopt.OptionParser
+
+object TestUtils {
+  /**
+    *
+    */
+  def getStrFromResourceFile(path: String): String = {
+    scala.io.Source.fromFile(path).mkString
+  }
+}
 
 object Operations extends Supportive {
   // initialize the parser
-  case class Config(modelPath: String = null)
+  case class Config(modelPath: String = null, jsonPath: String = null)
   val parser = new OptionParser[Config]("DIEN benchmark test Usage") {
     opt[String]('m', "modelPath")
       .text("Model Path for Test")
       .action((x, params) => params.copy(modelPath = x))
+      .required()
+    opt[String]('j', "jsonPath")
+      .text("Json Format Input Path of Model")
+      .action((x, params) => params.copy(jsonPath = x))
       .required()
   }
 
@@ -42,10 +53,11 @@ object Operations extends Supportive {
     // read the path of model
     val arg = parser.parse(args, Config()).head
     val path = arg.modelPath
+    val jsonPath = arg.jsonPath
 
     // read file from path to String
     // this is a prepared json format input of DIEN recommendation model
-    val string = TestUtils.getStrFromResourceFile("dien_json_str_bs16.json")
+    val string = TestUtils.getStrFromResourceFile(jsonPath)
 
     // decode json string input to activity
     val input = JsonInputDeserializer.deserialize(string)
