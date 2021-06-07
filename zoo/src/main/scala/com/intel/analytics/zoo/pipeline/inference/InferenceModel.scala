@@ -557,7 +557,9 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     })
   }
   private def predict(inputActivity: Activity): Activity = {
-    val model = retrieveModel()
+    val model = timing("retrive model!!!"){
+      retrieveModel()
+    }
     val hashCode = System.identityHashCode(model)
     try {
       val begin = System.nanoTime()
@@ -645,6 +647,8 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
   }
 
   def getOriginalModel: AbstractModel = originalModel
+
+  def getConcurrentNum: Int = concurrentNum
 
   override def toString: String =
     s"InferenceModel($autoScalingEnabled, $concurrentNum, $originalModel, $modelQueue)"

@@ -42,10 +42,7 @@ import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.ImmutableList
-import com.intel.analytics.zoo.serving.http.FrontEndApp.{
-  metrics, overallRequestTimer, purePredictTimersMap,
-  system, timeout, timing, waitRedisTimer, makeActivityTimer, handleResponseTimer
-}
+import com.intel.analytics.zoo.serving.http.FrontEndApp.{handleResponseTimer, makeActivityTimer, metrics, overallRequestTimer, purePredictTimersMap, system, timeout, timing, waitRedisTimer}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.opencv.imgcodecs.Imgcodecs
@@ -54,6 +51,7 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.serving.serialization.StreamSerializer
+import org.slf4j.LoggerFactory
 
 sealed trait ServingMessage
 
@@ -391,7 +389,6 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
     val provider = new DictionaryProvider.MapDictionaryProvider
     val byteArrayOutputStream = new ByteArrayOutputStream()
     val arrowStreamWriter = new ArrowStreamWriter(vectorSchemaRoot, provider, byteArrayOutputStream)
-
     arrowStreamWriter.start()
     for (i <- 0 until tensors.size) {
       val map = tensors(i)
@@ -834,6 +831,7 @@ abstract class Servable(modelMetaData: ModelMetaData) {
 
 class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   extends Servable(inferenceModelMetaData) {
+  val logger = LoggerFactory.getLogger(getClass)
   var model: InferenceModel = _
 
   def load(): Unit = {
@@ -851,6 +849,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
       case "PyTorch" =>
         model.doLoadPyTorch(inferenceModelMetaData.modelPath)
     }
+    logger.info(s"model loaded successfully as $model" )
   }
 
   def predict(inputs: Instances): Seq[PredictionOutput[String]] = {
