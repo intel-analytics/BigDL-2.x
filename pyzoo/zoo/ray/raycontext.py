@@ -17,6 +17,7 @@
 
 import os
 import re
+import uuid
 import random
 import signal
 import warnings
@@ -145,12 +146,12 @@ class RayServiceFuncGenerator(object):
         self.labels = \
             """--resources '{"_mxnet_worker": %s, "_mxnet_server": %s, "_reserved": %s}'""" \
             % (1, 1, 2)
-        base_path = tempfile.gettempdir()  # Temp path for lock and flag files when launching ray.
-        import uuid
-        # Add a unique id to the flag so that it won't affect other programs even if not removed.
-        self.ray_master_flag = os.path.join(base_path, "ray_master_" + uuid.uuid4().hex)
-        self.ray_master_lock = os.path.join(base_path, "ray_master_start.lock")
-        self.raylet_lock = os.path.join(base_path, "raylet_start.lock")
+        # Add a unique id so that different Ray programs won't affect each other even if
+        # the flags and locks are not removed.
+        tag = uuid.uuid4().hex
+        self.ray_master_flag = "ray_master_{}".format(tag)
+        self.ray_master_lock = "ray_master_start_{}.lock".format(tag)
+        self.raylet_lock = "raylet_start_{}.lock".format(tag)
 
     def gen_stop(self):
         def _stop(iter):
@@ -237,14 +238,18 @@ class RayServiceFuncGenerator(object):
             master_ip = redis_address.split(":")[0]
             do_start = True
             process_info = None
+            base_path = tempfile.gettempdir()
+            ray_master_flag_path = os.path.join(base_path, self.ray_master_flag)
             # If there is already a ray master on this node, we need to start one less raylet.
             if current_ip == master_ip:
-                with filelock.FileLock(self.ray_master_lock):
-                    if not os.path.exists(self.ray_master_flag):
+                ray_master_lock_path = os.path.join(base_path, self.ray_master_lock)
+                with filelock.FileLock(ray_master_lock_path):
+                    if not os.path.exists(ray_master_flag_path):
                         os.mknod(self.ray_master_flag)
                         do_start = False
             if do_start:
-                with filelock.FileLock(self.raylet_lock):
+                raylet_lock_path = os.path.join(base_path, self.raylet_lock)
+                with filelock.FileLock(raylet_lock_path):
                     process_info = self._start_ray_node(
                         command=RayServiceFuncGenerator._get_raylet_command(
                             redis_address=redis_address,
@@ -271,25 +276,29 @@ class RayServiceFuncGenerator(object):
             print("master address {}".format(master_ip))
             redis_address = "{}:{}".format(master_ip, self.redis_port)
             process_info = None
+            base_path = tempfile.gettempdir()
+            ray_master_flag_path = os.path.join(base_path, self.ray_master_flag)
             if current_ip == master_ip:  # Start the ray master.
                 # It is possible that multiple executors are on one node. In this case,
                 # the first executor that gets the lock would be the master and it would
                 # create a flag to indicate the master has initialized.
                 # The flag file is removed when ray start processes finish so that this
                 # won't affect other programs.
-                with filelock.FileLock(self.ray_master_lock):
-                    if not os.path.exists(self.ray_master_flag):
+                ray_master_lock_path = os.path.join(base_path, self.ray_master_lock)
+                with filelock.FileLock(ray_master_lock_path):
+                    if not os.path.exists(ray_master_flag_path):
                         print("partition id is : {}".format(tc.partitionId()))
                         process_info = self._start_ray_node(command=self._gen_master_command(),
                                                             tag="ray-master")
                         process_info.master_addr = redis_address
-                        os.mknod(self.ray_master_flag)
+                        os.mknod(ray_master_flag_path)
 
             tc.barrier()
             if not process_info:  # Start raylets.
                 # Add a lock to avoid starting multiple raylets on one node at the same time.
                 # See this issue: https://github.com/ray-project/ray/issues/10154
-                with filelock.FileLock(self.raylet_lock):
+                raylet_lock_path = os.path.join(base_path, self.raylet_lock)
+                with filelock.FileLock(raylet_lock_path):
                     print("partition id is : {}".format(tc.partitionId()))
                     process_info = self._start_ray_node(
                         command=RayServiceFuncGenerator._get_raylet_command(
@@ -303,8 +312,8 @@ class RayServiceFuncGenerator(object):
                         tag="raylet")
                     kill_redundant_log_monitors(redis_address=redis_address)
 
-            if os.path.exists(self.ray_master_flag):
-                os.remove(self.ray_master_flag)
+            if os.path.exists(ray_master_flag_path):
+                os.remove(ray_master_flag_path)
             yield process_info
         return _start_ray_services
 
