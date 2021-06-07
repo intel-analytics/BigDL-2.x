@@ -26,9 +26,6 @@ import com.codahale.metrics.MetricRegistry
 import scopt.OptionParser
 
 object TestUtils {
-  /**
-    *
-    */
   def getStrFromResourceFile(path: String): String = {
     scala.io.Source.fromFile(path).mkString
   }
@@ -69,7 +66,7 @@ object Operations extends Supportive {
       model.doLoadTensorflow(path, "frozenModel")
 
       (0 to 10).foreach(range => {
-        logger.info(s"inference with $threadNumber threads and range $range benchmark test starts.\n")
+        logger.info(s"inference with $threadNumber threads and range $range starts.\n")
         // set timer name
         val preprocessingKey = s"preprocessing.${threadNumber}_thread.${range}_range"
         val postprocessingKey = s"postprocessing.${threadNumber}_thread.${range}_range"
@@ -105,7 +102,10 @@ object Operations extends Supportive {
           })
         })
         // output metrics
-        val servingMetricsList = List(ServingTimerMetrics(preprocessingKey, preprocessingTimer), ServingTimerMetrics(predictKey, predictTimer), ServingTimerMetrics(postprocessingKey, postprocessingTimer))
+        val servingMetricsList = List(
+          ServingTimerMetrics(preprocessingKey, preprocessingTimer),
+          ServingTimerMetrics(predictKey, predictTimer),
+          ServingTimerMetrics(postprocessingKey, postprocessingTimer))
         val jsonMetrics = JsonUtil.toJson(servingMetricsList)
         logger.info(jsonMetrics)
       })
