@@ -432,6 +432,7 @@ class RayContext(object):
                 include_webui=self.include_webui,
                 extra_params=self.extra_params)
         RayContext._active_ray_context = self
+        self.total_cores = self.num_ray_nodes * self.ray_node_cpu_cores
 
     @classmethod
     def get(cls, initialize=True):
@@ -452,8 +453,9 @@ class RayContext(object):
             from zoo.util.utils import get_node_ip
             yield get_node_ip()
 
-        ips = self.sc.range(0, self.num_ray_nodes,
-                            numSlices=self.num_ray_nodes).mapPartitions(info_fn).collect()
+        ips = self.sc.range(0, self.total_cores,
+                            numSlices=self.total_cores).mapPartitions(info_fn).collect()
+        ips = list(set(ips))
         return ips
 
     def stop(self):
@@ -480,9 +482,8 @@ class RayContext(object):
             import ray
             ray.shutdown()
         else:
-            self.sc.range(0,
-                          self.num_ray_nodes,
-                          numSlices=self.num_ray_nodes).mapPartitions(
+            self.sc.range(0, self.total_cores,
+                          numSlices=self.total_cores).mapPartitions(
                 self.ray_service.gen_stop()).collect()
         self.initialized = False
 
