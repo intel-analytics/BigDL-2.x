@@ -33,8 +33,9 @@ if (( $# < 1)); then
 fi
 
 version=$1
-spark_version=$2
-bigdl_artifactId=$3
-spark_profile=$4
+upload=$2
+spark_version=$3
+bigdl_artifactId=$4
+spark_profile=$5
 
-bash ${RUN_SCRIPT_DIR}/release.sh linux ${version} false false -Dspark.version=${spark_version} -Dbigdl.artifactId=${bigdl_artifactId} -P ${spark_profile}
+bash ${RUN_SCRIPT_DIR}/release.sh linux ${version} false ${upload} -Dspark.version=${spark_version} -Dbigdl.artifactId=${bigdl_artifactId} -P ${spark_profile}
