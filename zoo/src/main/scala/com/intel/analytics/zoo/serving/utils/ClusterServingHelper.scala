@@ -68,6 +68,7 @@ class ClusterServingHelper
   var defPath: String = _
   var redisSecureTrustStoreToken: String = ""
 
+
   def parseConfigStrings(): Unit = {
     redisHost = redisUrl.split(":").head.trim
     redisPort = redisUrl.split(":").last.trim.toInt

@@ -28,13 +28,14 @@ import akka.http.scaladsl.server.Directives.{complete, path, _}
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.{MetricRegistry, Timer}
 import com.google.common.util.concurrent.RateLimiter
 import com.intel.analytics.zoo.pipeline.inference.EncryptSupportive
 import com.intel.analytics.zoo.serving.utils.Conventions
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
@@ -56,6 +57,39 @@ object FrontEndApp extends Supportive with EncryptSupportive {
           case None => argumentsParser.failure("miss args, please see the usage info"); null
         }
       }
+
+      val servableManager = new ServableManager
+      timing("load servable manager")() {
+        try servableManager.load(arguments.servableManagerPath)
+        catch {
+          case e: ServableLoadException =>
+            throw e
+          case e =>
+            val exampleYaml =
+              """
+                ---
+                 modelMetaDataList:
+                 - !<ClusterServingMetaData>
+                    modelName: "1"
+                    modelVersion:"1.0"
+                    redisHost: "localhost"
+                    redisPort: "6381"
+                    redisInputQueue: "serving_stream2"
+                    redisOutputQueue: "cluster-serving_serving_stream2:"
+                 - !<InflerenceModelMetaData>
+                    modelName: "1"
+                    modelVersion:"1.0"
+                    modelPath:"/"
+                    modelType:"OpenVINO"
+                    features:
+                      - "a"
+                      - "b"
+              """
+            logger.info("Example Format of Input:" + exampleYaml)
+            throw e
+        }
+      }
+      logger.info("Servable Manager Load Success!")
 
       val rateLimiter: RateLimiter = arguments.tokenBucketEnabled match {
         case true => RateLimiter.create(arguments.tokensPerSecond)
@@ -225,6 +259,104 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               }
             }
           }
+        }~(get & path("models")) {
+          timing("get all model infos")(overallRequestTimer, servablesRetriveTimer) {
+            try {
+              val servables = servableManager.retriveAllServables
+              val metaData = servables.map(e => e.getMetaData)
+              val json = JsonUtil.toJson(metaData)
+              complete(200, json)
+            }
+            catch {
+              case e: ModelNotFoundException =>
+                complete(404, "Model Not Found")
+              case e: ServingRuntimeException =>
+                complete(405, "Serving Runtime Error Err: " + e)
+              case e =>
+                complete(500, "Internal Error: " + e)
+            }
+          }
+        } ~ pathPrefix("models") {
+          concat(
+            (get & path(Segment)) {
+              (modelName) => {
+                timing("get model infos with model name")(overallRequestTimer,
+                  servablesRetriveTimer) {
+                  try {
+                    val servables = servableManager.retriveServables(modelName)
+                    val metaData = servables.map(e => e.getMetaData)
+                    val json = JsonUtil.toJson(metaData)
+                    complete(200, json)
+                  }
+                  catch {
+                    case e: ModelNotFoundException =>
+                      complete(404, "Model Not Found")
+                    case e: ServingRuntimeException =>
+                      complete(405, "Serving Runtime Error Err: " + e)
+                    case e =>
+                      complete(500, "Internal Error: " + e)
+                  }
+                }
+              }
+            } ~ (get & path(Segment / "versions" / Segment)) {
+              (modelName, modelVersion) => {
+                timing("get model info with model name and model version")(overallRequestTimer,
+                  servableRetriveTimer) {
+                  try {
+                    val servables = servableManager.retriveServable(modelName, modelVersion)
+                    val metaData = servables.getMetaData
+                    val json = JsonUtil.toJson(metaData)
+                    complete(200, json)
+                  }
+                  catch {
+                    case e: ModelNotFoundException =>
+                      complete(404, "Model Not Found")
+                    case e: ServingRuntimeException =>
+                      complete(405, "Serving Runtime Error Err: " + e)
+                    case e =>
+                      complete(500, "Internal Error: " + e)
+                  }
+                }
+              }
+            } ~ (post & path(Segment / "versions" / Segment / "predict")
+              & extract(_.request.entity.contentType) & entity(as[String])) {
+              (modelName, modelVersion, contentType, content) => {
+                timing("backend inference timing")(overallRequestTimer, backendInferenceTimer) {
+                  try {
+                    logger.info("model name: " + modelName + ", model version: " + modelVersion)
+                    val servable = timing("retriving servable")(servableRetriveTimer) {
+                      servableManager.retriveServable(modelName, modelVersion)
+                    }
+                    servable match {
+                      case _: ClusterServingServable =>
+                        val result = timing("cluster serving predict")(predictRequestTimer) {
+                          val instances = timing("json deserialization")() {
+                            JsonUtil.fromJson(classOf[Instances], content)
+                          }
+                          val outputs = timing("model predict total")(modelInferenceTimersMap
+                          (modelName)(modelVersion)) {
+                            servable.predict(instances)
+                          }
+                          Predictions(outputs)
+                        }
+                        timing("cluster serving response complete")() {
+                          complete(200, result.toString)
+                        }
+                    }
+                  }
+                  catch {
+                    case e: ModelNotFoundException =>
+                      complete(404, "Model Not Found. Err: " + e.message)
+                    case e: ServingRuntimeException =>
+                      complete(405, "Serving Runtime Error Err: " + e.message)
+                    case e =>
+                      e.printStackTrace()
+                      complete(500, "Internal Error: " + e)
+                  }
+                }
+              }
+            }
+          )
         }
       }
       if (arguments.httpsEnabled) {
@@ -244,10 +376,14 @@ object FrontEndApp extends Supportive with EncryptSupportive {
   val metrics = new MetricRegistry
   val overallRequestTimer = metrics.timer("zoo.serving.request.overall")
   val predictRequestTimer = metrics.timer("zoo.serving.request.predict")
+  val servableRetriveTimer = metrics.timer("zoo.serving.retrive.servable")
+  val servablesRetriveTimer = metrics.timer("zoo.serving.retrive.servables")
+  val backendInferenceTimer = metrics.timer("zoo.serving.backend.inference")
   val putRedisTimer = metrics.timer("zoo.serving.redis.put")
   val getRedisTimer = metrics.timer("zoo.serving.redis.get")
   val waitRedisTimer = metrics.timer("zoo.serving.redis.wait")
   val metricsRequestTimer = metrics.timer("zoo.serving.request.metrics")
+  val modelInferenceTimersMap = new mutable.HashMap[String, mutable.HashMap[String, Timer]]
 
   val jacksonJsonSerializer = new JacksonJsonSerializer()
 
@@ -313,10 +449,13 @@ object FrontEndApp extends Supportive with EncryptSupportive {
     opt[String]('w', "redissTrustStoreToken")
       .action((x, c) => c.copy(redissTrustStoreToken = x))
       .text("rediss trustStore password")
+    opt[String]('z', "servableManagerConfPath")
+      .action((x, c) => c.copy(servableManagerPath = x))
+      .text("servableManagerConfPath")
   }
 
   def defineServerContext(httpsKeyStoreToken: String,
-      httpsKeyStorePath: String): ConnectionContext = {
+                          httpsKeyStorePath: String): ConnectionContext = {
     val token = httpsKeyStoreToken.toCharArray
 
     val keyStore = KeyStore.getInstance("PKCS12")
@@ -339,24 +478,26 @@ object FrontEndApp extends Supportive with EncryptSupportive {
 }
 
 case class FrontEndAppArguments(
-  interface: String = "0.0.0.0",
-  port: Int = 10020,
-  securePort: Int = 10023,
-  redisHost: String = "localhost",
-  redisPort: Int = 6379,
-  redisInputQueue: String = Conventions.SERVING_STREAM_DEFAULT_NAME,
-  redisOutputQueue: String =
-    Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME + ":",
-  parallelism: Int = 1000,
-  timeWindow: Int = 0,
-  countWindow: Int = 56,
-  tokenBucketEnabled: Boolean = false,
-  tokensPerSecond: Int = 100,
-  tokenAcquireTimeout: Int = 100,
-  httpsEnabled: Boolean = false,
-  httpsKeyStorePath: String = null,
-  httpsKeyStoreToken: String = "1234qwer",
-  redisSecureEnabled: Boolean = false,
-  redissTrustStorePath: String = null,
-  redissTrustStoreToken: String = "1234qwer"
-)
+                                 interface: String = "0.0.0.0",
+                                 port: Int = 10020,
+                                 securePort: Int = 10023,
+                                 redisHost: String = "localhost",
+                                 redisPort: Int = 6379,
+                                 redisInputQueue: String = Conventions.SERVING_STREAM_DEFAULT_NAME,
+                                 redisOutputQueue: String =
+                                 Conventions.RESULT_PREFIX + Conventions.SERVING_STREAM_DEFAULT_NAME
+                                   + ":",
+                                 parallelism: Int = 1000,
+                                 timeWindow: Int = 0,
+                                 countWindow: Int = 0,
+                                 tokenBucketEnabled: Boolean = false,
+                                 tokensPerSecond: Int = 100,
+                                 tokenAcquireTimeout: Int = 100,
+                                 httpsEnabled: Boolean = false,
+                                 httpsKeyStorePath: String = null,
+                                 httpsKeyStoreToken: String = "1234qwer",
+                                 redisSecureEnabled: Boolean = false,
+                                 redissTrustStorePath: String = null,
+                                 redissTrustStoreToken: String = "1234qwer",
+                                 servableManagerPath: String = "./servables-conf.yaml"
+                               )

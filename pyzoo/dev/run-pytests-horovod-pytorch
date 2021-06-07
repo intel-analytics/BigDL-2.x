@@ -33,8 +33,8 @@ then
     exit $exit_status_1
 fi
 
-echo "Running zouwu tcmf distributed test"
-python -m pytest -v ../test/zoo/zouwu/model/forecast/test_tcmf_forecaster.py::TestZouwuModelTCMFForecaster::test_forecast_tcmf_distributed
+echo "Running chronos tcmf distributed test"
+python -m pytest -v ../test/zoo/chronos/model/forecast/test_tcmf_forecaster.py::TestChronosModelTCMFForecaster::test_forecast_tcmf_distributed
 exit_status_2=$?
 if [ $exit_status_2 -ne 0 ];
 then

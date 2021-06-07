@@ -26,11 +26,9 @@ from ray.tune import Trainable, Stopper
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model import ModelBuilder
 from zoo.orca.automl import hp
-from zoo.zouwu.feature.identity_transformer import IdentityTransformer
-from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
+from zoo.chronos.feature.identity_transformer import IdentityTransformer
+from zoo.chronos.preprocessing.impute import LastFillImpute, FillZeroImpute
 import pandas as pd
-
-SEARCH_ALG_ALLOWED = ("skopt", "bayesopt", "sigopt")
 
 
 class RayTuneSearchEngine(SearchEngine):
@@ -60,132 +58,83 @@ class RayTuneSearchEngine(SearchEngine):
 
     def compile(self,
                 data,
-                model_create_func,
-                recipe,
+                model_builder,
+                epochs=1,
+                validation_data=None,
+                metric="mse",
+                metric_threshold=None,
+                n_sampling=1,
                 search_space=None,
                 search_alg=None,
                 search_alg_params=None,
                 scheduler=None,
                 scheduler_params=None,
-                feature_transformers=None,
-                mc=False,
-                metric="mse"):
+                mc=False):
         """
         Do necessary preparations for the engine
-        :param data: data dictionary
-               Pandas Dataframe API keys:
-                   "df": dataframe for training
-                   "val_df": (optional) dataframe for validation
-                   "feature_cols": (optional) column name for extra features
-                   "target_col": (optional) column name for target
-               Numpy ndarray API keys:
-                   "x": ndarray for training input
-                   "y": ndarray for training output
-                   "x_val": (optional) ndarray for validation input
-                   "y_val": (optional) ndarray for validation output
-               Note: For Pandas Dataframe API keys, if "feature_cols" or "target_col" is missing,
-                     then feature_transformers is required.
-        :param model_create_func: model creation function
-        :param recipe: search recipe
-        :param search_space: search_space, required if recipe is not provided
-        :param search_alg: str, one of "skopt", "bayesopt" and "sigopt"
+        :param data: data for training
+               Pandas Dataframe:
+                   a Pandas dataframe for training
+               Numpy ndarray:
+                   a tuple in form of (x, y)
+                        x: ndarray for training input
+                        y: ndarray for training output
+        :param model_builder: model creation function
+        :param search_space: a dict for search space
+        :param metric_threshold: a trial will be terminated when metric threshold is met
+        :param n_sampling: number of sampling
+        :param epochs: max epochs for training
+        :param validation_data: data for validation
+               Pandas Dataframe:
+                   a Pandas dataframe for validation
+               Numpy ndarray:
+                   a tuple in form of (x, y)
+                        x: ndarray for validation input
+                        y: ndarray for validation output
+        :param search_space: search_space
+        :param search_alg: str, all supported searcher provided by ray tune
+               (i.e."variant_generator", "random", "ax", "dragonfly", "skopt",
+               "hyperopt", "bayesopt", "bohb", "nevergrad", "optuna", "zoopt" and
+               "sigopt")
         :param search_alg_params: extra parameters for searcher algorithm
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
-        :param feature_transformers: feature transformer instance
         :param mc: if calculate uncertainty
         :param metric: metric name
         """
 
-        # data mode detection
-        assert isinstance(data, dict), 'ERROR: Argument \'data\' should be a dictionary.'
-        data_mode = None  # data_mode can only be 'dataframe' or 'ndarray'
-        data_schema = set(data.keys())
-        if set(["df"]).issubset(data_schema):
-            data_mode = 'dataframe'
-        if set(["x", "y"]).issubset(data_schema):
-            data_mode = 'ndarray'
-        assert data_mode in ['dataframe', 'ndarray'],\
-            'ERROR: Argument \'data\' should fit either \
-                dataframe schema (include \'df\' in keys) or\
-                     ndarray (include \'x\' and \'y\' in keys) schema.'
-
-        # data extract
-        if data_mode == 'dataframe':
-            input_data = data['df']
-            feature_cols = data.get("feature_cols", None)
-            target_col = data.get("target_col", None)
-            validation_data = data.get("val_df", None)
-        else:
-            input_data = {"x": data["x"], "y": data["y"]}
-            if 'val_x' in data.keys():
-                validation_data = {"x": data["val_x"], "y": data["val_y"]}
-            else:
-                validation_data = None
-
         # metric and metric's mode
         self.metric = metric
         self.mode = Evaluator.get_metric_mode(metric)
+        self.num_samples = n_sampling
+        self.stopper = TrialStopper(metric_threshold=metric_threshold,
+                                    epochs=epochs,
+                                    metric=self.metric,
+                                    mode=self.mode)
 
-        # prepare parameters for search engine
-        runtime_params = recipe.runtime_params()
-        self.num_samples = runtime_params['num_samples']
-        stop = dict(runtime_params)
-        del stop['num_samples']
-
-        # temp operation for reward_metric
-        redundant_stop_keys = stop.keys() - {"reward_metric", "training_iteration"}
-        assert len(redundant_stop_keys) == 0, \
-            f"{redundant_stop_keys} is not expected in stop criteria, \
-             only \"reward_metric\", \"training_iteration\" are expected."
-
-        if "reward_metric" in stop.keys():
-            stop[self.metric] = -stop["reward_metric"] if \
-                self.mode == "min" else stop["reward_metric"]
-            del stop["reward_metric"]
-        stop.setdefault("training_iteration", 1)
-
-        self.stopper = TrialStopper(stop=stop, metric=self.metric, mode=self.mode)
-
-        if search_space is None:
-            search_space = recipe.search_space()
         self.search_space = search_space
 
         self._search_alg = RayTuneSearchEngine._set_search_alg(search_alg, search_alg_params,
-                                                               recipe, self.metric, self.mode)
+                                                               self.metric, self.mode)
         self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params,
                                                              self.metric, self.mode)
 
-        if feature_transformers is None and data_mode == 'dataframe':
-            feature_transformers = IdentityTransformer(feature_cols, target_col)
-
-        numpy_format = True if data_mode == 'ndarray' else False
-
-        self.train_func = self._prepare_train_func(input_data=input_data,
-                                                   model_create_func=model_create_func,
-                                                   feature_transformers=feature_transformers,
+        self.train_func = self._prepare_train_func(data=data,
+                                                   model_builder=model_builder,
                                                    validation_data=validation_data,
                                                    metric=metric,
                                                    mc=mc,
-                                                   remote_dir=self.remote_dir,
-                                                   numpy_format=numpy_format
+                                                   remote_dir=self.remote_dir
                                                    )
 
     @staticmethod
-    def _set_search_alg(search_alg, search_alg_params, recipe, metric, mode):
+    def _set_search_alg(search_alg, search_alg_params, metric, mode):
         if search_alg:
             if not isinstance(search_alg, str):
                 raise ValueError(f"search_alg should be of type str."
                                  f" Got {search_alg.__class__.__name__}")
-            search_alg = search_alg.lower()
             if search_alg_params is None:
                 search_alg_params = dict()
-            if search_alg not in SEARCH_ALG_ALLOWED:
-                raise ValueError(f"search_alg must be one of {SEARCH_ALG_ALLOWED}. "
-                                 f"Got: {search_alg}")
-            elif search_alg == "bayesopt":
-                search_alg_params.update({"space": recipe.manual_search_space()})
-
             search_alg_params.update(dict(
                 metric=metric,
                 mode=mode,
@@ -256,8 +205,11 @@ class RayTuneSearchEngine(SearchEngine):
         return [self._make_trial_output(t) for t in best_trials]
 
     def _make_trial_output(self, trial):
+        model_path = os.path.join(trial.logdir, trial.last_result["checkpoint"])
+        if self.remote_dir:
+            get_ckpt_hdfs(self.remote_dir, model_path)
         return TrialOutput(config=trial.config,
-                           model_path=os.path.join(trial.logdir, trial.last_result["checkpoint"]))
+                           model_path=model_path)
 
     @staticmethod
     def _get_best_trial(trial_list, metric, mode):
@@ -301,96 +253,44 @@ class RayTuneSearchEngine(SearchEngine):
         raise Exception("Didn't call reporter...")
 
     @staticmethod
-    def _prepare_train_func(input_data,
-                            model_create_func,
-                            feature_transformers,
+    def _prepare_train_func(data,
+                            model_builder,
                             metric,
                             validation_data=None,
                             mc=False,
                             remote_dir=None,
-                            numpy_format=False,
                             ):
         """
         Prepare the train function for ray tune
-        :param input_data: input data
-        :param model_create_func: model create function
-        :param feature_transformers: feature transformers
+        :param data: input data
+        :param model_builder: model create function
         :param metric: the rewarding metric
         :param validation_data: validation data
         :param mc: if calculate uncertainty
         :param remote_dir: checkpoint will be uploaded to remote_dir in hdfs
-        :param numpy_format: whether input data is of numpy format
 
         :return: the train function
         """
-        numpy_format_id = ray.put(numpy_format)
-        input_data_id = ray.put(input_data)
-        ft_id = ray.put(feature_transformers)
-
-        # validation data processing
-        df_not_empty = isinstance(validation_data, dict) or\
-            (isinstance(validation_data, pd.DataFrame) and not validation_data.empty)
-        df_list_not_empty = isinstance(validation_data, dict) or\
-            (isinstance(validation_data, list) and validation_data
-                and not all([d.empty for d in validation_data]))
-        if validation_data is not None and (df_not_empty or df_list_not_empty):
-            validation_data_id = ray.put(validation_data)
-            is_val_valid = True
-        else:
-            is_val_valid = False
+        data_id = ray.put(data)
+        validation_data_id = ray.put(validation_data)
 
         def train_func(config):
-            numpy_format = ray.get(numpy_format_id)
-
-            if isinstance(model_create_func, ModelBuilder):
-                trial_model = model_create_func.build(config)
-            else:
-                trial_model = model_create_func()
-
-            if not numpy_format:
-                global_ft = ray.get(ft_id)
-                trial_ft = deepcopy(global_ft)
-                imputer = None
-                if "imputation" in config:
-                    if config["imputation"] == "LastFillImpute":
-                        imputer = LastFillImpute()
-                    elif config["imputation"] == "FillZeroImpute":
-                        imputer = FillZeroImpute()
-
-                # handling input
-                global_input_df = ray.get(input_data_id)
-                trial_input_df = deepcopy(global_input_df)
-                if imputer:
-                    trial_input_df = imputer.impute(trial_input_df)
-                config = convert_bayes_configs(config).copy()
-                (x_train, y_train) = trial_ft.fit_transform(trial_input_df, **config)
-
-                # handling validation data
-                validation_data = None
-                if is_val_valid:
-                    global_validation_df = ray.get(validation_data_id)
-                    trial_validation_df = deepcopy(global_validation_df)
-                    validation_data = trial_ft.transform(trial_validation_df)
-            else:
-                train_data = ray.get(input_data_id)
-                x_train, y_train = (train_data["x"], train_data["y"])
-                validation_data = None
-                if is_val_valid:
-                    validation_data = ray.get(validation_data_id)
-                    validation_data = (validation_data["x"], validation_data["y"])
-                trial_ft = None
+            train_data = ray.get(data_id)
+            val_data = ray.get(validation_data_id)
+            config = convert_bayes_configs(config).copy()
+            if not isinstance(model_builder, ModelBuilder):
+                raise ValueError(f"You must input a ModelBuilder instance for model_builder")
+            trial_model = model_builder.build(config)
 
             # no need to call build since it is called the first time fit_eval is called.
             # callbacks = [TuneCallback(tune_reporter)]
             # fit model
             best_reward = None
             for i in range(1, 101):
-                result = trial_model.fit_eval(x_train,
-                                              y_train,
-                                              validation_data=validation_data,
+                result = trial_model.fit_eval(data=train_data,
+                                              validation_data=val_data,
                                               mc=mc,
                                               metric=metric,
-                                              # verbose=1,
                                               **config)
                 reward = result
                 checkpoint_filename = "best.ckpt"
@@ -404,13 +304,10 @@ class RayTuneSearchEngine(SearchEngine):
 
                 if has_best_reward:
                     best_reward = reward
-                    if isinstance(model_create_func, ModelBuilder):
-                        trial_model.save(checkpoint_filename)
-                    else:
-                        save_zip(checkpoint_filename, trial_ft, trial_model, config)
+                    trial_model.save(checkpoint_filename)
                     # Save to hdfs
                     if remote_dir is not None:
-                        upload_ppl_hdfs(remote_dir, checkpoint_filename)
+                        put_ckpt_hdfs(remote_dir, checkpoint_filename)
 
                 report_dict = {"training_iteration": i,
                                metric: reward,
@@ -423,20 +320,20 @@ class RayTuneSearchEngine(SearchEngine):
 
 # stopper
 class TrialStopper(Stopper):
-    def __init__(self, stop, metric, mode):
+    def __init__(self, metric_threshold, epochs, metric, mode):
         self._mode = mode
         self._metric = metric
-        self._stop = stop
+        self._metric_threshold = metric_threshold
+        self._epochs = epochs
 
     def __call__(self, trial_id, result):
-        if self._metric in self._stop.keys():
-            if self._mode == "max" and result[self._metric] >= self._stop[self._metric]:
+        if self._metric_threshold is not None:
+            if self._mode == "max" and result[self._metric] >= self._metric_threshold:
                 return True
-            if self._mode == "min" and result[self._metric] <= self._stop[self._metric]:
+            if self._mode == "min" and result[self._metric] <= self._metric_threshold:
                 return True
-        if "training_iteration" in self._stop.keys():
-            if result["training_iteration"] >= self._stop["training_iteration"]:
-                return True
+        if result["training_iteration"] >= self._epochs:
+            return True
         return False
 
     def stop_all(self):
