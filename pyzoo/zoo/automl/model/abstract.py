@@ -26,7 +26,7 @@ class BaseModel(ABC):
     config = None
 
     @abstractmethod
-    def fit_eval(self, data, validation_data=None):
+    def fit_eval(self, data, validation_data=None, **kwargs):
         """
         optimize and evaluate for one iteration for tuning
         :param data: train data
@@ -56,14 +56,12 @@ class BaseModel(ABC):
         """
         pass
 
-    @abstractmethod
     def _get_required_parameters(self):
         """
         :return: required parameters to be set into config
         """
         return set()
 
-    @abstractmethod
     def _get_optional_parameters(self):
         """
         :return: optional parameters to be set into config
