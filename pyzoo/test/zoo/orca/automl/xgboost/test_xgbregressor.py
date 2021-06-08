@@ -23,6 +23,7 @@ from numpy.testing import assert_array_almost_equal
 
 from zoo.orca.automl.xgboost.XGBoost import XGBoost
 from zoo.chronos.feature.identity_transformer import IdentityTransformer
+import pytest
 
 
 class TestXgbregressor(ZooTestCase):
@@ -71,7 +72,24 @@ class TestXgbregressor(ZooTestCase):
             "predict before is {}, and predict after is {}".format(result_save, result_restore)
         os.remove(model_file)
 
+    def test_metric(self):
+        # metric not in XGB_METRIC_NAME but in Evaluator.metrics_func.keys()
+        self.model.fit_eval(
+            data=(self.x, self.y),
+            validation_data=[(self.val_x, self.val_y)],
+            metric="mse")
+        # metric in XGB_METRIC_NAME
+        self.model.fit_eval(
+            data=(self.x, self.y),
+            validation_data=[(self.val_x, self.val_y)],
+            metric="mlogloss")
+
+        with pytest.raises(ValueError):
+            self.model.fit_eval(
+                data=(self.x, self.y),
+                validation_data=[(self.val_x, self.val_y)],
+                metric="wrong_metric")
+
 
 if __name__ == "__main__":
-    import pytest
     pytest.main([__file__])
