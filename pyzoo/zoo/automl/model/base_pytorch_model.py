@@ -89,7 +89,7 @@ class PytorchBaseModel(BaseModel):
                                   shuffle=True)
         return data_creator
 
-    def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
+    def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric=None,
                  **config):
         """
         :param data: data could be a tuple with numpy ndarray with form (x, y) or a
@@ -107,6 +107,9 @@ class PytorchBaseModel(BaseModel):
         """
         # todo: support input validation data None
         assert validation_data is not None, "You must input validation data!"
+
+        if not metric:
+            raise ValueError("You must input a valid metric value for fit_eval.")
 
         # update config settings
         def update_config():
