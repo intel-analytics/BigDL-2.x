@@ -15,59 +15,56 @@
 #
 import os
 import time
-from matplotlib.pyplot import sca
 
 from torch.utils.data import Dataset, DataLoader
-from sklearn.model_selection import train_test_split
 import torch
 import numpy as np
+import pandas as pd
 import argparse
-import seaborn as sns
 
-from sklearn.preprocessing import StandardScaler
+
 from zoo.chronos.autots.model.auto_lstm import AutoLSTM
 from zoo.orca.automl import hp
 from zoo.orca import init_orca_context, stop_orca_context
 
-
-input_feature_dim = 6
+input_feature_dim = 7
 output_feature_dim = 2
-past_seq_len = 5
+past_seq_len = 9
 future_seq_len = 1
 
 
 def get_random_data(size):
     X = np.random.randn(size, past_seq_len, input_feature_dim)
     y = np.random.randn(size, future_seq_len, output_feature_dim)
-    return np.array(X),np.array(y)
-
-
-def get_data(data_selection='train'):
-    load_data = sns.load_dataset('mpg')
-    dataset = load_data[['displacement', 'horsepower',
-                        'weight', 'acceleration', 'model_year', 'mpg']]
-    _dataset = dataset.loc[~np.isnan(dataset).any(axis=1), :]
-    train_dataset, valid_dataset = train_test_split(
-        _dataset, train_size=0.8, test_size=0.2, shuffle=True)
-    dataset = (train_dataset if data_selection == 'train' else valid_dataset)
-    scaler = StandardScaler()
-    dataset = scaler.fit_transform(dataset)
-    return dataset
+    return np.array(X), np.array(y)
 
 
 class AutoLSTMDataset(Dataset):
 
     def __init__(self, data_selection):
-        self.data = get_data(data_selection)
+        self.data = AutoLSTMDataset.get_data(data_selection)
 
     def __len__(self):
-        return self.data.shape[0] - past_seq_len - future_seq_len - 1
+        return self.data.shape[0] - past_seq_len - future_seq_len + 1
 
     def __getitem__(self, idx):
         X = self.data[idx:idx+past_seq_len, :input_feature_dim]
         y = self.data[idx+past_seq_len:idx+past_seq_len +
                       future_seq_len, -output_feature_dim:]
         return torch.from_numpy(X).float(), torch.from_numpy(y).float()
+
+    @staticmethod
+    def get_data(data_selection):
+        os.system('wget -nc -c -P /tmp https://archive.ics.uci.edu/ml/machine-learning-databases/00235/household_power_consumption.zip')
+        os.system('unzip -n -d ./ /tmp/household_power_consumption.zip')
+        df = pd.read_csv(r'./household_power_consumption.txt', sep=';', header=0, low_memory=False,
+                         infer_datetime_format=True, parse_dates={'datetime': [0, 1]}, index_col=['datetime'], nrows=2000)
+        df.dropna(axis=0, how='any', inplace=True)
+        data = df.astype('float32')
+        train_dataset, valid_dataset = data[:1600], data[1600:]
+        dataset = (train_dataset if data_selection ==
+                   'train' else valid_dataset)
+        return dataset.values
 
 
 def train_dataloader_creator(config):
@@ -102,9 +99,9 @@ def test_fit_np_data(args):
                   n_sampling=args.n_sampling
                   )
     best_model = auto_lstm.get_best_model()
-    best_model_mse = best_model.evaluate(
-        x=get_random_data(1000)[0], y=get_random_data(1000)[1], metrics=['mse'])
-    print(f"Evaluation result is {np.mean(best_model_mse[0][0]):.2f}")
+    best_model_rmse = best_model.evaluate(
+        x=get_random_data(1000)[0], y=get_random_data(1000)[1], metrics=['rmse'])
+    print(f"Evaluation result is {np.mean(best_model_rmse[0][0]):.2f}")
     print(
         f'The hyperparameters of the model include lr:{best_model.config["lr"]}, dropout:{best_model.config["dropout"]}, batch_size:{best_model.config["batch_size"]}')
     best_model_path = '/tmp/Checkpoint/auto_lstm_best_model_' + \
@@ -114,7 +111,7 @@ def test_fit_np_data(args):
     best_model.save(best_model_path)
 
 
-def test_fit_mpg_data(args):
+def test_fit_uci_data(args):
     auto_lstm = AutoLSTM(input_feature_num=input_feature_dim,
                          output_target_num=output_feature_dim,
                          optimizer='Adam',
@@ -135,9 +132,9 @@ def test_fit_mpg_data(args):
                   n_sampling=args.n_sampling,
                   )
     best_model = auto_lstm.get_best_model()
-    best_model_mse = best_model._validate(
-        valid_dataloader_creator(best_model.config), metric='mse')
-    print(f'Evaluation result is {best_model_mse["mse"]:.2f}')
+    best_model_rmse = best_model._validate(
+        valid_dataloader_creator(best_model.config), metric='rmse')
+    print(f'Evaluation result is {best_model_rmse["rmse"]:.2f}')
     print(
         f'The hyperparameters of the model include lr:{best_model.config["lr"]}, dropout:{best_model.config["dropout"]}, batch_size:{best_model.config["batch_size"]}')
 
@@ -171,5 +168,5 @@ if __name__ == '__main__':
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
                       memory=args.memory, num_nodes=num_nodes, init_ray_on_spark=True)
     test_fit_np_data(args)
-    test_fit_mpg_data(args)
+    test_fit_uci_data(args)
     stop_orca_context()

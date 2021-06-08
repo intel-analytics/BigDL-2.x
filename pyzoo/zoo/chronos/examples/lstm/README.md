@@ -11,7 +11,8 @@ pip install torch==1.8.1 ray[tune]==1.2.0 seaborn scikit-learn
 ```
 
 ## Prepare data
-mpg is the data describing the fuel economy of automobiles in the late 1970s and early 1980s. Here, only a few of these characteristics are selected for prediction.
+The data set used in this example is a personal household electricity consumption data set, and in order to save the running time of the example, only the first 2000 pieces of data are used. For more details, please refer to [here](https://archive.ics.uci.edu/ml/datasets/Individual+household+electric+power+consumption)
+
 
 ## Run on local after pip install
 ```
