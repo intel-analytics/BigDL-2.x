@@ -42,7 +42,8 @@ import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.ImmutableList
-import com.intel.analytics.zoo.serving.http.FrontEndApp.{handleResponseTimer, makeActivityTimer, metrics, overallRequestTimer, purePredictTimersMap, system, timeout, timing, waitRedisTimer}
+import com.intel.analytics.zoo.serving.http.FrontEndApp.{handleResponseTimer, makeActivityTimer,
+  metrics, overallRequestTimer, purePredictTimersMap, system, timeout, timing, waitRedisTimer}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.opencv.imgcodecs.Imgcodecs
@@ -216,21 +217,69 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
         })
         tensor
       case _: List[_] =>
+        val dimList = new ArrayBuffer[Int](2)
         val length = eleList.size
         val width = eleList.head.asInstanceOf[List[_]].size
-        val tensor = Tensor[Float](length, width)
-        (1 to eleList.length).foreach(i => {
-          (1 to eleList(i - 1).asInstanceOf[List[_]].length).foreach(
-            j => {
-              val value = eleList(i - 1).asInstanceOf[List[_]](j - 1) match {
-                case num: Int =>
-                  num.toFloat
-                case num: Float =>
-                  num
+        var tmpList = eleList.head.asInstanceOf[List[_]]
+        dimList.append(length)
+        dimList.append(width)
+        var size = length * width
+        while (tmpList.head.isInstanceOf[List[_]]) {
+          tmpList = tmpList.head.asInstanceOf[List[_]]
+          dimList.append(tmpList.size)
+          size *= tmpList.size
+        }
+        val tensor = Tensor[Float](dimList: _*)
+        (1 to size).foreach(i => {
+          dimList.length match {
+            case 2 =>
+              val dimX = (i - 1) / dimList(1)
+              val dimY = (i - 1) % dimList(1)
+              val value = eleList(dimX).asInstanceOf[List[_]](dimY) match{
+                case value : Int => value.toFloat
+                case value : Double => value.toFloat
+                case value : Float => value
               }
-              tensor.setValue(i, j, value)
-            }
-          )
+              tensor.setValue(dimX + 1, dimY + 1, value)
+            case 3 =>
+              val dimX = (i - 1) / (dimList(1) * dimList(2))
+              val dimY = ((i - 1) % (dimList(1) * dimList(2))) / dimList(2)
+              val dimZ = (i - 1) %  dimList(2)
+              val value = eleList(dimX).asInstanceOf[List[_]](dimY).asInstanceOf[List[_]](dimZ)
+              match {
+                case value : Int => value.toFloat
+                case value : Double => value.toFloat
+                case value : Float => value
+              }
+              tensor.setValue(dimX + 1, dimY + 1, dimZ +1, value)
+            case 4 =>
+              val dimX = (i - 1) / (dimList(1) * dimList(2)* dimList(3))
+              val dimY = ((i - 1) % (dimList(1) * dimList(2)* dimList(3))) /
+                (dimList(2) * dimList(3))
+              val dimZ = ((i - 1) % (dimList(2) * dimList(3))) / dimList(3)
+              val dimZA = (i - 1) % dimList(3)
+              val value = eleList(dimX).asInstanceOf[List[_]](dimY).asInstanceOf[List[_]](dimZ)
+                .asInstanceOf[List[_]](dimZA) match{
+                case value : Int => value.toFloat
+                case value : Double => value.toFloat
+                case value : Float => value
+              }
+              tensor.setValue(dimX + 1, dimY + 1, dimZ + 1, dimZA + 1, value)
+            case 5 =>
+              val dimX = (i - 1) / (dimList(1) * dimList(2)* dimList(3) * dimList(4))
+              val dimY = ((i - 1) % (dimList(1) * dimList(2)* dimList(3) * dimList(4))) /
+                (dimList(2)* dimList(3) * dimList(4))
+              val dimZ = ((i - 1) % (dimList(2)* dimList(3) * dimList(4))) / (dimList(3) * dimList(4))
+              val dimZA = ((i - 1) % (dimList(3) * dimList(4))) / dimList(4)
+              val dimZB = (i - 1) % dimList(4)
+              val value = eleList(dimX).asInstanceOf[List[_]](dimY).asInstanceOf[List[_]](dimZ)
+                .asInstanceOf[List[_]](dimZA).asInstanceOf[List[_]](dimZB) match{
+                case value : Int => value.toFloat
+                case value : Double => value.toFloat
+                case value : Float => value
+              }
+              tensor.setValue(dimX + 1, dimY + 1, dimZ + 1, dimZA + 1, dimZB + 1, value)
+          }
         })
         tensor
     }
@@ -850,7 +899,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
       case "PyTorch" =>
         model.doLoadPyTorch(inferenceModelMetaData.modelPath)
     }
-    logger.info(s"model loaded successfully as $model" )
+    logger.info(s"model loaded successfully as $model")
   }
 
   def predict(inputs: Instances): Seq[PredictionOutput[String]] = {
@@ -859,13 +908,13 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
     }
     activities.map(
       activity => {
-        val result = if (isFirstTimePredict){
-          timing("model first predict")(){
+        val result = if (isFirstTimePredict) {
+          timing("model first predict")() {
             isFirstTimePredict = false
             model.doPredict(activity)
           }
-        }else {
-           timing("model predict")(purePredictTimersMap(inferenceModelMetaData.modelName)(
+        } else {
+          timing("model predict")(purePredictTimersMap(inferenceModelMetaData.modelName)(
             inferenceModelMetaData.modelVersion)) {
             model.doPredict(activity)
           }

@@ -58,10 +58,6 @@ object MockMultipleServingHttpClient extends App with Supportive {
 
     val instance = JsonUtil.fromJson(classOf[Instances], content)
     inferenceServable.predict(instance)
-//    val inputTensor = Tensor[Float](3, 5, 5).rand()
-//    val model = new InferenceModel()
-//    model.doLoadCaffe(modelPath, weightPath)
-//    model.doPredict(inputTensor)
 
   }
 
