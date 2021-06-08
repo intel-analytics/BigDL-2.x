@@ -51,7 +51,7 @@ class TestFeature(ZooTestCase):
                                    'values',
                                    'datetime'}
         
-    def gen_global_feature_single_id(self):
+    def test_gen_global_feature_single_id(self):
         dates = pd.date_range('1/1/2019', periods=8)
         data = np.random.randn(8, 3)
         df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
@@ -63,21 +63,24 @@ class TestFeature(ZooTestCase):
         for params in [ComprehensiveFCParameters(),
                        MinimalFCParameters(),
                        EfficientFCParameters()]:
-            output_df = generate_global_features(input_df=df, default_fc_parameters=params)
+            output_df, _ = generate_global_features(input_df=df,
+                                                    column_id="id",
+                                                    column_sort="datetime",
+                                                    default_fc_parameters=params)
 
-            assert "datatime" in output_df.columns
+            assert "datetime" in output_df.columns
             assert "values" in output_df.columns
             assert "A" in output_df.columns
             assert "B" in output_df.columns
             assert "id" in output_df.columns
 
             for col in output_df.columns:
-                if col in ["datatime", "values", "A", "B", "id"]:
+                if col in ["datetime", "values", "A", "B", "id"]:
                     continue
                 assert len(set(output_df[col])) == 1
                 assert output_df[col].isna().sum() == 0
     
-    def gen_global_feature_multi_id(self):
+    def test_gen_global_feature_multi_id(self):
         dates = pd.date_range('1/1/2019', periods=8)
         data = np.random.randn(8, 3)
         df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
@@ -89,16 +92,19 @@ class TestFeature(ZooTestCase):
         for params in [ComprehensiveFCParameters(),
                        MinimalFCParameters(),
                        EfficientFCParameters()]:
-            output_df = generate_global_features(input_df=df, default_fc_parameters=params)
+            output_df, _ = generate_global_features(input_df=df,
+                                                    column_id="id",
+                                                    column_sort="datetime",
+                                                    default_fc_parameters=params)
 
-            assert "datatime" in output_df.columns
+            assert "datetime" in output_df.columns
             assert "values" in output_df.columns
             assert "A" in output_df.columns
             assert "B" in output_df.columns
             assert "id" in output_df.columns
 
             for col in output_df.columns:
-                if col in ["datatime", "values", "A", "B", "id"]:
+                if col in ["datetime", "values", "A", "B", "id"]:
                     continue
                 assert len(set(output_df[output_df["id"]=="00"][col])) == 1
                 assert len(set(output_df[output_df["id"]=="01"][col])) == 1
