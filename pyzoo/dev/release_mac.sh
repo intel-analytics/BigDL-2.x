@@ -16,10 +16,7 @@
 # limitations under the License.
 #
 
-# This is the default script with maven parameters to release analytics-zoo for mac.
-# Note that if the maven parameters to build analytics-zoo need to be changed,
-# make sure to change this file accordingly.
-# If you want to customize the release, please use release.sh and specify maven parameters instead.
+# This is the script to release analytics-zoo for mac with different spark versions.
 
 set -e
 RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
