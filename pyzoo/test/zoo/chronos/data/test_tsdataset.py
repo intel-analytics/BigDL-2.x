@@ -266,10 +266,10 @@ class TestTSDataset(ZooTestCase):
                    RobustScaler(with_centering=False),
                    RobustScaler(with_scaling=False),
                    RobustScaler(quantile_range=(20, 80))]
-        
+
         for scaler in scalers:
             tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
-                                       extra_feature_col=["extra feature"], id_col="id")
+                                           extra_feature_col=["extra feature"], id_col="id")
             tsdata_test = TSDataset.from_pandas(df_test, dt_col="datetime", target_col="value",
                                                 extra_feature_col=["extra feature"], id_col="id")
             tsdata.gen_global_feature(settings="minimal")\

@@ -50,7 +50,7 @@ class TestFeature(ZooTestCase):
                                    'B',
                                    'values',
                                    'datetime'}
-        
+
     def test_gen_global_feature_single_id(self):
         dates = pd.date_range('1/1/2019', periods=8)
         data = np.random.randn(8, 3)
@@ -79,7 +79,7 @@ class TestFeature(ZooTestCase):
                     continue
                 assert len(set(output_df[col])) == 1
                 assert output_df[col].isna().sum() == 0
-    
+
     def test_gen_global_feature_multi_id(self):
         dates = pd.date_range('1/1/2019', periods=8)
         data = np.random.randn(8, 3)
@@ -106,8 +106,7 @@ class TestFeature(ZooTestCase):
             for col in output_df.columns:
                 if col in ["datetime", "values", "A", "B", "id"]:
                     continue
-                assert len(set(output_df[output_df["id"]=="00"][col])) == 1
-                assert len(set(output_df[output_df["id"]=="01"][col])) == 1
-                assert output_df[output_df["id"]=="00"][col].isna().sum() == 0
-                assert output_df[output_df["id"]=="01"][col].isna().sum() == 0
-
+                assert len(set(output_df[output_df["id"] == "00"][col])) == 1
+                assert len(set(output_df[output_df["id"] == "01"][col])) == 1
+                assert output_df[output_df["id"] == "00"][col].isna().sum() == 0
+                assert output_df[output_df["id"] == "01"][col].isna().sum() == 0

@@ -263,12 +263,13 @@ class TSDataset:
             default_fc_parameters = default_params[settings]
         else:
             default_fc_parameters = settings
-        
-        self.df, addtional_feature = generate_global_features(input_df=self.df,
-                                                              column_id=self.id_col,
-                                                              column_sort=self.dt_col,
-                                                              default_fc_parameters=
-                                                              default_fc_parameters)
+
+        self.df,\
+            addtional_feature =\
+            generate_global_features(input_df=self.df,
+                                     column_id=self.id_col,
+                                     column_sort=self.dt_col,
+                                     default_fc_parameters=default_fc_parameters)
 
         self.feature_col += addtional_feature
 
