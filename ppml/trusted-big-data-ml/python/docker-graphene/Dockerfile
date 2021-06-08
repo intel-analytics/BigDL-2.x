@@ -44,7 +44,8 @@ RUN cd /opt && \
     mv spark-${SPARK_VERSION}/python/lib/pyspark.zip spark-${SPARK_VERSION}/python/lib/pyspark.zip.bac && \
     patch spark-${SPARK_VERSION}/python/pyspark/rdd.py /opt/rdd.patch && \
     patch spark-${SPARK_VERSION}/python/pyspark/shuffle.py /opt/shuffle.patch && \
-    zip -r spark-${SPARK_VERSION}/python/lib/pyspark.zip spark-${SPARK_VERSION}/python/pyspark
+    cd spark-${SPARK_VERSION}/python && \
+    zip -r lib/pyspark.zip pyspark
 
 # stage.3 bigdl
 FROM ubuntu:18.04 AS bigdl
