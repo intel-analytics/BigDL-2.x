@@ -151,7 +151,7 @@ class PytorchBaseModel(BaseModel):
         train_stats = {"loss": np.mean(epoch_losses), "last_loss": epoch_losses[-1]}
         val_stats = self._validate(validation_loader, metric=metric)
         self.onnx_model_built = False
-        return val_stats[metric]
+        return val_stats
 
     @staticmethod
     def to_torch(inp):

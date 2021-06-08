@@ -512,7 +512,7 @@ class MTNetKeras(BaseModel):
             result = hist.history.get(self.metrics[0])[-1]
         else:
             result = hist.history.get('val_' + str(self.metrics[0]))[-1]
-        return result
+        return {self.metrics[0]: result}
 
     def evaluate(self, x, y, metrics=['mse']):
         """

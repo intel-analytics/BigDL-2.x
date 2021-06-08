@@ -286,7 +286,7 @@ class RayTuneSearchEngine(SearchEngine):
                                               mc=mc,
                                               metric=metric,
                                               **config)
-                reward = result
+                reward = result[metric]
                 checkpoint_filename = "best.ckpt"
 
                 # Save best reward iteration
@@ -305,9 +305,9 @@ class RayTuneSearchEngine(SearchEngine):
                         put_ckpt_hdfs(remote_dir, checkpoint_filename)
 
                 report_dict = {"training_iteration": i,
-                               metric: reward,
                                "checkpoint": checkpoint_filename,
                                "best_" + metric: best_reward}
+                report_dict.update(result)
                 tune.report(**report_dict)
 
         return train_func

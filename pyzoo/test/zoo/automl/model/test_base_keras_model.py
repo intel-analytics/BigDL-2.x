@@ -50,12 +50,12 @@ class TestBaseKerasModel(TestCase):
         model = modelBuilder_keras.build(config={
             "lr": 1e-2,
             "batch_size": 32,
-            "metric": "mse"
         })
         val_result = model.fit_eval(data=(self.data["x"], self.data["y"]),
                                     validation_data=(self.data["val_x"], self.data["val_y"]),
+                                    metric="mse",
                                     epochs=20)
-        assert val_result is not None
+        assert val_result.get("mse")
 
     def test_uncompiled_model(self):
         def model_creator(config):
@@ -70,10 +70,10 @@ class TestBaseKerasModel(TestCase):
             model = modelBuilder_keras.build(config={
                 "lr": 1e-2,
                 "batch_size": 32,
-                "metric": "mse"
             })
             model.fit_eval(data=(self.data["x"], self.data["y"]),
                            validation_data=(self.data["val_x"], self.data["val_y"]),
+                           metric="mse",
                            epochs=20)
 
     def test_unaligned_metric_value(self):

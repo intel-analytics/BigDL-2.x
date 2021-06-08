@@ -32,7 +32,7 @@ class BaseModel(ABC):
         :param data: train data
         :param validation_data: validation data
 
-        :return:
+        :return: A Dictionary
         """
         raise NotImplementedError
 

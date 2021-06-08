@@ -90,7 +90,7 @@ class TestBasePytorchModel(TestCase):
         val_result = model.fit_eval(data=(self.data["x"], self.data["y"]),
                                     validation_data=(self.data["val_x"], self.data["val_y"]),
                                     epochs=20)
-        assert val_result is not None
+        assert val_result.get(metric_name)
 
     def test_evaluate(self):
         modelBuilder = PytorchModelBuilder(model_creator=model_creator_pytorch,
@@ -176,7 +176,7 @@ class TestBasePytorchModel(TestCase):
         assert model.config["train_size"] == 500
         assert model.config["valid_size"] == 100
         assert model.config["shuffle"] is True
-        assert val_result is not None
+        assert val_result.get(metric_name)
 
 
 if __name__ == "__main__":
