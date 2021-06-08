@@ -1,4 +1,4 @@
-Chronos Forecasters API
+Forecasters
 =====================
 
 chronos.model.forecast.lstm_forecaster
