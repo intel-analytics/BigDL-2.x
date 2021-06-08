@@ -245,7 +245,7 @@ class RayServiceFuncGenerator(object):
                 ray_master_lock_path = os.path.join(base_path, self.ray_master_lock)
                 with filelock.FileLock(ray_master_lock_path):
                     if not os.path.exists(ray_master_flag_path):
-                        os.mknod(self.ray_master_flag)
+                        os.mknod(ray_master_flag_path)
                         do_start = False
             if do_start:
                 raylet_lock_path = os.path.join(base_path, self.raylet_lock)
