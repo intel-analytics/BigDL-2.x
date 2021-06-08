@@ -33,5 +33,8 @@ if (( $# < 1)); then
 fi
 
 version=$1
+spark_version=$2
+bigdl_artifactId=$3
+spark_profile=$4
 
-bash ${RUN_SCRIPT_DIR}/release.sh linux ${version} false true -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.4+
+bash ${RUN_SCRIPT_DIR}/release.sh linux ${version} false true  -Dspark.version=${spark_version} -Dbigdl.artifactId=${bigdl_artifactId} -P ${spark_profile}
