@@ -18,6 +18,8 @@ import pandas as pd
 import numpy as np
 from packaging import version
 
+import tsfresh
+
 
 def _is_awake(hour):
     return (((hour >= 6) & (hour <= 23)) | (hour == 0)).astype(int).values
@@ -66,3 +68,14 @@ def generate_dt_features(input_df, dt_col):
         df[attr + "({})".format(dt_col)] = ADDITIONAL_TIME_FEATURE_WEEKDAY[attr](weekday)
 
     return df
+
+def generate_global_features(input_df, default_fc_parameters, kind_to_fc_parameters=None):
+    '''
+    generate global features by tsfresh.
+    :param input_df: input dataframe.
+    :param default_fc_parameters: same as tsfresh.
+    :param kind_to_fc_parameters: same as tsfresh.
+
+    :return : a new input_df that contains all generated feature.
+    '''
+    pass

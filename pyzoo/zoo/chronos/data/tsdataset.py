@@ -229,10 +229,19 @@ class TSDataset:
         self.feature_col += [attr + "({})".format(self.dt_col) for attr in increased_attrbutes]
         return self
 
-    def gen_global_feature(self):
+    def gen_global_feature(self, settings="comprehensive", feature_col=None, full_settings=None):
         '''
         Generate per-time-series feature for each time series.
         This method will be implemented by tsfresh.
+
+        :param settings: str or dict. If a string is set, then it must be one of "comprehensive"
+               "minimal" and "efficient". If a dict is set then it should follow the instruction
+               for default_fc_parameters in tsfresh. The value is defaulted to "comprehensive".
+        :param feature_col: str or list. It indicates the feature column name that will be used
+               to generate global features. The value is defaulted to None, which means that all
+               current feature col will be used. 
+        :param full_settings: dict. It should follow the instruction for kind_to_fc_parameters in
+               tsfresh. The value is defaulted to None.
         '''
         # call feature gen function in chronos.data.utils.feature on each sub-df.
         raise NotImplementedError("This method has not been implemented!")
