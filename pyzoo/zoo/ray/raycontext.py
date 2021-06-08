@@ -557,15 +557,16 @@ class RayContext(object):
         return self.address_info["redis_address"]
 
     def _start_cluster(self):
-        print("Start to launch ray on cluster")
         ray_rdd = self.sc.range(0, self.num_ray_nodes,
                                 numSlices=self.num_ray_nodes)
         from zoo import ZooContext
         if ZooContext.barrier_mode:
+            print("Launching Ray on cluster with Spark barrier mode")
             # The first ip would be used to launch ray master.
             process_infos = ray_rdd.barrier().mapPartitions(
                 self.ray_service.gen_ray_start(self.cluster_ips[0])).collect()
         else:
+            print("Launching Ray on cluster without Spark barrier mode")
             master_process_infos = ray_rdd.mapPartitionsWithIndex(
                 self.ray_service.gen_ray_master_start()).collect()
             master_process_infos = [process for process in master_process_infos if process]
