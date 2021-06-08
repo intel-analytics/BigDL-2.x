@@ -29,12 +29,12 @@ class TestARIMAModel(ZooTestCase):
     def setup_method(self, method):
         self.seq_len = 1095
         self.config = {
-            "p": np.random.randint(0, 5),
+            "p": np.random.randint(0, 4),
             "q": np.random.randint(0, 5),
             "seasonality_mode": np.random.choice([True, False]),
-            "P": np.random.randint(0, 5),
+            "P": np.random.randint(5, 12),
             "Q": np.random.randint(0, 5),
-            "m": np.random.choice([4, 7, 12, 24, 365]),
+            "m": np.random.choice([4, 7]),
             "metric": "mse",
         }
         self.model = ARIMAModel()
