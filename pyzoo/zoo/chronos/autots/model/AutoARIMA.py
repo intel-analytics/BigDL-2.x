@@ -17,7 +17,7 @@
 #
 
 from zoo.orca.automl.auto_estimator import AutoEstimator
-from zoo.zouwu.model.arima import ARIMABuilder
+from zoo.chronos.model.arima import ARIMABuilder
 
 
 # -
