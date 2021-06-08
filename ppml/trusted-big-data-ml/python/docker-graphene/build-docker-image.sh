@@ -19,7 +19,7 @@ sudo docker build \
     --build-arg HTTPS_PROXY_PORT=$HTTPS_PROXY_PORT \
     --build-arg JDK_VERSION=8u192 \
     --build-arg JDK_URL=$JDK_URL \
-    --build-arg no_proxy=x.x.x.x \
+    --build-arg no_proxy=10.239.45.10 \
     -t intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-python-graphene:0.11-SNAPSHOT -f ./Dockerfile .
 
 sudo docker tag intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-python-graphene:0.11-SNAPSHOT \

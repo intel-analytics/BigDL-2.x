@@ -23,7 +23,9 @@ ARG JDK_VERSION=8u192
 ARG JDK_URL=your_jdk_url
 ENV SPARK_VERSION	${SPARK_VERSION}
 RUN apt-get update --fix-missing && \
-    apt-get install -y apt-utils wget unzip
+    apt-get install -y apt-utils wget unzip patch zip
+ADD rdd.patch /opt/rdd.patch
+ADD shuffle.patch /opt/shuffle.patch
 # java
 RUN wget $JDK_URL && \
     gunzip jdk-$JDK_VERSION-linux-x64.tar.gz && \
@@ -38,7 +40,11 @@ RUN cd /opt && \
     mv spark-${SPARK_VERSION}-bin-hadoop2.7 spark-${SPARK_VERSION} && \
     rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     wget -O spark-network-common_2.11-${SPARK_VERSION}.jar https://master.dl.sourceforge.net/project/analytics-zoo/analytics-zoo-data/spark-network-common_2.11-${SPARK_VERSION}.jar && \
-    mv spark-network-common_2.11-${SPARK_VERSION}.jar spark-${SPARK_VERSION}/jars
+    mv spark-network-common_2.11-${SPARK_VERSION}.jar spark-${SPARK_VERSION}/jars && \
+    mv spark-${SPARK_VERSION}/python/lib/pyspark.zip spark-${SPARK_VERSION}/python/lib/pyspark.zip.bac && \
+    patch spark-${SPARK_VERSION}/python/pyspark/rdd.py /opt/rdd.patch && \
+    patch spark-${SPARK_VERSION}/python/pyspark/shuffle.py /opt/shuffle.patch && \
+    zip -r spark-${SPARK_VERSION}/python/lib/pyspark.zip spark-${SPARK_VERSION}/python/pyspark
 
 # stage.3 bigdl
 FROM ubuntu:18.04 AS bigdl
@@ -144,7 +150,7 @@ RUN apt-get install -y python3-minimal && \
     pip install numpy scipy && \
     pip install --no-binary pandas -I pandas && \
     pip install scikit-learn matplotlib seaborn jupyter wordcloud moviepy requests h5py opencv-python tensorflow==1.15.0 && \
-    pip install torch==1.1.0 torchvision==0.3.0 -f https://download.pytorch.org/whl/torch_stable.html && \
+    pip install torch==1.8.1 torchvision==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html && \
     ln -s /usr/bin/python3 /usr/bin/python && \
     #Fix tornado await process
     pip uninstall -y -q tornado && \
