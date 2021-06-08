@@ -127,7 +127,9 @@ class XGBoost(BaseModel):
         if not self.model_init:
             self._build(**config)
         if validation_data is not None and type(validation_data) is not list:
-            validation_data = [validation_data]
+            eval_set = [validation_data]
+        else:
+            eval_set = validation_data
 
         self.metric = metric or self.metric
         valid_metric_names = XGB_METRIC_NAME | Evaluator.metrics_func.keys()
@@ -140,11 +142,13 @@ class XGBoost(BaseModel):
                              f"are {valid_metric_names}")
 
         if self.metric in XGB_METRIC_NAME:
-            self.model.fit(x, y, eval_set=validation_data, eval_metric=self.metric)
+            self.model.fit(x, y, eval_set=eval_set, eval_metric=self.metric)
             vals = self.model.evals_result_.get("validation_0").get(self.metric)
             return vals[-1]
         else:
-            self.model.fit(x, y, eval_set=validation_data, eval_metric=default_metric)
+            if isinstance(validation_data, list):
+                validation_data = validation_data[0]
+            self.model.fit(x, y, eval_set=eval_set, eval_metric=default_metric)
             eval_result = self.evaluate(
                 validation_data[0],
                 validation_data[1],
@@ -165,9 +169,7 @@ class XGBoost(BaseModel):
             raise Exception("Needs to call fit_eval or restore first before calling predict")
         self.model.n_jobs = self.n_jobs
         out = self.model.predict(x)
-        output_df = pd.DataFrame(out)
-
-        return output_df
+        return out
 
     def evaluate(self, x, y, metrics=['mse']):
         """
@@ -187,9 +189,11 @@ class XGBoost(BaseModel):
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
 
+        if isinstance(y, pd.DataFrame):
+            y = y.values
         self.model.n_jobs = self.n_jobs
         y_pred = self.predict(x)
-        return [Evaluator.evaluate(m, y.values, y_pred.values) for m in metrics]
+        return [Evaluator.evaluate(m, y, y_pred) for m in metrics]
 
     def save(self, checkpoint):
         pickle.dump(self.model, open(checkpoint, "wb"))
