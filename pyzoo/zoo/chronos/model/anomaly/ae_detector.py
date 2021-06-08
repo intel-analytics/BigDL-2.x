@@ -48,7 +48,12 @@ def create_torch_model(compress_rate, input_dim):
 
 class AEDetector(AnomalyDetector):
     """
-    Anomaly Detector based on AutoEncoder
+        Example:
+            >>> #The dataset to detect is y
+            >>> ad =  AEDetector(roll_len=314)
+            >>> ad.fit(y)
+            >>> anomaly_scores = ad.score()
+            >>> anomaly_indexes = ad.anomaly_indexes()
     """
 
     def __init__(self,
@@ -64,10 +69,12 @@ class AEDetector(AnomalyDetector):
         """
         Initialize an AE Anomaly Detector.
         AE Anomaly Detector supports two modes to detect anomalies in input time series.
+
         1. It trains an autoencoder network directly on the input times series and
         calculate anomaly scores based on reconstruction error. For each sample
         in the input, the larger the reconstruction error, the higher the
         anomaly score.
+
         2. It will first roll the input series into a batch of subsequences, each
         with a fixed length (`roll_len`). Then it trains an autoencoder network on
         the batch of subsequences and calculate the reconstruction error. In

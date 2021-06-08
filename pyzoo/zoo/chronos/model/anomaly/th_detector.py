@@ -157,7 +157,13 @@ def detect_anomaly(y,
 
 class ThresholdDetector(AnomalyDetector):
     """
-    Detect anomalies according to threshold
+        Example:
+            >>> #The dataset to detect is y
+            >>> td = ThresholdDetector()
+            >>> td.set_params(threshold=(-1, 1))
+            >>> td.fit(y)
+            >>> anomaly_scores = td.score()
+            >>> anomaly_indexes = td.anomaly_indexes()
     """
 
     def __init__(self):
@@ -202,8 +208,8 @@ class ThresholdDetector(AnomalyDetector):
 
         :param y: the values to detect. shape could be 1-D (num_samples,)
             or 2-D array (num_samples, features)
-        :param y_pred: the estimated values, a tensor with same shape as y,
-        could be None when threshold is a tuple
+        :param y_pred: the estimated values, a tensor with same shape as y
+            could be None when threshold is a tuple
         """
         if y_pred is not None and self.th == math.inf:
             self.th = estimate_th(y,

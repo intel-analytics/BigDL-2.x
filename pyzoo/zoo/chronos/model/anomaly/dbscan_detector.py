@@ -22,7 +22,12 @@ from sklearn.cluster import DBSCAN
 
 class DBScanDetector(AnomalyDetector):
     """
-    Anomaly Detector by DBSCAN outlier detection
+        Example:
+            >>> #The dataset to detect is y
+            >>> ad = DBScanDetector(eps=0.1, min_samples=6)
+            >>> ad.fit(y)
+            >>> anomaly_scores = ad.score()
+            >>> anomaly_indexes = ad.anomaly_indexes()
     """
 
     def __init__(self,
