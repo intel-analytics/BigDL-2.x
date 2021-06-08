@@ -186,7 +186,7 @@ class ARIMABuilder(ModelBuilder):
            https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA
         for the parameter names to specify.
         """
-        from zoo.zouwu.model.arima import ARIMAModel
+        from zoo.chronos.model.arima import ARIMAModel
         model = ARIMAModel(config=self.model_config)
         model._build(**config)
         return model
@@ -196,7 +196,7 @@ class ARIMABuilder(ModelBuilder):
         Build ARIMA Model from checkpoint
         :param checkpoint_filename: model checkpoint filename
         """
-        from zoo.zouwu.model.arima import ARIMAModel
+        from zoo.chronos.model.arima import ARIMAModel
         model = ARIMAModel(config=self.model_config)
         model.restore(checkpoint_filename)
         return model
