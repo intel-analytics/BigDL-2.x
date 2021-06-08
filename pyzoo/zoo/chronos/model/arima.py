@@ -68,14 +68,15 @@ class ARIMAModel(BaseModel):
         self.model = ARIMA(order=order, seasonal_order=seasonal_order, suppress_warnings=True)
         self.model_init = True
 
-    def fit_eval(self, x, target, **config):
+    def fit_eval(self, data, **config):
         """
         Fit on the training data from scratch.
-
-        :param x: training data
-        :param target: evaluation data for evaluation
+        :param data: a dict with data['x'] for training data and
+            data['val_y'] for evaluation adata
         :return: the evaluation metric value
         """
+        x = data['x']
+        target = data['val_y']
         
         # Estimating differencing term (d) and seasonal differencing term (D)
         kpss_diffs = ndiffs(x, alpha=0.05, test='kpss', max_d=6)
