@@ -14,6 +14,8 @@
 #
 
 import pickle
+import types
+
 import pandas as pd
 from xgboost.sklearn import XGBRegressor
 
@@ -64,6 +66,7 @@ class XGBoost(BaseModel):
         self.metric = config.get('metric')
         self.model = None
         self.model_init = False
+        self.config = config
 
     def set_params(self, **config):
         self.n_estimators = config.get('n_estimators', self.n_estimators)
@@ -81,6 +84,7 @@ class XGBoost(BaseModel):
         self.reg_alpha = config.get('reg_alpha', self.reg_alpha)
         self.reg_lambda = config.get('reg_lambda', self.reg_lambda)
         self.verbosity = config.get('verbosity', self.verbosity)
+        self.config.update(config)
 
     def _build(self, **config):
         """
@@ -123,13 +127,17 @@ class XGBoost(BaseModel):
         :param verbose:
         :return: the evaluation metric value
         """
-        x, y = data[0], data[1]
         if not self.model_init:
             self._build(**config)
-        if validation_data is not None and type(validation_data) is not list:
-            eval_set = [validation_data]
-        else:
-            eval_set = validation_data
+
+        data = self._validate_data(data, "data")
+        x, y = data[0], data[1]
+        if validation_data is not None:
+            validation_data = self._validate_data(validation_data, "validation_data")
+            if type(validation_data) is not list:
+                eval_set = [validation_data]
+            else:
+                eval_set = validation_data
 
         self.metric = metric or self.metric
         valid_metric_names = XGB_METRIC_NAME | Evaluator.metrics_func.keys()
@@ -154,6 +162,31 @@ class XGBoost(BaseModel):
                 validation_data[1],
                 metrics=[self.metric])[0]
             return {self.metric: eval_result}
+
+    def _validate_data(self, data, name):
+        import types
+        if isinstance(data, types.FunctionType):
+            data = data(self.config)
+            if not isinstance(data, tuple) or isinstance(data, list):
+                raise ValueError(
+                    f"You must input a data create function which returns a tuple or a list of "
+                    f"(x, y) for {name} in XGBoost. "
+                    f"Your function returns a {data.__class__.__name__} instead")
+            if len(data) != 2:
+                raise ValueError(
+                    f"You must input a data create function which returns a tuple or a list "
+                    f"containing two elements of (x, y) for {name} in XGBoost. "
+                    f"Your data create function returns {len(data)} elements instead")
+
+        if not isinstance(data, tuple) or isinstance(data, list):
+            raise ValueError(
+                f"You must input a tuple or a list of (x, y) for {name} in XGBoost. "
+                f"Got {data.__class__.__name__}")
+        if len(data) != 2:
+            raise ValueError(
+                f"You must input a tuple or a list containing two elements of (x, y). "
+                f"Got {len(data)} elements for {name} in XGBoost")
+        return data
 
     def predict(self, x):
         """
