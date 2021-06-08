@@ -26,9 +26,9 @@ RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
 echo $RUN_SCRIPT_DIR
 
 if (( $# < 1)); then
-  echo "Usage: release_default_linux.sh version"
-  echo "Usage example: bash release_default_linux.sh default"
-  echo "Usage example: bash release_default_linux.sh 0.6.0.dev0"
+  echo "Usage: release_linux.sh version spark_version bigdl_artifactId spark_profile"
+  echo "Usage example: bash release_linux.sh default spark_version bigdl_artifactId spark_profile"
+  echo "Usage example: bash release_linux.sh 0.6.0.dev0 spark_version bigdl_artifactId spark_profile"
   exit -1
 fi
 
@@ -37,4 +37,4 @@ spark_version=$2
 bigdl_artifactId=$3
 spark_profile=$4
 
-bash ${RUN_SCRIPT_DIR}/release.sh linux ${version} false true  -Dspark.version=${spark_version} -Dbigdl.artifactId=${bigdl_artifactId} -P ${spark_profile}
+bash ${RUN_SCRIPT_DIR}/release.sh linux ${version} false true -Dspark.version=${spark_version} -Dbigdl.artifactId=${bigdl_artifactId} -P ${spark_profile}
