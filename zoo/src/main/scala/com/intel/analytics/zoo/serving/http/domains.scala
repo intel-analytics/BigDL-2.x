@@ -833,6 +833,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   extends Servable(inferenceModelMetaData) {
   val logger = LoggerFactory.getLogger(getClass)
   var model: InferenceModel = _
+  var isFirstTimePredict = true
 
   def load(): Unit = {
     model = new InferenceModel(inferenceModelMetaData.modelConCurrentNum)
@@ -856,21 +857,27 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
     val activities = timing("activity make")(makeActivityTimer) {
       inputs.makeActivities(inferenceModelMetaData.features)
     }
-    println("activity:" + activities)
     activities.map(
       activity => {
-        var result = timing("model predict")(purePredictTimersMap(inferenceModelMetaData.modelName)(
-          inferenceModelMetaData.modelVersion)) {
-          model.doPredict(activity)
+        val result = if (isFirstTimePredict){
+          timing("model first predict")(){
+            isFirstTimePredict = false
+            model.doPredict(activity)
+          }
+        }else {
+           timing("model predict")(purePredictTimersMap(inferenceModelMetaData.modelName)(
+            inferenceModelMetaData.modelVersion)) {
+            model.doPredict(activity)
+          }
         }
         timing("handle response")(handleResponseTimer) {
-          val responses = tensorToNdArrayString(result.toTensor[Float])
+          val responses = tensorToString(result.toTensor[Float])
           PredictionOutput[String]("", responses)
         }
       })
   }
 
-  private def tensorToNdArrayString(tensor: Tensor[Float]): String = {
+  private def tensorToString(tensor: Tensor[Float]): String = {
     val outputShape = tensor.size()
     // Share Tensor Storage
     val jTensor = new com.intel.analytics.zoo.pipeline.inference.JTensor(tensor.storage().array(),

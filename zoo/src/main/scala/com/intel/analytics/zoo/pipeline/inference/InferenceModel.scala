@@ -557,9 +557,7 @@ class InferenceModel(private var autoScalingEnabled: Boolean = true,
     })
   }
   private def predict(inputActivity: Activity): Activity = {
-    val model = timing("retrive model!!!"){
-      retrieveModel()
-    }
+    val model = retrieveModel()
     val hashCode = System.identityHashCode(model)
     try {
       val begin = System.nanoTime()
