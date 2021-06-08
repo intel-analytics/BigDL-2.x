@@ -104,7 +104,7 @@ class RayTuneSearchEngine(SearchEngine):
         if metric_mode and not metric:
             metric = DEFAULT_METRIC_NAME
         self.metric = metric
-        self.mode = RayTuneSearchEngine._validate_metric_mode(metric, metric_mode)
+        self.mode = metric_mode
         self.stopper = TrialStopper(metric_threshold=metric_threshold,
                                     epochs=epochs,
                                     metric=self.metric,
@@ -125,18 +125,6 @@ class RayTuneSearchEngine(SearchEngine):
                                                    mc=mc,
                                                    remote_dir=self.remote_dir
                                                    )
-
-    @staticmethod
-    def _validate_metric_mode(metric, mode):
-        if not mode:
-            try:
-                mode = Evaluator.get_metric_mode(metric)
-            except ValueError:
-                raise ValueError(f"We cannot infer metric mode with metric name of {metric}."
-                                 f"Please specify the `metric_mode` parameter.")
-        if mode not in ["min", "max"]:
-            raise ValueError("`mode` has to be one of ['min', 'max']")
-        return mode
 
     @staticmethod
     def _set_search_alg(search_alg, search_alg_params, metric, mode):
