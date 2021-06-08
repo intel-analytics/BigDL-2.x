@@ -64,17 +64,18 @@ class AEDetector(AnomalyDetector):
         """
         Initialize an AE Anomaly Detector.
         AE Anomaly Detector supports two modes to detect anomalies in input time series.
-            1. It trains an autoencoder network directly on the input times series and
-                calculate anomaly scores based on reconstruction error. For each sample
-                in the input, the larger the reconstruction error, the higher the
-                anomaly score.
-            2. It will first roll the input series into a batch of subsequences, each
-                with a fixed length (`roll_len`). Then it trains an autoencoder network on
-                the batch of subsequences and calculate the reconstruction error. In
-                this mode, both the difference of each point in the rolled samples and
-                the subsequence vector are taken into account when calculating the
-                anomaly scores. The final score is an aggregation of the two. You may
-                use `sub_scalef` to control the weights of subsequence errors.
+        1. It trains an autoencoder network directly on the input times series and
+            calculate anomaly scores based on reconstruction error. For each sample
+            in the input, the larger the reconstruction error, the higher the
+            anomaly score.
+        2. It will first roll the input series into a batch of subsequences, each
+            with a fixed length (`roll_len`). Then it trains an autoencoder network on
+            the batch of subsequences and calculate the reconstruction error. In
+            this mode, both the difference of each point in the rolled samples and
+            the subsequence vector are taken into account when calculating the
+            anomaly scores. The final score is an aggregation of the two. You may
+            use `sub_scalef` to control the weights of subsequence errors.
+
         :param roll_len: roll_len the length to roll the input data. Usually we set a length
             that is probably a full or half a cycle. e.g. half a day, one day, etc. Note that
             roll_len must be smaller than the length of the input time series
@@ -113,6 +114,7 @@ class AEDetector(AnomalyDetector):
     def fit(self, y):
         """
         fit the AutoEncoder model to the data
+
         :param y: the input time series
         :return
         """
@@ -172,8 +174,9 @@ class AEDetector(AnomalyDetector):
         """
         gets the anomaly scores for each sample.
         All anomaly scores are positive.
-        If rolled , the anomaly score is calculated by aggregating the reconstruction
+        If rolled, the anomaly score is calculated by aggregating the reconstruction
         errors of each point and subsequence.
+
         :return: the anomaly scores, in an array format with the same size as input
         """
         if self.anomaly_scores_ is None:
@@ -200,6 +203,7 @@ class AEDetector(AnomalyDetector):
         """
         gets the indexes of N samples with the largest anomaly scores in y
         (N = size of input y * AEDetector.ratio)
+
         :return: the indexes of N samples
         """
         if self.anomaly_scores_ is None:

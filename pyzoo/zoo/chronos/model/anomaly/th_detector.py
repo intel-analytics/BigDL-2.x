@@ -30,6 +30,7 @@ class Distance(ABC):
     def abs_dist(self, x, y):
         """
         Calculate the distance between x and y. a and b should be in same shape.
+
         :param x: the first tensor
         :param y: the second tensor
         :return: the absolute distance between x and y
@@ -56,6 +57,7 @@ def estimate_th(y,
                 dist_measure=EuclideanDistance()):
     """
     Estimate the threshold based on y and yhat
+
     :param y: actual values
     :param yhat: predicted values
     :param mode: types of ways to find threshold
@@ -111,19 +113,19 @@ def detect_anomaly(y,
                    th=math.inf,
                    dist_measure=EuclideanDistance()):
     """
-        Detect anomalies. Each sample can have 1 or more dimensions.
-        :param y: the values to detect. shape could be
-                1-D (num_samples,)
-                or 2-D array (num_samples, features)
-        :param yhat: the estimated values, a tensor with same shape as y,
-                could be None when threshold is a tuple
-        :param th: threshold, could be
-            1. a single value -  absolute distance threshold, same for all samples
-            2. a tuple (min, max) - min and max are either int/float or tensors in same shape as y,
-                yhat is ignored in this case
-        :param dist_measure: measure of distance
-        :return: the anomaly values indexes in the samples, i.e. num_samples dimension.
-        """
+    Detect anomalies. Each sample can have 1 or more dimensions.
+
+    :param y: the values to detect. shape could be 1-D (num_samples,)
+        or 2-D array (num_samples, features)
+    :param yhat: the estimated values, a tensor with same shape as y,
+        could be None when threshold is a tuple
+    :param th: threshold, could be
+        1. a single value -  absolute distance threshold, same for all samples
+        2. a tuple (min, max) - min and max are either int/float or tensors in same shape as y,
+        yhat is ignored in this case
+    :param dist_measure: measure of distance
+    :return: the anomaly values indexes in the samples, i.e. num_samples dimension.
+    """
     if isinstance(th, int) or isinstance(th, float):
         if yhat is None:
             raise ValueError("Please specify a threshold range (min,max) ",
@@ -171,6 +173,7 @@ class ThresholdDetector(AnomalyDetector):
                    dist_measure=EuclideanDistance()):
         """
         set parameters for ThresholdDetector
+
         :param mode: mode can be "default" or "gaussian".
             "default" : fit data according to a uniform distribution
             "gaussian": fit data according to a gaussian distribution
@@ -187,6 +190,7 @@ class ThresholdDetector(AnomalyDetector):
     def fit(self, y, y_pred=None):
         """
         fit to the time series
+
         :param y_pred:
         :param y: the input time series
         :return:
@@ -205,6 +209,7 @@ class ThresholdDetector(AnomalyDetector):
     def score(self, y=None, y_pred=None):
         """
         calculate anomaly scores for the input
+
         :param y: new time series to detect anomaly. if y is None, returns anomalies
             in the fit input, y_pred is ignored in this case
         :param y_pred: forecasts corresponding to y

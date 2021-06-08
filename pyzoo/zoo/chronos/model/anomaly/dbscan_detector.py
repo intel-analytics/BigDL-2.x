@@ -36,6 +36,7 @@ class DBScanDetector(AnomalyDetector):
         as -1. It thus detects outliers detection in the input time series.
         (TODO: Direct DBSCAN approach may have high local false positives and false negatives,
         so we also provide window-based mode to alleviate this)
+
         :param eps: The maximum distance between two samples for one to be considered
             as the neighborhood of the other.
             It is a parameter of DBSCAN, refer to sklearn.cluster.DBSCAN docs for more details.
@@ -58,6 +59,7 @@ class DBScanDetector(AnomalyDetector):
     def fit(self, y):
         """
         fit the DBSCAN model to the data
+
         :param y: the input time series. y must be 1-D numpy array.
         :return:
         """
@@ -74,6 +76,7 @@ class DBScanDetector(AnomalyDetector):
         """
         gets the anomaly scores for each sample.
         Each anomaly score is either 0 or 1, where 1 indicates an anomaly.
+
         :return: anomaly score for each sample.
         """
         if self.anomaly_indexes_ is None:
@@ -83,6 +86,7 @@ class DBScanDetector(AnomalyDetector):
     def anomaly_indexes(self):
         """
         gets the indexes of the anomalies.
+
         :return: the indexes of the anomalies.
         """
         if self.anomaly_indexes_ is None:
