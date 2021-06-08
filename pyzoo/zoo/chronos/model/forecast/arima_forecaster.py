@@ -24,7 +24,6 @@ class ARIMAForecaster(Forecaster):
     """
 
     def __init__(self,
-                 horizon=1,
                  p=2,
                  q=2,
                  seasonality_mode=True,
@@ -80,8 +79,8 @@ class ARIMAForecaster(Forecaster):
         self._check_data(x, target)
         x = x.reshape(-1, 1)
         target = target.reshape(-1, 1)
-        return self.internal.fit_eval(x=x,
-                                      target=target,
+        data = {'x': x, 'y': None, 'val_x': None, 'val_y': target}
+        return self.internal.fit_eval(data=data,
                                       **self.model_config)
 
     def _check_data(self, x, target):
@@ -104,17 +103,21 @@ class ARIMAForecaster(Forecaster):
             raise RuntimeError("You must call fit or restore first before calling predict!")
         return self.internal.predict(horizon=horizon)
 
-    def evaluate(self, x, y, metrics=['mse']):
+    def evaluate(self, x, target, metrics=['mse']):
         """
         Evaluate using a trained forecaster.
 
-        :param x: A 1-D numpy array as the training data
+        :param x: We don't support input x currently.
         :param target: A 1-D numpy array as the evaluation data
         :param metrics: A list contains metrics for test/valid data.
         """
+        if x is not None:
+            raise ValueError("We don't support input x currently")
+        if target is None:
+            raise ValueError("Input invalid target of None")
         if self.internal.model is None:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate(x, y, metrics=metrics, multioutput=multioutput)
+        return self.internal.evaluate(x, target, metrics=metrics)
 
     def save(self, checkpoint_file):
         """
