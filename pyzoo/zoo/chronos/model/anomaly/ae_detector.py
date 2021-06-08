@@ -65,16 +65,16 @@ class AEDetector(AnomalyDetector):
         Initialize an AE Anomaly Detector.
         AE Anomaly Detector supports two modes to detect anomalies in input time series.
         1. It trains an autoencoder network directly on the input times series and
-            calculate anomaly scores based on reconstruction error. For each sample
-            in the input, the larger the reconstruction error, the higher the
-            anomaly score.
+        calculate anomaly scores based on reconstruction error. For each sample
+        in the input, the larger the reconstruction error, the higher the
+        anomaly score.
         2. It will first roll the input series into a batch of subsequences, each
-            with a fixed length (`roll_len`). Then it trains an autoencoder network on
-            the batch of subsequences and calculate the reconstruction error. In
-            this mode, both the difference of each point in the rolled samples and
-            the subsequence vector are taken into account when calculating the
-            anomaly scores. The final score is an aggregation of the two. You may
-            use `sub_scalef` to control the weights of subsequence errors.
+        with a fixed length (`roll_len`). Then it trains an autoencoder network on
+        the batch of subsequences and calculate the reconstruction error. In
+        this mode, both the difference of each point in the rolled samples and
+        the subsequence vector are taken into account when calculating the
+        anomaly scores. The final score is an aggregation of the two. You may
+        use `sub_scalef` to control the weights of subsequence errors.
 
         :param roll_len: roll_len the length to roll the input data. Usually we set a length
             that is probably a full or half a cycle. e.g. half a day, one day, etc. Note that
@@ -115,8 +115,7 @@ class AEDetector(AnomalyDetector):
         """
         fit the AutoEncoder model to the data
 
-        :param y: the input time series
-        :return
+        :param y: the input time series. y must be 1-D numpy array.
         """
         self.check_data(y)
         self.anomaly_scores_ = np.zeros_like(y)

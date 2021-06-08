@@ -1,4 +1,4 @@
-Anomaly detectors
+Anomaly Detectors
 =====================
 
 chronos.model.anomaly.ae_detector
@@ -21,5 +21,5 @@ chronos.model.anomaly.th_detector
 ----------------------------------------
 
 .. automodule:: zoo.chronos.model.anomaly.th_detector
-    :members:
+    :members: ThresholdDetector
     :show-inheritance:

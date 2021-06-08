@@ -120,7 +120,9 @@ def detect_anomaly(y,
     :param yhat: the estimated values, a tensor with same shape as y,
         could be None when threshold is a tuple
     :param th: threshold, could be
-        1. a single value -  absolute distance threshold, same for all samples
+
+        1. a single value - absolute distance threshold, same for all samples
+
         2. a tuple (min, max) - min and max are either int/float or tensors in same shape as y,
         yhat is ignored in this case
     :param dist_measure: measure of distance
@@ -159,6 +161,9 @@ class ThresholdDetector(AnomalyDetector):
     """
 
     def __init__(self):
+        """
+        initialize a threshold based anomaly detector
+        """
         self.th = math.inf
         self.ratio = 0.01
         self.dist_measure = EuclideanDistance()
@@ -177,10 +182,14 @@ class ThresholdDetector(AnomalyDetector):
         :param mode: mode can be "default" or "gaussian".
             "default" : fit data according to a uniform distribution
             "gaussian": fit data according to a gaussian distribution
-        :param ratio:
-        :param threshold:
-        :param dist_measure:
-        :return:
+        :param ratio: the ratio of anomaly to consider as anomaly.
+        :param threshold: threshold, could be
+
+            1. a single value - absolute distance threshold, same for all samples
+
+            2. a tuple (min, max) - min and max are either int/float or tensors in same shape as y,
+            yhat is ignored in this case
+        :param dist_measure: measure of distance
         """
         self.ratio = ratio
         self.dist_measure = dist_measure
@@ -191,9 +200,10 @@ class ThresholdDetector(AnomalyDetector):
         """
         fit to the time series
 
-        :param y_pred:
-        :param y: the input time series
-        :return:
+        :param y: the values to detect. shape could be 1-D (num_samples,)
+            or 2-D array (num_samples, features)
+        :param y_pred: the estimated values, a tensor with same shape as y,
+        could be None when threshold is a tuple
         """
         if y_pred is not None and self.th == math.inf:
             self.th = estimate_th(y,
@@ -213,6 +223,7 @@ class ThresholdDetector(AnomalyDetector):
         :param y: new time series to detect anomaly. if y is None, returns anomalies
             in the fit input, y_pred is ignored in this case
         :param y_pred: forecasts corresponding to y
+
         :return: anomaly scores for each input sample in y
         """
         if y is None:
