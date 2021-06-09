@@ -62,7 +62,7 @@ class AutoLSTMDataset(Dataset):
             file = zipfile.ZipFile(io.BytesIO(download_file.content))
             file.extractall(os.path.abspath(os.path.dirname(__file__)))
         df = pd.read_csv(file_path, sep=';', header=0, low_memory=False, na_filter=False,
-                         infer_datetime_format=True, parse_dates={'datetime': [0, 1]}, 
+                         infer_datetime_format=True, parse_dates={'datetime': [0, 1]},
                          index_col=['datetime'], nrows=2000)
         df.dropna(axis=0, how='any', inplace=True)
         data = df.astype('float32')
