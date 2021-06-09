@@ -374,10 +374,10 @@ class TSDataset:
             additional_feature_col = None
             self.roll_feature = feature_col
 
-        num_id = len(self._id_list)
-        num_feature_col = len(self.feature_col)
-        num_target_col = len(self.target_col)
         self.roll_target = target_col
+        num_id = len(self._id_list)
+        num_feature_col = len(self.roll_feature)
+        num_target_col = len(self.roll_target)
         self.id_sensitive = id_sensitive
         roll_feature_df = None if self.roll_feature_df is None else self.roll_feature_df[additional_feature_col]
 
