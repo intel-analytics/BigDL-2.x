@@ -52,16 +52,18 @@ class AutoLSTMDataset(Dataset):
 
     @staticmethod
     def get_data(data_selection):
-        url_path = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00235/household_power_consumption.zip'
-        file_name = url_path.split('/')[-1].rpartition('.')[0] + '.txt'
+        url_base = "https://archive.ics.uci.edu/ml/machine-learning-databases/"
+        url_file_path = "00235/household_power_consumption.zip"
+        file_name = url_file_path.split('/')[-1].rpartition('.')[0] + '.txt'
         file_path = os.path.abspath(
             os.path.dirname(__file__) + '/' + file_name)
         if not os.path.exists(file_path):
-            download_file = requests.get(url_path)
+            download_file = requests.get(url_base + url_file_path)
             file = zipfile.ZipFile(io.BytesIO(download_file.content))
             file.extractall(os.path.abspath(os.path.dirname(__file__)))
         df = pd.read_csv(file_path, sep=';', header=0, low_memory=False, na_filter=False,
-                         infer_datetime_format=True, parse_dates={'datetime': [0, 1]}, index_col=['datetime'], nrows=2000)
+                         infer_datetime_format=True, parse_dates={'datetime': [0, 1]}, 
+                         index_col=['datetime'], nrows=2000)
         df.dropna(axis=0, how='any', inplace=True)
         data = df.astype('float32')
         train_dataset, valid_dataset = data[:1600], data[1600:]
@@ -132,6 +134,7 @@ if __name__ == '__main__':
         valid_dataloader_creator(best_model.config), metric='rmse')
     print(f'Evaluation result is {best_model_rmse["rmse"]:.2f}')
     print(
-        f'The hyperparameters of the model include lr:{best_model.config["lr"]}, dropout:{best_model.config["dropout"]}, batch_size:{best_model.config["batch_size"]}')
+        f"The hyperparameters of the model include lr:{best_model.config['lr']},"
+        "dropout:{best_model.config['dropout']}, batch_size:{best_model.config['batch_size']}")
 
     stop_orca_context()
