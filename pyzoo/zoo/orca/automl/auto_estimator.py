@@ -163,7 +163,7 @@ class AutoEstimator:
             raise RuntimeError(
                 "This AutoEstimator has already been fitted and cannot fit again.")
 
-        AutoEstimator._validate_metric_mode(metric, metric_mode)
+        metric_mode = AutoEstimator._validate_metric_mode(metric, metric_mode)
 
         self.searcher.compile(data=data,
                               model_builder=self.model_builder,
