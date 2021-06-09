@@ -176,7 +176,8 @@ RUN chmod a+x /ppml/trusted-big-data-ml/init.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-master-sgx.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-worker-sgx.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-driver-sgx.sh && \
-    chmod a+x /ppml/trusted-big-data-ml/ppml-spark-submit.sh
+    chmod a+x /ppml/trusted-big-data-ml/ppml-spark-submit.sh && \
     chmod a+x /ppml/trusted-big-data-ml/check-status.sh
+
     
 

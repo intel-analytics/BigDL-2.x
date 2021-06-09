@@ -24,6 +24,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+XGB_METRIC_NAME = {"rmse", "rmsle", "mae", "mape", "mphe", "logloss", "error", "error@t", "merror",
+                   "mlogloss", "auc", "aucpr", "ndcg", "map", "ndcg@n", "map@n", "ndcg-", "map-",
+                   "ndcg@n-", "map@n-", "poisson-nloglik", "gamma-nloglik", "cox-nloglik",
+                   "gamma-deviance", "tweedie-nloglik", "aft-nloglik",
+                   "interval-regression-accuracy"}
+
 
 class XGBoost(BaseModel):
 
@@ -37,6 +43,9 @@ class XGBoost(BaseModel):
         if not config:
             config = {}
 
+        valid_model_type = ('regressor', 'classifier')
+        if model_type not in valid_model_type:
+            raise ValueError(f"model_type must be between {valid_model_type}. Got {model_type}")
         self.model_type = model_type
         self.n_estimators = config.get('n_estimators', 1000)
         self.max_depth = config.get('max_depth', 5)
@@ -52,15 +61,7 @@ class XGBoost(BaseModel):
         self.reg_alpha = config.get('reg_alpha', 0)
         self.reg_lambda = config.get('reg_lambda', 1)
         self.verbosity = config.get('verbosity', 0)
-
-        if 'metric' not in config:
-            if self.model_type == 'regressor':
-                self.metric = 'rmse'
-            elif self.model_type == 'classifier':
-                self.metric = 'logloss'
-        else:
-            self.metric = config['metric']
-
+        self.metric = config.get('metric')
         self.model = None
         self.model_init = False
 
@@ -80,7 +81,6 @@ class XGBoost(BaseModel):
         self.reg_alpha = config.get('reg_alpha', self.reg_alpha)
         self.reg_lambda = config.get('reg_lambda', self.reg_lambda)
         self.verbosity = config.get('verbosity', self.verbosity)
-        self.metric = config.get('metric', self.metric)
 
     def _build(self, **config):
         """
@@ -115,7 +115,7 @@ class XGBoost(BaseModel):
 
         self.model_init = True
 
-    def fit_eval(self, data, validation_data=None, **config):
+    def fit_eval(self, data, validation_data=None, metric=None, **config):
         """
         Fit on the training data from scratch.
         Since the rolling process is very customized in this model,
@@ -127,11 +127,33 @@ class XGBoost(BaseModel):
         if not self.model_init:
             self._build(**config)
         if validation_data is not None and type(validation_data) is not list:
-            validation_data = [validation_data]
+            eval_set = [validation_data]
+        else:
+            eval_set = validation_data
 
-        self.model.fit(x, y, eval_set=validation_data, eval_metric=self.metric)
-        vals = self.model.evals_result_.get("validation_0").get(self.metric)
-        return vals[-1]
+        self.metric = metric or self.metric
+        valid_metric_names = XGB_METRIC_NAME | Evaluator.metrics_func.keys()
+        default_metric = 'rmse' if self.model_type == 'regressor' else 'logloss'
+
+        if not self.metric:
+            self.metric = default_metric
+        elif self.metric not in valid_metric_names:
+            raise ValueError(f"Got invalid metric name of {self.metric} for XGBoost. Valid metrics "
+                             f"are {valid_metric_names}")
+
+        if self.metric in XGB_METRIC_NAME:
+            self.model.fit(x, y, eval_set=eval_set, eval_metric=self.metric)
+            vals = self.model.evals_result_.get("validation_0").get(self.metric)
+            return vals[-1]
+        else:
+            if isinstance(validation_data, list):
+                validation_data = validation_data[0]
+            self.model.fit(x, y, eval_set=eval_set, eval_metric=default_metric)
+            eval_result = self.evaluate(
+                validation_data[0],
+                validation_data[1],
+                metrics=[self.metric])[0]
+            return eval_result
 
     def predict(self, x):
         """
@@ -147,9 +169,7 @@ class XGBoost(BaseModel):
             raise Exception("Needs to call fit_eval or restore first before calling predict")
         self.model.n_jobs = self.n_jobs
         out = self.model.predict(x)
-        output_df = pd.DataFrame(out)
-
-        return output_df
+        return out
 
     def evaluate(self, x, y, metrics=['mse']):
         """
@@ -169,9 +189,11 @@ class XGBoost(BaseModel):
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
 
+        if isinstance(y, pd.DataFrame):
+            y = y.values
         self.model.n_jobs = self.n_jobs
         y_pred = self.predict(x)
-        return [Evaluator.evaluate(m, y.values, y_pred.values) for m in metrics]
+        return [Evaluator.evaluate(m, y, y_pred) for m in metrics]
 
     def save(self, checkpoint):
         pickle.dump(self.model, open(checkpoint, "wb"))
