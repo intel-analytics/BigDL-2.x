@@ -127,7 +127,6 @@ class XGBoost(BaseModel):
         if not self.model_init:
             self._build(**config)
         if validation_data is not None and type(validation_data) is not list:
-<<<<<<< HEAD
             eval_set = [validation_data]
         else:
             eval_set = validation_data
