@@ -50,7 +50,8 @@ class AEDetector(AnomalyDetector):
     """
         Example:
             >>> #The dataset to detect is y
-            >>> ad =  AEDetector(roll_len=314)
+            >>> y = numpy.array(...)
+            >>> ad = AEDetector(roll_len=24)
             >>> ad.fit(y)
             >>> anomaly_scores = ad.score()
             >>> anomaly_indexes = ad.anomaly_indexes()
@@ -70,22 +71,24 @@ class AEDetector(AnomalyDetector):
         Initialize an AE Anomaly Detector.
         AE Anomaly Detector supports two modes to detect anomalies in input time series.
 
-        1. It trains an autoencoder network directly on the input times series and
+        1. direct-mode: It trains an autoencoder network directly on the input times series and
         calculate anomaly scores based on reconstruction error. For each sample
         in the input, the larger the reconstruction error, the higher the
         anomaly score.
 
-        2. It will first roll the input series into a batch of subsequences, each
+        2. window mode: It first rolls the input series into a batch of subsequences, each
         with a fixed length (`roll_len`). Then it trains an autoencoder network on
         the batch of subsequences and calculate the reconstruction error. In
         this mode, both the difference of each point in the rolled samples and
         the subsequence vector are taken into account when calculating the
         anomaly scores. The final score is an aggregation of the two. You may
-        use `sub_scalef` to control the weights of subsequence errors.
+        use `sub_scalef` to control the weights of subsequence errors in the anormaly score calculation.
 
-        :param roll_len: roll_len the length to roll the input data. Usually we set a length
-            that is probably a full or half a cycle. e.g. half a day, one day, etc. Note that
-            roll_len must be smaller than the length of the input time series
+        :param roll_len: the length of window when rolling the input data. If roll_len=0, direct
+            mode is used. If roll_len >0, window mode is used. When setting roll_len, we suggest
+            use a number that is probably a full or half a cycle in your data. e.g. half a day,
+            one day, etc. Note that roll_len must be smaller than the total length of the input
+            time series.
         :param ratio: ratio of anomalies
         :param compress_rate: the compression rate of the autoencoder, changing this value will have
             impact on the reconstruction error it calculated.
@@ -120,7 +123,7 @@ class AEDetector(AnomalyDetector):
 
     def fit(self, y):
         """
-        fit the AutoEncoder model to the data
+        Fit the model.
 
         :param y: the input time series. y must be 1-D numpy array.
         """
@@ -178,8 +181,8 @@ class AEDetector(AnomalyDetector):
 
     def score(self):
         """
-        gets the anomaly scores for each sample.
-        All anomaly scores are positive.
+        Gets the anomaly scores for each sample.
+        All anomaly scores are positive numbers. Samples with larger scores are more likely the anomalies.
         If rolled, the anomaly score is calculated by aggregating the reconstruction
         errors of each point and subsequence.
 
@@ -207,7 +210,7 @@ class AEDetector(AnomalyDetector):
 
     def anomaly_indexes(self):
         """
-        gets the indexes of N samples with the largest anomaly scores in y
+        Gets the indexes of N samples with the largest anomaly scores in y
         (N = size of input y * AEDetector.ratio)
 
         :return: the indexes of N samples

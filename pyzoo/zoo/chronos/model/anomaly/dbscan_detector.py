@@ -24,6 +24,7 @@ class DBScanDetector(AnomalyDetector):
     """
         Example:
             >>> #The dataset to detect is y
+            >>> y = numpy.array(...)
             >>> ad = DBScanDetector(eps=0.1, min_samples=6)
             >>> ad.fit(y)
             >>> anomaly_scores = ad.score()
@@ -36,11 +37,6 @@ class DBScanDetector(AnomalyDetector):
                  **argv):
         """
         Initialize an DBSCAN clustering based Anomaly Detector.
-        It is one of the clustering based unsupervised approach for anomaly detection.
-        DBSCAN tries to cluster the points and label the points that do not belong to any clusters
-        as -1. It thus detects outliers detection in the input time series.
-        (TODO: Direct DBSCAN approach may have high local false positives and false negatives,
-        so we also provide window-based mode to alleviate this)
 
         :param eps: The maximum distance between two samples for one to be considered
             as the neighborhood of the other.
@@ -63,7 +59,7 @@ class DBScanDetector(AnomalyDetector):
 
     def fit(self, y):
         """
-        fit the DBSCAN model to the data
+        Fit the model
 
         :param y: the input time series. y must be 1-D numpy array.
         """
@@ -78,10 +74,10 @@ class DBScanDetector(AnomalyDetector):
 
     def score(self):
         """
-        gets the anomaly scores for each sample.
+        Gets the anomaly scores for each sample.
         Each anomaly score is either 0 or 1, where 1 indicates an anomaly.
 
-        :return: anomaly score for each sample.
+        :return: anomaly score for each sample, in an array format with the same size as input
         """
         if self.anomaly_indexes_ is None:
             raise RuntimeError("Please call fit first")
@@ -89,7 +85,7 @@ class DBScanDetector(AnomalyDetector):
 
     def anomaly_indexes(self):
         """
-        gets the indexes of the anomalies.
+        Gets the indexes of the anomalies.
 
         :return: the indexes of the anomalies.
         """
