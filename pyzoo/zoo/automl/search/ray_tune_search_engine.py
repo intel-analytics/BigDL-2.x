@@ -17,19 +17,13 @@ import warnings
 
 import ray
 from ray import tune
-from copy import deepcopy
-
-from zoo.automl.search.base import *
-from zoo.automl.common.util import *
-from zoo.automl.common.metrics import Evaluator
+import os
+from zoo.automl.search.base import SearchEngine, TrialOutput, GoodError
+from zoo.automl.common.util import get_ckpt_hdfs, put_ckpt_hdfs, convert_bayes_configs
 from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME, DEFAULT_METRIC_NAME
-from ray.tune import Trainable, Stopper
+from ray.tune import Stopper
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model.abstract import ModelBuilder
-from zoo.orca.automl import hp
-from zoo.chronos.feature.identity_transformer import IdentityTransformer
-from zoo.chronos.preprocessing.impute import LastFillImpute, FillZeroImpute
-import pandas as pd
 
 
 class RayTuneSearchEngine(SearchEngine):
@@ -60,10 +54,10 @@ class RayTuneSearchEngine(SearchEngine):
     def compile(self,
                 data,
                 model_builder,
+                metric_mode,
                 epochs=1,
                 validation_data=None,
                 metric=None,
-                metric_mode=None,
                 metric_threshold=None,
                 n_sampling=1,
                 search_space=None,
@@ -99,12 +93,9 @@ class RayTuneSearchEngine(SearchEngine):
         :param scheduler_params: parameters for scheduler
         :param mc: if calculate uncertainty
         """
-
         # metric and metric's mode
-        if metric_mode and not metric:
-            metric = DEFAULT_METRIC_NAME
-        self.metric = metric
-        self.mode = RayTuneSearchEngine._validate_metric_mode(metric, metric_mode)
+        self.metric = metric or DEFAULT_METRIC_NAME
+        self.mode = metric_mode
         self.stopper = TrialStopper(metric_threshold=metric_threshold,
                                     epochs=epochs,
                                     metric=self.metric,
@@ -125,18 +116,6 @@ class RayTuneSearchEngine(SearchEngine):
                                                    mc=mc,
                                                    remote_dir=self.remote_dir
                                                    )
-
-    @staticmethod
-    def _validate_metric_mode(metric, mode):
-        if not mode:
-            try:
-                mode = Evaluator.get_metric_mode(metric)
-            except ValueError:
-                raise ValueError(f"We cannot infer metric mode with metric name of {metric}."
-                                 f"Please specify the `metric_mode` parameter.")
-        if mode not in ["min", "max"]:
-            raise ValueError("`mode` has to be one of ['min', 'max']")
-        return mode
 
     @staticmethod
     def _set_search_alg(search_alg, search_alg_params, metric, mode):
