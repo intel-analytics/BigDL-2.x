@@ -16,10 +16,12 @@
 
 package com.intel.analytics.zoo.serving.engine
 
+import com.codahale.metrics.MetricRegistry
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
+import com.intel.analytics.zoo.serving.http.{JsonUtil, ServingTimerMetrics, Supportive}
 import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
@@ -28,11 +30,12 @@ import org.apache.log4j.Logger
 /**
  * Inference Logic of Cluster Serving
  */
-class ClusterServingInference() {
-  val logger = Logger.getLogger(getClass)
+class ClusterServingInference() extends Supportive{
+  val newLogger = Logger.getLogger(getClass)
   val helper = ClusterServing.helper
   val preProcessing = new PreProcessing()
-  var timer = new Timer()
+  var metrics = new MetricRegistry
+  var timer = metrics.timer("predict")
   var cnt = 0
 
   def singleThreadPipeline(in: List[(String, String, String)]): List[(String, String)] = {
@@ -64,13 +67,13 @@ class ClusterServingInference() {
   }
   def singleThreadInference(in: List[(String, Activity)]): List[(String, String)] = {
     if (cnt > 1000){
-      timer = new Timer()
+      timer = metrics.timer("predict")
       cnt = 0
     }
     cnt += 1
 
     val postProcessed = in.map(pathByte => {
-      timer.timing("predict", 1){
+      timing("predict")(timer){
         try {
           val t = typeCheck(pathByte._2)
           val result = ClusterServing.model.doPredict(t)
@@ -80,13 +83,15 @@ class ClusterServingInference() {
           (pathByte._1, value)
         } catch {
           case e: Exception =>
-            logger.error(s"${e.printStackTrace()}, " +
+            newLogger.error(s"${e.printStackTrace()}, " +
               s"Your input ${pathByte._1} format is invalid to your model, this record is skipped")
             (pathByte._1, "NaN")
         }
       }
     })
-    timer.print()
+    val servingMetrics = ServingTimerMetrics("predict", timer)
+    val jsonMetrics = JsonUtil.toJson(servingMetrics)
+    newLogger.info(jsonMetrics)
     postProcessed
   }
 
@@ -117,7 +122,7 @@ class ClusterServingInference() {
         kvResult
       } catch {
         case e: Exception =>
-          logger.error(s"${e.printStackTrace()}, " +
+          newLogger.error(s"${e.printStackTrace()}, " +
             s"Your input format is invalid to your model, this batch is skipped")
           pathByte.map(x => (x._1, "NaN"))
       }
@@ -151,7 +156,7 @@ class ClusterServingInference() {
         kvResult
       } catch {
         case e: Exception =>
-          logger.error(s"${e.printStackTrace()}, " +
+          newLogger.error(s"${e.printStackTrace()}, " +
             s"Your input format is invalid to your model, this batch is skipped")
           itemBatch.toParArray.map(x => (x._1, "NaN"))
       }
@@ -263,7 +268,7 @@ class ClusterServingInference() {
     } else if (input.isTensor) {
       input.toTensor[Float].addSingletonDimension()
     } else {
-      logger.error("Your input of Inference is neither Table nor Tensor, please check.")
+      newLogger.error("Your input of Inference is neither Table nor Tensor, please check.")
       throw new Error("Your input is invalid, skipped.")
     }
   }
