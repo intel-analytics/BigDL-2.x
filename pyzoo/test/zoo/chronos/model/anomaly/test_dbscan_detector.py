@@ -39,7 +39,7 @@ class TestDBScanDetector(ZooTestCase):
         data[17] -= 3
         return data
 
-    def test_ae_fit_score(self):
+    def test_dbscan_fit_score(self):
         y = self.create_data()
         ad = DBScanDetector(eps=0.1, min_samples=6)
         ad.fit(y)
