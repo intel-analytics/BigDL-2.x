@@ -116,6 +116,7 @@ class AutoEstimator:
             epochs=1,
             validation_data=None,
             metric=None,
+            metric_func=None,
             metric_mode=None,
             metric_threshold=None,
             n_sampling=1,
@@ -141,7 +142,11 @@ class AutoEstimator:
             optimized to the metric_threshold or it has been trained for {epochs} epochs.
         :param validation_data: Validation data. Validation data type should be the same as data.
         :param metric: String. The evaluation metric name to optimize, e.g. "mse"
+        :param metric_func: Customized evaluation metric function. Defaults to be None.
+            The signature should be func(y_true, y_pred), where y_true and y_pred are numpy ndarray.
+            The function should return a float value as evaluation result.
         :param metric_mode: One of ["min", "max"]. "max" means greater metric value is better.
+            You have to specify metric_mode if you use a customized metric function.
             You don't have to specify metric_mode if you use the built-in metric in
             zoo.automl.common.metrics.Evaluator.
         :param metric_threshold: a trial will be terminated when metric threshold is met
