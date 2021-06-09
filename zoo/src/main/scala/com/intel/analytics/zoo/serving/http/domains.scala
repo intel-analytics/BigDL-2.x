@@ -40,10 +40,12 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode, TextNode}
+import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer, JsonNode, ObjectMapper}
 import com.google.common.collect.ImmutableList
-import com.intel.analytics.zoo.serving.http.FrontEndApp.{handleResponseTimer, makeActivityTimer,
-  metrics, overallRequestTimer, purePredictTimersMap, system, timeout, timing, waitRedisTimer}
+import com.intel.analytics.zoo.serving.http.FrontEndApp.{handleResponseTimer, makeActivityTimer, metrics, overallRequestTimer, purePredictTimersMap, system, timeout, timing, waitRedisTimer}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.opencv.imgcodecs.Imgcodecs
@@ -873,6 +875,8 @@ class ServableManager {
 abstract class Servable(modelMetaData: ModelMetaData) {
   def predict(input: Instances): Seq[PredictionOutput[String]]
 
+  def predict(input: String): Seq[PredictionOutput[String]]
+
   def load(): Unit
 
   def getMetaData: ModelMetaData = modelMetaData
@@ -926,6 +930,30 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
       })
   }
 
+  def predict(input: String):Seq[PredictionOutput[String]]={
+    val activities = timing("activity make")(makeActivityTimer){
+      JsonInputDeserializer.deserialize(input)
+    }
+    activities.map(
+      activity => {
+        val result = if (isFirstTimePredict) {
+          timing("model first predict")() {
+            isFirstTimePredict = false
+            model.doPredict(activity)
+          }
+        } else {
+          timing("model predict")(purePredictTimersMap(inferenceModelMetaData.modelName)(
+            inferenceModelMetaData.modelVersion)) {
+            model.doPredict(activity)
+          }
+        }
+        timing("handle response")(handleResponseTimer) {
+          val responses = tensorToString(result.toTensor[Float])
+          PredictionOutput[String]("", responses)
+        }
+      })
+  }
+
   private def tensorToString(tensor: Tensor[Float]): String = {
     val outputShape = tensor.size()
     // Share Tensor Storage
@@ -942,6 +970,7 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
   var redisPutter: ActorRef = _
   var redisGetter: ActorRef = _
   var querierQueue: LinkedBlockingQueue[ActorRef] = _
+
 
   def load(): Unit = {
     val redisPutterName = s"redis-putter-${clusterServingMetaData.modelName}" +
@@ -989,6 +1018,12 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
     }
   }
 
+  def predict(input: String):Seq[PredictionOutput[String]]={
+    val instances = timing("json deserialization")() {
+      JsonUtil.fromJson(classOf[Instances], input)
+    }
+    predict(instances)
+  }
 
   def predict(instances: Instances):
   Seq[PredictionOutput[String]] = {
@@ -1087,4 +1122,72 @@ case class ModelNotFoundException(message: String = null, cause: Throwable = nul
 case class ServableLoadException(message: String = null, cause: Throwable = null)
   extends RuntimeException(message, cause) {
   def this(response: ServingResponse[String]) = this(JsonUtil.toJson(response), null)
+}
+
+
+class JsonInputDeserializer extends JsonDeserializer[Seq[Activity]]{
+  var intBuffer: ArrayBuffer[Int] = null
+  var floatBuffer: ArrayBuffer[Float] = null
+  var stringBuffer: ArrayBuffer[String] = null
+  var shapeBuffer: ArrayBuffer[Int] = null
+  var valueCount: Int = 0
+  var shapeMask: Map[Int, Boolean] = null
+  override def deserialize(p: JsonParser, ctxt: DeserializationContext): Seq[Activity] = {
+    val oc = p.getCodec
+    val node = oc.readTree[JsonNode](p)
+    (1 to node.get("instances").size()).map(i => {
+      val inputsIt = node.get("instances").get(i-1).elements()
+      val tensorBuffer = new ArrayBuffer[Tensor[Float]]()
+      while (inputsIt.hasNext) {
+        initBuffer()
+        parse(inputsIt.next(), 0)
+        if (shapeBuffer.isEmpty) shapeBuffer.append(1)
+        if (!floatBuffer.isEmpty) {
+          tensorBuffer.append(Tensor[Float](floatBuffer.toArray, shapeBuffer.toArray))
+        } else {
+          // add string, string tensor, sparse tensor in the future
+          throw new Error("???")
+        }
+
+      }
+      T.array(tensorBuffer.toArray)
+    })
+  }
+  def parse(node: JsonNode, currentShapeDim: Int): Unit = {
+    if (node.isInstanceOf[ArrayNode]) {
+
+      val iter = node.elements()
+      if (shapeMask.get(currentShapeDim) == None) {
+        shapeBuffer.append(node.size())
+        shapeMask += (currentShapeDim -> true)
+      }
+      while (iter.hasNext) {
+        parse(iter.next(), currentShapeDim + 1)
+      }
+    } else if (node.isInstanceOf[TextNode]) {
+      stringBuffer.append(node.asText())
+    } else if (node.isInstanceOf[ObjectNode]) {
+      // currently used for SparseTensor only maybe
+    } else {
+      // v1: int, float, double would all parse to float
+      floatBuffer.append(node.asDouble().toFloat)
+    }
+
+  }
+  def initBuffer(): Unit = {
+    floatBuffer = new ArrayBuffer[Float]()
+    shapeBuffer = new ArrayBuffer[Int]()
+    stringBuffer = new ArrayBuffer[String]()
+    shapeMask = Map[Int, Boolean]()
+  }
+
+}
+object JsonInputDeserializer {
+  def deserialize(str: String): Seq[Activity] = {
+    val mapper = new ObjectMapper()
+    val module = new SimpleModule()
+    module.addDeserializer(classOf[Seq[Activity]], new JsonInputDeserializer())
+    mapper.registerModule(module)
+    mapper.readValue(str, classOf[Seq[Activity]])
+  }
 }
