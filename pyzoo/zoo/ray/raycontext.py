@@ -213,6 +213,8 @@ class RayServiceFuncGenerator(object):
         if "envs" in self.python_loc:  # conda environment
             python_bin_dir = "/".join(self.python_loc.split("/")[:-1])
             return "{}/python {}/ray".format(python_bin_dir, python_bin_dir)
+        elif self.python_loc == "python_env/bin/python":  # conda yarn archive on the executor
+            return "python_env/bin/python python_env/bin/ray"
         else:  # system environment with ray installed; for example: /usr/local/bin/ray
             return "ray"
 
