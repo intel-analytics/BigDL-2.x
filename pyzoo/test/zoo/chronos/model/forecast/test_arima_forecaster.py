@@ -24,7 +24,7 @@ import pytest
 
 
 def create_data():
-    seq_len = 1095
+    seq_len = 400
     x = np.random.rand(seq_len)
     horizon = np.random.randint(2, 50)
     target = np.random.rand(horizon)
@@ -52,6 +52,9 @@ class TestChronosModelARIMAForecaster(TestCase):
         train_loss = forecaster.fit(data['x'], data['val_y'])
         test_pred = forecaster.predict(len(data['val_y']))
         assert len(test_pred) == len(data['val_y'])
+        # test rolling predict
+        test_rolling_pred = forecaster.predict(len(data['val_y']), rolling=True)
+        assert len(test_rolling_pred) == len(data['val_y'])
         test_mse = forecaster.evaluate(None, data['val_y'])
 
 

@@ -32,7 +32,7 @@ class ARIMAForecaster(Forecaster):
                  p=2,
                  q=2,
                  seasonality_mode=True,
-                 P=1,
+                 P=3,
                  Q=1,
                  m=7,
                  metric="mse",
@@ -98,17 +98,18 @@ class ARIMAForecaster(Forecaster):
             Got target dimension of {}."\
             .format(target.ndim)
         
-    def predict(self, horizon):
+    def predict(self, horizon, rolling=False):
         """
         Predict using a trained forecaster.
 
-        :param x: A 1-D numpy array with length horizon.
+        :param horizon: the number of steps forward to predict
+        :param rolling: whether to use rolling prediction
         """
         if self.internal.model is None:
             raise RuntimeError("You must call fit or restore first before calling predict!")
-        return self.internal.predict(horizon=horizon)
+        return self.internal.predict(horizon=horizon, rolling=rolling)
 
-    def evaluate(self, x, target, metrics=['mse']):
+    def evaluate(self, x, target, metrics=['mse'], rolling=False):
         """
         Evaluate using a trained forecaster.
 
@@ -122,7 +123,7 @@ class ARIMAForecaster(Forecaster):
             raise ValueError("Input invalid target of None")
         if self.internal.model is None:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate(x, target, metrics=metrics)
+        return self.internal.evaluate(x, target, metrics=metrics, rolling=rolling)
 
     def save(self, checkpoint_file):
         """
