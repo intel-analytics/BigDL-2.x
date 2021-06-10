@@ -15,6 +15,7 @@
 
 import json
 import pandas as pd
+import os
 import pickle
 from pmdarima.arima import ARIMA
 from pmdarima.arima import ndiffs
@@ -92,45 +93,44 @@ class ARIMAModel(BaseModel):
         val_metric = self.evaluate(x=None, target=target, metrics=[self.metric])[0].item()
         return val_metric
 
-    def predict(self, x=None, horizon=24):
+    def predict(self, x=None, horizon=24, update=False, rolling=False):
         """
         Predict horizon time-points ahead the input x in fit_eval
         :param x: ARIMA predicts the horizon steps foreward from the training data. 
             So x should be None as it is not used.
         :param horizon: the number of steps forward to predict
+        :param update: whether to update the original model
+        :param rolling: whether to use rolling prediction
         :return: predicted result of length horizon
         """
         if x is not None:
             raise ValueError("x should be None")
+        if update==True and rolling==False:
+            raise Exception("We don't support updating model without rolling prediction currently")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
         
-        forecasts = self.model.predict(n_periods=horizon)
+        if update==False and rolling==False:
+            forecasts = self.model.predict(n_periods=horizon)
+        elif rolling==True:
+            if update==False:
+                self.save("tmp.pkl")
 
+            forecasts = []
+            for step in range(horizon):
+                fc = self.model.predict(n_periods=1).item()
+                forecasts.append(fc)
+
+                # Updates the existing model with a small number of MLE steps for rolling prediction
+                self.model.update(fc)
+
+            if update==False:
+                self.restore("tmp.pkl")
+                os.remove("tmp.pkl")
+                
         return forecasts
     
-    def roll_predict(self, target):
-        """
-        Rolling predict horizon time-points ahead the input x in fit_eval, note that 
-        the model will be updated for rolling prediction
-        :param x: We don't support input x currently.
-        :param target: target for rolling prediction
-        :return: predicted result of length same as target
-        """
-        if self.model is None:
-            raise Exception("Needs to call fit_eval or restore first before calling predict")
-        
-        forecasts = []
-        for new_ob in target:
-            fc = self.model.predict(n_periods=1).item()
-            forecasts.append(fc)
-            
-            # Updates the existing model with a small number of MLE steps for rolling prediction
-            self.model.update(new_ob)
-
-        return forecasts
-    
-    def evaluate(self, x, target, metrics=['mse']):
+    def evaluate(self, x, target, metrics=['mse'], rolling=False):
         """
         Evaluate on the prediction results and y. We predict horizon time-points ahead the input x
         in fit_eval before evaluation, where the horizon length equals the second dimension size of
@@ -139,6 +139,7 @@ class ARIMAModel(BaseModel):
             So x should be None as it is not used.
         :param target: target for evaluation.
         :param metrics: a list of metrics in string format
+        :param rolling: whether to use rolling prediction
         :return: a list of metric evaluation results
         """
         if x is not None:
@@ -148,7 +149,7 @@ class ARIMAModel(BaseModel):
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling evaluate")
     
-        forecasts = self.predict(horizon=len(target))
+        forecasts = self.predict(horizon=len(target), rolling=rolling)
         
         return [Evaluator.evaluate(m, target, forecasts) for m in metrics]
 
@@ -200,5 +201,5 @@ class ARIMABuilder(ModelBuilder):
         """
         from zoo.chronos.model.arima import ARIMAModel
         model = ARIMAModel(config=self.model_config)
-        model.restore(checkpoint_filename)
+        model.eestore(checkpoint_filename)
         return model
