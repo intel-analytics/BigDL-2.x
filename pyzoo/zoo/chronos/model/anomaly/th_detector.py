@@ -171,7 +171,7 @@ class ThresholdDetector(AnomalyDetector):
 
     def __init__(self):
         """
-        initialize a threshold based anomaly detector
+        Initialize a threshold based anomaly detector
         """
         self.th = math.inf
         self.ratio = 0.01

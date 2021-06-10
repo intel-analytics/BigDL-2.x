@@ -82,7 +82,8 @@ class AEDetector(AnomalyDetector):
         this mode, both the difference of each point in the rolled samples and
         the subsequence vector are taken into account when calculating the
         anomaly scores. The final score is an aggregation of the two. You may
-        use `sub_scalef` to control the weights of subsequence errors in the anormaly score calculation.
+        use `sub_scalef` to control the weights of subsequence errors in the anormaly score
+        calculation.
 
         :param roll_len: the length of window when rolling the input data. If roll_len=0, direct
             mode is used. If roll_len >0, window mode is used. When setting roll_len, we suggest
@@ -182,7 +183,8 @@ class AEDetector(AnomalyDetector):
     def score(self):
         """
         Gets the anomaly scores for each sample.
-        All anomaly scores are positive numbers. Samples with larger scores are more likely the anomalies.
+        All anomaly scores are positive numbers. Samples with larger scores are more
+        likely the anomalies.
         If rolled, the anomaly score is calculated by aggregating the reconstruction
         errors of each point and subsequence.
 
