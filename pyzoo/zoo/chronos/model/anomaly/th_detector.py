@@ -158,10 +158,13 @@ def detect_anomaly(y,
 class ThresholdDetector(AnomalyDetector):
     """
         Example:
-            >>> #The dataset to detect is y
+            >>> #The dataset is split into x_train, x_test, y_train, y_test
+            >>> forecaster = Forecaster(...)
+            >>> forecaster.fit(x=x_train, y=y_train, ...)
+            >>> y_pred = forecaster.predict(x_test)
             >>> td = ThresholdDetector()
-            >>> td.set_params(threshold=(-1, 1))
-            >>> td.fit(y)
+            >>> td.set_params(threshold=10)
+            >>> td.fit(y_test, y_pred)
             >>> anomaly_scores = td.score()
             >>> anomaly_indexes = td.anomaly_indexes()
     """
@@ -183,7 +186,7 @@ class ThresholdDetector(AnomalyDetector):
                    threshold=math.inf,
                    dist_measure=EuclideanDistance()):
         """
-        set parameters for ThresholdDetector
+        Set parameters for ThresholdDetector
 
         :param mode: mode can be "default" or "gaussian".
             "default" : fit data according to a uniform distribution
@@ -204,7 +207,7 @@ class ThresholdDetector(AnomalyDetector):
 
     def fit(self, y, y_pred=None):
         """
-        fit to the time series
+        Fit the model
 
         :param y: the values to detect. shape could be 1-D (num_samples,)
             or 2-D array (num_samples, features)
@@ -224,7 +227,7 @@ class ThresholdDetector(AnomalyDetector):
 
     def score(self, y=None, y_pred=None):
         """
-        calculate anomaly scores for the input
+        Gets the anomaly scores for each sample.
 
         :param y: new time series to detect anomaly. if y is None, returns anomalies
             in the fit input, y_pred is ignored in this case
@@ -244,7 +247,8 @@ class ThresholdDetector(AnomalyDetector):
 
     def anomaly_indexes(self):
         """
-        gets the indexes of the anomalies.
+        Gets the indexes of the anomalies.
+
         :return: the indexes of the anomalies.
         """
         if self.anomaly_indexes_ is None:
