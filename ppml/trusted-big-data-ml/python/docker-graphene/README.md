@@ -50,7 +50,7 @@ Before running the following command, please modify the paths in `build-docker-i
 
 
 
-## Run Native Python Examples
+## Run as Spark Local Mode
 
 #### 1. Start the container to run spark applications in spark local mode
 
@@ -63,7 +63,7 @@ cd /ppml/trusted-big-data-ml
 ./init.sh
 ```
 
- #### 2. Run five native python examples
+ #### 2. Run native python examples
 
 ##### Example 1: `helloworld.py`
 
@@ -207,7 +207,7 @@ The result should be similar to
 
 
 
-## Run Spark Standalne Examples
+## Run as Spark Standalone Mode
 
 #### 1. Start the container to run spark applications in spark standalone mode
 
@@ -229,7 +229,7 @@ cd /ppml/trusted-big-data-ml
 ./init.sh
 ```
 
-#### 2. Run two pyspark examples
+#### 2. Run pyspark examples
 
 ##### Example1: `pi.py`
 
