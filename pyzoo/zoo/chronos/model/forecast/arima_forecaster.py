@@ -21,6 +21,11 @@ from zoo.chronos.model.arima import ARIMAModel
 class ARIMAForecaster(Forecaster):
     """
     ARIMA Forecaster
+    AutoRegressive Integrated Moving Average (ARIMA) is a class of statistical models
+    for analyzing and forecasting time series data. It consists of 3 components:
+    AR (AutoRegressive), I (Integrated) and MA (Moving Average). Here we implement SARIMA
+    (Seasonal ARIMA), which is an extension of ARIMA that additionally supports the direct
+    modeling of the seasonal component of the time series.
     """
 
     def __init__(self,
