@@ -134,12 +134,13 @@ SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
 Then check the output with the following command.
 
 ```bash
+cat result.txt
 
 ```
 
 The result should be
 
->
+>[('Labrador retriever', 41.585174560546875), ('golden retriever', 16.591665267944336), ('Saluki, gazelle hound', 16.286867141723633), ('whippet', 2.8539085388183594), ('Ibizan hound, Ibizan Podenco', 2.392474889755249)]
 
 
 
@@ -163,18 +164,19 @@ SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
 	/ppml/trusted-big-data-ml/work/examples/tensorflow-lite/label_image \
 	-m /ppml/trusted-big-data-ml/work/examples/tensorflow-lite/inception_v3.tflite \
 	-i /ppml/trusted-big-data-ml/work/examples/tensorflow-lite/image.bmp \
-	-l /ppml/trusted-big-data-ml/work/examples/tensorflow-lite/labels.txt" | tee test-pytorch-sgx.log
+	-l /ppml/trusted-big-data-ml/work/examples/tensorflow-lite/labels.txt" | tee test-tflite-sgx.log
 ```
 
 Then check the output with the following command.
 
 ```bash
+cat test-tflite-sgx.log | egrep "military"
 
 ```
 
 The result should be
 
->
+>0.699143: 653 military uniform
 
 
 
@@ -193,12 +195,15 @@ SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
 Then check the output with the following command.
 
 ```bash
+cat test-tf-sgx.log | egrep "accuracy"
 
 ```
 
 The result should be similar to
 
+>test accuracy 0.78357
 >
+>training data accuracy 0.92361
 
 
 
@@ -277,6 +282,7 @@ cat test-wordcount-sgx.log | egrep "print"
 The result should be similar to
 
 > print("Hello: 1
+>
 > print(sys.path);: 1
 
 
@@ -305,11 +311,18 @@ cat test-sql-basic-sgx.log | egrep "Justin"
 The result should be similar to
 
 > | 19|  Justin|
+>
 > |  Justin| 
+>
 > |  Justin|       20|
+>
 > | 19|  Justin|
+>
 > | 19|  Justin|
+>
 > | 19|  Justin|
+>
 > Name: Justin
+>
 > |  Justin|
 
