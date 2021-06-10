@@ -135,7 +135,8 @@ class ARIMAModel(BaseModel):
         Evaluate on the prediction results and y. We predict horizon time-points ahead the input x
         in fit_eval before evaluation, where the horizon length equals the second dimension size of
         y.
-        :param x: We don't support input x currently.
+        :param x: ARIMA predicts the horizon steps foreward from the training data.
+            So x should be None as it is not used.
         :param target: target for evaluation.
         :param metrics: a list of metrics in string format
         :return: a list of metric evaluation results
@@ -173,7 +174,7 @@ class ARIMABuilder(ModelBuilder):
 
     def __init__(self, **arima_config):
         """
-        Initialize ARIMA Model
+        Initialize ARIMA Model Builder
         :param ARIMA_config: Other ARIMA hyperparameters. You may refer to
            https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA
         for the parameter names to specify.
