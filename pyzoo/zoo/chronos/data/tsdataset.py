@@ -260,9 +260,9 @@ class TSDataset:
             self.df,\
                 addtional_feature =\
                 generate_global_features(input_df=self.df,
-                                        column_id=self.id_col,
-                                        column_sort=self.dt_col,
-                                        kind_to_fc_parameters=full_settings)
+                                         column_id=self.id_col,
+                                         column_sort=self.dt_col,
+                                         kind_to_fc_parameters=full_settings)
             self.feature_col += addtional_feature
             return self
 
