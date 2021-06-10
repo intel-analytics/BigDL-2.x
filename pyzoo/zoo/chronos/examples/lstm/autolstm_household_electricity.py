@@ -51,7 +51,7 @@ class AutoLSTMDataset(Dataset):
         url_file_path = "00235/household_power_consumption.zip"
         file_name = url_file_path.split('/')[-1].rpartition('.')[0] + '.txt'
         file_path = os.path.abspath(
-            os.path.dirname(__file__))+ '/' + file_name
+            os.path.dirname(__file__)) + '/' + file_name
         if not os.path.exists(file_path):
             download_file = requests.get(url_base + url_file_path)
             file = zipfile.ZipFile(io.BytesIO(download_file.content))
