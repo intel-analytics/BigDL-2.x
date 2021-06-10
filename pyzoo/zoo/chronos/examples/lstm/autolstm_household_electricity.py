@@ -14,14 +14,12 @@
 # limitations under the License.
 #
 import os
-import time
 import requests
 import zipfile
 import io
 
 from torch.utils.data import Dataset, DataLoader
 import torch
-import numpy as np
 import pandas as pd
 import argparse
 
@@ -30,24 +28,21 @@ from zoo.chronos.autots.model.auto_lstm import AutoLSTM
 from zoo.orca.automl import hp
 from zoo.orca import init_orca_context, stop_orca_context
 
-input_feature_dim = 7
-output_feature_dim = 2
-past_seq_len = 9
-future_seq_len = 1
-
 
 class AutoLSTMDataset(Dataset):
 
-    def __init__(self, data_selection):
+    def __init__(self, data_selection, past_seq_len=9, future_seq_len=1):
         self.data = AutoLSTMDataset.get_data(data_selection)
+        self.past_seq_len = past_seq_len
+        self.future_seq_len = future_seq_len
 
     def __len__(self):
-        return self.data.shape[0] - past_seq_len - future_seq_len + 1
+        return self.data.shape[0] - self.past_seq_len - self.future_seq_len + 1
 
     def __getitem__(self, idx):
-        X = self.data[idx:idx+past_seq_len, :input_feature_dim]
-        y = self.data[idx+past_seq_len:idx+past_seq_len +
-                      future_seq_len, -output_feature_dim:]
+        X = self.data[idx:idx+self.past_seq_len, :input_feature_dim]
+        y = self.data[idx+self.past_seq_len:idx+self.past_seq_len +
+                      self.future_seq_len, -output_feature_dim:]
         return torch.from_numpy(X).float(), torch.from_numpy(y).float()
 
     @staticmethod
@@ -56,7 +51,7 @@ class AutoLSTMDataset(Dataset):
         url_file_path = "00235/household_power_consumption.zip"
         file_name = url_file_path.split('/')[-1].rpartition('.')[0] + '.txt'
         file_path = os.path.abspath(
-            os.path.dirname(__file__) + '/' + file_name)
+            os.path.dirname(__file__))+ '/' + file_name
         if not os.path.exists(file_path):
             download_file = requests.get(url_base + url_file_path)
             file = zipfile.ZipFile(io.BytesIO(download_file.content))
@@ -111,8 +106,11 @@ if __name__ == '__main__':
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
                       memory=args.memory, num_nodes=num_nodes, init_ray_on_spark=True)
 
-    auto_lstm = AutoLSTM(input_feature_num=input_feature_dim,
-                         output_target_num=output_feature_dim,
+    input_feature_dim = 7
+    output_feature_dim = 2
+
+    auto_lstm = AutoLSTM(input_feature_num=7,
+                         output_target_num=2,
                          optimizer='Adam',
                          loss=torch.nn.MSELoss(),
                          metric="mse",

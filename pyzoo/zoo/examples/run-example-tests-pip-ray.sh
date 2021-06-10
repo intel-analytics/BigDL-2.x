@@ -105,6 +105,9 @@ time10=$?
 execute_ray_test autoecastimator-pytorch "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoestimator/autoestimator_pytorch.py --trials 5 --epochs 2"
 time11=$?
 
+execute_ray_test autolstm_household_electricity "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/autolstm_household_electricity.py"
+time12=$?
+
 echo "#1 rl_pong time used:$time1 seconds"
 echo "#2 sync_parameter_server time used:$time2 seconds"
 echo "#3 async_parameter_server time used:$time3 seconds"
@@ -116,5 +119,6 @@ echo "#8 cifar10 time used:$time8 seconds"
 echo "#9 auto-xgboost-classifier time used:$time9 seconds"
 echo "#10 auto-xgboost-regressor time used:$time10 seconds"
 echo "#11 autoecastimator-pytorch time used:$time11 seconds"
+echo "#12 autolstm_household_electricity time used:$time12 seconds"
 
 clear_up
