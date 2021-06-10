@@ -571,9 +571,6 @@ class XGBRegressor () {
   }
 }
 
-
-
-
 /**
  * [[XGBRegressorModel]] xgboost wrapper of XGBRegressorModel.
  */
