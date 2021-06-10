@@ -17,6 +17,7 @@
 
 package com.intel.analytics.zoo.serving.http
 
+
 import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
@@ -25,8 +26,6 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
@@ -36,6 +35,11 @@ object MockMultipleServingHttpClient extends App with Supportive {
 
   override val logger = LoggerFactory.getLogger(getClass)
   // load various model
+  implicit val system = ActorSystem("zoo-serving-frontend-system")
+  implicit val materializer = ActorMaterializer()
+  implicit val executionContext = system.dispatcher
+  implicit val timeout: Timeout = Timeout(100, TimeUnit.SECONDS)
+
   testCaffe()
   testBigDL()
 
@@ -93,6 +97,7 @@ object MockMultipleServingHttpClient extends App with Supportive {
     silent(s"get models request")() {
       val getModelsResponse = handle(rawRequest)
       println(s"$getModelsResponse")
+
     }
   }
   def handle(request: HttpRequest): (Int, String) = {

@@ -345,14 +345,14 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                     val servable = timing("servable retrive")(servableRetriveTimer) {
                       servableManager.retriveServable(modelName, modelVersion)
                     }
+                    val modelInferenceTimer = modelInferenceTimersMap(modelName)(modelVersion)
                     servable match {
                       case _: ClusterServingServable =>
                         val result = timing("cluster serving inference")(predictRequestTimer) {
                           val instances = timing("json deserialization")() {
                             JsonUtil.fromJson(classOf[Instances], content)
                           }
-                          val outputs = timing("model predict total")(modelInferenceTimersMap
-                          (modelName)(modelVersion)) {
+                          val outputs = timing("model predict total")(modelInferenceTimer) {
                             servable.predict(instances)
                           }
                           Predictions(outputs)
@@ -362,8 +362,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                         }
                       case _: InferenceModelServable =>
                         val result = timing("inference model inference")(predictRequestTimer) {
-                          val outputs = timing("model predict total")(modelInferenceTimersMap
-                          (modelName)(modelVersion)) {
+                          val outputs = timing("model predict total")(modelInferenceTimer) {
                             servable.predict(content)
                           }
                           JsonUtil.toJson(outputs.map(_.result))

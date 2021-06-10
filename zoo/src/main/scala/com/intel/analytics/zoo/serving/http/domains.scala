@@ -831,6 +831,12 @@ class ServableManager {
         throw ServableLoadException("duplicated model info. Model Name: " + modelInfo.getModelName
           + ", Model Version: " + modelInfo.getModelVersion, null)
       }
+      FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
+        metrics.timer("zoo.serving.inference." + modelInfo.getModelName + "."
+          + modelInfo.getModelVersion)
+      FrontEndApp.purePredictTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
+        metrics.timer("zoo.pure.predict." + modelInfo.getModelName + "."
+          + modelInfo.getModelVersion)
       val servable = modelInfo match {
         case clusterServingModelInfo: ClusterServingMetaData =>
           new ClusterServingServable(clusterServingModelInfo)
@@ -839,12 +845,6 @@ class ServableManager {
       }
       servable.load()
       modelVersionMap(modelInfo.getModelName)(modelInfo.getModelVersion) = servable
-      FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
-        metrics.timer("zoo.serving.inference." + modelInfo.getModelName + "."
-          + modelInfo.getModelVersion)
-      FrontEndApp.purePredictTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
-        metrics.timer("zoo.pure.predict." + modelInfo.getModelName + "."
-          + modelInfo.getModelVersion)
     }
   }
 
@@ -887,6 +887,8 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   val logger = LoggerFactory.getLogger(getClass)
   var model: InferenceModel = _
   var isFirstTimePredict = true
+  val purePredictTimer = purePredictTimersMap(inferenceModelMetaData.modelName)(
+    inferenceModelMetaData.modelVersion)
 
   def load(): Unit = {
     model = new InferenceModel(inferenceModelMetaData.modelConCurrentNum)
@@ -918,8 +920,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
             model.doPredict(activity)
           }
         } else {
-          timing("model predict")(purePredictTimersMap(inferenceModelMetaData.modelName)(
-            inferenceModelMetaData.modelVersion)) {
+          timing("model predict")(purePredictTimer) {
             model.doPredict(activity)
           }
         }
@@ -942,8 +943,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
             model.doPredict(activity)
           }
         } else {
-          timing("model predict")(purePredictTimersMap(inferenceModelMetaData.modelName)(
-            inferenceModelMetaData.modelVersion)) {
+          timing("model predict")(purePredictTimer) {
             model.doPredict(activity)
           }
         }
