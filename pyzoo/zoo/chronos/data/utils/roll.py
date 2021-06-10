@@ -26,8 +26,10 @@ def roll_timeseries_dataframe(df,
                               target_col):
     """
     roll dataframe into numpy ndarray sequence samples.
+
     :param input_df: a dataframe which has been resampled in uniform frequency.
-    :param roll_feature_df: 
+    :param roll_feature_df: an additional rolling feature dataframe that will
+           be append to final result.
     :param lookback: the length of the past sequence
     :param horizon: int or list,
            if `horizon` is an int, we will sample `horizon` step
@@ -76,7 +78,7 @@ def _append_rolling_feature_df(rolling_result,
                                          len(roll_feature_df.columns)))
     for idx in range(additional_rolling_result.shape[0]):
         for col_idx in range(additional_rolling_result.shape[2]):
-            additional_rolling_result[idx,:,col_idx] = roll_feature_df.iloc[idx, col_idx]
+            additional_rolling_result[idx, :, col_idx] = roll_feature_df.iloc[idx, col_idx]
     rolling_result = np.concatenate([rolling_result, additional_rolling_result], axis=2)
     return rolling_result
 

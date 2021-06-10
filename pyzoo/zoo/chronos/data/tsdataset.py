@@ -30,7 +30,7 @@ from tsfresh.utilities.dataframe_functions import roll_time_series
 from tsfresh.utilities.dataframe_functions import impute as impute_tsfresh
 from tsfresh import extract_features
 from tsfresh.feature_extraction import ComprehensiveFCParameters,\
-            MinimalFCParameters, EfficientFCParameters
+    MinimalFCParameters, EfficientFCParameters
 DEFAULT_PARAMS = {"comprehensive": ComprehensiveFCParameters(),
                   "minimal": MinimalFCParameters(),
                   "efficient": EfficientFCParameters()}
@@ -308,7 +308,7 @@ class TSDataset:
             default_fc_parameters = DEFAULT_PARAMS[settings]
         else:
             default_fc_parameters = settings
-        
+
         df_rolled = roll_time_series(self.df,
                                      column_id=self.id_col,
                                      column_sort=self.dt_col,
@@ -330,7 +330,6 @@ class TSDataset:
         self.roll_addional_feature = list(self.roll_feature_df.columns)
 
         return self
-
 
     def roll(self,
              lookback,
@@ -391,7 +390,8 @@ class TSDataset:
         num_feature_col = len(self.roll_feature)
         num_target_col = len(self.roll_target)
         self.id_sensitive = id_sensitive
-        roll_feature_df = None if self.roll_feature_df is None else self.roll_feature_df[additional_feature_col]
+        roll_feature_df = None if self.roll_feature_df is None \
+            else self.roll_feature_df[additional_feature_col]
 
         # get rolling result for each sub dataframe
         rolling_result = [roll_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
@@ -448,6 +448,7 @@ class TSDataset:
     def scale(self, scaler, fit=True):
         '''
         scale the time series dataset's feature column and target column.
+
         :param scaler: sklearn scaler instance, StandardScaler, MaxAbsScaler,
                MinMaxScaler and RobustScaler are supported.
         :param fit: if we need to fit the scaler. Typically, the value should
@@ -458,7 +459,7 @@ class TSDataset:
         feature_col = []
         if self.roll_addional_feature:
             for feature in self.feature_col:
-                if not feature in self.roll_addional_feature:
+                if feature not in self.roll_addional_feature:
                     feature_col.append(feature)
         if fit:
             self.df[self.target_col + feature_col] = \
@@ -478,7 +479,7 @@ class TSDataset:
         feature_col = []
         if self.roll_addional_feature:
             for feature in self.feature_col:
-                if not feature in self.roll_addional_feature:
+                if feature not in self.roll_addional_feature:
                     feature_col.append(feature)
         self.df[self.target_col + feature_col] = \
             self.scaler.inverse_transform(self.df[self.target_col + feature_col])
