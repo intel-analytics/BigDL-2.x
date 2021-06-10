@@ -257,10 +257,13 @@ class TSDataset:
 
         '''
         if full_settings is not None:
-            self.df = generate_global_features(input_df=self.df,
-                                               column_id=self.id_col,
-                                               column_sort=self.dt_col,
-                                               kind_to_fc_parameters=full_settings)
+            self.df,\
+                addtional_feature =\
+                generate_global_features(input_df=self.df,
+                                        column_id=self.id_col,
+                                        column_sort=self.dt_col,
+                                        kind_to_fc_parameters=full_settings)
+            self.feature_col += addtional_feature
             return self
 
         if isinstance(settings, str):
@@ -456,8 +459,9 @@ class TSDataset:
                test set. The value is defaulted to True.
         :return: the tsdataset instance.
         '''
-        feature_col = []
+        feature_col = self.feature_col
         if self.roll_addional_feature:
+            feature_col = []
             for feature in self.feature_col:
                 if feature not in self.roll_addional_feature:
                     feature_col.append(feature)
@@ -476,8 +480,9 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
-        feature_col = []
+        feature_col = self.feature_col
         if self.roll_addional_feature:
+            feature_col = []
             for feature in self.feature_col:
                 if feature not in self.roll_addional_feature:
                     feature_col.append(feature)
