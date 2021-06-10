@@ -120,7 +120,6 @@ def callZooFunc(bigdl_type, name, *args):
     """ Call API in PythonBigDL """
     gateway = _get_gateway()
     args = [_py2java(gateway, a) for a in args]
-    print(args)
     error = Exception("Cannot find function: %s" % name)
     for jinvoker in JavaCreator.instance(bigdl_type, gateway).value:
         # hasattr(jinvoker, name) always return true here,

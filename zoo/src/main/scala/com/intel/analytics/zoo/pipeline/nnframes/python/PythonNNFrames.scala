@@ -310,7 +310,4 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
                      value: Int): NNEstimator[T] = {
     estimator.setBatchSize(value)
   }
-
-
-
 }

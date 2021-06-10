@@ -853,8 +853,6 @@ class TestNNClassifer():
             .builder \
             .getOrCreate()
         df = spark.read.csv(filePath, sep=",", inferSchema=True, header=True)
-        df.printSchema()
-        df.show()
         model.setFeaturesCol(["age", "gender", "jointime", "star"])
         predict = model.transform(df)
         predict.count()
@@ -878,24 +876,20 @@ class TestNNClassifer():
         assembledf = vecasembler.transform(df).select("features", "label").cache()
         assembledf.printSchema()
         testdf = vecasembler.transform(df).select("features", "label").cache()
-
-
         xgbRf0 = XGBRegressor()
         xgbRf0.setNthread(1)
         xgbmodel : XGBRegressorModel = XGBRegressorModel(xgbRf0.fit(assembledf))
-
         xgbmodel.save("/tmp/modelfile/")
         xgbmodel.setFeaturesCol("features")
         assembledf.show()
         yxgb = xgbmodel.transform(assembledf)
+
         model = xgbmodel.load("/tmp/modelfile/")
         yxgb.show()
         model.setFeaturesCol("features")
-
         y0 = model.transform(assembledf)
         y0.show()
         assert(y0.subtract(yxgb).count() ==0)
-        print("model loaded")
 
 
 if __name__ == "__main__":
