@@ -245,6 +245,8 @@ class TSDataset:
         Generate per-time-series feature for each time series.
         This method will be implemented by tsfresh.
 
+        TODO: relationship with scale should be figured out.
+
         :param settings: str or dict. If a string is set, then it must be one of "comprehensive"
                "minimal" and "efficient". If a dict is set then it should follow the instruction
                for default_fc_parameters in tsfresh. The value is defaulted to "comprehensive".
@@ -285,6 +287,11 @@ class TSDataset:
                             settings="comprehensive",
                             full_settings=None):
         '''
+        Generate aggregation feature for each sample.
+        This method will be implemented by tsfresh.
+
+        TODO: relationship with scale should be figured out.
+
         :param window_size: int, generate feature according to the rolling result.
         :param settings: str or dict. If a string is set, then it must be one of "comprehensive"
                "minimal" and "efficient". If a dict is set then it should follow the instruction
@@ -307,11 +314,16 @@ class TSDataset:
                                      column_sort=self.dt_col,
                                      max_timeshift=window_size-1,
                                      min_timeshift=window_size-1)
-
-        self.roll_feature_df = extract_features(df_rolled,
-                                                column_id=self.id_col,
-                                                column_sort=self.dt_col,
-                                                default_fc_parameters=default_fc_parameters)
+        if not full_settings:
+            self.roll_feature_df = extract_features(df_rolled,
+                                                    column_id=self.id_col,
+                                                    column_sort=self.dt_col,
+                                                    default_fc_parameters=default_fc_parameters)
+        else:
+            self.roll_feature_df = extract_features(df_rolled,
+                                                    column_id=self.id_col,
+                                                    column_sort=self.dt_col,
+                                                    kind_to_fc_parameters=full_settings)
         impute_tsfresh(self.roll_feature_df)
 
         self.feature_col += list(self.roll_feature_df.columns)
