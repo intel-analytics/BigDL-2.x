@@ -231,6 +231,13 @@ cd /ppml/trusted-big-data-ml
 Run the example with SGX and standalone mode with the following command in the terminal.
 
 ```bash
+SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
+	-cp '/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+	-Xmx1g org.apache.spark.deploy.SparkSubmit \
+	--master 'spark://192.168.0.111:7077' \
+	--conf spark.authenticate=true \
+        --conf spark.authenticate.secret=Intel123 \
+	/ppml/trusted-big-data-ml/work/spark-2.4.3/examples/src/main/python/pi.py" | tee test-pi-sgx.log
 
 ```
 
@@ -251,6 +258,13 @@ The result should be similar to
 Run the example with SGX and standalone mode with the following command in the terminal.
 
 ```bash
+SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
+	-cp '/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+	-Xmx1g org.apache.spark.deploy.SparkSubmit \
+	--master 'spark://192.168.0.111:7077' \
+	--conf spark.authenticate=true \
+        --conf spark.authenticate.secret=Intel123 \
+	/ppml/trusted-big-data-ml/work/spark-2.4.3/examples/src/main/python/wordcount.py ./work/examples/helloworld.py" | tee test-wordcount-sgx.log
 
 ```
 
@@ -263,7 +277,6 @@ cat test-wordcount-sgx.log | egrep "print"
 The result should be similar to
 
 > print("Hello: 1
->
 > print(sys.path);: 1
 
 
@@ -273,30 +286,30 @@ The result should be similar to
 Run the example with SGX and standalone mode with the following command in the terminal.
 
 ```bash
+SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
+	-cp '/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+	-Xmx1g org.apache.spark.deploy.SparkSubmit \
+	--master 'spark://192.168.0.111:7077' \
+	--conf spark.authenticate=true \
+        --conf spark.authenticate.secret=Intel123 \
+	/ppml/trusted-big-data-ml/work/spark-2.4.3/examples/src/main/python/sql/basic.py" | tee test-sql-basic-sgx.log
 
 ```
 
 Then check the output with the following command.
 
 ```bash
-cat test-wordcount-sgx.log | egrep "Justin"
+cat test-sql-basic-sgx.log | egrep "Justin"
 ```
 
 The result should be similar to
 
 > | 19|  Justin|
->
 > |  Justin| 
->
 > |  Justin|       20|
->
 > | 19|  Justin|
->
 > | 19|  Justin|
->
 > | 19|  Justin|
->
 > Name: Justin
->
 > |  Justin|
 
