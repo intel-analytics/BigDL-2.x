@@ -1,5 +1,5 @@
-# AutoLSTM examples on mpg dataset
-This example will demonstrate the effect of AutoLSTM on the mpg dataset on Seaborn. AutoLstm will return the best set of hyperparameters within the specified hyperparameter range.
+# AutoLSTM examples on household_electricity dataset
+This example will demonstrate that Auto LSTM performs automatic time series forecasting on household electricity. Auto Lstm will return the best hyperparameter set within the specified hyperparameter range.
 
 ## Prepare the environment
 We recommend you to use Anaconda to prepare the environment, especially if you want to run on a yarn cluster:
