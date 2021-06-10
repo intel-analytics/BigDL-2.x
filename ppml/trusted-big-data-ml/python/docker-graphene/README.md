@@ -266,3 +266,37 @@ The result should be similar to
 >
 > print(sys.path);: 1
 
+
+
+##### Example3: Basic SQL
+
+Run the example with SGX and standalone mode with the following command in the terminal.
+
+```bash
+
+```
+
+Then check the output with the following command.
+
+```bash
+cat test-wordcount-sgx.log | egrep "Justin"
+```
+
+The result should be similar to
+
+> | 19|  Justin|
+>
+> |  Justin| 
+>
+> |  Justin|       20|
+>
+> | 19|  Justin|
+>
+> | 19|  Justin|
+>
+> | 19|  Justin|
+>
+> Name: Justin
+>
+> |  Justin|
+
