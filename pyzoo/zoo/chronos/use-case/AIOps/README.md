@@ -8,9 +8,9 @@ In the reference use case, we use the publicly available cluster trace data clus
 
 This use case example contains two notebooks:
 
-- **AIOps_anomaly_detect_unsupervised_forecast_based.ipynb** demonstrates how to leverage Chronos's built-in models ie. MTNet, to do time series forecasting. Then perform anomaly detection on predicted value with threshold detector.
+- **AIOps_anomaly_detect_unsupervised_forecast_based.ipynb** demonstrates how to leverage Chronos's built-in models ie. MTNet, to do time series forecasting. Then perform anomaly detection on predicted value with [ThresholdDetector](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-th-detector).
 
-- **AIOps_anomaly_detect_unsupervised.ipynb** demonstrates how to perform anomaly detection based on Chronos's built-in dbscan detector, autoencoder detector and threshold detector.
+- **AIOps_anomaly_detect_unsupervised.ipynb** demonstrates how to perform anomaly detection based on Chronos's built-in [DBScanDetector](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-dbscan-detector), [AEDetector](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-ae-detector) and [ThresholdDetector](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-th-detector).
 
 ### Install
 
