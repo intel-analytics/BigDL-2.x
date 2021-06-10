@@ -55,7 +55,7 @@ class TestChronosModelARIMAForecaster(TestCase):
         test_mse = forecaster.evaluate(None, data['val_y'])
 
 
-    def test_tcn_forecaster_save_restore(self):
+    def test_arima_forecaster_save_restore(self):
         data = create_data()
         forecaster = ARIMAForecaster(p=2,
                                      q=2,
@@ -73,7 +73,7 @@ class TestChronosModelARIMAForecaster(TestCase):
             test_pred_restore = forecaster.predict(len(data['val_y']))
         np.testing.assert_almost_equal(test_pred_save, test_pred_restore)
 
-    def test_tcn_forecaster_runtime_error(self):
+    def test_arima_forecaster_runtime_error(self):
         data = create_data()
         forecaster = ARIMAForecaster(p=2,
                                      q=2,
@@ -105,7 +105,7 @@ class TestChronosModelARIMAForecaster(TestCase):
             forecaster.save(model_file)
 
 
-    def test_tcn_forecaster_shape_error(self):
+    def test_arima_forecaster_shape_error(self):
         data = create_data()
         forecaster = ARIMAForecaster(p=2,
                                      q=2,
