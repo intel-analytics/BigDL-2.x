@@ -70,7 +70,7 @@ if __name__ == "__main__":
     category_index = item_category_indices[1]
 
     user_index = transaction_tbl.gen_string_idx(['user'], 1)
-    trans_label = lambda x: [float(x), 1 - float(x)]
+    trans_label = lambda x: [1 - float(x), float(x)]
     label_type = ArrayType(FloatType())
 
     item_tbl = item_tbl\
