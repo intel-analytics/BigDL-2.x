@@ -272,7 +272,7 @@ init_orca_context(..., exra_executor_memory_for_ray=100g)
 
 ####  **4.5 How to set proper "steps_per_epoch" and "validation steps" ?**
 
-The `steps_per_epoch` and `validation_steps` equal to numbers of dataset divided by batch size. The `steps_per_epoch` and `validation_steps` do not relate to the `num_nodes` when total dataset and batch size are fixed. For example, you set `num_nodes` to 1, and set `steps_per_epoch` to 6. If you change the `num_nodes` to 3, the `steps_per_epoch` should still be 6.
+The `steps_per_epoch` and `validation_steps` should equal to numbers of dataset divided by batch size if you want to train all dataset. The `steps_per_epoch` and `validation_steps` do not relate to the `num_nodes` when total dataset and batch size are fixed. For example, you set `num_nodes` to 1, and set `steps_per_epoch` to 6. If you change the `num_nodes` to 3, the `steps_per_epoch` should still be 6.
 
 #### **4.6 Others**
 
