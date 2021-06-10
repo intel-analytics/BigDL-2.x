@@ -350,7 +350,6 @@ class XGBClassifierModel private[zoo](
       .setInputCols(featuresCols)
       .setOutputCol("featureAssembledVector")
     val assembledDF = featureVectorAssembler.transform(dataset)
-
     import org.apache.spark.sql.functions.{col, udf}
     import org.apache.spark.ml.linalg.Vector
     val asDense = udf((v: Vector) => v.toDense)
@@ -390,6 +389,7 @@ class XGBRegressor () {
   }
 
   def fit(df: DataFrame): XGBRegressorModel = {
+    print("XGB Regressor Fit")
     df.repartition(EngineRef.getNodeNumber())
     val xgbModel = model.fit(df)
     new XGBRegressorModel(xgbModel)
@@ -571,13 +571,16 @@ class XGBRegressor () {
   }
 }
 
+
+
+
 /**
  * [[XGBRegressorModel]] xgboost wrapper of XGBRegressorModel.
  */
 class XGBRegressorModel private[zoo](val model: XGBoostRegressionModel) {
   var predictionCol: String = null
   var featuresCol: String = "features"
-
+  var featurearray: Array[String] = Array("features")
   def setPredictionCol(value: String): this.type = {
     predictionCol = value
     this
@@ -589,18 +592,23 @@ class XGBRegressorModel private[zoo](val model: XGBoostRegressionModel) {
   }
 
   def setFeaturesCol(value: String): this.type = {
+//    println("start features col of XGBRegressorModel")
     model.setFeaturesCol(value)
     featuresCol = value
     this
   }
 
   def transform(dataset: DataFrame): DataFrame = {
+    val featureVectorAssembler = new VectorAssembler()
+      .setInputCols(featurearray)
+      .setOutputCol("featureAssembledVector")
+    val assembledDF = featureVectorAssembler.transform(dataset)
     import org.apache.spark.sql.functions.{col, udf}
     import org.apache.spark.ml.linalg.Vector
     val asDense = udf((v: Vector) => v.toDense)
-    val xgbInput = dataset.withColumn("DenseFeatures", asDense(col(featuresCol)))
+    val xgbInput = assembledDF.withColumn("DenseFeatures", asDense(col("featureAssembledVector")))
     model.setFeaturesCol("DenseFeatures")
-    var output = model.transform(xgbInput).drop("DenseFeatures")
+    var output = model.transform(xgbInput).drop("DenseFeatures", "featureAssembledVector")
     if(predictionCol != null) {
       output = output.withColumnRenamed("prediction", predictionCol)
     }

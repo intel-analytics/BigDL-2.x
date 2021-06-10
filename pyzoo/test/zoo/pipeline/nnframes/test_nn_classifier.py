@@ -853,10 +853,51 @@ class TestNNClassifer():
             .builder \
             .getOrCreate()
         df = spark.read.csv(filePath, sep=",", inferSchema=True, header=True)
+        df.printSchema()
+        df.show()
         model.setFeaturesCol(["age", "gender", "jointime", "star"])
         predict = model.transform(df)
         predict.count()
 
+    def test_XGBRegressor(self):
+
+        from sys import platform
+        if platform in ("darwin", "win32"):
+            return
+
+        data = self.sc.parallelize([
+            (1.0, 2.0, 3.0, 4.0, 5.0, 1.0, 2.0, 4.0, 8.0, 3.0, 116.3668),
+             (1.0, 3.0, 8.0, 6.0, 5.0, 9.0, 5.0, 6.0, 7.0, 4.0, 116.367),
+             (2.0, 1.0, 5.0, 7.0, 6.0, 7.0, 4.0, 1.0, 2.0, 3.0, 116.367),
+             (2.0, 1.0, 4.0, 3.0, 6.0, 1.0, 3.0, 2.0, 1.0, 3.0, 116.3668)
+             ])
+        columns = ["f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "label"]
+        df = data.toDF(columns)
+        from pyspark.ml.feature import VectorAssembler
+        vecasembler = VectorAssembler(inputCols = columns, outputCol="features")
+        assembledf = vecasembler.transform(df).select("features", "label").cache()
+        assembledf.printSchema()
+        testdf = vecasembler.transform(df).select("features", "label").cache()
+
+
+        xgbRf0 = XGBRegressor()
+        xgbRf0.setNthread(1)
+        xgbmodel : XGBRegressorModel = XGBRegressorModel(xgbRf0.fit(assembledf))
+
+        xgbmodel.save("/tmp/modelfile/")
+        xgbmodel.setFeaturesCol("features")
+        assembledf.show()
+        yxgb = xgbmodel.transform(assembledf)
+        model = xgbmodel.load("/tmp/modelfile/")
+        yxgb.show()
+        model.setFeaturesCol("features")
+
+        y0 = model.transform(assembledf)
+        y0.show()
+        assert(y0.subtract(yxgb).count() ==0)
+        print("model loaded")
+
 
 if __name__ == "__main__":
     pytest.main()
+
