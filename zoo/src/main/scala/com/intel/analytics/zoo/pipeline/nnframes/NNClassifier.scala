@@ -389,7 +389,6 @@ class XGBRegressor () {
   }
 
   def fit(df: DataFrame): XGBRegressorModel = {
-    print("XGB Regressor Fit")
     df.repartition(EngineRef.getNodeNumber())
     val xgbModel = model.fit(df)
     new XGBRegressorModel(xgbModel)

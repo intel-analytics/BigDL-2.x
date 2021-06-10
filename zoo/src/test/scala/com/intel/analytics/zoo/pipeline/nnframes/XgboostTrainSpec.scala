@@ -67,3 +67,4 @@ class XgboostTrainSpec extends ZooSpecHelper {
     }
   }
 }
+
