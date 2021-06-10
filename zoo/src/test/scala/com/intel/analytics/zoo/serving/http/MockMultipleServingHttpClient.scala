@@ -56,8 +56,7 @@ object MockMultipleServingHttpClient extends App with Supportive {
   } ]
 }"""
 
-    val instance = JsonUtil.fromJson(classOf[Instances], content)
-    inferenceServable.predict(instance)
+    inferenceServable.predict(content)
 
   }
 
@@ -79,7 +78,6 @@ object MockMultipleServingHttpClient extends App with Supportive {
     val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "BigDL", weightPath, 1, null)
 
     val inferenceServable = new InferenceModelServable(inferenceModelMetaData)
-    inferenceServable.load()
   }
 
   // Test Model Retrive Path. Starting FrontEnd App with MultiServing Tag
@@ -90,6 +88,23 @@ object MockMultipleServingHttpClient extends App with Supportive {
     val rawRequest = HttpRequest(
       method = HttpMethods.GET,
       uri = Uri(s"http://localhost:10020/models"))
+
+
+    silent(s"get models request")() {
+      val getModelsResponse = handle(rawRequest)
+      println(s"$getModelsResponse")
+    }
+  }
+  def handle(request: HttpRequest): (Int, String) = {
+    val future = timing("send")() {
+      Http().singleRequest(request)
+    }
+    val response = timing("receive")() {
+      Await.result(future, Duration.Inf)
+    }
+    val status = response.status.intValue()
+    val entity = Await.result(Unmarshal(response.entity).to[String], Duration.Inf).trim
+    (status, entity)
   }
 
 }

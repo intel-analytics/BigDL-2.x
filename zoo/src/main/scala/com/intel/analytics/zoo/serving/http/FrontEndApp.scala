@@ -362,9 +362,6 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                         }
                       case _: InferenceModelServable =>
                         val result = timing("inference model inference")(predictRequestTimer) {
-//                          val instances = timing("json deserialization")() {
-//                            JsonUtil.fromJson(classOf[Instances], content)
-//                          }
                           val outputs = timing("model predict total")(modelInferenceTimersMap
                           (modelName)(modelVersion)) {
                             servable.predict(content)
