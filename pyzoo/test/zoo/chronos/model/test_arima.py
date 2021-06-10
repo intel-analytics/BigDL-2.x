@@ -64,7 +64,7 @@ class TestARIMAModel(ZooTestCase):
         
 
     def test_error(self):
-        with pytest.raises(ValueError, match="We don't support input x currently"):
+        with pytest.raises(ValueError, match="x should be None"):
             self.model.predict(x=1)
 
         with pytest.raises(ValueError, match="We don't support input x currently"):

@@ -95,12 +95,13 @@ class ARIMAModel(BaseModel):
     def predict(self, x=None, horizon=24):
         """
         Predict horizon time-points ahead the input x in fit_eval
-        :param x: We don't support input x currently.
-        :param horizon: horizon length to predict
+        :param x: ARIMA predicts the horizon steps foreward from the training data. 
+            So x should be None as it is not used.
+        :param horizon: the number of steps forward to predict
         :return: predicted result of length horizon
         """
         if x is not None:
-            raise ValueError("We don't support input x currently")
+            raise ValueError("x should be None")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
         
