@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.serving.http
 
 import java.io.File
 import java.security.{KeyStore, SecureRandom}
-import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
 import akka.actor.{ActorRef, ActorSystem, Props}
