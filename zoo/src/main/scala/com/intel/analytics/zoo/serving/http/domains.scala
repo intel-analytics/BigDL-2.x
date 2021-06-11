@@ -1183,6 +1183,7 @@ class JsonInputDeserializer extends JsonDeserializer[Seq[Activity]]{
   }
 
 }
+
 object JsonInputDeserializer {
   def deserialize(str: String): Seq[Activity] = {
     val mapper = new ObjectMapper()
