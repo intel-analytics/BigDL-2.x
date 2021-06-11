@@ -64,7 +64,8 @@ class KerasBaseModel(BaseModel):
         def update_config():
             config.setdefault("input_dim", x.shape[-1])
             config.setdefault("output_dim", y.shape[-1])
-            config.update({"metric": metric})
+            if metric:
+                config.update({"metric": metric})
 
         if not self.model_built:
             update_config()
