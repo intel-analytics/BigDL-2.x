@@ -227,7 +227,8 @@ class ThresholdDetector(AnomalyDetector):
 
     def score(self, y=None, y_pred=None):
         """
-        Gets the anomaly scores for each sample. Each anomaly score is either 0 or 1, where 1 indicates an anomaly.
+        Gets the anomaly scores for each sample. Each anomaly score is either 0 or 1,
+        where 1 indicates an anomaly.
 
         :param y: new time series to detect anomaly. if y is None, returns anomalies
             in the fit input, y_pred is ignored in this case
