@@ -823,10 +823,10 @@ class ServableManager {
       if (!modelVersionMap.contains(modelInfo.getModelName)) {
         val versionMapper = new mutable.HashMap[String, Servable]
         modelVersionMap(modelInfo.getModelName) = versionMapper
-        val timerMapper = new mutable.HashMap[String, Timer]
-        FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName) = timerMapper
-        val timerMapper2 = new mutable.HashMap[String, Timer]
-        FrontEndApp.purePredictTimersMap(modelInfo.getModelName) = timerMapper2
+        val timerMapperInference = new mutable.HashMap[String, Timer]
+        FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName) = timerMapperInference
+        val timerMapperPurePredict = new mutable.HashMap[String, Timer]
+        FrontEndApp.purePredictTimersMap(modelInfo.getModelName) = timerMapperPurePredict
       }
       if (modelVersionMap(modelInfo.getModelName).contains(modelInfo.getModelVersion)) {
         throw ServableLoadException("duplicated model info. Model Name: " + modelInfo.getModelName
