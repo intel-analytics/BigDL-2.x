@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 from zoo.automl.search import SearchEngineFactory
 
 
@@ -163,6 +162,9 @@ class AutoEstimator:
         if self._fitted:
             raise RuntimeError(
                 "This AutoEstimator has already been fitted and cannot fit again.")
+
+        metric_mode = AutoEstimator._validate_metric_mode(metric, metric_mode)
+
         self.searcher.compile(data=data,
                               model_builder=self.model_builder,
                               epochs=epochs,
@@ -201,3 +203,18 @@ class AutoEstimator:
         best_trial = self.searcher.get_best_trial()
         best_config = best_trial.config
         return best_config
+
+    @staticmethod
+    def _validate_metric_mode(metric, mode):
+        from zoo.automl.common.metrics import Evaluator
+        if not mode:
+            try:
+                mode = Evaluator.get_metric_mode(metric)
+            except ValueError:
+                pass
+        if not mode:
+            raise ValueError(f"We cannot infer metric mode with metric name of {metric}. "
+                             f"Please specify the `metric_mode` parameter in AutoEstimator.fit().")
+        if mode not in ["min", "max"]:
+            raise ValueError("`mode` has to be one of ['min', 'max']")
+        return mode

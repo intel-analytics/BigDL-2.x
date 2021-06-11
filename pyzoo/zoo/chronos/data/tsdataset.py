@@ -18,12 +18,13 @@ import pandas as pd
 import numpy as np
 import functools
 
-from zoo.chronos.data.utils.feature import generate_dt_features
+from zoo.chronos.data.utils.feature import generate_dt_features, generate_global_features
 from zoo.chronos.data.utils.impute import impute_timeseries_dataframe
 from zoo.chronos.data.utils.deduplicate import deduplicate_timeseries_dataframe
 from zoo.chronos.data.utils.roll import roll_timeseries_dataframe
 from zoo.chronos.data.utils.scale import unscale_timeseries_numpy
 from zoo.chronos.data.utils.resample import resample_timeseries_dataframe
+from zoo.chronos.data.utils.split import split_timeseries_dataframe
 
 _DEFAULT_ID_COL_NAME = "id"
 _DEFAULT_ID_PLACEHOLDER = "0"
@@ -58,9 +59,14 @@ class TSDataset:
                     dt_col,
                     target_col,
                     id_col=None,
-                    extra_feature_col=None):
+                    extra_feature_col=None,
+                    with_split=False,
+                    val_ratio=0,
+                    test_ratio=0.1,
+                    largest_look_back=0,
+                    largest_horizon=1):
         '''
-        Initialize a tsdataset from pandas dataframe.
+        Initialize a tsdataset(s) from pandas dataframe.
 
         :param df: a pandas dataframe for your raw time series data.
         :param dt_col: a str indicates the col name of datetime
@@ -70,8 +76,20 @@ class TSDataset:
         :param id_col: (optional) a str indicates the col name of dataframe id.
         :param extra_feature_col: (optional) a str or list indicates the col name
                of extra feature columns that needs to predict the target column.
+        :param with_split: (optional) bool, state if we need to split the dataframe
+               to train, validation and test set. The value defaults to False.
+        :param val_ratio: (optional) float, validation ratio. Only effective when
+               with_split is set to True. The value defaults to 0.
+        :param test_ratio: (optional) float, test ratio. Only effective when with_split
+               is set to True. The value defaults to 0.1.
+        :param largest_look_back: (optional) int, the largest length to look back.
+               Only effective when with_split is set to True. The value defaults to 0.
+        :param largest_horizon: (optional) int, the largest num of steps to look
+               forward. Only effective when with_split is set to True. The value defaults
+               to 1.
 
-        :return: a TSDataset instance
+        :return: a TSDataset instance when with_split is set to False,
+                 three TSDataset instances when with_split is set to True.
 
 
         Here is a df example:
@@ -99,6 +117,19 @@ class TSDataset:
         if id_col is None:
             tsdataset_df[_DEFAULT_ID_COL_NAME] = _DEFAULT_ID_PLACEHOLDER
             id_col = _DEFAULT_ID_COL_NAME
+
+        if with_split:
+            tsdataset_dfs = split_timeseries_dataframe(df=tsdataset_df,
+                                                       id_col=id_col,
+                                                       val_ratio=val_ratio,
+                                                       test_ratio=test_ratio,
+                                                       look_back=largest_look_back,
+                                                       horizon=largest_horizon)
+            return [TSDataset(data=tsdataset_dfs[i],
+                              id_col=id_col,
+                              dt_col=dt_col,
+                              target_col=target_col,
+                              feature_col=feature_col) for i in range(3)]
 
         return TSDataset(data=tsdataset_df,
                          id_col=id_col,
@@ -198,13 +229,51 @@ class TSDataset:
         self.feature_col += [attr + "({})".format(self.dt_col) for attr in increased_attrbutes]
         return self
 
-    def gen_global_feature(self):
+    def gen_global_feature(self, settings="comprehensive", full_settings=None):
         '''
         Generate per-time-series feature for each time series.
         This method will be implemented by tsfresh.
+
+        :param settings: str or dict. If a string is set, then it must be one of "comprehensive"
+               "minimal" and "efficient". If a dict is set then it should follow the instruction
+               for default_fc_parameters in tsfresh. The value is defaulted to "comprehensive".
+        :param full_settings: dict. It should follow the instruction for kind_to_fc_parameters in
+               tsfresh. The value is defaulted to None.
+
+        :return: the tsdataset instance.
+
         '''
-        # call feature gen function in chronos.data.utils.feature on each sub-df.
-        raise NotImplementedError("This method has not been implemented!")
+        if full_settings is not None:
+            self.df = generate_global_features(input_df=self.df,
+                                               column_id=self.id_col,
+                                               column_sort=self.dt_col,
+                                               kind_to_fc_parameters=full_settings)
+            return self
+
+        from tsfresh.feature_extraction import ComprehensiveFCParameters,\
+            MinimalFCParameters, EfficientFCParameters
+        default_params = {"comprehensive": ComprehensiveFCParameters(),
+                          "minimal": MinimalFCParameters(),
+                          "efficient": EfficientFCParameters()}
+
+        if isinstance(settings, str):
+            assert settings in ["comprehensive", "minimal", "efficient"], \
+                f"settings str should be one of \"comprehensive\", \"minimal\", \"efficient\"\
+                    , but found {settings}."
+            default_fc_parameters = default_params[settings]
+        else:
+            default_fc_parameters = settings
+
+        self.df,\
+            addtional_feature =\
+            generate_global_features(input_df=self.df,
+                                     column_id=self.id_col,
+                                     column_sort=self.dt_col,
+                                     default_fc_parameters=default_fc_parameters)
+
+        self.feature_col += addtional_feature
+
+        return self
 
     def roll(self,
              lookback,

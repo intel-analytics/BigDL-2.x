@@ -110,6 +110,11 @@ class PreProcessing()
       java.util.Base64.getDecoder.decode(s)
     }
     val mat = OpenCVMethod.fromImageBytes(byteBuffer, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
+    if (helper.imageResize != "") {
+      val hw = helper.imageResize.split(",")
+      require(hw.length == 2, "Image dim must be 2")
+      Imgproc.resize(mat, mat, new Size(hw(0).trim.toInt, hw(1).trim.toInt))
+    }
 //    Imgproc.resize(mat, mat, new Size(224, 224))
     val (height, width, channel) = (mat.height(), mat.width(), mat.channels())
 
