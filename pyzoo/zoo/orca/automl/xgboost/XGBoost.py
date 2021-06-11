@@ -144,7 +144,7 @@ class XGBoost(BaseModel):
         if self.metric in XGB_METRIC_NAME:
             self.model.fit(x, y, eval_set=eval_set, eval_metric=self.metric)
             vals = self.model.evals_result_.get("validation_0").get(self.metric)
-            return vals[-1]
+            return {self.metric: vals[-1]}
         else:
             if isinstance(validation_data, list):
                 validation_data = validation_data[0]
@@ -153,7 +153,7 @@ class XGBoost(BaseModel):
                 validation_data[0],
                 validation_data[1],
                 metrics=[self.metric])[0]
-            return eval_result
+            return {self.metric: eval_result}
 
     def predict(self, x):
         """
