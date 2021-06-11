@@ -22,6 +22,7 @@ from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql.functions import col, udf, array, broadcast, explode, struct, collect_list
 from pyspark.sql import Row
+import pyspark.sql.functions as F
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
@@ -632,33 +633,61 @@ class FeatureTable(Table):
             df = df.withColumn(c.replace("item", "category"), cat_udf(col(c)))
         return FeatureTable(df)
 
-    def group_by(self, columns=None, agg_exprs={"*":"count"}, join=False):
+    def group_by(self, columns=[], agg="count", join=False):
         """
         Group the Table with specified columns and then run aggregation. Optionally join the result
         with the original Table.
 
         :param columns: str or list of str. Columns to group the Table.
-        :param agg_exprs: dict or list. Aggragation functions to be applied to grouped Table.
-               If agg_exprs is a single dict mapping from string to string, then the key is
-               the column to perform aggregation on, and the value is the aggregate function.
-               Alternatively, agg_exprs can also be a list of aggregate Column expressions.
+        :param agg: str, dict or list. Aggragation functions to be applied to grouped Table.
+               If agg is a str, then agg is the aggregate function and the aggregation is performed
+               on all columns that are not in `columns`.
+               If agg is a single dict mapping from string to string, then the key is the column
+               to perform aggregation on, and the value is the aggregate function.
+               If agg is a single dict mapping from string to string/list, then the key is the
+               column to perform aggregation on, and the value is the aggregate function(s) among
+               ['count', 'sum', 'mean', 'std', 'variance', 'max', 'min'].
+               Alternatively, agg can also be a list of aggregate Column expressions.
+
+               Examples:
+               agg="sum"
+               agg={"*":"count"}
+               agg={"col_1":"sum", "col_2":["count", "mean"]}
+               import pyspark.sql.functions as F
+               agg=[F.last("col_1"), F.sum("col_2"), F.mean("col_2")]
         :param join: boolean. If join is True, join the aggragation result with original Table.
 
-        :return: A new Table.
+        :return: A new Table with aggregated column fields.
         """
-        if columns is None:
-            grouped_data = self.df.groupBy()
-        else:
-            grouped_data = self.df.groupBy(columns)
+        columns = str_to_list(columns, "columns")
+        grouped_data = self.df.groupBy(columns)
 
-        if isinstance(agg_exprs, dict):
-            agg_df = grouped_data.agg(agg_exprs)
-        elif isinstance(agg_exprs, list):
-            agg_df = grouped_data.agg(*agg_exprs)
+        if isinstance(agg, str):
+            agg_exprs_dict = {agg_column:agg for agg_column in self.df.columns \
+                    if agg_column not in columns}
+            agg_df = grouped_data.agg(agg_exprs_dict)
+        elif isinstance(agg, dict):
+            if all(isinstance(agg[agg_column], str) for agg_column in agg):
+                agg_df = grouped_data.agg(agg)
+            else:
+                stats_func = {"count": F.count, "sum": F.sum, "mean": F.mean, "std": F.stddev, \
+                        "variance": F.variance, "max": F.max, "min": F.min}
+                agg_exprs_list = []
+                for agg_column in agg:
+                    stats = str_to_list(agg[agg_column], "value in agg_exprs")
+                    for stat in stats:
+                        assert stat in stats_func, "if some values of dict agg are list, " \
+                                "the aggregation functions should be among {} but get {}" \
+                                .format(stats_func.keys(), stat)
+                        agg_exprs_list += [(stats_func[stat])(agg_column)]
+                agg_df = grouped_data.agg(*agg_exprs_list)
+        elif isinstance(agg, list):
+            agg_df = grouped_data.agg(*agg)
         else:
-            raise TypeError("agg_exprs should be dict or list")
+            raise TypeError("agg should be dict or list")
 
         if join:
+            assert columns, "columns can not be empty if join is True"
             result_df = self.df.join(agg_df, on=columns, how="left")
             return FeatureTable(result_df)
         else:
