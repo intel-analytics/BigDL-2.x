@@ -7,7 +7,7 @@ We recommend conda to set up your environment. You can install a conda distribut
 if you haven't already.
 
 ```bash
-conda create -n analytics-zoo python==3.7.
+conda create -n analytics-zoo python==3.7
 conda activate analytics-zoo
 pip install tensorflow
 pip install pandas
@@ -22,7 +22,7 @@ pip install analytics_zoo-${VERSION}-${TIMESTAMP}-py2.py3-none-${OS}_x86_64.whl[
 
 ## Training Data
 
-Download VOC2009 [here](http://host.robots.ox.ac.uk/pascal/VOC/voc2009/VOCtrainval_11-May-2009.tar) 
+Download VOC2009 dataset [here](http://host.robots.ox.ac.uk/pascal/VOC/voc2009/VOCtrainval_11-May-2009.tar) 
 
 
 ## Pretrained Weights
