@@ -57,6 +57,14 @@ class Table:
             else:
                 raise Exception("cols should be a column name or list of column names")
         return df
+    
+    @staticmethod
+    def _read_csv(paths, header = True):
+        if not isinstance(paths,list):
+            paths = [paths]
+        spark = OrcaContext.get_spark_session()
+        df = spark.read.csv(*paths,header = header)
+        return df
 
     def _clone(self, df):
         return Table(df)
@@ -347,6 +355,10 @@ class FeatureTable(Table):
     def read_json(cls, paths, cols=None):
         return cls(Table._read_json(paths, cols))
 
+    @classmethod
+    def read_csv(cls ,paths ,header = True):
+        return cls(Table._read_csv(paths, header))
+
     def encode_string(self, columns, indices):
         """
         Encode columns with provided list of StringIndex.
@@ -379,6 +391,7 @@ class FeatureTable(Table):
                 .drop(col_name).withColumnRenamed("id", col_name)\
                 .dropna(subset=[col_name])
         return FeatureTable(data_df)
+
 
     def gen_string_idx(self, columns, freq_limit):
         """
@@ -636,6 +649,31 @@ class FeatureTable(Table):
             cat_udf = udf(gen_cat, col_type)
             df = df.withColumn(c.replace("item", "category"), cat_udf(pyspark_col(c)))
         return FeatureTable(df)
+
+    def union(self,tbls,withname=True):
+        """
+        Find the union of mutiple Feature Table
+
+        :param tbl: feature table or list of feature table
+        :param withname: append by columns name
+
+        :return: Feature Table
+        """
+        if not isinstance(tbls,list):
+            tbls = [tbls]
+        result = self.df
+        for x in tbls:
+            result = result.unionByName(x.df) if withname else result.union(x.df)
+        return FeatureTable(result)
+
+    def append_columns(self,col,value):
+        """
+        Append the columns with value to table
+
+        :param col: the name of the col
+        :param value: value to be append
+        """
+        self.df = self.df.withColumn(col,lit(value))
 
 
 class StringIndex(Table):
