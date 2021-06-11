@@ -36,7 +36,7 @@ class DBScanDetector(AnomalyDetector):
                  min_samples=6,
                  **argv):
         """
-        Initialize an DBSCAN clustering based Anomaly Detector.
+        Initialize a DBScanDetector.
 
         :param eps: The maximum distance between two samples for one to be considered
             as the neighborhood of the other.

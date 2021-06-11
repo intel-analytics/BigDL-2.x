@@ -171,7 +171,7 @@ class ThresholdDetector(AnomalyDetector):
 
     def __init__(self):
         """
-        Initialize a threshold based anomaly detector
+        Initialize a ThresholdDetector.
         """
         self.th = math.inf
         self.ratio = 0.01
@@ -227,13 +227,13 @@ class ThresholdDetector(AnomalyDetector):
 
     def score(self, y=None, y_pred=None):
         """
-        Gets the anomaly scores for each sample.
+        Gets the anomaly scores for each sample. Each anomaly score is either 0 or 1, where 1 indicates an anomaly.
 
         :param y: new time series to detect anomaly. if y is None, returns anomalies
             in the fit input, y_pred is ignored in this case
         :param y_pred: forecasts corresponding to y
 
-        :return: anomaly scores for each input sample in y
+        :return: anomaly score for each sample, in an array format with the same size as input
         """
         if y is None:
             if self.anomaly_scores_ is None:

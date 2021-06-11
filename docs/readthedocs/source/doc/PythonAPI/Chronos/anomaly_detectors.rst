@@ -4,7 +4,7 @@ Anomaly Detectors
 chronos.model.anomaly.ae_detector
 ----------------------------------------
 
-AEDetector is unsupervised anomaly detector. It builds an autoencoder network, try to fit the model to the input data, and calcuates the reconstruction error. The samples with larger reconstruction errors are more likely the anomalies.
+AEDetector is unsupervised anomaly detector. It builds an autoencoder network, tries to fit the model to the input data, and calcuates the reconstruction error. The samples with larger reconstruction errors are more likely the anomalies.
 
 .. automodule:: zoo.chronos.model.anomaly.ae_detector
     :members:
@@ -14,7 +14,7 @@ AEDetector is unsupervised anomaly detector. It builds an autoencoder network, t
 chronos.model.anomaly.dbscan_detector
 ----------------------------------------
 
-DBScanDetector uses DBSCAN clustering for anomaly detection. The DBSCAN algorithm tries to cluster the points and label the points that do not belong to any clusters as -1. It thus detects outliers detection in the input time series.
+DBScanDetector uses DBSCAN clustering for anomaly detection. The DBSCAN algorithm tries to cluster the points and label the points that do not belong to any clusters as -1. It thus detects outliers in the input time series.
 
 .. automodule:: zoo.chronos.model.anomaly.dbscan_detector
     :members:

@@ -68,29 +68,29 @@ class AEDetector(AnomalyDetector):
                  backend="keras",
                  lr=0.001):
         """
-        Initialize an AE Anomaly Detector.
-        AE Anomaly Detector supports two modes to detect anomalies in input time series.
+        Initialize an AEDetector.
+        AEDetector supports two modes to detect anomalies in input time series.
 
         1. direct-mode: It trains an autoencoder network directly on the input times series and
         calculate anomaly scores based on reconstruction error. For each sample
         in the input, the larger the reconstruction error, the higher the
         anomaly score.
 
-        2. window mode: It first rolls the input series into a batch of subsequences, each
-        with a fixed length (`roll_len`). Then it trains an autoencoder network on
-        the batch of subsequences and calculate the reconstruction error. In
-        this mode, both the difference of each point in the rolled samples and
-        the subsequence vector are taken into account when calculating the
-        anomaly scores. The final score is an aggregation of the two. You may
-        use `sub_scalef` to control the weights of subsequence errors in the anormaly score
-        calculation.
+        2.window mode: It first rolls the input series into a batch of subsequences, each
+        with length=`roll_len`. Then it trains an autoencoder network on the batch of
+        subsequences and calculate the reconstruction error. The anomaly score for each
+        sample is a linear combinition of two parts: 1) the reconstruction error of the
+        sample in a subsequence 2) the reconstruction error of the entire subsequence
+        as a vector. You can use `sub_scalef` to control the weights of the 2nd part. Note
+        that one sample may belong to several subsequences as subsequences overlap because
+        of rolling, and we only keep the largest anomaly score as the final score.
 
         :param roll_len: the length of window when rolling the input data. If roll_len=0, direct
             mode is used. If roll_len >0, window mode is used. When setting roll_len, we suggest
             use a number that is probably a full or half a cycle in your data. e.g. half a day,
             one day, etc. Note that roll_len must be smaller than the total length of the input
             time series.
-        :param ratio: ratio of anomalies
+        :param ratio: (estimated) ratio of anomalies
         :param compress_rate: the compression rate of the autoencoder, changing this value will have
             impact on the reconstruction error it calculated.
         :param batch_size: batch size for autoencoder training
