@@ -650,7 +650,7 @@ class FeatureTable(Table):
             df = df.withColumn(c.replace("item", "category"), cat_udf(pyspark_col(c)))
         return FeatureTable(df)
 
-    def union(self,tbls,withname=True):
+    def union(self, tbls, withname=True):
         """
         Find the union of mutiple Feature Table
 
@@ -666,7 +666,7 @@ class FeatureTable(Table):
             result = result.unionByName(x.df) if withname else result.union(x.df)
         return FeatureTable(result)
 
-    def append_columns(self,col,value):
+    def append_columns(self, col, value):
         """
         Append the columns with value to table
 

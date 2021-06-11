@@ -524,5 +524,11 @@ class TestTable(TestCase):
         assert tbl.df.where(tbl.df.height == 10).select("num").collect()[0]["num"] == 2, \
             "the third row of num should be 2"
 
+    def test_read_csv:
+        spark = OrcaContext.get_spark_session()
+        file_path = os.path.join(self.resource_path, "friesian/feature/csv/df1.csv")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
