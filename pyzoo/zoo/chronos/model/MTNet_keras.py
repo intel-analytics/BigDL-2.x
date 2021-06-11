@@ -277,7 +277,7 @@ class MTNetKeras(BaseModel):
             # assert config_names.issuperset(self.lr_decay_configs) or \
             #        config_names.issuperset(self.lr_configs)
         self.epochs = config.get("epochs")
-        self.metric = config.get("metric", "mean_squared_error")
+        self.metric = config.get("metric") or "mean_squared_error"
         self.mc = config.get("mc")
         self.feature_num = config["feature_num"]
         self.output_dim = config["output_dim"]
@@ -493,7 +493,7 @@ class MTNetKeras(BaseModel):
         # if model is not initialized, __build the model
         if self.model is None:
             st = time.time()
-            self.build(config)
+            self.build(self.config)
             end = time.time()
             if verbose == 1:
                 print("Build model took {}s".format(end - st))
@@ -506,12 +506,22 @@ class MTNetKeras(BaseModel):
 
         if verbose == 1:
             print("Fit model took {}s".format(time.time() - st))
-        if validation_data is None:
-            # get train metrics
-            # results = self.model.evaluate(x, y)
-            result = hist.history.get(self.metric)[-1]
+
+        compiled_metric_names = self.model.metrics_names.copy()
+        compiled_metric_names.remove("loss")
+        hist_metric_name = tf.keras.metrics.get(self.metric).__name__
+        if hist_metric_name in compiled_metric_names:
+            metric_name = hist_metric_name
+        elif metric in compiled_metric_names:
+            metric_name = metric
         else:
-            result = hist.history.get('val_' + str(self.metric))[-1]
+            raise ValueError(f"Input metric in fit_eval should be one of the metrics that are "
+                             f"used to compile the model. Got metric value of {metric} and the "
+                             f"metrics in compile are {compiled_metric_names}")
+        if validation_data is None:
+            result = hist.history.get(metric_name)[-1]
+        else:
+            result = hist.history.get('val_' + metric_name)[-1]
         return {self.metric: result}
 
     def evaluate(self, x, y, metrics=['mse']):
