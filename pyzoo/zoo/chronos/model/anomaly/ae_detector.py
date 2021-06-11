@@ -76,11 +76,11 @@ class AEDetector(AnomalyDetector):
         in the input, the larger the reconstruction error, the higher the
         anomaly score.
 
-        2.window mode: It first rolls the input series into a batch of subsequences, each
-        with length=`roll_len`. Then it trains an autoencoder network on the batch of
+        2. window mode: It first rolls the input series into a batch of subsequences, each
+        with length = `roll_len`. Then it trains an autoencoder network on the batch of
         subsequences and calculate the reconstruction error. The anomaly score for each
         sample is a linear combinition of two parts: 1) the reconstruction error of the
-        sample in a subsequence 2) the reconstruction error of the entire subsequence
+        sample in a subsequence. 2) the reconstruction error of the entire subsequence
         as a vector. You can use `sub_scalef` to control the weights of the 2nd part. Note
         that one sample may belong to several subsequences as subsequences overlap because
         of rolling, and we only keep the largest anomaly score as the final score.
