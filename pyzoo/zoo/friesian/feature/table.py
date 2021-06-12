@@ -19,7 +19,7 @@ from pyspark.sql.types import DoubleType, ArrayType, DataType
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
-from pyspark.sql.functions import col as pyspark_col, udf, array, broadcast
+from pyspark.sql.functions import col as pyspark_col, udf, array, broadcast,lit
 from pyspark.sql import Row
 
 from zoo.orca import OrcaContext
@@ -59,7 +59,7 @@ class Table:
         return df
     
     @staticmethod
-    def _read_csv(paths, header = True):
+    def _read_csv(paths, header=True):
         if not isinstance(paths,list):
             paths = [paths]
         spark = OrcaContext.get_spark_session()
@@ -196,7 +196,7 @@ class Table:
         :param min: numeric, the minimum value to clip values to. Values less than this will be
                replaced with this value.
         :param max: numeric, the maximum value to clip values to. Values greater than this will be
-               replaced with this value.
+               replaced with this vchild-prc.intel.comalue.
 
         :return: A new Table that replaced the value less than `min` with specified `min` and the
                  value greater than `max` with specified `max`.
@@ -356,7 +356,7 @@ class FeatureTable(Table):
         return cls(Table._read_json(paths, cols))
 
     @classmethod
-    def read_csv(cls ,paths ,header = True):
+    def read_csv(cls, paths, header=True):
         return cls(Table._read_csv(paths, header))
 
     def encode_string(self, columns, indices):

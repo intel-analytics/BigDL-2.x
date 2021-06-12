@@ -23,8 +23,12 @@ from pyspark.sql.functions import col, max, min, array
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
 
 from zoo.orca import OrcaContext
-from zoo.friesian.feature import FeatureTable, StringIndex
+#from zoo.friesian.feature import FeatureTable, StringIndex
 from zoo.common.nncontext import *
+
+import sys
+sys.path.append("../../../../zoo/friesian/feature")
+from table import *
 
 
 class TestTable(TestCase):
@@ -529,6 +533,37 @@ class TestTable(TestCase):
         file_path = os.path.join(self.resource_path, "friesian/feature/csv/df1.csv")
         df1 = FeatureTable.read_csv(file_path)
         assert isinstance(df1,FeatureTable)
+        assert df1.size() == 2
+        df1 = FeatureTable.read_csv(file_path, header = False)
+        assert df1.size() == 3
+        
+    def test_union(self):
+        spark = OrcaContext.get_spark_session()
+        file_path = os.path.join(self.resource_path, "friesian/feature/csv/")
+        df1 = FeatureTable.read_csv(file_path+"df1.csv")
+        df2 = FeatureTable.read_csv(file_path+"df2.csv")
+        df3 = df1.union(df2)
+        assert df3.size() == 4
+        assert df3.filter(" y == 3 or y == 4 ").size() == 0
+
+        df4 = df1.union([df2,df2])
+        assert df4.size() == 6
+        assert df4.distinct().size() == 4
+
+        df5 = df1.union(df2, False)
+        assert df5.filter(" y == 3 or y == 4").size() == 2
+
+        df6 = df1.union([df2,df2],False)
+        assert df6.filter(" y == 3 or y == 4").size() == 4
+
+    def test_append_columns(self):
+        spark = OrcaContext.get_spark_session()
+        file_path = os.path.join(self.resource_path, "friesian/feature/csv/")
+        df = FeatureTable.read_csv(file_path+"df1.csv")
+        df.append_columns("z",0)
+        assert df.select("z"),size() == 2
+        assert df.filter("z == 0").size() == 2
+
 
 
 
