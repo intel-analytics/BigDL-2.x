@@ -34,6 +34,7 @@ from zoo.pipeline.api.keras.optimizers import Adam as KAdam
 from zoo.pipeline.nnframes import *
 from zoo.util.tf import *
 
+
 def demoexample():
     sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
     sc = init_nncontext(sparkConf)
@@ -59,7 +60,6 @@ def demoexample():
     y0 = model.transform(assembledf)
 
 
-
 def preProcessdata(filepath):
     '''
     preProcess the data read from filepath
@@ -68,8 +68,8 @@ def preProcessdata(filepath):
     '''
     dataset = np.loadtxt(filepath, delimiter=',')
     N = dataset.shape[1]
-    X = dataset[:, 0: N-1]
-    Y = dataset[:, N-1]
+    X = dataset[:, 0: N - 1]
+    Y = dataset[:, N - 1]
     sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
     sc = init_nncontext(sparkConf)
     sqlContext = SQLContext(sc)
@@ -86,9 +86,9 @@ def preProcessdata(filepath):
 
 if __name__ == "__main__":
     parser = OptionParser()
-    parser.add_option("-f", "--folder", type=str, dest="data_path", default = ".",
+    parser.add_option("-f", "--folder", type=str, dest="data_path", default=".",
                       help="Path where data are stored")
-    parser.add_option("-d", action="store_true", dest="demo", default = False)
+    parser.add_option("-d", action="store_true", dest="demo", default=False)
     (option, args) = parser.parse_args(sys.argv)
     print(option.demo)
     if (option.demo):
@@ -100,9 +100,6 @@ if __name__ == "__main__":
 
         for file in os.listdir(datapath):
             if (os.path.splitext(file)[-1] == ".csv"):
-                filepath = os.path.join(option.data_path,file)
+                filepath = os.path.join(option.data_path, file)
                 print(filepath)
                 preProcessdata(filepath)
-
-
-

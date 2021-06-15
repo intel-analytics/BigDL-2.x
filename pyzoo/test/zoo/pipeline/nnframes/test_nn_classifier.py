@@ -207,14 +207,14 @@ class TestNNClassifer():
             .setDataCacheLevel("DISK_AND_DRAM", 2)
 
         data = self.sc.parallelize([
-                                       ((2.0, 1.0), (1.0, 2.0)),
-                                       ((1.0, 2.0), (2.0, 1.0)),
-                                       ((2.0, 1.0), (1.0, 2.0)),
-                                       ((1.0, 2.0), (2.0, 1.0)),
-                                       ((2.0, 1.0), (1.0, 2.0)),
-                                       ((1.0, 2.0), (2.0, 1.0)),
-                                       ((2.0, 1.0), (1.0, 2.0)),
-                                       ((1.0, 2.0), (2.0, 1.0))] * 10)
+            ((2.0, 1.0), (1.0, 2.0)),
+            ((1.0, 2.0), (2.0, 1.0)),
+            ((2.0, 1.0), (1.0, 2.0)),
+            ((1.0, 2.0), (2.0, 1.0)),
+            ((2.0, 1.0), (1.0, 2.0)),
+            ((1.0, 2.0), (2.0, 1.0)),
+            ((2.0, 1.0), (1.0, 2.0)),
+            ((1.0, 2.0), (2.0, 1.0))] * 10)
 
         schema = StructType([
             StructField("features", ArrayType(DoubleType(), False), False),
@@ -271,8 +271,8 @@ class TestNNClassifer():
             .setLearningRate(0.01).setMaxEpoch(1) \
             .setPredictionCol("tt") \
             .setOptimMethod(KAdam(
-            schedule=Plateau("Loss", factor=0.1, patience=2, mode="min", epsilon=0.01,
-                             cooldown=0, min_lr=1e-15))) \
+                schedule=Plateau("Loss", factor=0.1, patience=2, mode="min", epsilon=0.01,
+                                 cooldown=0, min_lr=1e-15))) \
             .fit(df)
         res = nnModel.transform(df)
         assert type(res).__name__ == 'DataFrame'
