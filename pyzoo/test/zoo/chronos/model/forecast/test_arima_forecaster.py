@@ -57,7 +57,6 @@ class TestChronosModelARIMAForecaster(TestCase):
         assert len(test_rolling_pred) == len(data['val_y'])
         test_mse = forecaster.evaluate(None, data['val_y'])
 
-
     def test_arima_forecaster_save_restore(self):
         data = create_data()
         forecaster = ARIMAForecaster(p=2,
@@ -107,7 +106,6 @@ class TestChronosModelARIMAForecaster(TestCase):
             model_file = "tmp.pkl"
             forecaster.save(model_file)
 
-
     def test_arima_forecaster_shape_error(self):
         data = create_data()
         forecaster = ARIMAForecaster(p=2,
@@ -117,9 +115,9 @@ class TestChronosModelARIMAForecaster(TestCase):
                                      Q=1,
                                      m=7
                                      )
-        
+
         with pytest.raises(AssertionError):
             forecaster.fit(data['x'].reshape(-1, 1), data['val_y'])
-        
+
         with pytest.raises(AssertionError):
             forecaster.fit(data['x'], data['val_y'].reshape(-1, 1))

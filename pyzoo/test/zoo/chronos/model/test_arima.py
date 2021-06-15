@@ -61,7 +61,6 @@ class TestARIMAModel(ZooTestCase):
         # test rolling predict
         rolling_result = self.model.predict(x=None, horizon=self.horizon, rolling=True)
         assert len(rolling_result) == self.horizon
-        
 
     def test_error(self):
         with pytest.raises(ValueError, match="x should be None"):
@@ -76,11 +75,12 @@ class TestARIMAModel(ZooTestCase):
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling predict"):
             self.model.predict(x=None, horizon=self.horizon)
-            
+
         with pytest.raises(Exception,
-                           match="We don't support updating model without rolling prediction currently"):
+                           match="We don't support updating model without rolling prediction currently"
+                           ):
             self.model.predict(horizon=self.horizon, update=True, rolling=False)
-            
+
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling evaluate"):
             self.model.evaluate(x=None, target=self.target)

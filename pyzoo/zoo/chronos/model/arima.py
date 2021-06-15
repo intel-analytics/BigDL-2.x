@@ -49,7 +49,7 @@ class ARIMAModel(BaseModel):
         self.d = config.get('d', self.d)
         self.q = config.get('q', self.q)
         self.seasonal = config.get('seasonality_mode', self.seasonal)
-        self.P = config.get('P', self.P) 
+        self.P = config.get('P', self.P)
         self.D = config.get('D', self.D)
         self.Q = config.get('Q', self.Q)
         self.m = config.get('m', self.m)
@@ -61,11 +61,11 @@ class ARIMAModel(BaseModel):
         :param config: hyperparameters for the model
         """
         self.set_params(**config)
-        order=(self.p, self.d, self.q)
-        if self.seasonal == False:
-            seasonal_order=(0, 0, 0, 0)
+        order = (self.p, self.d, self.q)
+        if not self.seasonal:
+            seasonal_order = (0, 0, 0, 0)
         else:
-            seasonal_order=(self.P, self.D, self.Q, self.m)
+            seasonal_order = (self.P, self.D, self.Q, self.m)
         self.model = ARIMA(order=order, seasonal_order=seasonal_order, suppress_warnings=True)
         self.model_init = True
 
@@ -78,13 +78,13 @@ class ARIMAModel(BaseModel):
         """
         x = data['x']
         target = data['val_y']
-        
+
         # Estimating differencing term (d) and seasonal differencing term (D)
         kpss_diffs = ndiffs(x, alpha=0.05, test='kpss', max_d=6)
         adf_diffs = ndiffs(x, alpha=0.05, test='adf', max_d=6)
         d = max(adf_diffs, kpss_diffs)
-        D = 0 if self.seasonal == False else nsdiffs(x, m=7, max_D=12)
-        config.update(d=d, D=D)        
+        D = 0 if not self.seasonal else nsdiffs(x, m=7, max_D=12)
+        config.update(d=d, D=D)
 
         if not self.model_init:
             self._build(**config)
@@ -96,7 +96,7 @@ class ARIMAModel(BaseModel):
     def predict(self, x=None, horizon=24, update=False, rolling=False):
         """
         Predict horizon time-points ahead the input x in fit_eval
-        :param x: ARIMA predicts the horizon steps foreward from the training data. 
+        :param x: ARIMA predicts the horizon steps foreward from the training data.
             So x should be None as it is not used.
         :param horizon: the number of steps forward to predict
         :param update: whether to update the original model
@@ -105,15 +105,15 @@ class ARIMAModel(BaseModel):
         """
         if x is not None:
             raise ValueError("x should be None")
-        if update==True and rolling==False:
+        if update and not rolling:
             raise Exception("We don't support updating model without rolling prediction currently")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
         
-        if update==False and rolling==False:
+        if not update and not rolling:
             forecasts = self.model.predict(n_periods=horizon)
-        elif rolling==True:
-            if update==False:
+        elif rolling:
+            if not update:
                 self.save("tmp.pkl")
 
             forecasts = []
@@ -124,12 +124,12 @@ class ARIMAModel(BaseModel):
                 # Updates the existing model with a small number of MLE steps for rolling prediction
                 self.model.update(fc)
 
-            if update==False:
+            if not update:
                 self.restore("tmp.pkl")
                 os.remove("tmp.pkl")
-                
+
         return forecasts
-    
+
     def evaluate(self, x, target, metrics=['mse'], rolling=False):
         """
         Evaluate on the prediction results and y. We predict horizon time-points ahead the input x
@@ -148,9 +148,9 @@ class ARIMAModel(BaseModel):
             raise ValueError("Input invalid target of None")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling evaluate")
-    
+
         forecasts = self.predict(horizon=len(target), rolling=rolling)
-        
+
         return [Evaluator.evaluate(m, target, forecasts) for m in metrics]
 
     def save(self, checkpoint_file):

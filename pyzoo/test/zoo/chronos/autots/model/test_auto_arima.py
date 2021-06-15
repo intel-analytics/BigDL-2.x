@@ -53,11 +53,11 @@ class TestAutoARIMA(TestCase):
             "m": hp.choice([4, 7]),
         }
         auto_arima.fit(data=data,
-                         epochs=1,
-                         metric="mse",
-                         n_sampling=3,
-                         search_space=search_space,
-                         )
+                       epochs=1,
+                       metric="mse",
+                       n_sampling=3,
+                       search_space=search_space,
+                       )
         best_model = auto_arima.get_best_model()
         assert 0 <= best_model.p <= 4
         assert 0 <= best_model.q <= 5
