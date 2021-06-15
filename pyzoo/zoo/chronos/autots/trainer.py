@@ -14,6 +14,9 @@
 # limitations under the License.
 #
 
+from zoo.chronos.data import TSDataset
+import zoo.orca.automl.hp as hp
+
 
 def check_lstm_params(search_space):
     if search_space.get('input_feature_num') is None \
@@ -77,6 +80,10 @@ class AutoTSTrainer:
                 raise ValueError(f"We only support backend as torch. Got {backend}")
 
         self.metric = metric
+        self.backend = backend
+
+        self.past_seq_len = search_space.get('past_seq_len', 24)
+        self.future_seq_len = search_space.get('future_seq_len', 1)
 
         import types
         if model == "lstm":
@@ -96,7 +103,7 @@ class AutoTSTrainer:
                 backend=backend,
                 logs_dir=logs_dir,
                 cpus_per_trial=cpus_per_trial,
-                name=name
+                name=name,
             )
         elif model == "tcn":
             # if model is tcn
@@ -105,8 +112,8 @@ class AutoTSTrainer:
             self.model = AutoTCN(
                 input_feature_num=search_space.get('input_feature_num'),
                 output_target_num=search_space.get('output_target_num'),
-                past_seq_len=search_space.get('past_seq_len', 24),
-                future_seq_len=search_space.get('future_seq_len', 1),
+                past_seq_len=self.past_seq_len,
+                future_seq_len=self.future_seq_len,
                 optimizer=search_space.get('optimizer', "Adam"),
                 loss=self.loss,
                 metric=self.metric,
@@ -119,7 +126,7 @@ class AutoTSTrainer:
                 backend=backend,
                 logs_dir=logs_dir,
                 cpus_per_trial=cpus_per_trial,
-                name=name
+                name=name,
             )
         elif isinstance(model, types.FunctionType):
             # TODO if model is user defined
@@ -143,11 +150,9 @@ class AutoTSTrainer:
         """
         fit using AutoEstimator
         :param data: train data.
-               For backend of "torch", data can be a tuple of ndarrays or a function that takes a
+               For backend of "torch", data can be a TSDataset or a function that takes a
                config dictionary as parameter and returns a PyTorch DataLoader.
-               For backend of "keras", data can be a tuple of ndarrays.
-               If data is a tuple of ndarrays, it should be in the form of (x, y),
-                where x is training input data and y is training target data.
+               For backend of "keras", data can be a TSDataset.
         :param epochs: Max number of epochs to train in each trial. Defaults to 1.
                If you have also set metric_threshold, a trial will stop if either it has been
                optimized to the metric_threshold or it has been trained for {epochs} epochs.
@@ -168,17 +173,22 @@ class AutoTSTrainer:
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
         """
+        train_d = data
+        val_d = validation_data
         if self.preprocess is True:
-            # TODO add the data preprocessing part
-            # which operations are included, configurable?
-            # 1. fill
-            # feature generation
-            pass
+            # TODO do we need more customizations for feature search?
+            # a little bit of hacking to modify automodel's search_space before fit
+            train_d, val_d = self.prepare_feature_search(
+                    search_space=self.model.search_space,
+                    train_data=data,
+                    val_data=validation_data,
+            )
+
         self.model.fit(
-            data=data,
+            data=train_d,
             epochs=epochs,
             batch_size=batch_size,
-            validation_data=validation_data,
+            validation_data=val_d,
             metric_threshold=metric_threshold,
             n_sampling=n_sampling,
             search_alg=search_alg,
@@ -186,6 +196,85 @@ class AutoTSTrainer:
             scheduler=scheduler,
             scheduler_params=scheduler_params
         )
+
+    def prepare_feature_search(self, search_space, train_data, val_data=None):
+        """
+        prepare the data creators and add selected features to search_space
+        :param search_space: the search space
+        :param train_data: train data
+        :param val_data: validation data
+        :return: data creators from train and validation data
+        """
+        import torch
+        from torch.utils.data import Dataset, DataLoader
+        from sklearn.preprocessing import StandardScaler
+        import ray
+
+        standard_scaler = StandardScaler()
+
+        class TorchDataset(Dataset):
+            def __init__(self, x, y):
+                self.x = torch.from_numpy(x).float()
+                self.y = torch.from_numpy(y).float()
+
+            def __len__(self):
+                return self.x.shape[0]
+
+            def __getitem__(self, idx):
+                return self.x[idx], self.y[idx]
+
+        # append feature selection into search space
+        train_data.gen_dt_feature()
+        all_features = train_data.feature_col
+        if search_space.get('selected_features') is not None:
+            raise ValueError("Do not specify ""selected_features"" in search space."
+                             " The system will automatically generate this config for you")
+        search_space['selected_features'] = hp.choice_n(all_features, 3, len(all_features))
+
+#        train_data_id = ray.put(train_data)
+
+#        train_data_2 = ray.get(train_data_id)
+        train_data.scale(standard_scaler, fit=True) \
+            .roll(lookback=self.past_seq_len,
+                  horizon=self.future_seq_len,
+                  feature_col=["DAYOFYEAR(datetime)"]) \
+            .to_numpy()
+
+        def train_data_creator(config):
+            """
+            train data creator function
+            :param config:
+            :return:
+            """
+            train_d = ray.get(train_data_id)
+            x, y = train_d.scale(standard_scaler, fit=True) \
+                .roll(lookback=self.past_seq_len,
+                      horizon=self.future_seq_len,
+                      feature_col=config['selected_features']) \
+                .to_numpy()
+
+            return DataLoader(TorchDataset(x, y),
+                              batch_size=config["batch_size"],
+                              shuffle=True)
+
+        def val_data_creator(config):
+            """
+            train data creator function
+            :param config:
+            :return:
+            """
+            x, y = val_data.gen_dt_feature() \
+                .scale(standard_scaler, fit=False) \
+                .roll(lookback=self.past_seq_len,
+                      horizon=self.future_seq_len,
+                      feature_col=config['selected_features']) \
+                .to_numpy()
+
+            return DataLoader(TorchDataset(x, y),
+                              batch_size=config["batch_size"],
+                              shuffle=True)
+
+        return train_data_creator, val_data_creator
 
     def get_best_model(self):
         """

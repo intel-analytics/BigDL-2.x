@@ -17,11 +17,12 @@
 from unittest import TestCase
 import pytest
 
-from torch.utils.data import Dataset, DataLoader
 import torch
 import numpy as np
 from zoo.chronos.autots.trainer import AutoTSTrainer
+from zoo.chronos.data.tsdataset import TSDataset
 from zoo.orca.automl import hp
+import pandas as pd
 
 input_feature_dim = 10
 output_feature_dim = 2
@@ -35,17 +36,22 @@ def get_x_y(size):
     return x, y
 
 
-class RandomDataset(Dataset):
-    def __init__(self, size=1000):
-        x, y = get_x_y(size)
-        self.x = torch.from_numpy(x).float()
-        self.y = torch.from_numpy(y).float()
+def get_ts_df():
+    sample_num = np.random.randint(100, 200)
+    train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
+                             "value": np.random.randn(sample_num),
+                             "id": np.array(['00'] * sample_num),
+                             "extra feature": np.random.randn(sample_num)})
+    return train_df
 
-    def __len__(self):
-        return self.x.shape[0]
 
-    def __getitem__(self, idx):
-        return self.x[idx], self.y[idx]
+def get_tsdataset():
+    df = get_ts_df()
+    return TSDataset.from_pandas(df,
+                                 dt_col="datetime",
+                                 target_col="value",
+                                 extra_feature_col=["extra feature"],
+                                 id_col="id")
 
 
 class TestAutoTrainer(TestCase):
@@ -57,7 +63,7 @@ class TestAutoTrainer(TestCase):
         from zoo.orca import stop_orca_context
         stop_orca_context()
 
-    def test_fit_builtin_lstm(self):
+    def test_fit_lstm_feature(self):
         search_space = {
             'input_feature_num': input_feature_dim,
             'output_target_num': output_feature_dim,
@@ -71,47 +77,17 @@ class TestAutoTrainer(TestCase):
                                      search_space=search_space,
                                      metric="mse",
                                      loss=torch.nn.MSELoss(),
+                                     preprocess=True,
                                      logs_dir="/tmp/auto_trainer",
                                      cpus_per_trial=2,
                                      name="auto_trainer"
                                      )
-        auto_trainer.fit(data=get_x_y(size=1000),
+        auto_trainer.fit(data=get_tsdataset(),
                          epochs=1,
                          batch_size=hp.choice([32, 64]),
-                         validation_data=get_x_y(size=400),
+                         validation_data=get_tsdataset(),
                          n_sampling=1
                          )
-        best_model = auto_trainer.get_best_model()
-        assert best_model.config['lr'] in (0.001, 0.003, 0.01)
-        assert best_model.config['batch_size'] in (32, 64)
-
-    def test_fit_builtin_tcn(self):
-        search_space = {
-            'input_feature_num': input_feature_dim,
-            'output_target_num': output_feature_dim,
-            'past_seq_len': 5,
-            'hidden_units': 8,
-            'levels': hp.randint(1, 3),
-            'kernel_size': hp.choice([2, 3]),
-            'lr': hp.choice([0.001, 0.003, 0.01]),
-            'dropout': hp.uniform(0.1, 0.2),
-        }
-        auto_trainer = AutoTSTrainer(model='tcn',
-                                     search_space=search_space,
-                                     logs_dir="/tmp/auto_trainer",
-                                     cpus_per_trial=2,
-                                     name="auto_trainer"
-                                     )
-        auto_trainer.fit(data=get_x_y(size=1000),
-                         epochs=1,
-                         batch_size=hp.choice([32, 64]),
-                         validation_data=get_x_y(size=400),
-                         n_sampling=1
-                         )
-
-        best_model = auto_trainer.get_best_model()
-        assert best_model.config['lr'] in (0.001, 0.003, 0.01)
-        assert best_model.config['batch_size'] in (32, 64)
 
 
 if __name__ == "__main__":
