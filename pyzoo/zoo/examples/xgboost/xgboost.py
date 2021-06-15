@@ -51,7 +51,7 @@ def demoexample():
     assembledf = vecasembler.transform(df).select("features", "label").cache()
     xgbRf0 = XGBRegressor()
     xgbRf0.setNthread(1)
-    xgbmodel: XGBRegressorModel = XGBRegressorModel(xgbRf0.fit(assembledf))
+    xgbmodel = XGBRegressorModel(xgbRf0.fit(assembledf))
     xgbmodel.save("/tmp/modelfile/")
     xgbmodel.setFeaturesCol("features")
     yxgb = xgbmodel.transform(assembledf)
@@ -102,4 +102,4 @@ if __name__ == "__main__":
             if (os.path.splitext(file)[-1] == ".csv"):
                 filepath = os.path.join(option.data_path, file)
                 print(filepath)
-                preProcessdata(filepath)
+                assembledf = preProcessdata(filepath)
