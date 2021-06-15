@@ -15,6 +15,7 @@
 #
 
 import ray.tune as tune
+import numpy as np
 
 
 def uniform(lower, upper):
@@ -107,6 +108,25 @@ def choice(categories):
     :param categories: A list to be sampled.
     '''
     return tune.choice(categories)
+
+
+def choice_n(categories, min_items, max_items):
+    """
+    Sample a subset from a list
+    :param categories: A list to be sampled
+    :param min_items: minimum number of items to be sampled
+    :param max_items: maximum number of items to be sampled
+    """
+    return tune.sample_from(
+        lambda spec: list(
+                np.random.choice(
+                    categories,
+                    size=np.random.randint(
+                        low=min_items,
+                        high=max_items),
+                    replace=False
+                )
+            ))
 
 
 def sample_from(func):

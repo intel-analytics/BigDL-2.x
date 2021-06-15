@@ -47,7 +47,11 @@ class LSTMModel(nn.Module):
 
 
 def model_creator(config):
-    return LSTMModel(input_dim=config["input_feature_num"],
+    if 'selected_features' in config:
+        input_dim = len(config['selected_features'])+1
+    else:
+        input_dim = config["input_feature_num"]
+    return LSTMModel(input_dim=input_dim,
                      hidden_dim=config.get("hidden_dim", 32),
                      layer_num=config.get("layer_num", 2),
                      dropout=config.get("dropout", 0.2),
