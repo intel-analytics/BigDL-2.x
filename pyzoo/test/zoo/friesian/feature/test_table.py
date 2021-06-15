@@ -20,7 +20,7 @@ import tempfile
 from unittest import TestCase
 
 from pyspark.sql.functions import col, max, min, array
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, DoubleType
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature import FeatureTable, StringIndex
@@ -523,6 +523,35 @@ class TestTable(TestCase):
             "the first row of name should be 1"
         assert tbl.df.where(tbl.df.height == 10).select("num").collect()[0]["num"] == 2, \
             "the third row of num should be 2"
+
+    def test_col_names(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        col_names = feature_tbl.get_col_names()
+        assert isinstance(col_names,list), "col_names should be a list of strings"
+        assert col_names == ["col_1","col_2","col_3","col_4","col_5"], "column names are incorrenct"
+
+    def test_add_constant_values(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14, 8.5),
+                ("alice", "34", 25, 9.6),
+                ("rose", "25344", 23, 10.0)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True),
+                             StructField("height", DoubleType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        columns = ["age", "height"]
+        new_tbl = tbl.add_constant_values(columns, 1.5)
+        new_list = new_tbl.df.take(3)
+        assert len(new_list) == 3, "new_tbl should have 3 rows"
+        assert new_list[0]['age'] == 15.5, "the age of jack should increase 1"
+        assert new_list[0]['height'] == 10, "the height of jack should increase 1"
+        assert new_list[1]['age'] == 26.5, "the age of alice should increase 1"
+        assert new_list[1]['height'] == 11.1, "the height of alice should increase 1"
+        assert new_list[2]['age'] == 24.5, "the age of rose should increase 1"
+        assert new_list[2]['height'] == 11.5, "the height of rose should increase 1"
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
