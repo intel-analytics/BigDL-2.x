@@ -713,6 +713,7 @@ class XGBClassifierModel:
         jvalue = callZooFunc("float", "loadXGBClassifierModel", path, numClasses)
         return XGBClassifierModel(jvalue=jvalue)
 
+
 class XGBRegressor():
     def __init__(self):
         super(XGBRegressor, self).__init__()
@@ -738,7 +739,7 @@ class XGBRegressorModel:
     def setPredictionCol(self, prediction):
         callZooFunc("float", "setPredictionXGBRegressorModel", self.value, prediction)
 
-    def setInferBatchSize(self, value:int):
+    def setInferBatchSize(self, value: int):
         callZooFunc("float", "setInferBatchSizeXGBRegressorModel", self.value, value)
 
     def transform(self, dataset):

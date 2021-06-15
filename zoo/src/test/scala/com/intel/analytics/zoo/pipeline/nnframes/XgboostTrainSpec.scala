@@ -59,10 +59,11 @@ class XgboostTrainSpec extends ZooSpecHelper {
       xgbRf0.setNthread(1)
       val xgbRegressorModel0 = xgbRf0.fit(assembledDf)
       val y0 = xgbRegressorModel0.transform(assembledDf)
-
+      y0.show()
       xgbRegressorModel0.save("/tmp/test")
       val model = XGBRegressorModel.load("/tmp/test")
       val y0_0 = model.transform(assembledDf)
+      y0_0.show()
       assert(y0_0.except(y0).count()==0)
     }
   }
