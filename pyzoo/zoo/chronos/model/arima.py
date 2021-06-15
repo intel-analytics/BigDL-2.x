@@ -109,7 +109,7 @@ class ARIMAModel(BaseModel):
             raise Exception("We don't support updating model without rolling prediction currently")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
-        
+
         if not update and not rolling:
             forecasts = self.model.predict(n_periods=horizon)
         elif rolling:

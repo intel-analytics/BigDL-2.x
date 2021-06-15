@@ -38,10 +38,10 @@ class ARIMAForecaster(Forecaster):
                  metric="mse",
                  ):
         """
-        Build a ARIMA Forecast Model. 
+        Build a ARIMA Forecast Model.
         User need to set p, q, P, Q, m for the ARIMA model, the differencing term (d) and
         seasonal differencing term (D) are automatically estimated from the data.
-        
+
         :param p: hyperparameter p for the ARIMA model, for details you may refer to
             https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA
         :param q: hyperparameter q for the ARIMA model, for details you may refer to
@@ -73,7 +73,6 @@ class ARIMAForecaster(Forecaster):
 
         super().__init__()
 
-        
     def fit(self, x, target):
         """
         Fit(Train) the forecaster.
@@ -97,7 +96,7 @@ class ARIMAForecaster(Forecaster):
             "The target should be an 1-D array), \
             Got target dimension of {}."\
             .format(target.ndim)
-        
+
     def predict(self, horizon, rolling=False):
         """
         Predict using a trained forecaster.
