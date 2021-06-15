@@ -291,6 +291,32 @@ class Table:
                align cells right.
         """
         self.df.show(n, truncate)
+    
+    def add_constant_values(self, columns, value = 1):
+        """
+        Increase all of values of a column or a list of columns by a constant value
+
+        :param columns: str or list of str, the target columns to be increased
+        :param value: numeric, the constant value to bed added 
+
+        return: A new table that update values of specified columns by a constant value
+        """
+        if columns is None:
+            raise ValueError("Columns should e str or list r str, but got None")
+        if not isinstance(columns,list):
+            columns = [columns]
+        check_col_exists(self.df,columns)
+        new_df = self.df
+        for column in columns:
+            new_df = new_df.withColumn(column,pyspark_col(column)+value)
+        return self._clone(new_df)
+
+    def get_col_names(self):
+        """
+        Get column names of the table
+        :return: A list of strings that specifies column names 
+        """
+        return self.df.schema.names
 
     def write_parquet(self, path, mode="overwrite"):
         self.df.write.mode(mode).parquet(path)
