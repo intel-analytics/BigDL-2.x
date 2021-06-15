@@ -87,7 +87,7 @@ class TSDataset:
         :param id_col: (optional) a str indicates the col name of dataframe id.
         :param extra_feature_col: (optional) a str or list indicates the col name
                of extra feature columns that needs to predict the target column.
-        :param with_split: (optional) bool, state if we need to split the dataframe
+        :param with_split: (optional) bool, states if we need to split the dataframe
                to train, validation and test set. The value defaults to False.
         :param val_ratio: (optional) float, validation ratio. Only effective when
                with_split is set to True. The value defaults to 0.
@@ -154,17 +154,19 @@ class TSDataset:
         distinguished by id_col and feature_col
 
         :param mode: imputation mode, select from "last", "const" or "linear".
+
                "last": impute by propagating the last non N/A number to its following N/A.
                        if there is no non N/A number ahead, 0 is filled instead.
+
                "const": impute by a const value input by user.
+
                "linear": impute by linear interpolation.
-        :param const_num:  indicate the const number to fill, which only effective when mode
+        :param const_num:  indicates the const number to fill, which is only effective when mode
                is set to "const".
 
         :return: the tsdataset instance.
 
-        Note: It is preferred that `impute` is called after `resample` while before
-              `roll` if needed.
+        Note: It is preferred that `impute` is called after `resample` while before `roll` if needed.
         '''
         df_list = [impute_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
                                                dt_col=self.dt_col,
@@ -191,7 +193,7 @@ class TSDataset:
 
     def resample(self, interval, start_time, end_time, merge_mode="mean"):
         '''
-        resample on an new interval for each univariate time series distinguished
+        Resample on a new interval for each univariate time series distinguished
         by id_col and feature_col.
 
         :param interval: pandas offset aliases, indicating time interval of the output dataframe.
@@ -200,9 +202,10 @@ class TSDataset:
         :param merge_mode: if current interval is smaller than output interval,
             we need to merge the values in a mode. "max", "min", "mean"
             or "sum" are supported for now.
+
         :return: the tsdataset instance.
 
-        Note: It if preferred to call `impute` right after `resample`.
+        Note: It is preferred to call `impute` right after `resample`.
         '''
         df_list = []
         for id_name in self._id_list:
@@ -248,7 +251,7 @@ class TSDataset:
         TODO: relationship with scale should be figured out.
 
         :param settings: str or dict. If a string is set, then it must be one of "comprehensive"
-               "minimal" and "efficient". If a dict is set then it should follow the instruction
+               "minimal" and "efficient". If a dict is set, then it should follow the instruction
                for default_fc_parameters in tsfresh. The value is defaulted to "comprehensive".
         :param full_settings: dict. It should follow the instruction for kind_to_fc_parameters in
                tsfresh. The value is defaulted to None.
@@ -297,7 +300,7 @@ class TSDataset:
 
         :param window_size: int, generate feature according to the rolling result.
         :param settings: str or dict. If a string is set, then it must be one of "comprehensive"
-               "minimal" and "efficient". If a dict is set then it should follow the instruction
+               "minimal" and "efficient". If a dict is set, then it should follow the instruction
                for default_fc_parameters in tsfresh. The value is defaulted to "comprehensive".
         :param full_settings: dict. It should follow the instruction for kind_to_fc_parameters in
                tsfresh. The value is defaulted to None.
@@ -347,14 +350,14 @@ class TSDataset:
         :param horizon: int or list,
                if `horizon` is an int, we will sample `horizon` step
                continuously after the forecasting point.
-               if `horizon` is an list, we will sample discretely according
+               if `horizon` is a list, we will sample discretely according
                to the input list.
                specially, when `horizon` is set to 0, ground truth will be generated as None.
-        :param feature_col: str or list, indicate the feature col name. Default to None,
-               where we will take all avaliable feature in rolling.
-        :param target_col: str or list, indicate the target col name. Default to None,
+        :param feature_col: str or list, indicates the feature col name. Default to None,
+               where we will take all available feature in rolling.
+        :param target_col: str or list, indicates the target col name. Default to None,
                where we will take all target in rolling. it should be a subset of target_col
-               you used to initialized the tsdataset.
+               you used to initialize the tsdataset.
         :param id_sensitive: bool,
                if `id_sensitive` is False, we will rolling on each id's sub dataframe
                and fuse the sampings.
@@ -431,7 +434,7 @@ class TSDataset:
 
     def to_numpy(self):
         '''
-        export rolling result in form of a tuple of numpy ndarray (x, y)
+        Export rolling result in form of a tuple of numpy ndarray (x, y)
 
         :return: a 2-dim tuple. each item is a 3d numpy ndarray
         '''
@@ -442,7 +445,7 @@ class TSDataset:
 
     def to_pandas(self):
         '''
-        export the pandas dataframe
+        Export the pandas dataframe
 
         :return: the internal dataframe.
         '''
@@ -450,13 +453,14 @@ class TSDataset:
 
     def scale(self, scaler, fit=True):
         '''
-        scale the time series dataset's feature column and target column.
+        Scale the time series dataset's feature column and target column.
 
         :param scaler: sklearn scaler instance, StandardScaler, MaxAbsScaler,
                MinMaxScaler and RobustScaler are supported.
         :param fit: if we need to fit the scaler. Typically, the value should
                be set to True for training set, while False for validation and
                test set. The value is defaulted to True.
+
         :return: the tsdataset instance.
         '''
         feature_col = self.feature_col
@@ -476,7 +480,7 @@ class TSDataset:
 
     def unscale(self):
         '''
-        unscale the time series dataset's feature column and target column.
+        Unscale the time series dataset's feature column and target column.
 
         :return: the tsdataset instance.
         '''
@@ -492,9 +496,11 @@ class TSDataset:
 
     def _unscale_numpy(self, data):
         '''
-        unscale the time series forecastor's numpy prediction result/ground truth.
+        Unscale the time series forecaster's numpy prediction result/ground truth.
+
         :param data: a numpy ndarray with 3 dim whose shape should be exactly the
                same with self.numpy_y.
+
         :return: the unscaled numpy ndarray
         '''
         num_roll_target = len(self.roll_target)
