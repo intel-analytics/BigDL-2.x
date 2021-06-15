@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.chronos.autots.model.AutoARIMA import AutoARIMA
+from zoo.chronos.autots.model.auto_arima import AutoARIMA
 
 import numpy as np
 import pandas as pd

@@ -201,5 +201,5 @@ class ARIMABuilder(ModelBuilder):
         """
         from zoo.chronos.model.arima import ARIMAModel
         model = ARIMAModel(config=self.model_config)
-        model.eestore(checkpoint_filename)
+        model.restore(checkpoint_filename)
         return model
