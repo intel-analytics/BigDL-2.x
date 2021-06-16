@@ -460,6 +460,15 @@ class TSDataset:
                test set. The value is defaulted to True.
 
         :return: the tsdataset instance.
+
+        Assume there is a training set tsdata and a test set tsdata_test.
+        scale() should be called first on training set with default value fit=True,
+        then be called on test set with the same scaler and fit=False.
+
+        >>> from sklearn.preprocessing import StandardScaler
+        >>> scaler = StandardScaler()
+        >>> tsdata.scale(scaler)
+        >>> tsdata_test.scale(scaler, fit=False)
         '''
         feature_col = self.feature_col
         if self.roll_addional_feature:
