@@ -69,6 +69,8 @@ class DatasetHandler:
                               validation_steps):
 
         config, local_batch_size = self._handle_batch_size(config)
+        config['rank'] = self.rank
+        config['size'] = self.size
         train_dataset = data_creator(config, config["batch_size"])
         if isinstance(train_dataset, list) and \
                 all([isinstance(x, ray.ObjectID) for x in train_dataset]):
@@ -99,6 +101,8 @@ class DatasetHandler:
 
     def handle_dataset_validation(self, data_creator, config, steps):
         config, local_batch_size = self._handle_batch_size(config)
+        config['rank'] = self.rank
+        config['size'] = self.size
         dataset = data_creator(config, config["batch_size"])
         if isinstance(dataset, list) and all([isinstance(x, ray.ObjectID) for x in dataset]):
             assert steps is not None, "steps must be provided for xshard"
@@ -192,7 +196,12 @@ class TFDistributedDatasetHandler(DatasetHandler):
         return dataset
 
     def _handle_sharding(self, dataset):
-        return dataset
+        import tensorflow as tf
+        if isinstance(dataset, tf.data.Dataset):
+            from tensorflow.python.distribute import distribution_strategy_context as ds_context
+            strategy = ds_context.get_strategy()
+            dist_dataset = strategy.experimental_distribute_dataset(dataset)
+        return dist_dataset
 
     def _handle_batch_size(self, config):
         assert "batch_size" in config, "batch_size must be set in config"
