@@ -1095,6 +1095,7 @@ case class InferenceModelMetaData(modelName: String,
                                   modelType: String,
                                   weightPath: String,
                                   modelConCurrentNum: Int = 1,
+                                  inputCompileType: String,
                                   features: Array[String])
   extends ModelMetaData(modelName, modelVersion, features)
 

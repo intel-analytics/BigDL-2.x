@@ -227,8 +227,18 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                         }
                       case _: InferenceModelServable =>
                         val result = timing("inference model inference")(predictRequestTimer) {
-                          val outputs = timing("model inference")(modelInferenceTimer) {
-                            servable.predict(content)
+                          val outputs = servable.getMetaData.
+                            asInstanceOf[InferenceModelMetaData].inputCompileType match {
+                            case "direct" => timing("model inference")(modelInferenceTimer) {
+                              servable.predict(content)
+                            }
+                            case "instance" =>
+                              val instances = timing("json deserialization")() {
+                                JsonUtil.fromJson(classOf[Instances], content)
+                              }
+                              timing("model inference")(modelInferenceTimer) {
+                                servable.predict(instances)
+                              }
                           }
                           JsonUtil.toJson(outputs.map(_.result))
                         }
