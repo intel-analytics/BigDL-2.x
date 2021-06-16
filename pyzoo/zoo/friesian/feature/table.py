@@ -680,12 +680,11 @@ class FeatureTable(Table):
                         if agg_column not in columns]
             agg_df = grouped_data.agg(*agg_exprs_list)
         elif isinstance(agg, dict):
-            if all(isinstance(agg[agg_column], str) for agg_column in agg):
+            if all(isinstance(stats, str) for agg_column, stats in agg.items()):
                 agg_df = grouped_data.agg(agg)
             else:
                 agg_exprs_list = []
-                for agg_column in agg:
-                    stats = agg[agg_column]
+                for agg_column, stats in agg.items():
                     if isinstance(stats, str):
                         stats = [stats]
                     assert isinstance(stats, list), "value in agg should be str or list of str"
@@ -694,7 +693,7 @@ class FeatureTable(Table):
                         agg_exprs_list += [stat_func(agg_column)]
                 agg_df = grouped_data.agg(*agg_exprs_list)
         else:
-            raise TypeError("agg should be dict or list")
+            raise TypeError("agg should be str, list of str, or dict")
 
         if join:
             assert columns, "columns can not be empty if join is True"
