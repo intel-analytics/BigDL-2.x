@@ -669,15 +669,15 @@ class FeatureTable(Table):
         grouped_data = self.df.groupBy(columns)
 
         if isinstance(agg, str):
-            agg_exprs_dict = {agg_column:agg for agg_column in self.df.columns \
-                    if agg_column not in columns}
+            agg_exprs_dict = {agg_column: agg for agg_column in self.df.columns
+                              if agg_column not in columns}
             agg_df = grouped_data.agg(agg_exprs_dict)
         elif isinstance(agg, list):
             agg_exprs_list = []
             for stat in agg:
                 stat_func = getattr(F, stat)
-                agg_exprs_list += [stat_func(agg_column) for agg_column in self.df.columns \
-                        if agg_column not in columns]
+                agg_exprs_list += [stat_func(agg_column) for agg_column in self.df.columns
+                                   if agg_column not in columns]
             agg_df = grouped_data.agg(*agg_exprs_list)
         elif isinstance(agg, dict):
             if all(isinstance(stats, str) for agg_column, stats in agg.items()):
