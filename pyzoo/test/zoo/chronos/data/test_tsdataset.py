@@ -18,6 +18,7 @@ import pytest
 import numpy as np
 import pandas as pd
 import random
+import math
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.chronos.data import TSDataset
@@ -113,6 +114,50 @@ class TestTSDataset(ZooTestCase):
             tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=["value1"],
                                            extra_feature_col="extra feature", id_col="id")
 
+    def test_tsdataset_initialization_num(self):
+        df = get_multi_id_ts_df()
+        # legal input
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                       extra_feature_col=["extra feature"], id_col="id")
+        assert tsdata._id_list == ['00', '01']
+        assert tsdata.feature_col == ["extra feature"]
+        assert tsdata.target_col == ["value"]
+        assert tsdata.dt_col == "datetime"
+        assert tsdata._is_pd_datetime
+
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=["value"],
+                                       extra_feature_col="extra feature", id_col="id")
+        assert tsdata._id_list == ['00', '01']
+        assert tsdata.feature_col == ["extra feature"]
+        assert tsdata.target_col == ["value"]
+        assert tsdata.dt_col == "datetime"
+        assert tsdata._is_pd_datetime
+
+        tsdata = TSDataset.from_pandas(df.drop(columns=["id"]), dt_col="datetime",
+                                       target_col=["value"], extra_feature_col="extra feature")
+        assert tsdata._id_list == ['0']
+        assert tsdata.feature_col == ["extra feature"]
+        assert tsdata.target_col == ["value"]
+        assert tsdata.dt_col == "datetime"
+        assert tsdata._is_pd_datetime
+
+        # illegael input
+        with pytest.raises(AssertionError):
+            tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=["value"],
+                                           extra_feature_col="extra feature", id_col=0)
+        with pytest.raises(AssertionError):
+            tsdata = TSDataset.from_pandas(df, dt_col=0, target_col=["value"],
+                                           extra_feature_col="extra feature", id_col="id")
+        with pytest.raises(AssertionError):
+            tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=0,
+                                           extra_feature_col="extra feature", id_col="id")
+        with pytest.raises(AssertionError):
+            tsdata = TSDataset.from_pandas(0, dt_col="datetime", target_col=["value"],
+                                           extra_feature_col="extra feature", id_col="id")
+        with pytest.raises(AssertionError):
+            tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=["value1"],
+                                           extra_feature_col="extra feature", id_col="id")
+
     def test_tsdataset_roll_single_id(self):
         df = get_ts_df()
         horizon = random.randint(1, 10)
@@ -192,6 +237,38 @@ class TestTSDataset(ZooTestCase):
         assert len(tsdata.to_pandas()) == 100
         tsdata._check_basic_invariants()
 
+    def test_tsdataset_datetime_feature_signle(self):
+        df = get_ts_df()
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                       extra_feature_col=["extra feature"], id_col="id")
+        tsdata.gen_dt_feature()
+        assert set(tsdata.to_pandas().columns) == {'IS_AWAKE(datetime)',
+                                                   'IS_BUSY_HOURS(datetime)',
+                                                   'HOUR(datetime)',
+                                                   'DAY(datetime)',
+                                                   'IS_WEEKEND(datetime)',
+                                                   'WEEKDAY(datetime)',
+                                                   'MONTH(datetime)',
+                                                   'DAYOFYEAR(datetime)',
+                                                   'WEEKOFYEAR(datetime)',
+                                                   'MINUTE(datetime)',
+                                                   'extra feature',
+                                                   'value',
+                                                   'datetime',
+                                                   'id'}
+        assert set(tsdata.feature_col) == {'IS_AWAKE(datetime)',
+                                           'IS_BUSY_HOURS(datetime)',
+                                           'HOUR(datetime)',
+                                           'DAY(datetime)',
+                                           'IS_WEEKEND(datetime)',
+                                           'WEEKDAY(datetime)',
+                                           'MONTH(datetime)',
+                                           'DAYOFYEAR(datetime)',
+                                           'WEEKOFYEAR(datetime)',
+                                           'MINUTE(datetime)',
+                                           'extra feature'}
+        tsdata._check_basic_invariants()
+
     def test_tsdataset_datetime_feature(self):
         df = get_multi_id_ts_df()
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
@@ -233,7 +310,8 @@ class TestTSDataset(ZooTestCase):
                                             extra_feature_col=["extra feature"], id_col="id")
 
         from sklearn.preprocessing import StandardScaler, MaxAbsScaler, MinMaxScaler, RobustScaler
-        scalers = [StandardScaler(), MaxAbsScaler(), MinMaxScaler(), RobustScaler()]
+        scalers = [StandardScaler(), MaxAbsScaler(),
+                   MinMaxScaler(), RobustScaler()]
         for scaler in scalers:
             tsdata.scale(scaler)
             tsdata_test.scale(scaler, fit=False)
@@ -291,17 +369,44 @@ class TestTSDataset(ZooTestCase):
             _, unscaled_y_test_reproduce = tsdata_test.to_numpy()
 
             assert_array_almost_equal(unscaled_pred, unscaled_y_test_reproduce)
-            assert_array_almost_equal(unscaled_y_test, unscaled_y_test_reproduce)
+            assert_array_almost_equal(
+                unscaled_y_test, unscaled_y_test_reproduce)
 
             tsdata._check_basic_invariants()
 
-    def test_tsdataset_resample(self):
+    def test_tsdataset_resmaple_sign(self):
+        df = get_ts_df()
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                       extra_feature_col=["extra feature"], id_col="id")
+        tsdata.resample('2D', df["datetime"][0], df["datetime"][df.shape[0]-1])
+        assert len(tsdata.to_pandas()) == math.floor(df.shape[0] / 2)
+        tsdata._check_basic_invariants()
+
+    def test_tsdataset_resample_mul(self):
         df = get_multi_id_ts_df()
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
-        tsdata.resample('2D', df["datetime"][0], df["datetime"][99])
-        assert len(tsdata.to_pandas()) == 50
+        tsdata.resample('2D', df["datetime"][0], df["datetime"][df.shape[0]-1])
+        assert len(tsdata.to_pandas()) == math.floor(df.shape[0] / 2)
         tsdata._check_basic_invariants()
+
+    def test_tsdataset_split_ts(self):
+        df = get_ts_df()
+        tsdata_train, tsdata_valid, tsdata_test =\
+            TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                  extra_feature_col=["extra feature"], id_col="id",
+                                  with_split=True, val_ratio=0.1, test_ratio=0.1,
+                                  largest_look_back=5, largest_horizon=2)
+
+        assert set(np.unique(tsdata_train.to_pandas()["id"])) == {"00"}
+        assert set(np.unique(tsdata_valid.to_pandas()["id"])) == {"00"}
+        assert set(np.unique(tsdata_test.to_pandas()["id"])) == {"00"}
+
+        assert len(tsdata_train.to_pandas()) == math.floor(df.shape[0] * 0.8)
+        assert len(tsdata_valid.to_pandas()) == math.floor(
+            df.shape[0] * 0.1 + 5 + 2 - 1)
+        assert len(tsdata_test.to_pandas()) == math.floor(
+            df.shape[0] * 0.1 + 5 + 2 - 1)
 
     def test_tsdataset_split(self):
         df = get_multi_id_ts_df()
