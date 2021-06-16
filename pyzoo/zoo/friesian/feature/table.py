@@ -15,7 +15,8 @@
 #
 import os
 
-from pyspark.sql.types import DoubleType, ArrayType, DataType
+from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, DecimalType, \
+    DoubleType, ArrayType, DataType
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
@@ -293,22 +294,26 @@ class Table:
         """
         self.df.show(n, truncate)
 
-    def add_constant_values(self, columns, value=1):
+    def add(self, columns, value=1):
         """
         Increase all of values of a column or a list of columns by a constant value
 
         :param columns: str or list of str, the target columns to be increased
-        :param value: numeric, the constant value to bed added
+        :param value: numeric (int/float/double/short/long), the constant value to be added
         return: A new table that update values of specified columns by a constant value
         """
         if columns is None:
-            raise ValueError("Columns should e str or list r str, but got None")
+            raise ValueError("Columns should be str or list of str, but got None")
         if not isinstance(columns, list):
             columns = [columns]
         check_col_exists(self.df, columns)
         new_df = self.df
         for column in columns:
-            new_df = new_df.withColumn(column, pyspark_col(column)+value)
+            if new_df.schema[column].dataType not in [IntegerType(), ShortType(),
+                                                      LongType(), FloatType(),
+                                                      DecimalType(), DoubleType()]:
+                raise ValueError("column type should be numeric")
+            new_df = new_df.withColumn(column, pyspark_col(column) + value)
         return self._clone(new_df)
 
     def get_col_names(self):
@@ -318,7 +323,7 @@ class Table:
         """
         return self.df.schema.names
 
-    def sample(self, fraction, withReplacement=False, seed=random.random()):
+    def sample(self, fraction, replace=False, seed=random.random()):
         """
         Return a sampled subset of table
 
@@ -329,7 +334,7 @@ class Table:
         """
         if fraction < 0 or fraction > 1:
             raise ValueError("fraction should in the range of [0,1]")
-        return self._clone(self.df.sample(withReplacement, fraction, seed))
+        return self._clone(self.df.sample(replace, fraction, seed))
 
     def write_parquet(self, path, mode="overwrite"):
         self.df.write.mode(mode).parquet(path)
