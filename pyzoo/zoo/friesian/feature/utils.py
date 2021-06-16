@@ -62,10 +62,3 @@ def check_col_exists(df, columns):
     col_not_exist = list(filter(lambda x: x not in df_cols, columns))
     if len(col_not_exist) > 0:
         raise ValueError(str(col_not_exist) + " do not exist in this Table")
-
-
-def str_to_list(arg, arg_name):
-    if isinstance(arg, str):
-        return [arg]
-    assert isinstance(arg, list), arg_name + " should be str or list"
-    return arg

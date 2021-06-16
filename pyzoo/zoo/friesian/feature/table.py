@@ -638,8 +638,10 @@ class FeatureTable(Table):
         Group the Table with specified columns and then run aggregation. Optionally join the result
         with the original Table.
 
-        :param columns: str or list of str. Columns to group the Table.
+        :param columns: str or list of str. Columns to group the Table. If it is an empty list,
+               aggregation is run directly without grouping. Default is [].
         :param agg: str, list or dict. Aggragate functions to be applied to grouped Table.
+               Default is "count".
                Supported aggregate functions are: "max", "min", "count", "sum", "avg", "mean",
                "sumDistinct", "stddev", "stddev_pop", "variance", "var_pop", "skewness", "kurtosis",
                "collect_list", "collect_set", "approx_count_distinct", "first", "last".
@@ -661,7 +663,9 @@ class FeatureTable(Table):
 
         :return: A new Table with aggregated column fields.
         """
-        columns = str_to_list(columns, "columns")
+        if isinstance(columns, str):
+            columns = [columns]
+        assert isinstance(columns, list), "columns should be str or list of str"
         grouped_data = self.df.groupBy(columns)
 
         if isinstance(agg, str):
@@ -681,7 +685,10 @@ class FeatureTable(Table):
             else:
                 agg_exprs_list = []
                 for agg_column in agg:
-                    stats = str_to_list(agg[agg_column], "value in agg_exprs")
+                    stats = agg[agg_column]
+                    if isinstance(stats, str):
+                        stats = [stats]
+                    assert isinstance(stats, list), "value in agg should be str or list of str"
                     for stat in stats:
                         stat_func = getattr(F, stat)
                         agg_exprs_list += [stat_func(agg_column)]
