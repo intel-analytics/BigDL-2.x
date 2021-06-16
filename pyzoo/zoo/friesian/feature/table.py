@@ -294,11 +294,11 @@ class Table:
 
     def min_max(self, columns):
         """
-        Calculate min and max statistics of specific columns
+        Calculate min and max statistics of specific columns.
 
-        :param columns: str or list of str, the target columns to be calculated
+        :param columns: str or list of str, specifies the target columns to be calculated.
 
-        return: A dict that contains the (min, max) tuple for each column
+        return: dict, format as {column -> (min, max)}.
         """
         if columns is None:
             raise ValueError("Columns should e str or list r str, but got None")
@@ -314,19 +314,22 @@ class Table:
 
     def convert_to_list(self, column):
         """
-        Convert a specefic column to a list
+        Convert a specefic column to a list.
 
-        :param column: str to specify the target column
-        return: A list that contain all value of a specific column
+        :param column: str, specifies the target column.
+
+        return: list, contains all values of a specific column.
         """
         check_col_exists(self.df, [column])
         return self.df.select(column).rdd.flatMap(lambda x: x).collect()
 
     def convert_to_dict(self, column):
         """
-        Convert the table into a dict, the table must be small
-        :param column: str, specified column as a key to index
-        return: The dict, as format {column -> {index -> value}}
+        Convert the table into a dictionary, the table must be small.
+
+        :param column: str, used as a key of the dictionary, must be a column of the table.
+
+        return: dict, as format {key -> {column name -> value}}.
         """
         check_col_exists(self.df, [column])
         if len(set(self.convert_to_list(column))) != len(set(self.convert_to_list(column))):
