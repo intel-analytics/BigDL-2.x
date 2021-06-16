@@ -200,8 +200,8 @@ class TFDistributedDatasetHandler(DatasetHandler):
         if isinstance(dataset, tf.data.Dataset):
             from tensorflow.python.distribute import distribution_strategy_context as ds_context
             strategy = ds_context.get_strategy()
-            dist_dataset = strategy.experimental_distribute_dataset(dataset)
-        return dist_dataset
+            dataset = strategy.experimental_distribute_dataset(dataset)
+        return dataset
 
     def _handle_batch_size(self, config):
         assert "batch_size" in config, "batch_size must be set in config"
