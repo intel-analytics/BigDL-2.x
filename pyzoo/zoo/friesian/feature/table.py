@@ -329,7 +329,7 @@ Please commit your changes or stash them before you switch branches.        if c
         """
         Return a sampled subset of table.
 
-        :param withReplacement: bool, identify if sampled items need to be replaced.
+        :param replace: bool, identify if sampled items need to be replaced.
         during the sample process
         :param fraction: float, fraction of rows to generate.
         :param seed: seed for sampling.
