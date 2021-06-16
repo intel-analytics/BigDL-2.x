@@ -33,7 +33,7 @@ from zoo.pipeline.api.keras.models import Model as ZModel
 from zoo.pipeline.api.keras.optimizers import Adam as KAdam
 from zoo.pipeline.nnframes import *
 from zoo.util.tf import *
-
+import csv
 
 def demoexample():
     sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
@@ -58,6 +58,7 @@ def demoexample():
     model = xgbmodel.load("/tmp/modelfile/")
     model.setFeaturesCol("features")
     y0 = model.transform(assembledf)
+    y0.show()
 
 
 def preProcessdata(filepath):
@@ -66,29 +67,39 @@ def preProcessdata(filepath):
     :param filepath:
     :return: assembledf:
     '''
-    dataset = np.loadtxt(filepath, delimiter=',')
-    N = dataset.shape[1]
-    X = dataset[:, 0: N - 1]
-    Y = dataset[:, N - 1]
+    # csvdata = csv.reader(filepath, delimiter = ",")
+    
+    dataset = np.loadtxt(filepath, delimiter=',', skiprows=1)
+    M, N = dataset.shape
+    # X = dataset[1 :, 0: N - 1]
+    # Y = dataset[1:, N - 1]
+    train_X = dataset[:(int)(0.8*M), :]
+    test_X = dataset[(int)(0.8*M):, :]
+    
     sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
     sc = init_nncontext(sparkConf)
     sqlContext = SQLContext(sc)
 
-    data = sc.parallelize(dataset.tolist())
+    data = sc.parallelize(train_X.tolist())
     columns = ["c" + str(i) for i in range(1, N)]
     columns.append("label")
     print(columns)
     df = data.toDF(columns)
     vecasembler = VectorAssembler(inputCols=columns, outputCol="features")
     assembledf = vecasembler.transform(df).select("features", "label").cache()
-    return assembledf
+    test_data = sc.parallelize(test_X.tolist())
+    df2 = test_data.toDF(columns)
+    testdf = vecasembler.transform(df2).select("features", "label").cache()
+
+    return assembledf, testdf
 
 
 if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-f", "--folder", type=str, dest="data_path", default=".",
                       help="Path where data are stored")
-    parser.add_option("-d", action="store_true", dest="demo", default=False)
+    parser.add_option("-d", "--demo",action="store_true", dest="demo", default=False)
+    parser.add_option("-m", "--master", type=str, dest="masterchoice")
     (option, args) = parser.parse_args(sys.argv)
     print(option.demo)
     if (option.demo):
@@ -102,4 +113,9 @@ if __name__ == "__main__":
             if (os.path.splitext(file)[-1] == ".csv"):
                 filepath = os.path.join(option.data_path, file)
                 print(filepath)
-                assembledf = preProcessdata(filepath)
+                assembledf, testdf = preProcessdata(filepath)
+                xgbRf0 = XGBRegressor()
+                xgbRf0.setNthread(1)
+                xgbmodel = XGBRegressorModel(xgbRf0.fit(assembledf))
+                y0 = xgbmodel.transform(testdf)
+                y0.show()
