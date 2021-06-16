@@ -105,13 +105,11 @@ class TSDataset:
         Create a tsdataset instance by:
 
         >>> #Here is a df example:
-        >>>
         >>> #id        datetime      value   "extra feature 1"   "extra feature 2"
         >>> #00        2019-01-01    1.9     1                   2
         >>> #01        2019-01-01    2.3     0                   9
         >>> #00        2019-01-02    2.4     3                   4
         >>> #01        2019-01-02    2.6     0                   2
-        >>>
         >>> tsdataset = TSDataset.from_pandas(df, dt_col="datetime",
         >>>                                   target_col="value", id_col="id",
         >>>                                   extra_feature_col=["extra feature 1",
@@ -150,7 +148,7 @@ class TSDataset:
     def impute(self, mode="last", const_num=0):
         '''
         Impute the tsdataset by imputing each univariate time series
-        distinguished by id_col and feature_col
+        distinguished by id_col and feature_col.
 
         :param mode: imputation mode, select from "last", "const" or "linear".
 
@@ -165,7 +163,8 @@ class TSDataset:
 
         :return: the tsdataset instance.
 
-        Note: It is preferred that `impute` is called after `resample` while before `roll` if needed.
+        Note: It is preferred that `impute` is called after `resample` while before `roll` if
+        needed.
         '''
         df_list = [impute_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
                                                dt_col=self.dt_col,
@@ -178,7 +177,7 @@ class TSDataset:
     def deduplicate(self):
         '''
         Remove those duplicated rows which has exactly the same values in each feature_col for
-        each multivariate timeseries distinguished by id_col
+        each multivariate timeseries distinguished by id_col.
 
         :return: the tsdataset instance.
 
@@ -224,7 +223,7 @@ class TSDataset:
         '''
         Generate datetime feature for each row. Currently we generate following features:
         "MINUTE", "DAY", "DAYOFYEAR", "HOUR", "WEEKDAY", "WEEKOFYEAR", "MONTH", "IS_AWAKE",
-        "IS_BUSY_HOURS", "IS_WEEKEND"
+        "IS_BUSY_HOURS", "IS_WEEKEND".
 
         :return: the tsdataset instance.
 
@@ -345,7 +344,7 @@ class TSDataset:
         '''
         Sampling by rolling for machine learning/deep learning models.
 
-        :param lookback: int, lookback value
+        :param lookback: int, lookback value.
         :param horizon: int or list,
                if `horizon` is an int, we will sample `horizon` step
                continuously after the forecasting point.
@@ -433,9 +432,9 @@ class TSDataset:
 
     def to_numpy(self):
         '''
-        Export rolling result in form of a tuple of numpy ndarray (x, y)
+        Export rolling result in form of a tuple of numpy ndarray (x, y).
 
-        :return: a 2-dim tuple. each item is a 3d numpy ndarray
+        :return: a 2-dim tuple. each item is a 3d numpy ndarray.
         '''
         if self.numpy_x is None:
             raise RuntimeError("Please call \"roll\" method\
@@ -444,7 +443,7 @@ class TSDataset:
 
     def to_pandas(self):
         '''
-        Export the pandas dataframe
+        Export the pandas dataframe.
 
         :return: the internal dataframe.
         '''
@@ -500,7 +499,7 @@ class TSDataset:
         :param data: a numpy ndarray with 3 dim whose shape should be exactly the
                same with self.numpy_y.
 
-        :return: the unscaled numpy ndarray
+        :return: the unscaled numpy ndarray.
         '''
         num_roll_target = len(self.roll_target)
         repeat_factor = len(self._id_list) if self.id_sensitive else 1
@@ -513,7 +512,7 @@ class TSDataset:
         This function contains a bunch of assertions to make sure strict rules(the invariants)
         for the internal dataframe(self.df) must stands. If not, clear and user-friendly error
         or warning message should be provided to the users.
-        This function will be called after each method(e.g. impute, deduplicate ...)
+        This function will be called after each method(e.g. impute, deduplicate ...).
         '''
         # check type
         _check_type(self.df, "df", pd.DataFrame)
