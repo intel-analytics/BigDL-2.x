@@ -102,7 +102,7 @@ def preProcessdata(filepath):
 
 if __name__ == "__main__":
     parser = OptionParser()
-    parser.add_option("-f", "--folder", type=str, dest="data_path", 
+    parser.add_option("-f", "--folder", type=str, dest="data_path",
                       default=".", help="Path where data are stored")
     parser.add_option("-d", "--demo", action="store_true", dest="demo", default=False)
     parser.add_option("-m", "--master", type=str, dest="masterchoice")
