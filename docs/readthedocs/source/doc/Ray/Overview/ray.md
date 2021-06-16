@@ -32,6 +32,14 @@ from zoo.orca import init_orca_context
 sc = init_orca_context(cluster_mode="yarn-client", cores=4, memory="10g", num_nodes=2, init_ray_on_spark=True)
 ```
 
+By default, the Ray cluster would be launched using Spark barrier execution mode, you can turn it off via the configurations of `OrcaContext`:
+
+```python
+from zoo.orca import OrcaContext
+
+OrcaContext.barrier_mode = False
+```
+
 View [Orca Context](../../Orca/Overview/orca-context.md) for more details.
 
 ---
