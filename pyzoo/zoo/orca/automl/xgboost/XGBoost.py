@@ -133,11 +133,12 @@ class XGBoost(BaseModel):
         data = self._validate_data(data, "data")
         x, y = data[0], data[1]
         if validation_data is not None:
+            if isinstance(validation_data, list):
+                validation_data = validation_data[0]
             validation_data = self._validate_data(validation_data, "validation_data")
-            if type(validation_data) is not list:
-                eval_set = [validation_data]
-            else:
-                eval_set = validation_data
+            eval_set = [validation_data]
+        else:
+            eval_set = None
 
         self.metric = metric or self.metric
         valid_metric_names = XGB_METRIC_NAME | Evaluator.metrics_func.keys()
@@ -154,8 +155,6 @@ class XGBoost(BaseModel):
             vals = self.model.evals_result_.get("validation_0").get(self.metric)
             return {self.metric: vals[-1]}
         else:
-            if isinstance(validation_data, list):
-                validation_data = validation_data[0]
             self.model.fit(x, y, eval_set=eval_set, eval_metric=default_metric)
             eval_result = self.evaluate(
                 validation_data[0],
@@ -164,8 +163,7 @@ class XGBoost(BaseModel):
             return {self.metric: eval_result}
 
     def _validate_data(self, data, name):
-        import types
-        if isinstance(data, types.FunctionType):
+        if callable(data):
             data = data(self.config)
             if not isinstance(data, tuple) or isinstance(data, list):
                 raise ValueError(
@@ -178,7 +176,7 @@ class XGBoost(BaseModel):
                     f"containing two elements of (x, y) for {name} in XGBoost. "
                     f"Your data create function returns {len(data)} elements instead")
 
-        if not isinstance(data, tuple) or isinstance(data, list):
+        if not (isinstance(data, tuple) or isinstance(data, list)):
             raise ValueError(
                 f"You must input a tuple or a list of (x, y) for {name} in XGBoost. "
                 f"Got {data.__class__.__name__}")
