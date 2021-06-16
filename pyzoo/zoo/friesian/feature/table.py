@@ -250,7 +250,7 @@ class Table:
         """
         if columns and not isinstance(columns, list):
             columns = [columns]
-        if columns:
+Please commit your changes or stash them before you switch branches.        if columns:
             check_col_exists(self.df, columns)
         return self._clone(median(self.df, columns))
 
@@ -296,11 +296,12 @@ class Table:
 
     def add(self, columns, value=1):
         """
-        Increase all of values of a column or a list of columns by a constant value
+        Increase all of values of a column or a list of columns by a constant value.
 
-        :param columns: str or list of str, the target columns to be increased
-        :param value: numeric (int/float/double/short/long), the constant value to be added
-        return: A new table that update values of specified columns by a constant value
+        :param columns: str or list of str, the target columns to be increased.
+        :param value: numeric (int/float/double/short/long), the constant value to be added.
+
+        return: A new table that update values of specified columns by a constant value.
         """
         if columns is None:
             raise ValueError("Columns should be str or list of str, but got None")
@@ -318,19 +319,20 @@ class Table:
 
     def get_col_names(self):
         """
-        Get column names of the table
-        :return: A list of strings that specifies column names
+        Get column names of the table.
+
+        :return: A list of strings that specifies column names.
         """
         return self.df.schema.names
 
     def sample(self, fraction, replace=False, seed=random.random()):
         """
-        Return a sampled subset of table
+        Return a sampled subset of table.
 
-        :param withReplacement: bool, identify if sampled items need to be replaced
+        :param withReplacement: bool, identify if sampled items need to be replaced.
         during the sample process
-        :param fraction: float, fraction of rows to generate
-        :param seed: seed for sampling
+        :param fraction: float, fraction of rows to generate.
+        :param seed: seed for sampling.
         """
         if fraction < 0 or fraction > 1:
             raise ValueError("fraction should in the range of [0,1]")
