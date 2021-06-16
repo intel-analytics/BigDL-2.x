@@ -90,8 +90,11 @@ def preProcessdata(filepath):
     df.show()
     vecasembler = VectorAssembler(inputCols=columns, outputCol="features")
     assembledf = vecasembler.transform(df).select("features", "label").cache()
+    print('train df:')
+    assembledf.show()
     test_data = sc.parallelize(test_X.tolist())
     df2 = test_data.toDF(columns)
+    df2.show()
     testdf = vecasembler.transform(df2).select("features", "label").cache()
 
     return assembledf, testdf
