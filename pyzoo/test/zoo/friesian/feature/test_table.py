@@ -572,5 +572,62 @@ class TestTable(TestCase):
         total_distinct_line = feature_tbl2.distinct().size()
         assert total_line_2 == total_distinct_line, "all rows should be distinct"
 
+    def test_min_max(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14, 8.5),
+                ("alice", "34", 25, 9.6),
+                ("rose", "25344", 23, 10.0)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True),
+                             StructField("height", DoubleType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        columns = ["age", "height"]
+        statistics = tbl.min_max(columns)
+        assert len(statistics) == 2, "the dict should contain two statistics"
+        assert statistics["age"][0] == 14, "the min value of age is not correct"
+        assert statistics["age"][1] == 25, "the max value of age is not correct"
+        assert statistics["height"][0] == 8.5, "the min value of height is not correct"
+        assert statistics["height"][1] == 10.0, "the max value of height is not correct"
+
+    def test_convert_to_list(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14, 8.5, [0, 0]),
+                ("alice", "34", 25, 9.6, [1, 1]),
+                ("rose", "25344", 23, 10.0, [2, 2])]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True),
+                             StructField("height", DoubleType(), True),
+                             StructField("array", ArrayType(IntegerType()), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        list1 = tbl.convert_to_list("name")
+        list2 = tbl.convert_to_list("num")
+        list3 = tbl.convert_to_list("age")
+        list4 = tbl.convert_to_list("height")
+        list5 = tbl.convert_to_list("array")
+        assert list1 == ["jack", "alice", "rose"], "the result of name is not correct"
+        assert list2 == ["123", "34", "25344"], "the result of num is not correct"
+        assert list3 == [14, 25, 23], "the result of age is not correct"
+        assert list4 == [8.5, 9.6, 10.0], "the result of height is not correct"
+        assert list5 == [[0, 0], [1, 1], [2, 2]], "the result of array is not correct"
+
+    def test_convert_to_dict(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14),
+                ("alice", "34", 25),
+                ("rose", "25344", 23)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        dictionary = tbl.convert_to_dict("name")
+        assert dictionary["jack"]["name"] == "jack" and dictionary["jack"]["num"] == "123" \
+            and dictionary["jack"]["age"] == 14, "the information for jack is not correct"
+        assert dictionary["alice"]["name"] == "alice" and dictionary["alice"]["num"] == "34" \
+            and dictionary["alice"]["age"] == 25, "the information for alice is not correct"
+        assert dictionary["rose"]["name"] == "rose" and dictionary["rose"]["num"] == "25344" \
+            and dictionary["rose"]["age"] == 23, "the information for rose is not correct"
+
 if __name__ == "__main__":
     pytest.main([__file__])

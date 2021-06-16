@@ -336,6 +336,48 @@ class Table:
             raise ValueError("fraction should in the range of [0,1]")
         return self._clone(self.df.sample(replace, fraction, seed))
 
+    def min_max(self, columns):
+        """
+        Calculate min and max statistics of specific columns
+
+        :param columns: str or list of str, the target columns to be calculated
+
+        return: A dict that contains the (min, max) tuple for each column
+        """
+        if columns is None:
+            raise ValueError("Columns should e str or list r str, but got None")
+        if not isinstance(columns, list):
+            columns = [columns]
+        check_col_exists(self.df, columns)
+        statistics = {}
+        for column in columns:
+            maxValue = self.df.agg({column: "max"}).collect()[0][0]
+            minValue = self.df.agg({column: "min"}).collect()[0][0]
+            statistics[column] = (minValue, maxValue)
+        return statistics
+
+    def convert_to_list(self, column):
+        """
+        Convert a specefic column to a list
+
+        :param column: str to specify the target column
+        return: A list that contain all value of a specific column
+        """
+        check_col_exists(self.df, [column])
+        return self.df.select(column).rdd.flatMap(lambda x: x).collect()
+
+    def convert_to_dict(self, column):
+        """
+        Convert the table into a dict, the table must be small
+        :param column: str, specified column as a key to index
+        return: The dict, as format {column -> {index -> value}}
+        """
+        check_col_exists(self.df, [column])
+        if len(set(self.convert_to_list(column))) != len(set(self.convert_to_list(column))):
+            raise ValueError("the value of column must be unique")
+        ret = map(lambda row: row.asDict(), self.df.collect())
+        return {person[column]: person for person in ret}
+
     def write_parquet(self, path, mode="overwrite"):
         self.df.write.mode(mode).parquet(path)
 
