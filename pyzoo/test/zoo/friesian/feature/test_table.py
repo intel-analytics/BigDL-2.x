@@ -552,6 +552,23 @@ class TestTable(TestCase):
         assert new_list[2]['age'] == 24.5, "the age of rose should increase 1"
         assert new_list[2]['height'] == 11.5, "the height of rose should increase 1"
 
-
+    def test_sample(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "0"),
+                ("alice", "1"),
+                ("rose", "2"),
+                ("rachel","3"),
+                ("cissie","4"),
+                ("alan","5")]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("id", StringType(), True)])
+        feature_tbl = FeatureTable(spark.createDataFrame(data, schema))
+        total_line_1 = feature_tbl.size()
+        feature_tbl2 = feature_tbl.sample(0.5)
+        total_line_2 = feature_tbl2.size()
+        assert total_line_2 == int(total_line_1/2), "the number of rows should be half"
+        total_distinct_line = feature_tbl2.distinct().size()
+        assert total_line_2 == total_distinct_line, "all rows should be distinct"
+        
 if __name__ == "__main__":
     pytest.main([__file__])
