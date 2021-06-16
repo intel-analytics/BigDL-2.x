@@ -26,6 +26,7 @@ from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
 from zoo.common.utils import callZooFunc
 
+import random
 
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
@@ -317,6 +318,18 @@ class Table:
         :return: A list of strings that specifies column names 
         """
         return self.df.schema.names
+
+    def sample(self, fraction, withReplacement=False, seed = random.random()):
+        """
+        Return a sampled subset of table
+
+        :param withReplacement: bool, identify if sampled items need to be replaced during the sample process
+        :param fraction: float, fraction of rows to generate
+        :param seed: seed for sampling
+        """
+        if fraction <0 or fraction>1:
+            raise ValueError("fraction should in the range of [0,1]")
+        return self._clone(self.df.sample(withReplacement, fraction, seed))
 
     def write_parquet(self, path, mode="overwrite"):
         self.df.write.mode(mode).parquet(path)
