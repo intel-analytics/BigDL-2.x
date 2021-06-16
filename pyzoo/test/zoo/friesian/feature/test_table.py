@@ -20,7 +20,8 @@ import tempfile
 from unittest import TestCase
 
 from pyspark.sql.functions import col, max, min, array
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, DoubleType
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, \
+    DoubleType
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature import FeatureTable, StringIndex
@@ -528,8 +529,9 @@ class TestTable(TestCase):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
         col_names = feature_tbl.get_col_names()
-        assert isinstance(col_names,list), "col_names should be a list of strings"
-        assert col_names == ["col_1","col_2","col_3","col_4","col_5"], "column names are incorrenct"
+        assert isinstance(col_names, list), "col_names should be a list of strings"
+        assert col_names == ["col_1", "col_2", "col_3", "col_4", "col_5"], \
+            "column names are incorrenct"
 
     def test_add_constant_values(self):
         spark = OrcaContext.get_spark_session()
@@ -557,9 +559,9 @@ class TestTable(TestCase):
         data = [("jack", "0"),
                 ("alice", "1"),
                 ("rose", "2"),
-                ("rachel","3"),
-                ("cissie","4"),
-                ("alan","5")]
+                ("rachel", "3"),
+                ("cissie", "4"),
+                ("alan", "5")]
         schema = StructType([StructField("name", StringType(), True),
                              StructField("id", StringType(), True)])
         feature_tbl = FeatureTable(spark.createDataFrame(data, schema))
@@ -569,6 +571,6 @@ class TestTable(TestCase):
         assert total_line_2 == int(total_line_1/2), "the number of rows should be half"
         total_distinct_line = feature_tbl2.distinct().size()
         assert total_line_2 == total_distinct_line, "all rows should be distinct"
-        
+
 if __name__ == "__main__":
     pytest.main([__file__])
