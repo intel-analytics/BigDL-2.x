@@ -13,11 +13,10 @@ pip install tensorflow
 pip install pandas
 ```
 
-Then download and install latest analytics whl by following instructions ([here](https://analytics-zoo.github.io/master/#PythonUserGuide/install/#install-the-latest-nightly-build-wheels-for-pip).
+Then download and install latest nightly-build Analytics Zoo 
 
-E.g.
 ```bash
-pip install analytics_zoo-${VERSION}-${TIMESTAMP}-py2.py3-none-${OS}_x86_64.whl[ray]
+pip install --pre --upgrade analytics-zoo[ray]
 ```
 
 ## Training Data
@@ -34,6 +33,6 @@ Download pretrained weights [here](https://pjreddie.com/media/files/yolov3.weigh
 Example command:
 
 ```
-python yoloV3.py --data ${data_dir} --names ${voc_names} --weights ${weights} --class_num ${num}
+python yoloV3.py --data_dir ${data_dir} --weights ${weights} --class_num ${class_num} --names ${names}
 ```
 

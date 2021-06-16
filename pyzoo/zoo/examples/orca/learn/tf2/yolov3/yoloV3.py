@@ -37,44 +37,46 @@ DEFAULT_IMAGE_SIZE = 416
 
 @tf.function
 def transform_targets_for_output(y_true, grid_size, anchor_idxs):
-    # y_true: (N, boxes, (x1, y1, x2, y2, class, best_anchor))
     N = tf.shape(y_true)[0]
-
-    # y_true_out: (N, grid, grid, anchors, [x1, y1, x2, y2, obj, class])
-    y_true_out = tf.zeros(
-        (N, grid_size, grid_size, tf.shape(anchor_idxs)[0], 6))
-
+    y_true_out = tf.zeros((N, grid_size, grid_size, tf.shape(anchor_idxs)[0], 6))
     anchor_idxs = tf.cast(anchor_idxs, tf.int32)
 
-    indexes = tf.TensorArray(tf.int32, 1, dynamic_size=True)
-    updates = tf.TensorArray(tf.float32, 1, dynamic_size=True)
-    idx = 0
-    for i in tf.range(N):
-        for j in tf.range(tf.shape(y_true)[1]):
-            if tf.equal(y_true[i][j][2], 0):
-                continue
+    def outer_comp(i):
+        def inner_comp(j):
             anchor_eq = tf.equal(
                 anchor_idxs, tf.cast(y_true[i][j][5], tf.int32))
 
-            if tf.reduce_any(anchor_eq):
+            def reduce(y_true, anchor_eq, grid_size):
                 box = y_true[i][j][0:4]
                 box_xy = (y_true[i][j][0:2] + y_true[i][j][2:4]) / 2
-
                 anchor_idx = tf.cast(tf.where(anchor_eq), tf.int32)
                 grid_xy = tf.cast(box_xy // (1 / grid_size), tf.int32)
 
                 # grid[y][x][anchor] = (tx, ty, bw, bh, obj, class)
-                indexes = indexes.write(
-                    idx, [i, grid_xy[1], grid_xy[0], anchor_idx[0][0]])
-                updates = updates.write(
-                    idx, [box[0], box[1], box[2], box[3], 1, y_true[i][j][4]])
-                idx += 1
+                indexes = tf.stack([i, grid_xy[1], grid_xy[0], anchor_idx[0][0]])
+                updates = tf.stack(
+                    [box[0], box[1], box[2], box[3], tf.constant(1, dtype=tf.float32),
+                     y_true[i][j][4]])
+                print("updates", updates)
+                # idx += 1
+                return (True, indexes, updates)
 
-    # tf.print(indexes.stack())
-    # tf.print(updates.stack())
+            (mask, indexes, updates) = tf.cond(tf.reduce_any(anchor_eq),
+                                               lambda: reduce(y_true, anchor_eq, grid_size),
+                                               lambda: (False, tf.zeros(4, tf.int32),
+                                                        tf.zeros(6, tf.float32)))
+            return (mask, indexes, updates)
 
-    return tf.tensor_scatter_nd_update(
-        y_true_out, indexes.stack(), updates.stack())
+        return tf.map_fn(inner_comp, tf.range(tf.shape(y_true)[1]),
+                         dtype=(tf.bool, tf.int32, tf.float32))
+
+    (mask, indexes, updates) = tf.map_fn(outer_comp, tf.range(N),
+                                         dtype=(tf.bool, tf.int32, tf.float32))
+
+    indexes = tf.boolean_mask(indexes, mask)
+    updates = tf.boolean_mask(updates, mask)
+
+    return tf.tensor_scatter_nd_update(y_true_out, indexes, updates)
 
 
 def transform_targets(y_train, anchors, anchor_masks, size):
@@ -137,6 +139,74 @@ yolo_tiny_anchors = np.array([(10, 14), (23, 27), (37, 58),
                               (81, 82), (135, 169), (344, 319)],
                              np.float32) / 416
 yolo_tiny_anchor_masks = np.array([[3, 4, 5], [0, 1, 2]])
+
+YOLOV3_LAYER_LIST = [
+    'yolo_darknet',
+    'yolo_conv_0',
+    'yolo_output_0',
+    'yolo_conv_1',
+    'yolo_output_1',
+    'yolo_conv_2',
+    'yolo_output_2',
+]
+
+YOLOV3_TINY_LAYER_LIST = [
+    'yolo_darknet',
+    'yolo_conv_0',
+    'yolo_output_0',
+    'yolo_conv_1',
+    'yolo_output_1',
+]
+
+
+def load_darknet_weights(model, weights_file, tiny=False):
+    wf = open(weights_file, 'rb')
+    major, minor, revision, seen, _ = np.fromfile(wf, dtype=np.int32, count=5)
+
+    if tiny:
+        layers = YOLOV3_TINY_LAYER_LIST
+    else:
+        layers = YOLOV3_LAYER_LIST
+
+    for layer_name in layers:
+        sub_model = model.get_layer(layer_name)
+        for i, layer in enumerate(sub_model.layers):
+            if not layer.name.startswith('conv2d'):
+                continue
+            batch_norm = None
+            if i + 1 < len(sub_model.layers) and \
+                    sub_model.layers[i + 1].name.startswith('batch_norm'):
+                batch_norm = sub_model.layers[i + 1]
+
+            filters = layer.filters
+            size = layer.kernel_size[0]
+            in_dim = layer.get_input_shape_at(0)[-1]
+
+            if batch_norm is None:
+                conv_bias = np.fromfile(wf, dtype=np.float32, count=filters)
+            else:
+                # darknet [beta, gamma, mean, variance]
+                bn_weights = np.fromfile(
+                    wf, dtype=np.float32, count=4 * filters)
+                # tf [gamma, beta, mean, variance]
+                bn_weights = bn_weights.reshape((4, filters))[[1, 0, 2, 3]]
+
+            # darknet shape (out_dim, in_dim, height, width)
+            conv_shape = (filters, in_dim, size, size)
+            conv_weights = np.fromfile(
+                wf, dtype=np.float32, count=np.product(conv_shape))
+            # tf shape (height, width, in_dim, out_dim)
+            conv_weights = conv_weights.reshape(
+                conv_shape).transpose([2, 3, 1, 0])
+
+            if batch_norm is None:
+                layer.set_weights([conv_weights, conv_bias])
+            else:
+                layer.set_weights([conv_weights])
+                batch_norm.set_weights(bn_weights)
+
+    assert len(wf.read()) == 0, 'failed to read all data'
+    wf.close()
 
 
 def freeze_all(model, frozen=True):
@@ -426,28 +496,62 @@ def main():
     anchor_masks = yolo_anchor_masks
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", dest="data",
+    parser.add_argument("--data_dir", dest="data_dir",
                         help="Required. The path where data locates.")
+    parser.add_argument("--output_data", dest="output_data", default=tempfile.mkdtemp(),
+                        help="Required. The path where voc parquet data locates.")
     parser.add_argument("--names", dest="names",
                         help="Required. The path where class names locates.")
-    parser.add_argument("--weights", dest="weights",
+    parser.add_argument("--weights", dest="weights", default="./checkpoints/yolov3.weights",
                         help="Required. The path where weights locates.")
-    parser.add_argument("--epcohs", type=int, default=2,
+    parser.add_argument("--checkpoint", dest="checkpoint", default="./checkpoints/yolov3.tf",
+                        help="Required. The path where checkpoint locates.")
+    parser.add_argument("--epochs", dest="epochs", type=int, default=2,
                         help="Required. epochs.")
-    parser.add_argument("--mode", dest="mode",
+    parser.add_argument("--batch_size", dest="batch_size", type=int, default=16,
+                        help="Required. epochs.")
+    parser.add_argument("--cluster_mode", dest="cluster_mode", default="local",
                         help="Required. Run on local/yarn/k8s mode.")
-    parser.add_argument("--class_num", dest="mode",
-                        help="Required. Run on local/yarn/k8s mode.")
-    (options, args) = parser.parse_args(sys.argv)
+    parser.add_argument("--class_num", dest="class_num", type=int, default=20,
+                        help="Required. class num.")
+    parser.add_argument("--worker_num", type=int, default=1,
+                        help="The number of slave nodes to be used in the cluster."
+                             "You can change it depending on your own cluster setting.")
+    parser.add_argument("--cores", type=int, default=4,
+                        help="The number of cpu cores you want to use on each node. "
+                             "You can change it depending on your own cluster setting.")
+    parser.add_argument("--memory", type=str, default="20g",
+                        help="The memory you want to use on each node. "
+                             "You can change it depending on your own cluster setting.")
+    parser.add_argument("--object_store_memory", type=str, default="10g",
+                        help="The memory you want to use on each node. "
+                             "You can change it depending on your own cluster setting.")
+    parser.add_argument('--k8s_master', type=str, default="",
+                        help="The k8s master. "
+                             "It should be k8s://https://<k8s-apiserver-host>: "
+                             "<k8s-apiserver-port>.")
+    parser.add_argument("--container_image", type=str, default="",
+                        help="The runtime k8s image. ")
+    parser.add_argument('--k8s_driver_host', type=str, default="",
+                        help="The k8s driver localhost.")
+    parser.add_argument('--k8s_driver_port', type=str, default="",
+                        help="The k8s driver port.")
+
+    options = parser.parse_args()
+
+    # convert yolov3 weights
+    yolo = YoloV3(classes=80)
+    load_darknet_weights(yolo, options.weights)
+    yolo.save_weights(options.checkpoint)
 
     def model_creator(config):
-        model = YoloV3(DEFAULT_IMAGE_SIZE, training=True, classes=80)
+        model = YoloV3(DEFAULT_IMAGE_SIZE, training=True, classes=options.class_num)
         anchors = yolo_anchors
         anchor_masks = yolo_anchor_masks
 
         model_pretrained = YoloV3(
-            DEFAULT_IMAGE_SIZE, training=True, classes=80)
-        model_pretrained.load_weights(options.weights)
+            DEFAULT_IMAGE_SIZE, training=True, classes=options.class_num)
+        model_pretrained.load_weights(options.checkpoint)
 
         model.get_layer('yolo_darknet').set_weights(
             model_pretrained.get_layer('yolo_darknet').get_weights())
@@ -461,15 +565,13 @@ def main():
         return model
 
     # prepare data
-    temp_dir = tempfile.mkdtemp()
     class_map = {name: idx for idx, name in enumerate(
-        open(options.name).read().splitlines())}
-    print(class_map)
-    dataset_path = os.path.join(options.data, "VOCdevkit")
-    voc_train_path = os.path.join(temp_dir, "train_dataset")
-    voc_val_path = os.path.join(temp_dir, "val_dataset")
+        open(options.names).read().splitlines())}
+    dataset_path = os.path.join(options.data_dir, "VOCdevkit")
+    voc_train_path = os.path.join(options.output_data, "train_dataset")
+    voc_val_path = os.path.join(options.output_data, "val_dataset")
 
-    write_voc(dataset_path, splits_names=[(2009, "trainval")],
+    write_voc(dataset_path, splits_names=[(2009, "train")],
               output_path="file://" + voc_train_path,
               classes=class_map)
     write_voc(dataset_path, splits_names=[(2009, "val")],
@@ -511,19 +613,33 @@ def main():
     callbacks = [
         ReduceLROnPlateau(verbose=1),
         EarlyStopping(patience=3, verbose=1),
-        ModelCheckpoint('checkpoints/yolov3_train_{epoch}.tf',
+        ModelCheckpoint(options.checkpoint + '/yolov3_train_{epoch}.tf',
                         verbose=1, save_weights_only=True),
         TensorBoard(log_dir='logs')
     ]
 
-    init_orca_context(cluster_mode="local", cores=4, num_nodes=1, memory='20g',
-                      init_ray_on_spark=True, enable_numa_binding=False,
-                      object_store_memory='10g')
+    if options.cluster_mode == "local":
+        init_orca_context(cluster_mode="local", cores=options.cores, num_nodes=options.worker_num,
+                          memory= options.memory, init_ray_on_spark=True, enable_numa_binding=False,
+                          object_store_memory=options.object_store_memory)
+    elif options.cluster_mode == "k8s":
+        init_orca_context(cluster_mode="k8s", master=options.k8s_master,
+                          container_image=options.container_image,
+                          init_ray_on_spark=True, enable_numa_binding=False,
+                          num_nodes=options.worker_num, cores=options.cores, memory=options.memory,
+                          object_store_memory=options.object_store_memory,
+                          conf={"spark.driver.host": options.driver_host,
+                                "spark.driver.port": options.driver_port})
+    elif options.cluster_mode == "yarn":
+        init_orca_context(cluster_mode="yarn-client", cores=options.cores, num_nodes=options.worker_num,
+                          memory=options.memory, init_ray_on_spark=True, enable_numa_binding=False,
+                          object_store_memory=options.object_store_memory)
+    
     trainer = Estimator.from_keras(model_creator=model_creator)
 
     trainer.fit(train_data_creator,
-                epochs=3,
-                batch_size=16,
+                epochs=options.epochs,
+                batch_size=options.batch_size,
                 callbacks=callbacks,
                 validation_data=val_data_creator)
     stop_orca_context()
