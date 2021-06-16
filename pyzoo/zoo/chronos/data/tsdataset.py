@@ -102,17 +102,16 @@ class TSDataset:
         :return: a TSDataset instance when with_split is set to False,
                  three TSDataset instances when with_split is set to True.
 
-
-        Here is a df example:
-
-        id        datetime      value   "extra feature 1"   "extra feature 2"
-        00        2019-01-01    1.9     1                   2
-        01        2019-01-01    2.3     0                   9
-        00        2019-01-02    2.4     3                   4
-        01        2019-01-02    2.6     0                   2
-
         Create a tsdataset instance by:
 
+        >>> #Here is a df example:
+        >>>
+        >>> #id        datetime      value   "extra feature 1"   "extra feature 2"
+        >>> #00        2019-01-01    1.9     1                   2
+        >>> #01        2019-01-01    2.3     0                   9
+        >>> #00        2019-01-02    2.4     3                   4
+        >>> #01        2019-01-02    2.6     0                   2
+        >>>
         >>> tsdataset = TSDataset.from_pandas(df, dt_col="datetime",
         >>>                                   target_col="value", id_col="id",
         >>>                                   extra_feature_col=["extra feature 1",
@@ -155,14 +154,14 @@ class TSDataset:
 
         :param mode: imputation mode, select from "last", "const" or "linear".
 
-               "last": impute by propagating the last non N/A number to its following N/A.
-                       if there is no non N/A number ahead, 0 is filled instead.
+            "last": impute by propagating the last non N/A number to its following N/A.
+            if there is no non N/A number ahead, 0 is filled instead.
 
-               "const": impute by a const value input by user.
+            "const": impute by a const value input by user.
 
-               "linear": impute by linear interpolation.
+            "linear": impute by linear interpolation.
         :param const_num:  indicates the const number to fill, which is only effective when mode
-               is set to "const".
+            is set to "const".
 
         :return: the tsdataset instance.
 
