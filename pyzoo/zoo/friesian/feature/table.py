@@ -639,22 +639,24 @@ class FeatureTable(Table):
         with the original Table.
 
         :param columns: str or list of str. Columns to group the Table.
-        :param agg: str, dict or list. Aggragation functions to be applied to grouped Table.
+        :param agg: str, list or dict. Aggragate functions to be applied to grouped Table.
+               Supported aggregate functions are: "max", "min", "count", "sum", "avg", "mean",
+               "sumDistinct", "stddev", "stddev_pop", "variance", "var_pop", "skewness", "kurtosis",
+               "collect_list", "collect_set", "approx_count_distinct", "first", "last".
                If agg is a str, then agg is the aggregate function and the aggregation is performed
                on all columns that are not in `columns`.
+               If agg is a list of str, then agg is a list of aggregate function and the aggregation
+               is performed on all columns that are not in `columns`.
                If agg is a single dict mapping from string to string, then the key is the column
                to perform aggregation on, and the value is the aggregate function.
-               If agg is a single dict mapping from string to string/list, then the key is the
-               column to perform aggregation on, and the value is the aggregate function(s) among
-               ['count', 'sum', 'mean', 'std', 'variance', 'max', 'min'].
-               Alternatively, agg can also be a list of aggregate Column expressions.
+               If agg is a single dict mapping from string to list, then the key is the
+               column to perform aggregation on, and the value is list of aggregate functions.
 
                Examples:
                agg="sum"
+               agg=["last", "stddev"]
                agg={"*":"count"}
                agg={"col_1":"sum", "col_2":["count", "mean"]}
-               import pyspark.sql.functions as F
-               agg=[F.last("col_1"), F.sum("col_2"), F.mean("col_2")]
         :param join: boolean. If join is True, join the aggragation result with original Table.
 
         :return: A new Table with aggregated column fields.
@@ -666,23 +668,24 @@ class FeatureTable(Table):
             agg_exprs_dict = {agg_column:agg for agg_column in self.df.columns \
                     if agg_column not in columns}
             agg_df = grouped_data.agg(agg_exprs_dict)
+        elif isinstance(agg, list):
+            agg_exprs_list = []
+            for stat in agg:
+                stat_func = getattr(F, stat)
+                agg_exprs_list += [stat_func(agg_column) for agg_column in self.df.columns \
+                        if agg_column not in columns]
+            agg_df = grouped_data.agg(*agg_exprs_list)
         elif isinstance(agg, dict):
             if all(isinstance(agg[agg_column], str) for agg_column in agg):
                 agg_df = grouped_data.agg(agg)
             else:
-                stats_func = {"count": F.count, "sum": F.sum, "mean": F.mean, "std": F.stddev, \
-                        "variance": F.variance, "max": F.max, "min": F.min}
                 agg_exprs_list = []
                 for agg_column in agg:
                     stats = str_to_list(agg[agg_column], "value in agg_exprs")
                     for stat in stats:
-                        assert stat in stats_func, "if some values of dict agg are list, " \
-                                "the aggregation functions should be among {} but get {}" \
-                                .format(stats_func.keys(), stat)
-                        agg_exprs_list += [(stats_func[stat])(agg_column)]
+                        stat_func = getattr(F, stat)
+                        agg_exprs_list += [stat_func(agg_column)]
                 agg_df = grouped_data.agg(*agg_exprs_list)
-        elif isinstance(agg, list):
-            agg_df = grouped_data.agg(*agg)
         else:
             raise TypeError("agg should be dict or list")
 
