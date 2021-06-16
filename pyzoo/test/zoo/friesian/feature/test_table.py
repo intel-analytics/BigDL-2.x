@@ -533,7 +533,7 @@ class TestTable(TestCase):
         assert col_names == ["col_1", "col_2", "col_3", "col_4", "col_5"], \
             "column names are incorrenct"
 
-    def test_add_constant_values(self):
+    def test_add(self):
         spark = OrcaContext.get_spark_session()
         data = [("jack", "123", 14, 8.5),
                 ("alice", "34", 25, 9.6),
@@ -544,7 +544,7 @@ class TestTable(TestCase):
                              StructField("height", DoubleType(), True)])
         tbl = FeatureTable(spark.createDataFrame(data, schema))
         columns = ["age", "height"]
-        new_tbl = tbl.add_constant_values(columns, 1.5)
+        new_tbl = tbl.add(columns, 1.5)
         new_list = new_tbl.df.take(3)
         assert len(new_list) == 3, "new_tbl should have 3 rows"
         assert new_list[0]['age'] == 15.5, "the age of jack should increase 1"
