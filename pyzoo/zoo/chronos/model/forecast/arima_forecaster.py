@@ -46,7 +46,8 @@ class ARIMAForecaster(Forecaster):
             https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA
         :param q: hyperparameter q for the ARIMA model, for details you may refer to
             https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA
-        :param seasonality_mode: hyperparameter q for the ARIMA model, for details you may refer to
+        :param seasonality_mode: hyperparameter seasonality_mode for the ARIMA model,
+            for details you may refer to
             https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA
         :param P: hyperparameter P for the ARIMA model, for details you may refer to
             https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA
@@ -73,29 +74,29 @@ class ARIMAForecaster(Forecaster):
 
         super().__init__()
 
-    def fit(self, x, target):
+    def fit(self, data, validation_data):
         """
         Fit(Train) the forecaster.
 
-        :param x: A 1-D numpy array as the training data
-        :param target: A 1-D numpy array as the evaluation data
+        :param data: A 1-D numpy array as the training data
+        :param validation_data: A 1-D numpy array as the evaluation data
         """
-        self._check_data(x, target)
-        x = x.reshape(-1, 1)
-        target = target.reshape(-1, 1)
-        data = {'x': x, 'y': None, 'val_x': None, 'val_y': target}
+        self._check_data(data, validation_data)
+        data = data.reshape(-1, 1)
+        validation_data = validation_data.reshape(-1, 1)
         return self.internal.fit_eval(data=data,
+                                      validation_data=validation_data,
                                       **self.model_config)
 
-    def _check_data(self, x, target):
-        assert x.ndim == 1, \
-            "x should be an 1-D array), \
-            Got x dimension of {}."\
-            .format(x.ndim)
-        assert target.ndim == 1, \
-            "The target should be an 1-D array), \
-            Got target dimension of {}."\
-            .format(target.ndim)
+    def _check_data(self, data, validation_data):
+        assert data.ndim == 1, \
+            "data should be an 1-D array), \
+            Got data dimension of {}."\
+            .format(data.ndim)
+        assert validation_data.ndim == 1, \
+            "validation_data should be an 1-D array), \
+            Got validation_data dimension of {}."\
+            .format(validation_data.ndim)
 
     def predict(self, horizon, rolling=False):
         """
@@ -108,21 +109,21 @@ class ARIMAForecaster(Forecaster):
             raise RuntimeError("You must call fit or restore first before calling predict!")
         return self.internal.predict(horizon=horizon, rolling=rolling)
 
-    def evaluate(self, x, target, metrics=['mse'], rolling=False):
+    def evaluate(self, data, validation_data, metrics=['mse'], rolling=False):
         """
         Evaluate using a trained forecaster.
 
-        :param x: We don't support input x currently.
-        :param target: A 1-D numpy array as the evaluation data
+        :param data: We don't support input data currently.
+        :param validation_data: A 1-D numpy array as the evaluation data
         :param metrics: A list contains metrics for test/valid data.
         """
-        if x is not None:
-            raise ValueError("We don't support input x currently")
-        if target is None:
-            raise ValueError("Input invalid target of None")
+        if data is not None:
+            raise ValueError("We don't support input data currently")
+        if validation_data is None:
+            raise ValueError("Input invalid validation_data of None")
         if self.internal.model is None:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate(x, target, metrics=metrics, rolling=rolling)
+        return self.internal.evaluate(data, validation_data, metrics=metrics, rolling=rolling)
 
     def save(self, checkpoint_file):
         """

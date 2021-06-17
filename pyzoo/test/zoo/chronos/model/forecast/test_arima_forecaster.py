@@ -25,11 +25,10 @@ import pytest
 
 def create_data():
     seq_len = 400
-    x = np.random.rand(seq_len)
+    data = np.random.rand(seq_len)
     horizon = np.random.randint(2, 50)
-    target = np.random.rand(horizon)
-    data = {'x': x, 'y': None, 'val_x': None, 'val_y': target}
-    return data
+    validation_data = np.random.rand(horizon)
+    return data, validation_data
 
 
 class TestChronosModelARIMAForecaster(TestCase):
@@ -41,7 +40,7 @@ class TestChronosModelARIMAForecaster(TestCase):
         pass
 
     def test_arima_forecaster_fit_eval_pred(self):
-        data = create_data()
+        data, validation_data = create_data()
         forecaster = ARIMAForecaster(p=2,
                                      q=2,
                                      seasonality_mode=True,
@@ -49,16 +48,16 @@ class TestChronosModelARIMAForecaster(TestCase):
                                      Q=1,
                                      m=7
                                      )
-        train_loss = forecaster.fit(data['x'], data['val_y'])
-        test_pred = forecaster.predict(len(data['val_y']))
-        assert len(test_pred) == len(data['val_y'])
+        train_loss = forecaster.fit(data, validation_data)
+        test_pred = forecaster.predict(len(validation_data))
+        assert len(test_pred) == len(validation_data)
         # test rolling predict
-        test_rolling_pred = forecaster.predict(len(data['val_y']), rolling=True)
-        assert len(test_rolling_pred) == len(data['val_y'])
-        test_mse = forecaster.evaluate(None, data['val_y'])
+        test_rolling_pred = forecaster.predict(len(validation_data), rolling=True)
+        assert len(test_rolling_pred) == len(validation_data)
+        test_mse = forecaster.evaluate(None, validation_data)
 
     def test_arima_forecaster_save_restore(self):
-        data = create_data()
+        data, validation_data = create_data()
         forecaster = ARIMAForecaster(p=2,
                                      q=2,
                                      seasonality_mode=True,
@@ -66,17 +65,17 @@ class TestChronosModelARIMAForecaster(TestCase):
                                      Q=1,
                                      m=7
                                      )
-        train_loss = forecaster.fit(data['x'], data['val_y'])
+        train_loss = forecaster.fit(data, validation_data)
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             ckpt_name = os.path.join(tmp_dir_name, "pkl")
-            test_pred_save = forecaster.predict(len(data['val_y']))
+            test_pred_save = forecaster.predict(len(validation_data))
             forecaster.save(ckpt_name)
             forecaster.restore(ckpt_name)
-            test_pred_restore = forecaster.predict(len(data['val_y']))
+            test_pred_restore = forecaster.predict(len(validation_data))
         np.testing.assert_almost_equal(test_pred_save, test_pred_restore)
 
     def test_arima_forecaster_runtime_error(self):
-        data = create_data()
+        data, validation_data = create_data()
         forecaster = ARIMAForecaster(p=2,
                                      q=2,
                                      seasonality_mode=True,
@@ -87,19 +86,19 @@ class TestChronosModelARIMAForecaster(TestCase):
 
         with pytest.raises(Exception,
                            match="You must call fit or restore first before calling predict!"):
-            forecaster.predict(horizon=len(data['val_y']))
+            forecaster.predict(horizon=len(validation_data))
 
         with pytest.raises(Exception,
-                           match="We don't support input x currently"):
-            forecaster.evaluate(x=1, target=data['val_y'])
+                           match="We don't support input data currently"):
+            forecaster.evaluate(data=1, validation_data=validation_data)
 
         with pytest.raises(Exception,
-                           match="Input invalid target of None"):
-            forecaster.evaluate(x=None, target=None)
+                           match="Input invalid validation_data of None"):
+            forecaster.evaluate(data=None, validation_data=None)
 
         with pytest.raises(Exception,
                            match="You must call fit or restore first before calling evaluate!"):
-            forecaster.evaluate(x=None, target=data['val_y'])
+            forecaster.evaluate(data=None, validation_data=validation_data)
 
         with pytest.raises(Exception,
                            match="You must call fit or restore first before calling save!"):
@@ -107,7 +106,7 @@ class TestChronosModelARIMAForecaster(TestCase):
             forecaster.save(model_file)
 
     def test_arima_forecaster_shape_error(self):
-        data = create_data()
+        data, validation_data = create_data()
         forecaster = ARIMAForecaster(p=2,
                                      q=2,
                                      seasonality_mode=True,
@@ -117,7 +116,7 @@ class TestChronosModelARIMAForecaster(TestCase):
                                      )
 
         with pytest.raises(AssertionError):
-            forecaster.fit(data['x'].reshape(-1, 1), data['val_y'])
+            forecaster.fit(data.reshape(-1, 1), validation_data)
 
         with pytest.raises(AssertionError):
-            forecaster.fit(data['x'], data['val_y'].reshape(-1, 1))
+            forecaster.fit(data, validation_data.reshape(-1, 1))
