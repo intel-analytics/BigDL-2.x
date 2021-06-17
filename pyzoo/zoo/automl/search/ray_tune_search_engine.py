@@ -162,6 +162,7 @@ class RayTuneSearchEngine(SearchEngine):
             config=self.search_space,
             search_alg=self._search_alg,
             num_samples=self.num_samples,
+            trial_dirname_creator=trial_dirname_creator,
             scheduler=self._scheduler,
             resources_per_trial=self.resources_per_trial,
             verbose=1,
@@ -333,3 +334,7 @@ class TrialStopper(Stopper):
 
     def stop_all(self):
         return False
+
+
+def trial_dirname_creator(trial):
+    return f"{trial.trainable_name}_{trial.trial_id}"
