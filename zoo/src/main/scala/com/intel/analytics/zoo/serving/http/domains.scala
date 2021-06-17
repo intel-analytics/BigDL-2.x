@@ -237,7 +237,7 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
             case 2 =>
               val dimX = (i - 1) / dimList(1)
               val dimY = (i - 1) % dimList(1)
-              val value = eleList(dimX).asInstanceOf[List[_]](dimY) match{
+              val value = eleList(dimX).asInstanceOf[List[_]](dimY) match {
                 case value : Int => value.toFloat
                 case value : Double => value.toFloat
                 case value : Float => value
@@ -253,7 +253,7 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
                 case value : Double => value.toFloat
                 case value : Float => value
               }
-              tensor.setValue(dimX + 1, dimY + 1, dimZ +1, value)
+              tensor.setValue(dimX + 1, dimY + 1, dimZ + 1, value)
             case 4 =>
               val dimX = (i - 1) / (dimList(1) * dimList(2)* dimList(3))
               val dimY = ((i - 1) % (dimList(1) * dimList(2)* dimList(3))) /
@@ -261,7 +261,7 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
               val dimZ = ((i - 1) % (dimList(2) * dimList(3))) / dimList(3)
               val dimZA = (i - 1) % dimList(3)
               val value = eleList(dimX).asInstanceOf[List[_]](dimY).asInstanceOf[List[_]](dimZ)
-                .asInstanceOf[List[_]](dimZA) match{
+                .asInstanceOf[List[_]](dimZA) match {
                 case value : Int => value.toFloat
                 case value : Double => value.toFloat
                 case value : Float => value
@@ -271,11 +271,12 @@ case class Instances(instances: List[mutable.LinkedHashMap[String, Any]]) {
               val dimX = (i - 1) / (dimList(1) * dimList(2)* dimList(3) * dimList(4))
               val dimY = ((i - 1) % (dimList(1) * dimList(2)* dimList(3) * dimList(4))) /
                 (dimList(2)* dimList(3) * dimList(4))
-              val dimZ = ((i - 1) % (dimList(2)* dimList(3) * dimList(4))) / (dimList(3) * dimList(4))
+              val dimZ = ((i - 1) % (dimList(2)* dimList(3) * dimList(4))) / (dimList(3) *
+                dimList(4))
               val dimZA = ((i - 1) % (dimList(3) * dimList(4))) / dimList(4)
               val dimZB = (i - 1) % dimList(4)
               val value = eleList(dimX).asInstanceOf[List[_]](dimY).asInstanceOf[List[_]](dimZ)
-                .asInstanceOf[List[_]](dimZA).asInstanceOf[List[_]](dimZB) match{
+                .asInstanceOf[List[_]](dimZA).asInstanceOf[List[_]](dimZB) match {
                 case value : Int => value.toFloat
                 case value : Double => value.toFloat
                 case value : Float => value
@@ -932,7 +933,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
       })
   }
 
-  def predict(input: String):Seq[PredictionOutput[String]]={
+  def predict(input: String): Seq[PredictionOutput[String]] = {
     val activities = timing("activity make")(makeActivityTimer){
       JsonInputDeserializer.deserialize(input)
     }
@@ -1019,7 +1020,7 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
     }
   }
 
-  def predict(input: String):Seq[PredictionOutput[String]]={
+  def predict(input: String): Seq[PredictionOutput[String]] = {
     val instances = timing("json deserialization")() {
       JsonUtil.fromJson(classOf[Instances], input)
     }
