@@ -588,7 +588,6 @@ class XGBRegressorModel private[zoo](val model: XGBoostRegressionModel) {
   }
 
   def setFeaturesCol(value: String): this.type = {
-//    println("start features col of XGBRegressorModel")
     model.setFeaturesCol(value)
     featuresCol = value
     this

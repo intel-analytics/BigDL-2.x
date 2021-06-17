@@ -36,35 +36,8 @@ from zoo.util.tf import *
 import csv
 
 
-def demoexample():
-    sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
-    sc = init_nncontext(sparkConf)
-    sqlContext = SQLContext(sc)
-    data = sc.parallelize([
-        (1.0, 2.0, 3.0, 4.0, 5.0, 1.0, 2.0, 4.0, 8.0, 3.0, 116.3668),
-        (1.0, 3.0, 8.0, 6.0, 5.0, 9.0, 5.0, 6.0, 7.0, 4.0, 116.367),
-        (2.0, 1.0, 5.0, 7.0, 6.0, 7.0, 4.0, 1.0, 2.0, 3.0, 116.367),
-        (2.0, 1.0, 4.0, 3.0, 6.0, 1.0, 3.0, 2.0, 1.0, 3.0, 116.3668)
-    ])
-    columns = ["f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "label"]
-    df = data.toDF(columns)
-    vecasembler = VectorAssembler(inputCols=columns, outputCol="features")
-    assembledf = vecasembler.transform(df).select("features", "label").cache()
-    xgbRf0 = XGBRegressor()
-    xgbRf0.setNthread(1)
 
-    xgbmodel = XGBRegressorModel(xgbRf0.fit(assembledf))
-
-    xgbmodel.save("/tmp/modelfile/")
-    xgbmodel.setFeaturesCol("features")
-    yxgb = xgbmodel.transform(assembledf)
-    model = xgbmodel.load("/tmp/modelfile/")
-    model.setFeaturesCol("features")
-    y0 = model.transform(assembledf)
-    y0.show()
-
-
-def preProcessdata(filepath):
+def Processdata(filepath, demo):
     '''
          preProcess the data read from filepath
     :param filepath:
@@ -82,43 +55,43 @@ def preProcessdata(filepath):
     sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
     sc = init_nncontext(sparkConf)
     sqlContext = SQLContext(sc)
-
-    data = sc.parallelize(train_X.tolist())
+    if demo:
+        data = sc.parallelize([
+            (1.0, 2.0, 3.0, 4.0, 5.0, 1.0, 2.0, 4.0, 8.0, 3.0, 116.3668),
+            (1.0, 3.0, 8.0, 6.0, 5.0, 9.0, 5.0, 6.0, 7.0, 4.0, 116.367),
+            (2.0, 1.0, 5.0, 7.0, 6.0, 7.0, 4.0, 1.0, 2.0, 3.0, 116.367),
+            (2.0, 1.0, 4.0, 3.0, 6.0, 1.0, 3.0, 2.0, 1.0, 3.0, 116.3668)
+        ])
+    else:
+        data = sc.parallelize(train_X.tolist())
     columns = ["c" + str(i) for i in range(1, N)]
     columns.append("label")
     df = data.toDF(columns)
-    df.show()
     vecasembler = VectorAssembler(inputCols=columns, outputCol="features")
     assembledf = vecasembler.transform(df).select("features", "label").cache()
-    print('train df:')
-    assembledf.show()
     test_data = sc.parallelize(test_X.tolist())
     df2 = test_data.toDF(columns)
-    df2.show()
     testdf = vecasembler.transform(df2).select("features", "label").cache()
+    xgbRf0 = XGBRegressor()
+    xgbRf0.setNthread(1)
+    xgbRf0.setNumRound(10)
+    xgbmodel = XGBRegressorModel(xgbRf0.fit(assembledf))
+    y0 = xgbmodel.transform(testdf)
+    y0.show()
+    sc.stop()
 
-    return assembledf, testdf
 
 
 if __name__ == "__main__":
     parser = OptionParser()
-    parser.add_option("-f", "--folder", type=str, dest="data_path",
+    parser.add_option("-f", "--file-path", type=str, dest="data_path",
                       default=".", help="Path where data are stored")
     parser.add_option("-d", "--demo", action="store_true", dest="demo", default=False)
     parser.add_option("-m", "--master", type=str, dest="masterchoice")
+
     (option, args) = parser.parse_args(sys.argv)
-    if (option.demo):
-        demoexample()
-    else:
-        if option.data_path is None:
-            errno("data path is not specified")
-        datapath = option.data_path
-        for file in os.listdir(datapath):
-            if (os.path.splitext(file)[-1] == ".csv"):
-                filepath = os.path.join(option.data_path, file)
-                assembledf, testdf = preProcessdata(filepath)
-                xgbRf0 = XGBRegressor()
-                xgbRf0.setNthread(1)
-                xgbmodel = XGBRegressorModel(xgbRf0.fit(assembledf))
-                y0 = xgbmodel.transform(testdf)
-                y0.show()
+
+    if option.data_path is None:
+        errno("data path is not specified")
+    datapath = option.data_path
+    Processdata(datapath, option.demo)

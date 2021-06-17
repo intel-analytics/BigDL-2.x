@@ -723,6 +723,12 @@ class XGBRegressor():
     def setNthread(self, value: int):
         callZooFunc("float", "setXGBRegressorNthread", self.value, value)
 
+    def setNumRound(self, value: int):
+        callZooFunc("float", "setXGBRegressorNumRound", self.value, value)
+
+    def setNumWorkers(self, value: int):
+        callZooFunc("float", "setXGBRegressorNumWorkers", self.value, value)
+
     def fit(self, df):
         return callZooFunc("float", "fitXGBRegressor", self.value, df)
 

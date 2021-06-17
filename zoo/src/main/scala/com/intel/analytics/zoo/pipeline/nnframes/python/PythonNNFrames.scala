@@ -262,6 +262,14 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     model.setNthread(value)
   }
 
+  def setXGBRegressorNumRound(model: XGBRegressor, value: Int): Unit = {
+    model.setNumRound(value)
+  }
+
+  def setXGBRegressorNumWorkers(model: XGBRegressor, value: Int): Unit = {
+    model.setNumWorkers(value)
+  }
+
   def fitXGBRegressor(model: XGBRegressor, df : DataFrame): XGBRegressorModel = {
     model.fit(df)
   }
