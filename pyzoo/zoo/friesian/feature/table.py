@@ -14,14 +14,14 @@
 # limitations under the License.
 #
 import os
-from functools import reduce
 
 from pyspark.sql.types import DoubleType, ArrayType, DataType
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
-from pyspark.sql.functions import col, udf, array, broadcast, explode, struct, collect_list
+from pyspark.sql.functions import col as pyspark_col, udf, array, broadcast
 from pyspark.sql import Row
+import pyspark.sql.functions as F
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
@@ -300,10 +300,10 @@ class Table:
         """
         Cast columns to the specified type.
 
-        :param columns: a string or a list of strings that specifies column names. If it is None,
-                        then cast all of the columns.
-        :param type: a string ("string", "int", "long", "float", "double")
-                     or one of pyspark.sql.types that specifies the type.
+        :param columns: a string or a list of strings that specifies column names.
+                        If it is None, then cast all of the columns.
+        :param type: a string ("string", "boolean", "int", "long", "short", "float", "double")
+                     that specifies the type.
 
         :return: A new Table that casts all of the specified columns to the specified type.
         """
@@ -312,12 +312,24 @@ class Table:
         elif not isinstance(columns, list):
             columns = [columns]
             check_col_exists(self.df, columns)
-        if not isinstance(type, str) and not isinstance(type, DataType):
-            raise ValueError("type should be a string or a dataype in pyspark.sql.types")
+        valid_types = ["str", "string", "bool", "boolean", "int",
+                       "integer", "long", "short", "float", "double"]
+        if not (isinstance(type, str) and (type in valid_types)) \
+           and not isinstance(type, DataType):
+            raise ValueError(
+                "type should be string, boolean, int, long, short, float, double.")
+        transform_dict = {"str": "string", "bool": "boolean", "integer": "int"}
+        type = transform_dict[type] if type in transform_dict else type
         df_cast = self._clone(self.df)
         for i in columns:
-            df_cast.df = df_cast.df.withColumn(i, col(i).cast(type))
+            df_cast.df = df_cast.df.withColumn(i, pyspark_col(i).cast(type))
         return df_cast
+
+    def __getattr__(self, name):
+        return self.df.__getattr__(name)
+
+    def col(self, name):
+        return pyspark_col(name)
 
 
 class FeatureTable(Table):
@@ -453,15 +465,15 @@ class FeatureTable(Table):
 
             # Fitting pipeline on dataframe
             df = pipeline.fit(df).transform(df) \
-                .withColumn("scaled_list", tolist(col("scaled"))) \
+                .withColumn("scaled_list", tolist(pyspark_col("scaled"))) \
                 .drop("vect").drop("scaled")
             for i in range(len(scalar_cols)):
-                df = df.withColumn(scalar_cols[i], col("scaled_list")[i])
+                df = df.withColumn(scalar_cols[i], pyspark_col("scaled_list")[i])
             df = df.drop("scaled_list")
 
             # cast to float
             for c in scalar_cols:
-                df = df.withColumn(c, col(c).cast("float"))
+                df = df.withColumn(c, pyspark_col(c).cast("float"))
 
         for c in array_cols:
             df = normalize_array(df, c)
@@ -573,7 +585,7 @@ class FeatureTable(Table):
 
         :return: FeatureTable
         """
-        df = self.df.withColumn(out_col, udf_func(col(in_col)))
+        df = self.df.withColumn(out_col, udf_func(pyspark_col(in_col)))
         return FeatureTable(df)
 
     def join(self, table, on=None, how=None):
@@ -623,8 +635,77 @@ class FeatureTable(Table):
         for c in item_cols:
             col_type = df.schema[c].dataType
             cat_udf = udf(gen_cat, col_type)
-            df = df.withColumn(c.replace("item", "category"), cat_udf(col(c)))
+            df = df.withColumn(c.replace("item", "category"), cat_udf(pyspark_col(c)))
         return FeatureTable(df)
+
+    def group_by(self, columns=[], agg="count", join=False):
+        """
+        Group the Table with specified columns and then run aggregation. Optionally join the result
+        with the original Table.
+
+        :param columns: str or list of str. Columns to group the Table. If it is an empty list,
+               aggregation is run directly without grouping. Default is [].
+        :param agg: str, list or dict. Aggragate functions to be applied to grouped Table.
+               Default is "count".
+               Supported aggregate functions are: "max", "min", "count", "sum", "avg", "mean",
+               "sumDistinct", "stddev", "stddev_pop", "variance", "var_pop", "skewness", "kurtosis",
+               "collect_list", "collect_set", "approx_count_distinct", "first", "last".
+               If agg is a str, then agg is the aggregate function and the aggregation is performed
+               on all columns that are not in `columns`.
+               If agg is a list of str, then agg is a list of aggregate function and the aggregation
+               is performed on all columns that are not in `columns`.
+               If agg is a single dict mapping from string to string, then the key is the column
+               to perform aggregation on, and the value is the aggregate function.
+               If agg is a single dict mapping from string to list, then the key is the
+               column to perform aggregation on, and the value is list of aggregate functions.
+
+               Examples:
+               agg="sum"
+               agg=["last", "stddev"]
+               agg={"*":"count"}
+               agg={"col_1":"sum", "col_2":["count", "mean"]}
+        :param join: boolean. If join is True, join the aggragation result with original Table.
+
+        :return: A new Table with aggregated column fields.
+        """
+        if isinstance(columns, str):
+            columns = [columns]
+        assert isinstance(columns, list), "columns should be str or list of str"
+        grouped_data = self.df.groupBy(columns)
+
+        if isinstance(agg, str):
+            agg_exprs_dict = {agg_column: agg for agg_column in self.df.columns
+                              if agg_column not in columns}
+            agg_df = grouped_data.agg(agg_exprs_dict)
+        elif isinstance(agg, list):
+            agg_exprs_list = []
+            for stat in agg:
+                stat_func = getattr(F, stat)
+                agg_exprs_list += [stat_func(agg_column) for agg_column in self.df.columns
+                                   if agg_column not in columns]
+            agg_df = grouped_data.agg(*agg_exprs_list)
+        elif isinstance(agg, dict):
+            if all(isinstance(stats, str) for agg_column, stats in agg.items()):
+                agg_df = grouped_data.agg(agg)
+            else:
+                agg_exprs_list = []
+                for agg_column, stats in agg.items():
+                    if isinstance(stats, str):
+                        stats = [stats]
+                    assert isinstance(stats, list), "value in agg should be str or list of str"
+                    for stat in stats:
+                        stat_func = getattr(F, stat)
+                        agg_exprs_list += [stat_func(agg_column)]
+                agg_df = grouped_data.agg(*agg_exprs_list)
+        else:
+            raise TypeError("agg should be str, list of str, or dict")
+
+        if join:
+            assert columns, "columns can not be empty if join is True"
+            result_df = self.df.join(agg_df, on=columns, how="left")
+            return FeatureTable(result_df)
+        else:
+            return FeatureTable(agg_df)
 
 
 class StringIndex(Table):
