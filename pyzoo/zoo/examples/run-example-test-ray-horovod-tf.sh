@@ -12,7 +12,6 @@ export PYTHONPATH=${ANALYTICS_ZOO_PYZIP}:$PYTHONPATH
 export BIGDL_JARS=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "analytics-zoo*jar-with-dependencies.jar"`
 
 set -e
-
 echo "Start ray horovod tf example tests"
 
 echo "#1 tf2 estimator resnet 50 example"
@@ -25,7 +24,7 @@ echo "Ray example tests finished"
 
 echo "Start yoloV3 tf2 example tests"
 
-echo "#1 tf2 estimator yoloV3 example"
+echo "#2 tf2 estimator yoloV3 example"
 start=$(date "+%s")
 if [ -f analytics-zoo-models/yolov3.weights ]; then
   echo "analytics-zoo-models/yolov3.weights already exists."
@@ -36,18 +35,21 @@ fi
 if [ -f analytics-zoo-data/voc2012.names ]; then
   echo "analytics-zoo-data/voc2012.names already exists."
 else
-  wget -nv $FTP_URI/analytics-zoo-data/yolov3/voc2012.names \
+  wget -nv $FTP_URI/analytics-zoo-data/yolov3/voc2012.names \ 
     -P analytics-zoo-data
+fi
 if [ -f analytics-zoo-data/VOC2007.zip ]; then
   echo "analytics-zoo-data/VOCdevkit.zip already exists."
 else
   wget -nv $FTP_URI/analytics-zoo-data/yolov3/VOCdevkit.zip \
     -P analytics-zoo-data
-unzip -q analytics-zoo-data/yolov3/VOCdevkit.zip -d analytics-zoo-data/yolov3/VOCdevkit
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf2/yolov3/yoloV3.py --data_dir analytics-zoo-data/yolov3 --weights analytics-zoo-models/yolov3.weights --class_num 20 --names analytics-zoo-data/voc2012.names --data_year 2007 --split_name_train trainval --split_name_test trainval
+fi
+unzip -q analytics-zoo-data/VOCdevkit.zip -d analytics-zoo-data/VOCdevkit
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf2/yolov3/yoloV3.py --data_dir analytics-zoo-data/VOCdevkit --weights analytics-zoo-models/yolov3.weights --class_num 20 --names analytics-zoo-data/voc2012.names --data_year 2007 --split_name_train trainval --split_name_test trainval
 
 now=$(date "+%s")
 time2=$((now-start))
 
 echo "#1 tf2 estimator resnet 50 time used:$time1 seconds"
-echo "#1 tf2 estimator yolov3 time used:$time2 seconds"
+echo "#2 tf2 estimator yolov3 time used:$time2 seconds"
+
