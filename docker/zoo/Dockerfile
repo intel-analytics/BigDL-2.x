@@ -69,7 +69,7 @@ RUN apt-get install -y python3-minimal && \
     ln -s /usr/bin/python3 /usr/bin/python && \
     #Fix tornado await process
     pip uninstall -y -q tornado && \
-    pip install tornado==5.1.1 && \
+    pip install --no-cache-dir tornado==5.1.1 && \
     python3 -m ipykernel.kernelspec
 
 #spark

@@ -162,6 +162,7 @@ class RayTuneSearchEngine(SearchEngine):
             config=self.search_space,
             search_alg=self._search_alg,
             num_samples=self.num_samples,
+            trial_dirname_creator=trial_dirname_creator,
             scheduler=self._scheduler,
             resources_per_trial=self.resources_per_trial,
             verbose=1,
@@ -286,7 +287,7 @@ class RayTuneSearchEngine(SearchEngine):
                                               mc=mc,
                                               metric=metric,
                                               **config)
-                reward = result
+                reward = result[metric]
                 checkpoint_filename = "best.ckpt"
 
                 # Save best reward iteration
@@ -305,9 +306,9 @@ class RayTuneSearchEngine(SearchEngine):
                         put_ckpt_hdfs(remote_dir, checkpoint_filename)
 
                 report_dict = {"training_iteration": i,
-                               metric: reward,
                                "checkpoint": checkpoint_filename,
                                "best_" + metric: best_reward}
+                report_dict.update(result)
                 tune.report(**report_dict)
 
         return train_func
@@ -333,3 +334,7 @@ class TrialStopper(Stopper):
 
     def stop_all(self):
         return False
+
+
+def trial_dirname_creator(trial):
+    return f"{trial.trainable_name}_{trial.trial_id}"

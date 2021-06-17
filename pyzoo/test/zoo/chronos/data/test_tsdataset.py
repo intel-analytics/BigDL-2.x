@@ -272,12 +272,10 @@ class TestTSDataset(ZooTestCase):
                                            extra_feature_col=["extra feature"], id_col="id")
             tsdata_test = TSDataset.from_pandas(df_test, dt_col="datetime", target_col="value",
                                                 extra_feature_col=["extra feature"], id_col="id")
-            tsdata.gen_global_feature(settings="minimal")\
-                  .gen_dt_feature()\
+            tsdata.gen_dt_feature()\
                   .scale(scaler)\
                   .roll(lookback=5, horizon=4, id_sensitive=True)
-            tsdata_test.gen_global_feature(settings="minimal")\
-                       .gen_dt_feature()\
+            tsdata_test.gen_dt_feature()\
                        .scale(scaler, fit=False)\
                        .roll(lookback=5, horizon=4, id_sensitive=True)
 
@@ -321,9 +319,47 @@ class TestTSDataset(ZooTestCase):
         assert len(tsdata_valid.to_pandas()) == (50 * 0.1 + 5 + 2 - 1)*2
         assert len(tsdata_test.to_pandas()) == (50 * 0.1 + 5 + 2 - 1)*2
 
+        assert tsdata_train.feature_col is not tsdata_valid.feature_col
+        assert tsdata_train.feature_col is not tsdata_test.feature_col
+        assert tsdata_train.target_col is not tsdata_valid.target_col
+        assert tsdata_train.target_col is not tsdata_test.target_col
+
+        tsdata_train.feature_col.append("new extra feature")
+        assert len(tsdata_train.feature_col) == 2
+        assert len(tsdata_valid.feature_col) == 1
+        assert len(tsdata_test.feature_col) == 1
+
+        tsdata_train.target_col[0] = "new value"
+        assert tsdata_train.target_col[0] == "new value"
+        assert tsdata_valid.target_col[0] != "new value"
+        assert tsdata_test.target_col[0] != "new value"
+
     def test_tsdataset_global_feature(self):
         df = get_multi_id_ts_df()
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
         tsdata.gen_global_feature(settings="minimal")
+        tsdata._check_basic_invariants()
+
+    def test_tsdataset_rolling_feature(self):
+        df = get_multi_id_ts_df()
+        horizon = random.randint(2, 10)
+        lookback = random.randint(2, 20)
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                       extra_feature_col=["extra feature"], id_col="id")
+        tsdata.gen_rolling_feature(settings="minimal", window_size=lookback)
+        tsdata._check_basic_invariants()
+
+        # roll train
+        tsdata.roll(lookback=lookback, horizon=horizon)
+        x, y = tsdata.to_numpy()
+        feature_num = len(tsdata.feature_col) + len(tsdata.target_col)
+        assert x.shape == ((50-lookback-horizon+1)*2, lookback, feature_num)
+        assert y.shape == ((50-lookback-horizon+1)*2, horizon, 1)
+
+        tsdata.roll(lookback=lookback, horizon=horizon, id_sensitive=True)
+        x, y = tsdata.to_numpy()
+        assert x.shape == ((50-lookback-horizon+1), lookback, feature_num*2)
+        assert y.shape == ((50-lookback-horizon+1), horizon, 2)
+
         tsdata._check_basic_invariants()
