@@ -28,44 +28,35 @@ from zoo.automl.model import ModelBuilder
 
 class ARIMAModel(BaseModel):
 
-    def __init__(self, config={}):
+    def __init__(self):
         """
         Initialize Model
         """
-        self.p = config.get('p', 2)
-        self.d = config.get('d', 0)
-        self.q = config.get('q', 2)
-        self.seasonal = config.get('seasonality_mode', True)
-        self.P = config.get('P', 1)
-        self.D = config.get('D', 0)
-        self.Q = config.get('Q', 1)
-        self.m = config.get('m', 7)
-        self.metric = config.get('metric', 'mse')
+        self.metric = 'mse'
         self.model = None
         self.model_init = False
-
-    def set_params(self, **config):
-        self.p = config.get('p', self.p)
-        self.d = config.get('d', self.d)
-        self.q = config.get('q', self.q)
-        self.seasonal = config.get('seasonality_mode', self.seasonal)
-        self.P = config.get('P', self.P)
-        self.D = config.get('D', self.D)
-        self.Q = config.get('Q', self.Q)
-        self.m = config.get('m', self.m)
-        self.metric = config.get('metric', self.metric)
 
     def _build(self, **config):
         """
         build the models and initialize.
         :param config: hyperparameters for the model
         """
-        self.set_params(**config)
-        order = (self.p, self.d, self.q)
-        if not self.seasonal:
+        p = config.get('p', 2)
+        d = config.get('d', 0)
+        q = config.get('q', 2)
+        seasonal = config.get('seasonality_mode', True)
+        P = config.get('P', 1)
+        D = config.get('D', 0)
+        Q = config.get('Q', 1)
+        m = config.get('m', 7)
+        self.metric = config.get('metric', self.metric)
+        
+        order = (p, d, q)
+        if not seasonal:
             seasonal_order = (0, 0, 0, 0)
         else:
-            seasonal_order = (self.P, self.D, self.Q, self.m)
+            seasonal_order = (P, D, Q, m)
+            
         self.model = ARIMA(order=order, seasonal_order=seasonal_order, suppress_warnings=True)
         self.model_init = True
 
