@@ -14,11 +14,11 @@
 # limitations under the License.
 #
 
+import py
 import pytest
 import numpy as np
 import pandas as pd
 import random
-import math
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.chronos.data import TSDataset
@@ -114,7 +114,7 @@ class TestTSDataset(ZooTestCase):
             tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=["value1"],
                                            extra_feature_col="extra feature", id_col="id")
 
-    def test_tsdataset_initialization_num(self):
+    def test_tsdataset_initialization_multi(self):
         df = get_multi_id_ts_df()
         # legal input
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
@@ -228,7 +228,7 @@ class TestTSDataset(ZooTestCase):
 
     def test_tsdataset_deduplicate(self):
         df = get_ugly_ts_df()
-        for i in range(20):
+        for _ in range(20):
             df.loc[len(df)] = df.loc[np.random.randint(0, 99)]
         assert len(df) == 120
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="e",
@@ -237,7 +237,7 @@ class TestTSDataset(ZooTestCase):
         assert len(tsdata.to_pandas()) == 100
         tsdata._check_basic_invariants()
 
-    def test_tsdataset_datetime_feature_signle(self):
+    def test_tsdataset_datetime_feature_single(self):
         df = get_ts_df()
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
@@ -374,12 +374,12 @@ class TestTSDataset(ZooTestCase):
 
             tsdata._check_basic_invariants()
 
-    def test_tsdataset_resmaple_sign(self):
+    def test_tsdataset_resample_single(self):
         df = get_ts_df()
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
         tsdata.resample('2D', df["datetime"][0], df["datetime"][df.shape[0]-1])
-        assert len(tsdata.to_pandas()) == math.floor(df.shape[0] / 2)
+        assert len(tsdata.to_pandas()) == df.shape[0] // 2
         tsdata._check_basic_invariants()
 
     def test_tsdataset_resample_mul(self):
@@ -387,10 +387,10 @@ class TestTSDataset(ZooTestCase):
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
         tsdata.resample('2D', df["datetime"][0], df["datetime"][df.shape[0]-1])
-        assert len(tsdata.to_pandas()) == math.floor(df.shape[0] / 2)
+        assert len(tsdata.to_pandas()) == df.shape[0] // 2
         tsdata._check_basic_invariants()
 
-    def test_tsdataset_split_ts(self):
+    def test_tsdataset_split_single(self):
         df = get_ts_df()
         tsdata_train, tsdata_valid, tsdata_test =\
             TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
@@ -402,11 +402,20 @@ class TestTSDataset(ZooTestCase):
         assert set(np.unique(tsdata_valid.to_pandas()["id"])) == {"00"}
         assert set(np.unique(tsdata_test.to_pandas()["id"])) == {"00"}
 
-        assert len(tsdata_train.to_pandas()) == math.floor(df.shape[0] * 0.8)
-        assert len(tsdata_valid.to_pandas()) == math.floor(
+        assert len(tsdata_train.to_pandas()) == int(df.shape[0] * 0.8)
+        assert len(tsdata_valid.to_pandas()) == int(
             df.shape[0] * 0.1 + 5 + 2 - 1)
-        assert len(tsdata_test.to_pandas()) == math.floor(
+        assert len(tsdata_test.to_pandas()) == int(
             df.shape[0] * 0.1 + 5 + 2 - 1)
+        tsdata_train.feature_col.append("new extra feature")
+        assert len(tsdata_train.feature_col) == 2
+        assert len(tsdata_valid.feature_col) == 1
+        assert len(tsdata_test.feature_col) == 1
+
+        tsdata_train.target_col[0] = "new value"
+        assert tsdata_train.target_col[0] == "new value"
+        assert tsdata_valid.target_col[0] != "new value"
+        assert tsdata_test.target_col[0] != "new value"
 
     def test_tsdataset_split(self):
         df = get_multi_id_ts_df()
