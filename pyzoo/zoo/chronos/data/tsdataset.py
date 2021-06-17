@@ -77,14 +77,16 @@ class TSDataset:
                     largest_look_back=0,
                     largest_horizon=1):
         '''
-        Initialize a tsdataset(s) from pandas dataframe.
+        Initialize tsdataset(s) from pandas dataframe.
 
         :param df: a pandas dataframe for your raw time series data.
         :param dt_col: a str indicates the col name of datetime
                column in the input data frame.
         :param target_col: a str or list indicates the col name of target column
                in the input data frame.
-        :param id_col: (optional) a str indicates the col name of dataframe id.
+        :param id_col: (optional) a str indicates the col name of dataframe id. If
+               it is not explicitly stated, then the data is interpreted as only
+               containing a single id.
         :param extra_feature_col: (optional) a str or list indicates the col name
                of extra feature columns that needs to predict the target column.
         :param with_split: (optional) bool, states if we need to split the dataframe
@@ -104,12 +106,12 @@ class TSDataset:
 
         Create a tsdataset instance by:
 
-        >>> #Here is a df example:
-        >>> #id        datetime      value   "extra feature 1"   "extra feature 2"
-        >>> #00        2019-01-01    1.9     1                   2
-        >>> #01        2019-01-01    2.3     0                   9
-        >>> #00        2019-01-02    2.4     3                   4
-        >>> #01        2019-01-02    2.6     0                   2
+        >>> # Here is a df example:
+        >>> # id        datetime      value   "extra feature 1"   "extra feature 2"
+        >>> # 00        2019-01-01    1.9     1                   2
+        >>> # 01        2019-01-01    2.3     0                   9
+        >>> # 00        2019-01-02    2.4     3                   4
+        >>> # 01        2019-01-02    2.6     0                   2
         >>> tsdataset = TSDataset.from_pandas(df, dt_col="datetime",
         >>>                                   target_col="value", id_col="id",
         >>>                                   extra_feature_col=["extra feature 1",
@@ -176,8 +178,8 @@ class TSDataset:
 
     def deduplicate(self):
         '''
-        Remove those duplicated rows which has exactly the same values in each feature_col for
-        each multivariate timeseries distinguished by id_col.
+        Remove those duplicated records which has exactly the same values in each feature_col
+        for each multivariate timeseries distinguished by id_col.
 
         :return: the tsdataset instance.
 
@@ -221,9 +223,20 @@ class TSDataset:
 
     def gen_dt_feature(self):
         '''
-        Generate datetime feature for each row. Currently we generate following features:
-        "MINUTE", "DAY", "DAYOFYEAR", "HOUR", "WEEKDAY", "WEEKOFYEAR", "MONTH", "IS_AWAKE",
-        "IS_BUSY_HOURS", "IS_WEEKEND".
+        | Generate datetime feature for each row. Currently we generate following features:
+        | "MINUTE": The minute of the time stamp.
+        | "DAY": The day of the time stamp.
+        | "DAYOFYEAR": The ordinal day of the year of the time stamp.
+        | "HOUR": The hour of the time stamp.
+        | "WEEKDAY": The day of the week of the time stamp, Monday=0, Sunday=6.
+        | "WEEKOFYEAR": The ordinal week of the year of the time stamp.
+        | "MONTH": The month of the time stamp.
+        | "IS_AWAKE": Bool value indicating whether it belongs to awake hours for the time stamp,
+        True for hours between 6A.M. and 1A.M.
+        | "IS_BUSY_HOURS": Bool value indicating whether it belongs to busy hours for the time
+        stamp, True for hours between 7A.M. and 10A.M. and hours between 4P.M. and 8P.M.
+        | "IS_WEEKEND": Bool value indicating whether it belongs to weekends for the time stamp,
+        True for Saturdays and Sundays.
 
         :return: the tsdataset instance.
 
@@ -374,6 +387,32 @@ class TSDataset:
                num_target_col is the product of the number of id and the number of target_col.
 
         :return: the tsdataset instance.
+
+        Assume there is a df with 2 ids, 1 target_col and 2 + 1 = 3 feature_cols.
+        Roll is called twice with lookback=1, horizon=1, id_sensitive=False and
+        lookback=1, horizon=1, id_sensitive=True.
+        Let's observe the outputs and their corresponding shapes.
+
+        >>> # Here is a df example:
+        >>> # id        datetime      value   "extra feature 1"   "extra feature 2"
+        >>> # 00        2019-01-01    1.9     1                   2
+        >>> # 01        2019-01-01    2.3     0                   9
+        >>> # 00        2019-01-02    2.4     3                   4
+        >>> # 01        2019-01-02    2.6     0                   2
+        >>> tsdataset = TSDataset.from_pandas(df, dt_col="datetime",
+        >>>                                   target_col="value", id_col="id",
+        >>>                                   extra_feature_col=["extra feature 1",
+        >>>                                                      "extra feature 2"])
+        >>> horizon, lookback = 1, 1
+        >>> tsdataset.roll(lookback=lookback, horizon=horizon, id_sensitive=False)
+        >>> x, y = tsdataset.to_numpy()
+        >>> print(x, y) # x = [[[1.9, 1, 2 ]], [[2.3, 0, 9 ]]] y = [[[ 2.4 ]], [[ 2.6 ]]]
+        >>> print(x.shape, y.shape) # x.shape = (2, 1, 3) y.shape = (2, 1, 1)
+        >>> tsdataset.roll(lookback=lookback, horizon=horizon, id_sensitive=True)
+        >>> x, y = tsdataset.to_numpy()
+        >>> print(x, y) # x = [[[ 1.9, 2, 2.3, 1, 0, 9 ]]] y = [[[ 2.4, 2.6]]]
+        >>> print(x.shape, y.shape) # x.shape = (1, 1, 6) y.shape = (1, 1, 2)
+
         '''
         feature_col = _to_list(feature_col, "feature_col") if feature_col is not None \
             else self.feature_col
@@ -467,7 +506,7 @@ class TSDataset:
 
         >>> from sklearn.preprocessing import StandardScaler
         >>> scaler = StandardScaler()
-        >>> tsdata.scale(scaler)
+        >>> tsdata.scale(scaler, fit=True)
         >>> tsdata_test.scale(scaler, fit=False)
         '''
         feature_col = self.feature_col
