@@ -24,12 +24,11 @@ from zoo.orca.automl import hp
 
 
 def get_data():
-    seq_len = 1095
-    x = np.random.rand(seq_len)
+    seq_len = 400
+    data = np.random.rand(seq_len)
     horizon = np.random.randint(2, 50)
-    target = np.random.rand(horizon)
-    data = {'x': x, 'y': None, 'val_x': None, 'val_y': target}
-    return data
+    validation_data = np.random.rand(horizon)
+    return data, validation_data
 
 
 class TestAutoARIMA(TestCase):
@@ -42,25 +41,19 @@ class TestAutoARIMA(TestCase):
         stop_orca_context()
 
     def test_fit(self):
-        auto_arima = AutoARIMA()
-        data = get_data()
+        data, validation_data = get_data()
         search_space = {
             "p": hp.randint(0, 4),
-            "q": hp.randint(0, 5),
+            "q": hp.randint(0, 4),
             "seasonality_mode": hp.choice([True, False]),
             "P": hp.randint(5, 12),
-            "Q": hp.randint(0, 5),
+            "Q": hp.randint(5, 12),
             "m": hp.choice([4, 7]),
         }
+        auto_arima = AutoARIMA(metric="mse", **search_space)
         auto_arima.fit(data=data,
+                       validation_data=validation_data,
                        epochs=1,
-                       metric="mse",
-                       n_sampling=3,
-                       search_space=search_space,
+                       n_sampling=1,
                        )
         best_model = auto_arima.get_best_model()
-        assert 0 <= best_model.p <= 4
-        assert 0 <= best_model.q <= 5
-        assert 0 <= best_model.P <= 12
-        assert 0 <= best_model.Q <= 5
-        assert best_model.m in [4, 7]
