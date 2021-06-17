@@ -1,3 +1,4 @@
+#
 # Copyright 2018 Analytics Zoo Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# The MIT License (MIT)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 
 import tensorflow as tf
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping, \
@@ -405,7 +426,7 @@ def YoloV3(size=None, channels=3, anchors=yolo_anchors,
     return Model(inputs, outputs, name='yolov3')
 
 
-def YoloLoss(anchors, classes=80, ignore_thresh=0.5):
+def YoloLoss(anchors, classes, ignore_thresh=0.5):
     def yolo_loss(y_true, y_pred):
         # 1. transform all pred outputs
         # y_pred: (batch_size, grid, grid, anchors, (x, y, w, h, obj, ...cls))
@@ -500,6 +521,12 @@ def main():
                         help="Required. The path where data locates.")
     parser.add_argument("--output_data", dest="output_data", default=tempfile.mkdtemp(),
                         help="Required. The path where voc parquet data locates.")
+    parser.add_argument("--data_year", dest="data_year", default="2009",
+                        help="Required. The voc data date.")
+    parser.add_argument("--split_name_train", dest="split_name_train", default="train",
+                        help="Required. Split name.")
+    parser.add_argument("--split_name_test", dest="split_name_test", default="test",
+                        help="Required. Split name.")
     parser.add_argument("--names", dest="names",
                         help="Required. The path where class names locates.")
     parser.add_argument("--weights", dest="weights", default="./checkpoints/yolov3.weights",
@@ -550,7 +577,7 @@ def main():
         anchor_masks = yolo_anchor_masks
 
         model_pretrained = YoloV3(
-            DEFAULT_IMAGE_SIZE, training=True, classes=options.class_num)
+            DEFAULT_IMAGE_SIZE, training=True, classes=80)
         model_pretrained.load_weights(options.checkpoint)
 
         model.get_layer('yolo_darknet').set_weights(
@@ -570,11 +597,11 @@ def main():
     dataset_path = os.path.join(options.data_dir, "VOCdevkit")
     voc_train_path = os.path.join(options.output_data, "train_dataset")
     voc_val_path = os.path.join(options.output_data, "val_dataset")
-
-    write_voc(dataset_path, splits_names=[(2009, "train")],
+    
+    write_voc(dataset_path, splits_names=[(options.data_year, options.split_name_train)],
               output_path="file://" + voc_train_path,
               classes=class_map)
-    write_voc(dataset_path, splits_names=[(2009, "val")],
+    write_voc(dataset_path, splits_names=[(options.data_year, options.split_name_test)],
               output_path="file://" + voc_val_path,
               classes=class_map)
 
@@ -640,8 +667,10 @@ def main():
     trainer.fit(train_data_creator,
                 epochs=options.epochs,
                 batch_size=options.batch_size,
+                steps_per_epoch=3473 // options.batch_size,
                 callbacks=callbacks,
-                validation_data=val_data_creator)
+                validation_data=val_data_creator,
+                validation_steps=3581 // options.batch_size)
     stop_orca_context()
 
 
