@@ -271,8 +271,8 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         else:
             self.loss = TorchLoss.from_pytorch(loss)
         if isinstance(model, types.FunctionType):
-            def model_creator():
-                return model(config)
+            def model_creator(self):
+                return model(self.config)
             model = model_creator
         if self.optimizer is None:
             from zoo.orca.learn.optimizers.schedule import Default
