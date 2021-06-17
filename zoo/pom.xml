@@ -899,6 +899,9 @@
                                     <exclude>org.glassfish.jersey.core:*</exclude>
                                     <exclude>org.codehaus.jackson:*</exclude>
                                 </excludes>
+                                <includes>
+                                    <include>net.sf.py4j:py4j:*</include>
+                                </includes>
                             </artifactSet>
                         </configuration>
                     </execution>
