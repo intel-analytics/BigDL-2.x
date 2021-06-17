@@ -32,19 +32,19 @@ else
   wget -nv $FTP_URI/analytics-zoo-models/yolov3/yolov3.weights \
     -P analytics-zoo-models
 fi
+
 if [ -f analytics-zoo-data/voc2012.names ]; then
   echo "analytics-zoo-data/voc2012.names already exists."
 else
-  wget -nv $FTP_URI/analytics-zoo-data/yolov3/voc2012.names \ 
-    -P analytics-zoo-data
+  wget -nv $FTP_URI/analytics-zoo-data/yolov3/voc2012.names -P analytics-zoo-data
 fi
-if [ -f analytics-zoo-data/VOC2007.zip ]; then
+
+if [ -f analytics-zoo-data/VOCdevkit.zip ]; then
   echo "analytics-zoo-data/VOCdevkit.zip already exists."
 else
-  wget -nv $FTP_URI/analytics-zoo-data/yolov3/VOCdevkit.zip \
-    -P analytics-zoo-data
+  wget -nv $FTP_URI/analytics-zoo-data/yolov3/VOCdevkit.zip -P analytics-zoo-data
+  unzip -q analytics-zoo-data/VOCdevkit.zip -d analytics-zoo-data/VOCdevkit
 fi
-unzip -q analytics-zoo-data/VOCdevkit.zip -d analytics-zoo-data/VOCdevkit
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf2/yolov3/yoloV3.py --data_dir analytics-zoo-data/VOCdevkit --weights analytics-zoo-models/yolov3.weights --class_num 20 --names analytics-zoo-data/voc2012.names --data_year 2007 --split_name_train trainval --split_name_test trainval
 
 now=$(date "+%s")
