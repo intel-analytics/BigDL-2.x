@@ -878,6 +878,7 @@ class TestNNClassifer():
         testdf = vecasembler.transform(df).select("features", "label").cache()
         xgbRf0 = XGBRegressor()
         xgbRf0.setNthread(1)
+        xgbRf0.setNumRound(10)
         xgbmodel = XGBRegressorModel(xgbRf0.fit(assembledf))
         xgbmodel.save("/tmp/modelfile/")
         xgbmodel.setFeaturesCol("features")
