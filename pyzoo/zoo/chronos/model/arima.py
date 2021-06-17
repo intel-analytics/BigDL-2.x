@@ -32,6 +32,7 @@ class ARIMAModel(BaseModel):
         """
         Initialize Model
         """
+        self.seasonal= True
         self.metric = 'mse'
         self.model = None
         self.model_init = False
@@ -44,7 +45,7 @@ class ARIMAModel(BaseModel):
         p = config.get('p', 2)
         d = config.get('d', 0)
         q = config.get('q', 2)
-        seasonal = config.get('seasonality_mode', True)
+        self.seasonal = config.get('seasonality_mode', True)
         P = config.get('P', 1)
         D = config.get('D', 0)
         Q = config.get('Q', 1)
@@ -52,7 +53,7 @@ class ARIMAModel(BaseModel):
         self.metric = config.get('metric', self.metric)
         
         order = (p, d, q)
-        if not seasonal:
+        if not self.seasonal:
             seasonal_order = (0, 0, 0, 0)
         else:
             seasonal_order = (P, D, Q, m)
