@@ -79,6 +79,10 @@ class FlinkInference(helper: ClusterServingHelper)
 
   override def map(in: List[(String, String, String)]): List[(String, String)] = {
     if (cnt > 1000){
+      val servingMetrics = ServingTimerMetrics("backend", timer)
+      val jsonMetrics = JsonUtil.toJson(servingMetrics)
+      print(jsonMetrics)
+      metrics = new MetricRegistry()
       timer = metrics.timer("backend")
       cnt = 0
     }
@@ -99,9 +103,6 @@ class FlinkInference(helper: ClusterServingHelper)
     newLogger.info(s"${in.size} records backend time ${(t2 - t1) / 1e9} s. " +
       s"Throughput ${in.size / ((t2 - t1) / 1e9)}")
 
-    val servingMetrics = ServingTimerMetrics("backend", timer)
-    val jsonMetrics = JsonUtil.toJson(servingMetrics)
-    newLogger.info(jsonMetrics)
     postProcessed
   }
 }

@@ -67,6 +67,10 @@ class ClusterServingInference() extends Supportive{
   }
   def singleThreadInference(in: List[(String, Activity)]): List[(String, String)] = {
     if (cnt > 1000){
+      val servingMetrics = ServingTimerMetrics("predict", timer)
+      val jsonMetrics = JsonUtil.toJson(servingMetrics)
+      print(jsonMetrics)
+      metrics = new MetricRegistry()
       timer = metrics.timer("predict")
       cnt = 0
     }
@@ -89,9 +93,7 @@ class ClusterServingInference() extends Supportive{
         }
       }
     })
-    val servingMetrics = ServingTimerMetrics("predict", timer)
-    val jsonMetrics = JsonUtil.toJson(servingMetrics)
-    newLogger.info(jsonMetrics)
+
     postProcessed
   }
 
