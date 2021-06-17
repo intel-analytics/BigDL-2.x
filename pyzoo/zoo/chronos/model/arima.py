@@ -152,12 +152,6 @@ class ARIMAModel(BaseModel):
             self.model = pickle.load(fin)
         self.model_init = True
 
-    def _get_required_parameters(self):
-        return {}
-
-    def _get_optional_parameters(self):
-        return {}
-
 
 class ARIMABuilder(ModelBuilder):
 
@@ -180,14 +174,4 @@ class ARIMABuilder(ModelBuilder):
         from zoo.chronos.model.arima import ARIMAModel
         model = ARIMAModel()
         model._build(**config)
-        return model
-
-    def build_from_ckpt(self, checkpoint_filename):
-        """
-        Build ARIMA Model from checkpoint
-        :param checkpoint_filename: model checkpoint filename
-        """
-        from zoo.chronos.model.arima import ARIMAModel
-        model = ARIMAModel()
-        model.restore(checkpoint_filename)
         return model
