@@ -121,10 +121,10 @@ class VOCDatasets:
                 continue
             cls_id = self.cat2label[cls_name]
             xml_box = obj.find('bndbox')
-            xmin = float(int(xml_box.find('xmin').text)/ width)
-            ymin = float(int(xml_box.find('ymin').text)/ height)
-            xmax = float(int(xml_box.find('xmax').text)/ width)
-            ymax = float(int(xml_box.find('ymax').text)/ height)
+            xmin = float(int(xml_box.find('xmin').text) / width)
+            ymin = float(int(xml_box.find('ymin').text) / height)
+            xmax = float(int(xml_box.find('xmax').text) / width)
+            ymax = float(int(xml_box.find('ymax').text) / height)
             label.append([xmin, ymin, xmax, ymax, cls_id, difficult])
         label = np.array(label).astype(np.float32)
         if not self._diff:

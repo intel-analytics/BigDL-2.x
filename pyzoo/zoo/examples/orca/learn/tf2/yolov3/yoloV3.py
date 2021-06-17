@@ -82,7 +82,8 @@ def transform_targets_for_output(y_true, grid_size, anchor_idxs):
                 # idx += 1
                 return (True, indexes, updates)
 
-            (mask, indexes, updates) = tf.cond(tf.reduce_any(anchor_eq) and not tf.equal(y_true[i][j][2], 0),
+            (mask, indexes, updates) = tf.cond(tf.reduce_any(anchor_eq) and
+                                               not tf.equal(y_true[i][j][2], 0),
                                                lambda: reduce(y_true, anchor_eq, grid_size),
                                                lambda: (False, tf.zeros(4, tf.int32),
                                                         tf.zeros(6, tf.float32)))
@@ -111,8 +112,8 @@ def transform_targets(y_train, anchors, anchor_masks, size):
     box_wh = tf.tile(tf.expand_dims(box_wh, -2),
                      (1, 1, tf.shape(anchors)[0], 1))
     box_area = box_wh[..., 0] * box_wh[..., 1]
-    intersection = tf.minimum(box_wh[..., 0], anchors[..., 0]) * \
-                   tf.minimum(box_wh[..., 1], anchors[..., 1])
+    intersection = tf.minimum(box_wh[..., 0], anchors[..., 0]) * tf.minimum(box_wh[..., 1],
+                                                                            anchors[..., 1])
     iou = intersection / (box_area + anchor_area - intersection)
     anchor_idx = tf.cast(tf.argmax(iou, axis=-1), tf.float32)
     anchor_idx = tf.expand_dims(anchor_idx, axis=-1)
@@ -337,8 +338,7 @@ def yolo_boxes(pred, anchors, classes):
     grid = _meshgrid(grid_size[1], grid_size[0])
     grid = tf.expand_dims(tf.stack(grid, axis=-1), axis=2)  # [gx, gy, 1, 2]
 
-    box_xy = (box_xy + tf.cast(grid, tf.float32)) / \
-             tf.cast(grid_size, tf.float32)
+    box_xy = (box_xy + tf.cast(grid, tf.float32)) / tf.cast(grid_size, tf.float32)
     box_wh = tf.exp(box_wh) * anchors
 
     box_x1y1 = box_xy - box_wh / 2
@@ -449,8 +449,7 @@ def YoloLoss(anchors, classes, ignore_thresh=0.5):
         grid_size = tf.shape(y_true)[1]
         grid = tf.meshgrid(tf.range(grid_size), tf.range(grid_size))
         grid = tf.expand_dims(tf.stack(grid, axis=-1), axis=2)
-        true_xy = true_xy * tf.cast(grid_size, tf.float32) - \
-                  tf.cast(grid, tf.float32)
+        true_xy = true_xy * tf.cast(grid_size, tf.float32) - tf.cast(grid, tf.float32)
         true_wh = tf.math.log(true_wh / anchors)
         true_wh = tf.where(tf.math.is_inf(true_wh),
                            tf.zeros_like(true_wh), true_wh)
@@ -466,13 +465,10 @@ def YoloLoss(anchors, classes, ignore_thresh=0.5):
         ignore_mask = tf.cast(best_iou < ignore_thresh, tf.float32)
 
         # 5. calculate all losses
-        xy_loss = obj_mask * box_loss_scale * \
-                  tf.reduce_sum(tf.square(true_xy - pred_xy), axis=-1)
-        wh_loss = obj_mask * box_loss_scale * \
-                  tf.reduce_sum(tf.square(true_wh - pred_wh), axis=-1)
+        xy_loss = obj_mask * box_loss_scale * tf.reduce_sum(tf.square(true_xy - pred_xy), axis=-1)
+        wh_loss = obj_mask * box_loss_scale * tf.reduce_sum(tf.square(true_wh - pred_wh), axis=-1)
         obj_loss = binary_crossentropy(true_obj, pred_obj)
-        obj_loss = obj_mask * obj_loss + \
-                   (1 - obj_mask) * ignore_mask * obj_loss
+        obj_loss = obj_mask * obj_loss + (1 - obj_mask) * ignore_mask * obj_loss
         # TODO: use binary_crossentropy instead
         class_loss = obj_mask * sparse_categorical_crossentropy(
             true_class_idx, pred_class)
@@ -525,7 +521,7 @@ def main():
                         help="Required. The voc data date.")
     parser.add_argument("--split_name_train", dest="split_name_train", default="train",
                         help="Required. Split name.")
-    parser.add_argument("--split_name_test", dest="split_name_test", default="test",
+    parser.add_argument("--split_name_test", dest="split_name_test", default="val",
                         help="Required. Split name.")
     parser.add_argument("--names", dest="names",
                         help="Required. The path where class names locates.")
@@ -597,7 +593,7 @@ def main():
     dataset_path = os.path.join(options.data_dir, "VOCdevkit")
     voc_train_path = os.path.join(options.output_data, "train_dataset")
     voc_val_path = os.path.join(options.output_data, "val_dataset")
-    
+
     write_voc(dataset_path, splits_names=[(options.data_year, options.split_name_train)],
               output_path="file://" + voc_train_path,
               classes=class_map)
@@ -612,10 +608,10 @@ def main():
         train_dataset = read_parquet("tf_dataset", input_path=voc_train_path,
                                      output_types=output_types,
                                      output_shapes=output_shapes)
-        train_dataset = train_dataset.shuffle(buffer_size=512)
         train_dataset = train_dataset.map(
             lambda data_dict: (data_dict["image"], data_dict["label"]))
         train_dataset = train_dataset.map(parse_data_train)
+        train_dataset = train_dataset.shuffle(buffer_size=512)
         train_dataset = train_dataset.batch(batch_size)
         train_dataset = train_dataset.map(lambda x, y: (
             transform_images(x, DEFAULT_IMAGE_SIZE),
@@ -627,7 +623,6 @@ def main():
         val_dataset = read_parquet("tf_dataset", input_path=voc_val_path,
                                    output_types=output_types,
                                    output_shapes=output_shapes)
-        val_dataset = val_dataset.shuffle(buffer_size=512)
         val_dataset = val_dataset.map(
             lambda data_dict: (data_dict["image"], data_dict["label"]))
         val_dataset = val_dataset.map(parse_data_train)
@@ -647,7 +642,7 @@ def main():
 
     if options.cluster_mode == "local":
         init_orca_context(cluster_mode="local", cores=options.cores, num_nodes=options.worker_num,
-                          memory= options.memory, init_ray_on_spark=True, enable_numa_binding=False,
+                          memory=options.memory, init_ray_on_spark=True, enable_numa_binding=False,
                           object_store_memory=options.object_store_memory)
     elif options.cluster_mode == "k8s":
         init_orca_context(cluster_mode="k8s", master=options.k8s_master,
@@ -658,10 +653,11 @@ def main():
                           conf={"spark.driver.host": options.driver_host,
                                 "spark.driver.port": options.driver_port})
     elif options.cluster_mode == "yarn":
-        init_orca_context(cluster_mode="yarn-client", cores=options.cores, num_nodes=options.worker_num,
+        init_orca_context(cluster_mode="yarn-client", cores=options.cores,
+                          num_nodes=options.worker_num,
                           memory=options.memory, init_ray_on_spark=True, enable_numa_binding=False,
                           object_store_memory=options.object_store_memory)
-    
+
     trainer = Estimator.from_keras(model_creator=model_creator)
 
     trainer.fit(train_data_creator,
