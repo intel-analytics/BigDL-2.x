@@ -22,8 +22,7 @@ from pmdarima.arima import ndiffs
 from pmdarima.arima import nsdiffs
 
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.model.abstract import BaseModel
-from zoo.automl.model import ModelBuilder
+from zoo.automl.model.abstract import BaseModel, ModelBuilder
 
 
 class ARIMAModel(BaseModel):
@@ -59,31 +58,28 @@ class ARIMAModel(BaseModel):
             seasonal_order = (P, D, Q, m)
             
         self.model = ARIMA(order=order, seasonal_order=seasonal_order, suppress_warnings=True)
-        self.model_init = True
 
-    def fit_eval(self, data, **config):
+    def fit_eval(self, data, validation_data, **config):
         """
         Fit on the training data from scratch.
-        :param data: a dict with data['x'] for training data and
-            data['val_y'] for evaluation adata
+        :param data: A 1-D numpy array as the training data
+        :param validation_data: A 1-D numpy array as the evaluation data
         :return: the evaluation metric value
         """
-        x = data['x']
-        target = data['val_y']
-
         # Estimating differencing term (d) and seasonal differencing term (D)
-        kpss_diffs = ndiffs(x, alpha=0.05, test='kpss', max_d=6)
-        adf_diffs = ndiffs(x, alpha=0.05, test='adf', max_d=6)
+        kpss_diffs = ndiffs(data, alpha=0.05, test='kpss', max_d=6)
+        adf_diffs = ndiffs(data, alpha=0.05, test='adf', max_d=6)
         d = max(adf_diffs, kpss_diffs)
-        D = 0 if not self.seasonal else nsdiffs(x, m=7, max_D=12)
+        D = 0 if not self.seasonal else nsdiffs(data, m=7, max_D=12)
         config.update(d=d, D=D)
 
         if not self.model_init:
             self._build(**config)
+            self.model_init = True
 
-        self.model.fit(x)
-        val_metric = self.evaluate(x=None, target=target, metrics=[self.metric])[0].item()
-        return val_metric
+        self.model.fit(data)
+        val_metric = self.evaluate(x=None, target=validation_data, metrics=[self.metric])[0].item()
+        return {self.metric: val_metric}
 
     def predict(self, x=None, horizon=24, update=False, rolling=False):
         """
@@ -182,7 +178,7 @@ class ARIMABuilder(ModelBuilder):
         for the parameter names to specify.
         """
         from zoo.chronos.model.arima import ARIMAModel
-        model = ARIMAModel(config=self.model_config)
+        model = ARIMAModel()
         model._build(**config)
         return model
 
@@ -192,6 +188,6 @@ class ARIMABuilder(ModelBuilder):
         :param checkpoint_filename: model checkpoint filename
         """
         from zoo.chronos.model.arima import ARIMAModel
-        model = ARIMAModel(config=self.model_config)
+        model = ARIMAModel()
         model.restore(checkpoint_filename)
         return model

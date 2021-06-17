@@ -38,25 +38,26 @@ class TestARIMAModel(ZooTestCase):
             "metric": "mse",
         }
         self.model = ARIMAModel()
-        self.x = np.random.rand(self.seq_len)
+        self.data = np.random.rand(self.seq_len)
         self.horizon = np.random.randint(2, 50)
-        self.target = np.random.rand(self.horizon)
-        self.data = {'x': self.x, 'y': None, 'val_x': None, 'val_y': self.target}
+        self.validation_data = np.random.rand(self.horizon)
 
     def teardown_method(self, method):
         del self.model
-        del self.x
-        del self.target
         del self.data
+        del self.validation_data
 
     def test_arima(self):
         # test fit_eval
-        evaluate_result = self.model.fit_eval(data=self.data, **self.config)
+        evaluate_result = self.model.fit_eval(data=self.data, 
+                                              validation_data=self.validation_data, 
+                                              **self.config
+                                              )
         # test predict
         result = self.model.predict(x=None, horizon=self.horizon)
         assert len(result) == self.horizon
         # test evaluate
-        evaluate_result = self.model.evaluate(x=None, target=self.target, metrics=['mae', 'smape'])
+        evaluate_result = self.model.evaluate(x=None, target=self.validation_data, metrics=['mae', 'smape'])
         assert len(evaluate_result) == 2
         # test rolling predict
         rolling_result = self.model.predict(x=None, horizon=self.horizon, rolling=True)
@@ -67,7 +68,7 @@ class TestARIMAModel(ZooTestCase):
             self.model.predict(x=1)
 
         with pytest.raises(ValueError, match="We don't support input x currently"):
-            self.model.evaluate(x=1, target=self.target)
+            self.model.evaluate(x=1, target=self.validation_data)
 
         with pytest.raises(ValueError, match="Input invalid target of None"):
             self.model.evaluate(x=None, target=None)
@@ -84,7 +85,7 @@ class TestARIMAModel(ZooTestCase):
 
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling evaluate"):
-            self.model.evaluate(x=None, target=self.target)
+            self.model.evaluate(x=None, target=self.validation_data)
 
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling save"):
@@ -92,7 +93,7 @@ class TestARIMAModel(ZooTestCase):
             self.model.save(model_file)
 
     def test_save_restore(self):
-        self.model.fit_eval(data=self.data, **self.config)
+        self.model.fit_eval(data=self.data, validation_data=self.validation_data, **self.config)
         result_save = self.model.predict(x=None, horizon=self.horizon, rolling=False)
         model_file = "tmp.pkl"
 
