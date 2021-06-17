@@ -19,5 +19,5 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
 ```
 
 ## Options
-* '--folder', where data is stored, default will be current folder.
-* '--demo', whether to use demo data or not. 
+* '--file-path' or '-f', where data is stored, default will be current folder (Required Argument).
+* '--demo' or '-d', whether to use demo data or not. 

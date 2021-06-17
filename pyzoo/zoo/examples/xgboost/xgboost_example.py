@@ -43,15 +43,6 @@ def Processdata(filepath, demo):
     :param filepath:
     :return: assembledf:
     '''
-    # csvdata = csv.reader(filepath, delimiter = ",")
-
-    dataset = np.loadtxt(filepath, delimiter=',', skiprows=1)
-    M, N = dataset.shape
-    # X = dataset[1 :, 0: N - 1]
-    # Y = dataset[1:, N - 1]
-    train_X = dataset[:(int)(0.8 * M), :]
-    test_X = dataset[(int)(0.8 * M):, :]
-
     sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
     sc = init_nncontext(sparkConf)
     sqlContext = SQLContext(sc)
@@ -62,20 +53,29 @@ def Processdata(filepath, demo):
             (2.0, 1.0, 5.0, 7.0, 6.0, 7.0, 4.0, 1.0, 2.0, 3.0, 116.367),
             (2.0, 1.0, 4.0, 3.0, 6.0, 1.0, 3.0, 2.0, 1.0, 3.0, 116.3668)
         ])
+        N = 11
+        train_data = data
+        test_data = data
+
     else:
-        data = sc.parallelize(train_X.tolist())
+        dataset = np.loadtxt(filepath, delimiter=',', skiprows=1)
+        M, N = dataset.shape
+        train_X = dataset[:(int)(0.8 * M), :]
+        test_X = dataset[(int)(0.8 * M):, :]
+        train_data = sc.parallelize(train_X.tolist())
+        test_data = sc.parallelize(test_X.tolist())
+
     columns = ["c" + str(i) for i in range(1, N)]
     columns.append("label")
-    df = data.toDF(columns)
+    df1 = train_data.toDF(columns)
     vecasembler = VectorAssembler(inputCols=columns, outputCol="features")
-    assembledf = vecasembler.transform(df).select("features", "label").cache()
-    test_data = sc.parallelize(test_X.tolist())
+    traindf = vecasembler.transform(df1).select("features", "label").cache()
     df2 = test_data.toDF(columns)
     testdf = vecasembler.transform(df2).select("features", "label").cache()
     xgbRf0 = XGBRegressor()
     xgbRf0.setNthread(1)
     xgbRf0.setNumRound(10)
-    xgbmodel = XGBRegressorModel(xgbRf0.fit(assembledf))
+    xgbmodel = XGBRegressorModel(xgbRf0.fit(traindf))
     y0 = xgbmodel.transform(testdf)
     y0.show()
     sc.stop()
