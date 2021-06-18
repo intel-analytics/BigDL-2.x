@@ -317,7 +317,7 @@ class Table:
                 raise ValueError("column type should be numeric")
             new_df = new_df.withColumn(column, pyspark_col(column) + value)
         return self._clone(new_df)
-    
+
     @property
     def col_names(self):
         """

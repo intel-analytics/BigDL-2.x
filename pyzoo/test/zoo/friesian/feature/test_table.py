@@ -561,7 +561,8 @@ class TestTable(TestCase):
         total_line_1 = feature_tbl.size()
         feature_tbl2 = feature_tbl.sample(0.5)
         total_line_2 = feature_tbl2.size()
-        assert int(total_line_1/2) - 100 < total_line_2 < int(total_line_1/2) + 100, "the number of rows should be half"
+        assert int(total_line_1/2) - 100 < total_line_2 < int(total_line_1/2) + 100, \
+            "the number of rows should be half"
         total_distinct_line = feature_tbl2.distinct().size()
         assert total_line_2 == total_distinct_line, "all rows should be distinct"
 
