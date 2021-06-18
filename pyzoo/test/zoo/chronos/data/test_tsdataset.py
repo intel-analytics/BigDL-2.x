@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-import py
 import pytest
 import numpy as np
 import pandas as pd
@@ -114,7 +113,7 @@ class TestTSDataset(ZooTestCase):
             tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=["value1"],
                                            extra_feature_col="extra feature", id_col="id")
 
-    def test_tsdataset_initialization_multi(self):
+    def test_tsdataset_initialization_multiple(self):
         df = get_multi_id_ts_df()
         # legal input
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
@@ -125,8 +124,8 @@ class TestTSDataset(ZooTestCase):
         assert tsdata.dt_col == "datetime"
         assert tsdata._is_pd_datetime
 
-        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=["value"],
-                                       extra_feature_col="extra feature", id_col="id")
+        tsdata = TSDataset.afrom_pandas(df, dt_col="datetime", target_col=["value"],
+                                        extra_feature_col="extra feature", id_col="id")
         assert tsdata._id_list == ['00', '01']
         assert tsdata.feature_col == ["extra feature"]
         assert tsdata.target_col == ["value"]
@@ -237,7 +236,7 @@ class TestTSDataset(ZooTestCase):
         assert len(tsdata.to_pandas()) == 100
         tsdata._check_basic_invariants()
 
-    def test_tsdataset_datetime_feature_single(self):
+    def test_tsdataset_datetime_feature(self):
         df = get_ts_df()
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
@@ -269,7 +268,7 @@ class TestTSDataset(ZooTestCase):
                                            'extra feature'}
         tsdata._check_basic_invariants()
 
-    def test_tsdataset_datetime_feature(self):
+    def test_tsdataset_datetime_feature_multiple(self):
         df = get_multi_id_ts_df()
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
@@ -374,7 +373,7 @@ class TestTSDataset(ZooTestCase):
 
             tsdata._check_basic_invariants()
 
-    def test_tsdataset_resample_single(self):
+    def test_tsdataset_resample(self):
         df = get_ts_df()
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
@@ -382,7 +381,7 @@ class TestTSDataset(ZooTestCase):
         assert len(tsdata.to_pandas()) == df.shape[0] // 2
         tsdata._check_basic_invariants()
 
-    def test_tsdataset_resample_mul(self):
+    def test_tsdataset_resample_multiple(self):
         df = get_multi_id_ts_df()
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
@@ -390,7 +389,7 @@ class TestTSDataset(ZooTestCase):
         assert len(tsdata.to_pandas()) == df.shape[0] // 2
         tsdata._check_basic_invariants()
 
-    def test_tsdataset_split_single(self):
+    def test_tsdataset_split(self):
         df = get_ts_df()
         tsdata_train, tsdata_valid, tsdata_test =\
             TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
@@ -417,7 +416,7 @@ class TestTSDataset(ZooTestCase):
         assert tsdata_valid.target_col[0] != "new value"
         assert tsdata_test.target_col[0] != "new value"
 
-    def test_tsdataset_split(self):
+    def test_tsdataset_split_multiple(self):
         df = get_multi_id_ts_df()
         tsdata_train, tsdata_valid, tsdata_test =\
             TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
