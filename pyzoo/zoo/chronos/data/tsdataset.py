@@ -225,11 +225,11 @@ class TSDataset:
         | "WEEKOFYEAR": The ordinal week of the year of the time stamp.
         | "MONTH": The month of the time stamp.
         | "IS_AWAKE": Bool value indicating whether it belongs to awake hours for the time stamp,
-        True for hours between 6A.M. and 1A.M.
+        | True for hours between 6A.M. and 1A.M.
         | "IS_BUSY_HOURS": Bool value indicating whether it belongs to busy hours for the time
-        stamp, True for hours between 7A.M. and 10A.M. and hours between 4P.M. and 8P.M.
+        | stamp, True for hours between 7A.M. and 10A.M. and hours between 4P.M. and 8P.M.
         | "IS_WEEKEND": Bool value indicating whether it belongs to weekends for the time stamp,
-        True for Saturdays and Sundays.
+        | True for Saturdays and Sundays.
 
         :return: the tsdataset instance.
         '''
@@ -364,25 +364,22 @@ class TSDataset:
                if `id_sensitive` is False, we will rolling on each id's sub dataframe
                and fuse the sampings.
                The shape of rolling will be
-               x: (num_sample, lookback, num_feature_col)
+               x: (num_sample, lookback, num_feature_col + num_target_col)
                y: (num_sample, horizon, num_target_col)
                where num_sample is the summation of sample number of each dataframe
 
                if `id_sensitive` is True, we will rolling on the wide dataframe whose
                columns are cartesian product of id_col and feature_col
                The shape of rolling will be
-               x: (num_sample, lookback, num_feature_col)
-               y: (num_sample, horizon, num_target_col)
+               x: (num_sample, lookback, new_num_feature_col + new_num_target_col)
+               y: (num_sample, horizon, new_num_target_col)
                where num_sample is the sample number of the wide dataframe,
-               num_feature_col is the product of the number of id and the number of feature_col,
-               num_target_col is the product of the number of id and the number of target_col.
+               new_num_feature_col is the product of the number of id and the number of feature_col.
+               new_num_target_col is the product of the number of id and the number of target_col.
 
         :return: the tsdataset instance.
 
-        Assume there is a df with 2 ids, 1 target_col and 2 + 1 = 3 feature_cols.
-        Roll is called twice with lookback=1, horizon=1, id_sensitive=False and
-        lookback=1, horizon=1, id_sensitive=True.
-        Let's observe the outputs and their corresponding shapes.
+        roll() can be called by:
 
         >>> # Here is a df example:
         >>> # id        datetime      value   "extra feature 1"   "extra feature 2"
@@ -401,7 +398,7 @@ class TSDataset:
         >>> print(x.shape, y.shape) # x.shape = (2, 1, 3) y.shape = (2, 1, 1)
         >>> tsdataset.roll(lookback=lookback, horizon=horizon, id_sensitive=True)
         >>> x, y = tsdataset.to_numpy()
-        >>> print(x, y) # x = [[[ 1.9, 2, 2.3, 1, 0, 9 ]]] y = [[[ 2.4, 2.6]]]
+        >>> print(x, y) # x = [[[ 1.9, 2.3, 1, 2, 0, 9 ]]] y = [[[ 2.4, 2.6]]]
         >>> print(x.shape, y.shape) # x.shape = (1, 1, 6) y.shape = (1, 1, 2)
 
         '''
