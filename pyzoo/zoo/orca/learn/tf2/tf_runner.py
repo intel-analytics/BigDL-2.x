@@ -196,11 +196,6 @@ class TFDistributedDatasetHandler(DatasetHandler):
         return dataset
 
     def _handle_sharding(self, dataset):
-        import tensorflow as tf
-        if isinstance(dataset, tf.data.Dataset):
-            from tensorflow.python.distribute import distribution_strategy_context as ds_context
-            strategy = ds_context.get_strategy()
-            dataset = strategy.experimental_distribute_dataset(dataset)
         return dataset
 
     def _handle_batch_size(self, config):
