@@ -164,9 +164,6 @@ class TSDataset:
             is set to "const".
 
         :return: the tsdataset instance.
-
-        Note: It is preferred that `impute` is called after `resample` while before `roll` if
-        needed.
         '''
         df_list = [impute_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
                                                dt_col=self.dt_col,
@@ -182,8 +179,6 @@ class TSDataset:
         for each multivariate timeseries distinguished by id_col.
 
         :return: the tsdataset instance.
-
-        Note: It is preferred that `deduplicate` is called before all other operations if needed.
         '''
         df_list = [deduplicate_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
                                                     dt_col=self.dt_col)
@@ -204,8 +199,6 @@ class TSDataset:
             or "sum" are supported for now.
 
         :return: the tsdataset instance.
-
-        Note: It is preferred to call `impute` right after `resample`.
         '''
         df_list = []
         for id_name in self._id_list:
@@ -239,8 +232,6 @@ class TSDataset:
         True for Saturdays and Sundays.
 
         :return: the tsdataset instance.
-
-        Note: it should be called before scale if needed.
         '''
         df_list = [generate_dt_features(input_df=self.df[self.df[self.id_col] == id_name],
                                         dt_col=self.dt_col)
