@@ -528,7 +528,7 @@ class TestTable(TestCase):
     def test_col_names(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
-        col_names = feature_tbl.get_col_names()
+        col_names = feature_tbl.col_names
         assert isinstance(col_names, list), "col_names should be a list of strings"
         assert col_names == ["col_1", "col_2", "col_3", "col_4", "col_5"], \
             "column names are incorrenct"
@@ -556,19 +556,12 @@ class TestTable(TestCase):
 
     def test_sample(self):
         spark = OrcaContext.get_spark_session()
-        data = [("jack", "0"),
-                ("alice", "1"),
-                ("rose", "2"),
-                ("rachel", "3"),
-                ("cissie", "4"),
-                ("alan", "5")]
-        schema = StructType([StructField("name", StringType(), True),
-                             StructField("id", StringType(), True)])
-        feature_tbl = FeatureTable(spark.createDataFrame(data, schema))
+        df = spark.range(1000)
+        feature_tbl = FeatureTable(df)
         total_line_1 = feature_tbl.size()
         feature_tbl2 = feature_tbl.sample(0.5)
         total_line_2 = feature_tbl2.size()
-        assert total_line_2 == int(total_line_1/2), "the number of rows should be half"
+        assert int(total_line_1/2) - 100 < total_line_2 < int(total_line_1/2) + 100, "the number of rows should be half"
         total_distinct_line = feature_tbl2.distinct().size()
         assert total_line_2 == total_distinct_line, "all rows should be distinct"
 

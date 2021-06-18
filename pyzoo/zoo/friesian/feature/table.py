@@ -36,6 +36,7 @@ JAVA_INT_MAX = 2147483647
 class Table:
     def __init__(self, df):
         self.df = df
+        self.__column_names = self.df.schema.names
 
     @staticmethod
     def _read_parquet(paths):
@@ -250,7 +251,7 @@ class Table:
         """
         if columns and not isinstance(columns, list):
             columns = [columns]
-Please commit your changes or stash them before you switch branches.        if columns:
+        if columns:
             check_col_exists(self.df, columns)
         return self._clone(median(self.df, columns))
 
@@ -316,16 +317,17 @@ Please commit your changes or stash them before you switch branches.        if c
                 raise ValueError("column type should be numeric")
             new_df = new_df.withColumn(column, pyspark_col(column) + value)
         return self._clone(new_df)
-
-    def get_col_names(self):
+    
+    @property
+    def col_names(self):
         """
         Get column names of the table.
 
         :return: A list of strings that specifies column names.
         """
-        return self.df.schema.names
+        return self.__column_names
 
-    def sample(self, fraction, replace=False, seed=random.random()):
+    def sample(self, fraction, replace=False, seed=None):
         """
         Return a sampled subset of table.
 
@@ -336,7 +338,7 @@ Please commit your changes or stash them before you switch branches.        if c
         """
         if fraction < 0 or fraction > 1:
             raise ValueError("fraction should in the range of [0,1]")
-        return self._clone(self.df.sample(replace, fraction, seed))
+        return self._clone(self.df.sample(withReplacement=replace, fraction=fraction, seed=seed))
 
     def write_parquet(self, path, mode="overwrite"):
         self.df.write.mode(mode).parquet(path)
