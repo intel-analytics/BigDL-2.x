@@ -135,7 +135,6 @@ Then check the output with the following command.
 
 ```bash
 cat result.txt
-
 ```
 
 The result should be
@@ -171,7 +170,6 @@ Then check the output with the following command.
 
 ```bash
 cat test-tflite-sgx.log | egrep "military"
-
 ```
 
 The result should be
@@ -196,7 +194,6 @@ Then check the output with the following command.
 
 ```bash
 cat test-tf-sgx.log | egrep "accuracy"
-
 ```
 
 The result should be similar to
@@ -233,7 +230,7 @@ cd /ppml/trusted-big-data-ml
 
 ##### Example1: `pi.py`
 
-Run the example with SGX and standalone mode with the following command in the terminal.
+Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of ``spark.authenticate.secret`` with your own secret key.
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
@@ -241,7 +238,7 @@ SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
 	-Xmx1g org.apache.spark.deploy.SparkSubmit \
 	--master 'spark://192.168.0.111:7077' \
 	--conf spark.authenticate=true \
-        --conf spark.authenticate.secret=Intel123 \
+  --conf spark.authenticate.secret=your_secret_key \
 	/ppml/trusted-big-data-ml/work/spark-2.4.3/examples/src/main/python/pi.py" | tee test-pi-sgx.log
 
 ```
@@ -260,7 +257,7 @@ The result should be similar to
 
 ##### Example2: `test-wordcount.py`
 
-Run the example with SGX and standalone mode with the following command in the terminal.
+Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of ``spark.authenticate.secret`` with your own secret key.
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
@@ -268,7 +265,7 @@ SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
 	-Xmx1g org.apache.spark.deploy.SparkSubmit \
 	--master 'spark://192.168.0.111:7077' \
 	--conf spark.authenticate=true \
-        --conf spark.authenticate.secret=Intel123 \
+  --conf spark.authenticate.secret=your_secret_key \
 	/ppml/trusted-big-data-ml/work/spark-2.4.3/examples/src/main/python/wordcount.py ./work/examples/helloworld.py" | tee test-wordcount-sgx.log
 
 ```
@@ -289,7 +286,7 @@ The result should be similar to
 
 ##### Example3: Basic SQL
 
-Run the example with SGX and standalone mode with the following command in the terminal.
+Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of ``spark.authenticate.secret`` with your own secret key.
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
@@ -297,7 +294,7 @@ SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
 	-Xmx1g org.apache.spark.deploy.SparkSubmit \
 	--master 'spark://192.168.0.111:7077' \
 	--conf spark.authenticate=true \
-        --conf spark.authenticate.secret=Intel123 \
+  --conf spark.authenticate.secret=your_secret_key \
 	/ppml/trusted-big-data-ml/work/spark-2.4.3/examples/src/main/python/sql/basic.py" | tee test-sql-basic-sgx.log
 
 ```
@@ -325,4 +322,24 @@ The result should be similar to
 > Name: Justin
 >
 > |  Justin|
+
+
+
+##### Example4: Bigdl lenet
+
+Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of ``spark.authenticate.secret`` with your own secret key.
+
+```bash
+
+```
+
+Then check the output with the following command.
+
+```bash
+cat test-bigdl-lenet-sgx.log | egrep "Accuracy"
+```
+
+The result should be similar to
+
+>
 
