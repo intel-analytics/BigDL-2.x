@@ -301,16 +301,16 @@ class Table:
         return: dict, format as {column -> (min, max)}.
         """
         if columns is None:
-            raise ValueError("Columns should e str or list r str, but got None")
+            raise ValueError("Columns should be str or list of str, but got None")
         if not isinstance(columns, list):
             columns = [columns]
         check_col_exists(self.df, columns)
-        statistics = {}
+        stats = {}
         for column in columns:
             maxValue = self.df.agg({column: "max"}).collect()[0][0]
             minValue = self.df.agg({column: "min"}).collect()[0][0]
-            statistics[column] = (minValue, maxValue)
-        return statistics
+            stats[column] = (minValue, maxValue)
+        return stats
 
     def convert_to_list(self, column):
         """
