@@ -20,7 +20,7 @@ from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, Decim
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
-from pyspark.sql.functions import col as pyspark_col, udf, array, broadcast
+from pyspark.sql.functions import col as pyspark_col, udf, array, broadcast, lit
 from pyspark.sql import Row
 
 from zoo.orca import OrcaContext
@@ -315,7 +315,7 @@ class Table:
                                                       LongType(), FloatType(),
                                                       DecimalType(), DoubleType()]:
                 raise ValueError("column type should be numeric")
-            new_df = new_df.withColumn(column, pyspark_col(column) + value)
+            new_df = new_df.withColumn(column, pyspark_col(column) + lit(value))
         return self._clone(new_df)
 
     @property
