@@ -874,7 +874,7 @@
                                 <excludes>
                                     <exclude>org.scala-lang:scala-library</exclude>
                                     <exclude>org.scala-lang:scala-reflect</exclude>
-                                    <!--<exclude>org.apache.spark:spark-core_${scala.major.version}</exclude>-->
+                                    <exclude>org.apache.spark:spark-core_${scala.major.version}</exclude>
                                     <!--<exclude>org.apache.spark:spark-mllib_${scala.major.version}</exclude>-->
                                     <!--<exclude>com.esotericsoftware.kryo:kryo</exclude>-->
                                     <!--<exclude>org.json4s:*</exclude>-->
@@ -969,7 +969,7 @@
                                     <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
                                     <exclude>org.scala-lang:scala-reflect</exclude>
-                                    <!--<exclude>org.apache.spark:spark-core_${scala.major.version}</exclude>-->
+                                    <exclude>org.apache.spark:spark-core_${scala.major.version}</exclude>
                                     <!--<exclude>org.apache.spark:spark-mllib_${scala.major.version}</exclude>-->
                                     <!--<exclude>com.esotericsoftware.kryo:kryo</exclude>-->
                                     <!--<exclude>org.json4s:*</exclude>-->
