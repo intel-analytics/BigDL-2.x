@@ -330,7 +330,28 @@ The result should be similar to
 Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of ``spark.authenticate.secret`` with your own secret key.
 
 ```bash
-
+SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
+  '/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+  -Xmx8g \
+  org.apache.spark.deploy.SparkSubmit \
+  --master 'spark://192.168.0.111:7077' \
+  --conf spark.authenticate=true \
+  --conf spark.authenticate.secret=your_secret_key \
+  --conf spark.driver.memory=8g \
+  --conf spark.executor.extraClassPath=/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar \
+  --conf spark.driver.extraClassPath=/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar \
+  --conf spark.rpc.message.maxSize=190 \
+  --conf spark.network.timeout=10000000 \
+  --conf spark.executor.heartbeatInterval=10000000 \
+  --py-files /ppml/trusted-big-data-ml/work/bigd-python-api.zip,/ppml/trusted-big-data-ml/work/examples/bigdl/lenet/lenet.py \
+  --jars /ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar \
+  --driver-cores 2 \
+  --total-executor-cores 2 \
+  --executor-cores 2 \
+  --executor-memory 8g \
+  /ppml/trusted-big-data-ml/work/examples/bigdl/lenet/lenet.py \
+  --dataPath /ppml/trusted-big-data-ml/work/data/mnist \
+  --maxEpoch 2" | tee test-bigdl-lenet-sgx.log
 ```
 
 Then check the output with the following command.
@@ -341,5 +362,9 @@ cat test-bigdl-lenet-sgx.log | egrep "Accuracy"
 
 The result should be similar to
 
+>creating: createTop1Accuracy
 >
+>2021-06-18 01:39:45 INFO DistriOptimizer$:180 - [Epoch 1 60032/60000][Iteration 469][Wall Clock 457.926565s] Top1Accuracy is Accuracy(correct: 9488, count: 10000, accuracy: 0.9488)
+>
+>2021-06-18 01:46:20 INFO DistriOptimizer$:180 - [Epoch 2 60032/60000][Iteration 938][Wall Clock 845.747782s] Top1Accuracy is Accuracy(correct: 9696, count: 10000, accuracy: 0.9696)
 
