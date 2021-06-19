@@ -888,10 +888,10 @@
                                     <exclude>org.apache.ivy:ivy</exclude>
                                     <exclude>org.apache.commons:commons-math3</exclude>
                                     <exclude>org.apache.commons:commons-compress</exclude>
-                                    <exclude>org.apache.orc:*</exclude>
-                                    <exclude>org.apache.avro:*</exclude>
-                                    <exclude>org.apache.directory.api:*</exclude>
-                                    <exclude>org.apache.directory.server:*</exclude>
+                                    <!--<exclude>org.apache.orc:*</exclude>-->
+                                    <!--<exclude>org.apache.avro:*</exclude>-->
+                                    <!--<exclude>org.apache.directory.api:*</exclude>-->
+                                    <!--<exclude>org.apache.directory.server:*</exclude>-->
                                     <!--<exclude>commons-digester:*</exclude>-->
                                     <!--<exclude>org.xerial.snappy:*</exclude>-->
                                     <!--<exclude>org.spark-project.spark:*</exclude>-->
@@ -983,10 +983,10 @@
                                     <exclude>org.apache.ivy:ivy</exclude>
                                     <exclude>org.apache.commons:commons-math3</exclude>
                                     <exclude>org.apache.commons:commons-compress</exclude>
-                                    <exclude>org.apache.orc:*</exclude>
-                                    <exclude>org.apache.avro:*</exclude>
-                                    <exclude>org.apache.directory.api:*</exclude>
-                                    <exclude>org.apache.directory.server:*</exclude>
+                                    <!--<exclude>org.apache.orc:*</exclude>-->
+                                    <!--<exclude>org.apache.avro:*</exclude>-->
+                                    <!--<exclude>org.apache.directory.api:*</exclude>-->
+                                    <!--<exclude>org.apache.directory.server:*</exclude>-->
                                     <!--<exclude>commons-digester:commons-digester</exclude>-->
                                     <!--<exclude>org.xerial.snappy:snappy-java</exclude>-->
                                     <!--<exclude>org.spark-project.spark:*</exclude>-->
