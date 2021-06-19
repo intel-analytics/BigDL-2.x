@@ -59,7 +59,6 @@ class TestAutoTrainer(TestCase):
         output_feature_dim = 2  # 2 targets (i.e. "value 1", "value 2") is generated in get_tsdataset
 
         search_space = {
-            'optimizer': 'Adam',
             'hidden_dim': hp.grid_search([32, 64]),
             'layer_num': hp.randint(1, 3),
             'lr': hp.choice([0.001, 0.003, 0.01]),
@@ -76,8 +75,7 @@ class TestAutoTrainer(TestCase):
                                      loss=torch.nn.MSELoss(),
                                      logs_dir="/tmp/auto_trainer",
                                      cpus_per_trial=2,
-                                     name="auto_trainer"
-                                     )
+                                     name="auto_trainer")
         auto_trainer.fit(data=get_tsdataset().gen_dt_feature(),
                          epochs=1,
                          batch_size=hp.choice([32, 64]),

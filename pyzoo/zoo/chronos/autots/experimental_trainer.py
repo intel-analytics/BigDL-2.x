@@ -32,6 +32,7 @@ class AutoTSTrainer:
                  search_space=dict(),
                  metric="mse",
                  loss=None,
+                 optimizer="Adam",
                  past_seq_len=None,
                  future_seq_len=None,
                  input_feature_num=None,
@@ -52,6 +53,7 @@ class AutoTSTrainer:
             are fixed parameters (such as input dimensions, etc.) Read the API docs for each auto model
         :param metric: String. The evaluation metric name to optimize. e.g. "mse"
         :param loss: String or pytorch/tf.keras loss instance or pytorch loss creator function.
+        :param optimizer:
         :param past_seq_len:
         :param future_seq_len:
         :param input_feature_num:
@@ -76,7 +78,7 @@ class AutoTSTrainer:
         if isinstance(model, types.FunctionType):
             self.model = model
             raise ValueError("3rd party model is not support for now")
-        
+
         # update auto model common search space
         search_space.update({"past_seq_len": past_seq_len,
                              "future_seq_len": future_seq_len,
@@ -84,11 +86,12 @@ class AutoTSTrainer:
                              "output_target_num": output_target_num,
                              "loss": loss,
                              "metric": metric,
+                             "optimizer": optimizer,
                              "backend": backend,
                              "logs_dir": logs_dir,
                              "cpus_per_trial": cpus_per_trial,
                              "name": name})
-        
+
         # create auto model from name
         self.model = AutoModelFactory.create_auto_model(name=model,
                                                         search_space=search_space)
@@ -181,6 +184,7 @@ class AutoTSTrainer:
         if self.selected_features == "all":
             search_space['selected_features'] = all_features
 
+        # put train/val data in ray
         train_data_id = ray.put(train_data)
         valid_data_id = ray.put(val_data)
 
@@ -237,12 +241,3 @@ class AutoTSTrainer:
         :return:
         """
         return self.model.auto_est.get_best_config()
-
-    def get_pipeline(self):
-        """
-        TODO do we still need to return a full pipeline?
-        If not, we still need to tell user how to reconstruct the entire pipeline
-        including data processing and the model
-        :return:
-        """
-        pass
