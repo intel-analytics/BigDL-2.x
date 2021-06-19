@@ -16,20 +16,10 @@
 
 from zoo.chronos.data import TSDataset
 import zoo.orca.automl.hp as hp
+from zoo.chronos.autots.model import AutoModelFactory
 
-
-def check_lstm_params(search_space):
-    if search_space.get('input_feature_num') is None \
-            or search_space.get('output_target_num') is None:
-        raise ValueError("Need to specify input_feature_num and "
-                         "output_target_num in search_space")
-
-
-def check_tcn_params(search_space):
-    if search_space.get('input_feature_num') is None \
-            or search_space.get('output_target_num') is None:
-        raise ValueError("Need to specify input_feature_num and "
-                         "output_target_num in search_space")
+AUTOTS_DEFAULT_LOOKBACK = 5
+AUTOTS_DEFAULT_HORIZON = 1
 
 
 class AutoTSTrainer:
@@ -42,7 +32,11 @@ class AutoTSTrainer:
                  search_space=dict(),
                  metric="mse",
                  loss=None,
-                 preprocess=False,
+                 past_seq_len=None,
+                 future_seq_len=None,
+                 input_feature_num=None,
+                 output_target_num=None,
+                 selected_features="all",
                  backend="torch",
                  logs_dir="/tmp/autots_trainer",
                  cpus_per_trial=1,
@@ -58,78 +52,49 @@ class AutoTSTrainer:
             are fixed parameters (such as input dimensions, etc.) Read the API docs for each auto model
         :param metric: String. The evaluation metric name to optimize. e.g. "mse"
         :param loss: String or pytorch/tf.keras loss instance or pytorch loss creator function.
-        :param preprocess: whether to enable data preprocessing (rolling, feature generation, etc.)
+        :param past_seq_len:
+        :param future_seq_len:
+        :param input_feature_num:
+        :param output_target_num:
+        :param selected_features:
         :param backend: The backend of the lstm model. We only support backend as "torch" for now.
         :param logs_dir: Local directory to save logs and results. It defaults to "/tmp/auto_lstm"
         :param cpus_per_trial: Int. Number of cpus for each trial. It defaults to 1.
         :param name: name of the AutoLSTM. It defaults to "auto_lstm"
         :param preprocess: Whether to enable feature processing
         """
-
-        if loss is None:
-            self.loss = search_space.get("loss")
+        # check backend and set default loss
+        if backend != "torch":
+            raise ValueError(f"We only support backend as torch. Got {backend}")
         else:
-            self.loss = loss
-        if self.loss is None:
-            if backend == "torch":
-                import torch
-                self.loss = torch.nn.MSELoss()
-            else:
-                # TODO support more backends
-                raise ValueError(f"We only support backend as torch. Got {backend}")
+            import torch
+            if loss is None:
+                loss = torch.nn.MSELoss()
 
-        self.metric = metric
-        self.backend = backend
-
+        # check 3rd party model
         import types
-        if model == "lstm":
-            # if model is lstm
-            from zoo.chronos.autots.model.auto_lstm import AutoLSTM
-            check_lstm_params(search_space)
-            self.model = AutoLSTM(
-                input_feature_num=search_space.get('input_feature_num'),
-                output_target_num=search_space.get('output_target_num'),
-                optimizer=search_space.get('optimizer', "Adam"),
-                loss=self.loss,
-                metric=self.metric,
-                hidden_dim=search_space.get('hidden_dim', 32),
-                layer_num=search_space.get('layer_num', 1),
-                lr=search_space.get('lr', 0.001),
-                dropout=search_space.get('dropout', 0.2),
-                backend=backend,
-                logs_dir=logs_dir,
-                cpus_per_trial=cpus_per_trial,
-                name=name,
-            )
-        elif model == "tcn":
-            # if model is tcn
-            from zoo.chronos.autots.model.auto_tcn import AutoTCN
-            check_tcn_params(search_space)
-            self.model = AutoTCN(
-                input_feature_num=search_space.get('input_feature_num'),
-                output_target_num=search_space.get('output_target_num'),
-                past_seq_len=self.past_seq_len,
-                future_seq_len=self.future_seq_len,
-                optimizer=search_space.get('optimizer', "Adam"),
-                loss=self.loss,
-                metric=self.metric,
-                hidden_units=search_space.get('hidden_units'),
-                levels=search_space.get('levels'),
-                num_channels=search_space.get('num_channels'),
-                kernel_size=search_space.get('kernel_size', 7),
-                lr=search_space.get('lr', 0.001),
-                dropout=0.2,
-                backend=backend,
-                logs_dir=logs_dir,
-                cpus_per_trial=cpus_per_trial,
-                name=name,
-            )
-        elif isinstance(model, types.FunctionType):
-            # TODO if model is user defined
+        if isinstance(model, types.FunctionType):
             self.model = model
             raise ValueError("3rd party model is not support for now")
+        
+        # update auto model common search space
+        search_space.update({"past_seq_len": past_seq_len,
+                             "future_seq_len": future_seq_len,
+                             "input_feature_num": input_feature_num,
+                             "output_target_num": output_target_num,
+                             "loss": loss,
+                             "metric": metric,
+                             "backend": backend,
+                             "logs_dir": logs_dir,
+                             "cpus_per_trial": cpus_per_trial,
+                             "name": name})
+        
+        # create auto model from name
+        self.model = AutoModelFactory.create_auto_model(name=model,
+                                                        search_space=search_space)
 
-        self.preprocess = preprocess
+        # save selected features setting for data creator generation
+        self.selected_features = selected_features
 
     def fit(self,
             data,
@@ -169,16 +134,15 @@ class AutoTSTrainer:
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
         """
-        train_d = data
-        val_d = validation_data
-        if self.preprocess is True:
-            # TODO do we need more customizations for feature search?
-            # a little bit of hacking to modify automodel's search_space before fit
-            train_d, val_d = self.prepare_feature_search(
+        # generate data creator from TSDataset (pytorch base require validation data)
+        if isinstance(data, TSDataset) and isinstance(validation_data, TSDataset):
+            train_d, val_d = self._prepare_data_creator(
                     search_space=self.model.search_space,
                     train_data=data,
                     val_data=validation_data,
             )
+        else:
+            train_d, val_d = data, validation_data
 
         self.model.fit(
             data=train_d,
@@ -193,7 +157,7 @@ class AutoTSTrainer:
             scheduler_params=scheduler_params
         )
 
-    def prepare_feature_search(self, search_space, train_data, val_data=None):
+    def _prepare_data_creator(self, search_space, train_data, val_data=None):
         """
         prepare the data creators and add selected features to search_space
         :param search_space: the search space
@@ -202,39 +166,23 @@ class AutoTSTrainer:
         :return: data creators from train and validation data
         """
         import torch
-        from torch.utils.data import Dataset, DataLoader
-        from sklearn.preprocessing import StandardScaler
+        from torch.utils.data import TensorDataset, DataLoader
         import ray
 
-        standard_scaler = StandardScaler()
-
-        class TorchDataset(Dataset):
-            def __init__(self, x, y):
-                self.x = torch.from_numpy(x).float()
-                self.y = torch.from_numpy(y).float()
-
-            def __len__(self):
-                return self.x.shape[0]
-
-            def __getitem__(self, idx):
-                return self.x[idx], self.y[idx]
-
         # append feature selection into search space
-        train_data.gen_dt_feature().scale(standard_scaler, fit=True)
         all_features = train_data.feature_col
         if search_space.get('selected_features') is not None:
             raise ValueError("Do not specify ""selected_features"" in search space."
                              " The system will automatically generate this config for you")
-        search_space['selected_features'] = hp.choice_n(all_features, 3, len(all_features))
+        if self.selected_features == "auto":
+            search_space['selected_features'] = hp.choice_n(all_features,
+                                                            min_items=0,
+                                                            max_items=len(all_features))
+        if self.selected_features == "all":
+            search_space['selected_features'] = all_features
 
         train_data_id = ray.put(train_data)
-
-#        train_data_2 = ray.get(train_data_id)
-        # train_data.scale(standard_scaler, fit=True) \
-        #     .roll(lookback=self.past_seq_len,
-        #           horizon=self.future_seq_len,
-        #           feature_col=["DAYOFYEAR(datetime)"]) \
-        #     .to_numpy()
+        valid_data_id = ray.put(val_data)
 
         def train_data_creator(config):
             """
@@ -243,13 +191,16 @@ class AutoTSTrainer:
             :return:
             """
             train_d = ray.get(train_data_id)
-            # print(type(config['selected_features']), config['selected_features'])
-            x, y = train_d.roll(lookback=config.get('past_seq_len', 5),
-                                horizon=config.get('future_seq_len', 1),
+
+            x, y = train_d.roll(lookback=config.get('past_seq_len', AUTOTS_DEFAULT_LOOKBACK),
+                                horizon=config.get('future_seq_len', AUTOTS_DEFAULT_HORIZON),
                                 feature_col=config['selected_features']) \
                           .to_numpy()
-            print(x.shape, y.shape)
-            return DataLoader(TorchDataset(x, y),
+            
+            print("DDDD", x, type(x), x.dtype)
+
+            return DataLoader(TensorDataset(torch.from_numpy(x).float(),
+                                            torch.from_numpy(y).float()),
                               batch_size=config["batch_size"],
                               shuffle=True)
 
@@ -259,14 +210,15 @@ class AutoTSTrainer:
             :param config:
             :return:
             """
-            x, y = val_data.gen_dt_feature() \
-                           .scale(standard_scaler, fit=False) \
-                           .roll(lookback=config.get('past_seq_len', 5),
-                                 horizon=config.get('future_seq_len', 1),
-                                 feature_col=config['selected_features']) \
-                           .to_numpy()
+            val_d = ray.get(valid_data_id)
 
-            return DataLoader(TorchDataset(x, y),
+            x, y = val_d.roll(lookback=config.get('past_seq_len', AUTOTS_DEFAULT_LOOKBACK),
+                                 horizon=config.get('future_seq_len', AUTOTS_DEFAULT_HORIZON),
+                                 feature_col=config['selected_features']) \
+                        .to_numpy()
+
+            return DataLoader(TensorDataset(torch.from_numpy(x).float(),
+                                            torch.from_numpy(y).float()),
                               batch_size=config["batch_size"],
                               shuffle=True)
 
@@ -284,7 +236,7 @@ class AutoTSTrainer:
         Get the best configuration
         :return:
         """
-        pass
+        return self.model.auto_est.get_best_config()
 
     def get_pipeline(self):
         """

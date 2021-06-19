@@ -461,12 +461,13 @@ class TSDataset:
         '''
         Export rolling result in form of a tuple of numpy ndarray (x, y).
 
-        :return: a 2-dim tuple. each item is a 3d numpy ndarray.
+        :return: a 2-dim tuple. each item is a 3d numpy ndarray. The ndarray
+                 is casted to float64.
         '''
         if self.numpy_x is None:
             raise RuntimeError("Please call \"roll\" method\
                     before transform a TSDataset to numpy ndarray!")
-        return self.numpy_x, self.numpy_y
+        return self.numpy_x.astype(np.float64), self.numpy_y.astype(np.float64)
 
     def to_pandas(self):
         '''

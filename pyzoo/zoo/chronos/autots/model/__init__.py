@@ -13,3 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+AUTO_MODEL_SUPPORT_LIST = ["lstm", "tcn"]
+
+
+class AutoModelFactory:
+    @staticmethod
+    def create_auto_model(name, search_space):
+        name = name.lower()
+        if name == "lstm":
+            from .auto_lstm import AutoLSTM
+            del search_space["past_seq_len"]  # no need to have past_seq_len
+            del search_space["future_seq_len"]  # future_seq_len should always be 1
+            return AutoLSTM(**search_space)
+        if name == "tcn":
+            from .auto_tcn import AutoTCN
+            return AutoTCN(**search_space)
+        return NotImplementedError(f"{AUTO_MODEL_SUPPORT_LIST} are supported for auto model,\
+                                    but get {name}.")
