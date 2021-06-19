@@ -877,7 +877,7 @@
                                     <!--<exclude>org.apache.spark:spark-core_${scala.major.version}</exclude>-->
                                     <!--<exclude>org.apache.spark:spark-mllib_${scala.major.version}</exclude>-->
                                     <exclude>com.esotericsoftware.kryo:kryo</exclude>
-                                    <exclude>org.json4s:*</exclude>
+                                    <!--<exclude>org.json4s:*</exclude>-->
                                     <exclude>org.apache.hadoop:*</exclude>
                                     <exclude>org.apache.parquet:*</exclude>
                                     <!--<exclude>org.apache.spark:spark-sql_${scala.major.version}</exclude>-->
@@ -972,7 +972,7 @@
                                     <!--<exclude>org.apache.spark:spark-core_${scala.major.version}</exclude>-->
                                     <!--<exclude>org.apache.spark:spark-mllib_${scala.major.version}</exclude>-->
                                     <exclude>com.esotericsoftware.kryo:kryo</exclude>
-                                    <exclude>org.json4s:*</exclude>
+                                    <!--<exclude>org.json4s:*</exclude>-->
                                     <exclude>org.apache.hadoop:*</exclude>
                                     <exclude>org.apache.parquet:*</exclude>
                                     <!--<exclude>org.apache.spark:spark-sql_${scala.major.version}</exclude>-->
