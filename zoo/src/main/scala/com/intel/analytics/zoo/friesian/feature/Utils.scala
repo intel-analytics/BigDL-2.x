@@ -23,7 +23,7 @@ import org.apache.spark.TaskContext
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
-import scala.collection.mutable
+import scala.collection.{immutable, mutable}
 import scala.collection.mutable.WrappedArray
 import reflect.runtime.universe._
 import scala.util.Random
@@ -173,16 +173,13 @@ private[friesian] object Utils {
     return (content.hashCode() % bucketSize + bucketSize) % bucketSize + start
   }
 
-
-  def maskArr[T]: (Int, mutable.WrappedArray[T]) => Seq[T] = {
-    (maxLength: Int, history: WrappedArray[T]) => {
+  def maskArr: (Int, mutable.WrappedArray[Any]) => Seq[Int] = {
+    (maxLength: Int, history: WrappedArray[Any]) => {
       val n = history.length
-      val result: Seq[T] = if (maxLength > n) {
-        (0 to n - 1).map(_ =>
-          castValueFromNum(history(0), 1)) ++ (0 to (maxLength - n - 1)).map(_ =>
-          castValueFromNum(history(0)))
+      val result = if (maxLength > n) {
+        (0 to n - 1).map(_ => 1) ++ (0 to (maxLength - n - 1)).map(_ => 0)
       } else {
-        (0 to maxLength - 1).map(_ => castValueFromNum(history(0), 1))
+        (0 to maxLength - 1).map(_ => 1)
       }
       result
     }
@@ -191,7 +188,7 @@ private[friesian] object Utils {
   def padArr[T]: (Int, mutable.WrappedArray[T]) => mutable.Seq[T] = {
     (maxLength: Int, history: WrappedArray[T]) => {
       val n = history.length
-      val padValue = castValueFromNum(history(0))
+      val padValue = castValueFromNum(history(0), 0)
       val pads: mutable.Seq[T] = if (maxLength > n) {
         history ++ (0 to maxLength - n - 1).map(_ => padValue)
       } else {
@@ -201,14 +198,16 @@ private[friesian] object Utils {
     }
   }
 
+
+
   def padMatrix[T]: (Int, WrappedArray[WrappedArray[T]]) => Seq[Seq[T]] = {
     (maxLength: Int, history: WrappedArray[WrappedArray[T]]) => {
       val n = history.length
+      val padValue = castValueFromNum(history(0)(0), 0)
       if (maxLength > n) {
         val hishead = history(0)
         val padArray =
-          (0 to maxLength - n - 1).map(_
-          => (0 to hishead.length - 1).map(_ => castValueFromNum(history(0)(0))))
+          (0 to maxLength - n - 1).map(_ => (0 to hishead.length - 1).map(_ => padValue))
         history ++ padArray
       } else {
         history.slice(n - maxLength, n)
@@ -216,12 +215,14 @@ private[friesian] object Utils {
     }
   }
 
-  def castValueFromNum[T](num: T, value: Int = 0): T = {
+  def castValueFromNum[T](num: T, value: Int): T = {
     val out: Any = num match {
       case _: Double => value.toDouble
       case _: Int => value
       case _: Float => value.toFloat
       case _: Long => value.toLong
+      case _ => throw new IllegalArgumentException(
+        s"Unsupported value type ${num.getClass.getName} ($num).")
     }
     out.asInstanceOf[T]
   }
@@ -254,5 +255,11 @@ private[friesian] object Utils {
       })
       negItemSeq
     }
+  }
+
+  def get1row[T](full_rows: Array[Row], colName: String, index: Int, lowerBound: Int): Seq[Any] = {
+    val colValue = full_rows(index).getAs[T](colName)
+    val historySeq = full_rows.slice(lowerBound, index).map(row => row.getAs[T](colName))
+    Seq(colValue, historySeq)
   }
 }

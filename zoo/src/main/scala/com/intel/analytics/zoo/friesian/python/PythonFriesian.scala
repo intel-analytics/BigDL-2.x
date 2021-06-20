@@ -236,12 +236,19 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     df.sparkSession.conf.set("spark.sql.legacy.allowUntypedScalaUDF", "true")
     val colNames: Array[String] = cols.asScala.toArray
-    val colsWithType = df.schema.fields.filter(x => colNames.contains(x.name))
+
+    val colsWithType = df.schema.fields.filter(x => x.name != userCol)
     val schema = ArrayType(StructType(colsWithType.flatMap(c =>
-      Seq(c, StructField(c.name + "_hist_seq", ArrayType(c.dataType))))))
+      if (colNames.contains(c.name)) {
+        Seq(c, StructField(c.name + "_hist_seq", ArrayType(c.dataType)))
+      } else {
+        Seq(c)
+      })))
 
     val genHisUDF = udf(f = (his_collect: Seq[Row]) => {
+
       val full_rows: Array[Row] = his_collect.sortBy(x => x.getAs[Long](timeCol)).toArray
+
       val n = full_rows.length
 
       val result: Seq[Row] = (minLength to n - 1).map(i => {
@@ -251,14 +258,20 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
           i - maxLength
         }
 
-        val rowValue = colsWithType.flatMap(col => {
-          col.dataType.typeName match {
-            case "integer" => get1row[Int](full_rows, col.name, i, lowerBound)
-            case "double" => get1row[Double](full_rows, col.name, i, lowerBound)
-            case "float" => get1row[Float](full_rows, col.name, i, lowerBound)
-            case "long" => get1row[Long](full_rows, col.name, i, lowerBound)
-            case _ => throw new IllegalArgumentException(
-              s"Unsupported data type ${col.dataType.typeName} in addHistSeq")
+        val rowValue: Array[Any] = colsWithType.flatMap(col => {
+          if(colNames.contains(col.name)) {
+            col.dataType.typeName match {
+              case "integer" => Utils.get1row[Int](full_rows, col.name, i, lowerBound)
+              case "double" => Utils.get1row[Double](full_rows, col.name, i, lowerBound)
+              case "float" => Utils.get1row[Float](full_rows, col.name, i, lowerBound)
+              case "long" => Utils.get1row[Long](full_rows, col.name, i, lowerBound)
+              case _ => throw new IllegalArgumentException(
+                s"Unsupported data type ${col.dataType.typeName} " +
+                  s"of column${col.name} in addHistSeq")
+            }
+          } else {
+            val colValue: Any = full_rows(i).getAs(col.name)
+            Seq(colValue)
           }
         })
         Row.fromSeq(rowValue)
@@ -266,34 +279,15 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       result
     }, schema)
 
-    val collectColumns = colNames.map(c => col(c)) ++ Seq(col(timeCol))
-
-    df.groupBy(userCol)
-      .agg(collect_list(struct(collectColumns: _*)).as("friesian_his_collect"))
+    val allColumns = colsWithType.map(x => col(x.name))
+    df.groupBy(userCol).agg(collect_list(struct(allColumns: _*)).as("friesian_his_collect"))
       .withColumn("friesian_history", explode(genHisUDF(col("friesian_his_collect"))))
       .select(userCol, "friesian_history.*")
   }
 
-  private def get1row[T](full_rows: Array[Row], colName: String, index: Int, lowerBound: Int) = {
-    val colValue = full_rows(index).getAs[T](colName)
-    val historySeq = full_rows.slice(lowerBound, index).map(row => row.getAs[T](colName))
-    Seq(colValue, historySeq)
-  }
-
   def mask(df: DataFrame, cols: JList[String], maxLength: Int): DataFrame = {
-    val colDataTypes = df.schema.fields.filter(x => cols.contains(x.name))
-      .map(x => x.dataType).distinct
-    require(colDataTypes.length == 1, "dataTypes should be the same at each operation")
 
-    colDataTypes(0) match {
-      case ArrayType(IntegerType, _) =>
-        df.sqlContext.udf.register("mask", Utils.maskArr[Int])
-      case ArrayType(LongType, _) =>
-        df.sqlContext.udf.register("mask", Utils.maskArr[Long])
-      case ArrayType(DoubleType, _) =>
-        df.sqlContext.udf.register("mask", Utils.maskArr[Double])
-      case _ => throw new IllegalArgumentException(s"Unsupported data type $colDataTypes in mask")
-    }
+    df.sqlContext.udf.register("mask", Utils.maskArr)
 
     df.createOrReplaceTempView("tmp")
 

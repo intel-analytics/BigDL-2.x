@@ -177,6 +177,27 @@ class FriesianSpec extends ZooSpecHelper {
   }
 
 
+  "mask Long and Int" should "work properly" in {
+    val data = sc.parallelize(Seq(
+      Row("jack", Seq(1, 2, 3, 4, 5), Seq(1L, 2L, 3L, 4L, 5L)),
+      Row("alice", Seq(4, 5, 6, 7, 8), Seq(4L, 5L, 6L, 7L, 8L)),
+      Row("rose", Seq(1, 2), Seq(1L, 2L))))
+    val schema = StructType(Array(
+      StructField("name", StringType, true),
+      StructField("history", ArrayType(IntegerType), true),
+      StructField("history1", ArrayType(LongType), true)
+    ))
+    val df = sqlContext.createDataFrame(data, schema)
+    val dfmasked = friesian.mask(df, Array("history", "history1").toList.asJava, 4)
+    assert(dfmasked.columns.contains("history_mask"))
+    assert(dfmasked.columns.contains("history1_mask"))
+    assert(dfmasked.filter("size(history_mask) = 4").count() == 3)
+    assert(dfmasked.filter("size(history_mask) = 2").count() == 0)
+    assert(dfmasked.filter("size(history1_mask) = 4").count() == 3)
+    assert(dfmasked.filter("size(history1_mask) = 2").count() == 0)
+  }
+
+
   "postpad Int" should "work properly" in {
     val data = sc.parallelize(Seq(
       Row("jack", Seq(1, 2, 3, 4, 5), Seq(Seq(1, 2, 3), Seq(1, 2, 3))),
@@ -244,19 +265,20 @@ class FriesianSpec extends ZooSpecHelper {
 
   "addHisSeq int and float" should "work properly" in {
     val data = sc.parallelize(Seq(
-      Row("rose", 1, 2.0f, "2019-07-01 12:01:19.000"),
-      Row("jack", 1, 2.0f, "2019-07-01 12:01:19.000"),
-      Row("jack", 2, 2.0f, "2019-08-01 12:01:19.000"),
-      Row("jack", 3, 2.0f, "2019-09-01 12:01:19.000"),
-      Row("jack", 4, 1.0f, "2019-10-01 12:01:19.000"),
-      Row("jack", 5, 1.0f, "2019-11-01 12:01:19.000"),
-      Row("jack", 6, 1.0f, "2019-12-01 12:01:19.000"),
-      Row("jack", 7, 0.0f, "2019-12-02 12:01:19.000"),
-      Row("alice", 4, 0.0f, "2019-09-01 12:01:19.000"),
-      Row("alice", 5, 1.0f, "2019-10-01 12:01:19.000"),
-      Row("alice", 6, 0.0f, "2019-11-01 12:01:19.000")))
+      Row("rose", "A", 1, 2.0f, "2019-07-01 12:01:19.000"),
+      Row("jack", "B", 1, 2.0f, "2019-07-01 12:01:19.000"),
+      Row("jack", "A", 2, 2.0f, "2019-08-01 12:01:19.000"),
+      Row("jack", "C", 3, 2.0f, "2019-09-01 12:01:19.000"),
+      Row("jack", "D", 4, 1.0f, "2019-10-01 12:01:19.000"),
+      Row("jack", "A", 5, 1.0f, "2019-11-01 12:01:19.000"),
+      Row("jack", "E", 6, 1.0f, "2019-12-01 12:01:19.000"),
+      Row("jack", "F", 7, 0.0f, "2019-12-02 12:01:19.000"),
+      Row("alice", "G", 4, 0.0f, "2019-09-01 12:01:19.000"),
+      Row("alice", "H", 5, 1.0f, "2019-10-01 12:01:19.000"),
+      Row("alice", "I", 6, 0.0f, "2019-11-01 12:01:19.000")))
     val schema = StructType(Array(
       StructField("name", StringType, true),
+      StructField("category", StringType, true),
       StructField("item", IntegerType, true),
       StructField("other", FloatType, true),
       StructField("time", StringType, true)
@@ -264,7 +286,9 @@ class FriesianSpec extends ZooSpecHelper {
     val df = sqlContext.createDataFrame(data, schema)
       .withColumn("ts", col("time").cast("timestamp").cast("long"))
 
+    df.show(false)
     val dft = friesian.addHistSeq(df, Array("item", "other").toList.asJava, "name", "ts", 1, 4)
+    dft.show()
     assert(dft.count() == 8)
     assert(dft.filter(df("name") === "alice").count() == 2)
     assert(dft.filter(df("name") === "jack").count() == 6)

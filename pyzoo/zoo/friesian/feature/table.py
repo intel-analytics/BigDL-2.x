@@ -513,18 +513,6 @@ class FeatureTable(Table):
         df = callZooFunc("float", "mask", self.df, mask_cols, seq_len)
         return FeatureTable(df)
 
-    def add_col_length(self, col_name):
-        """
-         Generagte length of a column
-
-         :param col_name: string.
-
-         :return: FeatureTable
-         """
-        size_udf = udf(lambda xs: len(xs), IntegerType())
-        df = self.df.withColumn(col_name + "_length", size_udf(col(col_name)))
-        return FeatureTable(df)
-
     def pad(self, cols, seq_len=100, mask_cols=None):
         """
         Mask and pad columns
@@ -546,7 +534,7 @@ class FeatureTable(Table):
          :param in_col: string, name of column needed to be transformed.
          :param out_col: string, name of output column.
          :param func: python function
-         :param data_type: data type of out_col
+         :param data_type: string, data type of out_col
 
          :return: FeatureTable
          """
@@ -568,15 +556,15 @@ class FeatureTable(Table):
         joined_df = self.df.join(table.df, on=on, how=how)
         return FeatureTable(joined_df)
 
-    def add_value_features(self, key_cols, tbl, key="item", value="category"):
+    def add_value_features(self, key_cols, tbl, key, value):
         """
-         Add features based on key_cols and another key value table, it replaces
-         each element in key_cols using key-value pairs from tbl
+         Add features based on key_cols and another key value table,
+         for each col in key_cols, it adds a value_col using key-value pairs from tbl
 
          :param key_cols: list[string]
          :param tbl: Table with only two columns [key, value]
          :param key: string, name of key column in tbl
-         :param value: string, name of value valumn in tbl
+         :param value: string, name of value column in tbl
 
          :return: FeatureTable
          """

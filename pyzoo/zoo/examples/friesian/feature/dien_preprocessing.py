@@ -18,60 +18,97 @@ import sys
 import os
 import time
 from pyspark import StorageLevel
-
-try:
-    import cPickle as pkl
-except ModuleNotFoundError:
-    import pickle as pkl
-
-from optparse import OptionParser
-from zoo.orca import init_orca_context, stop_orca_context, OrcaContext
+from zoo.orca import init_orca_context, stop_orca_context
 from pyspark.sql.functions import udf, col
-from zoo.friesian.feature import FeatureTable, StringIndex
-from pyspark.sql.types import StringType, IntegerType, ArrayType, FloatType
+from zoo.friesian.feature import FeatureTable
+from pyspark.sql.types import StringType, ArrayType, FloatType
+from argparse import ArgumentParser
+
+conf = {"spark.network.timeout": "10000000",
+        "spark.sql.broadcastTimeout": "7200",
+        "spark.sql.shuffle.partitions": "2000",
+        "spark.locality.wait": "0s",
+        "spark.sql.hive.filesourcePartitionFileCacheSize": "4096000000",
+        "spark.sql.crossJoin.enabled": "true",
+        "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
+        "spark.kryo.unsafe": "true",
+        "spark.kryoserializer.buffer.max": "1024m",
+        "spark.task.cpus": "1",
+        "spark.executor.heartbeatInterval": "200s",
+        "spark.driver.maxResultSize": "40G"}
+
+
+def _parse_args():
+    parser = ArgumentParser()
+
+    parser.add_argument('--cluster_mode', type=str, default="local",
+                        help='The cluster mode, such as local, yarn or standalone.')
+    parser.add_argument('--master', type=str, default=None,
+                        help='The master url, only used when cluster mode is standalone.')
+    parser.add_argument('--executor_cores', type=int, default=48,
+                        help='The executor core number.')
+    parser.add_argument('--executor_memory', type=str, default="160g",
+                        help='The executor memory.')
+    parser.add_argument('--num_executor', type=int, default=8,
+                        help='The number of executor.')
+    parser.add_argument('--driver_cores', type=int, default=4,
+                        help='The driver core number.')
+    parser.add_argument('--driver_memory', type=str, default="36g",
+                        help='The driver memory.')
+    parser.add_argument('--input_transaction', type=str, required=True,
+                        help="transaction files.")
+    parser.add_argument('--input_meta', type=str, required=True,
+                        help="item metadata file")
+    parser.add_argument('--output')
+    parser.add_argument(
+        '--write_mode',
+        choices=['overwrite', 'errorifexists'],
+        default='overwrite')
+
+    args = parser.parse_args()
+    return args
 
 if __name__ == "__main__":
-    parser = OptionParser()
-    parser.add_option("--meta", dest="meta_file")
-    parser.add_option("--review", dest="review_file")
-    parser.add_option("--output", dest="output")
-    (options, args) = parser.parse_args(sys.argv)
+    args = _parse_args()
+    if args.cluster_mode == "local":
+        init_orca_context("local", cores=args.executor_cores, memory=args.executor_memory)
+    elif args.cluster_mode == "standalone":
+        init_orca_context("standalone", master=args.master,
+                          cores=args.executor_cores, num_nodes=args.num_executor,
+                          memory=args.executor_memory,
+                          driver_cores=args.driver_cores,
+                          driver_memory=args.driver_memory, conf=conf)
+    elif args.cluster_mode == "yarn":
+        init_orca_context("yarn-client", cores=args.executor_cores,
+                          num_nodes=args.num_executor, memory=args.executor_memory,
+                          driver_cores=args.driver_cores, driver_memory=args.driver_memory,
+                          conf=conf)
+
     begin = time.time()
-    sc = init_orca_context()
-    spark = OrcaContext.get_spark_session()
 
     # read review datavi run.sh
-    transaction_df = spark.read.json(options.review_file).select(
+    transaction_tbl = FeatureTable.read_json(args.input_transaction).select(
         ['reviewerID', 'asin', 'unixReviewTime']) \
-        .withColumnRenamed('reviewerID', 'user') \
-        .withColumnRenamed('asin', 'item') \
-        .withColumnRenamed('unixReviewTime', 'time')\
-        .dropna("any").persist(storageLevel=StorageLevel.DISK_ONLY)
-    transaction_tbl = FeatureTable(transaction_df)
+        .rename({'reviewerID': 'user', 'asin': 'item','unixReviewTime': 'time'}) \
+        .dropna(columns=['user', 'item'])
     print("transaction_tbl, ", transaction_tbl.size())
 
     # read meta data
     def get_category(x):
         cat = x[0][-1] if x[0][-1] is not None else "default"
         return cat.strip().lower()
-    get_cat_udf = udf(lambda x: get_category(x), StringType())
+    trans_label = lambda x: [1 - float(x), float(x)]
 
-    item_df = spark.read.json(options.meta_file).select(['asin', 'categories'])\
-        .dropna(subset=['asin', 'categories']) \
-        .withColumn("category", get_cat_udf("categories")) \
-        .withColumnRenamed("asin", "item").drop("categories").distinct()\
-        .persist(storageLevel=StorageLevel.DISK_ONLY)
-    item_tbl = FeatureTable(item_df)
-
+    item_tbl = FeatureTable.read_json(args.input_meta).select(['asin', 'categories'])\
+        .dropna(columns=['asin', 'categories']) \
+        .apply("categories", "category", get_category, "string") \
+        .rename({"asin": "item"}).drop("categories").distinct()
     print("item_tbl, ", item_tbl.size())
 
+    user_index = transaction_tbl.gen_string_idx(['user'], 1)
     item_category_indices = item_tbl.gen_string_idx(["item", "category"], 1)
     item_size = item_category_indices[0].size()
     category_index = item_category_indices[1]
-
-    user_index = transaction_tbl.gen_string_idx(['user'], 1)
-    trans_label = lambda x: [1 - float(x), float(x)]
-    label_type = ArrayType(FloatType())
 
     item_tbl = item_tbl\
         .encode_string(["item", "category"], [item_category_indices[0], category_index])\
@@ -87,19 +124,19 @@ if __name__ == "__main__":
 
     full_tbl = transaction_tbl.join(item_tbl, "item")\
         .add_value_features(key_cols=["item_hist_seq", "neg_item_hist_seq"], tbl=item_tbl)\
-        .pad(mask_cols=['item_hist_seq'],
-             cols=['item_hist_seq', 'category_hist_seq',
+        .pad(cols=['item_hist_seq', 'category_hist_seq',
              'neg_item_hist_seq', 'neg_category_hist_seq'],
-             seq_len=100) \
-        .add_col_length("item_hist_seq") \
-        .apply("label", "label", trans_label, label_type)
+             seq_len=100,
+             mask_cols=['item_hist_seq']) \
+        .apply("item_hist_seq","item_hist_seq_len", len, "int") \
+        .apply("label", "label", trans_label, "float")
 
     # write out
-    user_index[0].write_parquet(options.output+"user_index")
-    item_category_indices[0].write_parquet(options.output+"item_index")
-    category_index.write_parquet(options.output+"category_index")
-    item_tbl.write_parquet(options.output+"item2cat")
-    full_tbl.write_parquet(options.output + "data")
+    user_index[0].write_parquet(args.output+"user_index")
+    item_category_indices[0].write_parquet(args.output + "item_index")
+    category_index.write_parquet(args.output + "category_index")
+    item_tbl.write_parquet(args.output + "item2cat")
+    full_tbl.write_parquet(args.output + "data")
 
     print("final output count, ", full_tbl.size())
     stop_orca_context()
