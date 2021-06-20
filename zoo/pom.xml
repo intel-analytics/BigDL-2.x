@@ -886,8 +886,8 @@
                                     <!--<exclude>org.apache.spark:spark-network-common_${scala.major.version}</exclude>-->
                                     <!--<exclude>org.apache.spark:spark-network-shuffle_${scala.major.version}</exclude>-->
                                     <!--<exclude>org.apache.ivy:ivy</exclude>-->
-                                    <exclude>org.apache.commons:commons-math3</exclude>
-                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <!--<exclude>org.apache.commons:commons-math3</exclude>-->
+                                    <!--<exclude>org.apache.commons:commons-compress</exclude>-->
                                     <!--<exclude>org.apache.orc:*</exclude>-->
                                     <!--<exclude>org.apache.avro:*</exclude>-->
                                     <!--<exclude>org.apache.directory.api:*</exclude>-->
@@ -981,8 +981,8 @@
                                     <!--<exclude>org.apache.spark:spark-network-common_${scala.major.version}</exclude>-->
                                     <!--<exclude>org.apache.spark:spark-network-shuffle_${scala.major.version}</exclude>-->
                                     <!--<exclude>org.apache.ivy:ivy</exclude>-->
-                                    <exclude>org.apache.commons:commons-math3</exclude>
-                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <!--<exclude>org.apache.commons:commons-math3</exclude>-->
+                                    <!--<exclude>org.apache.commons:commons-compress</exclude>-->
                                     <!--<exclude>org.apache.orc:*</exclude>-->
                                     <!--<exclude>org.apache.avro:*</exclude>-->
                                     <!--<exclude>org.apache.directory.api:*</exclude>-->
