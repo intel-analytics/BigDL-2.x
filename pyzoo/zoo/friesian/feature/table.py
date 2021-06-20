@@ -481,7 +481,7 @@ class FeatureTable(Table):
 
         :return: FeatureTable
         """
-        df = callZooFunc("float", "addNegSamples", self.df, item_size, item_col, label_col, neg_num)
+        df = add_negative_samples(self.df, item_size, item_col, label_col, neg_num)
         return FeatureTable(df)
 
     def add_hist_seq(self, cols, user_col, sort_col='time', min_len=1, max_len=100):
@@ -496,7 +496,7 @@ class FeatureTable(Table):
 
         :return: FeatureTable
         """
-        df = callZooFunc("float", "addHistSeq", self.df, cols, user_col, sort_col, min_len, max_len)
+        df = add_hist_seq(self.df, cols, user_col, sort_col, min_len, max_len)
         return FeatureTable(df)
 
     def add_neg_hist_seq(self, item_size, item_history_col, neg_num):
@@ -510,7 +510,7 @@ class FeatureTable(Table):
 
         :return: FeatureTable
         """
-        df = callZooFunc("float", "addNegHisSeq", self.df, item_size, item_history_col, neg_num)
+        df = add_neg_hist_seq(self.df, item_size, item_history_col, neg_num)
         return FeatureTable(df)
 
     def mask(self, mask_cols, seq_len=100):
@@ -522,7 +522,7 @@ class FeatureTable(Table):
 
         :return: FeatureTable
         """
-        df = callZooFunc("float", "mask", self.df, mask_cols, seq_len)
+        df = mask(self.df, mask_cols, seq_len)
         return FeatureTable(df)
 
     def pad(self, cols, seq_len=100, mask_cols=None):
@@ -535,8 +535,7 @@ class FeatureTable(Table):
 
          :return: FeatureTable
          """
-        df = callZooFunc("float", "mask", self.df, mask_cols, seq_len) if mask_cols else self.df
-        df = callZooFunc("float", "postPad", df, cols, seq_len)
+        df = pad(self.df, cols, seq_len, mask_cols)
         return FeatureTable(df)
 
     def apply(self, in_col, out_col, func, data_type):

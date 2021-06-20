@@ -151,7 +151,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def log(df: DataFrame, columns: JList[String], clipping: Boolean = true): DataFrame = {
     val colsIdx = Utils.getIndex(df, columns.asScala.toArray)
-    for(i <- 0 until columns.size()) {
+    for (i <- 0 until columns.size()) {
       val colName = columns.get(i)
       val colType = df.schema(colsIdx(i)).dataType.typeName
       if (!Utils.checkColumnNumeric(df, colName)) {
@@ -191,7 +191,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       }
     })
 
-    for(i <- 0 until columns.size()) {
+    for (i <- 0 until columns.size()) {
       val colName = columns.get(i)
       val colType = colsType(i)
 
@@ -259,7 +259,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         }
 
         val rowValue: Array[Any] = colsWithType.flatMap(col => {
-          if(colNames.contains(col.name)) {
+          if (colNames.contains(col.name)) {
             col.dataType.typeName match {
               case "integer" => Utils.get1row[Int](full_rows, col.name, i, lowerBound)
               case "double" => Utils.get1row[Double](full_rows, col.name, i, lowerBound)
@@ -332,9 +332,11 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def postPad(df: DataFrame, cols: JList[String], maxLength: Int = 100): DataFrame = {
-    val colDataTypes = df.schema.fields.filter(x =>
-      cols.contains(x.name)).map(x => x.dataType).distinct
-    colDataTypes.map(dataType =>
+
+    val colFields = df.schema.fields.filter(x => cols.contains(x.name))
+
+    colFields.map(column => {
+      val dataType = column.dataType
       dataType match {
         case ArrayType(IntegerType, _) =>
           df.sqlContext.udf.register("pad_array", Utils.padArr[Int])
@@ -348,8 +350,10 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
           df.sqlContext.udf.register("pad_matrix", Utils.padMatrix[Long])
         case ArrayType(ArrayType(DoubleType, _), _) =>
           df.sqlContext.udf.register("pad_matrix", Utils.padMatrix[Double])
-        case _ => throw new IllegalArgumentException(s"Unsupported data type $dataType in postPad")
-      })
+        case _ => throw new IllegalArgumentException(
+          s"Unsupported data type $dataType of column $column in postPad")
+      }
+    })
 
     df.createOrReplaceTempView("tmp")
 
@@ -417,7 +421,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       columns.asScala.toArray
     }
 
-    Utils.getIndex(df, cols)  // checks if `columns` exist in `df`
+    Utils.getIndex(df, cols) // checks if `columns` exist in `df`
     val medians = Utils.getMedian(df, cols, relativeError)
     val medians_data = (cols zip medians).map(cm => Row.fromSeq(Array(cm._1, cm._2)))
     val spark = df.sparkSession
@@ -441,8 +445,8 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     val vectoredDF = df.withColumn(column, toVector(col(column)))
     val scaler = new MinMaxScaler()
-        .setInputCol(column)
-        .setOutputCol("scaled");
+      .setInputCol(column)
+      .setOutputCol("scaled");
     val toArray = udf((vec: MLVector) => vec.toArray.map(_.toFloat))
     val resultDF = scaler.fit(vectoredDF).transform(vectoredDF)
       .withColumn(column, toArray(col("scaled"))).drop("scaled")

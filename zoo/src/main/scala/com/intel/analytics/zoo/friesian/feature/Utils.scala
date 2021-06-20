@@ -198,8 +198,6 @@ private[friesian] object Utils {
     }
   }
 
-
-
   def padMatrix[T]: (Int, WrappedArray[WrappedArray[T]]) => Seq[Seq[T]] = {
     (maxLength: Int, history: WrappedArray[WrappedArray[T]]) => {
       val n = history.length
