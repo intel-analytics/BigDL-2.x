@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from unittest import TestCase
-from zoo.automl.model import KerasModelBuilder
+from zoo.automl.model.base_keras_model import KerasBaseModel, KerasModelBuilder
 import numpy as np
 import tensorflow as tf
 import pytest
@@ -42,6 +42,17 @@ def model_creator_keras(config):
     return model
 
 
+def model_creator_multiple_metrics(config):
+    """Returns a tf.keras model"""
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Dense(1)
+    ])
+    model.compile(loss="mse",
+                  optimizer='sgd',
+                  metrics=["mse", "mae"])
+    return model
+
+
 class TestBaseKerasModel(TestCase):
     data = get_data()
 
@@ -50,12 +61,35 @@ class TestBaseKerasModel(TestCase):
         model = modelBuilder_keras.build(config={
             "lr": 1e-2,
             "batch_size": 32,
-            "metric": "mse"
+        })
+        val_result = model.fit_eval(data=(self.data["x"], self.data["y"]),
+                                    validation_data=(self.data["val_x"], self.data["val_y"]),
+                                    metric="mse",
+                                    epochs=20)
+        assert val_result.get("mse")
+
+    def test_fit_eval_default_metric(self):
+        modelBuilder_keras = KerasModelBuilder(model_creator_keras)
+        model = modelBuilder_keras.build(config={
+            "lr": 1e-2,
+            "batch_size": 32,
         })
         val_result = model.fit_eval(data=(self.data["x"], self.data["y"]),
                                     validation_data=(self.data["val_x"], self.data["val_y"]),
                                     epochs=20)
-        assert val_result is not None
+        hist_metric_name = tf.keras.metrics.get("mse").__name__
+        assert val_result.get(hist_metric_name)
+
+    def test_multiple_metrics_default(self):
+        modelBuilder_keras = KerasModelBuilder(model_creator_multiple_metrics)
+        model = modelBuilder_keras.build(config={
+            "lr": 1e-2,
+            "batch_size": 32,
+        })
+        with pytest.raises(ValueError):
+            model.fit_eval(data=(self.data["x"], self.data["y"]),
+                           validation_data=(self.data["val_x"], self.data["val_y"]),
+                           epochs=20)
 
     def test_uncompiled_model(self):
         def model_creator(config):
@@ -70,10 +104,10 @@ class TestBaseKerasModel(TestCase):
             model = modelBuilder_keras.build(config={
                 "lr": 1e-2,
                 "batch_size": 32,
-                "metric": "mse"
             })
             model.fit_eval(data=(self.data["x"], self.data["y"]),
                            validation_data=(self.data["val_x"], self.data["val_y"]),
+                           metric="mse",
                            epochs=20)
 
     def test_unaligned_metric_value(self):
