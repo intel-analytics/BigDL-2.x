@@ -17,7 +17,7 @@
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.search import SearchEngineFactory
 from zoo.automl.search.ray_tune_search_engine import RayTuneSearchEngine
-from zoo.automl.model import PytorchModelBuilder
+from zoo.automl.model.base_pytorch_model import PytorchModelBuilder
 import torch
 import torch.nn as nn
 from zoo.orca.automl import hp
@@ -61,6 +61,7 @@ def prepare_searcher(data,
                      optimizer_creator=optimizer_creator,
                      loss_creator=loss_creator,
                      metric="mse",
+                     metric_mode="min",
                      name="demo"):
     modelBuilder = PytorchModelBuilder(model_creator=model_creator,
                                        optimizer_creator=optimizer_creator,
@@ -76,6 +77,7 @@ def prepare_searcher(data,
                      n_sampling=2,
                      epochs=stop["training_iteration"],
                      metric_threshold=stop["reward_metric"],
+                     metric_mode=metric_mode,
                      metric=metric)
     return searcher
 
@@ -121,6 +123,7 @@ class TestRayTuneSearchEngine(ZooTestCase):
                                     validation_data=val_data,
                                     name='test_searcher_metric_name',
                                     metric='mse',
+                                    metric_mode='min',
                                     search_space=create_simple_search_space(),
                                     stop=create_stop(float('inf')))
         analysis = searcher.run()
@@ -147,6 +150,7 @@ class TestRayTuneSearchEngine(ZooTestCase):
                                     validation_data=val_data,
                                     name='test_searcher_metric_name',
                                     metric='r2',
+                                    metric_mode='max',
                                     search_space=create_simple_search_space(),
                                     stop=create_stop(0))  # stop at once
         analysis = searcher.run()
@@ -173,6 +177,7 @@ class TestRayTuneSearchEngine(ZooTestCase):
                                     validation_data=val_data,
                                     name='test_searcher_metric_name',
                                     metric='mae',
+                                    metric_mode="min",
                                     search_space=create_simple_search_space(),
                                     stop=create_stop(0))  # never stop by metric
         analysis = searcher.run()

@@ -28,7 +28,21 @@ Once set up, you could copy the `/path/to/analytics-zoo/scripts/cluster-serving/
 Run `zoo/src/main/scala/com/intel/analytics/zoo/serving/http/Frontend2.scala` if you use HTTP frontend.
  
 Once started, you could run python client code to finish an end-to-end test just as you run Cluster Serving in [Programming Guide](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ClusterServingGuide/ProgrammingGuide.md#4-model-inference).
+### Test Package
+Once you write the code and complete the test in IDE, you can package the jar and test.
 
+To package,
+```
+cd /path/to/analytics-zoo/zoo
+./make-dist.sh
+```
+Then, in `target` folder, copy `analytics-zoo-xxx-flink-udf.jar` to your test directory, and rename it as `zoo.jar`, and also copy the `config.yaml` to your test directory.
+
+You could copy `/path/to/analytics-zoo/scripts/cluster-serving/cluster-serving-start` to start Cluster Serving, this scripts will start Redis server for you and submit Flink job. If you prefer not to control Redis, you could use the command in it `${FLINK_HOME}/bin/flink run -c com.intel.analytics.zoo.serving.ClusterServing zoo.jar` to start Cluster Serving.
+
+To run frontend, call `java -cp zoo.jar com.intel.analytics.zoo.serving.http.Frontend2`.
+
+The rest are the same with test in IDE.
 
 ## Add Features
 ### Data Connector
@@ -95,3 +109,10 @@ Please locate this part of code in `pyzoo/zoo/serving/data_pipeline_name/`, e.g.
 It is recommended to refer to `InputQueue.enqueue()` and `InputQueue.predict()` method. This method calls `self.data_to_b64` method first and add data to data pipeline. You could define a similar enqueue method to work with your data connector.
 ##### get from data pipeline
 It is recommended to refer to `OutputQueue.query()` and `OutputQueue.dequeue()` method. This method gets result from data pipeline and calls `self.get_ndarray_from_b64` method to decode. You could define a similar dequeue method to work with your data connector.
+
+## Benchmark Test
+You could use `zoo/src/main/scala/com/intel/analytics/zoo/serving/engine/Operations.scala` to test the inference time of your model. 
+
+The script takes two arguments, run it with `-m modelPath` and `-j jsonPath` to indicate the path to the model and the path to the prepared json format operation template of the model.
+
+The model will output the inference time stats of preprocessing, prediction and postprocessing processes, which varies with the different preprocessing/postprocessing time and thread numbers.

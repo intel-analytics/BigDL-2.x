@@ -19,8 +19,7 @@ from prophet import Prophet
 from prophet.serialize import model_to_json, model_from_json
 
 from zoo.automl.common.metrics import Evaluator
-from zoo.automl.model.abstract import BaseModel
-from zoo.automl.model import ModelBuilder
+from zoo.automl.model.abstract import BaseModel, ModelBuilder
 
 
 class ProphetModel(BaseModel):
@@ -79,7 +78,7 @@ class ProphetModel(BaseModel):
         target = data['val_y']
         self.model.fit(x)
         val_metric = self.evaluate(x=None, target=target, metrics=[self.metric])[0].item()
-        return val_metric
+        return {self.metric: val_metric}
 
     def predict(self, x=None, horizon=24):
         """
@@ -120,14 +119,14 @@ class ProphetModel(BaseModel):
         target_pred = self.predict(horizon=horizon)[['yhat']]
         return [Evaluator.evaluate(m, target.values, target_pred.values) for m in metrics]
 
-    def save(self, checkpoint_file):
+    def save(self, checkpoint):
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling save")
-        with open(checkpoint_file, 'w') as fout:
+        with open(checkpoint, 'w') as fout:
             json.dump(model_to_json(self.model), fout)
 
-    def restore(self, checkpoint_file):
-        with open(checkpoint_file, 'r') as fin:
+    def restore(self, checkpoint):
+        with open(checkpoint, 'r') as fin:
             self.model = model_from_json(json.load(fin))
         self.model_init = True
 
@@ -159,14 +158,4 @@ class ProphetBuilder(ModelBuilder):
         from zoo.chronos.model.prophet import ProphetModel
         model = ProphetModel(config=self.model_config)
         model._build(**config)
-        return model
-
-    def build_from_ckpt(self, checkpoint_filename):
-        """
-        Build Prophet Model from checkpoint
-        :param checkpoint_filename: model checkpoint filename
-        """
-        from zoo.chronos.model.prophet import ProphetModel
-        model = ProphetModel(config=self.model_config)
-        model.restore(checkpoint_filename)
         return model

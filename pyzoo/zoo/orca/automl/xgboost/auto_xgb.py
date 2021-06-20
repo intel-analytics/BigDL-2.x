@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from zoo.automl.model import XGBoostModelBuilder
+from zoo.orca.automl.xgboost.XGBoost import XGBoostModelBuilder
 from zoo.orca.automl.auto_estimator import AutoEstimator
 
 
