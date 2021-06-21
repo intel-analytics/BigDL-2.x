@@ -14,9 +14,14 @@
 # limitations under the License.
 #
 #=============================================================================
-# This file is adapted from https://github.com/zzh8829/yolov3-tf2
+# This file is adapted from 
+# https://github.com/zzh8829/yolov3-tf2/blob/master/train.py,
+# https://github.com/zzh8829/yolov3-tf2/blob/master/yolov3_tf2/models.py and
+# https://github.com/zzh8829/yolov3-tf2/blob/master/yolov3_tf2/dataset.py
 #
-# The MIT License (MIT)
+# MIT License
+#
+# Copyright (c) 2019 Zihao Zhang
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +40,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 
 import tensorflow as tf
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping, \
