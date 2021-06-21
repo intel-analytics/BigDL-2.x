@@ -274,7 +274,6 @@ object FrontEndApp extends Supportive with EncryptSupportive {
     }
   }
 
-  //arguments
 
   val metrics = new MetricRegistry
   val overallRequestTimer = metrics.timer("zoo.serving.request.overall")

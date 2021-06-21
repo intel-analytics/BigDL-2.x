@@ -934,7 +934,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   }
 
   def predict(input: String): Seq[PredictionOutput[String]] = {
-    val activities = timing("activity make")(makeActivityTimer){
+    val activities = timing("activity make")(makeActivityTimer) {
       JsonInputDeserializer.deserialize(input)
     }
     activities.map(

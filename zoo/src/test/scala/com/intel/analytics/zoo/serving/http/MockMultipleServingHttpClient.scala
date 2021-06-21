@@ -45,7 +45,6 @@ object MockMultipleServingHttpClient extends App with Supportive {
 
   def testCaffe() : Unit = {
     val resource = getClass().getClassLoader().getResource("models")
-    //loads
     val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
     val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
     val features = Array("floatTensor")
@@ -67,7 +66,6 @@ object MockMultipleServingHttpClient extends App with Supportive {
 
   def testBigDL() : Unit = {
     val resource = getClass().getClassLoader().getResource("models")
-    //loads
     val modelPath = resource.getPath + "/bigdl/bigdl_lenet.model"
     val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "BigDL", null,
       1, "instance", null)
@@ -78,7 +76,6 @@ object MockMultipleServingHttpClient extends App with Supportive {
 
   def testPyTorch() : Unit = {
     val resource = getClass().getClassLoader().getResource("models")
-    //loads
     val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
     val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
     val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "BigDL",

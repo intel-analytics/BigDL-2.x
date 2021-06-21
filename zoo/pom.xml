@@ -350,12 +350,12 @@
             <scope>${spark-scope}</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_${scala.major.version}</artifactId>
-            <version>${spark.version}</version>
-            <scope>${scala-library-scope}</scope>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.apache.spark</groupId>-->
+            <!--<artifactId>spark-core_${scala.major.version}</artifactId>-->
+            <!--<version>${spark.version}</version>-->
+            <!--<scope>${scala-library-scope}</scope>-->
+        <!--</dependency>-->
 
 
         <dependency>
@@ -502,31 +502,6 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>15.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.esotericsoftware.kryo</groupId>
-            <artifactId>kryo</artifactId>
-            <version>2.24.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.json4s</groupId>
-            <artifactId>json4s-ast_2.11</artifactId>
-            <version>3.5.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.json4s</groupId>
-            <artifactId>json4s-core_2.11</artifactId>
-            <version>3.5.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.json4s</groupId>
-            <artifactId>json4s-jackson_2.11</artifactId>
-            <version>3.5.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.json4s</groupId>
-            <artifactId>json4s-scalap_2.11</artifactId>
-            <version>3.5.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.arrow</groupId>
@@ -873,9 +848,9 @@
                             <artifactSet>
                                 <excludes>
                                     <exclude>org.scala-lang:scala-library</exclude>
-                                    <!--<exclude>org.scala-lang:scala-reflect</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-core_${scala.major.version}</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-mllib_${scala.major.version}</exclude>-->
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
+
+                                    <exclude>org.apache.spark:spark-mllib_${scala.major.version}</exclude>
                                     <!--<exclude>com.esotericsoftware.kryo:kryo</exclude>-->
                                     <!--<exclude>org.json4s:*</exclude>-->
                                     <!--<exclude>org.apache.hadoop:*</exclude>-->
@@ -967,9 +942,9 @@
                                     <exclude>com.intel.analytics.zoo:zoo-core-dist-mac</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
-                                    <!--<exclude>org.scala-lang:scala-reflect</exclude>-->
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
                                     <!--<exclude>org.apache.spark:spark-core_${scala.major.version}</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-mllib_${scala.major.version}</exclude>-->
+                                    <exclude>org.apache.spark:spark-mllib_${scala.major.version}</exclude>
                                     <!--<exclude>com.esotericsoftware.kryo:kryo</exclude>-->
                                     <!--<exclude>org.json4s:*</exclude>-->
                                     <!--<exclude>org.apache.hadoop:*</exclude>-->
@@ -1212,5 +1187,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
