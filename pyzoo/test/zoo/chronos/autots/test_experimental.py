@@ -100,6 +100,10 @@ class TestAutoTrainer(TestCase):
         input_feature_dim = 11  # This param will not be used
         output_feature_dim = 2  # 2 targets are generated in get_tsdataset
 
+        tsdata_train = get_tsdataset().gen_dt_feature()
+        tsdata_valid = get_tsdataset().gen_dt_feature()
+        tsdata_test = get_tsdataset().gen_dt_feature()
+
         search_space = {
             'hidden_units': hp.grid_search([32, 64]),
             'levels': hp.randint(4, 6),
@@ -115,17 +119,34 @@ class TestAutoTrainer(TestCase):
                                      output_target_num=output_feature_dim,
                                      selected_features="auto",
                                      metric="mse",
+                                     optimizer="Adam",
                                      loss=torch.nn.MSELoss(),
                                      logs_dir="/tmp/auto_trainer",
                                      cpus_per_trial=2,
                                      name="auto_trainer")
-        auto_trainer.fit(data=get_tsdataset().gen_dt_feature(),
+        auto_trainer.fit(data=tsdata_train,
                          epochs=1,
                          batch_size=hp.choice([32, 64]),
-                         validation_data=get_tsdataset().gen_dt_feature(),
+                         validation_data=tsdata_valid,
                          n_sampling=1
                          )
-        config = auto_trainer.get_best_config()
+        best_config = auto_trainer.get_best_config()
+        best_model = auto_trainer.get_best_model()
+
+        # really difficult to use the model currently...
+        tsdata_test.roll(lookback=best_config["past_seq_len"],
+                         horizon=1,
+                         feature_col=best_config["selected_features"])
+        x_test, y_test = tsdata_test.to_numpy()
+        y_pred = best_model.predict(x_test)
+        best_model.save("best.ckpt")
+        from zoo.automl.model.base_pytorch_model import PytorchModelBuilder
+        restore_model = PytorchModelBuilder(model_creator=best_model.model_creator,
+                                            optimizer_creator="Adam",
+                                            loss_creator=torch.nn.MSELoss()).build(best_config)
+        restore_model.restore("best.ckpt")
+        y_pred_restore = restore_model.predict(x_test)
+        np.testing.assert_almost_equal(y_pred, y_pred_restore)
 
     def test_fit_lstm_data_creator(self):
         input_feature_dim = 4
