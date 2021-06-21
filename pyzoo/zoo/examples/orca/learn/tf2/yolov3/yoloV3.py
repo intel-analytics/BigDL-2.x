@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+#=============================================================================
+# This file is adapted from https://github.com/zzh8829/yolov3-tf2
+#
 # The MIT License (MIT)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -42,8 +45,7 @@ from tensorflow.keras.layers import Add, Concatenate, Conv2D, Input, Lambda, \
     LeakyReLU, MaxPool2D, UpSampling2D, ZeroPadding2D, BatchNormalization
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.losses import binary_crossentropy, sparse_categorical_crossentropy
-from zoo.orca.data.image.parquet_dataset import read_parquet
-from zoo.orca.data.image import write_voc
+from zoo.orca.data.image.parquet_dataset import read_parquet, write_parquet
 from zoo.orca.learn.tf2 import Estimator
 from zoo.orca import init_orca_context, stop_orca_context
 import numpy as np
@@ -594,18 +596,16 @@ def main():
     voc_train_path = os.path.join(options.output_data, "train_dataset")
     voc_val_path = os.path.join(options.output_data, "val_dataset")
 
-    write_voc(dataset_path, splits_names=[(options.data_year, options.split_name_train)],
-              output_path="file://" + voc_train_path,
-              classes=class_map)
-    write_voc(dataset_path, splits_names=[(options.data_year, options.split_name_test)],
-              output_path="file://" + voc_val_path,
-              classes=class_map)
+    write_parquet(format="voc", voc_root_path=dataset_path, output_path="file://" + voc_train_path,
+                  splits_names=[(options.data_year, options.split_name_train)], classes=class_map)
+    write_parquet(format="voc", voc_root_path=dataset_path, output_path="file://" + voc_val_path,
+                  splits_names=[(options.data_year, options.split_name_test)], classes=class_map)
 
     output_types = {"image": tf.string, "label": tf.float32, "image_id": tf.string}
     output_shapes = {"image": (), "label": (None, 5), "image_id": ()}
 
     def train_data_creator(config, batch_size):
-        train_dataset = read_parquet("tf_dataset", input_path=voc_train_path,
+        train_dataset = read_parquet(format="tf_dataset", path=voc_train_path,
                                      output_types=output_types,
                                      output_shapes=output_shapes)
         train_dataset = train_dataset.map(
@@ -620,7 +620,7 @@ def main():
         return train_dataset
 
     def val_data_creator(config, batch_size):
-        val_dataset = read_parquet("tf_dataset", input_path=voc_val_path,
+        val_dataset = read_parquet(format="tf_dataset", path=voc_val_path,
                                    output_types=output_types,
                                    output_shapes=output_shapes)
         val_dataset = val_dataset.map(
