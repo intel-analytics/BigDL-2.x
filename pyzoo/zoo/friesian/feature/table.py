@@ -19,13 +19,14 @@ from pyspark.sql.types import DoubleType, ArrayType, DataType
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
-from pyspark.sql.functions import col as pyspark_col, udf, array, broadcast
-from pyspark.sql import Row
+from pyspark.sql.functions import col as pyspark_col, udf, array, broadcast, lit
+from pyspark.sql import Row, DataFrame
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
 from zoo.common.utils import callZooFunc
 
+from functools import reduce
 
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
@@ -323,6 +324,70 @@ class Table:
         for i in columns:
             df_cast.df = df_cast.df.withColumn(i, pyspark_col(i).cast(type))
         return df_cast
+
+    def write_to_csv(self, path, partition=1, mode="overwrite", header=False):
+        """
+        Write the table as csv file.
+
+        :param partition: specify the number of files to write.
+        :param mode: specify the writing mode.
+        :param header: indicate whether to include the schema as first line in csv file.
+        """
+        self.df.repartition(partition).write.csv(path=path, mode=mode, header=header)
+
+    def _concat(self, join="outer"):
+        def concat_inner(self, df2):
+            col_names_1 = set(self.schema.names)
+            col_names_2 = set(df2.schema.names)
+            for col in list(col_names_1.difference(col_names_2)):
+                self = self.drop(col)
+            for col in list(col_names_2.difference(col_names_1)):
+                df2 = df2.drop(col)
+            return self.union(df2)
+
+        def concat_outer(self, df2):
+            col_names_1 = set(self.schema.names)
+            col_names_2 = set(df2.schema.names)
+            for col in col_names_1.difference(col_names_2):
+                df2 = df2.withColumn(col, lit(None).cast(self.schema[col].dataType))
+            for col in col_names_2.difference(col_names_1):
+                self = self.withColumn(col, lit(None).cast(df2.schema[col].dataType))
+            return self.union(df2)
+        if join == "outer":
+            return concat_outer
+        else:
+            return concat_inner
+
+    def concat(self, tables, join="outer"):
+        """
+        Concatenate a list of tables into one table in the dimension of row.
+        :param tables: a list of tables.
+        :param join: can only take value "outer" or "inner", the value "inner" indicates
+        that the result table only contains.
+        columns that are shared by all tables, the value "outer" indicates that the output
+        table contain all columns.
+
+        return: a single table with rows combined from input tables.
+        """
+        if join not in ["outer", "inner"]:
+            raise ValueError("join should take either outer or inner.")
+        dfs = [table.df for table in tables]
+        df = reduce(self._concat(join), dfs)
+        return self._clone(df)
+
+    def drop_duplicates(self, subset=None):
+        """
+        Return a new table with duplicate rows removed.
+        :param subset: specify which columns to be considered when referring to duplication.
+
+        return: a new table with duplicate rows removed.
+        """
+        if subset is None:
+            return self._clone(self.df.dropDuplicates())
+        if not isinstance(subset, list):
+            subset = [subset]
+        check_col_exists(self.df, subset)
+        return self._clone(self.df.dropDuplicates(subset))
 
     def __getattr__(self, name):
         return self.df.__getattr__(name)

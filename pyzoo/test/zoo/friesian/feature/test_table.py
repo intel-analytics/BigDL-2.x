@@ -26,6 +26,9 @@ from zoo.orca import OrcaContext
 from zoo.friesian.feature import FeatureTable, StringIndex
 from zoo.common.nncontext import *
 
+import shutil
+import pandas as pd
+
 
 class TestTable(TestCase):
     def setup_method(self, method):
@@ -523,6 +526,66 @@ class TestTable(TestCase):
             "the first row of name should be 1"
         assert tbl.df.where(tbl.df.height == 10).select("num").collect()[0]["num"] == 2, \
             "the third row of num should be 2"
+
+    def test_write_to_csv(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", 14, 8),
+                ("alice", 25, 9),
+                ("rose", 23, 10)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("age", IntegerType(), True),
+                             StructField("height", IntegerType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        directory = "data"
+        tbl.write_to_csv(directory, partition=2, header=True)
+        files = [f for f in os.listdir(directory) if
+                 os.path.isfile(os.path.join(directory, f)) and '.csv' in f]
+        pds = []
+        for file in files:
+            file = os.path.join(directory, file)
+            pds.append(pd.read_csv(file))
+        result = pd.concat(pds)
+        assert list(result.loc[:, "name"]) == ["jack", "alice", "rose"], "wrong answer"
+        assert list(result.loc[:, "age"]) == [14, 25, 23], "wrong answer"
+        assert list(result.loc[:, "height"]) == [8, 9, 10], "wrong answer"
+        shutil.rmtree("data")
+
+    def test_concat(self):
+        spark = OrcaContext.get_spark_session()
+        data1 = [("jack", 1)]
+        data2 = [("rose", 2)]
+        data3 = [("amy", 3, 50)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("id", IntegerType(), True)])
+        schema2 = StructType([StructField("name", StringType(), True),
+                             StructField("id", IntegerType(), True),
+                             StructField("weight", IntegerType(), True)])
+        tbl1 = FeatureTable(spark.createDataFrame(data1, schema))
+        tbl2 = FeatureTable(spark.createDataFrame(data2, schema))
+        tbl3 = FeatureTable(spark.createDataFrame(data3, schema2))
+        tbl = tbl1.concat([tbl1, tbl2, tbl3])
+        assert tbl.df.count() == 3, "the number of data is incorrect"
+        assert tbl.df.schema.names == ["name", "id", "weight"], "column names are incorrect"
+        data = tbl.df.toPandas()
+        assert list(data.loc[:, "name"]) == ["jack", "rose", "amy"], "wrong answer"
+        assert list(data.loc[:, "id"]) == [1, 2, 3]
+        tbl = tbl1.concat([tbl1, tbl2, tbl3], join="inner")
+        assert tbl.df.count() == 3, "the number of data is incorrect"
+        assert tbl.df.schema.names == ["name", "id"], "column names are incorrect"
+        data = tbl.df.toPandas()
+        assert list(data.loc[:, "name"]) == ["jack", "rose", "amy"], "wrong answer"
+        assert list(data.loc[:, "id"]) == [1, 2, 3]
+
+    def test_drop_duplicates(self):
+        spark = OrcaContext.get_spark_session()
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("id", IntegerType(), True)])
+        data = [("jack", 1), ("jack", 1), ("jack", 2)]
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        assert tbl.drop_duplicates().df.count() == 2
+        assert tbl.drop_duplicates(["name"]).df.count() == 1
+        assert tbl.drop_duplicates(["id"]).df.count() == 2
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
