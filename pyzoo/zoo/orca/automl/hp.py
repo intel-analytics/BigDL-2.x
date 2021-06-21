@@ -119,14 +119,13 @@ def choice_n(categories, min_items, max_items):
     """
     return tune.sample_from(
         lambda spec: list(
-                np.random.choice(
-                    categories,
-                    size=np.random.randint(
-                        low=min_items,
-                        high=max_items),
-                    replace=False
-                )
-            ))
+            np.random.choice(
+                categories,
+                size=np.random.randint(
+                    low=min_items,
+                    high=max_items),
+                replace=False
+            )))
 
 
 def sample_from(func):
