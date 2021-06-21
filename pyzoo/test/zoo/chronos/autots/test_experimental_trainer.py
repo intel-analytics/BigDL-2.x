@@ -52,8 +52,8 @@ def get_data_creator():
         x, y = tsdata.roll(lookback=7, horizon=1).to_numpy()
         return DataLoader(TensorDataset(torch.from_numpy(x).float(),
                                         torch.from_numpy(y).float()),
-                            batch_size=config["batch_size"],
-                            shuffle=True)
+                          batch_size=config["batch_size"],
+                          shuffle=True)
     return data_creator
 
 
@@ -68,7 +68,7 @@ class TestAutoTrainer(TestCase):
 
     def test_fit_lstm_feature(self):
         input_feature_dim = 11  # This param will not be used
-        output_feature_dim = 2  # 2 targets (i.e. "value 1", "value 2") is generated in get_tsdataset
+        output_feature_dim = 2  # 2 targets are generated in get_tsdataset
 
         search_space = {
             'hidden_dim': hp.grid_search([32, 64]),
@@ -95,10 +95,10 @@ class TestAutoTrainer(TestCase):
                          n_sampling=1
                          )
         config = auto_trainer.get_best_config()
-    
+
     def test_fit_tcn_feature(self):
         input_feature_dim = 11  # This param will not be used
-        output_feature_dim = 2  # 2 targets (i.e. "value 1", "value 2") is generated in get_tsdataset
+        output_feature_dim = 2  # 2 targets are generated in get_tsdataset
 
         search_space = {
             'hidden_units': hp.grid_search([32, 64]),
@@ -129,7 +129,7 @@ class TestAutoTrainer(TestCase):
 
     def test_fit_lstm_data_creator(self):
         input_feature_dim = 4
-        output_feature_dim = 2  # 2 targets (i.e. "value 1", "value 2") is generated in get_tsdataset
+        output_feature_dim = 2  # 2 targets are generated in get_tsdataset
 
         search_space = {
             'hidden_dim': hp.grid_search([32, 64]),

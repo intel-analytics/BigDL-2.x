@@ -62,12 +62,13 @@ class AutoTSTrainer:
         :param input_feature_num: Int. The number of features in the input. The value is ignored if
                you set selected_features and use chronos.data.TSDataset as input data type.
         :param output_target_num: Int. The number of targets in the output.
-        :param selected_features: String. "all" and "auto" are supported for now. For "all", all features
-               that are generated are used for each trial. For "auto", a subset is sampled randomly
-               from all features for each trial. The parameter is ignored if not using
-               chronos.data.TSDataset as input data type.
+        :param selected_features: String. "all" and "auto" are supported for now. For "all",
+               all features that are generated are used for each trial. For "auto", a subset
+               is sampled randomly from all features for each trial. The parameter is ignored
+               if not using chronos.data.TSDataset as input data type.
         :param backend: The backend of the auto model. We only support backend as "torch" for now.
-        :param logs_dir: Local directory to save logs and results. It defaults to "/tmp/autots_trainer"
+        :param logs_dir: Local directory to save logs and results.
+               It defaults to "/tmp/autots_trainer"
         :param cpus_per_trial: Int. Number of cpus for each trial. It defaults to 1.
         :param name: name of the AutoLSTM. It defaults to "auto_lstm".
         """
@@ -146,9 +147,9 @@ class AutoTSTrainer:
         # generate data creator from TSDataset (pytorch base require validation data)
         if isinstance(data, TSDataset) and isinstance(validation_data, TSDataset):
             train_d, val_d = self._prepare_data_creator(
-                    search_space=self.model.search_space,
-                    train_data=data,
-                    val_data=validation_data,
+                search_space=self.model.search_space,
+                train_data=data,
+                val_data=validation_data,
             )
         else:
             train_d, val_d = data, validation_data
@@ -211,8 +212,8 @@ class AutoTSTrainer:
             val_d = ray.get(valid_data_id)
 
             x, y = val_d.roll(lookback=config.get('past_seq_len', AUTOTS_DEFAULT_LOOKBACK),
-                                 horizon=config.get('future_seq_len', AUTOTS_DEFAULT_HORIZON),
-                                 feature_col=config['selected_features']) \
+                              horizon=config.get('future_seq_len', AUTOTS_DEFAULT_HORIZON),
+                              feature_col=config['selected_features']) \
                         .to_numpy()
 
             return DataLoader(TensorDataset(torch.from_numpy(x).float(),

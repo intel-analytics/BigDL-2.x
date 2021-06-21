@@ -68,7 +68,8 @@ class PytorchBaseModel(BaseModel):
         self.config = config
         # build model
         if "selected_features" in config:
-            config["input_feature_num"] = len(config['selected_features'])+config['output_feature_num']
+            config["input_feature_num"] = len(config['selected_features'])\
+                + config['output_feature_num']
         self.model = self.model_creator(config)
         if not isinstance(self.model, torch.nn.Module):
             raise ValueError("You must create a torch model in model_creator")
