@@ -18,7 +18,7 @@ from zoo.chronos.data import TSDataset
 import zoo.orca.automl.hp as hp
 from zoo.chronos.autots.model import AutoModelFactory
 
-AUTOTS_DEFAULT_LOOKBACK = 5
+AUTOTS_DEFAULT_LOOKBACK = 2
 AUTOTS_DEFAULT_HORIZON = 1
 
 
@@ -181,9 +181,9 @@ class AutoTSTrainer:
 
         # append feature selection into search space
         all_features = train_data.feature_col
-        if search_space.get('selected_features') is not None:
-            raise ValueError("Do not specify ""selected_features"" in search space."
-                             " The system will automatically generate this config for you")
+        if self.selected_features not in ("all", "auto"):
+            raise ValueError(f"Only \"all\" and \"auto\" are supported for selected_features,\
+                but found {self.selected_features}")
         if self.selected_features == "auto":
             search_space['selected_features'] = hp.choice_n(all_features,
                                                             min_items=0,
