@@ -14,7 +14,8 @@
 # limitations under the License.
 #
 # ===========================================================================
-# This file is adapted from 
+#
+# This file is adapted from
 # https://github.com/zzh8829/yolov3-tf2/blob/master/train.py,
 # https://github.com/zzh8829/yolov3-tf2/blob/master/yolov3_tf2/models.py and
 # https://github.com/zzh8829/yolov3-tf2/blob/master/yolov3_tf2/dataset.py
