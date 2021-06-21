@@ -200,8 +200,6 @@ class AutoTSTrainer:
                                 horizon=config.get('future_seq_len', AUTOTS_DEFAULT_HORIZON),
                                 feature_col=config['selected_features']) \
                           .to_numpy()
-            
-            print("DDDD", x, type(x), x.dtype)
 
             return DataLoader(TensorDataset(torch.from_numpy(x).float(),
                                             torch.from_numpy(y).float()),
