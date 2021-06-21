@@ -123,13 +123,14 @@ if __name__ == "__main__":
         .add_negative_samples(item_size, item_col='item', neg_num=1)
 
     full_tbl = transaction_tbl.join(item_tbl, "item")\
-        .add_value_features(key_cols=["item_hist_seq", "neg_item_hist_seq"], tbl=item_tbl)\
+        .add_value_features(key_cols=["item_hist_seq", "neg_item_hist_seq"],
+                            tbl=item_tbl, key="item", value="category")\
         .pad(cols=['item_hist_seq', 'category_hist_seq',
              'neg_item_hist_seq', 'neg_category_hist_seq'],
              seq_len=100,
              mask_cols=['item_hist_seq']) \
         .apply("item_hist_seq","item_hist_seq_len", len, "int") \
-        .apply("label", "label", trans_label, "float")
+        .apply("label", "label", trans_label, "array<float>")
 
     # write out
     user_index[0].write_parquet(args.output+"user_index")
