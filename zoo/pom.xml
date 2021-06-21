@@ -587,6 +587,31 @@
             <artifactId>embedded-redis</artifactId>
             <version>0.6</version>
         </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.esotericsoftware.kryo</groupId>-->
+            <!--<artifactId>kryo</artifactId>-->
+            <!--<version>2.24.0</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.json4s</groupId>-->
+            <!--<artifactId>json4s-core_${scala.major.version}</artifactId>-->
+            <!--<version>3.5.3</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.json4s</groupId>-->
+            <!--<artifactId>json4s-ast_${scala.major.version}</artifactId>-->
+            <!--<version>3.5.3</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.json4s</groupId>-->
+            <!--<artifactId>json4s-jackson_${scala.major.version}</artifactId>-->
+            <!--<version>3.5.3</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.json4s</groupId>-->
+            <!--<artifactId>json4s-scalap_${scala.major.version}</artifactId>-->
+            <!--<version>3.5.3</version>-->
+        <!--</dependency>-->
     </dependencies>
 
     <build>
@@ -849,30 +874,6 @@
                                 <excludes>
                                     <exclude>org.scala-lang:scala-library</exclude>
                                     <exclude>org.scala-lang:scala-reflect</exclude>
-
-                                    <exclude>org.apache.spark:spark-mllib_${scala.major.version}</exclude>
-                                    <!--<exclude>com.esotericsoftware.kryo:kryo</exclude>-->
-                                    <!--<exclude>org.json4s:*</exclude>-->
-                                    <!--<exclude>org.apache.hadoop:*</exclude>-->
-                                    <!--<exclude>org.apache.parquet:*</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-sql_${scala.major.version}</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-catalyst_${scala.major.version}</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-graphx_${scala.major.version}</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-network-common_${scala.major.version}</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-network-shuffle_${scala.major.version}</exclude>-->
-                                    <!--<exclude>org.apache.ivy:ivy</exclude>-->
-                                    <!--<exclude>org.apache.commons:commons-math3</exclude>-->
-                                    <!--<exclude>org.apache.commons:commons-compress</exclude>-->
-                                    <!--<exclude>org.apache.orc:*</exclude>-->
-                                    <!--<exclude>org.apache.avro:*</exclude>-->
-                                    <!--<exclude>org.apache.directory.api:*</exclude>-->
-                                    <!--<exclude>org.apache.directory.server:*</exclude>-->
-                                    <!--<exclude>commons-digester:*</exclude>-->
-                                    <!--<exclude>org.xerial.snappy:*</exclude>-->
-                                    <!--<exclude>org.spark-project.spark:*</exclude>-->
-                                    <!--<exclude>org.glassfish.hk2:*</exclude>-->
-                                    <!--<exclude>org.glassfish.jersey.core:*</exclude>-->
-                                    <!--<exclude>org.codehaus.jackson:*</exclude>-->
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -900,14 +901,35 @@
                                 </transformer>
                             </transformers>
                             <artifactSet>
+                                <includes>
+                                    <!--<include>io.dropwizard.metrics:metrics-core</include>-->
+                                    <!--<include>org.scala-lang:scala-library</include>-->
+                                    <!--<include>org.scala-lang:scala-reflect</include>-->
+                                    <!--<include>com.typesafe.akka:*</include>-->
+                                    <!--<include>org.slf4j:slf4j-api</include>-->
+                                    <!--<include>org.slf4j:slf4j-log4j12</include>-->
+                                    <!--<include>com.github.scopt:scopt_${scala.major.version}</include>-->
+                                    <!--<include>com.typesafe:config</include>-->
+                                    <!--<include>com.fasterxml.jackson.core:*</include>-->
+                                    <!--<include>com.fasterxml.jackson.module:jackson-module-scala_${scala.major.version}</include>-->
+                                    <!--<include>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml</include>-->
+                                    <!--<include>com.google.flatbuffers:flatbuffers-java</include>-->
+                                    <!--<include>org.yaml:snakeyaml</include>-->
+                                    <!--<include>com.thoughtworks.paranamer:paranamer</include>-->
+                                    <!--<include>com.intel.analytics.bigdl:${bigdl.artifactId}</include>-->
+                                    <!--<include>com.intel.analytics.zoo:*</include>-->
+                                    <!--<include>com.esotericsoftware.kryo:kryo</include>-->
+                                    <!--<include>org.json4s:*</include>-->
+                                    <!--<include>org.tensorflow:*</include>-->
+                                    <!--<include>log4j:log4j</include>-->
+                                    <!--<include>org.apache.spark:spark-core_${scala.major.version}</include>-->
+                                    <!--<include>com.intel.analytics.bigdl.core.dist:all</include>-->
+                                </includes>
                                 <excludes>
                                     <exclude>ml.dmlc:xgboost4j</exclude>
                                     <exclude>black.ninia:jep</exclude>
                                     <exclude>org.tensorflow:tensorflow-hadoop</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-dist-all</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-pmem-java-linux</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-mkl-linux</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-dist-mac</exclude>
+
                                     <exclude>it.unimi.dsi:fastutil</exclude>
                                 </excludes>
                             </artifactSet>
@@ -943,31 +965,6 @@
                                     <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
                                     <exclude>org.scala-lang:scala-reflect</exclude>
-                                    <!--<exclude>org.apache.spark:spark-core_${scala.major.version}</exclude>-->
-                                    <exclude>org.apache.spark:spark-mllib_${scala.major.version}</exclude>
-                                    <!--<exclude>com.esotericsoftware.kryo:kryo</exclude>-->
-                                    <!--<exclude>org.json4s:*</exclude>-->
-                                    <!--<exclude>org.apache.hadoop:*</exclude>-->
-                                    <!--<exclude>org.apache.parquet:*</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-sql_${scala.major.version}</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-catalyst_${scala.major.version}</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-streaming_${scala.major.version}</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-graphx_${scala.major.version}</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-network-common_${scala.major.version}</exclude>-->
-                                    <!--<exclude>org.apache.spark:spark-network-shuffle_${scala.major.version}</exclude>-->
-                                    <!--<exclude>org.apache.ivy:ivy</exclude>-->
-                                    <!--<exclude>org.apache.commons:commons-math3</exclude>-->
-                                    <!--<exclude>org.apache.commons:commons-compress</exclude>-->
-                                    <!--<exclude>org.apache.orc:*</exclude>-->
-                                    <!--<exclude>org.apache.avro:*</exclude>-->
-                                    <!--<exclude>org.apache.directory.api:*</exclude>-->
-                                    <!--<exclude>org.apache.directory.server:*</exclude>-->
-                                    <!--<exclude>commons-digester:commons-digester</exclude>-->
-                                    <!--<exclude>org.xerial.snappy:snappy-java</exclude>-->
-                                    <!--<exclude>org.spark-project.spark:*</exclude>-->
-                                    <!--<exclude>org.glassfish.hk2:*</exclude>-->
-                                    <!--<exclude>org.glassfish.jersey.core:*</exclude>-->
-                                    <!--<exclude>org.codehaus.jackson:*</exclude>-->
                                 </excludes>
                             </artifactSet>
                         </configuration>
