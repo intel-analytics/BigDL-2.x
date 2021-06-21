@@ -48,22 +48,28 @@ class AutoTSTrainer:
         User can choose one of the built-in models, or pass in a customized pytorch or keras model
         for tuning using AutoML.
         :param model: a string or a model creation function
-            a string indicates a built-in model, currently "lstm", "tcn" are supported
-        :param search_space: hyper parameter configurations. Some parameters are searchable and some
-            are fixed parameters (such as input dimensions, etc.) Read the API docs for each auto model
+               a string indicates a built-in model, currently "lstm", "tcn" are supported
+        :param search_space: hyper parameter configurations. Read the API docs for each auto model.
+               Some common hyper parameter can be explicitly set in named parameter.
         :param metric: String. The evaluation metric name to optimize. e.g. "mse"
         :param loss: String or pytorch/tf.keras loss instance or pytorch loss creator function.
-        :param optimizer:
-        :param past_seq_len:
-        :param future_seq_len:
-        :param input_feature_num:
-        :param output_target_num:
-        :param selected_features:
-        :param backend: The backend of the lstm model. We only support backend as "torch" for now.
-        :param logs_dir: Local directory to save logs and results. It defaults to "/tmp/auto_lstm"
+        :param optimizer: String or pyTorch optimizer creator function or
+               tf.keras optimizer instance.
+        :param past_seq_len: Int or or hp sampling function. The number of historical steps (i.e.
+               lookback) used for forecasting. For hp sampling, see zoo.orca.automl.hp for more
+               details.
+        :param future_seq_len: Int. The number of future steps to forecast.
+        :param input_feature_num: Int. The number of features in the input. The value is ignored if
+               you set selected_features and use chronos.data.TSDataset as input data type.
+        :param output_target_num: Int. The number of targets in the output.
+        :param selected_features: String. "all" and "auto" are supported for now. For "all", all features
+               that are generated are used for each trial. For "auto", a subset is sampled randomly
+               from all features for each trial. The parameter is ignored if not using
+               chronos.data.TSDataset as input data type.
+        :param backend: The backend of the auto model. We only support backend as "torch" for now.
+        :param logs_dir: Local directory to save logs and results. It defaults to "/tmp/autots_trainer"
         :param cpus_per_trial: Int. Number of cpus for each trial. It defaults to 1.
-        :param name: name of the AutoLSTM. It defaults to "auto_lstm"
-        :param preprocess: Whether to enable feature processing
+        :param name: name of the AutoLSTM. It defaults to "auto_lstm".
         """
         # check backend and set default loss
         if backend != "torch":
@@ -189,11 +195,6 @@ class AutoTSTrainer:
         valid_data_id = ray.put(val_data)
 
         def train_data_creator(config):
-            """
-            train data creator function
-            :param config:
-            :return:
-            """
             train_d = ray.get(train_data_id)
 
             x, y = train_d.roll(lookback=config.get('past_seq_len', AUTOTS_DEFAULT_LOOKBACK),
@@ -207,11 +208,6 @@ class AutoTSTrainer:
                               shuffle=True)
 
         def val_data_creator(config):
-            """
-            train data creator function
-            :param config:
-            :return:
-            """
             val_d = ray.get(valid_data_id)
 
             x, y = val_d.roll(lookback=config.get('past_seq_len', AUTOTS_DEFAULT_LOOKBACK),
@@ -229,13 +225,15 @@ class AutoTSTrainer:
     def get_best_model(self):
         """
         Get the tuned model
-        :return:
+
+        :return: the best model instance
         """
         return self.model.get_best_model()
 
     def get_best_config(self):
         """
         Get the best configuration
-        :return:
+
+        :return: A dictionary of best hyper parameters
         """
         return self.model.auto_est.get_best_config()
