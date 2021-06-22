@@ -90,8 +90,7 @@ class ProphetForecaster(Forecaster):
 
     def _check_data(self, data, validation_data):
         assert 'ds' in data.columns and 'y' in data.columns, \
-            "data should be a pandas dataframe that has at least 2 columns 'ds' and 'y'."\
-            .format(x.ndim)
+            "data should be a pandas dataframe that has at least 2 columns 'ds' and 'y'."
         assert 'ds' in validation_data.columns and 'y' in validation_data.columns, \
             "validation_data should be a dataframe that has at least 2 columns 'ds' and 'y'."
 
@@ -112,14 +111,14 @@ class ProphetForecaster(Forecaster):
         :param validation_data: evaluation data, a pandas dataframe with Td rows,
             and 2 columns, with column 'ds' indicating date and column 'y' indicating value
             and Td is the time dimension
-        :param x: We don't support input x currently.
+        :param data: We don't support input data currently.
         :param metrics: A list contains metrics for test/valid data.
         """
         if validation_data is None:
             raise ValueError("Input invalid validation_data of None")
         if self.internal.model is None:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate(x, target, metrics=metrics)
+        return self.internal.evaluate(None, validation_data, metrics=metrics)
 
     def save(self, checkpoint_file):
         """
