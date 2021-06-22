@@ -350,12 +350,12 @@
             <scope>${spark-scope}</scope>
         </dependency>
 
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.spark</groupId>-->
-        <!--            <artifactId>spark-core_${scala.major.version}</artifactId>-->
-        <!--            <version>${spark.version}</version>-->
-        <!--            <scope>${spark-scope}</scope>-->
-        <!--        </dependency>-->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.major.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>${scala-library-scope}</scope>
+        </dependency>
 
 
         <dependency>
@@ -586,6 +586,11 @@
             <groupId>com.github.kstyrc</groupId>
             <artifactId>embedded-redis</artifactId>
             <version>0.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.esotericsoftware.kryo</groupId>
+            <artifactId>kryo</artifactId>
+            <version>2.24.0</version>
         </dependency>
     </dependencies>
 
@@ -829,6 +834,9 @@
                                     <include>io.netty</include>
                                     <include>org.apache.arrow</include>
                                 </includes>
+                                <excludes>
+                                    <exclude>org.apache.spark:*</exclude>
+                                </excludes>
                             </artifactSet>
                         </configuration>
                         <goals>
@@ -848,6 +856,7 @@
                             <artifactSet>
                                 <excludes>
                                     <exclude>org.scala-lang:scala-library</exclude>
+                                    <exclude>org.apache.spark:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -875,6 +884,32 @@
                                 </transformer>
                             </transformers>
                             <artifactSet>
+                                <!--<includes>-->
+                                    <!--<include>io.dropwizard.metrics:metrics-core</include>-->
+                                    <!--<include>org.scala-lang:scala-library</include>-->
+                                    <!--<include>org.scala-lang:scala-reflect</include>-->
+                                    <!--<include>com.typesafe.akka:*</include>-->
+                                    <!--<include>org.slf4j:slf4j-api</include>-->
+                                    <!--<include>org.slf4j:slf4j-log4j12</include>-->
+                                    <!--<include>com.github.scopt:scopt_${scala.major.version}</include>-->
+                                    <!--<include>com.typesafe:*</include>-->
+                                    <!--<include>com.fasterxml.jackson.core:*</include>-->
+                                    <!--<include>com.fasterxml.jackson.module:jackson-module-scala_${scala.major.version}</include>-->
+                                    <!--<include>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml</include>-->
+                                    <!--<include>com.google.flatbuffers:flatbuffers-java</include>-->
+                                    <!--<include>org.yaml:snakeyaml</include>-->
+                                    <!--<include>com.thoughtworks.paranamer:paranamer</include>-->
+                                    <!--<include>com.intel.analytics.bigdl:${bigdl.artifactId}</include>-->
+                                    <!--<include>com.intel.analytics.zoo:*</include>-->
+                                    <!--<include>com.esotericsoftware.kryo:kryo</include>-->
+                                    <!--<include>org.json4s:*</include>-->
+                                    <!--<include>org.tensorflow:*</include>-->
+                                    <!--<include>log4j:log4j</include>-->
+                                    <!--<include>org.apache.spark:spark-core_${scala.major.version}</include>-->
+                                    <!--<include>com.intel.analytics.bigdl.core.dist:all</include>-->
+                                    <!--<include>org.scala-lang.modules:*</include>-->
+                                    <!--<include>org.reactivestreams:reactive-streams</include>-->
+                                <!--</includes>-->
                                 <excludes>
                                     <exclude>ml.dmlc:xgboost4j</exclude>
                                     <exclude>black.ninia:jep</exclude>
@@ -913,6 +948,7 @@
                                     <exclude>com.intel.analytics.zoo:zoo-core-dist-mac</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
+                                    <exclude>org.apache.spark:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
