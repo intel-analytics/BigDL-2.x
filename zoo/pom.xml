@@ -362,7 +362,7 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
-            <scope>${spark-scope}</scope>
+            <scope>${scala-library-scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.intel.analytics.bigdl</groupId>
