@@ -116,7 +116,6 @@ class AutoEstimator:
             epochs=1,
             validation_data=None,
             metric=None,
-            metric_func=None,
             metric_mode=None,
             metric_threshold=None,
             n_sampling=1,
@@ -141,10 +140,10 @@ class AutoEstimator:
             If you have also set metric_threshold, a trial will stop if either it has been
             optimized to the metric_threshold or it has been trained for {epochs} epochs.
         :param validation_data: Validation data. Validation data type should be the same as data.
-        :param metric: String. The evaluation metric name to optimize, e.g. "mse"
-        :param metric_func: Customized evaluation metric function. Defaults to be None.
-            The signature should be func(y_true, y_pred), where y_true and y_pred are numpy ndarray.
-            The function should return a float value as evaluation result.
+        :param metric: String or customized evaluation metric function.
+            If string, metric is the evaluation metric name to optimize, e.g. "mse".
+            If callable function, it signature should be func(y_true, y_pred), where y_true and
+            y_pred are numpy ndarray. The function should return a float value as evaluation result.
         :param metric_mode: One of ["min", "max"]. "max" means greater metric value is better.
             You have to specify metric_mode if you use a customized metric function.
             You don't have to specify metric_mode if you use the built-in metric in
@@ -211,15 +210,17 @@ class AutoEstimator:
 
     @staticmethod
     def _validate_metric_mode(metric, mode):
-        from zoo.automl.common.metrics import Evaluator
         if not mode:
+            if callable(metric):
+                raise ValueError("You must specify `metric_mode` for your metric function")
             try:
+                from zoo.automl.common.metrics import Evaluator
                 mode = Evaluator.get_metric_mode(metric)
             except ValueError:
                 pass
-        if not mode:
-            raise ValueError(f"We cannot infer metric mode with metric name of {metric}. "
-                             f"Please specify the `metric_mode` parameter in AutoEstimator.fit().")
+            if not mode:
+                raise ValueError(f"We cannot infer metric mode with metric name of {metric}. Please"
+                                 f" specify the `metric_mode` parameter in AutoEstimator.fit().")
         if mode not in ["min", "max"]:
             raise ValueError("`mode` has to be one of ['min', 'max']")
         return mode
