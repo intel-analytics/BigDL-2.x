@@ -26,7 +26,7 @@ class ProphetForecaster(Forecaster):
     It works best with time series that have strong seasonal effects and several seasons of
     historical data. Prophet is robust to missing data and shifts in the trend, and
     typically handles outliers well.
-    
+
     Source: https://github.com/facebook/prophet
     """
 
@@ -63,11 +63,11 @@ class ProphetForecaster(Forecaster):
             Cosine Proximity: ("cosine_proximity", "cosine")
         """
         self.model_config = {
-            "changepoint_prior_scale" : changepoint_prior_scale,
-            "seasonality_prior_scale" : seasonality_prior_scale,
-            "holidays_prior_scale" : holidays_prior_scale,
-            "seasonality_mode" : seasonality_mode,
-            "changepoint_range" : changepoint_range,
+            "changepoint_prior_scale": changepoint_prior_scale,
+            "seasonality_prior_scale": seasonality_prior_scale,
+            "holidays_prior_scale": holidays_prior_scale,
+            "seasonality_mode": seasonality_mode,
+            "changepoint_range": changepoint_range,
             "metric": metric
         }
         self.internal = ProphetModel()
@@ -84,7 +84,11 @@ class ProphetForecaster(Forecaster):
         :param validation_data: evaluation data, should be the same type as x
         """
         self._check_data(data, validation_data)
-        data_dict = {'x': data, 'y': None, 'val_x': None, 'val_y': validation_data}
+        data_dict = {
+            'x': data,
+            'y': None,
+            'val_x': None,
+            'val_y': validation_data}
         return self.internal.fit_eval(data=data_dict,
                                       **self.model_config)
 
@@ -101,7 +105,8 @@ class ProphetForecaster(Forecaster):
         :param horizon: the number of steps forward to predict
         """
         if self.internal.model is None:
-            raise RuntimeError("You must call fit or restore first before calling predict!")
+            raise RuntimeError(
+                "You must call fit or restore first before calling predict!")
         return self.internal.predict(horizon=horizon)
 
     def evaluate(self, validation_data, metrics=['mse']):
@@ -117,7 +122,8 @@ class ProphetForecaster(Forecaster):
         if validation_data is None:
             raise ValueError("Input invalid validation_data of None")
         if self.internal.model is None:
-            raise RuntimeError("You must call fit or restore first before calling evaluate!")
+            raise RuntimeError(
+                "You must call fit or restore first before calling evaluate!")
         return self.internal.evaluate(None, validation_data, metrics=metrics)
 
     def save(self, checkpoint_file):
@@ -127,7 +133,8 @@ class ProphetForecaster(Forecaster):
         :param checkpoint_file: The location you want to save the forecaster, should be a json file
         """
         if self.internal.model is None:
-            raise RuntimeError("You must call fit or restore first before calling save!")
+            raise RuntimeError(
+                "You must call fit or restore first before calling save!")
         self.internal.save(checkpoint_file)
 
     def restore(self, checkpoint_file):

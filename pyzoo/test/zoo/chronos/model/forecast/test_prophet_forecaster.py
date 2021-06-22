@@ -72,7 +72,7 @@ class TestChronosModelProphetForecaster(TestCase):
             forecaster.save(ckpt_name)
             forecaster.restore(ckpt_name)
             test_pred_restore = forecaster.predict(validation_data.shape[0])
-        assert (test_pred_save['yhat']==test_pred_restore['yhat']).all()
+        assert (test_pred_save['yhat'] == test_pred_restore['yhat']).all()
 
     def test_prophet_forecaster_runtime_error(self):
         data, validation_data = create_data()
