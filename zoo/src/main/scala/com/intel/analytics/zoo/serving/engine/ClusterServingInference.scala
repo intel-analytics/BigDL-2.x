@@ -93,7 +93,7 @@ class ClusterServingInference() extends Supportive{
         }
       }
     })
-
+    newLogger.info(s"Predict ends at time ${System.currentTimeMillis()}")
     postProcessed
   }
 
