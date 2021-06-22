@@ -350,12 +350,12 @@
             <scope>${spark-scope}</scope>
         </dependency>
 
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.spark</groupId>-->
-        <!--            <artifactId>spark-core_${scala.major.version}</artifactId>-->
-        <!--            <version>${spark.version}</version>-->
-        <!--            <scope>${spark-scope}</scope>-->
-        <!--        </dependency>-->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.major.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>${scala-library-scope}</scope>
+        </dependency>
 
 
         <dependency>
@@ -829,6 +829,9 @@
                                     <include>io.netty</include>
                                     <include>org.apache.arrow</include>
                                 </includes>
+                                <excludes>
+                                    <exclude>org.apache.spark:*</exclude>
+                                </excludes>
                             </artifactSet>
                         </configuration>
                         <goals>
@@ -848,6 +851,7 @@
                             <artifactSet>
                                 <excludes>
                                     <exclude>org.scala-lang:scala-library</exclude>
+                                    <exclude>org.apache.spark:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -928,6 +932,7 @@
                                     <exclude>com.intel.analytics.zoo:zoo-core-dist-mac</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
+                                    <exclude>org.apache.spark:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
