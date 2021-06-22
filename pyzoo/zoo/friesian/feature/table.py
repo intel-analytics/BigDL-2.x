@@ -27,7 +27,6 @@ from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
 from zoo.common.utils import callZooFunc
 
-import random
 
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
@@ -314,8 +313,8 @@ class Table:
             if new_df.schema[column].dataType not in [IntegerType(), ShortType(),
                                                       LongType(), FloatType(),
                                                       DecimalType(), DoubleType()]:
-                raise ValueError("column type should be numeric, but have type {columns}".
-                                 format(columns=new_df.schema[column].dataType))
+                raise ValueError("Column type should be numeric, but have type {type} \
+                    for column {column}".format(new_df.schema[column].dataType, column))
             new_df = new_df.withColumn(column, pyspark_col(column) + lit(value))
         return self._clone(new_df)
 
@@ -332,14 +331,14 @@ class Table:
         """
         Return a sampled subset of Table.
 
-        :param fraction: float, fraction of rows to generate.
+        :param fraction: float, fraction of rows to generate, fraction should be
+        within the range [0, 1].
         :param replace: allow or disallow sampling of the same row more than once.
         :param seed: seed for sampling.
 
-        return: a sampled subset of Table
+        return: A new Table with sampled rows.
         """
-        if fraction < 0 or fraction > 1:
-            raise ValueError("fraction should be within the range of [0, 1]")
+
         return self._clone(self.df.sample(withReplacement=replace, fraction=fraction, seed=seed))
 
     def write_parquet(self, path, mode="overwrite"):

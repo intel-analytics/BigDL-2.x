@@ -547,12 +547,21 @@ class TestTable(TestCase):
         new_tbl = tbl.add(columns, 1.5)
         new_list = new_tbl.df.take(3)
         assert len(new_list) == 3, "new_tbl should have 3 rows"
-        assert new_list[0]['age'] == 15.5, "the age of jack should increase 1"
-        assert new_list[0]['height'] == 10, "the height of jack should increase 1"
-        assert new_list[1]['age'] == 26.5, "the age of alice should increase 1"
-        assert new_list[1]['height'] == 11.1, "the height of alice should increase 1"
-        assert new_list[2]['age'] == 24.5, "the age of rose should increase 1"
-        assert new_list[2]['height'] == 11.5, "the height of rose should increase 1"
+        assert new_list[0]['age'] == 15.5, "the age of jack should increase 1.5"
+        assert new_list[0]['height'] == 10, "the height of jack should increase 1.5"
+        assert new_list[1]['age'] == 26.5, "the age of alice should increase 1.5"
+        assert new_list[1]['height'] == 11.1, "the height of alice should increase 1.5"
+        assert new_list[2]['age'] == 24.5, "the age of rose should increase 1.5"
+        assert new_list[2]['height'] == 11.5, "the height of rose should increase 1.5"
+        new_tbl = tbl.add(columns, -1)
+        new_list = new_tbl.df.take(3)
+        assert len(new_list) == 3, "new_tbl should have 3 rows"
+        assert new_list[0]['age'] == 13, "the age of jack should decrease 1"
+        assert new_list[0]['height'] == 7.5, "the height of jack should decrease 1"
+        assert new_list[1]['age'] == 24, "the age of alice should decrease 1"
+        assert new_list[1]['height'] == 8.6, "the height of alice should decrease 1"
+        assert new_list[2]['age'] == 22, "the age of rose should decrease 1"
+        assert new_list[2]['height'] == 9.0, "the height of rose should decrease 1"
 
     def test_sample(self):
         spark = OrcaContext.get_spark_session()
