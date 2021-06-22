@@ -236,7 +236,7 @@ Run the example with SGX and standalone mode with the following command in the t
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
 	-cp '/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
 	-Xmx1g org.apache.spark.deploy.SparkSubmit \
-	--master 'spark://192.168.0.111:7077' \
+	--master 'spark://your_master_url' \
 	--conf spark.authenticate=true \
   --conf spark.authenticate.secret=your_secret_key \
 	/ppml/trusted-big-data-ml/work/spark-2.4.3/examples/src/main/python/pi.py" | tee test-pi-sgx.log
@@ -263,7 +263,7 @@ Run the example with SGX and standalone mode with the following command in the t
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
 	-cp '/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
 	-Xmx1g org.apache.spark.deploy.SparkSubmit \
-	--master 'spark://192.168.0.111:7077' \
+	--master 'spark://your_master_url' \
 	--conf spark.authenticate=true \
   --conf spark.authenticate.secret=your_secret_key \
 	/ppml/trusted-big-data-ml/work/spark-2.4.3/examples/src/main/python/wordcount.py ./work/examples/helloworld.py" | tee test-wordcount-sgx.log
@@ -292,7 +292,7 @@ Run the example with SGX and standalone mode with the following command in the t
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
 	-cp '/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
 	-Xmx1g org.apache.spark.deploy.SparkSubmit \
-	--master 'spark://192.168.0.111:7077' \
+	--master 'spark://your_master_url' \
 	--conf spark.authenticate=true \
   --conf spark.authenticate.secret=your_secret_key \
 	/ppml/trusted-big-data-ml/work/spark-2.4.3/examples/src/main/python/sql/basic.py" | tee test-sql-basic-sgx.log
@@ -334,7 +334,7 @@ SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
   '/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
   -Xmx8g \
   org.apache.spark.deploy.SparkSubmit \
-  --master 'spark://192.168.0.111:7077' \
+  --master 'spark://your_master_url' \
   --conf spark.authenticate=true \
   --conf spark.authenticate.secret=your_secret_key \
   --conf spark.driver.memory=8g \
@@ -379,7 +379,7 @@ SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=your_IP_address && /opt/jdk8
     '/ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
   -Xmx2g \
   org.apache.spark.deploy.SparkSubmit \
-  --master 'spark://192.168.0.111:7077' \
+  --master 'spark://your_master_url' \
   --conf spark.authenticate=true \
   --conf spark.authenticate.secret=your_secret_key \
   --conf spark.driver.memory=2g \
