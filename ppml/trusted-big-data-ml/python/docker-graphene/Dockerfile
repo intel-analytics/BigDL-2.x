@@ -174,8 +174,10 @@ ADD ./start-spark-standalone-worker-sgx.sh /ppml/trusted-big-data-ml/start-spark
 ADD ./start-spark-standalone-driver-sgx.sh /ppml/trusted-big-data-ml/start-spark-standalone-driver-sgx.sh
 ADD ./ppml-spark-submit.sh /ppml/trusted-big-data-ml/ppml-spark-submit.sh
 ADD ./check-status.sh /ppml/trusted-big-data-ml/check-status.sh
+ADD tracker.py /ppml/trusted-big-data-ml/tracker.py
 
-RUN chmod a+x /ppml/trusted-big-data-ml/init.sh && \
+RUN jar -uf /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar /ppml/trusted-big-data-ml/tracker.py && \
+    chmod a+x /ppml/trusted-big-data-ml/init.sh && \
     chmod a+x /ppml/trusted-big-data-ml/clean.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-local-train-sgx.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-master-sgx.sh && \
