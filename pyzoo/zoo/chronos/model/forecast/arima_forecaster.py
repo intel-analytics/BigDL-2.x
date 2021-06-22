@@ -109,21 +109,18 @@ class ARIMAForecaster(Forecaster):
             raise RuntimeError("You must call fit or restore first before calling predict!")
         return self.internal.predict(horizon=horizon, rolling=rolling)
 
-    def evaluate(self, data, validation_data, metrics=['mse'], rolling=False):
+    def evaluate(self, validation_data, metrics=['mse'], rolling=False):
         """
         Evaluate using a trained forecaster.
 
-        :param data: We don't support input data currently.
         :param validation_data: A 1-D numpy array as the evaluation data
         :param metrics: A list contains metrics for test/valid data.
         """
-        if data is not None:
-            raise ValueError("We don't support input data currently")
         if validation_data is None:
             raise ValueError("Input invalid validation_data of None")
         if self.internal.model is None:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate(data, validation_data, metrics=metrics, rolling=rolling)
+        return self.internal.evaluate(validation_data, metrics=metrics, rolling=rolling)
 
     def save(self, checkpoint_file):
         """

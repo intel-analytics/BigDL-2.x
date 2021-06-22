@@ -54,7 +54,7 @@ class TestChronosModelARIMAForecaster(TestCase):
         # test rolling predict
         test_rolling_pred = forecaster.predict(len(validation_data), rolling=True)
         assert len(test_rolling_pred) == len(validation_data)
-        test_mse = forecaster.evaluate(None, validation_data)
+        test_mse = forecaster.evaluate(validation_data)
 
     def test_arima_forecaster_save_restore(self):
         data, validation_data = create_data()
@@ -89,16 +89,12 @@ class TestChronosModelARIMAForecaster(TestCase):
             forecaster.predict(horizon=len(validation_data))
 
         with pytest.raises(Exception,
-                           match="We don't support input data currently"):
-            forecaster.evaluate(data=1, validation_data=validation_data)
-
-        with pytest.raises(Exception,
                            match="Input invalid validation_data of None"):
-            forecaster.evaluate(data=None, validation_data=None)
+            forecaster.evaluate(validation_data=None)
 
         with pytest.raises(Exception,
                            match="You must call fit or restore first before calling evaluate!"):
-            forecaster.evaluate(data=None, validation_data=validation_data)
+            forecaster.evaluate(validation_data=validation_data)
 
         with pytest.raises(Exception,
                            match="You must call fit or restore first before calling save!"):
