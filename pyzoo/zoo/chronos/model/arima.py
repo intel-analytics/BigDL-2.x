@@ -31,7 +31,7 @@ class ARIMAModel(BaseModel):
         """
         Initialize Model
         """
-        self.seasonal= True
+        self.seasonal = True
         self.metric = 'mse'
         self.model = None
         self.model_init = False
@@ -50,13 +50,13 @@ class ARIMAModel(BaseModel):
         Q = config.get('Q', 1)
         m = config.get('m', 7)
         self.metric = config.get('metric', self.metric)
-        
+
         order = (p, d, q)
         if not self.seasonal:
             seasonal_order = (0, 0, 0, 0)
         else:
             seasonal_order = (P, D, Q, m)
-            
+
         self.model = ARIMA(order=order, seasonal_order=seasonal_order, suppress_warnings=True)
 
     def fit_eval(self, data, validation_data, **config):
@@ -66,6 +66,7 @@ class ARIMAModel(BaseModel):
         :param validation_data: A 1-D numpy array as the evaluation data
         :return: the evaluation metric value
         """
+        
         if not self.model_init
             # Estimating differencing term (d) and seasonal differencing term (D)
             kpss_diffs = ndiffs(data, alpha=0.05, test='kpss', max_d=6)
@@ -73,8 +74,7 @@ class ARIMAModel(BaseModel):
             d = max(adf_diffs, kpss_diffs)
             D = 0 if not self.seasonal else nsdiffs(data, m=7, max_D=12)
             config.update(d=d, D=D)
-
-        if not self.model_init:
+            
             self._build(**config)
             self.model_init = True
 

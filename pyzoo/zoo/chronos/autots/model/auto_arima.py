@@ -39,30 +39,32 @@ class AutoARIMA:
                  ):
         """
         Create an automated ARIMA Model
-        
+
         :param p: Int or hp sampling function from an integer space for hyperparameter p
                of the ARIMA model, for details you may refer to
-               https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA. 
-               For hp sampling, see zoo.chronos.orca.automl.hp for more details. e.g. hp.randint(0, 3).
+               https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA.
+               For hp sampling, see zoo.chronos.orca.automl.hp for more details.
+               e.g. hp.randint(0, 3).
         :param q: Int or hp sampling function from an integer space for hyperparameter q
                of the ARIMA model, for details you may refer to
                https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA.
                e.g. hp.randint(0, 3).
-        :param seasonal: Bool or hp sampling function from an integer space for whether to add seasonal components 
-               to the ARIMA model, for details you may refer to
+        :param seasonal: Bool or hp sampling function from an integer space for whether to add
+               seasonal components to the ARIMA model, for details you may refer to
                https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA.
                e.g. hp.choice([True, False]).
         :param P: Int or hp sampling function from an integer space for hyperparameter P
                of the ARIMA model, for details you may refer to
-               https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA. 
-               For hp sampling, see zoo.chronos.orca.automl.hp for more details. e.g. hp.randint(0, 3).
+               https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA.
+               For hp sampling, see zoo.chronos.orca.automl.hp for more details.
+               e.g. hp.randint(0, 3).
         :param Q: Int or hp sampling function from an integer space for hyperparameter Q
                of the ARIMA model, for details you may refer to
                https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA.
                e.g. hp.randint(0, 3).
         :param m: Int or hp sampling function from an integer space for hyperparameter p
                of the ARIMA model, for details you may refer to
-               https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA. 
+               https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA.
                e.g. hp.choice([4, 7, 12, 24, 365]).
         :param metric: String. The evaluation metric name to optimize. e.g. "mse"
         :param logs_dir: Local directory to save logs and results. It defaults to
@@ -70,9 +72,9 @@ class AutoARIMA:
         :param cpus_per_trial: Int. Number of cpus for each trial. It defaults to 1.
         :param name: name of the AutoARIMA. It defaults to "auto_arima"
         :param arima_config: Other ARIMA hyperparameters. You may refer to
-               https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning for 
+               https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning for
                the parameter names to specify.
-        
+
         """
         self.search_space = {
             "p": p,
@@ -88,6 +90,7 @@ class AutoARIMA:
                                       logs_dir=logs_dir,
                                       resources_per_trial={"cpu": cpus_per_trial},
                                       name=name)
+    
     def fit(self,
             data,
             epochs=1,

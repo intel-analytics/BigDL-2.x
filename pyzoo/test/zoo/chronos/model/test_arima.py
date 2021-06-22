@@ -49,18 +49,18 @@ class TestARIMAModel(ZooTestCase):
 
     def test_arima(self):
         # test fit_eval
-        evaluate_result = self.model.fit_eval(data=self.data, 
-                                              validation_data=self.validation_data, 
+        evaluate_result = self.model.fit_eval(data=self.data,
+                                              validation_data=self.validation_data,
                                               **self.config
                                               )
         # test predict
-        result = self.model.predict(x=None, horizon=self.horizon)
+        result = self.model.predict(horizon=self.horizon)
         assert len(result) == self.horizon
         # test evaluate
         evaluate_result = self.model.evaluate(target=self.validation_data, metrics=['mae', 'smape'])
         assert len(evaluate_result) == 2
         # test rolling predict
-        rolling_result = self.model.predict(x=None, horizon=self.horizon, rolling=True)
+        rolling_result = self.model.predict(horizon=self.horizon, rolling=True)
         assert len(rolling_result) == self.horizon
 
     def test_error(self):
@@ -75,10 +75,10 @@ class TestARIMAModel(ZooTestCase):
 
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling predict"):
-            self.model.predict(x=None, horizon=self.horizon)
+            self.model.predict(horizon=self.horizon)
 
         with pytest.raises(Exception,
-                           match=\
+                           match=
                            "We don't support updating model without rolling prediction currently"
                            ):
             self.model.predict(horizon=self.horizon, update=True, rolling=False)
@@ -94,7 +94,7 @@ class TestARIMAModel(ZooTestCase):
 
     def test_save_restore(self):
         self.model.fit_eval(data=self.data, validation_data=self.validation_data, **self.config)
-        result_save = self.model.predict(x=None, horizon=self.horizon, rolling=False)
+        result_save = self.model.predict(horizon=self.horizon, rolling=False)
         model_file = "tmp.pkl"
 
         self.model.save(model_file)
@@ -102,7 +102,7 @@ class TestARIMAModel(ZooTestCase):
         new_model = ARIMAModel()
         new_model.restore(model_file)
         assert new_model.model
-        result_restore = new_model.predict(x=None, horizon=self.horizon, rolling=False)
+        result_restore = new_model.predict(horizon=self.horizon, rolling=False)
         assert_array_almost_equal(result_save, result_restore, decimal=2), \
             "Prediction values are not the same after restore: " \
             "predict before is {}, and predict after is {}".format(result_save, result_restore)
