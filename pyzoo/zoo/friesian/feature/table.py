@@ -332,14 +332,13 @@ class Table:
         """
         Return a sampled subset of Table.
 
-        :param fraction: float, fraction of rows to generate, fraction should be
-        within the range [0, 1].
+        :param fraction: float, fraction of rows to generate, should be within the 
+        range [0, 1].
         :param replace: allow or disallow sampling of the same row more than once.
         :param seed: seed for sampling.
 
         return: A new Table with sampled rows.
         """
-
         return self._clone(self.df.sample(withReplacement=replace, fraction=fraction, seed=seed))
 
     def write_parquet(self, path, mode="overwrite"):
