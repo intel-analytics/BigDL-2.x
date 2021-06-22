@@ -21,7 +21,9 @@ import io
 from torch.utils.data import Dataset, DataLoader
 import torch
 import pandas as pd
+import numpy as np
 import argparse
+from sklearn.preprocessing import MinMaxScaler
 
 
 from zoo.chronos.autots.model.auto_lstm import AutoLSTM
@@ -42,7 +44,7 @@ class AutoLSTMDataset(Dataset):
     def __getitem__(self, idx):
         X = self.data[idx:idx+self.past_seq_len, :input_feature_dim]
         y = self.data[idx+self.past_seq_len:idx+self.past_seq_len +
-                      self.future_seq_len, -output_feature_dim:]
+                      self.future_seq_len, 1:3]
         return torch.from_numpy(X).float(), torch.from_numpy(y).float()
 
     @staticmethod
@@ -56,15 +58,16 @@ class AutoLSTMDataset(Dataset):
             download_file = requests.get(url_base + url_file_path)
             file = zipfile.ZipFile(io.BytesIO(download_file.content))
             file.extractall(os.path.abspath(os.path.dirname(__file__)))
-        df = pd.read_csv(file_path, sep=';', header=0, low_memory=False, na_filter=False,
-                         infer_datetime_format=True, parse_dates={'datetime': [0, 1]},
-                         index_col=['datetime'], nrows=2000)
+        df = pd.read_csv(file_path, sep=';', header=0, low_memory=False,
+                         infer_datetime_format=True, parse_dates={'datetime': [0, 1]}, index_col=['datetime'], nrows=2000)
         df.dropna(axis=0, how='any', inplace=True)
-        data = df.astype('float32')
-        train_dataset, valid_dataset = data[:1600], data[1600:]
-        dataset = (train_dataset if data_selection ==
-                   'train' else valid_dataset)
-        return dataset.values
+        df.astype('float32')
+        train_dataset, valid_dataset = mm.fit_transform(
+            df[:1600]), mm.transform(df[1600:])
+        if data_selection == 'train':
+            return train_dataset
+        else:
+            return valid_dataset
 
 
 def train_dataloader_creator(config):
@@ -108,7 +111,7 @@ if __name__ == '__main__':
 
     input_feature_dim = 7
     output_feature_dim = 2
-
+    mm = MinMaxScaler()
     auto_lstm = AutoLSTM(input_feature_num=7,
                          output_target_num=2,
                          optimizer='Adam',
@@ -128,11 +131,12 @@ if __name__ == '__main__':
                   n_sampling=args.n_sampling,
                   )
     best_model = auto_lstm.get_best_model()
-    best_model_rmse = best_model._validate(
-        valid_dataloader_creator(best_model.config), metric='rmse')
-    print(f'Evaluation result is {best_model_rmse["rmse"]:.2f}')
+    tsdata_x, tsdata_y = next(
+        iter(valid_dataloader_creator(best_model.config)))
+    mse, smape = best_model.evaluate(x=np.array(
+        tsdata_x), y=np.array(tsdata_y), metrics=['mse', 'smape'])
+    print(f'mse is {np.mean(mse)}, smape is {np.mean(smape)}')
     print(
         f"The hyperparameters of the model include lr:{best_model.config['lr']},"
-        "dropout:{best_model.config['dropout']}, batch_size:{best_model.config['batch_size']}")
-
+        f"dropout:{best_model.config['dropout']}, batch_size:{best_model.config['batch_size']}")
     stop_orca_context()
