@@ -302,7 +302,7 @@ class Table:
         :param columns: str or list of str, the target columns to be increased.
         :param value: numeric (int/float/double/short/long), the constant value to be added.
 
-        return: A new Table that update values of specified columns by a constant value.
+        return: A new Table with update numeric values on specified columns.
         """
         if columns is None:
             raise ValueError("Columns should be str or list of str, but got None")
@@ -314,7 +314,8 @@ class Table:
             if new_df.schema[column].dataType not in [IntegerType(), ShortType(),
                                                       LongType(), FloatType(),
                                                       DecimalType(), DoubleType()]:
-                raise ValueError("column type should be numeric, but have type ", new_df.schema[column].dataType)
+                raise ValueError("column type should be numeric, but have type {columns}".
+                                 format(columns=new_df.schema[column].dataType))
             new_df = new_df.withColumn(column, pyspark_col(column) + lit(value))
         return self._clone(new_df)
 
@@ -332,13 +333,13 @@ class Table:
         Return a sampled subset of Table.
 
         :param fraction: float, fraction of rows to generate.
-        :param replace: allow or disallow sampling of the same row more than once. 
+        :param replace: allow or disallow sampling of the same row more than once.
         :param seed: seed for sampling.
 
         return: a sampled subset of Table
         """
         if fraction < 0 or fraction > 1:
-            raise ValueError("fraction should in the range of [0, 1]")
+            raise ValueError("fraction should be within the range of [0, 1]")
         return self._clone(self.df.sample(withReplacement=replace, fraction=fraction, seed=seed))
 
     def write_parquet(self, path, mode="overwrite"):
