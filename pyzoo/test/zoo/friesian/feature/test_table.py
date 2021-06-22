@@ -372,7 +372,8 @@ class TestTable(TestCase):
             .withColumn("category", col("category").cast("Integer"))
         tbl = FeatureTable(df)
         tbl2 = tbl.add_neg_hist_seq(9, "item_hist_seq", 4)
-        tbl3 = tbl2.add_value_features(["item_hist_seq", "neg_item_hist_seq"], FeatureTable(df2))
+        tbl3 = tbl2.add_value_features(["item_hist_seq", "neg_item_hist_seq"],
+                                       FeatureTable(df2), "item", "category")
         assert tbl3.df.select("category_hist_seq").count() == 3
         assert tbl3.df.select("neg_category_hist_seq").count() == 3
         assert tbl3.df.filter("name like '%alice%'").select("neg_category_hist_seq").count() == 1
@@ -396,21 +397,6 @@ class TestTable(TestCase):
         assert tbl2.df.filter("size(list_mask) = 4").count() == 3
         assert tbl2.df.filter("size(list_mask) = 2").count() == 0
         assert "list_mask" in tbl2.df.columns
-
-    def test_add_length(self):
-        spark = OrcaContext.get_spark_session()
-        data = [("jack", [1, 2, 3, 4, 5]),
-                ("alice", [4, 5, 6, 7, 8]),
-                ("rose", [1, 2])]
-        schema = StructType([StructField("name", StringType(), True),
-                             StructField("history", ArrayType(IntegerType()), True)])
-
-        df = spark.createDataFrame(data, schema)
-        tbl = FeatureTable(df)
-        tbl = tbl.add_col_length("history")
-        assert "history_length" in tbl.df.columns
-        assert tbl.df.filter("history_length = 5").count() == 2
-        assert tbl.df.filter("history_length = 2").count() == 1
 
     def test_median(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
