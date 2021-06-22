@@ -66,6 +66,7 @@ class ClusterServingInference() extends Supportive{
     preProcessed.filter(x => x._2 != null)
   }
   def singleThreadInference(in: List[(String, Activity)]): List[(String, String)] = {
+    newLogger.info(s"Predict starts at time ${System.currentTimeMillis()}")
     if (cnt > 1000){
       val servingMetrics = ServingTimerMetrics("predict", timer)
       val jsonMetrics = JsonUtil.toJson(servingMetrics)
