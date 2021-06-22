@@ -19,6 +19,7 @@ import pytest
 import tempfile
 from unittest import TestCase
 
+from pyspark.sql.functions import udf, struct
 from pyspark.sql.functions import col, max, min, array
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
 
@@ -98,6 +99,77 @@ class TestTable(TestCase):
                                                                    "filled"
         assert filled_tbl.df.filter("col_5 is null").count() == 0, "col_5 null values should be " \
                                                                    "filled"
+
+    def test_hash_encoder(self):
+        import hashlib
+        import pandas as pd
+        spark = OrcaContext.get_spark_session()
+        """
+        data: read data from input
+        schema: define the structType for spark dataframe popuse
+        df: create spark data frame
+        sum_cols: based on reco.py, set a udf function to implement sum of cols
+        """
+        data = [("a", "b", 1),
+                ("b", "a", 2),
+                ("a", "c", 3),
+                ("c", "c", 2),
+                ("b", "a", 1),
+                ("a", "d", 1)]
+        schema = StructType([StructField("A", StringType(), True),
+                             StructField("B", StringType(), True),
+                             StructField("C", IntegerType(), True)])
+        df = spark.createDataFrame(data, schema)
+        tbl = FeatureTable(df)
+        """
+        define columns sum operation by UDF
+        """
+        sum_cols = udf(lambda x: x[0] + x[1], StringType())
+        """
+        convert pd df vision to spark RDD vision
+        """
+        se = (
+            df.select(df["A"], df["B"])
+            .withColumn('Result', sum_cols(struct('A', 'B')))
+            .rdd
+            .map(lambda x: str(x).encode(encoding='utf_8', errors='strict'))
+            .map(getattr(hashlib, "md5"))
+            .map(lambda x: x.hexdigest())
+            .map(lambda x: int(x, 16))
+            .map(lambda x: x % 100)
+        )
+        """
+        convert pipelineRDD to spark df
+        """
+        schema1 = StructType([StructField("conversion", StringType(), True)])
+        se1 = spark.createDataFrame([se], schema=schema1)
+        """
+        create spark datafrome for encode
+        """
+        encoded = spark.createDataFrame(pd.DataFrame(
+            np.zeros((se1.count(), 100)),
+            columns=["cross_" + str(i) for i in range(100)],
+        ))
+        """
+        mirror of pandas.iloc in spark df
+        """
+        def getrows(encoded, rownums=None):
+            return encoded\
+                .rdd\
+                .zipWithIndex()\
+                .filter(lambda x: x[1] in rownums)\
+                .map(lambda x: x[0])
+        """
+        get location in df and set value to 1
+        """
+        for i, c in enumerate(se1):
+           getrows(encoded, rownums=[i, c]) == 1
+        """
+        call futureTable and make comparison
+        """
+        tbl = tbl.hash_encoder(["A", "B"], 100, "cross")
+        assert encoded.count() == tbl.to_spark_df().count() == 1
+
 
     def test_gen_string_idx(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
