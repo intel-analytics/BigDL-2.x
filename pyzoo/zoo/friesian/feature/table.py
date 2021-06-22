@@ -652,17 +652,27 @@ class FeatureTable(Table):
         df = self.df.withColumn(out_col, udf_func(pyspark_col(in_col)))
         return FeatureTable(df)
 
-    def join(self, table, on=None, how=None):
+    def join(self, table, on=None, how=None, lsuffix=None, rsuffix=None):
         """
         Join a FeatureTable with another FeatureTable, it is wrapper of spark dataframe join
 
         :param table: FeatureTable
-        :param on: string, join on this column
+        :param on: string or list of string, join on this column
         :param how: string
 
         :return: FeatureTable
         """
         assert isinstance(table, Table), "the joined table should be a Table"
+        if not isinstance(on, list):
+            on = [on]
+        overlap_columns = list(set(self.df.schema.names).
+                               intersection(set(table.df.schema.names)).difference(on))
+        if lsuffix is not None:
+            names = {column: column + lsuffix for column in overlap_columns}
+            self = self.rename(names)
+        if rsuffix is not None:
+            names = {column: column + rsuffix for column in overlap_columns}
+            table = table.rename(names)
         joined_df = self.df.join(table.df, on=on, how=how)
         return FeatureTable(joined_df)
 

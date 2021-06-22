@@ -586,6 +586,18 @@ class TestTable(TestCase):
         assert tbl.drop_duplicates(["name"]).df.count() == 1
         assert tbl.drop_duplicates(["id"]).df.count() == 2
 
+    def test_join(self):
+        spark = OrcaContext.get_spark_session()
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("id", IntegerType(), True)])
+        data = [("jack", 1), ("jack", 2), ("jack", 3)]
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        tbl2 = FeatureTable(spark.createDataFrame(data, schema))
+        tbl = tbl.join(tbl2, on="id", lsuffix="_l", rsuffix="_r")
+        assert "name_l" in tbl.df.schema.names
+        assert "id" in tbl.df.schema.names
+        assert "name_r" in tbl.df.schema.names
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
