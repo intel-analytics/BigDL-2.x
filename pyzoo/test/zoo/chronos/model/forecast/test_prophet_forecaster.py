@@ -26,12 +26,12 @@ import pytest
 
 def create_data():
     seq_len = 400
-    x = pd.DataFrame(pd.date_range('20130101', periods=seq_len), columns=['ds'])
-    x.insert(1, 'y', np.random.rand(seq_len))
+    data = pd.DataFrame(pd.date_range('20130101', periods=seq_len), columns=['ds'])
+    data.insert(1, 'y', np.random.rand(seq_len))
     horizon = np.random.randint(2, 50)
-    target = pd.DataFrame(pd.date_range('20140426', periods=horizon), columns=['ds'])
-    target.insert(1, 'y', np.random.rand(horizon))
-    return x, target
+    validation_data = pd.DataFrame(pd.date_range('20140426', periods=horizon), columns=['ds'])
+    validation_data.insert(1, 'y', np.random.rand(horizon))
+    return data, validation_data
 
 
 class TestChronosModelProphetForecaster(TestCase):
@@ -43,7 +43,7 @@ class TestChronosModelProphetForecaster(TestCase):
         pass
 
     def test_prophet_forecaster_fit_eval_pred(self):
-        x, target = create_data()
+        data, validation_data = create_data()
         forecaster = ProphetForecaster(changepoint_prior_scale=0.05,
                                        seasonality_prior_scale=10.0,
                                        holidays_prior_scale=10.0,
@@ -51,13 +51,13 @@ class TestChronosModelProphetForecaster(TestCase):
                                        changepoint_range=0.8,
                                        metric="mse",
                                        )
-        train_loss = forecaster.fit(x, target)
-        test_pred = forecaster.predict(target.shape[0])
-        assert test_pred.shape[0] == target.shape[0]
-        test_mse = forecaster.evaluate(target)
+        train_loss = forecaster.fit(data, validation_data)
+        test_pred = forecaster.predict(validation_data.shape[0])
+        assert test_pred.shape[0] == validation_data.shape[0]
+        test_mse = forecaster.evaluate(validation_data)
 
     def test_prophet_forecaster_save_restore(self):
-        x, target = create_data()
+        data, validation_data = create_data()
         forecaster = ProphetForecaster(changepoint_prior_scale=0.05,
                                        seasonality_prior_scale=10.0,
                                        holidays_prior_scale=10.0,
@@ -65,17 +65,17 @@ class TestChronosModelProphetForecaster(TestCase):
                                        changepoint_range=0.8,
                                        metric="mse",
                                        )
-        train_loss = forecaster.fit(x, target)
+        train_loss = forecaster.fit(data, validation_data)
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             ckpt_name = os.path.join(tmp_dir_name, "json")
-            test_pred_save = forecaster.predict(target.shape[0])
+            test_pred_save = forecaster.predict(validation_data.shape[0])
             forecaster.save(ckpt_name)
             forecaster.restore(ckpt_name)
-            test_pred_restore = forecaster.predict(target.shape[0])
+            test_pred_restore = forecaster.predict(validation_data.shape[0])
         assert (test_pred_save['yhat']==test_pred_restore['yhat']).all()
 
     def test_prophet_forecaster_runtime_error(self):
-        x, target = create_data()
+        data, validation_data = create_data()
         forecaster = ProphetForecaster(changepoint_prior_scale=0.05,
                                        seasonality_prior_scale=10.0,
                                        holidays_prior_scale=10.0,
@@ -86,15 +86,15 @@ class TestChronosModelProphetForecaster(TestCase):
 
         with pytest.raises(Exception,
                            match="You must call fit or restore first before calling predict!"):
-            forecaster.predict(horizon=target.shape[0])
+            forecaster.predict(horizon=validation_data.shape[0])
 
         with pytest.raises(Exception,
-                           match="Input invalid target of None"):
-            forecaster.evaluate(target=None)
+                           match="Input invalid validation_data of None"):
+            forecaster.evaluate(validation_data=None)
 
         with pytest.raises(Exception,
                            match="You must call fit or restore first before calling evaluate!"):
-            forecaster.evaluate(target=target)
+            forecaster.evaluate(validation_data=validation_data)
 
         with pytest.raises(Exception,
                            match="You must call fit or restore first before calling save!"):
@@ -102,7 +102,7 @@ class TestChronosModelProphetForecaster(TestCase):
             forecaster.save(model_file)
 
     def test_prophet_forecaster_shape_error(self):
-        x, target = create_data()
+        data, validation_data = create_data()
         forecaster = ProphetForecaster(changepoint_prior_scale=0.05,
                                        seasonality_prior_scale=10.0,
                                        holidays_prior_scale=10.0,
@@ -112,7 +112,7 @@ class TestChronosModelProphetForecaster(TestCase):
                                        )
 
         with pytest.raises(AssertionError):
-            forecaster.fit(x[['ds']], target)
+            forecaster.fit(data[['ds']], validation_data)
 
         with pytest.raises(AssertionError):
-            forecaster.fit(x, target[['ds']])
+            forecaster.fit(data, validation_data[['ds']])
