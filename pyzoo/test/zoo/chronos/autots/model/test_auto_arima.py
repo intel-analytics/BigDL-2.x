@@ -42,15 +42,14 @@ class TestAutoARIMA(TestCase):
 
     def test_fit(self):
         data, validation_data = get_data()
-        search_space = {
-            "p": hp.randint(0, 4),
-            "q": hp.randint(0, 4),
-            "seasonality_mode": hp.choice([True, False]),
-            "P": hp.randint(5, 12),
-            "Q": hp.randint(5, 12),
-            "m": hp.choice([4, 7]),
-        }
-        auto_arima = AutoARIMA(metric="mse", **search_space)
+        auto_arima = AutoARIMA(metric="mse",
+                               p=hp.randint(0, 4),
+                               q=hp.randint(0, 4),
+                               seasonality_mode=hp.choice([True, False]),
+                               P=hp.randint(5, 12),
+                               Q=hp.randint(5, 12),
+                               m=hp.choice([4, 7])
+                               )
         auto_arima.fit(data=data,
                        validation_data=validation_data,
                        epochs=1,
