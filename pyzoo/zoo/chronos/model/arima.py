@@ -66,15 +66,15 @@ class ARIMAModel(BaseModel):
         :param validation_data: A 1-D numpy array as the evaluation data
         :return: the evaluation metric value
         """
-        
-        if not self.model_init
+
+        if not self.model_init:
             # Estimating differencing term (d) and seasonal differencing term (D)
             kpss_diffs = ndiffs(data, alpha=0.05, test='kpss', max_d=6)
             adf_diffs = ndiffs(data, alpha=0.05, test='adf', max_d=6)
             d = max(adf_diffs, kpss_diffs)
             D = 0 if not self.seasonal else nsdiffs(data, m=7, max_D=12)
             config.update(d=d, D=D)
-            
+
             self._build(**config)
             self.model_init = True
 

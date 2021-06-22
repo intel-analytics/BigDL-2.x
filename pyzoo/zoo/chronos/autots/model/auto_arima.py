@@ -90,7 +90,7 @@ class AutoARIMA:
                                       logs_dir=logs_dir,
                                       resources_per_trial={"cpu": cpus_per_trial},
                                       name=name)
-    
+
     def fit(self,
             data,
             epochs=1,
