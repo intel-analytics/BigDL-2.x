@@ -575,7 +575,7 @@ class TestTable(TestCase):
             "the number of rows should be half"
         total_distinct_line = feature_tbl2.distinct().size()
         assert total_line_2 == total_distinct_line, "all rows should be distinct"
-        
+
     def test_group_by(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data2.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
