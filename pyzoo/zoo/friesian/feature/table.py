@@ -294,11 +294,11 @@ class Table:
 
     def min_max(self, columns):
         """
-        Calculate min and max statistics of specific columns.
+        Calculate min and max statistics of target columns.
 
         :param columns: str or list of str, specifies the target columns to be calculated.
 
-        return: dict, format as {column -> (min, max)}.
+        return: dict, with format {column -> (min, max)}.
         """
         if columns is None:
             raise ValueError("Columns should be str or list of str, but got None")
@@ -314,9 +314,9 @@ class Table:
 
     def convert_to_list(self, column):
         """
-        Convert a specefic column to a list.
+        Convert the target column to a list.
 
-        :param column: str, specifies the target column.
+        :param column: str, specifies the name of target column.
 
         return: list, contains all values of a specific column.
         """
@@ -325,11 +325,12 @@ class Table:
 
     def convert_to_dict(self, column):
         """
-        Convert the table into a dictionary, the table must be small.
+        Convert the Table into a dictionary, the Table must be small.
 
-        :param column: str, used as a key of the dictionary, must be a column of the table.
+        :param column: str, itentifies the key of the dictionary, 
+        must be a column of the Table.
 
-        return: dict, as format {key -> {column name -> value}}.
+        return: dict, with format {key -> {column name -> value}}.
         """
         check_col_exists(self.df, [column])
         if len(set(self.convert_to_list(column))) != len(set(self.convert_to_list(column))):
