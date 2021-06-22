@@ -118,14 +118,14 @@ class ARIMAModel(BaseModel):
 
         return forecasts
 
-    def evaluate(self, x, target, metrics=['mse'], rolling=False):
+    def evaluate(self, target, x=None, metrics=['mse'], rolling=False):
         """
         Evaluate on the prediction results and y. We predict horizon time-points ahead the input x
         in fit_eval before evaluation, where the horizon length equals the second dimension size of
         y.
+        :param target: target for evaluation.
         :param x: ARIMA predicts the horizon steps foreward from the training data.
             So x should be None as it is not used.
-        :param target: target for evaluation.
         :param metrics: a list of metrics in string format
         :param rolling: whether to use rolling prediction
         :return: a list of metric evaluation results

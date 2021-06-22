@@ -57,7 +57,7 @@ class TestARIMAModel(ZooTestCase):
         result = self.model.predict(x=None, horizon=self.horizon)
         assert len(result) == self.horizon
         # test evaluate
-        evaluate_result = self.model.evaluate(x=None, target=self.validation_data, metrics=['mae', 'smape'])
+        evaluate_result = self.model.evaluate(target=self.validation_data, metrics=['mae', 'smape'])
         assert len(evaluate_result) == 2
         # test rolling predict
         rolling_result = self.model.predict(x=None, horizon=self.horizon, rolling=True)
@@ -68,10 +68,10 @@ class TestARIMAModel(ZooTestCase):
             self.model.predict(x=1)
 
         with pytest.raises(ValueError, match="We don't support input x currently"):
-            self.model.evaluate(x=1, target=self.validation_data)
+            self.model.evaluate(target=self.validation_data, x=1)
 
         with pytest.raises(ValueError, match="Input invalid target of None"):
-            self.model.evaluate(x=None, target=None)
+            self.model.evaluate(target=None)
 
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling predict"):
@@ -85,7 +85,7 @@ class TestARIMAModel(ZooTestCase):
 
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling evaluate"):
-            self.model.evaluate(x=None, target=self.validation_data)
+            self.model.evaluate(target=self.validation_data, x=None)
 
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling save"):
