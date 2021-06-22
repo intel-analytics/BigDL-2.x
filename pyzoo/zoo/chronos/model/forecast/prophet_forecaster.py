@@ -74,53 +74,49 @@ class ProphetForecaster(Forecaster):
 
         super().__init__()
 
-    def fit(self, x, target):
+    def fit(self, data, validation_data):
         """
         Fit(Train) the forecaster.
 
-        :param x: training data, a dataframe with Td rows,
+        :param data: training data, a pandas dataframe with Td rows,
             and 2 columns, with column 'ds' indicating date and column 'y' indicating value
             and Td is the time dimension
-        :param target: evaluation data, should be the same type as x
+        :param validation_data: evaluation data, should be the same type as x
         """
-        self._check_data(x, target)
-        data = {'x': x, 'y': None, 'val_x': None, 'val_y': target}
-        return self.internal.fit_eval(data=data,
+        self._check_data(data, validation_data)
+        data_dict = {'x': data, 'y': None, 'val_x': None, 'val_y': validation_data}
+        return self.internal.fit_eval(data=data_dict,
                                       **self.model_config)
 
-    def _check_data(self, x, target):
-        assert 'ds' in x.columns and 'y' in x.columns, \
-            "x should be a dataframe that has at least 2 columns 'ds' and 'y'."\
+    def _check_data(self, data, validation_data):
+        assert 'ds' in data.columns and 'y' in data.columns, \
+            "data should be a pandas dataframe that has at least 2 columns 'ds' and 'y'."\
             .format(x.ndim)
-        assert 'ds' in target.columns and 'y' in target.columns, \
-            "target should be a dataframe that has at least 2 columns 'ds' and 'y'."\
-            .format(x.ndim)
+        assert 'ds' in validation_data.columns and 'y' in validation_data.columns, \
+            "validation_data should be a dataframe that has at least 2 columns 'ds' and 'y'."
 
     def predict(self, horizon):
         """
         Predict using a trained forecaster.
 
         :param horizon: the number of steps forward to predict
-        :param rolling: whether to use rolling prediction
         """
         if self.internal.model is None:
             raise RuntimeError("You must call fit or restore first before calling predict!")
         return self.internal.predict(horizon=horizon)
 
-    def evaluate(self, target, x=None, metrics=['mse']):
+    def evaluate(self, validation_data, metrics=['mse']):
         """
         Evaluate using a trained forecaster.
 
-        :param target: evaluation data, a dataframe with Td rows,
+        :param validation_data: evaluation data, a pandas dataframe with Td rows,
             and 2 columns, with column 'ds' indicating date and column 'y' indicating value
             and Td is the time dimension
         :param x: We don't support input x currently.
         :param metrics: A list contains metrics for test/valid data.
         """
-        if x is not None:
-            raise ValueError("We don't support input x currently")
-        if target is None:
-            raise ValueError("Input invalid target of None")
+        if validation_data is None:
+            raise ValueError("Input invalid validation_data of None")
         if self.internal.model is None:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
         return self.internal.evaluate(x, target, metrics=metrics)
