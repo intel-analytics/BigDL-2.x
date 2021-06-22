@@ -831,6 +831,7 @@
                                 </includes>
                                 <excludes>
                                     <exclude>org.apache.spark:*</exclude>
+                                    <exclude>net.sf.py4j:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -852,6 +853,7 @@
                                 <excludes>
                                     <exclude>org.scala-lang:scala-library</exclude>
                                     <exclude>org.apache.spark:*</exclude>
+                                    <exclude>net.sf.py4j:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -933,6 +935,7 @@
                                     <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
                                     <exclude>org.apache.spark:*</exclude>
+                                    <exclude>net.sf.py4j:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
