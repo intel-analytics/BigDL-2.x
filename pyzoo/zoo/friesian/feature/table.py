@@ -302,7 +302,7 @@ class Table:
         :param columns: str or list of str, the target columns to be increased.
         :param value: numeric (int/float/double/short/long), the constant value to be added.
 
-        return: A new Table with update numeric values on specified columns.
+        :return: A new Table with updated numeric values on specified columns.
         """
         if columns is None:
             raise ValueError("Columns should be str or list of str, but got None")
@@ -314,8 +314,8 @@ class Table:
             if new_df.schema[column].dataType not in [IntegerType(), ShortType(),
                                                       LongType(), FloatType(),
                                                       DecimalType(), DoubleType()]:
-                raise ValueError("Column type should be numeric, but have type {type} \
-                    for column {column}".format(new_df.schema[column].dataType, column))
+                raise ValueError("Column type should be numeric, but have type {} \
+                    for column {}".format(new_df.schema[column].dataType, column))
             new_df = new_df.withColumn(column, pyspark_col(column) + lit(value))
         return self._clone(new_df)
 
@@ -324,7 +324,7 @@ class Table:
         """
         Get column names of the Table.
 
-        :return: A list of strings that specifies column names.
+        :return: A list of strings that specify column names.
         """
         return self.__column_names
 
@@ -332,12 +332,12 @@ class Table:
         """
         Return a sampled subset of Table.
 
-        :param fraction: float, fraction of rows to generate, should be within the 
+        :param fraction: float, fraction of rows to generate, should be within the
         range [0, 1].
         :param replace: allow or disallow sampling of the same row more than once.
         :param seed: seed for sampling.
 
-        return: A new Table with sampled rows.
+        :return: A new Table with sampled rows.
         """
         return self._clone(self.df.sample(withReplacement=replace, fraction=fraction, seed=seed))
 
