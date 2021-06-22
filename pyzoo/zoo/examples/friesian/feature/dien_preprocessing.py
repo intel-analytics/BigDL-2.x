@@ -85,11 +85,9 @@ if __name__ == "__main__":
                           conf=conf)
 
     begin = time.time()
-
-    # read review datavi run.sh
     transaction_tbl = FeatureTable.read_json(args.input_transaction).select(
         ['reviewerID', 'asin', 'unixReviewTime']) \
-        .rename({'reviewerID': 'user', 'asin': 'item','unixReviewTime': 'time'}) \
+        .rename({'reviewerID': 'user', 'asin': 'item', 'unixReviewTime': 'time'}) \
         .dropna(columns=['user', 'item'])
     print("transaction_tbl, ", transaction_tbl.size())
 
@@ -129,7 +127,7 @@ if __name__ == "__main__":
              'neg_item_hist_seq', 'neg_category_hist_seq'],
              seq_len=100,
              mask_cols=['item_hist_seq']) \
-        .apply("item_hist_seq","item_hist_seq_len", len, "int") \
+        .apply("item_hist_seq", "item_hist_seq_len", len, "int") \
         .apply("label", "label", trans_label, "array<float>")
 
     # write out
