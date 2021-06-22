@@ -129,7 +129,7 @@ RUN mkdir -p /opt/analytics-zoo-examples/python && \
     apt-get install -y build-essential python3 python3-setuptools python3-dev python3-pip && \
     pip3 install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir --upgrade setuptools && \
-    pip install --no-cache-dir numpy scipy && \
+    pip install --no-cache-dir numpy==1.18.1 scipy && \
     pip install --no-cache-dir pandas==1.0.3 && \
     pip install --no-cache-dir scikit-learn matplotlib seaborn jupyter jupyterlab requests h5py tensorflow==1.15.0 && \
     ln -s /usr/bin/python3 /usr/bin/python && \
