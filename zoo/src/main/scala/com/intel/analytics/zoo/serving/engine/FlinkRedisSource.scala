@@ -57,6 +57,7 @@ class FlinkRedisSource(params: ClusterServingHelper)
       false,
       new SimpleEntry(params.jobName, StreamEntryID.UNRECEIVED_ENTRY))
     if (response != null) {
+      logger.info(s"Flink source gets redis result at time ${System.currentTimeMillis()}")
       for (streamMessages <- response.asScala) {
         val key = streamMessages.getKey
         val entries = streamMessages.getValue.asScala
