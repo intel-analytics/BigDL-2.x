@@ -19,15 +19,13 @@ import numpy as np
 import pandas as pd
 from functools import reduce
 
-from pyspark.sql.types import DoubleType, ArrayType
+from pyspark.sql.types import DoubleType, ArrayType, StringType, IntegerType
+from pyspark.sql.types import StructType, StructField
 from pyspark.ml import Pipeline
 from pyspark.sql import Row
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
 from pyspark.sql.functions import col, udf, array, broadcast, explode, struct, collect_list
-
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType
-
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
@@ -329,17 +327,18 @@ class FeatureTable(Table):
                 .drop(col_name).withColumnRenamed("id", col_name)\
                 .dropna(subset=[col_name])
         return FeatureTable(data_df)
-
-    """
-    Add Filter Freq
-    """  
+ 
     def freq_filter(self, columns, min_freq=2):
+        '''
+        Filter Data by given min frequency
+        :param columns: str list, column names which are considered for filtering
+        :param min_freq: int, min frequency
+        :return: a Data which is filtered
+        '''
         if not isinstance(columns, list):
             columns = [columns]
-
         freq_df = self.df
         spark = OrcaContext.get_spark_session()
-
         sum_cols = udf(lambda x: x[0] + x[1], StringType())
         key = (
             freq_df.select(freq_df[columns[0]], freq_df[columns[1]])
@@ -347,10 +346,7 @@ class FeatureTable(Table):
             )
         group = key.groupby(['key']).count()
         return FeatureTable(group.filter("count>=2"))
-
-    """
-    Add Hash Encoder
-    """
+  
     def hash_encoder(self, columns, bins, prefix, method='md5'):
         '''
         Hash encode for given columns
@@ -363,12 +359,9 @@ class FeatureTable(Table):
         '''
         hash_df = self.df
         spark = OrcaContext.get_spark_session()
-
         sum_cols = udf(lambda x: x[0] + x[1], StringType())
-
         if not isinstance(columns, list):
             columns = [columns]
-
         cross = (hash_df.select(hash_df[columns[0]], hash_df[columns[1]])
                  .withColumn("sum_cols", sum_cols(struct(columns[0], columns[1])))
                  .rdd
@@ -383,7 +376,6 @@ class FeatureTable(Table):
         encoded = spark.createDataFrame(pd.DataFrame(np.zeros((cross1.count(), bins))
                                , columns=[prefix + '_' + str(i) for i in range(bins)]))
         return FeatureTable(encoded)
-
 
     def gen_string_idx(self, columns, freq_limit):
         """

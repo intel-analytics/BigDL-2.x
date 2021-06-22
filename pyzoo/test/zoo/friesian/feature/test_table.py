@@ -104,12 +104,6 @@ class TestTable(TestCase):
         import hashlib
         import pandas as pd
         spark = OrcaContext.get_spark_session()
-        """
-        data: read data from input
-        schema: define the structType for spark dataframe popuse
-        df: create spark data frame
-        sum_cols: based on reco.py, set a udf function to implement sum of cols
-        """
         data = [("a", "b", 1),
                 ("b", "a", 2),
                 ("a", "c", 3),
@@ -121,13 +115,7 @@ class TestTable(TestCase):
                              StructField("C", IntegerType(), True)])
         df = spark.createDataFrame(data, schema)
         tbl = FeatureTable(df)
-        """
-        define columns sum operation by UDF
-        """
         sum_cols = udf(lambda x: x[0] + x[1], StringType())
-        """
-        convert pd df vision to spark RDD vision
-        """
         se = (
             df.select(df["A"], df["B"])
             .withColumn('Result', sum_cols(struct('A', 'B')))
@@ -138,38 +126,22 @@ class TestTable(TestCase):
             .map(lambda x: int(x, 16))
             .map(lambda x: x % 100)
         )
-        """
-        convert pipelineRDD to spark df
-        """
         schema1 = StructType([StructField("conversion", StringType(), True)])
         se1 = spark.createDataFrame([se], schema=schema1)
-        """
-        create spark datafrome for encode
-        """
         encoded = spark.createDataFrame(pd.DataFrame(
             np.zeros((se1.count(), 100)),
             columns=["cross_" + str(i) for i in range(100)],
         ))
-        """
-        mirror of pandas.iloc in spark df
-        """
         def getrows(encoded, rownums=None):
             return encoded\
                 .rdd\
                 .zipWithIndex()\
                 .filter(lambda x: x[1] in rownums)\
                 .map(lambda x: x[0])
-        """
-        get location in df and set value to 1
-        """
         for i, c in enumerate(se1):
            getrows(encoded, rownums=[i, c]) == 1
-        """
-        call futureTable and make comparison
-        """
         tbl = tbl.hash_encoder(["A", "B"], 100, "cross")
         assert encoded.count() == tbl.to_spark_df().count() == 1
-
 
     def test_filter_by_frequency(self):
         data = [("a", "b", 1),
@@ -183,21 +155,14 @@ class TestTable(TestCase):
                              StructField("C", IntegerType(), True)])
         spark = OrcaContext.get_spark_session()
         df = spark.createDataFrame(data, schema)
-        """
-        define columns sum operation by UDF
-        """
         sum_cols = udf(lambda x: x[0] + x[1], StringType())
         key = (df.select(df["A"], df["B"])
             .withColumn('key', sum_cols(struct('A', 'B')))
             )
         group = key.groupby(['key']).count()
-        """
-        call futureTable and make comparison
-        """
         tbl = FeatureTable(df).freq_filter(["A", "B"])
         assert group.filter("count>=2").count() == tbl.to_spark_df().count()
 
-"""
     def test_gen_string_idx(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
@@ -529,7 +494,6 @@ class TestTable(TestCase):
                                                                        "'column' of median_tbl"
         assert median_tbl.df.filter("column == 'col_2'").filter("median == 1.0").count() == 1, \
             "the median of col_2 should be 1.0"
-"""
 
 if __name__ == "__main__":
     pytest.main([__file__])
