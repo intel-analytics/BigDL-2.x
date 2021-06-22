@@ -659,6 +659,8 @@ class FeatureTable(Table):
         :param table: FeatureTable
         :param on: string or list of string, join on this column
         :param how: string
+        :param lsuffix: suffix to use for left table's overlapping columns.
+        :param rsuffix: suffix to use for right table's overlapping columns.
 
         :return: FeatureTable
         """
