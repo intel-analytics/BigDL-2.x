@@ -525,10 +525,10 @@ class TestTable(TestCase):
         assert tbl.df.where(tbl.df.height == 10).select("num").collect()[0]["num"] == 2, \
             "the third row of num should be 2"
 
-    def test_col_names(self):
+    def test_columns(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
-        col_names = feature_tbl.col_names
+        col_names = feature_tbl.columns
         assert isinstance(col_names, list), "col_names should be a list of strings"
         assert col_names == ["col_1", "col_2", "col_3", "col_4", "col_5"], \
             "column names are incorrenct"

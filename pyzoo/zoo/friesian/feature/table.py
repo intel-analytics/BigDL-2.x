@@ -297,12 +297,12 @@ class Table:
 
     def add(self, columns, value=1):
         """
-        Increase all of values of a column or a list of columns by a constant value.
+        Increase all of values of the target numeric column(s) by a constant value.
 
         :param columns: str or list of str, the target columns to be increased.
         :param value: numeric (int/float/double/short/long), the constant value to be added.
 
-        return: A new table that update values of specified columns by a constant value.
+        return: A new Table that update values of specified columns by a constant value.
         """
         if columns is None:
             raise ValueError("Columns should be str or list of str, but got None")
@@ -314,14 +314,14 @@ class Table:
             if new_df.schema[column].dataType not in [IntegerType(), ShortType(),
                                                       LongType(), FloatType(),
                                                       DecimalType(), DoubleType()]:
-                raise ValueError("column type should be numeric")
+                raise ValueError("column type should be numeric, but have type ", new_df.schema[column].dataType)
             new_df = new_df.withColumn(column, pyspark_col(column) + lit(value))
         return self._clone(new_df)
 
     @property
-    def col_names(self):
+    def columns(self):
         """
-        Get column names of the table.
+        Get column names of the Table.
 
         :return: A list of strings that specifies column names.
         """
@@ -329,15 +329,16 @@ class Table:
 
     def sample(self, fraction, replace=False, seed=None):
         """
-        Return a sampled subset of table.
+        Return a sampled subset of Table.
 
-        :param replace: bool, identify if sampled items need to be replaced.
-        during the sample process
         :param fraction: float, fraction of rows to generate.
+        :param replace: allow or disallow sampling of the same row more than once. 
         :param seed: seed for sampling.
+
+        return: a sampled subset of Table
         """
         if fraction < 0 or fraction > 1:
-            raise ValueError("fraction should in the range of [0,1]")
+            raise ValueError("fraction should in the range of [0, 1]")
         return self._clone(self.df.sample(withReplacement=replace, fraction=fraction, seed=seed))
 
     def write_parquet(self, path, mode="overwrite"):
