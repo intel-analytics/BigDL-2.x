@@ -101,6 +101,36 @@ class TestTFKerasAutoEstimator(TestCase):
                          epochs=1,
                          metric="mse")
 
+    def test_fit_metric_func(self):
+        auto_est = AutoEstimator.from_keras(model_creator=model_creator,
+                                            logs_dir="/tmp/zoo_automl_logs",
+                                            resources_per_trial={"cpu": 2},
+                                            name="test_fit")
+
+        data, validation_data = get_train_val_data()
+
+        def pyrmsle(y_true, y_pred):
+            y_pred[y_pred < -1] = -1 + 1e-6
+            elements = np.power(np.log1p(y_true) - np.log1p(y_pred), 2)
+            return float(np.sqrt(np.sum(elements) / len(y_true)))
+
+        with pytest.raises(ValueError) as exeinfo:
+            auto_est.fit(data=data,
+                         validation_data=validation_data,
+                         search_space=create_linear_search_space(),
+                         n_sampling=4,
+                         epochs=1,
+                         metric=pyrmsle)
+        assert "metric_mode" in str(exeinfo)
+
+        auto_est.fit(data=data,
+                     validation_data=validation_data,
+                     search_space=create_linear_search_space(),
+                     n_sampling=4,
+                     epochs=1,
+                     metric=pyrmsle,
+                     metric_mode="min")
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
