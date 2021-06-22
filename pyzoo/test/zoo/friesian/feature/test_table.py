@@ -20,6 +20,7 @@ import tempfile
 from unittest import TestCase
 
 from pyspark.sql.functions import col, max, min, array
+import pyspark.sql.functions as F
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
 
 from zoo.orca import OrcaContext
@@ -214,6 +215,15 @@ class TestTable(TestCase):
                                                                    "filled"
         assert filled_tbl.df.filter("col_2 is null").count() == 0, "col_2 null values should be " \
                                                                    "filled"
+
+    def test_filter(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        filtered_tbl = feature_tbl.filter(feature_tbl.col_1 == 1)
+        assert filtered_tbl.size() == 3, "Only 3 out of 5 rows has value 1 for col_1"
+        filtered_tbl2 = feature_tbl.filter(
+            (feature_tbl.col("col_1") == 1) & (feature_tbl.col_2 == 1))
+        assert filtered_tbl2.size() == 1, "Only 1 out of 5 rows has value 1 for col_1 and col_2"
 
     def test_rename(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
@@ -430,6 +440,119 @@ class TestTable(TestCase):
                                                                        "'column' of median_tbl"
         assert median_tbl.df.filter("column == 'col_2'").filter("median == 1.0").count() == 1, \
             "the median of col_2 should be 1.0"
+
+    def test_cast(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14, 8),
+                ("alice", "34", 25, 9),
+                ("rose", "25344", 23, 10)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("a", StringType(), True),
+                             StructField("b", IntegerType(), True),
+                             StructField("c", IntegerType(), True)])
+        df = spark.createDataFrame(data, schema)
+        tbl = FeatureTable(df)
+        tbl = tbl.cast("a", "int")
+        assert dict(tbl.df.dtypes)['a'] == "int", "column a should be now be cast to integer type"
+        tbl = tbl.cast("a", "float")
+        assert dict(tbl.df.dtypes)['a'] == "float", "column a should be now be cast to float type"
+        tbl = tbl.cast(["b", "c"], "double")
+        assert dict(tbl.df.dtypes)['b'] == dict(tbl.df.dtypes)['c'] == "double", \
+            "column b and c should be now be cast to double type"
+        tbl = tbl.cast(None, "float")
+        assert dict(tbl.df.dtypes)['name'] == dict(tbl.df.dtypes)['a'] == dict(tbl.df.dtypes)['b'] \
+            == dict(tbl.df.dtypes)['c'] == "float", \
+            "all the columns should now be cast to float type"
+        with self.assertRaises(Exception) as context:
+            tbl = tbl.cast("a", "notvalid")
+        self.assertTrue(
+            "type should be string, boolean, int, long, short, float, double."
+            in str(context.exception))
+
+    def test_select(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        select_tbl = feature_tbl.select("col_1", "col_2")
+        assert "col_1" in select_tbl.df.columns, "col_1 shoul be selected"
+        assert "col_2" in select_tbl.df.columns, "col_2 shoud be selected"
+        assert "col_3" not in select_tbl.df.columns, "col_3 shoud not be selected"
+        assert feature_tbl.size() == select_tbl.size(), \
+            "the selected table should have the same rows"
+        with self.assertRaises(Exception) as context:
+            feature_tbl.select()
+        self.assertTrue("cols should be str or a list of str, but got None."
+                        in str(context.exception))
+
+    def test_create_from_dict(self):
+        indices = {'a': 1, 'b': 2, 'c': 3}
+        col_name = 'letter'
+        tbl = StringIndex.from_dict(indices, col_name)
+        assert 'id' in tbl.df.columns, "id should be one column in the stringindex"
+        assert 'letter' in tbl.df.columns, "letter should be one column in the stringindex"
+        assert tbl.size() == 3, "the StringIndex should have three rows"
+        with self.assertRaises(Exception) as context:
+            StringIndex.from_dict(indices, None)
+        self.assertTrue("col_name should be str, but get None"
+                        in str(context.exception))
+        with self.assertRaises(Exception) as context:
+            StringIndex.from_dict(indices, 12)
+        self.assertTrue("col_name should be str, but get int"
+                        in str(context.exception))
+        with self.assertRaises(Exception) as context:
+            StringIndex.from_dict([indices], col_name)
+        self.assertTrue("indices should be dict, but get list"
+                        in str(context.exception))
+
+    def test_encode_string_from_dict(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14, 8),
+                ("alice", "34", 25, 9),
+                ("rose", "25344", 23, 10)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True),
+                             StructField("height", IntegerType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        columns = ["name", "num"]
+        indices = []
+        indices.append({"jack": 1, "alice": 2, "rose": 3})
+        indices.append({"123": 3, "34": 1, "25344": 2})
+        tbl = tbl.encode_string(columns, indices)
+        assert 'name' in tbl.df.columns, "name should be still in the columns"
+        assert 'num' in tbl.df.columns, "num should be still in the columns"
+        assert tbl.df.where(tbl.df.age == 14).select("name").collect()[0]["name"] == 1, \
+            "the first row of name should be 1"
+        assert tbl.df.where(tbl.df.height == 10).select("num").collect()[0]["num"] == 2, \
+            "the third row of num should be 2"
+
+    def test_group_by(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data2.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+
+        groupby_tbl1 = feature_tbl.group_by("col_4", agg={"col_1": ["sum", "count"]})
+        assert groupby_tbl1.df.filter("col_4 == 'a' and sum(col_1) == 3").count() == 1, \
+            "the sum of col_1 with col_4 = 'a' should be 3"
+        assert groupby_tbl1.df.filter("col_4 == 'b' and `count(col_1)` == 5").count() == 1, \
+            "the count of col_1 with col_4 = 'b' should be 5"
+
+        groupby_tbl2 = feature_tbl.group_by(agg={"target": "avg", "col_2": "last"})
+        assert groupby_tbl2.df.collect()[0]["avg(target)"] == 0.9, \
+            "the mean of target should be 0.9"
+
+        groupby_tbl3 = feature_tbl.group_by("col_5", agg=["max", "min"], join=True)
+        assert len(groupby_tbl3.df.columns) == len(feature_tbl.df.columns) + 10, \
+            "groupby_tbl3 should have (#df.columns - #columns)*len(agg)=10 more columns"
+        assert groupby_tbl3.df.filter("col_5 == 'cc' and `max(col_2)` == 9").count() == \
+            feature_tbl.df.filter("col_5 == 'cc'").count(), \
+            "max of col_2 should 9 for all col_5 = 'cc' in groupby_tbl3"
+        assert groupby_tbl3.df.filter("col_5 == 'aa' and `min(col_3)` == 1.0").count() == \
+            feature_tbl.df.filter("col_5 == 'aa'").count(), \
+            "min of col_3 should 1.0 for all col_5 = 'aa' in groupby_tbl3"
+
+        groupby_tbl4 = feature_tbl.group_by(["col_4", "col_5"], agg="first", join=True)
+        assert groupby_tbl4.df.filter("col_4 == 'b' and col_5 == 'dd' and `first(col_1)` == 0") \
+            .count() == feature_tbl.df.filter("col_4 == 'b' and col_5 == 'dd'").count(), \
+            "first of col_1 should be 0 for all col_4 = 'b' and col_5 = 'dd' in groupby_tbl4"
 
 
 if __name__ == "__main__":

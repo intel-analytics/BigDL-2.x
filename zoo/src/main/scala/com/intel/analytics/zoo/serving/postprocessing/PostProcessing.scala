@@ -20,7 +20,7 @@ import java.util.Base64
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.serving.arrow.ArrowSerializer
+import com.intel.analytics.zoo.serving.serialization.ArrowSerializer
 import com.intel.analytics.zoo.serving.utils.TensorUtils
 
 

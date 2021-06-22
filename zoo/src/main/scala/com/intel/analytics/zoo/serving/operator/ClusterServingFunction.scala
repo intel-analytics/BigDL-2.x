@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.serving.operator
 import java.nio.file.Files
 
 import com.intel.analytics.zoo.serving.ClusterServing
-import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
+import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
 import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 import org.apache.flink.core.fs.Path
@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory
 class ClusterServingFunction()
   extends ScalarFunction {
   val clusterServingParams = new ClusterServingParams()
-  val clusterServingHelper = new ClusterServingHelper()
+  ClusterServing.helper = new ClusterServingHelper()
   var inference: ClusterServingInference = null
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -56,11 +56,11 @@ class ClusterServingFunction()
             .loadModelfromDir(modelLocalPath, clusterServingParams._modelConcurrent)
           ClusterServing.model = info._1
           clusterServingParams._modelType = info._2
-          clusterServingHelper.modelType = clusterServingParams._modelType
+          ClusterServing.helper.modelType = clusterServingParams._modelType
         }
       }
     }
-    inference = new ClusterServingInference(null, clusterServingHelper)
+    inference = new ClusterServingInference()
 
   }
 

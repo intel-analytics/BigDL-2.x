@@ -21,8 +21,9 @@ import pandas as pd
 import os
 from numpy.testing import assert_array_almost_equal
 
-from zoo.orca.automl.xgboost.XGBoost import XGBoost
-from zoo.zouwu.feature.identity_transformer import IdentityTransformer
+from zoo.orca.automl.xgboost.XGBoost import XGBoost, XGBoostModelBuilder
+from zoo.chronos.feature.identity_transformer import IdentityTransformer
+import pytest
 
 
 class TestXgbregressor(ZooTestCase):
@@ -71,7 +72,41 @@ class TestXgbregressor(ZooTestCase):
             "predict before is {}, and predict after is {}".format(result_save, result_restore)
         os.remove(model_file)
 
+    def test_metric(self):
+        # metric not in XGB_METRIC_NAME but in Evaluator.metrics_func.keys()
+        self.model.fit_eval(
+            data=(self.x, self.y),
+            validation_data=[(self.val_x, self.val_y)],
+            metric="mse")
+        # metric in XGB_METRIC_NAME
+        self.model.fit_eval(
+            data=(self.x, self.y),
+            validation_data=[(self.val_x, self.val_y)],
+            metric="rmsle")
+
+        with pytest.raises(ValueError):
+            self.model.fit_eval(
+                data=(self.x, self.y),
+                validation_data=[(self.val_x, self.val_y)],
+                metric="wrong_metric")
+
+    def test_data_creator(self):
+        def get_x_y(size, config):
+            values = np.random.randn(size, 4)
+            df = pd.DataFrame(values, columns=["f1", "f2", "f3", "t"])
+            selected_features = config["features"]
+            x = df[selected_features].to_numpy()
+            y = df["t"].to_numpy()
+            return x, y
+
+        from functools import partial
+        train_data_creator = partial(get_x_y, 20)
+        val_data_creator = partial(get_x_y, 5)
+        config = {'n_estimators': 5, 'max_depth': 2, 'tree_method': 'hist'}
+        model_builder = XGBoostModelBuilder(model_type="regressor", cpus_per_trial=1, **config)
+        model = model_builder.build(config={"features": ["f1", "f2"]})
+        model.fit_eval(train_data_creator, validation_data=val_data_creator, metric="mae")
+
 
 if __name__ == "__main__":
-    import pytest
     pytest.main([__file__])

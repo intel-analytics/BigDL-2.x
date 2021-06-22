@@ -18,13 +18,12 @@ from torch.utils.data import TensorDataset, DataLoader
 
 import types
 
-from zoo.automl.model.abstract import BaseModel
+from zoo.automl.model.abstract import BaseModel, ModelBuilder
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 import pandas as pd
 
 from zoo.orca.automl.pytorch_utils import LR_NAME, DEFAULT_LR
-
 
 PYTORCH_REGRESSION_LOSS_MAP = {"mse": "MSELoss",
                                "mae": "L1Loss",
@@ -90,7 +89,7 @@ class PytorchBaseModel(BaseModel):
                                   shuffle=True)
         return data_creator
 
-    def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
+    def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric=None,
                  **config):
         """
         :param data: data could be a tuple with numpy ndarray with form (x, y) or a
@@ -108,6 +107,9 @@ class PytorchBaseModel(BaseModel):
         """
         # todo: support input validation data None
         assert validation_data is not None, "You must input validation data!"
+
+        if not metric:
+            raise ValueError("You must input a valid metric value for fit_eval.")
 
         # update config settings
         def update_config():
@@ -152,7 +154,7 @@ class PytorchBaseModel(BaseModel):
         train_stats = {"loss": np.mean(epoch_losses), "last_loss": epoch_losses[-1]}
         val_stats = self._validate(validation_loader, metric=metric)
         self.onnx_model_built = False
-        return val_stats[metric]
+        return val_stats
 
     @staticmethod
     def to_torch(inp):
@@ -275,14 +277,14 @@ class PytorchBaseModel(BaseModel):
         self.optimizer.load_state_dict(state["optimizer"])
         self._create_loss()
 
-    def save(self, checkpoint_file, config_path=None):
+    def save(self, checkpoint):
         if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling save!")
         state_dict = self.state_dict()
-        torch.save(state_dict, checkpoint_file)
+        torch.save(state_dict, checkpoint)
 
-    def restore(self, checkpoint_file):
-        state_dict = torch.load(checkpoint_file)
+    def restore(self, checkpoint):
+        state_dict = torch.load(checkpoint)
         self.load_state_dict(state_dict)
 
     def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None, multioutput="raw_values"):
@@ -348,3 +350,23 @@ class PytorchBaseModel(BaseModel):
                 "optim",
                 "loss"
                 }
+
+
+class PytorchModelBuilder(ModelBuilder):
+
+    def __init__(self, model_creator,
+                 optimizer_creator,
+                 loss_creator):
+        from zoo.orca.automl.pytorch_utils import validate_pytorch_loss, validate_pytorch_optim
+        self.model_creator = model_creator
+        optimizer = validate_pytorch_optim(optimizer_creator)
+        self.optimizer_creator = optimizer
+        loss = validate_pytorch_loss(loss_creator)
+        self.loss_creator = loss
+
+    def build(self, config):
+        model = PytorchBaseModel(self.model_creator,
+                                 self.optimizer_creator,
+                                 self.loss_creator)
+        model.build(config)
+        return model

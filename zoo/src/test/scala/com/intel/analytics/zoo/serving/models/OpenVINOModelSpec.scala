@@ -16,8 +16,8 @@
 
 package com.intel.analytics.zoo.serving.models
 
-import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
-import com.intel.analytics.zoo.serving.arrow.ArrowDeserializer
+import com.intel.analytics.zoo.serving.ClusterServing
+import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
 import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 import org.scalatest.{FlatSpec, Matchers}
@@ -25,7 +25,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import sys.process._
 
 class OpenVINOModelSpec extends FlatSpec with Matchers {
-
+  ClusterServing.helper = new ClusterServingHelper()
   "OpenVINO Inception_v1" should "work" in {
     ("wget -O /tmp/openvino_inception_v1.tar http://10.239.45.10:8081" +
       "/repository/raw/analytics-zoo-data/openvino_inception_v1.tar").!
@@ -34,7 +34,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+
+    val helper = ClusterServing.helper
     helper.modelType = "openvino"
     helper.weightPath = "/tmp/openvino_inception_v1/inception_v1.bin"
     helper.defPath = "/tmp/openvino_inception_v1/inception_v1.xml"
@@ -42,9 +43,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     ClusterServing.model = helper.loadInferenceModel()
     Seq("sh", "-c", "rm -rf /tmp/openvino_inception_v1*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val inference = new ClusterServingInference()
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {
@@ -62,7 +62,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+    val helper = ClusterServing.helper
     helper.modelType = "openvino"
     helper.weightPath = "/tmp/openvino_mobilenet_v1/mobilenet_v1_1.0_224_frozen.bin"
     helper.defPath = "/tmp/openvino_mobilenet_v1/mobilenet_v1_1.0_224_frozen.xml"
@@ -71,9 +72,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/openvino_mobilenet_v1*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val inference = new ClusterServingInference()
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {
@@ -92,7 +92,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+val helper = ClusterServing.helper
     helper.modelType = "openvino"
     helper.weightPath = "/tmp/openvino_mobilenet_v2/mobilenet_v2.bin"
     helper.defPath = "/tmp/openvino_mobilenet_v2/mobilenet_v2.xml"
@@ -101,9 +102,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/openvino_mobilenet_v2*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val inference = new ClusterServingInference()
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {
@@ -122,7 +122,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+val helper = ClusterServing.helper
     helper.modelType = "openvino"
     helper.weightPath = "/tmp/openvino2020_resnet50/resnet_v1_50.bin"
     helper.defPath = "/tmp/openvino2020_resnet50/resnet_v1_50.xml"
@@ -131,9 +132,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/openvino2020_resnet50*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val inference = new ClusterServingInference()
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {
@@ -152,7 +152,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+val helper = ClusterServing.helper
     helper.modelType = "openvino"
     helper.weightPath = "/tmp/openvino_resnet50/frozen_inference_graph.bin"
     helper.defPath = "/tmp/openvino_resnet50/frozen_inference_graph.xml"
@@ -161,9 +162,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/openvino_resnet50*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val inference = new ClusterServingInference()
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {
@@ -183,7 +183,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+val helper = ClusterServing.helper
     helper.modelType = "openvino"
     helper.weightPath = "/tmp/openvino_vgg16/vgg_16.bin"
     helper.defPath = "/tmp/openvino_vgg16/vgg_16.xml"
@@ -192,9 +193,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/openvino_vgg16*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val inference = new ClusterServingInference()
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {
@@ -213,7 +213,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
     val dataPath = resource.getPath + "/image-3_224_224-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+val helper = ClusterServing.helper
     helper.modelType = "openvino"
     helper.weightPath = "/tmp/openvino_face_detection_0100/face-detection-0100.bin"
     helper.defPath = "/tmp/openvino_face_detection_0100/face-detection-0100.xml"
@@ -222,9 +223,8 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
 
     Seq("sh", "-c", "rm -rf /tmp/openvino_face_detection_0100*").!
 
-    val inference = new ClusterServingInference(new PreProcessing(helper.chwFlag),
-      helper)
-    val in = List(("1", b64string), ("2", b64string), ("3", b64string))
+    val inference = new ClusterServingInference()
+    val in = List(("1", b64string, ""), ("2", b64string, ""), ("3", b64string, ""))
     val postProcessed = inference.multiThreadPipeline(in)
 
     postProcessed.foreach(x => {

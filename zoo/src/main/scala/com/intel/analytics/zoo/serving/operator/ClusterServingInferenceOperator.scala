@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.serving.operator
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
+import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.api.common.functions.RichMapFunction
@@ -29,7 +29,7 @@ class ClusterServingInferenceOperator(var params: ClusterServingParams = new Clu
   extends RichMapFunction[List[(String, Activity)], List[(String, String)]] {
   var logger: Logger = null
   var inference: ClusterServingInference = null
-  val clusterServingHelper = new ClusterServingHelper()
+  ClusterServing.helper = new ClusterServingHelper()
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
@@ -46,11 +46,11 @@ class ClusterServingInferenceOperator(var params: ClusterServingParams = new Clu
             .loadModelfromDir(localModelDir, params._modelConcurrent)
           ClusterServing.model = info._1
           params._modelType = info._2
-          clusterServingHelper.modelType = info._2
+          ClusterServing.helper.modelType = info._2
         }
       }
     }
-    inference = new ClusterServingInference(null, clusterServingHelper)
+    inference = new ClusterServingInference()
   }
 
   /**

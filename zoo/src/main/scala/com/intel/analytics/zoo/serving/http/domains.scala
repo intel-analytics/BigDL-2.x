@@ -43,6 +43,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.ImmutableList
 import com.intel.analytics.zoo.serving.http.FrontEndApp.{metrics, overallRequestTimer, silent, system, timeout, timing, waitRedisTimer}
+import com.intel.analytics.zoo.serving.serialization.StreamSerializer
 
 
 sealed trait ServingMessage
@@ -67,6 +68,8 @@ sealed trait PredictionInput {
   def getId(): String
 
   def toHash(): HashMap[String, String]
+
+  def toHashByStream(): HashMap[String, String]
 }
 
 case class BytesPredictionInput(uuid: String, bytesStr: String) extends PredictionInput {
@@ -80,6 +83,11 @@ case class BytesPredictionInput(uuid: String, bytesStr: String) extends Predicti
     hash.put("data", bytesStr)
     hash
   }
+
+  override def toHashByStream(): util.HashMap[String, String] = {
+    val hash = new HashMap[String, String]()
+    hash
+  }
 }
 
 object BytesPredictionInput {
@@ -87,7 +95,8 @@ object BytesPredictionInput {
     BytesPredictionInput(UUID.randomUUID().toString, str)
 }
 
-case class InstancesPredictionInput(uuid: String, instances: Instances) extends PredictionInput {
+case class InstancesPredictionInput(uuid: String, instances: Instances)
+  extends PredictionInput with Supportive {
   override def getId(): String = this.uuid
 
   override def toHash(): HashMap[String, String] = {
@@ -96,6 +105,16 @@ case class InstancesPredictionInput(uuid: String, instances: Instances) extends 
     val b64 = java.util.Base64.getEncoder.encodeToString(bytes)
     hash.put("uri", uuid)
     hash.put("data", b64)
+    hash
+  }
+
+  override def toHashByStream(): HashMap[String, String] = {
+    val hash = new HashMap[String, String]()
+    val bytes = StreamSerializer.objToBytes(instances)
+    val b64 = java.util.Base64.getEncoder.encodeToString(bytes)
+    hash.put("uri", uuid)
+    hash.put("data", b64)
+    hash.put("serde", "stream")
     hash
   }
 }
