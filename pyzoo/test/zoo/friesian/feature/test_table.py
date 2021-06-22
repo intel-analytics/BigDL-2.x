@@ -171,6 +171,33 @@ class TestTable(TestCase):
         assert encoded.count() == tbl.to_spark_df().count() == 1
 
 
+    def test_filter_by_frequency(self):
+        data = [("a", "b", 1),
+                ("b", "a", 2),
+                ("a", "c", 3),
+                ("c", "c", 2),
+                ("b", "a", 1),
+                ("a", "d", 1)]
+        schema = StructType([StructField("A", StringType(), True),
+                             StructField("B", StringType(), True),
+                             StructField("C", IntegerType(), True)])
+        spark = OrcaContext.get_spark_session()
+        df = spark.createDataFrame(data, schema)
+        """
+        define columns sum operation by UDF
+        """
+        sum_cols = udf(lambda x: x[0] + x[1], StringType())
+        key = (df.select(df["A"], df["B"])
+            .withColumn('key', sum_cols(struct('A', 'B')))
+            )
+        group = key.groupby(['key']).count()
+        """
+        call futureTable and make comparison
+        """
+        tbl = FeatureTable(df).freq_filter(["A", "B"])
+        assert group.filter("count>=2").count() == tbl.to_spark_df().count()
+
+"""
     def test_gen_string_idx(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
@@ -502,7 +529,7 @@ class TestTable(TestCase):
                                                                        "'column' of median_tbl"
         assert median_tbl.df.filter("column == 'col_2'").filter("median == 1.0").count() == 1, \
             "the median of col_2 should be 1.0"
-
+"""
 
 if __name__ == "__main__":
     pytest.main([__file__])
