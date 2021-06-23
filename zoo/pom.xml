@@ -837,6 +837,11 @@
                                 <excludes>
                                     <exclude>org.apache.spark:*</exclude>
                                     <exclude>net.sf.py4j:*</exclude>
+                                    <exclude>org.apache.hadoop:*</exclude>
+                                    <exclude>org.apache.parquet:*</exclude>
+                                    <exclude>org.apache.orc:*</exclude>
+                                    <exclude>org.apache.avro:*</exclude>
+                                    <exclude>org.apache.ivy:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -859,6 +864,11 @@
                                     <exclude>org.scala-lang:scala-library</exclude>
                                     <exclude>org.apache.spark:*</exclude>
                                     <exclude>net.sf.py4j:*</exclude>
+                                    <exclude>org.apache.hadoop:*</exclude>
+                                    <exclude>org.apache.parquet:*</exclude>
+                                    <exclude>org.apache.orc:*</exclude>
+                                    <exclude>org.apache.avro:*</exclude>
+                                    <exclude>org.apache.ivy:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -952,6 +962,11 @@
                                     <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
                                     <exclude>org.apache.spark:*</exclude>
                                     <exclude>net.sf.py4j:*</exclude>
+                                    <exclude>org.apache.hadoop:*</exclude>
+                                    <exclude>org.apache.parquet:*</exclude>
+                                    <exclude>org.apache.orc:*</exclude>
+                                    <exclude>org.apache.avro:*</exclude>
+                                    <exclude>org.apache.ivy:ivy</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
