@@ -39,5 +39,6 @@ AutoLSTM is an LSTM forecasting model with Auto tuning.
 
 .. automodule:: zoo.chronos.autots.model.auto_lstm
     :members:
+    :undoc-members:
     :show-inheritance:
 
