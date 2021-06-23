@@ -10,4 +10,12 @@ AutoTSTrainer trains a times series pipeline (including data processing, feature
     :members:
     :show-inheritance:
 
+chronos.config.recipe
+----------------------------------------
+
+Recipe is used for search configuration for AutoTSTrainer.
+
+.. automodule:: zoo.chronos.config.recipe
+    :members:
+    :show-inheritance:
 
