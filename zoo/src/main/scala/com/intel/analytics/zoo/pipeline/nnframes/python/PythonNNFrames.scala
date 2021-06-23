@@ -51,48 +51,48 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def createNNEstimator(
-                         model: Module[T],
-                         criterion: Criterion[T],
-                         sampleTransformer: Preprocessing[(Any, Option[Any]), Sample[T]]
-                       ): NNEstimator[T] = {
+      model: Module[T],
+      criterion: Criterion[T],
+      sampleTransformer: Preprocessing[(Any, Option[Any]), Sample[T]]
+    ): NNEstimator[T] = {
     NNEstimator(model, criterion).setSamplePreprocessing(sampleTransformer)
   }
 
   def createNNClassifier(
-                          model: Module[T],
-                          criterion: Criterion[T],
-                          samplePreprocessing: Preprocessing[(Any, Option[AnyVal]), Sample[T]]
-                        ): NNClassifier[T] = {
+      model: Module[T],
+      criterion: Criterion[T],
+      samplePreprocessing: Preprocessing[(Any, Option[AnyVal]), Sample[T]]
+    ): NNClassifier[T] = {
     NNClassifier(model, criterion).setSamplePreprocessing(samplePreprocessing)
   }
 
   def createNNModel(
-                     model: Module[T],
-                     samplePreprocessing: Preprocessing[Any, Sample[T]]): NNModel[T] = {
+      model: Module[T],
+      samplePreprocessing: Preprocessing[Any, Sample[T]]): NNModel[T] = {
     new NNModel(model).setSamplePreprocessing(samplePreprocessing)
   }
 
   def createNNClassifierModel(
-                               model: Module[T],
-                               samplePreprocessing: Preprocessing[Any, Sample[T]]): NNClassifierModel[T] = {
+      model: Module[T],
+      samplePreprocessing: Preprocessing[Any, Sample[T]]): NNClassifierModel[T] = {
     NNClassifierModel(model).setSamplePreprocessing(samplePreprocessing)
   }
 
   def setOptimMethod(
-                      estimator: NNEstimator[T],
-                      optimMethod: OptimMethod[T]): NNEstimator[T] = {
+      estimator: NNEstimator[T],
+      optimMethod: OptimMethod[T]): NNEstimator[T] = {
     estimator.setOptimMethod(optimMethod)
   }
 
   def setSamplePreprocessing(
-                              estimator: NNEstimator[T],
-                              samplePreprocessing: Preprocessing[(Any, Option[AnyVal]), Sample[T]]): NNEstimator[T] = {
+      estimator: NNEstimator[T],
+      samplePreprocessing: Preprocessing[(Any, Option[AnyVal]), Sample[T]]): NNEstimator[T] = {
     estimator.setSamplePreprocessing(samplePreprocessing)
   }
 
   def setSamplePreprocessing(
-                              model: NNModel[T],
-                              samplePreprocessing: Preprocessing[Any, Sample[T]]): NNModel[T] = {
+      model: NNModel[T],
+      samplePreprocessing: Preprocessing[Any, Sample[T]]): NNModel[T] = {
     model.setSamplePreprocessing(samplePreprocessing)
   }
 
@@ -125,9 +125,9 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def createFeatureLabelPreprocessing(
-                                       featureTransfomer: Preprocessing[Any, Tensor[T]],
-                                       labelTransformer: Preprocessing[Any, Tensor[T]]
-                                     ): FeatureLabelPreprocessing[Any, Any, Any, Sample[T]] = {
+      featureTransfomer: Preprocessing[Any, Tensor[T]],
+      labelTransformer: Preprocessing[Any, Tensor[T]]
+    ): FeatureLabelPreprocessing[Any, Any, Any, Sample[T]] = {
     FeatureLabelPreprocessing(featureTransfomer, labelTransformer)
       .asInstanceOf[FeatureLabelPreprocessing[Any, Any, Any, Sample[T]]]
   }
@@ -151,18 +151,18 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def setTrainSummary(
-                       estimator: NNEstimator[T],
-                       summary: TrainSummary
-                     ): NNEstimator[T] = {
+      estimator: NNEstimator[T],
+      summary: TrainSummary
+    ): NNEstimator[T] = {
     estimator.setTrainSummary(summary)
   }
 
   def setValidation(
-                     estimator: NNEstimator[T],
-                     trigger: Trigger,
-                     validationDF: DataFrame,
-                     vMethods : JList[ValidationMethod[T]],
-                     batchSize: Int): NNEstimator[T] = {
+      estimator: NNEstimator[T],
+      trigger: Trigger,
+      validationDF: DataFrame,
+      vMethods : JList[ValidationMethod[T]],
+      batchSize: Int): NNEstimator[T] = {
     estimator.setValidation(trigger, validationDF, vMethods.asScala.toArray, batchSize)
   }
 
@@ -171,9 +171,9 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def setDataCacheLevel(
-                         estimator: NNEstimator[T],
-                         level: String,
-                         numSlice: Int = 4): NNEstimator[T] = {
+      estimator: NNEstimator[T],
+      level: String,
+      numSlice: Int = 4): NNEstimator[T] = {
     val memType = level.trim.toUpperCase match {
       case "DRAM" => DRAM
       case "PMEM" => PMEM
@@ -185,22 +185,22 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def setCheckpoint(
-                     estimator: NNEstimator[T],
-                     path: String,
-                     trigger: Trigger,
-                     isOverWrite: Boolean): NNEstimator[T] = {
+      estimator: NNEstimator[T],
+      path: String,
+      trigger: Trigger,
+      isOverWrite: Boolean): NNEstimator[T] = {
     estimator.setCheckpoint(path, trigger, isOverWrite)
   }
 
   def setValidationSummary(
-                            estimator: NNEstimator[T],
-                            value: ValidationSummary): NNEstimator[T] = {
+      estimator: NNEstimator[T],
+      value: ValidationSummary): NNEstimator[T] = {
     estimator.setValidationSummary(value)
   }
 
   def setNNModelPreprocessing(
-                               model: NNModel[T],
-                               sampleTransformer: Preprocessing[Any, Sample[T]]): NNModel[T] = {
+      model: NNModel[T],
+      sampleTransformer: Preprocessing[Any, Sample[T]]): NNModel[T] = {
     model.setSamplePreprocessing(sampleTransformer)
   }
 
@@ -209,15 +209,15 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def nnEstimatorSetConstantGradientClipping(
-                                              estimator: NNEstimator[T],
-                                              min: Float,
-                                              max: Float): Unit = {
+      estimator: NNEstimator[T],
+      min: Float,
+      max: Float): Unit = {
     estimator.setConstantGradientClipping(min, max)
   }
 
   def nnEstimatorSetGradientClippingByL2Norm(
-                                              estimator: NNEstimator[T],
-                                              clipNorm: Float): Unit = {
+      estimator: NNEstimator[T],
+      clipNorm: Float): Unit = {
     estimator.setGradientClippingByL2Norm(clipNorm)
   }
 
@@ -264,17 +264,17 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   def setFeaturesXGBClassifierModel(model: XGBClassifierModel,
-                                    features: JList[String]): Unit = {
+                                          features: JList[String]): Unit = {
     model.setFeaturesCol(features.asScala.toArray)
   }
 
   def setPredictionXGBClassifierModel(model: XGBClassifierModel,
-                                      prediction: String): Unit = {
+                                            prediction: String): Unit = {
     model.setPredictionCol(prediction)
   }
 
   def transformXGBClassifierModel(model: XGBClassifierModel,
-                                  dataset: DataFrame): DataFrame = {
+                                        dataset: DataFrame): DataFrame = {
     model.transform(dataset)
   }
 
