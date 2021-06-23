@@ -842,6 +842,16 @@
                                     <exclude>org.apache.orc:*</exclude>
                                     <exclude>org.apache.avro:*</exclude>
                                     <exclude>org.apache.ivy:*</exclude>
+                                    <exclude>org.xerial.snappy:*</exclude>
+                                    <exclude>org.glassfish.hk2:*</exclude>
+                                    <exclude>org.glassfish.jersey.core:*</exclude>
+                                    <exclude>org.codehaus.jackson:*</exclude>
+                                    <exclude>org.codehaus.janino:janino</exclude>
+                                    <exclude>io.netty:netty</exclude>
+                                    <exclude>org.apache.commons:commons-math3</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
+                                    <exclude>xerces:xercesImpl</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -869,6 +879,16 @@
                                     <exclude>org.apache.orc:*</exclude>
                                     <exclude>org.apache.avro:*</exclude>
                                     <exclude>org.apache.ivy:*</exclude>
+                                    <exclude>org.xerial.snappy:*</exclude>
+                                    <exclude>org.glassfish.hk2:*</exclude>
+                                    <exclude>org.glassfish.jersey.core:*</exclude>
+                                    <exclude>org.codehaus.jackson:*</exclude>
+                                    <exclude>org.codehaus.janino:janino</exclude>
+                                    <exclude>io.netty:netty</exclude>
+                                    <exclude>org.apache.commons:commons-math3</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
+                                    <exclude>xerces:xercesImpl</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -896,32 +916,6 @@
                                 </transformer>
                             </transformers>
                             <artifactSet>
-                                <!--<includes>-->
-                                    <!--<include>io.dropwizard.metrics:metrics-core</include>-->
-                                    <!--<include>org.scala-lang:scala-library</include>-->
-                                    <!--<include>org.scala-lang:scala-reflect</include>-->
-                                    <!--<include>com.typesafe.akka:*</include>-->
-                                    <!--<include>org.slf4j:slf4j-api</include>-->
-                                    <!--<include>org.slf4j:slf4j-log4j12</include>-->
-                                    <!--<include>com.github.scopt:scopt_${scala.major.version}</include>-->
-                                    <!--<include>com.typesafe:*</include>-->
-                                    <!--<include>com.fasterxml.jackson.core:*</include>-->
-                                    <!--<include>com.fasterxml.jackson.module:jackson-module-scala_${scala.major.version}</include>-->
-                                    <!--<include>com.fasterxml.jackson.dataformat:jackson-dataformat-yaml</include>-->
-                                    <!--<include>com.google.flatbuffers:flatbuffers-java</include>-->
-                                    <!--<include>org.yaml:snakeyaml</include>-->
-                                    <!--<include>com.thoughtworks.paranamer:paranamer</include>-->
-                                    <!--<include>com.intel.analytics.bigdl:${bigdl.artifactId}</include>-->
-                                    <!--<include>com.intel.analytics.zoo:*</include>-->
-                                    <!--<include>com.esotericsoftware.kryo:kryo</include>-->
-                                    <!--<include>org.json4s:*</include>-->
-                                    <!--<include>org.tensorflow:*</include>-->
-                                    <!--<include>log4j:log4j</include>-->
-                                    <!--<include>org.apache.spark:spark-core_${scala.major.version}</include>-->
-                                    <!--<include>com.intel.analytics.bigdl.core.dist:all</include>-->
-                                    <!--<include>org.scala-lang.modules:*</include>-->
-                                    <!--<include>org.reactivestreams:reactive-streams</include>-->
-                                <!--</includes>-->
                                 <excludes>
                                     <exclude>ml.dmlc:xgboost4j</exclude>
                                     <exclude>black.ninia:jep</exclude>
@@ -966,7 +960,17 @@
                                     <exclude>org.apache.parquet:*</exclude>
                                     <exclude>org.apache.orc:*</exclude>
                                     <exclude>org.apache.avro:*</exclude>
-                                    <exclude>org.apache.ivy:ivy</exclude>
+                                    <exclude>org.apache.ivy:*</exclude>
+                                    <exclude>org.xerial.snappy:*</exclude>
+                                    <exclude>org.glassfish.hk2:*</exclude>
+                                    <exclude>org.glassfish.jersey.core:*</exclude>
+                                    <exclude>org.codehaus.jackson:*</exclude>
+                                    <exclude>org.codehaus.janino:janino</exclude>
+                                    <exclude>io.netty:netty</exclude>
+                                    <exclude>org.apache.commons:commons-math3</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
+                                    <exclude>xerces:xercesImpl</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
