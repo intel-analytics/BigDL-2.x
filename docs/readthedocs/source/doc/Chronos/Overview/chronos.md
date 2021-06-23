@@ -21,7 +21,7 @@ pip install --pre --upgrade analytics-zoo[automl]
 
 ### **3 Init Orca Context**
 
-_Chronos_ uses [Orca](../../Orca/Overview/orca.html) to enable distributed training and AutoML capabilities. Init orca as below. View [Orca Context](../../Orca/Overview/orca-context.md) for more details. Note that argument `init_ray_on_spark` must be True for _Chronos. 
+_Chronos_ uses [Orca](../../Orca/Overview/orca.md) to enable distributed training and AutoML capabilities. Init orca as below. View [Orca Context](../../Orca/Overview/orca-context.md) for more details. Note that argument `init_ray_on_spark` must be True for _Chronos. 
 
 ```python
 if args.cluster_mode == "local":
