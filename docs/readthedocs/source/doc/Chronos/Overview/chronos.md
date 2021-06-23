@@ -3,10 +3,11 @@
 ### **1. Overview**
 _Chronos_ is an application framework for building large-scale time series analysis applications.
 
-There are two ways to use _Chronos_ for time series analysis:
+You can use _Chronos_ to do:
 
-- AutoML enabled pipelines (i.e. [AutoTS](#3-use-autots-pipeline-with-automl))
-- Standalone [forecast pipeline](#4-use-standalone-forecaster-pipeline) without AutoML
+- Time Series Forecasting (using [Standalone Forecasters](#4-use-standalone-forecaster-pipeline) or [AutoTS](#3-use-autots-pipeline-with-automl) (AutoML enabled pipelines))
+- Anomaly Detection (using [Anomaly Detectors]())
+- Data preprocessing and feature generation (using [TSDataset]())
 
 ### **2. Install**
 
