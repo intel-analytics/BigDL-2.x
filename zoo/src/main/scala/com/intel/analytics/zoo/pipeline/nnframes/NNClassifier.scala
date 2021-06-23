@@ -368,6 +368,7 @@ class XGBClassifier () {
   }
 
 }
+
 /**
  * [[XGBClassifierModel]] is a trained XGBoost classification model.
  * The prediction column will have the prediction results.

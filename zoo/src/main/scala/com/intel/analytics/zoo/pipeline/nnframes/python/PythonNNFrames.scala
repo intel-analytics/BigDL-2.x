@@ -234,25 +234,6 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     NNClassifierModel.load(path)
   }
 
-  def loadXGBClassifierModel(path: String, numClasses: Int): XGBClassifierModel = {
-    XGBClassifierModel.load(path, numClasses)
-  }
-
-  def setFeaturesXGBClassifierModel(model: XGBClassifierModel,
-                                    features: JList[String]): Unit = {
-    model.setFeaturesCol(features.asScala.toArray)
-  }
-
-  def setPredictionXGBClassifierModel(model: XGBClassifierModel,
-                                      prediction: String): Unit = {
-    model.setPredictionCol(prediction)
-  }
-
-  def transformXGBClassifierModel(model: XGBClassifierModel,
-                                  dataset: DataFrame): DataFrame = {
-    model.transform(dataset)
-  }
-
   def getXGBClassifier(): XGBClassifier = {
     val model = new XGBClassifier()
     model
@@ -276,6 +257,25 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def setXGBClassifierMissing(model: XGBClassifier, value: Int): Unit = {
     model.setMissing(value)
+  }
+
+  def loadXGBClassifierModel(path: String, numClasses: Int): XGBClassifierModel = {
+    XGBClassifierModel.load(path, numClasses)
+  }
+
+  def setFeaturesXGBClassifierModel(model: XGBClassifierModel,
+                                    features: JList[String]): Unit = {
+    model.setFeaturesCol(features.asScala.toArray)
+  }
+
+  def setPredictionXGBClassifierModel(model: XGBClassifierModel,
+                                      prediction: String): Unit = {
+    model.setPredictionCol(prediction)
+  }
+
+  def transformXGBClassifierModel(model: XGBClassifierModel,
+                                  dataset: DataFrame): DataFrame = {
+    model.transform(dataset)
   }
 
   def getXGBRegressor(): XGBRegressor = {
