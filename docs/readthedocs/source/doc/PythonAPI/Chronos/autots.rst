@@ -26,7 +26,7 @@ chronos.autots.model.auto_tcn
 
 AutoTCN is a TCN forecasting model with Auto tuning. 
 
-.. automodule:: zoo.chronos.model.forecast.seq2seq_forecaster
+.. automodule:: zoo.chronos.autots.model.auto_tcn
     :members:
     :undoc-members:
     :show-inheritance:
