@@ -579,6 +579,7 @@ class TestTable(TestCase):
 
     def test_convert_to_dict(self):
         spark = OrcaContext.get_spark_session()
+        # test the case the column of key is unique
         data = [("jack", "123", 14),
                 ("alice", "34", 25),
                 ("rose", "25344", 23)]
@@ -593,6 +594,19 @@ class TestTable(TestCase):
             and dictionary["alice"]["age"] == 25, "the information for alice is not correct"
         assert dictionary["rose"]["name"] == "rose" and dictionary["rose"]["num"] == "25344" \
             and dictionary["rose"]["age"] == 23, "the information for rose is not correct"
+        # test the case the columns of key is not unique
+        data = [("jack", "123", 14),
+                ("alice", "34", 25),
+                ("rose", "25344", 23),
+                ("rose", "34", 10)]
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        dictionary = tbl.convert_to_dict("name")
+        assert dictionary["jack"]["name"] == "jack" and dictionary["jack"]["num"] == "123" \
+            and dictionary["jack"]["age"] == 14, "the information for jack is not correct"
+        assert dictionary["alice"]["name"] == "alice" and dictionary["alice"]["num"] == "34" \
+            and dictionary["alice"]["age"] == 25, "the information for alice is not correct"
+        assert dictionary["rose"]["name"] == "rose" and dictionary["rose"]["num"] == "34" \
+            and dictionary["rose"]["age"] == 10, "the information for rose is not correct"
 
     def test_add(self):
         spark = OrcaContext.get_spark_session()

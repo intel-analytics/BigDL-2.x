@@ -349,8 +349,6 @@ class Table:
         :return: dict, with format {key -> {column name -> value}}.
         """
         check_col_exists(self.df, [column])
-        if len(set(self.convert_to_list(column))) != len(set(self.convert_to_list(column))):
-            raise ValueError("the value of column must be unique")
         ret = map(lambda row: row.asDict(), self.df.collect())
         return {person[column]: person for person in ret}
 
