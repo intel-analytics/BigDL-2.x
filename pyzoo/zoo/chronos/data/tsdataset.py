@@ -437,11 +437,11 @@ class TSDataset:
         concat_axis = 2 if id_sensitive else 0
         self.numpy_x = np.concatenate([rolling_result[i][0]
                                        for i in range(num_id)],
-                                      axis=concat_axis)
+                                      axis=concat_axis).astype(np.float64)
         if horizon != 0:
             self.numpy_y = np.concatenate([rolling_result[i][1]
                                            for i in range(num_id)],
-                                          axis=concat_axis)
+                                          axis=concat_axis).astype(np.float64)
         else:
             self.numpy_y = None
 
@@ -467,7 +467,7 @@ class TSDataset:
         if self.numpy_x is None:
             raise RuntimeError("Please call \"roll\" method\
                     before transform a TSDataset to numpy ndarray!")
-        return self.numpy_x.astype(np.float64), self.numpy_y.astype(np.float64)
+        return self.numpy_x, self.numpy_y
 
     def to_pandas(self):
         '''
