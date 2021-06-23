@@ -30,10 +30,10 @@ class TestARIMAModel(ZooTestCase):
         self.seq_len = 400
         self.config = {
             "p": np.random.randint(0, 4),
-            "q": np.random.randint(0, 5),
+            "q": np.random.randint(0, 4),
             "seasonality_mode": np.random.choice([True, False]),
             "P": 5,
-            "Q": np.random.randint(0, 5),
+            "Q": 5,
             "m": np.random.choice([4, 7]),
             "metric": "mse",
         }
@@ -78,8 +78,8 @@ class TestARIMAModel(ZooTestCase):
             self.model.predict(horizon=self.horizon)
 
         with pytest.raises(Exception,
-                           match="We don't support updating model\
-                                 without rolling prediction currently"
+                           match="We don't support updating model "\
+                                 "without rolling prediction currently"
                            ):
             self.model.predict(horizon=self.horizon, update=True, rolling=False)
 
