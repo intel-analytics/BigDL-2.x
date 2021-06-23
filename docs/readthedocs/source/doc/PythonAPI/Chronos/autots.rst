@@ -10,6 +10,7 @@ AutoTSTrainer trains a times series pipeline (including data processing, feature
     :members:
     :show-inheritance:
 
+
 chronos.config.recipe
 ----------------------------------------
 
@@ -19,14 +20,17 @@ Recipe is used for search configuration for AutoTSTrainer.
     :members:
     :show-inheritance:
 
+
 chronos.autots.model.auto_tcn
-----------------------------------------
+-------------------------------------------
 
 AutoTCN is a TCN forecasting model with Auto tuning. 
 
-.. automodule:: zoo.chronos.autots.model.auto_tcn
+.. automodule:: zoo.chronos.model.forecast.seq2seq_forecaster
     :members:
+    :undoc-members:
     :show-inheritance:
+    
 
 chronos.autots.model.auto_lstm
 ----------------------------------------
@@ -36,5 +40,4 @@ AutoLSTM is an LSTM forecasting model with Auto tuning.
 .. automodule:: zoo.chronos.autots.model.auto_lstm
     :members:
     :show-inheritance:
-
 
