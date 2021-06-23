@@ -605,5 +605,6 @@ class TestTable(TestCase):
             .count() == feature_tbl.df.filter("col_4 == 'b' and col_5 == 'dd'").count(), \
             "first of col_1 should be 0 for all col_4 = 'b' and col_5 = 'dd' in groupby_tbl4"
 
+
 if __name__ == "__main__":
     pytest.main([__file__])
