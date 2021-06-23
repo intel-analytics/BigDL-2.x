@@ -74,10 +74,7 @@ You can create an `AutoTSTrainer` as follows (`dt_col` is the datetime, `target_
 ```python
 from zoo.chronos.autots.forecast import AutoTSTrainer
 
-trainer = AutoTSTrainer(dt_col="datetime",
-                        target_col="target",
-                        horizon=1,
-                        extra_features_col=["extra_feature_1","extra_feature_2"])
+trainer = AutoTSTrainer(dt_col="datetime", target_col="target", horizon=1, extra_features_col=["extra_feature_1","extra_feature_2"])
 ```
 
 View [AutoTSTrainer API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.AutoTSTrainer) for more details.
@@ -91,7 +88,7 @@ ts_pipeline = trainer.fit(train_df, validation_df, recipe=LSTMRecipe())
 ```
 
 View [Recipe API docs](../../PythonAPI/Chronos/autots.html#chronos-config-recipe) for available recipes to use in training. 
-After training, it will return a [TSPipeline](), which includes not only the model, but also the data preprocessing/post processing steps. 
+After training, it will return a [TSPipeline](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.TSPipeline), which includes not only the model, but also the data preprocessing/post processing steps. 
 
 Appropriate hyperparameters are automatically selected for the models and data processing steps in the pipeline during the fit process, and you may use built-in [visualization tool](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/AutoML/visualization.md) to inspect the training results after training stopped.
 
@@ -100,11 +97,8 @@ Appropriate hyperparameters are automatically selected for the models and data p
 Use `TSPipeline.predict|evaluate|fit` for prediction, evaluation or (incremental) fitting. (Note that incremental fitting on TSPipeline just update the model weights the standard way, which does not involve AutoML).
 
 ```python
-#predict
 ts_pipeline.predict(test_df)
-#evaluate
 ts_pipeline.evalute(val_df)
-#incremental fitting
 ts_pipeline.fit(new_train_df, new_val_df, epochs=10)
 ```
 
@@ -113,7 +107,6 @@ Use ```TSPipeline.save|load``` to load or save.
 ```python
 from zoo.chronos.autots.forecast import TSPipeline
 loaded_ppl = TSPipeline.load(file)
-# ... do sth. e.g. incremental fitting
 loaded_ppl.save(another_file)
 ```
 
