@@ -630,6 +630,11 @@ class TestTable(TestCase):
         assert "bucket" in new_tbl.df.schema.names
         assert new_tbl.df.select("bucket").rdd.flatMap(lambda x: x).collect() \
             == ["minor", "adult", "infant", "senior", "senior", "infant", "minor", "adult", "adult"]
+        # test label is None
+        new_tbl = tbl.cut_bins(bins=4, column="ages", drop=True)
+        assert "bucket" in new_tbl.df.schema.names
+        assert new_tbl.df.select("bucket").rdd.flatMap(lambda x: x).collect() \
+            == [1, 2, 0, 3, 3, 0, 1, 2, 2]
 
     def test_group_by(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data2.parquet")

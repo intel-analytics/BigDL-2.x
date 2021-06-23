@@ -21,7 +21,7 @@ from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
 
 from pyspark.sql.functions import col as pyspark_col, udf, array, broadcast, lit
-from pyspark.sql import Row, dropDuplicatesw, DataFrame
+from pyspark.sql import Row
 import pyspark.sql.functions as F
 
 from zoo.orca import OrcaContext
@@ -396,7 +396,7 @@ class Table:
         check_col_exists(self.df, subset)
         return self._clone(self.df.dropDuplicates(subset))
 
-    def cut_bins(self, bins, column, labels, name="bucket", drop=True):
+    def cut_bins(self, bins, column, labels=None, name="bucket", drop=True):
         """
         Segment values of the target column into bins.
 
@@ -419,9 +419,10 @@ class Table:
             bins = np.linspace(minValue, maxValue, bins+1, endpoint=True)
         bucketizer = Bucketizer(splits=bins, inputCol=column, outputCol=name)
         df_buck = bucketizer.setHandleInvalid("keep").transform(self.df)
-        t = {i: label for (i, label) in enumerate(labels)}
-        udf_foo = udf(lambda x: t[x], StringType())
-        df_buck = df_buck.withColumn(name, udf_foo(name))
+        if labels is not None:
+            t = {i: label for (i, label) in enumerate(labels)}
+            udf_foo = udf(lambda x: t[x], StringType())
+            df_buck = df_buck.withColumn(name, udf_foo(name))
         if drop:
             df_buck = df_buck.drop(column)
         return self._clone(df_buck)
