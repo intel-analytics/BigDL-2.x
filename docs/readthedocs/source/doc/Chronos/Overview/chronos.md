@@ -21,7 +21,7 @@ pip install --pre --upgrade analytics-zoo[automl]
 
 ### **3 Initialization**
 
-_Chronos_ uses [Orca](../../Orca/Overview/orca.md) to enable distributed training and AutoML capabilities. Init orca as below. View [Orca Context](../../Orca/Overview/orca-context.md) for more details. Note that argument `init_ray_on_spark` must be True for _Chronos. 
+_Chronos_ uses [Orca](../../Orca/Overview/orca.md) to enable distributed training and AutoML capabilities. Init orca as below. View [Orca Context](../../Orca/Overview/orca-context.md) for more details. Note that argument `init_ray_on_spark` must be `True` for _Chronos_. 
 
 ```python
 if args.cluster_mode == "local":
@@ -36,9 +36,9 @@ View [Quick Start](../QuickStart/chronos-autots-quickstart.md) for a more detail
 ---
 ### **4 Forecasting** 
 
-Time Series Forecasting uses the history to predict the future. There're two ways to do Forecasting:
+Time Series Forecasting uses the history to predict the future. There're two ways to do forecasting:
 
-- Use AutoTS Pipeline
+- Use AutoTS pipeline
 - Use Standalone Forecaster pipeline
 
 #### **4.1 Use AutoTS Pipeline (with AutoML)**
@@ -69,12 +69,12 @@ datetime    target  extra_feature_1  extra_feature_2
 
 ##### **4.1.2 Create AutoTSTrainer**
 
-You can create an `AutoTSTrainer` as follows (`dt_col` is the datetime, `target_col` is the target column, and `extra_features_col` is the extra features):
+You can create an `AutoTSTrainer` as follows (`dt_col` is the datetime, `target_col` is the target column):
 
 ```python
 from zoo.chronos.autots.forecast import AutoTSTrainer
 
-trainer = AutoTSTrainer(dt_col="datetime", target_col="target", horizon=1, extra_features_col=["extra_feature_1","extra_feature_2"])
+trainer = AutoTSTrainer(dt_col="datetime", target_col="target", horizon=1)
 ```
 
 View [AutoTSTrainer API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.AutoTSTrainer) for more details.
@@ -84,17 +84,17 @@ View [AutoTSTrainer API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.aut
 You can then train on the input data using `AutoTSTrainer.fit` with AutoML as follows:
 
 ```python
-ts_pipeline = trainer.fit(train_df, validation_df, recipe=LSTMRecipe())
+ts_pipeline = trainer.fit(train_df, validation_df, recipe=SmokeRecipe())
 ```
 
-View [Recipe API docs](../../PythonAPI/Chronos/autots.html#chronos-config-recipe) for available recipes to use in training. 
+`recipe` configures the search space for auto tuning. View [Recipe API docs](../../PythonAPI/Chronos/autots.html#chronos-config-recipe) for available recipes. 
 After training, it will return a [TSPipeline](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.TSPipeline), which includes not only the model, but also the data preprocessing/post processing steps. 
 
 Appropriate hyperparameters are automatically selected for the models and data processing steps in the pipeline during the fit process, and you may use built-in [visualization tool](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/AutoML/visualization.md) to inspect the training results after training stopped.
 
 ##### **4.1.4 Use TSPipeline**
 
-Use `TSPipeline.predict|evaluate|fit` for prediction, evaluation or (incremental) fitting. (Note that incremental fitting on TSPipeline just update the model weights the standard way, which does not involve AutoML).
+Use `TSPipeline.predict|evaluate|fit` for prediction, evaluation or (incremental) fitting. **Note**: incremental fitting on TSPipeline just update the model weights the standard way, which does not involve AutoML.
 
 ```python
 ts_pipeline.predict(test_df)
