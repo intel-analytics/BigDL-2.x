@@ -5,9 +5,9 @@ _Chronos_ is an application framework for building large-scale time series analy
 
 You can use _Chronos_ to do:
 
-- Time Series Forecasting (using [Standalone Forecasters](#42-use-standalone-forecaster-pipeline) or [AutoTS](#41-use-autots-pipeline-with-automl) (AutoML enabled pipelines))
-- Anomaly Detection (using [Anomaly Detectors](#5-anomaly-detection))
-- Data preprocessing and feature generation (using [TSDataset](#6-data-processing-and-features))
+- Time Series Forecasting (using [Standalone Forecasters](#use-standalone-forecaster-pipeline) or [AutoTS](#use-autots-pipeline-with-automl) (AutoML enabled pipelines))
+- Anomaly Detection (using [Anomaly Detectors](#anomaly-detection))
+- Data preprocessing and feature generation (using [TSDataset](#data-processing-and-features))
 
 ### **2. Install**
 
@@ -19,7 +19,7 @@ conda activate my_env
 pip install --pre --upgrade analytics-zoo[automl]
 ```
 
-### **3 Init**
+### **3 Initialization**
 
 _Chronos_ uses [Orca](../../Orca/Overview/orca.md) to enable distributed training and AutoML capabilities. Init orca as below. View [Orca Context](../../Orca/Overview/orca-context.md) for more details. Note that argument `init_ray_on_spark` must be True for _Chronos. 
 
