@@ -24,7 +24,7 @@ import com.intel.analytics.zoo.feature.common._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.nnframes.NNModel.NNModelWriter
 import ml.dmlc.xgboost4j.scala.spark.{XGBoostClassificationModel, XGBoostHelper,
-XGBoostRegressionModel, XGBoostRegressor}
+  XGBoostRegressionModel, XGBoostRegressor, XGBoostClassifier}
 import org.apache.spark.ml.DefaultParamsWriterWrapper
 import org.apache.spark.ml.adapter.SchemaUtils
 import org.apache.spark.ml.feature.VectorAssembler
@@ -46,10 +46,10 @@ import scala.reflect.ClassTag
  * @param criterion  BigDL criterion method
  */
 class NNClassifier[T: ClassTag] private[zoo]  (
-    @transient override val model: Module[T],
-    override val criterion : Criterion[T],
-    override val uid: String = Identifiable.randomUID("nnClassifier")
-  )(implicit ev: TensorNumeric[T])
+                                                @transient override val model: Module[T],
+                                                override val criterion : Criterion[T],
+                                                override val uid: String = Identifiable.randomUID("nnClassifier")
+                                              )(implicit ev: TensorNumeric[T])
   extends NNEstimator[T](model, criterion) {
 
   override protected def wrapBigDLModel(m: Module[T]): NNClassifierModel[T] = {
@@ -98,11 +98,11 @@ object NNClassifier {
    * @param criterion  BigDL criterion method
    */
   def apply[T: ClassTag](
-      model: Module[T],
-      criterion: Criterion[T]
-    )(implicit ev: TensorNumeric[T]): NNClassifier[T] = {
+                          model: Module[T],
+                          criterion: Criterion[T]
+                        )(implicit ev: TensorNumeric[T]): NNClassifier[T] = {
     new NNClassifier(model, criterion)
-        .setSamplePreprocessing(FeatureLabelPreprocessing(SeqToTensor(), ScalarToTensor()))
+      .setSamplePreprocessing(FeatureLabelPreprocessing(SeqToTensor(), ScalarToTensor()))
   }
 
   /**
@@ -117,13 +117,13 @@ object NNClassifier {
    *                    width * height = 28 * 28, featureSize = Array(28, 28).
    */
   def apply[T: ClassTag](
-      model: Module[T],
-      criterion: Criterion[T],
-      featureSize: Array[Int]
-    )(implicit ev: TensorNumeric[T]): NNClassifier[T] = {
+                          model: Module[T],
+                          criterion: Criterion[T],
+                          featureSize: Array[Int]
+                        )(implicit ev: TensorNumeric[T]): NNClassifier[T] = {
     new NNClassifier(model, criterion)
-        .setSamplePreprocessing(
-          FeatureLabelPreprocessing(SeqToTensor(featureSize), ScalarToTensor()))
+      .setSamplePreprocessing(
+        FeatureLabelPreprocessing(SeqToTensor(featureSize), ScalarToTensor()))
   }
 
 
@@ -141,15 +141,15 @@ object NNClassifier {
    * @param featureSize The sizes (Tensor dimensions) of the feature data.
    */
   def apply[T: ClassTag](
-      model: Module[T],
-      criterion: Criterion[T],
-      featureSize : Array[Array[Int]]
-    )(implicit ev: TensorNumeric[T]): NNClassifier[T] = {
+                          model: Module[T],
+                          criterion: Criterion[T],
+                          featureSize : Array[Array[Int]]
+                        )(implicit ev: TensorNumeric[T]): NNClassifier[T] = {
     new NNClassifier(model, criterion)
       .setSamplePreprocessing(FeatureLabelPreprocessing(
         SeqToMultipleTensors(featureSize), ScalarToTensor()
       )
-    )
+      )
   }
 
   /**
@@ -160,13 +160,13 @@ object NNClassifier {
    * @param featurePreprocessing Preprocessing[F, Tensor[T] ].
    */
   def apply[F, T: ClassTag](
-      model: Module[T],
-      criterion: Criterion[T],
-      featurePreprocessing: Preprocessing[F, Tensor[T]]
-    )(implicit ev: TensorNumeric[T]): NNClassifier[T] = {
+                             model: Module[T],
+                             criterion: Criterion[T],
+                             featurePreprocessing: Preprocessing[F, Tensor[T]]
+                           )(implicit ev: TensorNumeric[T]): NNClassifier[T] = {
     new NNClassifier(model, criterion)
-        .setSamplePreprocessing(
-          FeatureLabelPreprocessing(featurePreprocessing, ScalarToTensor()))
+      .setSamplePreprocessing(
+        FeatureLabelPreprocessing(featurePreprocessing, ScalarToTensor()))
   }
 }
 
@@ -177,9 +177,9 @@ object NNClassifier {
  * @param model trained BigDL models to use in prediction.
  */
 class NNClassifierModel[T: ClassTag] private[zoo] (
-    @transient override val model: Module[T],
-    override val uid: String = Identifiable.randomUID("nnClassifierModel")
-  )(implicit ev: TensorNumeric[T]) extends NNModel[T](model) {
+                                                    @transient override val model: Module[T],
+                                                    override val uid: String = Identifiable.randomUID("nnClassifierModel")
+                                                  )(implicit ev: TensorNumeric[T]) extends NNModel[T](model) {
 
   /**
    * Param for threshold in binary classification prediction.
@@ -230,8 +230,8 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
    * @param model BigDL module to be optimized
    */
   def apply[T: ClassTag](
-      model: Module[T]
-    )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
+                          model: Module[T]
+                        )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
     new NNClassifierModel(model)
       .setSamplePreprocessing(SeqToTensor() -> TensorToSample())
   }
@@ -247,9 +247,9 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
    *                    width * height = 28 * 28, featureSize = Array(28, 28).
    */
   def apply[T: ClassTag](
-      model: Module[T],
-      featureSize : Array[Int]
-    )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
+                          model: Module[T],
+                          featureSize : Array[Int]
+                        )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
     new NNClassifierModel(model)
       .setSamplePreprocessing(SeqToTensor(featureSize) -> TensorToSample())
   }
@@ -267,9 +267,9 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
    * @param featureSize The sizes (Tensor dimensions) of the feature data.
    */
   def apply[T: ClassTag](
-      model: Module[T],
-      featureSize : Array[Array[Int]]
-    )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
+                          model: Module[T],
+                          featureSize : Array[Array[Int]]
+                        )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
     new NNClassifierModel(model)
       .setSamplePreprocessing(SeqToMultipleTensors(featureSize) -> MultiTensorsToSample())
   }
@@ -281,9 +281,9 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
    * @param featurePreprocessing Preprocessing[F, Tensor[T] ].
    */
   def apply[F, T: ClassTag](
-      model: Module[T],
-      featurePreprocessing: Preprocessing[F, Tensor[T]]
-    )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
+                             model: Module[T],
+                             featurePreprocessing: Preprocessing[F, Tensor[T]]
+                           )(implicit ev: TensorNumeric[T]): NNClassifierModel[T] = {
     new NNClassifierModel(model).setSamplePreprocessing(featurePreprocessing -> TensorToSample())
   }
 
@@ -309,7 +309,7 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
   }
 
   class NNClassifierModelWriter[T: ClassTag](
-      instance: NNClassifierModel[T])(implicit ev: TensorNumeric[T])
+                                              instance: NNClassifierModel[T])(implicit ev: TensorNumeric[T])
     extends NNModelWriter[T](instance)
 
   override def read: MLReader[NNClassifierModel[_]] = {
@@ -317,6 +317,57 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
   }
 }
 
+class XGBClassifier () {
+  private val model = new XGBoostClassifier()
+  model.setNthread(EngineRef.getCoreNumber())
+  model.setMaxBins(256)
+  def setFeaturesCol(featuresColName: String): this.type = {
+    model.setFeaturesCol(featuresColName)
+    this
+  }
+
+  def fit(df: DataFrame): XGBClassifierModel = {
+    df.repartition(EngineRef.getNodeNumber())
+    val xgbmodel = model.fit(df)
+    new XGBClassifierModel(xgbmodel)
+  }
+
+  def setNthread(value: Int): this.type = {
+    model.setNthread(value)
+    this
+  }
+
+  def setNumRound(value: Int): this.type = {
+    model.setNumRound(value)
+    this
+  }
+
+  def setNumWorkers(value: Int): this.type = {
+    model.setNumWorkers(value)
+    this
+  }
+
+  def setEta(value: Int): this.type = {
+    model.setEta(value)
+    this
+  }
+
+  def setGamma(value: Int): this.type = {
+    model.setGamma(value)
+    this
+  }
+
+  def setMaxDepth(value: Int): this.type = {
+    model.setMaxDepth(value)
+    this
+  }
+
+  def setMissing(value: Float): this.type = {
+    model.setMissing(value)
+    this
+  }
+
+}
 /**
  * [[XGBClassifierModel]] is a trained XGBoost classification model.
  * The prediction column will have the prediction results.
@@ -324,7 +375,7 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
  * @param model trained XGBoostClassificationModel to use in prediction.
  */
 class XGBClassifierModel private[zoo](
-   val model: XGBoostClassificationModel) {
+                                       val model: XGBoostClassificationModel) {
   private var featuresCols: Array[String] = null
   private var predictionCol: String = null
 
