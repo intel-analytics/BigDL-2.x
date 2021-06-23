@@ -19,3 +19,20 @@ Recipe is used for search configuration for AutoTSTrainer.
     :members:
     :show-inheritance:
 
+chronos.autots.model.auto_tcn
+----------------------------------------
+AutoTCN is a TCN forecasting model with Auto tuning. 
+
+.. automodule:: zoo.chronos.autots.model.auto_tcn
+    :members:
+    :show-inheritance:
+
+chronos.autots.model.auto_lstm
+----------------------------------------
+AutoLSTM is an LSTM forecasting model with Auto tuning.
+
+.. automodule:: zoo.chronos.autots.model.auto_lstm
+    :members:
+    :show-inheritance:
+
+
