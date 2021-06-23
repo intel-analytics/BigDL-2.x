@@ -11,29 +11,29 @@ You can use _Chronos_ to do:
 
 ### **2. Install**
 
-_Chronos_ depends on the Python libraries below:
-
-```bash
-python 3.6 or 3.7
-pySpark
-analytics-zoo
-tensorflow>=1.15.0,<2.0.0
-h5py==2.10.0
-ray[tune]==1.2.0
-psutil
-aiohttp
-setproctitle
-pandas
-scikit-learn>=0.20.0,<0.24.0
-requests
-```
-
-You can easily install all the dependencies for _Chronos_ as follows:
+You need to install analytics-zoo with target [automl] to install the additional dependency libraries for _Chronos_. 
 
 ```bash
 conda create -n my_env python=3.7
 conda activate my_env
 pip install --pre --upgrade analytics-zoo[automl]
+```
+
+#### **3 Initialize Orca Context**
+
+_Chronos_ uses [Orca](../Orca/Overview/orca.html) to enable distributed training and AutoML capabilities. Init orca as below (View [Orca Context](../Orca/Overview/orca-context.md) for more details. ). Note that argument `init_ray_on_spark` must be True for _Chronos. 
+
+
+```python
+from zoo.orca import init_orca_context, stop_orca_context
+init_orca_context(cluster_mode="local", cores=4, memory='2g', init_ray_on_spark=True)
+```
+
+* YARN client mode
+
+```python
+from zoo.orca import init_orca_context, stop_orca_context
+init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, conda_name='my_env', extra_memory_for_ray="10g", object_store_memory='5g', init_ray_on_spark=True)
 ```
 
 ---
@@ -48,30 +48,7 @@ The general workflow has two steps:
 
 View [AutoTS example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.ipynb) for more details.
 
-#### **3.1 Initialize Orca Context**
 
-AutoTS uses [RayOnSpark](./ray.md) to train (or `fit`) the time series pipeline, and needs to call `init_orca_context` with argument `init_ray_on_spark=True`. 
-
-View [Orca Context](../Orca/Overview/orca-context.md) for more details. 
-
-* Local mode
-
-```python
-from zoo.orca import init_orca_context, stop_orca_context
-init_orca_context(cluster_mode="local", cores=4, memory='2g', init_ray_on_spark=True)
-```
-
-* YARN client mode
-
-```python
-from zoo.orca import init_orca_context, stop_orca_context
-init_orca_context(cluster_mode="yarn-client",
-                  num_nodes=2, cores=2,
-                  conda_name='my_env',
-                  extra_memory_for_ray="10g",
-                  object_store_memory='5g',
-                  init_ray_on_spark=True)
-```
 
 #### **3.2 Prepare input data**
 
