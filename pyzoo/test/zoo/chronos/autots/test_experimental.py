@@ -95,6 +95,7 @@ class TestAutoTrainer(TestCase):
                          n_sampling=1
                          )
         config = auto_trainer.get_best_config()
+        assert 4 <= config["past_seq_len"] <= 6
 
     def test_fit_tcn_feature(self):
         input_feature_dim = 11  # This param will not be used
@@ -132,6 +133,7 @@ class TestAutoTrainer(TestCase):
                          )
         best_config = auto_trainer.get_best_config()
         best_model = auto_trainer.get_best_model()
+        assert 4 <= best_config["past_seq_len"] <= 6
 
         # really difficult to use the model currently...
         tsdata_test.roll(lookback=best_config["past_seq_len"],
@@ -177,6 +179,8 @@ class TestAutoTrainer(TestCase):
                          n_sampling=1
                          )
         config = auto_trainer.get_best_config()
+        assert config["past_seq_len"] == 7
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

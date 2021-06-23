@@ -196,10 +196,6 @@ class AutoTSTrainer:
         def train_data_creator(config):
             train_d = ray.get(train_data_id)
 
-            print(config.get('past_seq_len'),
-                  type(config.get('past_seq_len')))
-            print(config)
-
             x, y = train_d.roll(lookback=config.get('past_seq_len'),
                                 horizon=config.get('future_seq_len'),
                                 feature_col=config['selected_features']) \
