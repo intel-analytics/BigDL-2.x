@@ -15,6 +15,7 @@
 #
 
 import os.path
+from os import remove
 import pytest
 import tempfile
 from unittest import TestCase
@@ -564,7 +565,21 @@ class TestTable(TestCase):
         assert df.select("z"),size() == 2
         assert df.filter("z == 0").size() == 2
 
-
+    def test_factorise(self):
+        spark = OrcaContext.get_spark_session()
+        file_path = os.path.join(self.resource_path, "friesian/feature/csv/")
+        df = FeatureTable.read_csv(file_path+"df3.csv")
+        df = df.factorise("x","y")
+        assert df.filter("y == 0").size() == 3
+        assert df.filter("y == 1").size() == 1
+        assert df.filter("y == 2").size() == 1
+    
+    def test_write_csv(self):
+        spark = OrcaContext.get_spark_session()
+        file_path = os.path.join(self.resource_path, "friesian/feature/csv/")
+        df = FeatureTable.read_csv(file_path+"df3.csv")
+        df.write_csv(file_path+"df4.csv")
+        assert os.path.exists(file_path+"df4.csv")
 
 
 if __name__ == "__main__":
