@@ -69,12 +69,12 @@ datetime    target  extra_feature_1  extra_feature_2
 
 ##### **4.1.2 Create AutoTSTrainer**
 
-You can create an `AutoTSTrainer` as follows (`dt_col` is the datetime, `target_col` is the target column):
+You can create an `AutoTSTrainer` as follows (`dt_col` is the datetime, `target_col` is the target column, and extra_features_col is the extra features):
 
 ```python
 from zoo.chronos.autots.forecast import AutoTSTrainer
 
-trainer = AutoTSTrainer(dt_col="datetime", target_col="target", horizon=1)
+trainer = AutoTSTrainer(dt_col="datetime", target_col="target", horizon=1, extra_features_col=["extra_feature_1","extra_feature_2"])
 ```
 
 View [AutoTSTrainer API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.AutoTSTrainer) for more details.
@@ -127,7 +127,7 @@ f = Forecaster()
 f.fit(...)
 f.predict(...)
 ```
-Refer to API docs of each Forecaster for detailed usage instructions and exmaples.
+Refer to API docs of each Forecaster for detailed usage instructions and examples.
 
 ###### **4.2.1 LSTMForecaster**
 
@@ -167,9 +167,9 @@ View some examples notebooks for [Datacenter AIOps](https://github.com/intel-ana
 
 #### **5.1 ThresholdDetector**
 
-ThresholdDetector detects anomaly based on threshold. It can be used to detect anomaly on a given time series ([notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb)), or used together with forecasts (#4-forecasting) to detect anomaly on new coming samples ([notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised_forecast_based.ipynb)). 
+ThresholdDetector detects anomaly based on threshold. It can be used to detect anomaly on a given time series ([notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb)), or used together with forecasts (#forecasting) to detect anomaly on new coming samples ([notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised_forecast_based.ipynb)). 
 
-View [ThresholdDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-ae-detector) for more details.
+View [ThresholdDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-th-detector) for more details.
 
 
 #### **5.2 AEDetector**
@@ -182,7 +182,7 @@ View anomaly detection [notebook](https://github.com/intel-analytics/analytics-z
 
 DBSanDetector uses DBSCAN clustering algortihm for anomaly detection. 
 
-View anomaly detection [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb) and [DBScanDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-ae-detector) for more details.
+View anomaly detection [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb) and [DBScanDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-dbscan-detector) for more details.
 
 ### **6 Data Processing and Features**
 
