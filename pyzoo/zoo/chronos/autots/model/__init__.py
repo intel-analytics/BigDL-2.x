@@ -23,9 +23,10 @@ class AutoModelFactory:
         name = name.lower()
         if name == "lstm":
             from .auto_lstm import AutoLSTM
-            del search_space["past_seq_len"]  # no need to have past_seq_len
-            del search_space["future_seq_len"]  # future_seq_len should always be 1
-            return AutoLSTM(**search_space)
+            revised_search_space = search_space.copy()
+            # del revised_search_space["past_seq_len"]  # no need to have past_seq_len
+            del revised_search_space["future_seq_len"]  # future_seq_len should always be 1
+            return AutoLSTM(**revised_search_space)
         if name == "tcn":
             from .auto_tcn import AutoTCN
             return AutoTCN(**search_space)

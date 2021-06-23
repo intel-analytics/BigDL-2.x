@@ -18,9 +18,6 @@ from zoo.chronos.data import TSDataset
 import zoo.orca.automl.hp as hp
 from zoo.chronos.autots.model import AutoModelFactory
 
-AUTOTS_DEFAULT_LOOKBACK = 2
-AUTOTS_DEFAULT_HORIZON = 1
-
 
 class AutoTSTrainer:
     """
@@ -33,8 +30,8 @@ class AutoTSTrainer:
                  metric="mse",
                  loss=None,
                  optimizer="Adam",
-                 past_seq_len=None,
-                 future_seq_len=None,
+                 past_seq_len=2,
+                 future_seq_len=1,
                  input_feature_num=None,
                  output_target_num=None,
                  selected_features="all",
@@ -57,8 +54,9 @@ class AutoTSTrainer:
                tf.keras optimizer instance.
         :param past_seq_len: Int or or hp sampling function. The number of historical steps (i.e.
                lookback) used for forecasting. For hp sampling, see zoo.orca.automl.hp for more
-               details.
-        :param future_seq_len: Int. The number of future steps to forecast.
+               details. The values defaults to 2.
+        :param future_seq_len: Int. The number of future steps to forecast. The value defaults
+               to 1.
         :param input_feature_num: Int. The number of features in the input. The value is ignored if
                you set selected_features and use chronos.data.TSDataset as input data type.
         :param output_target_num: Int. The number of targets in the output.
@@ -198,8 +196,12 @@ class AutoTSTrainer:
         def train_data_creator(config):
             train_d = ray.get(train_data_id)
 
-            x, y = train_d.roll(lookback=config.get('past_seq_len', AUTOTS_DEFAULT_LOOKBACK),
-                                horizon=config.get('future_seq_len', AUTOTS_DEFAULT_HORIZON),
+            print(config.get('past_seq_len'),
+                  type(config.get('past_seq_len')))
+            print(config)
+
+            x, y = train_d.roll(lookback=config.get('past_seq_len'),
+                                horizon=config.get('future_seq_len'),
                                 feature_col=config['selected_features']) \
                           .to_numpy()
 
@@ -211,8 +213,8 @@ class AutoTSTrainer:
         def val_data_creator(config):
             val_d = ray.get(valid_data_id)
 
-            x, y = val_d.roll(lookback=config.get('past_seq_len', AUTOTS_DEFAULT_LOOKBACK),
-                              horizon=config.get('future_seq_len', AUTOTS_DEFAULT_HORIZON),
+            x, y = val_d.roll(lookback=config.get('past_seq_len'),
+                              horizon=config.get('future_seq_len'),
                               feature_col=config['selected_features']) \
                         .to_numpy()
 
