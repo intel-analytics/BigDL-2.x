@@ -19,7 +19,7 @@ conda activate my_env
 pip install --pre --upgrade analytics-zoo[automl]
 ```
 
-### **3 Init Orca Context**
+### **3 Init**
 
 _Chronos_ uses [Orca](../../Orca/Overview/orca.md) to enable distributed training and AutoML capabilities. Init orca as below. View [Orca Context](../../Orca/Overview/orca-context.md) for more details. Note that argument `init_ray_on_spark` must be True for _Chronos. 
 
@@ -47,8 +47,8 @@ You can use the ```AutoTS``` package to to build a time series forecasting pipel
 
 The general workflow has two steps:
 
-* Create a [AutoTSTrainer](#412-create-autotstrainer) and train; it will then return a [TSPipeline](#414-use-tspipeline).
-* Use [TSPipeline](#414-use-tspipeline) to do prediction, evaluation, and incremental fitting.
+* Create a [AutoTSTrainer](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.AutoTSTrainer) and train; it will then return a [TSPipeline](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.TSPipeline).
+* Use [TSPipeline](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.TSPipeline) to do prediction, evaluation, and incremental fitting.
 
 View [AutoTS notebook example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.ipynb) for more details.
 
@@ -80,17 +80,18 @@ trainer = AutoTSTrainer(dt_col="datetime",
                         extra_features_col=["extra_feature_1","extra_feature_2"])
 ```
 
-Refer to [AutoTSTrainer API Doc]() for more details.
+View [AutoTSTrainer API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.AutoTSTrainer) for more details.
 
 ##### **4.1.3 Train AutoTS pipeline**
 
 You can then train on the input data using `AutoTSTrainer.fit` with AutoML as follows:
 
 ```python
-ts_pipeline = trainer.fit(train_df, validation_df)
+ts_pipeline = trainer.fit(train_df, validation_df, recipe=LSTMRecipe())
 ```
 
-After training, it will return a TSPipeline, which includes not only the model, but also the data preprocessing/post processing steps. 
+View [Recipe API docs](../../PythonAPI/Chronos/autots.html#chronos-config-recipe) for available recipes to use in training. 
+After training, it will return a [TSPipeline](), which includes not only the model, but also the data preprocessing/post processing steps. 
 
 Appropriate hyperparameters are automatically selected for the models and data processing steps in the pipeline during the fit process, and you may use built-in [visualization tool](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/AutoML/visualization.md) to inspect the training results after training stopped.
 
@@ -115,6 +116,8 @@ loaded_ppl = TSPipeline.load(file)
 # ... do sth. e.g. incremental fitting
 loaded_ppl.save(another_file)
 ```
+
+View [TSPipeline API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.TSPipeline) for more details.
 
 **Note**:  `init_orca_context` is not needed if you just use the trained TSPipeline for inference, evaluation or incremental fitting.
 
@@ -173,7 +176,7 @@ View some examples notebooks for [Datacenter AIOps](https://github.com/intel-ana
 
 ThresholdDetector detects anomaly based on threshold. It can be used to detect anomaly on a given time series ([notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb)), or used together with forecasts (#4-forecasting) to detect anomaly on new coming samples ([notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised_forecast_based.ipynb)). 
 
-View [AEDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-ae-detector) for more details.
+View [ThresholdDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-ae-detector) for more details.
 
 
 #### **5.2 AEDetector**
@@ -186,7 +189,7 @@ View anomaly detection [notebook](https://github.com/intel-analytics/analytics-z
 
 DBSanDetector uses DBSCAN clustering algortihm for anomaly detection. 
 
-View anomaly detection [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb) and [AEDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-ae-detector) for more details.
+View anomaly detection [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb) and [DBScanDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-ae-detector) for more details.
 
 ### **6 Data Processing and Features**
 
