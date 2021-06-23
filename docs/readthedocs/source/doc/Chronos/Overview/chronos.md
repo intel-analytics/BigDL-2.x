@@ -34,7 +34,7 @@ elif args.cluster_mode == "yarn":
 View [Quick Start]() for a more detailed example. 
 
 ---
-### **4 Forecasting 
+### **4 Forecasting** 
 
 #### **4.1 Use AutoTS Pipeline (with AutoML)**
 
