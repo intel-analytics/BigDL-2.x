@@ -5,13 +5,13 @@ _Chronos_ is an application framework for building large-scale time series analy
 
 You can use _Chronos_ to do:
 
-- Time Series Forecasting (using [Standalone Forecasters](#4-use-standalone-forecaster-pipeline) or [AutoTS](#3-use-autots-pipeline-with-automl) (AutoML enabled pipelines))
-- Anomaly Detection (using [Anomaly Detectors]())
-- Data preprocessing and feature generation (using [TSDataset]())
+- Time Series Forecasting (using [Standalone Forecasters](#42-use-standalone-forecaster-pipeline) or [AutoTS](#41-use-autots-pipeline-with-automl) (AutoML enabled pipelines))
+- Anomaly Detection (using [Anomaly Detectors](#5-anomaly-detection))
+- Data preprocessing and feature generation (using [TSDataset](#6-data-processing-and-features))
 
 ### **2. Install**
 
-Install analytics-zoo with target [automl] to install the additional dependencies for _Chronos_. 
+Install analytics-zoo with target `[automl]` to install the additional dependencies for _Chronos_. 
 
 ```bash
 conda create -n my_env python=3.7
@@ -21,7 +21,7 @@ pip install --pre --upgrade analytics-zoo[automl]
 
 ### **3 Init Orca Context**
 
-_Chronos_ uses [Orca](../Orca/Overview/orca.html) to enable distributed training and AutoML capabilities. Init orca as below. View [Orca Context](../Orca/Overview/orca-context.md) for more details. Note that argument `init_ray_on_spark` must be True for _Chronos. 
+_Chronos_ uses [Orca](../../Orca/Overview/orca.html) to enable distributed training and AutoML capabilities. Init orca as below. View [Orca Context](../../Orca/Overview/orca-context.md) for more details. Note that argument `init_ray_on_spark` must be True for _Chronos. 
 
 ```python
 if args.cluster_mode == "local":
@@ -31,10 +31,15 @@ elif args.cluster_mode == "k8s":
 elif args.cluster_mode == "yarn":
     init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2) # run on Hadoop YARN cluster
 ```
-View [Quick Start]() for a more detailed example. 
+View [Quick Start](../QuickStart/chronos-autots-quickstart.md) for a more detailed example. 
 
 ---
 ### **4 Forecasting** 
+
+Time Series Forecasting uses the history to predict the future. There're two ways to do Forecasting:
+
+- Use AutoTS Pipeline
+- Use Standalone Forecaster pipeline
 
 #### **4.1 Use AutoTS Pipeline (with AutoML)**
 
@@ -42,10 +47,10 @@ You can use the ```AutoTS``` package to to build a time series forecasting pipel
 
 The general workflow has two steps:
 
-* Create a [AutoTSTrainer](#33-create-autotstrainer) and train; it will then return a [TSPipeline](#35-use-tspipeline).
-* Use [TSPipeline](#35-use-tspipeline) to do prediction, evaluation, and incremental fitting.
+* Create a [AutoTSTrainer](#412-create-autotstrainer) and train; it will then return a [TSPipeline](#413-use-tspipeline).
+* Use [TSPipeline](#414-use-tspipeline) to do prediction, evaluation, and incremental fitting.
 
-View [AutoTS example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.ipynb) for more details.
+View [AutoTS notebook example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.ipynb) for more details.
 
 
 ##### **4.1.1 Prepare input data**
@@ -116,19 +121,17 @@ loaded_ppl.save(another_file)
 ---
 #### **4.2 Use Standalone Forecaster Pipeline**
 
-Chronos also provides a set of standalone time series forecaster, which are based on deep learning models (without AutoML support), including
+_Chronos_ provides a set of standalone time series forecasters without AutoML support, including deep learning models as well as traditional statistical models.
 
-* LSTMForecaster
-* TCNForecaster
-* Seq2SeqForecaster
-* MTNetForecaster
-* TCMFForecaster
-* ProphetForecaster
-* ARIMAForecaster
+View some examples notebooks for [Network Traffic Prediction](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/) 
 
-View [Network Traffic Prediction](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [Datacenter AIOps](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/chronos/use-case/AIOps) notebooks for some examples.
-
-Next, create an appropriate Forecaster to fit, evaluate or predict on the input data.
+The common process of using a Forecaster looks like below. 
+```python
+f = Forecaster()
+f.fit(...)
+f.predict(...)
+```
+Refer to API docs of each Forecaster for detailed usage instructions and exmaples.
 
 ###### **4.2.1 LSTMForecaster**
 
@@ -160,4 +163,25 @@ TCMFForecaster wraps a model architecture that follows implementation of the pap
 
 View High-dimensional Electricity Data Forecasting [example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/tcmf/run_electricity.py) and [TCMFForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-tcmf-forecaster) for more details.
 
+### **5 Anomaly Detection**
 
+Anomaly Detection detects abnormal samples in a given time series. _Chronos_ provides a set of unsupervised anomaly detectors. 
+
+View some examples notebooks for [Datacenter AIOps](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/chronos/use-case/AIOps).
+
+#### **5.1 ThresholdDetector**
+
+
+
+#### **5.2 AEDetector**
+
+AEDetector detects anomaly based on the reconstruction error of an autoencoder network. 
+
+View anomaly detection [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [AEDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-ae-detector) for more details.
+
+#### **
+
+
+### **6 Data Processing and Features**
+
+You can use 
