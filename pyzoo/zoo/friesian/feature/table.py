@@ -293,13 +293,17 @@ class Table:
         """
         self.df.show(n, truncate)
 
-    def min_max(self, columns):
+    def get_stats(self, columns, aggr):
         """
-        Calculate minimum and maximum of the values over target column/columns.
+        Calculate statistics of the values over target column/columns.
 
         :param columns: str or list of str, specifies names of target column/columns.
+        :param aggr:
+        str: specifies aggreegate funtion, must be min/max/avg/sum/count.
+        dict: the key is the column to perform aggregation on, and the value is the
+        aggregate function.
 
-        :return: dict, with format {column -> (min, max)}.
+        :return: dict, the key is the column, and the value is the aggregation result.
         """
         if columns is None:
             raise ValueError("Columns should be str or list of str, but got None")
@@ -308,9 +312,18 @@ class Table:
         check_col_exists(self.df, columns)
         stats = {}
         for column in columns:
-            maxValue = self.df.agg({column: "max"}).collect()[0][0]
-            minValue = self.df.agg({column: "min"}).collect()[0][0]
-            stats[column] = (minValue, maxValue)
+            if isinstance(aggr, str):
+                a = aggr
+            else:
+                if column not in aggr:
+                    raise ValueError("aggregate funtion not defined for target \
+                        column {}.".format(column))
+                a = aggr[column]
+            if a not in ["min", "max", "avg", "sum", "count"]:
+                raise ValueError("aggregate function must be min/max/avg/sum/count, \
+                    but get {}.".format(a))
+            value = self.df.agg({column: a}).collect()[0][0]
+            stats[column] = value
         return stats
 
     def convert_to_list(self, column):
