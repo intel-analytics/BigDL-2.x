@@ -15,7 +15,7 @@
 #
 import os
 
-from pyspark.sql.types import DoubleType, ArrayType, DataType
+from pyspark.sql.types import DoubleType, ArrayType, DataType, StringType
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
@@ -27,6 +27,11 @@ from zoo.friesian.feature.utils import *
 from zoo.common.utils import callZooFunc
 
 from functools import reduce
+from pyspark.ml.feature import Bucketizer
+from pyspark.sql.functions import udf
+from pyspark.sql.types import *
+
+import numpy as np
 
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
@@ -367,7 +372,7 @@ class Table:
         columns that are shared by all tables, the value "outer" indicates that the output
         table contain all columns.
 
-        return: a single table with rows combined from input tables.
+        :return: a single table with rows combined from input tables.
         """
         if join not in ["outer", "inner"]:
             raise ValueError("join should take either outer or inner.")
@@ -380,7 +385,7 @@ class Table:
         Return a new table with duplicate rows removed.
         :param subset: specify which columns to be considered when referring to duplication.
 
-        return: a new table with duplicate rows removed.
+        :return: a new table with duplicate rows removed.
         """
         if subset is None:
             return self._clone(self.df.dropDuplicates())
@@ -388,6 +393,36 @@ class Table:
             subset = [subset]
         check_col_exists(self.df, subset)
         return self._clone(self.df.dropDuplicates(subset))
+
+    def cut_bins(self, bins, column, labels, name="bucket", drop=True):
+        """
+        Segment values of the target column into bins.
+
+        :param bins:
+            list: defines bins to be used. With n+1 splits, there are n buckets. A bucket
+            defined by splits x,y holds values in the range [x,y) except the last bucket,
+            which also includes y. Should be of length >= 3 and strictly increasing.
+            int: defines the number of equal-width bins in the range of x.
+        :param column: str, target column.
+        :labels: list, specifies the labels for the returned bins.
+        :name: str, name of output categorical column.
+        :drop: bool, specify whether to drop original target column.
+
+        :return: new Table with updated bin column.
+        """
+        check_col_exists(self.df, [column])
+        if isinstance(bins, int):
+            maxValue = self.df.agg({column: "max"}).collect()[0][0]
+            minValue = self.df.agg({column: "min"}).collect()[0][0]
+            bins = np.linspace(minValue, maxValue, bins+1, endpoint=True)
+        bucketizer = Bucketizer(splits=bins, inputCol=column, outputCol=name)
+        df_buck = bucketizer.setHandleInvalid("keep").transform(self.df)
+        t = {i: label for (i, label) in enumerate(labels)}
+        udf_foo = udf(lambda x: t[x], StringType())
+        df_buck = df_buck.withColumn(name, udf_foo(name))
+        if drop:
+            df_buck = df_buck.drop(column)
+        return self._clone(df_buck)
 
     def __getattr__(self, name):
         return self.df.__getattr__(name)

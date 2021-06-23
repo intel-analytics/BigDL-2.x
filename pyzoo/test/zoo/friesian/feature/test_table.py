@@ -598,6 +598,38 @@ class TestTable(TestCase):
         assert "id" in tbl.df.schema.names
         assert "name_r" in tbl.df.schema.names
 
+    def test_cut_bins(self):
+        spark = OrcaContext.get_spark_session()
+        values = [("a", 23), ("b", 45), ("c", 10), ("d", 60), ("e", 56), ("f", 2),
+                  ("g", 25), ("h", 40), ("j", 33)]
+        tbl = FeatureTable(spark.createDataFrame(values, ["name", "ages"]))
+        splits = [0, 6, 18, 60, float('Inf')]
+        labels = ["infant", "minor", "adult", "senior"]
+        # test drop false, name defiend
+        new_tbl = tbl.cut_bins(bins=splits, column="ages", labels=labels,
+                               name="age_bucket", drop=False)
+        assert "age_bucket" in new_tbl.df.schema.names
+        assert "ages" in new_tbl.df.schema.names
+        assert new_tbl.df.select("age_bucket").rdd.flatMap(lambda x: x).collect() ==\
+            ["adult", "adult", "minor", "senior", "adult", "infant", "adult", "adult", "adult"]
+        # test drop true, name defined
+        new_tbl = tbl.cut_bins(bins=splits, column="ages", labels=labels,
+                               name="age_bucket", drop=True)
+        assert "age_bucket" in new_tbl.df.schema.names
+        assert "ages" not in new_tbl.df.schema.names
+        assert new_tbl.df.select("age_bucket").rdd.flatMap(lambda x: x).collect() == \
+            ["adult", "adult", "minor", "senior", "adult", "infant", "adult", "adult", "adult"]
+        # test name not defined
+        new_tbl = tbl.cut_bins(bins=splits, column="ages", labels=labels, drop=True)
+        assert "bucket" in new_tbl.df.schema.names
+        assert new_tbl.df.select("bucket").rdd.flatMap(lambda x: x).collect() == \
+            ["adult", "adult", "minor", "senior", "adult", "infant", "adult", "adult", "adult"]
+        # test integer bins
+        new_tbl = tbl.cut_bins(bins=4, column="ages", labels=labels, drop=True)
+        assert "bucket" in new_tbl.df.schema.names
+        assert new_tbl.df.select("bucket").rdd.flatMap(lambda x: x).collect() \
+            == ["minor", "adult", "infant", "senior", "senior", "infant", "minor", "adult", "adult"]
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
