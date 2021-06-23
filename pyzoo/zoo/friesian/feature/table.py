@@ -328,7 +328,7 @@ class Table:
         """
         Convert the Table to a dictionary, the Table must be small.
 
-        :param column: str, itentifies the key of the dictionary, 
+        :param column: str, itentifies the key of the dictionary,
         must be a column of the Table.
 
         :return: dict, with format {key -> {column name -> value}}.
