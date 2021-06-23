@@ -90,6 +90,7 @@ class PytorchBaseModel(BaseModel):
         return data_creator
 
     def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric=None,
+                 metric_func=None,
                  **config):
         """
         :param data: data could be a tuple with numpy ndarray with form (x, y) or a
@@ -152,7 +153,7 @@ class PytorchBaseModel(BaseModel):
             train_loss = self._train_epoch(train_loader)
             epoch_losses.append(train_loss)
         train_stats = {"loss": np.mean(epoch_losses), "last_loss": epoch_losses[-1]}
-        val_stats = self._validate(validation_loader, metric=metric)
+        val_stats = self._validate(validation_loader, metric_name=metric, metric_func=metric_func)
         self.onnx_model_built = False
         return val_stats
 
@@ -199,7 +200,10 @@ class PytorchBaseModel(BaseModel):
     def _forward(self, x, y):
         return self.model(x)
 
-    def _validate(self, validation_loader, metric):
+    def _validate(self, validation_loader, metric_name, metric_func=None):
+        if not metric_name:
+            assert metric_func, "You must input valid metric_func or metric_name"
+            metric_name = metric_func.__name__
         self.model.eval()
         with torch.no_grad():
             yhat_list = []
@@ -210,10 +214,13 @@ class PytorchBaseModel(BaseModel):
             yhat = np.concatenate(yhat_list, axis=0)
             y = np.concatenate(y_list, axis=0)
         # val_loss = self.criterion(yhat, y)
-        eval_result = Evaluator.evaluate(metric=metric,
-                                         y_true=y, y_pred=yhat,
-                                         multioutput='uniform_average')
-        return {metric: eval_result}
+        if metric_func:
+            eval_result = metric_func(y, yhat)
+        else:
+            eval_result = Evaluator.evaluate(metric=metric_name,
+                                             y_true=y, y_pred=yhat,
+                                             multioutput='uniform_average')
+        return {metric_name: eval_result}
 
     def _print_model(self):
         # print model and parameters
