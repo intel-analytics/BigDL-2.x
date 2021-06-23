@@ -47,7 +47,7 @@ You can use the ```AutoTS``` package to to build a time series forecasting pipel
 
 The general workflow has two steps:
 
-* Create a [AutoTSTrainer](#412-create-autotstrainer) and train; it will then return a [TSPipeline](#413-use-tspipeline).
+* Create a [AutoTSTrainer](#412-create-autotstrainer) and train; it will then return a [TSPipeline](#414-use-tspipeline).
 * Use [TSPipeline](#414-use-tspipeline) to do prediction, evaluation, and incremental fitting.
 
 View [AutoTS notebook example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.ipynb) for more details.
@@ -171,17 +171,25 @@ View some examples notebooks for [Datacenter AIOps](https://github.com/intel-ana
 
 #### **5.1 ThresholdDetector**
 
+ThresholdDetector detects anomaly based on threshold. It can be used to detect anomaly on a given time series ([notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb)), or used together with forecasts (#4-forecasting) to detect anomaly on new coming samples ([notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised_forecast_based.ipynb)). 
+
+View [AEDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-ae-detector) for more details.
 
 
 #### **5.2 AEDetector**
 
 AEDetector detects anomaly based on the reconstruction error of an autoencoder network. 
 
-View anomaly detection [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [AEDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-ae-detector) for more details.
+View anomaly detection [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb) and [AEDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-ae-detector) for more details.
 
-#### **
+#### **5.3 DBScanDetector**
 
+DBSanDetector uses DBSCAN clustering algortihm for anomaly detection. 
+
+View anomaly detection [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb) and [AEDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-ae-detector) for more details.
 
 ### **6 Data Processing and Features**
 
-You can use 
+_Chronos_ provides TSDataset for time series data processing and feature engineering. 
+
+View [TSDataset API Doc](../../PythonAPI/Chronos/tsdataset.html#) for more details. 
