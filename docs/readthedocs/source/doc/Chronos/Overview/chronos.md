@@ -11,7 +11,7 @@ You can use _Chronos_ to do:
 
 ### **2. Install**
 
-You need to install analytics-zoo with target [automl] to install the additional dependency libraries for _Chronos_. 
+Install analytics-zoo with target [automl] to install the additional dependencies for _Chronos_. 
 
 ```bash
 conda create -n my_env python=3.7
@@ -19,25 +19,24 @@ conda activate my_env
 pip install --pre --upgrade analytics-zoo[automl]
 ```
 
-#### **3 Initialize Orca Context**
+### **3 Init Orca Context**
 
-_Chronos_ uses [Orca](../Orca/Overview/orca.html) to enable distributed training and AutoML capabilities. Init orca as below (View [Orca Context](../Orca/Overview/orca-context.md) for more details. ). Note that argument `init_ray_on_spark` must be True for _Chronos. 
-
-
-```python
-from zoo.orca import init_orca_context, stop_orca_context
-init_orca_context(cluster_mode="local", cores=4, memory='2g', init_ray_on_spark=True)
-```
-
-* YARN client mode
+_Chronos_ uses [Orca](../Orca/Overview/orca.html) to enable distributed training and AutoML capabilities. Init orca as below. View [Orca Context](../Orca/Overview/orca-context.md) for more details. Note that argument `init_ray_on_spark` must be True for _Chronos. 
 
 ```python
-from zoo.orca import init_orca_context, stop_orca_context
-init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, conda_name='my_env', extra_memory_for_ray="10g", object_store_memory='5g', init_ray_on_spark=True)
+if args.cluster_mode == "local":
+    init_orca_context(cluster_mode="local", cores=4) # run in local mode
+elif args.cluster_mode == "k8s":
+    init_orca_context(cluster_mode="k8s", num_nodes=2, cores=2) # run on K8s cluster
+elif args.cluster_mode == "yarn":
+    init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2) # run on Hadoop YARN cluster
 ```
+View [Quick Start]() for a more detailed example. 
 
 ---
-### **3. Use AutoTS Pipeline (with AutoML)**
+### **4 Forecasting 
+
+#### **4.1 Use AutoTS Pipeline (with AutoML)**
 
 You can use the ```AutoTS``` package to to build a time series forecasting pipeline with AutoML.
 
@@ -49,8 +48,7 @@ The general workflow has two steps:
 View [AutoTS example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.ipynb) for more details.
 
 
-
-#### **3.2 Prepare input data**
+##### **4.1.1 Prepare input data**
 
 You should prepare the training dataset and the optional validation dataset. Both training and validation data need to be provided as *Pandas Dataframe*.  The dataframe should have at least two columns:
 - The *datetime* column, which should have Pandas datetime format (you can use `pandas.to_datetime` to convert a string into a datetime format)
@@ -64,7 +62,7 @@ datetime    target  extra_feature_1  extra_feature_2
 2019-06-07  2.30    2                1
 ```
 
-#### **3.3 Create AutoTSTrainer**
+##### **4.1.2 Create AutoTSTrainer**
 
 You can create an `AutoTSTrainer` as follows (`dt_col` is the datetime, `target_col` is the target column, and `extra_features_col` is the extra features):
 
@@ -79,7 +77,7 @@ trainer = AutoTSTrainer(dt_col="datetime",
 
 Refer to [AutoTSTrainer API Doc]() for more details.
 
-#### **3.4 Train AutoTS pipeline**
+##### **4.1.3 Train AutoTS pipeline**
 
 You can then train on the input data using `AutoTSTrainer.fit` with AutoML as follows:
 
@@ -91,7 +89,7 @@ After training, it will return a TSPipeline, which includes not only the model, 
 
 Appropriate hyperparameters are automatically selected for the models and data processing steps in the pipeline during the fit process, and you may use built-in [visualization tool](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/AutoML/visualization.md) to inspect the training results after training stopped.
 
-#### **3.5 Use TSPipeline**
+##### **4.1.4 Use TSPipeline**
 
 Use `TSPipeline.predict|evaluate|fit` for prediction, evaluation or (incremental) fitting. (Note that incremental fitting on TSPipeline just update the model weights the standard way, which does not involve AutoML).
 
@@ -116,70 +114,50 @@ loaded_ppl.save(another_file)
 **Note**:  `init_orca_context` is not needed if you just use the trained TSPipeline for inference, evaluation or incremental fitting.
 
 ---
-### **4. Use Standalone Forecaster Pipeline**
+#### **4.2 Use Standalone Forecaster Pipeline**
 
 Chronos also provides a set of standalone time series forecaster, which are based on deep learning models (without AutoML support), including
 
 * LSTMForecaster
+* TCNForecaster
+* Seq2SeqForecaster
 * MTNetForecaster
 * TCMFForecaster
-* Seq2SeqForecaster
-* TCNForecaster
+* ProphetForecaster
+* ARIMAForecaster
 
 View [Network Traffic Prediction](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [Datacenter AIOps](https://github.com/intel-analytics/analytics-zoo/tree/master/pyzoo/zoo/chronos/use-case/AIOps) notebooks for some examples.
 
-#### **4.1 Initialize Orca Context**
-
-First, call `init_orca_context` as follows 
-
-* Local mode
-
-```python
-from zoo.orca import init_orca_context, stop_orca_context
-init_orca_context(cluster_mode="local", cores=4, memory='2g')
-```
-
-* YARN client mode
-
-```python
-from zoo.orca import init_orca_context, stop_orca_context
-init_orca_context(cluster_mode="yarn-client",
-                  num_nodes=2, cores=2,
-                  conda_name='my_env')
-```
-
-View [Orca Context](../Orca/Overview/orca-context.md) for more details. 
-
-#### **4.2 Create a Forecaster**
-
 Next, create an appropriate Forecaster to fit, evaluate or predict on the input data.
 
-##### **4.2.1 LSTMForecaster**
+###### **4.2.1 LSTMForecaster**
 
 LSTMForecaster wraps a vanilla LSTM model, and is suitable for univariate time series forecasting.
 
 View Network Traffic Prediction [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [LSTMForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-lstm-forecaster) for more details.
 
-##### **4.2.2 MTNetForecaster**
-
-MTNetForecaster wraps a MTNet model. The model architecture mostly follows the [MTNet paper](https://arxiv.org/abs/1809.02105) with slight modifications, and is suitable for multivariate time series forecasting.
-
-View Network Traffic Prediction [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [MTNetForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-mtnet-forecaster) for more details.
-
-##### **4.2.3 TCMFForecaster**
-
-TCMFForecaster wraps a model architecture that follows implementation of the paper [DeepGLO paper](https://arxiv.org/abs/1905.03806) with slight modifications. It is especially suitable for extremely high dimensional (up-to millions) multivariate time series forecasting.
-
-View High-dimensional Electricity Data Forecasting [example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/tcmf/run_electricity.py) and [TCMFForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-tcmf-forecaster) for more details.
-
-##### **4.2.4 Seq2SeqForecaster**
+###### **4.2.2 Seq2SeqForecaster**
 
 Seq2SeqForecaster wraps a sequence to sequence model based on LSTM, and is suitable for multivariant & multistep time series forecasting.
 
 View [Seq2SeqForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-seq2seq-forecaster) for more details.
 
-##### **4.2.5 TCNForecaster**
+###### **4.2.3 TCNForecaster**
 
 Temporal Convolutional Networks (TCN) is a neural network that use convolutional architecture rather than recurrent networks. It supports multi-step and multi-variant cases. Causal Convolutions enables large scale parallel computing which makes TCN has less inference time than RNN based model such as LSTM.
 
 View Network Traffic multivariate multistep Prediction [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster.ipynb) and [TCNForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-tcn-forecaster) for more details.
+
+###### **4.2.4 MTNetForecaster**
+
+MTNetForecaster wraps a MTNet model. The model architecture mostly follows the [MTNet paper](https://arxiv.org/abs/1809.02105) with slight modifications, and is suitable for multivariate time series forecasting.
+
+View Network Traffic Prediction [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [MTNetForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-mtnet-forecaster) for more details.
+
+###### **4.2.5 TCMFForecaster**
+
+TCMFForecaster wraps a model architecture that follows implementation of the paper [DeepGLO paper](https://arxiv.org/abs/1905.03806) with slight modifications. It is especially suitable for extremely high dimensional (up-to millions) multivariate time series forecasting.
+
+View High-dimensional Electricity Data Forecasting [example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/tcmf/run_electricity.py) and [TCMFForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-tcmf-forecaster) for more details.
+
+
