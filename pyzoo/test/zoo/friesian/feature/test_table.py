@@ -533,7 +533,7 @@ class TestTable(TestCase):
         assert isinstance(col_names, list), "col_names should be a list of strings"
         assert col_names == ["col_1", "col_2", "col_3", "col_4", "col_5"], \
             "column names are incorrenct"
-  
+
     def test_get_stats(self):
         spark = OrcaContext.get_spark_session()
         data = [("jack", "123", 14, 8.5),
@@ -598,6 +598,13 @@ class TestTable(TestCase):
         spark = OrcaContext.get_spark_session()
         data = [("jack", "123", 14, 8.5),
                 ("alice", "34", 25, 9.6),
+                ("rose", "25344", 23, 10.0)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True),
+                             StructField("height", DoubleType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        columns = ["age", "height"]
         new_tbl = tbl.add(columns, 1.5)
         new_list = new_tbl.df.take(3)
         assert len(new_list) == 3, "new_tbl should have 3 rows"

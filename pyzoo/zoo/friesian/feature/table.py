@@ -306,12 +306,12 @@ class Table:
         aggregate function.
 
         :return: dict, the key is the column, and the value is the aggregation result.
+        """
         if columns is None:
             raise ValueError("Columns should be str or list of str, but got None")
         if not isinstance(columns, list):
             columns = [columns]
         check_col_exists(self.df, columns)
-
         stats = {}
         for column in columns:
             if isinstance(aggr, str):
@@ -353,7 +353,7 @@ class Table:
             raise ValueError("the value of column must be unique")
         ret = map(lambda row: row.asDict(), self.df.collect())
         return {person[column]: person for person in ret}
-    
+
     def add(self, columns, value=1):
         """
         Increase all of values of the target numeric column(s) by a constant value.
@@ -363,6 +363,11 @@ class Table:
 
         :return: A new Table with updated numeric values on specified columns.
         """
+        if columns is None:
+            raise ValueError("Columns should be str or list of str, but got None")
+        if not isinstance(columns, list):
+            columns = [columns]
+        check_col_exists(self.df, columns)
         new_df = self.df
         for column in columns:
             if new_df.schema[column].dataType not in [IntegerType(), ShortType(),
