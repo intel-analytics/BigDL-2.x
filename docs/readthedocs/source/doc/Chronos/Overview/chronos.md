@@ -91,7 +91,7 @@ ts_pipeline = trainer.fit(train_df, validation_df, recipe=SmokeRecipe())
 After training, it will return a [TSPipeline](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.TSPipeline), which includes not only the model, but also the data preprocessing/post processing steps. 
 
 Appropriate hyperparameters are automatically selected for the models and data processing steps in the pipeline during the fit process, and you may use built-in 
-`visualization tool <https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/AutoML/visualization.md>`__ 
+`visualization tool <https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/ProgrammingGuide/AutoML/visualization.md>`_
 to inspect the training results after training stopped.
 
 ##### **4.1.4 Use TSPipeline**
