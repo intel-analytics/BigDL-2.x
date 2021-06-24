@@ -297,60 +297,88 @@ class Table:
 
     def get_stats(self, columns, aggr):
         """
-        Calculate statistics of the values over target column/columns.
+        Calculate the statistics of the values over target column(s).
 
-        :param columns: str or list of str, specifies names of target column/columns.
-        :param aggr:
-        str: specifies aggreegate funtion, must be min/max/avg/sum/count.
-        dict: the key is the column to perform aggregation on, and the value is the
-        aggregate function.
+        :param columns: str or list of str, specifies names of the target column(s).
+        If columns is None, then the function will return statistics for all columns.
+        :param aggr: str or list of str or dict to specify aggregate functions,
+        min/max/avg/sum/count are supported.
+        If aggr is a str or a list of str, it contains the name(s) of aggregate function(s).
+        If aggr is a dict, the key is the column name, and the value is the aggregate function(s).
 
-        :return: dict, the key is the column, and the value is the aggregation result.
+        :return: A dictionary, the key is the column name, and the value is aggregate result(s).
         """
         if columns is None:
-            raise ValueError("Columns should be str or list of str, but got None")
+            columns = self.columns
         if not isinstance(columns, list):
             columns = [columns]
         check_col_exists(self.df, columns)
         stats = {}
         for column in columns:
-            if isinstance(aggr, str):
-                a = aggr
-            else:
+            if isinstance(aggr, str) or isinstance(aggr, list):
+                aggr_strs = aggr
+            elif isinstance(aggr, dict):
                 if column not in aggr:
-                    raise ValueError("aggregate funtion not defined for target \
-                        column {}.".format(column))
-                a = aggr[column]
-            if a not in ["min", "max", "avg", "sum", "count"]:
-                raise ValueError("aggregate function must be min/max/avg/sum/count, \
-                    but get {}.".format(a))
-            value = self.df.agg({column: a}).collect()[0][0]
-            stats[column] = value
+                    raise ValueError("aggregate funtion not defined for column {}.".format(column))
+                aggr_strs = aggr[column]
+            else:
+                raise ValueError("aggr should have type str or list or dict.")
+            if isinstance(aggr_strs, str):
+                aggr_strs = [aggr_strs]
+            values = []
+            for aggr_str in aggr_strs:
+                if aggr_str not in ["min", "max", "avg", "sum", "count"]:
+                    raise ValueError("aggregate function must be min/max/avg/sum/count, \
+                        but got {}.".format(aggr_str))
+                values.append(self.df.agg({column: aggr_str}).collect()[0][0])
+            stats[column] = values[0] if len(values) == 1 else values
         return stats
+
+    def min(self, columns):
+        """
+        Returns a dictionary that contains the minimum of target column(s).
+
+        :param columns: a str or a list of strs that specify the target column(s).
+
+        :return: A dictionary, the key is the column name, and the value is the minimum
+        value of the corresponding column.
+        """
+        return self.get_stats(columns, "min")
+
+    def max(self, columns):
+        """
+        Returns a dictionary that contains the maximum of target column(s).
+
+        :param columns: a str or a list of strs that specify the target column(s).
+
+        :return: A dictionary, the key is the column name, and the value is the maximum
+        value of the corresponding column.
+        """
+        return self.get_stats(columns, "max")
 
     def convert_to_list(self, column):
         """
         Convert all values of the target column to a list.
+        Only call this if the Table is small enougth.
 
         :param column: str, specifies the name of target column.
 
         :return: list, contains all values of the target column.
         """
+        if not isinstance(column, str):
+            raise ValueError("Column should has type str.")
         check_col_exists(self.df, [column])
         return self.df.select(column).rdd.flatMap(lambda x: x).collect()
 
-    def convert_to_dict(self, column):
+    def convert_to_dict(self):
         """
-        Convert the Table to a dictionary, the Table must be small.
+        Convert the Table to a dictionary.
+        Only call this if the Table is small enough.
 
-        :param column: str, itentifies the key of the dictionary,
-        must be a column of the Table.
-
-        :return: dict, with format {key -> {column name -> value}}.
+        :return: a Dictionary, the key is the column name, and the value
+        is the list containing all values of the target column.
         """
-        check_col_exists(self.df, [column])
-        ret = map(lambda row: row.asDict(), self.df.collect())
-        return {person[column]: person for person in ret}
+        return {column: self.convert_to_list(column) for column in self.columns}
 
     def add(self, columns, value=1):
         """
