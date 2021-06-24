@@ -18,7 +18,7 @@ conda activate zoo
 pip install analytics-zoo[automl] # install latest nightly build
 ```
 
-### **Step 1: Data transformation and feature engineering using Chronos TSDataset**
+### Step 1: Data transformation and feature engineering using Chronos TSDataset
 
 [TSDataset](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/tsdataset.html) is our abstract of time series dataset for data transformation and feature engineering. Here we use it to preprocess the data.
 
@@ -54,7 +54,7 @@ for tsdata in [tsdata_train, tsdata_valid, tsdata_test]:
           .roll(lookback=lookback, horizon=horizon)
 ```
 
-### Forecaster Step 2: Time series forecasting using Chronos Forecaster
+### Step 2: Time series forecasting using Chronos Forecaster
 
 After preprocessing the datasets. We can use [Chronos Forecaster](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/forecasters.html) to handle the forecasting tasks.
 
@@ -73,7 +73,7 @@ forecaster = TCNForecaster(past_seq_len=lookback,  # number of steps to look bac
 res = forecaster.fit(x, y, validation_data=(x_val, y_val), epochs=3)
 ```
 
-### Forecaster Step 3: Further deployment with fitted forecaster
+### Step 3: Further deployment with fitted forecaster
 
 Use fitted forecaster to predict test data
 
