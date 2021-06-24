@@ -122,6 +122,7 @@ def choice(categories):
 def choice_n(categories, min_items, max_items):
     """
     Sample a subset from a list
+    
     :param categories: A list to be sampled
     :param min_items: minimum number of items to be sampled
     :param max_items: maximum number of items to be sampled
