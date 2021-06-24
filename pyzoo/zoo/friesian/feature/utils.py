@@ -62,3 +62,23 @@ def check_col_exists(df, columns):
     col_not_exist = list(filter(lambda x: x not in df_cols, columns))
     if len(col_not_exist) > 0:
         raise ValueError(str(col_not_exist) + " do not exist in this Table")
+
+
+def shuffle_partition(df):
+    return callZooFunc("float", "shufflePartition", df)
+
+
+def shuffle_subpartition(df, part_size=1000000):
+    return callZooFunc("float", "shuffleSubPartition", df, part_size)
+
+
+def ordinal_shuffle_partition(df):
+    return callZooFunc("float", "ordinalShufflePartition", df)
+
+
+def write_parquet(df, path, mode):
+    callZooFunc("float", "dfWriteParquet", df, path, mode)
+
+
+def save_parquet(df, path, mode, part_size=100000):
+    return callZooFunc("float", "dfSaveParquet", df, path, mode, part_size)

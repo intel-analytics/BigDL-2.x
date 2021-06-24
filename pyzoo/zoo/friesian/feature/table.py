@@ -379,6 +379,21 @@ class Table:
     def col(self, name):
         return pyspark_col(name)
 
+    def shuffle_partition(self):
+        return self._clone(shuffle_partition(self.df))
+
+    def ordinal_shuffle_partition(self):
+        return self._clone(ordinal_shuffle_partition(self.df))
+
+    def shuffle_subpartition(self, part_size=1000000):
+        return self._clone(shuffle_subpartition(self.df, part_size))
+
+    def write_parquet(self, path, mode="overwrite"):
+        write_parquet(self.df, path, mode)
+
+    def save_parquet(self, path, mode="overwrite", part_size=100000):
+        return save_parquet(self.df, path, mode, part_size)
+
 
 class FeatureTable(Table):
     @classmethod
@@ -821,4 +836,4 @@ class StringIndex(Table):
                operation if data already exists.
         """
         path = path + "/" + self.col_name + ".parquet"
-        self.df.write.parquet(path, mode=mode)
+        write_parquet(self.df, path, mode)
