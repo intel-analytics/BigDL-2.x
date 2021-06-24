@@ -25,11 +25,11 @@ _Chronos_ uses [Orca](../../Orca/Overview/orca.md) to enable distributed trainin
 
 ```python
 if args.cluster_mode == "local":
-    init_orca_context(cluster_mode="local", cores=4) # run in local mode
+    init_orca_context(cluster_mode="local", cores=4, init_ray_on_spark=True) # run in local mode
 elif args.cluster_mode == "k8s":
-    init_orca_context(cluster_mode="k8s", num_nodes=2, cores=2) # run on K8s cluster
+    init_orca_context(cluster_mode="k8s", num_nodes=2, cores=2, init_ray_on_spark=True) # run on K8s cluster
 elif args.cluster_mode == "yarn":
-    init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2) # run on Hadoop YARN cluster
+    init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, init_ray_on_spark=True) # run on Hadoop YARN cluster
 ```
 View [Quick Start](../QuickStart/chronos-autots-quickstart.md) for a more detailed example. 
 
@@ -167,7 +167,7 @@ View some examples notebooks for [Datacenter AIOps](https://github.com/intel-ana
 
 #### **5.1 ThresholdDetector**
 
-ThresholdDetector detects anomaly based on threshold. It can be used to detect anomaly on a given time series ([notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb)), or used together with forecasts (#forecasting) to detect anomaly on new coming samples ([notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised_forecast_based.ipynb)). 
+ThresholdDetector detects anomaly based on threshold. It can be used to detect anomaly on a given time series ([notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb)), or used together with Forecasters (#forecasting) to detect anomaly on new coming samples ([notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised_forecast_based.ipynb)). 
 
 View [ThresholdDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-th-detector) for more details.
 
@@ -180,7 +180,7 @@ View anomaly detection [notebook](https://github.com/intel-analytics/analytics-z
 
 #### **5.3 DBScanDetector**
 
-DBSanDetector uses DBSCAN clustering algortihm for anomaly detection. 
+DBScanDetector uses DBSCAN clustering algortihm for anomaly detection. 
 
 View anomaly detection [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb) and [DBScanDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-dbscan-detector) for more details.
 
