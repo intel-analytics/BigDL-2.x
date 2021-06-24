@@ -21,14 +21,14 @@ import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.friesian.feature.Utils
 
 import java.util.{List => JList}
-import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{collect_list, explode, size, struct, array}
-import org.apache.spark.sql.types.{ArrayType, IntegerType, DoubleType, StringType, StructField, StructType}
-import org.apache.spark.sql.functions.{col, row_number, spark_partition_id, udf, log => sqllog, rand}
+
 import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.types.{ArrayType, IntegerType, DoubleType, StringType, LongType, StructField, StructType}
+import org.apache.spark.sql.functions.{collect_list, explode, size, struct, array}
+import org.apache.spark.sql.functions.{col, row_number, spark_partition_id, udf, log => sqllog, rand}
 import org.apache.spark.ml.linalg.{DenseVector, Vector => MLVector}
 import org.apache.spark.ml.feature.MinMaxScaler
-import org.apache.spark.sql.types.LongType
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
