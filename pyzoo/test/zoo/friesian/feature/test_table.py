@@ -34,7 +34,7 @@ class TestTable(TestCase):
         class.  setup_method is invoked for every test method of a class.
         """
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-    """
+
     def test_fillna_int(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
@@ -99,7 +99,6 @@ class TestTable(TestCase):
                                                                    "filled"
         assert filled_tbl.df.filter("col_5 is null").count() == 0, "col_5 null values should be " \
                                                                    "filled"
-        """
 
     def test_cate_hash_encoder(self):
         import hashlib
@@ -204,7 +203,7 @@ class TestTable(TestCase):
         group = key.groupby(['key']).count()
         tbl = FeatureTable(df).freq_filter(["A", "B"])
         assert group.filter("count>=2").count() == tbl.to_spark_df().count()
-"""
+
     def test_gen_string_idx(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
@@ -536,6 +535,6 @@ class TestTable(TestCase):
                                                                        "'column' of median_tbl"
         assert median_tbl.df.filter("column == 'col_2'").filter("median == 1.0").count() == 1, \
             "the median of col_2 should be 1.0"
-"""
+
 if __name__ == "__main__":
     pytest.main([__file__])
