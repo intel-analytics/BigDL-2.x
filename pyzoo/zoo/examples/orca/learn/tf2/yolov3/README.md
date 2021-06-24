@@ -13,7 +13,7 @@ pip install tensorflow
 pip install pandas
 ```
 
-Then download and install latest nightly-build Analytics Zoo 
+Then download and install latest nightly-build Analytics Zoo.
 
 ```bash
 pip install --pre --upgrade analytics-zoo[ray]
@@ -21,12 +21,12 @@ pip install --pre --upgrade analytics-zoo[ray]
 
 ## Training Data
 
-Download VOC2009 dataset [here](http://host.robots.ox.ac.uk/pascal/VOC/voc2009/VOCtrainval_11-May-2009.tar) 
+Download VOC2009 dataset [here](http://host.robots.ox.ac.uk/pascal/VOC/voc2009/VOCtrainval_11-May-2009.tar).
 
 
 ## Pretrained Weights
 
-Download pretrained weights [here](https://pjreddie.com/media/files/yolov3.weights)
+Download pretrained weights [here](https://pjreddie.com/media/files/yolov3.weights).
 
 ## Running example
 
@@ -47,8 +47,7 @@ Result:
 ### Predict
 
 ```bash
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf2/yolov3/predict.py --checkpoint ${checkpoint} --names ${names} --class_num ${class_num} --image ${image}
---output ${output}
+python predict.py --checkpoint ${checkpoint} --names ${names} --class_num ${class_num} --image ${image} --output ${output}
 ```
 Result:
 ```bash
@@ -56,5 +55,6 @@ detections:
         cat, 0.9573073983192444, [0.00200248 0.3109339  0.5238986  0.66431004]
         cat, 0.9199740290641785, [0.47669527 0.25620055 0.9729855  0.68201375]
 ```
-You can also find new generated images stored in output path, and the objects in the images are with a box around them [labeled "name"]
+You can also find new generated images stored in output path, and the objects in the images are with a box around them [labeled "name"]:
+
 ![Pic1](./data/output.jpg) 
