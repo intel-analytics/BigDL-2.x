@@ -833,8 +833,12 @@ cwd=$PWD
 cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/fsi/
 
 # download data
-if ! [ -d "data" ];
+if [ -d "data" ]
 then
+    echo "data already exists"
+else
+    echo "Downloading stock prediction data"
+
     mkdir data
     cd data
     wget https://github.com/CNuge/kaggle-code/raw/master/stock_data/individual_stocks_5yr.zip
@@ -843,6 +847,8 @@ then
     unzip individual_stocks_5yr.zip
     ./merge.sh
     cd ..
+
+    echo "Finish downloading stock prediction data"
 fi
 
 python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/fsi/stock_prediction.py
@@ -906,8 +912,12 @@ cwd=$PWD
 cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/fsi/
 
 # download data
-if ! [ -d "data" ];
+if [ -d "data" ]
 then
+    echo "data already exists"
+else
+    echo "Downloading stock prediction data"
+
     mkdir data
     cd data
     wget https://github.com/CNuge/kaggle-code/raw/master/stock_data/individual_stocks_5yr.zip
@@ -916,6 +926,8 @@ then
     unzip individual_stocks_5yr.zip
     ./merge.sh
     cd ..
+
+    echo "Finish downloading stock prediction data"
 fi
 
 python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/fsi/stock_prediction_prophet.py
