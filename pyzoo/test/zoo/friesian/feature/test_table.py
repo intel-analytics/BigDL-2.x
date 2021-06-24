@@ -201,7 +201,7 @@ class TestTable(TestCase):
             .withColumn('key', sum_cols(struct('A', 'B')))
             )
         group = key.groupby(['key']).count()
-        tbl = FeatureTable(df).freq_filter(["A", "B"])
+        tbl = FeatureTable(df).filter_by_frequency(["A", "B"])
         assert group.filter("count>=2").count() == tbl.to_spark_df().count()
 
     def test_gen_string_idx(self):

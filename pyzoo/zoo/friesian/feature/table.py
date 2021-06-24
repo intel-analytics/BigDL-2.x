@@ -328,7 +328,7 @@ class FeatureTable(Table):
                 .dropna(subset=[col_name])
         return FeatureTable(data_df)
  
-    def freq_filter(self, columns, min_freq=2):
+    def filter_by_frequency(self, columns, min_freq=2):
         '''
         Filter Data by given min frequency
         :param columns: str list, column names which are considered for filtering
