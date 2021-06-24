@@ -47,9 +47,7 @@ lookback, horizon = 6, 1
 
 scaler = StandardScaler()
 for tsdata in [tsdata_train, tsdata_valid, tsdata_test]:
-    tsdata.deduplicate()\
-          .impute()\
-          .gen_dt_feature()\
+    tsdata.deduplicate().impute().gen_dt_feature()\
           .scale(scaler, fit=(tsdata is tsdata_train))\
           .roll(lookback=lookback, horizon=horizon)
 ```
