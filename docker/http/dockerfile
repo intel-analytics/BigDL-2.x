@@ -1,0 +1,20 @@
+FROM ubuntu:18.04
+
+ARG JDK_VERSION
+ARG JDK_URL
+
+# java
+    wget $JDK_URL && \
+    gunzip jdk-$JDK_VERSION-linux-x64.tar.gz && \
+    tar -xf jdk-$JDK_VERSION-linux-x64.tar -C /opt && \
+    rm jdk-$JDK_VERSION-linux-x64.tar && \
+    mv /opt/jdk* /opt/jdk$JDK_VERSION && \
+    ln -s /opt/jdk$JDK_VERSION /opt/jdk && \
+
+ENV JAVA_HOME /opt/jdk
+ENV PATH ${JAVA_HOME}/bin
+ENV REDIS_HOST localhost
+
+ADD https://oss.sonatype.org/content/repositories/snapshots/com/intel/analytics/zoo/analytics-zoo-bigdl_0.12.2-spark_2.4.3/0.11.0-SNAPSHOT/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-20210622.201453-44-http.jar
+
+CMD java -jar analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-20210622.201453-44-http.jar --redisHost ${REDIS_HOST} --servableManagerConfPath /opt/work/cluster_serving.yaml
