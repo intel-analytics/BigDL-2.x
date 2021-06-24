@@ -100,7 +100,7 @@ class TestTable(TestCase):
         assert filled_tbl.df.filter("col_5 is null").count() == 0, "col_5 null values should be " \
                                                                    "filled"
 
-    def test_cate_hash_encoder(self):
+    def test_cate_hash_encode(self):
         import hashlib
         import pandas as pd
         spark = OrcaContext.get_spark_session()
@@ -143,7 +143,7 @@ class TestTable(TestCase):
         tbl = tbl.cate_hash_encode(["A", "B"], 100, "cross")
         assert encoded.count() == tbl.to_spark_df().count() == 1
 
-    def test_hash_encoder(self):
+    def test_hash_encode(self):
         import hashlib
         import pandas as pd
         spark = OrcaContext.get_spark_session()
