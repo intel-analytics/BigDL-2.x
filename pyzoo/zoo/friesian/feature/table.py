@@ -347,7 +347,7 @@ class FeatureTable(Table):
         group = key.groupby(['key']).count()
         return FeatureTable(group.filter(group['count'] >= min_freq))
   
-    def cate_hash_encoder(self, columns, bins, prefix, method='md5'):
+    def cate_hash_encode(self, columns, bins, prefix, method='md5'):
         '''
         Hash encode for categorical columns
         :param columns: str list, column names which are considered for cross features
@@ -360,11 +360,10 @@ class FeatureTable(Table):
         hash_df = self.df
         spark = OrcaContext.get_spark_session()
         sum_cols = udf(lambda x: x[0] + x[1], StringType())
-        #sum_cols = udf(lambda x :  sum(arr), StringType())
         if not isinstance(columns, list):
             columns = [columns]
         cross = (hash_df.select(hash_df[columns[0]], hash_df[columns[1]])
-                 .withColumn("sum_cols", sum_cols(arr))
+                 .withColumn("sum_cols", sum_cols(struct(columns[0], columns[1])))
                  .rdd
                  .map(lambda x: str(x).encode(encoding='utf_8', errors='strict'))
                  .map(getattr(hashlib, method))
