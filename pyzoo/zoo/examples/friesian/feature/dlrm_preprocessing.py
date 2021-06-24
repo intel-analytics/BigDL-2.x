@@ -112,8 +112,9 @@ if __name__ == "__main__":
     train_data = FeatureTable.read_parquet(paths[:-1])
     train_preprocessed = preprocess_and_save(train_data, idx_list, "train", args.output_folder)
 
-    test_data = FeatureTable.read_parquet(os.path.join(args.input_folder, "day_23_test.parquet"))
-    test_preprocessed = preprocess_and_save(test_data, idx_list, "test", args.output_folder)
+    if args.days == 24:  # Full Criteo dataset
+        test_data = FeatureTable.read_parquet(os.path.join(args.input_folder, "day_23_test.parquet"))
+        test_preprocessed = preprocess_and_save(test_data, idx_list, "test", args.output_folder)
 
     time_end = time()
     print("Total time: ", time_end - time_start)
