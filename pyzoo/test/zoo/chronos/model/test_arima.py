@@ -78,7 +78,7 @@ class TestARIMAModel(ZooTestCase):
             self.model.predict(horizon=self.horizon)
 
         with pytest.raises(Exception,
-                           match="We don't support updating model "\
+                           match="We don't support updating model "
                                  "without rolling prediction currently"
                            ):
             self.model.predict(horizon=self.horizon, update=True, rolling=False)
