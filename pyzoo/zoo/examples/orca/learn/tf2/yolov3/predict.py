@@ -39,10 +39,10 @@ def main():
     yolo = YoloV3(classes=options.class_num)
 
     yolo.load_weights(options.checkpoint).expect_partial()
-    logging.info('weights loaded')
+    print("weights loaded")
 
     class_names = [c.strip() for c in open(options.names).readlines()]
-    logging.info('names loaded')
+    print("names loaded")
 
     img_raw = tf.image.decode_image(
             open(options.image, 'rb').read(), channels=3)
@@ -53,18 +53,18 @@ def main():
     t1 = time.time()
     boxes, scores, classes, nums = yolo(img)
     t2 = time.time()
-    logging.info('time: {}'.format(t2 - t1))
+    print('time: {}'.format(t2 - t1))
 
-    logging.info('detections:')
+    print('detections:')
     for i in range(nums[0]):
-        logging.info('\t{}, {}, {}'.format(class_names[int(classes[0][i])],
+        print('\t{}, {}, {}'.format(class_names[int(classes[0][i])],
                                            np.array(scores[0][i]),
                                            np.array(boxes[0][i])))
 
     img = cv2.cvtColor(img_raw.numpy(), cv2.COLOR_RGB2BGR)
     img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
     cv2.imwrite(options.output, img)
-    logging.info('output: {}'.format(options.output))
+    print('output: {}'.format(options.output))
 
 if __name__ == '__main__':
     try:

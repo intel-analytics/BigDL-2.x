@@ -53,6 +53,8 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf2/yolov3/predict.py
 Result:
 ```bash
 detections:
-cup, 0.9980731010437012, [0.14266217 0.52777606 0.27184254 0.65748256]
+        cat, 0.9573073983192444, [0.00200248 0.3109339  0.5238986  0.66431004]
+        cat, 0.9199740290641785, [0.47669527 0.25620055 0.9729855  0.68201375]
 ```
 You can also find new generated images stored in output path, and the objects in the images are with a box around them [labeled "name"]
+![Pic1](./data/output.jpg) 
