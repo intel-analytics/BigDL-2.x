@@ -47,6 +47,9 @@ else
 fi
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf2/yolov3/yoloV3.py --data_dir analytics-zoo-data/VOCdevkit --weights analytics-zoo-models/yolov3.weights --class_num 20 --names analytics-zoo-data/voc2012.names --data_year 2007 --split_name_train trainval --split_name_test trainval
 
+echo "yolov3 preduct"
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf2/yolov3/predict.py --checkpoint ./checkpoints/yolov3.tf --names analytics-zoo-data/voc2012.names --class_num 20 --image analytics-zoo-data/VOCdevkit/VOC2007/JPEGImages/000005.jpg
+
 now=$(date "+%s")
 time2=$((now-start))
 
