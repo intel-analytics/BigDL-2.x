@@ -341,8 +341,11 @@ class Table:
         """
         return self._clone(self.df.sample(withReplacement=replace, fraction=fraction, seed=seed))
 
+    def ordinal_shuffle_partition(self):
+        return self._clone(ordinal_shuffle_partition(self.df))
+
     def write_parquet(self, path, mode="overwrite"):
-        self.df.write.mode(mode).parquet(path)
+        write_parquet(self.df, path, mode)
 
     def cast(self, columns, type):
         """
@@ -378,21 +381,6 @@ class Table:
 
     def col(self, name):
         return pyspark_col(name)
-
-    def shuffle_partition(self):
-        return self._clone(shuffle_partition(self.df))
-
-    def ordinal_shuffle_partition(self):
-        return self._clone(ordinal_shuffle_partition(self.df))
-
-    def shuffle_subpartition(self, part_size=1000000):
-        return self._clone(shuffle_subpartition(self.df, part_size))
-
-    def write_parquet(self, path, mode="overwrite"):
-        write_parquet(self.df, path, mode)
-
-    def save_parquet(self, path, mode="overwrite", part_size=100000):
-        return save_parquet(self.df, path, mode, part_size)
 
 
 class FeatureTable(Table):
