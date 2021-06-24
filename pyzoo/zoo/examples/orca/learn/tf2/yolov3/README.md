@@ -31,7 +31,6 @@ Download pretrained weights [here](https://pjreddie.com/media/files/yolov3.weigh
 ## Running example
 
 ### Train
-Example command:
 
 ```bash
 python yoloV3.py --data_dir ${data_dir} --weights ${weights} --class_num ${class_num} --names ${names}
@@ -46,7 +45,6 @@ Result:
 ```
 
 ### Predict
-Example command:
 
 ```bash
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf2/yolov3/predict.py --checkpoint ${checkpoint} --names ${names} --class_num ${class_num} --image ${image}
@@ -57,4 +55,4 @@ Result:
 detections:
 cup, 0.9980731010437012, [0.14266217 0.52777606 0.27184254 0.65748256]
 ```
-You can also find new generated images stored in output_path, and the objects in the images are with a box around them [labeled "name"]
+You can also find new generated images stored in output path, and the objects in the images are with a box around them [labeled "name"]
