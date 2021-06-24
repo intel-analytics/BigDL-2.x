@@ -90,6 +90,18 @@ class TestXgbregressor(ZooTestCase):
                 validation_data=[(self.val_x, self.val_y)],
                 metric="wrong_metric")
 
+        # metric func
+        def pyrmsle(y_true, y_pred):
+            y_pred[y_pred < -1] = -1 + 1e-6
+            elements = np.power(np.log1p(y_true) - np.log1p(y_pred), 2)
+            return float(np.sqrt(np.sum(elements) / len(y_true)))
+
+        result = self.model.fit_eval(
+            data=(self.x, self.y),
+            validation_data=[(self.val_x, self.val_y)],
+            metric_func=pyrmsle)
+        assert "pyrmsle" in result
+
     def test_data_creator(self):
         def get_x_y(size, config):
             values = np.random.randn(size, 4)
