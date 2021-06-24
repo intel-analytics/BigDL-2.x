@@ -15,6 +15,7 @@
 #
 
 import os.path
+import shutil
 import pytest
 import tempfile
 from unittest import TestCase
@@ -604,6 +605,61 @@ class TestTable(TestCase):
         assert groupby_tbl4.df.filter("col_4 == 'b' and col_5 == 'dd' and `first(col_1)` == 0") \
             .count() == feature_tbl.df.filter("col_4 == 'b' and col_5 == 'dd'").count(), \
             "first of col_1 should be 0 for all col_4 = 'b' and col_5 = 'dd' in groupby_tbl4"
+    
+    def test_read_csv(self):
+        spark = OrcaContext.get_spark_session()
+        file_path = os.path.join(self.resource_path, "friesian/feature/csv/df1.csv")
+        df1 = FeatureTable.read_csv(file_path)
+        assert isinstance(df1, FeatureTable)
+        assert df1.size() == 2
+        df1 = FeatureTable.read_csv(file_path, header=False)
+        assert df1.size() == 3
+
+    def test_union(self):
+        spark = OrcaContext.get_spark_session()
+        file_path = os.path.join(self.resource_path, "friesian/feature/csv/")
+        df1 = FeatureTable.read_csv(file_path+"df1.csv")
+        df2 = FeatureTable.read_csv(file_path+"df2.csv")
+        df3 = df1.union(df2)
+        assert df3.size() == 4
+        assert df3.filter(" y == 3 or y == 4 ").size() == 0
+
+        df4 = df1.union([df2, df2])
+        assert df4.size() == 6
+        assert df4.distinct().size() == 4
+
+        df5 = df1.union(df2, False)
+        assert df5.filter(" y == 3 or y == 4").size() == 2
+
+        df6 = df1.union([df2, df2], False)
+        assert df6.filter(" y == 3 or y == 4").size() == 4
+    
+    def test_append_columns(self):
+        spark = OrcaContext.get_spark_session()
+        file_path = os.path.join(self.resource_path, "friesian/feature/csv/")
+        df = FeatureTable.read_csv(file_path+"df1.csv")
+        df.append_columns("z", 0)
+        assert df.select("z"),size() == 2
+        assert df.filter("z == 0").size() == 2
+
+    def test_factorise(self):
+        spark = OrcaContext.get_spark_session()
+        file_path = os.path.join(self.resource_path, "friesian/feature/csv/")
+        df = FeatureTable.read_csv(file_path+"df3.csv")
+        df = df.factorise("x", "y")
+        assert df.filter("y == 0").size() == 3
+        assert df.filter("y == 1").size() == 1
+        assert df.filter("y == 2").size() == 1
+
+    def test_write_csv(self):
+        spark = OrcaContext.get_spark_session()
+        file_path = os.path.join(self.resource_path, "friesian/feature/csv/")
+        df = FeatureTable.read_csv(file_path+"df3.csv")
+        if os.path.exists(file_path+"df4.csv"):
+            shutil.rmtree(file_path+"df4.csv")
+        df.write_csv(file_path+"df4.csv")
+        assert os.path.exists(file_path+"df4.csv")
+        shutil.rmtree(file_path+"df4.csv")
 
 
 if __name__ == "__main__":

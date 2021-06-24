@@ -20,6 +20,7 @@ from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, Decim
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
+from pyspark.ml.feature import StringIndexer
 from pyspark.sql.functions import col as pyspark_col, udf, array, broadcast, lit
 from pyspark.sql import Row
 import pyspark.sql.functions as F
@@ -59,6 +60,14 @@ class Table:
                 df = df.select(cols)
             else:
                 raise Exception("cols should be a column name or list of column names")
+        return df
+
+    @staticmethod
+    def _read_csv(paths, header=True):
+        if not isinstance(paths, list):
+            paths = [paths]
+        spark = OrcaContext.get_spark_session()
+        df = spark.read.csv(*paths, header=header)
         return df
 
     def _clone(self, df):
@@ -395,6 +404,10 @@ class FeatureTable(Table):
     @classmethod
     def read_json(cls, paths, cols=None):
         return cls(Table._read_json(paths, cols))
+
+    @classmethod
+    def read_csv(cls, paths, header=True):
+        return cls(Table._read_csv(paths, header))
 
     def encode_string(self, columns, indices):
         """
@@ -754,6 +767,46 @@ class FeatureTable(Table):
             return FeatureTable(result_df)
         else:
             return FeatureTable(agg_df)
+
+    def union(self, tbls, withname=True):
+        """
+        Find the union of mutiple Feature Table
+
+        :param tbl: feature table or list of feature table
+        :param withname: append by columns name
+
+        :return: Feature Table
+        """
+        if not isinstance(tbls, list):
+            tbls = [tbls]
+        result = self.df
+        for x in tbls:
+            result = result.unionByName(x.df) if withname else result.union(x.df)
+        return FeatureTable(result)
+
+    def append_columns(self, col, value):
+        """
+        Append the columns with value to table
+
+        :param col: the name of the col
+        :param value: value to be append
+        """
+        self.df = self.df.withColumn(col, lit(value))
+
+    def factorise(self, in_col, out_col):
+        """
+        Factorise the given column and convert to output column
+
+        :param in_col: input columns
+        :param out_col: output columns
+        """
+        indexer = StringIndexer(inputCol=in_col,outputCol=out_col)
+        self.df = indexer.fit(self.df).transform(self.df)
+        return FeatureTable(self.df)
+
+    def write_csv(self, path, mode="overwrite"):
+        self.df.write.mode(mode).csv(path)
+
 
 
 class StringIndex(Table):
