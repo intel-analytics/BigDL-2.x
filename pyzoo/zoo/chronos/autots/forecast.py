@@ -162,7 +162,7 @@ class TSPipeline:
     def predict(self, input_df):
         """
         Prediction.
-        
+
         :param input_df: the input dataframe
         :return: the forecast results
         """

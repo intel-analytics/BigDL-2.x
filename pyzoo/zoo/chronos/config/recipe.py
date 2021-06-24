@@ -189,7 +189,7 @@ class GridRandomRecipe(Recipe):
 class LSTMSeq2SeqRandomRecipe(Recipe):
     """
     A recipe involves both grid search and random search, only for Seq2SeqPytorch.
-    Note: This recipe is specifically designed for third-party model searching, rather 
+    Note: This recipe is specifically designed for third-party model searching, rather
     than TimeSequencePredictor.
     """
 
@@ -255,7 +255,8 @@ class LSTMSeq2SeqRandomRecipe(Recipe):
                 f"type of {param_name} can only be a list while get a tuple"
             if param_name in ["lr"]:
                 return hp.loguniform(lower=ranges[0], upper=ranges[1])
-            if param_name in ["lstm_hidden_dim", "lstm_layer_num", "batch_size"]:
+            if param_name in ["lstm_hidden_dim",
+                              "lstm_layer_num", "batch_size"]:
                 return hp.randint(lower=ranges[0], upper=ranges[1])
             if param_name in ["dropout"]:
                 return hp.uniform(lower=ranges[0], upper=ranges[1])
@@ -533,7 +534,7 @@ class RandomRecipe(Recipe):
             reward_metric=-0.05,
             training_iteration=10):
         """
-        Constructor. 
+        Constructor.
 
         :param num_rand_samples: number of hyper-param configurations sampled randomly
         :param look_back:the length to look back, either a tuple with 2 int values,
@@ -663,10 +664,10 @@ class XgbRegressorGridRandomRecipe(Recipe):
             reg_lambda=1):
         """
         Constructor. For XGBoost hyper parameters, refer to
-        https://xgboost.readthedocs.io/en/latest/python/python_api.html for 
+        https://xgboost.readthedocs.io/en/latest/python/python_api.html for
         details.
 
-        :param num_rand_samples: number of hyper-param configurations sampled 
+        :param num_rand_samples: number of hyper-param configurations sampled
           randomly
         :param n_estimators: number of gradient boosted trees.
         :param max_depth: max tree depth
@@ -676,11 +677,11 @@ class XgbRegressorGridRandomRecipe(Recipe):
         :param seed: seed used to generate the folds
         :param lr: learning rate
         :param subsample: subsample ratio of the training instance
-        :param colsample_bytree: subsample ratio of columns when constructing 
+        :param colsample_bytree: subsample ratio of columns when constructing
           each tree.
-        :param min_child_weight: minimum sum of instance weight(hessian) 
+        :param min_child_weight: minimum sum of instance weight(hessian)
           needed in a child.
-        :param gamma: minimum loss reduction required to make a further 
+        :param gamma: minimum loss reduction required to make a further
           partition on a leaf node of the tree.
         :param reg_alpha: L1 regularization term on weights (xgb’s alpha).
         :param reg_lambda: L2 regularization term on weights (xgb’s lambda).
