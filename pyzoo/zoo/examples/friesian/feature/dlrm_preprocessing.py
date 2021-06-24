@@ -86,6 +86,8 @@ def preprocess_and_save(data_tbl, models, mode, save_path):
             raise ValueError("mode should be either train or test")
         print("Saving {} data files to {}".format(mode, save_path))
         data_tbl.write_parquet(save_path)
+    else:
+        data_tbl.compute()
     return data_tbl
 
 
