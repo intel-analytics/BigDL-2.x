@@ -137,6 +137,36 @@ class TestAutoTrainer(TestCase):
         config = auto_trainer.get_best_config()
         assert 4 <= config["past_seq_len"] <= 6
 
+    def test_fit_third_party_data_creator(self):
+        input_feature_dim = 4
+        output_feature_dim = 2  # 2 targets are generated in get_tsdataset
+
+        search_space = {
+            'hidden_dim': hp.grid_search([32, 64]),
+            'dropout': hp.uniform(0.1, 0.2)
+        }
+
+        auto_trainer = AutoTSTrainer(model=model_creator,
+                                     search_space=search_space,
+                                     past_seq_len=7,
+                                     future_seq_len=1,
+                                     input_feature_num=input_feature_dim,
+                                     output_target_num=output_feature_dim,
+                                     selected_features="auto",
+                                     metric="mse",
+                                     loss=torch.nn.MSELoss(),
+                                     cpus_per_trial=2)
+
+        auto_trainer.fit(data=get_data_creator(),
+                         epochs=1,
+                         batch_size=hp.choice([32, 64]),
+                         validation_data=get_data_creator(),
+                         n_sampling=1
+                         )
+
+        config = auto_trainer.get_best_config()
+        assert config["past_seq_len"] == 7
+
 
     def test_fit_lstm_feature(self):
         input_feature_dim = 11  # This param will not be used
