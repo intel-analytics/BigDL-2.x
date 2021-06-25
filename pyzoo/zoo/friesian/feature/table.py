@@ -400,11 +400,11 @@ class Table:
         """
         Segment values of the target column into bins.
 
-        :param bins:
-            list: defines bins to be used. With n+1 splits, there are n buckets. A bucket
-            defined by splits x,y holds values in the range [x,y) except the last bucket,
-            which also includes y. Should be of length >= 3 and strictly increasing.
-            int: defines the number of equal-width bins in the range of x.
+        :param bins: list or int. If bins is a list, it defines bins to be used. 
+        With n+1 splits, there are n buckets. A bucket defined by splits x,y holds 
+        values in the range [x,y) except the last bucket, which also includes y. 
+        Should be of length >= 3 and strictly increasing.
+        If bint is an int, it defines the number of equal-width bins in the range of x.
         :param column: str, target column.
         :labels: list, specifies the labels for the returned bins.
         :name: str, name of output categorical column.
