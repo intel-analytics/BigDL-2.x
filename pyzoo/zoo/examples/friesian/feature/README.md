@@ -17,7 +17,7 @@ You can download the full __1TB__ Click Logs dataset from [here](https://ailab.c
 
 After you download the files, convert them to parquet files with the name `day_x.parquet` (x=0-23), and put all parquet files in one folder.
 - The first 23 days (day0 to day22) are used for DLRM training with 4,195,197,692 records in total.
-- The first half (89,137,319 records in total) of the last day (day23) is used for test. To prepare the test dataset, you need to split the first half of day23 into a new file (e.g. using command `head -n 89137319 day_23 > day_23_test`) and finally convert to parquet file with the name `day_23_test.parquet` under the same folder with the train parquet files.
+- The first half (89,137,319 records in total) of the last day (day23) is used for test. To prepare the test dataset, you need to split the first half of day23 into a new file (e.g. using command `head -n 89137319 day_23 > day_23_test`) and finally convert to parquet files with the name `day_23_test.parquet` under the same folder with the train parquet files.
 
 If you want to use some sample data for test, you can download `dac_sample` from [here](https://labs.criteo.com/2014/02/download-dataset/), unzip and rename it to day0 and convert to parquet files.
 
