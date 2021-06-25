@@ -322,13 +322,13 @@ class Table:
                     raise ValueError("aggregate funtion not defined for column {}.".format(column))
                 aggr_strs = aggr[column]
             else:
-                raise ValueError("aggr should have type str or list or dict.")
+                raise ValueError("aggr must have type str or list or dict.")
             if isinstance(aggr_strs, str):
                 aggr_strs = [aggr_strs]
             values = []
             for aggr_str in aggr_strs:
                 if aggr_str not in ["min", "max", "avg", "sum", "count"]:
-                    raise ValueError("aggregate function must be min/max/avg/sum/count, \
+                    raise ValueError("aggregate function must be one of min/max/avg/sum/count, \
                         but got {}.".format(aggr_str))
                 values.append(self.df.agg({column: aggr_str}).collect()[0][0])
             stats[column] = values[0] if len(values) == 1 else values
@@ -366,7 +366,7 @@ class Table:
         :return: list, contains all values of the target column.
         """
         if not isinstance(column, str):
-            raise ValueError("Column should has type str.")
+            raise ValueError("Column must have type str.")
         check_col_exists(self.df, [column])
         return self.df.select(column).rdd.flatMap(lambda x: x).collect()
 
