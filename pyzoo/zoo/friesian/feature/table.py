@@ -356,7 +356,7 @@ class Table:
 
         :param path: str. The path to the Parquet file. Note that the col_name
                will be used as basename of the Parquet file.
-        :param mode: str. One of `append`, `overwrite`, `error` or `ignore`.
+        :param mode: str. One of "append", "overwrite", "error" or "ignore".
                append: Append contents to the existing data.
                overwrite: Overwrite the existing data.
                error: Throw an exception if the data already exists.
@@ -835,7 +835,7 @@ class StringIndex(Table):
 
         :param path: str. The path to the Parquet file. Note that the col_name
                will be used as basename of the Parquet file.
-        :param mode: str. One of `append`, `overwrite`, `error` or `ignore`.
+        :param mode: str. One of "append", "overwrite", "error" or "ignore".
                append: Append the contents of this StringIndex to the existing data.
                overwrite: Overwrite the existing data.
                error: Throw an exception if the data already exists.
