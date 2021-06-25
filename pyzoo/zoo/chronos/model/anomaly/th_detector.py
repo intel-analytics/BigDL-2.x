@@ -30,6 +30,7 @@ class Distance(ABC):
     def abs_dist(self, x, y):
         """
         Calculate the distance between x and y. a and b should be in same shape.
+
         :param x: the first tensor
         :param y: the second tensor
         :return: the absolute distance between x and y
@@ -56,6 +57,7 @@ def estimate_th(y,
                 dist_measure=EuclideanDistance()):
     """
     Estimate the threshold based on y and yhat
+
     :param y: actual values
     :param yhat: predicted values
     :param mode: types of ways to find threshold
@@ -76,15 +78,17 @@ def estimate_th(y,
         t = norm.ppf(1 - ratio)
         return t * sigma + mu
     else:
-        raise Exception("Does not support", mode)
+        raise ValueError("Does not support", mode)
 
 
 def detect_all(y, yhat, th, dist_measure):
     anomaly_scores = np.zeros_like(y)
+    anomaly_indexes = []
     for i, (y_i, yhat_i) in enumerate(zip(y, yhat)):
         if dist_measure.abs_dist(y_i, yhat_i) > th:
+            anomaly_indexes.append(i)
             anomaly_scores[i] = 1
-    return anomaly_scores
+    return anomaly_indexes, anomaly_scores
 
 
 def detect_range(y, th):
@@ -101,7 +105,7 @@ def detect_range_arr(y, th_arr):
     anomaly_scores = np.zeros_like(y)
     anomaly_scores[anomaly_indexes] = 1
     # anomaly_index.update(np.where(max_diff > 0)[0])
-    return anomaly_scores
+    return list(set(np.where(anomaly_scores > 0)[0])), anomaly_scores
 
 
 def detect_anomaly(y,
@@ -109,19 +113,21 @@ def detect_anomaly(y,
                    th=math.inf,
                    dist_measure=EuclideanDistance()):
     """
-        Detect anomalies. Each sample can have 1 or more dimensions.
-        :param y: the values to detect. shape could be
-                1-D (num_samples,)
-                or 2-D array (num_samples, features)
-        :param yhat: the estimated values, a tensor with same shape as y,
-                could be None when threshold is a tuple
-        :param th: threshold, could be
-            1. a single value -  absolute distance threshold, same for all samples
-            2. a tuple (min, max) - min and max are either int/float or tensors in same shape as y,
-                yhat is ignored in this case
-        :param dist_measure: measure of distance
-        :return: the anomaly values indexes in the samples, i.e. num_samples dimension.
-        """
+    Detect anomalies. Each sample can have 1 or more dimensions.
+
+    :param y: the values to detect. shape could be 1-D (num_samples,)
+        or 2-D array (num_samples, features)
+    :param yhat: the estimated values, a tensor with same shape as y,
+        could be None when threshold is a tuple
+    :param th: threshold, could be
+
+        1. a single value - absolute distance threshold, same for all samples
+
+        2. a tuple (min, max) - min and max are either int/float or tensors in same shape as y,
+        yhat is ignored in this case
+    :param dist_measure: measure of distance
+    :return: the anomaly values indexes in the samples, i.e. num_samples dimension.
+    """
     if isinstance(th, int) or isinstance(th, float):
         if yhat is None:
             raise ValueError("Please specify a threshold range (min,max) ",
@@ -151,15 +157,28 @@ def detect_anomaly(y,
 
 class ThresholdDetector(AnomalyDetector):
     """
-    Detect anomalies according to threshold
+        Example:
+            >>> #The dataset is split into x_train, x_test, y_train, y_test
+            >>> forecaster = Forecaster(...)
+            >>> forecaster.fit(x=x_train, y=y_train, ...)
+            >>> y_pred = forecaster.predict(x_test)
+            >>> td = ThresholdDetector()
+            >>> td.set_params(threshold=10)
+            >>> td.fit(y_test, y_pred)
+            >>> anomaly_scores = td.score()
+            >>> anomaly_indexes = td.anomaly_indexes()
     """
 
     def __init__(self):
+        """
+        Initialize a ThresholdDetector.
+        """
         self.th = math.inf
         self.ratio = 0.01
         self.dist_measure = EuclideanDistance()
         self.mode = "default"
-        self.anomalies = None
+        self.anomaly_indexes_ = None
+        self.anomaly_scores_ = None
 
     def set_params(self,
                    mode="default",
@@ -167,14 +186,19 @@ class ThresholdDetector(AnomalyDetector):
                    threshold=math.inf,
                    dist_measure=EuclideanDistance()):
         """
-        set parameters for ThresholdDetector
+        Set parameters for ThresholdDetector
+
         :param mode: mode can be "default" or "gaussian".
             "default" : fit data according to a uniform distribution
             "gaussian": fit data according to a gaussian distribution
-        :param ratio:
-        :param threshold:
-        :param dist_measure:
-        :return:
+        :param ratio: the ratio of anomaly to consider as anomaly.
+        :param threshold: threshold, could be
+
+            1. a single value - absolute distance threshold, same for all samples
+
+            2. a tuple (min, max) - min and max are either int/float or tensors in same shape as y,
+            yhat is ignored in this case
+        :param dist_measure: measure of distance
         """
         self.ratio = ratio
         self.dist_measure = dist_measure
@@ -183,10 +207,12 @@ class ThresholdDetector(AnomalyDetector):
 
     def fit(self, y, y_pred=None):
         """
-        fit to the time series
-        :param y_pred:
-        :param y: the input time series
-        :return:
+        Fit the model
+
+        :param y: the values to detect. shape could be 1-D (num_samples,)
+            or 2-D array (num_samples, features)
+        :param y_pred: the estimated values, a tensor with same shape as y
+            could be None when threshold is a tuple
         """
         if y_pred is not None and self.th == math.inf:
             self.th = estimate_th(y,
@@ -195,23 +221,37 @@ class ThresholdDetector(AnomalyDetector):
                                   ratio=self.ratio,
                                   dist_measure=self.dist_measure)
         # calculate anomalies in advance in case score does not specify input
-        self.anomalies = detect_anomaly(y,
-                                        y_pred,
-                                        self.th,
-                                        self.dist_measure)
+        anomalies = detect_anomaly(y, y_pred, self.th, self.dist_measure)
+        self.anomaly_indexes_ = anomalies[0]
+        self.anomaly_scores_ = anomalies[1]
 
     def score(self, y=None, y_pred=None):
         """
-        calculate anomaly scores for the input
+        Gets the anomaly scores for each sample. Each anomaly score is either 0 or 1,
+        where 1 indicates an anomaly.
+
         :param y: new time series to detect anomaly. if y is None, returns anomalies
             in the fit input, y_pred is ignored in this case
         :param y_pred: forecasts corresponding to y
-        :return: anomaly scores for each input sample in y
+
+        :return: anomaly score for each sample, in an array format with the same size as input
         """
         if y is None:
-            return self.anomalies
+            if self.anomaly_scores_ is None:
+                raise RuntimeError("please call fit before calling score")
+            return self.anomaly_scores_
         else:
             return detect_anomaly(y,
                                   y_pred,
                                   self.th,
-                                  self.dist_measure)
+                                  self.dist_measure)[1]
+
+    def anomaly_indexes(self):
+        """
+        Gets the indexes of the anomalies.
+
+        :return: the indexes of the anomalies.
+        """
+        if self.anomaly_indexes_ is None:
+            raise RuntimeError("Please call fit first")
+        return self.anomaly_indexes_

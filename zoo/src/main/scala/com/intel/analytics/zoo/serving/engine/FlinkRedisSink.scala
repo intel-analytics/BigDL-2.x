@@ -23,7 +23,7 @@ import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
 import org.apache.log4j.Logger
-import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
+import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 
 class FlinkRedisSink(params: ClusterServingHelper)
@@ -57,5 +57,20 @@ class FlinkRedisSink(params: ClusterServingHelper)
     logger.info(s"${cnt} valid records written to redis")
   }
 
+}
+
+class FlinkRedisXStreamSink(params: ClusterServingHelper) extends FlinkRedisSink(params) {
+  override def invoke(value: List[(String, String)], context: SinkFunction.Context[_]): Unit = {
+    val ppl = jedis.pipelined()
+    var cnt = 0
+    value.foreach(v => {
+      RedisUtils.writeXstream(ppl, v._1, v._2, params.jobName)
+      if (v._2 != "NaN") {
+        cnt += 1
+      }
+    })
+    ppl.sync()
+    logger.info(s"${cnt} valid records written to redis")
+  }
 }
 

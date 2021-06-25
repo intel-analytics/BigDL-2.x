@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from unittest import TestCase
-from zoo.automl.model import PytorchModelBuilder
+from zoo.automl.model.base_pytorch_model import PytorchModelBuilder
 from torch.utils.data import Dataset, DataLoader
 
 import pytest
@@ -80,6 +80,7 @@ class TestBasePytorchModel(TestCase):
     data = get_data()
 
     def test_fit_evaluate(self):
+        metric_name = "rmse"
         modelBuilder = PytorchModelBuilder(model_creator=model_creator_pytorch,
                                            optimizer_creator=optimizer_creator,
                                            loss_creator=loss_creator)
@@ -89,8 +90,9 @@ class TestBasePytorchModel(TestCase):
         })
         val_result = model.fit_eval(data=(self.data["x"], self.data["y"]),
                                     validation_data=(self.data["val_x"], self.data["val_y"]),
+                                    metric=metric_name,
                                     epochs=20)
-        assert val_result is not None
+        assert val_result.get(metric_name)
 
     def test_evaluate(self):
         modelBuilder = PytorchModelBuilder(model_creator=model_creator_pytorch,
@@ -102,6 +104,7 @@ class TestBasePytorchModel(TestCase):
         })
         model.fit_eval(data=(self.data["x"], self.data["y"]),
                        validation_data=(self.data["val_x"], self.data["val_y"]),
+                       metric="rmse",
                        epochs=20)
         mse_eval = model.evaluate(x=self.data["val_x"], y=self.data["val_y"])
         try:
@@ -114,6 +117,7 @@ class TestBasePytorchModel(TestCase):
         # incremental training test
         model.fit_eval(data=(self.data["x"], self.data["y"]),
                        validation_data=(self.data["val_x"], self.data["val_y"]),
+                       metric="rmse",
                        epochs=20)
         mse_eval = model.evaluate(x=self.data["val_x"], y=self.data["val_y"])
         try:
@@ -134,6 +138,7 @@ class TestBasePytorchModel(TestCase):
         })
         model.fit_eval(data=(self.data["x"], self.data["y"]),
                        validation_data=(self.data["val_x"], self.data["val_y"]),
+                       metric="rmse",
                        epochs=20)
         pred = model.predict(x=self.data["val_x"])
         pred_full_batch = model.predict(x=self.data["val_x"], batch_size=len(self.data["val_x"]))
@@ -160,6 +165,7 @@ class TestBasePytorchModel(TestCase):
             })
 
     def test_dataloader_fit_evaluate(self):
+        metric_name = "rmse"
         modelBuilder = PytorchModelBuilder(model_creator=model_creator_pytorch,
                                            optimizer_creator=optimizer_creator,
                                            loss_creator=loss_creator)
@@ -172,11 +178,12 @@ class TestBasePytorchModel(TestCase):
         })
         val_result = model.fit_eval(data=train_dataloader_creator,
                                     validation_data=valid_dataloader_creator,
+                                    metric=metric_name,
                                     epochs=20)
         assert model.config["train_size"] == 500
         assert model.config["valid_size"] == 100
         assert model.config["shuffle"] is True
-        assert val_result is not None
+        assert val_result.get(metric_name)
 
 
 if __name__ == "__main__":
