@@ -18,6 +18,7 @@ from unittest import TestCase
 import pytest
 
 import torch
+import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 from zoo.chronos.autots.experimental import AutoTSTrainer
@@ -75,7 +76,7 @@ class CustomizedNet(nn.Module):
 
     def forward(self, x):
         # x.shape = (num_sample, input_size, input_feature_num)
-        x.view(-1, x.shape[1]*x.shape[2])
+        x = x.view(-1, x.shape[1]*x.shape[2])
         x = self.fc1(x)
         x = self.dropout(x)
         x = self.relu1(x)
@@ -88,7 +89,7 @@ class CustomizedNet(nn.Module):
 
 def model_creator(config):
     return CustomizedNet(dropout=config["dropout"],
-                         input_size=config["past_seq_length"],
+                         input_size=config["past_seq_len"],
                          input_feature_num=config["input_feature_num"],
                          hidden_dim=config["hidden_dim"],
                          output_size=config["output_feature_num"])
@@ -105,7 +106,7 @@ class TestAutoTrainer(TestCase):
 
     def test_fit_third_party_feature(self):
         input_feature_dim = 11  # This param will not be used
-        ouput_feature_dim = 2  # 2 targets are generated in get_tsdataset
+        output_target_num = 2  # 2 targets are generated in get_tsdataset
 
         tsdata_train = get_tsdataset().gen_dt_feature()
         tsdata_valid = get_tsdataset().gen_dt_feature()
@@ -120,7 +121,7 @@ class TestAutoTrainer(TestCase):
                                      past_seq_len=hp.randint(4, 6),
                                      future_seq_len=1,
                                      input_feature_num=input_feature_dim,
-                                     output_target_num=output_feature_dim,
+                                     output_target_num=output_target_num,
                                      selected_features="auto",
                                      metric="mse",
                                      loss=torch.nn.MSELoss(),
