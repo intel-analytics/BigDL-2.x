@@ -19,6 +19,7 @@ import pytest
 import tempfile
 from unittest import TestCase
 
+import pyspark.sql.functions as f
 from pyspark.sql.functions import udf, struct
 from pyspark.sql.functions import col, max, min, array
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
@@ -34,7 +35,7 @@ class TestTable(TestCase):
         class.  setup_method is invoked for every test method of a class.
         """
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-
+    
     def test_fillna_int(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
@@ -98,9 +99,49 @@ class TestTable(TestCase):
         assert filled_tbl.df.filter("col_4 is null").count() == 0, "col_4 null values should be " \
                                                                    "filled"
         assert filled_tbl.df.filter("col_5 is null").count() == 0, "col_5 null values should be " \
-                                                                   "filled"
+ 
+    def test_filter_by_frequency(self):
+        data = [("a", "b", 1),
+                ("b", "a", 2),
+                ("a", "c", 3),
+                ("c", "c", 2),
+                ("b", "a", 1),
+                ("a", "d", 1)]
+        schema = StructType([StructField("A", StringType(), True),
+                             StructField("B", StringType(), True),
+                             StructField("C", IntegerType(), True)])
+        spark = OrcaContext.get_spark_session()
+        df = spark.createDataFrame(data, schema)
+        sum_cols = udf(lambda x: x[0] + x[1], StringType())
+        key = (df.select(df["A"], df["B"])
+            .withColumn('key', sum_cols(struct('A', 'B')))
+            )
+        group = key.groupby(['key']).count()
+        tbl = FeatureTable(df).filter_by_frequency(["A", "B"])
+        assert group.filter("count>=2").count() == tbl.to_spark_df().count() 
 
-    def test_cate_hash_encode(self):
+    def test_hash_encode(self):
+        import hashlib
+        import pandas as pd
+        spark = OrcaContext.get_spark_session()
+        data = [("a", "b", 1),
+                ("b", "a", 2),
+                ("a", "c", 3),
+                ("c", "c", 2),
+                ("b", "a", 1),
+                ("a", "d", 1)]
+        schema = StructType([StructField("A", StringType(), True),
+                             StructField("B", StringType(), True),
+                             StructField("C", IntegerType(), True)])
+        df = spark.createDataFrame(data, schema)
+        tbl = FeatureTable(df)
+        hash_str = udf(lambda x: getattr(hashlib, "md5")(str(x).encode('utf-8', 'strict')).hexdigest())
+        hash_int = udf(lambda x: int(x, 16) % 100)
+        df = df.withColumn("A",hash_str(col("A"))).withColumn("A",hash_int(col("A")))
+        tbl = tbl.hash_encode(["A"], 100)
+        assert tbl.to_spark_df().count() == df.count()
+
+    def test_cross_hash_encode(self):
         import hashlib
         import pandas as pd
         spark = OrcaContext.get_spark_session()
@@ -140,69 +181,8 @@ class TestTable(TestCase):
                 .map(lambda x: x[0])
         for i, c in enumerate(se1):
            getrows(encoded, rownums=[i, c]) == 1
-        tbl = tbl.cate_hash_encode(["A", "B"], 100, "cross")
+        tbl = tbl.cross_hash_encode(["A", "B"], 100, "cross")
         assert encoded.count() == tbl.to_spark_df().count() == 1
-
-    def test_hash_encode(self):
-        import hashlib
-        import pandas as pd
-        spark = OrcaContext.get_spark_session()
-        data = [("a", "b", 1),
-                ("b", "a", 2),
-                ("a", "c", 3),
-                ("c", "c", 2),
-                ("b", "a", 1),
-                ("a", "d", 1)]
-        schema = StructType([StructField("A", StringType(), True),
-                             StructField("B", StringType(), True),
-                             StructField("C", IntegerType(), True)])
-        df = spark.createDataFrame(data, schema)
-        tbl = FeatureTable(df)
-        se = (
-            df.select(df["A"])
-            .rdd
-            .map(lambda x: str(x).encode(encoding='utf_8', errors='strict'))
-            .map(getattr(hashlib, "md5"))
-            .map(lambda x: x.hexdigest())
-            .map(lambda x: int(x, 16))
-            .map(lambda x: x % 100)
-        )
-        schema1 = StructType([StructField("conversion", StringType(), True)])
-        se1 = spark.createDataFrame([se], schema=schema1)
-        encoded = spark.createDataFrame(pd.DataFrame(
-            np.zeros((se1.count(), 100)),
-            columns=["cross_" + str(i) for i in range(100)],
-        ))
-        def getrows(encoded, rownums=None):
-            return encoded\
-                .rdd\
-                .zipWithIndex()\
-                .filter(lambda x: x[1] in rownums)\
-                .map(lambda x: x[0])
-        for i, c in enumerate(se1):
-           getrows(encoded, rownums=[i, c]) == 1
-        tbl = tbl.hash_encode(["A"], 100, "cross")
-        assert encoded.count() == tbl.to_spark_df().count() == 1
-
-    def test_filter_by_frequency(self):
-        data = [("a", "b", 1),
-                ("b", "a", 2),
-                ("a", "c", 3),
-                ("c", "c", 2),
-                ("b", "a", 1),
-                ("a", "d", 1)]
-        schema = StructType([StructField("A", StringType(), True),
-                             StructField("B", StringType(), True),
-                             StructField("C", IntegerType(), True)])
-        spark = OrcaContext.get_spark_session()
-        df = spark.createDataFrame(data, schema)
-        sum_cols = udf(lambda x: x[0] + x[1], StringType())
-        key = (df.select(df["A"], df["B"])
-            .withColumn('key', sum_cols(struct('A', 'B')))
-            )
-        group = key.groupby(['key']).count()
-        tbl = FeatureTable(df).filter_by_frequency(["A", "B"])
-        assert group.filter("count>=2").count() == tbl.to_spark_df().count()
 
     def test_gen_string_idx(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")

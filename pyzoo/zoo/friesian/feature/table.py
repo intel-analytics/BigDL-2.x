@@ -346,10 +346,29 @@ class FeatureTable(Table):
             )
         group = key.groupby(['key']).count()
         return FeatureTable(group.filter(group['count'] >= min_freq))
-  
-    def cate_hash_encode(self, columns, bins, prefix, method='md5'):
+
+    def hash_encode(self, columns, bins, method='md5'):
         '''
-        Hash encode for categorical columns
+        Hash encode for single column
+        :param columns: str list, column names which are considered for general feature, for dense feature, you need to cut them to bin
+        :param bins: number of bins
+        :param method: hashlib supported method, like md5, sha256 etc.
+        :return: A new FeatureTable which hash encode values
+        '''
+        hash_df = self.df
+        spark = OrcaContext.get_spark_session()
+        if not isinstance(columns, list):
+            columns = [columns]
+        for i in range(len(columns)):
+            col_name = columns[i]
+        hash_str = udf(lambda x: getattr(hashlib, method)(str(x).encode(encoding='utf_8', errors='strict')).hexdigest())
+        hash_int = udf(lambda x: int(x, 16) % bins)
+        hash_df = hash_df.withColumn(col_name, hash_str(col(col_name))).withColumn(col_name, hash_int(col(col_name)))
+        return FeatureTable(hash_df)
+
+    def cross_hash_encode(self, columns, bins, prefix, method='md5'):
+        '''
+        Hash encode for cross categorical columns
         :param columns: str list, column names which are considered for cross features
                         only support category for cross feature, for dense feature, you need to cut them to bin
         :param bins: number of bins
@@ -371,35 +390,6 @@ class FeatureTable(Table):
                  .map(lambda x: int(x, 16))
                  .map(lambda x: x % bins)
                 )   
-        schema1 = StructType([StructField("conversion", StringType(), True)])
-        cross1 = spark.createDataFrame([cross], schema=schema1)
-        encoded = spark.createDataFrame(pd.DataFrame(np.zeros((cross1.count(), bins))
-                               , columns=[prefix + '_' + str(i) for i in range(bins)]))
-        return FeatureTable(encoded)
-
-    def hash_encode(self, columns, bins, prefix, method='md5'):
-        '''
-        Hash encode for general columns
-        :param columns: str list, column names which are considered for general feature, for dense feature, you need to cut them to bin
-        :param bins: number of bins
-        :param prefix: string for appending column names.
-        :param method: hashlib supported method, like md5, sha256 etc.
-        :return: an encoded features
-        '''
-        hash_df = self.df
-        spark = OrcaContext.get_spark_session()
-        if not isinstance(columns, list):
-            columns = [columns]
-        for i in range(len(columns)):
-            col_name = columns[i]
-        cross = (hash_df.select(hash_df[col_name])
-                .rdd
-                .map(lambda x: str(x).encode(encoding='utf_8', errors='strict'))
-                .map(getattr(hashlib, method))
-                .map(lambda x : x.hexdigest())
-                .map(lambda x : int(x, 16))
-                .map(lambda x : x % bins)
-                )
         schema1 = StructType([StructField("conversion", StringType(), True)])
         cross1 = spark.createDataFrame([cross], schema=schema1)
         encoded = spark.createDataFrame(pd.DataFrame(np.zeros((cross1.count(), bins))
