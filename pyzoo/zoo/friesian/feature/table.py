@@ -16,7 +16,7 @@
 import os
 
 from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, DecimalType, \
-    DoubleType, ArrayType, DataType
+    DoubleType, ArrayType, DataType, StructType, StringType, StructField
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
@@ -299,7 +299,7 @@ class Table:
         """
         Calculate the statistics of the values over target column(s).
 
-        :param columns: str or list of str, specifies names of the target column(s).
+        :param columns: a str or a list of str that specifies names of the target column(s).
         If columns is None, then the function will return statistics for all columns.
         :param aggr: str or list of str or dict to specify aggregate functions,
         min/max/avg/sum/count are supported.
@@ -336,25 +336,37 @@ class Table:
 
     def min(self, columns):
         """
-        Returns a dictionary that contains the minimum of target column(s).
+        Returns a new Table that has two columns, `column` and `min`, containing the column
+        names and the minimum values of the specified numeric columns.
 
-        :param columns: a str or a list of strs that specify the target column(s).
+        :param columns: a string or a list of strings that specifies column names. If it is None,
+               it will operate on all numeric columns.
 
-        :return: A dictionary, the key is the column name, and the value is the minimum
-        value of the corresponding column.
+        :return: A new Table that contains the minimum values of the specified columns.
         """
-        return self.get_stats(columns, "min")
+        data = self.get_stats(columns, "min")
+        data = [(column, float(data[column])) for column in data]
+        schema = StructType([StructField("column", StringType(), True),
+                             StructField("min", FloatType(), True)])
+        spark = OrcaContext.get_spark_session()
+        return FeatureTable(spark.createDataFrame(data, schema))
 
     def max(self, columns):
         """
-        Returns a dictionary that contains the maximum of target column(s).
+        Returns a new Table that has two columns, `column` and `max`, containing the column
+        names and the maximum values of the specified numeric columns.
 
-        :param columns: a str or a list of strs that specify the target column(s).
+        :param columns: a string or a list of strings that specifies column names. If it is None,
+               it will operate on all numeric columns.
 
-        :return: A dictionary, the key is the column name, and the value is the maximum
-        value of the corresponding column.
+        :return: A new Table that contains the maximum values of the specified columns.
         """
-        return self.get_stats(columns, "max")
+        data = self.get_stats(columns, "max")
+        data = [(column, float(data[column])) for column in data]
+        schema = StructType([StructField("column", StringType(), True),
+                             StructField("max", FloatType(), True)])
+        spark = OrcaContext.get_spark_session()
+        return FeatureTable(spark.createDataFrame(data, schema))
 
     def convert_to_list(self, column):
         """

@@ -583,8 +583,8 @@ class TestTable(TestCase):
         tbl = FeatureTable(spark.createDataFrame(data, schema))
         columns = ["age", "height"]
         min_result = tbl.min(columns)
-        assert min_result["age"] == 14, "the min of age should be 14."
-        assert min_result["height"] == 8.5, "the min of height should be 8.5."
+        assert min_result.convert_to_list("min") == [14, 8.5], \
+            "the min value for age and height is correct"
 
     def test_max(self):
         spark = OrcaContext.get_spark_session()
@@ -597,9 +597,9 @@ class TestTable(TestCase):
                              StructField("height", DoubleType(), True)])
         tbl = FeatureTable(spark.createDataFrame(data, schema))
         columns = ["age", "height"]
-        max_result = tbl.max(columns)
-        assert max_result["age"] == 25, "the max of age should be 25."
-        assert max_result["height"] == 10.0, "the max of height should be 10.0."
+        min_result = tbl.max(columns)
+        assert min_result.convert_to_list("max") == [25, 10.0], \
+            "the maximum value for age and height is correct"
 
     def test_convert_to_list(self):
         spark = OrcaContext.get_spark_session()
