@@ -366,36 +366,6 @@ class FeatureTable(Table):
         hash_df = hash_df.withColumn(col_name, hash_str(col(col_name))).withColumn(col_name, hash_int(col(col_name)))
         return FeatureTable(hash_df)
 
-    def cross_hash_encode(self, columns, bins, prefix, method='md5'):
-        '''
-        Hash encode for cross categorical columns
-        :param columns: str list, column names which are considered for cross features
-                        only support category for cross feature, for dense feature, you need to cut them to bin
-        :param bins: number of bins
-        :param prefix: string for appending column names.
-        :param method: hashlib supported method, like md5, sha256 etc.
-        :return: an encoded features
-        '''
-        hash_df = self.df
-        spark = OrcaContext.get_spark_session()
-        sum_cols = udf(lambda x: x[0] + x[1], StringType())
-        if not isinstance(columns, list):
-            columns = [columns]
-        cross = (hash_df.select(hash_df[columns[0]], hash_df[columns[1]])
-                 .withColumn("sum_cols", sum_cols(struct(columns[0], columns[1])))
-                 .rdd
-                 .map(lambda x: str(x).encode(encoding='utf_8', errors='strict'))
-                 .map(getattr(hashlib, method))
-                 .map(lambda x: x.hexdigest())
-                 .map(lambda x: int(x, 16))
-                 .map(lambda x: x % bins)
-                )   
-        schema1 = StructType([StructField("conversion", StringType(), True)])
-        cross1 = spark.createDataFrame([cross], schema=schema1)
-        encoded = spark.createDataFrame(pd.DataFrame(np.zeros((cross1.count(), bins))
-                               , columns=[prefix + '_' + str(i) for i in range(bins)]))
-        return FeatureTable(encoded)
-
     def gen_string_idx(self, columns, freq_limit):
         """
         Generate unique index value of categorical features
