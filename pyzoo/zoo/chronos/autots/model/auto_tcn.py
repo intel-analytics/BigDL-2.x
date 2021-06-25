@@ -161,7 +161,7 @@ class AutoTCN:
         Get the best tcn model.
         """
         return self.auto_est.get_best_model()
-    
+
     def get_best_config(self):
         """
         Get the best configuration

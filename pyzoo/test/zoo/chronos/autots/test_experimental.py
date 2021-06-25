@@ -167,7 +167,6 @@ class TestAutoTrainer(TestCase):
         config = auto_trainer.get_best_config()
         assert config["past_seq_len"] == 7
 
-
     def test_fit_lstm_feature(self):
         input_feature_dim = 11  # This param will not be used
         output_feature_dim = 2  # 2 targets are generated in get_tsdataset

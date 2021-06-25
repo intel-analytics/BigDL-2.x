@@ -22,7 +22,6 @@ import zoo.orca.automl.hp as hp
 from zoo.chronos.autots.model import AutoModelFactory
 
 
-
 class AutoTSTrainer:
     """
     Automated Trainer.
@@ -100,24 +99,24 @@ class AutoTSTrainer:
                                                   name=name)
             self.metric = metric
             search_space.update({"past_seq_len": past_seq_len,
-                                "future_seq_len": future_seq_len,
-                                "input_feature_num": input_feature_num,
-                                "output_feature_num": output_target_num})
+                                 "future_seq_len": future_seq_len,
+                                 "input_feature_num": input_feature_num,
+                                 "output_feature_num": output_target_num})
             self.search_space = search_space
 
         if isinstance(model, str):
             # update auto model common search space
             search_space.update({"past_seq_len": past_seq_len,
-                                "future_seq_len": future_seq_len,
-                                "input_feature_num": input_feature_num,
-                                "output_target_num": output_target_num,
-                                "loss": loss,
-                                "metric": metric,
-                                "optimizer": optimizer,
-                                "backend": backend,
-                                "logs_dir": logs_dir,
-                                "cpus_per_trial": cpus_per_trial,
-                                "name": name})
+                                 "future_seq_len": future_seq_len,
+                                 "input_feature_num": input_feature_num,
+                                 "output_target_num": output_target_num,
+                                 "loss": loss,
+                                 "metric": metric,
+                                 "optimizer": optimizer,
+                                 "backend": backend,
+                                 "logs_dir": logs_dir,
+                                 "cpus_per_trial": cpus_per_trial,
+                                 "name": name})
 
             # create auto model from name
             self.model = AutoModelFactory.create_auto_model(name=model,
