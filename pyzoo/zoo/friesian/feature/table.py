@@ -25,7 +25,7 @@ from pyspark.ml import Pipeline
 from pyspark.sql import Row
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
-from pyspark.sql.functions import col, udf, array, broadcast, explode, struct, collect_list
+from pyspark.sql.functions import col, concat, udf, array, broadcast, explode, struct, collect_list
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
@@ -339,11 +339,7 @@ class FeatureTable(Table):
             columns = [columns]
         freq_df = self.df
         spark = OrcaContext.get_spark_session()
-        sum_cols = udf(lambda x: x[0] + x[1], StringType())
-        key = (
-            freq_df.select(freq_df[columns[0]], freq_df[columns[1]])
-            .withColumn('key', sum_cols(struct(columns[0], columns[1])))
-            )
+        key = freq_df.withColumn("key", concat(*columns))
         group = key.groupby(['key']).count()
         return FeatureTable(group.filter(group['count'] >= min_freq))
 
@@ -365,6 +361,24 @@ class FeatureTable(Table):
         hash_int = udf(lambda x: int(x, 16) % bins)
         hash_df = hash_df.withColumn(col_name, hash_str(col(col_name))).withColumn(col_name, hash_int(col(col_name)))
         return FeatureTable(hash_df)
+
+    def cross_hash_encode(self, columns, bins, method='md5'):
+        '''
+        Hash encode for cross column
+        :param columns: str list, column names which are considered for category feature, for dense feature, you need to cut them to bin
+        :param bins: number of bins
+        :param method: hashlib supported method, like md5, sha256 etc.
+        :return: A new FeatureTable which hash encode values
+        '''
+        hash_df = self.df
+        if not isinstance(columns, list):
+            columns = [columns]
+        for i in range(len(columns)):
+            col_name = columns[i]
+        hash_df = hash_df.withColumn("cross",
+            concat(*columns))
+        hash_df = FeatureTable(hash_df).hash_encode(["cross"], 100)
+        return hash_df
 
     def gen_string_idx(self, columns, freq_limit):
         """

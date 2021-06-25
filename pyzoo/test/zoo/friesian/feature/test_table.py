@@ -21,7 +21,7 @@ from unittest import TestCase
 
 import pyspark.sql.functions as f
 from pyspark.sql.functions import udf, struct
-from pyspark.sql.functions import col, max, min, array
+from pyspark.sql.functions import col, concat, max, min, array
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
 
 from zoo.orca import OrcaContext
@@ -122,7 +122,6 @@ class TestTable(TestCase):
 
     def test_hash_encode(self):
         import hashlib
-        import pandas as pd
         spark = OrcaContext.get_spark_session()
         data = [("a", "b", 1),
                 ("b", "a", 2),
@@ -138,7 +137,28 @@ class TestTable(TestCase):
         hash_str = udf(lambda x: getattr(hashlib, "md5")(str(x).encode('utf-8', 'strict')).hexdigest())
         hash_int = udf(lambda x: int(x, 16) % 100)
         df = df.withColumn("A",hash_str(col("A"))).withColumn("A",hash_int(col("A")))
-        tbl = tbl.hash_encode(["A"], 100).show()
+        tbl = tbl.hash_encode(["A"], 100).hash_encode(["B"], 100)
+        assert tbl.to_spark_df().count() == df.count()
+
+    def test_cross_hash_encode(self):
+        import hashlib
+        spark = OrcaContext.get_spark_session()
+        data = [("a", "b", 1),
+                ("b", "a", 2),
+                ("a", "c", 3),
+                ("c", "c", 2),
+                ("b", "a", 1),
+                ("a", "d", 1)]
+        schema = StructType([StructField("A", StringType(), True),
+                             StructField("B", StringType(), True),
+                             StructField("C", IntegerType(), True)])
+        df = spark.createDataFrame(data, schema)
+        df = df.withColumn("cross", concat("A", "B"))
+        hash_str = udf(lambda x: getattr(hashlib, "md5")(str(x).encode('utf-8', 'strict')).hexdigest())
+        hash_int = udf(lambda x: int(x, 16) % 100)
+        df = df.withColumn("cross",hash_str(col("cross"))) 
+        tbl = FeatureTable(df)
+        tbl = tbl.cross_hash_encode(["A", "B"], 100)
         assert tbl.to_spark_df().count() == df.count()
 
     def test_gen_string_idx(self):
