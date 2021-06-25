@@ -32,7 +32,7 @@ python dlrm_preprocessing.py \
     --frequency_limit 15
 ```
 
-* Spark standalone, example command to run the full Criteo dataset:
+* Spark standalone, example command to run on the full Criteo dataset:
 ```bash
 python dlrm_preprocessing.py \
     --cluster_mode standalone \
@@ -45,7 +45,7 @@ python dlrm_preprocessing.py \
     --frequency_limit 15
 ```
 
-* Spark yarn client mode, example command to run the full Criteo dataset:
+* Spark yarn client mode, example command to run on the full Criteo dataset:
 ```bash
 python dlrm_preprocessing.py \
     --cluster_mode yarn \
