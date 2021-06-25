@@ -44,27 +44,27 @@ conf = {"spark.network.timeout": "10000000",
 def _parse_args():
     parser = ArgumentParser()
     parser.add_argument("--cluster_mode", type=str, default="local",
-                        help="The cluster mode, such as local, yarn or standalone.")
+                        help="The cluster mode, local, yarn or standalone.")
     parser.add_argument("--master", type=str, default=None,
-                        help="The master url, only used when the cluster mode is standalone.")
+                        help="The master url, only used when the cluster_mode is standalone.")
     parser.add_argument("--cores", type=int, default=48,
-                        help="The number of cores you want to use on each node.")
+                        help="The number of cores to use on each node.")
     parser.add_argument("--memory", type=str, default="240g",
-                        help="The amount of memory you want to allocate on each node.")
+                        help="The amount of memory to allocate on each node.")
     parser.add_argument("--num_nodes", type=int, default=8,
                         help="The number of nodes to use in the cluster.")
     parser.add_argument("--driver_cores", type=int, default=4,
-                        help="The number of cores you want to use for the driver.")
+                        help="The number of cores to use for the driver.")
     parser.add_argument("--driver_memory", type=str, default="36g",
-                        help="The amount of memory you want to allocate for the driver.")
-    parser.add_argument("--days", type=str, required=True,
-                        help="The day range for preprocessing, such as 0-23, 0-1.")
+                        help="The amount of memory to allocate for the driver.")
+    parser.add_argument("--days", type=str, default="0-23",
+                        help="The day range for data preprocessing, such as 0-23, 0-1.")
     parser.add_argument("--frequency_limit", type=int, default=15,
                         help="Categories with frequency below this value will be omitted from the encoding.")
     parser.add_argument("--input_folder", type=str, required=True,
-                        help="The path to the folder of parquet files.")
+                        help="The path to the folder of parquet files, either a local path or an HDFS path.")
     parser.add_argument("--output_folder", type=str,
-                        help="The path to save the preprocessed data to parquet files.")
+                        help="The path to save the preprocessed data to parquet files. HDFS path is recommended.")
 
     args = parser.parse_args()
     start, end = args.days.split("-")
