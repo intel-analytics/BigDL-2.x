@@ -51,6 +51,7 @@ import argparse
 
 DEFAULT_IMAGE_SIZE = 416
 
+
 def draw_outputs(img, outputs, class_names):
     boxes, objectness, classes, nums = outputs
     boxes, objectness, classes, nums = boxes[0], objectness[0], classes[0], nums[0]
@@ -61,7 +62,7 @@ def draw_outputs(img, outputs, class_names):
         img = cv2.rectangle(img, x1y1, x2y2, (255, 0, 0), 2)
         img = cv2.putText(img, '{} {:.4f}'.format(
             class_names[int(classes[i])], objectness[i]),
-            x1y1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
+                          x1y1, cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
     return img
 
 
@@ -89,7 +90,7 @@ def main():
     print("names loaded")
 
     img_raw = tf.image.decode_image(
-            open(options.image, 'rb').read(), channels=3)
+        open(options.image, 'rb').read(), channels=3)
 
     img = tf.expand_dims(img_raw, 0)
     img = transform_images(img, DEFAULT_IMAGE_SIZE)
@@ -102,13 +103,14 @@ def main():
     print('detections:')
     for i in range(nums[0]):
         print('\t{}, {}, {}'.format(class_names[int(classes[0][i])],
-                                           np.array(scores[0][i]),
-                                           np.array(boxes[0][i])))
+                                    np.array(scores[0][i]),
+                                    np.array(boxes[0][i])))
 
     img = cv2.cvtColor(img_raw.numpy(), cv2.COLOR_RGB2BGR)
     img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
     cv2.imwrite(options.output, img)
     print('output: {}'.format(options.output))
+
 
 if __name__ == '__main__':
     try:
