@@ -570,7 +570,7 @@ class TestTable(TestCase):
         data = tbl.df.toPandas()
         assert list(data.loc[:, "name"]) == ["jack", "rose", "amy"], "wrong answer"
         assert list(data.loc[:, "id"]) == [1, 2, 3]
-        tbl = tbl1.concat([tbl1, tbl2, tbl3], join="inner")
+        tbl = tbl1.concat([tbl1, tbl2, tbl3], mode="inner")
         assert tbl.df.count() == 3, "the number of data is incorrect"
         assert tbl.df.schema.names == ["name", "id"], "column names are incorrect"
         data = tbl.df.toPandas()

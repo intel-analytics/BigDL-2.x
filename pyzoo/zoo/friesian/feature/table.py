@@ -334,11 +334,12 @@ class Table:
 
     def write_to_csv(self, path, partition=1, mode="overwrite", header=False):
         """
-        Write the table as csv file.
-
-        :param partition: specify the number of files to write.
-        :param mode: specify the writing mode.
-        :param header: indicate whether to include the schema as first line in csv file.
+        Write the table to csv file.
+        
+        :param path: string, the path where csv file is written into.
+        :param partition: positive int, specifies the number of files to write.
+        :param mode: string, specify the writing mode. 
+        :param header: bool, indicates whether to include the schema at first line in csv file.
         """
         self.df.repartition(partition).write.csv(path=path, mode=mode, header=header)
 
@@ -365,21 +366,21 @@ class Table:
         else:
             return concat_inner
 
-    def concat(self, tables, join="outer"):
+    def concat(self, tables, mode="outer"):
         """
         Concatenate a list of tables into one table in the dimension of row.
+
         :param tables: a list of tables.
-        :param join: can only take value "outer" or "inner", the value "inner" indicates
-        that the result table only contains.
-        columns that are shared by all tables, the value "outer" indicates that the output
-        table contain all columns.
+        :param mode: string, can only be outer/inner. If mode equals to "inner", then the
+        new table only contains columns that are shared by all tables. If mode equals to "outer",
+        the the new table contains all columns appered in the list of tables.
 
         :return: a single table with rows combined from input tables.
         """
-        if join not in ["outer", "inner"]:
-            raise ValueError("join should take either outer or inner.")
+        if mode not in ["outer", "inner"]:
+            raise ValueError("join should take either outer or inner, but got {}.".format(join))
         dfs = [table.df for table in tables]
-        df = reduce(self._concat(join), dfs)
+        df = reduce(self._concat(mode), dfs)
         return self._clone(df)
 
     def drop_duplicates(self, subset=None):
@@ -400,17 +401,17 @@ class Table:
         """
         Segment values of the target column into bins.
 
-        :param bins: list or int. If bins is a list, it defines bins to be used. 
-        With n+1 splits, there are n buckets. A bucket defined by splits x,y holds 
-        values in the range [x,y) except the last bucket, which also includes y. 
-        Should be of length >= 3 and strictly increasing.
-        If bint is an int, it defines the number of equal-width bins in the range of x.
-        :param column: str, target column.
-        :labels: list, specifies the labels for the returned bins.
-        :name: str, name of output categorical column.
-        :drop: bool, specify whether to drop original target column.
+        :param bins: list or int. If bins is a list, it defines bins to be used. With n+1 splits,
+        there are n buckets. A bucket defined by splits x,y holds values in the range [x,y) except
+        the last bucket, which also includes y. Bins should be of length >= 3 and strictly increasing.
+        If bins is an int, it defines the number of equal-width bins in the range of all column values.
+        :param column: str, specifies the name of the target column.
+        :labels: list, specifies the labels for the returned bins. If lable is None, then the new bin
+        column would use integer to encode categories. 
+        :name: str, specifies the name of output categorical column, default name is "bucket".
+        :drop: bool, specifies whether to drop the original target column.
 
-        :return: new Table with updated bin column.
+        :return: new Table with the updated bin column.
         """
         check_col_exists(self.df, [column])
         if isinstance(bins, int):
