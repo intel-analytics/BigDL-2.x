@@ -3,7 +3,7 @@ This example demonstrates how to use Analytics Zoo Friesian to preprocess the
 [Criteo](https://ailab.criteo.com/download-criteo-1tb-click-logs-dataset/) dataset to be used for [DLRM](https://arxiv.org/abs/1906.00091) model training.
 
 ## Prepare the environment
-We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environments, especially if you want to run on a yarn cluster(yarn-client mode only).
+We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environments, especially if you want to run on a yarn cluster (yarn-client mode only).
 ```
 conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
@@ -13,9 +13,9 @@ pip install --pre --upgrade analytics-zoo
 __Note:__ As we test, Spark 3.0.0 will have performance benefit over the default Spark 2.4.3 and you can download the Analytics Zoo package built with Spark 3.0.0 from [here](https://sourceforge.net/projects/analytics-zoo/files/zoo-py/).
 
 ## Prepare the data
-You can download the full __1TB__ Click Logs dataset from [here](https://ailab.criteo.com/download-criteo-1tb-click-logs-dataset/), which include data of 24 days (day0 to day23) with 4373472329 records in total.
- 
-After you download the files, convert them to parquet files with the name day_x.parquet (x=0-23), and put all parquet files in one folder.
+You can download the full __1TB__ Click Logs dataset from [here](https://ailab.criteo.com/download-criteo-1tb-click-logs-dataset/), which includes data of 24 days (day0 to day23) with 4373472329 records in total.
+
+After you download the files, convert them to parquet files with the name `day_x.parquet` (x=0-23), and put all parquet files in one folder.
 - The first 23 days (day0 to day22) are used for DLRM training.
 - The first half of the last day (day23) is used for test. To prepare the test dataset, you need to split the first half of day23 into a new file (e.g. using command `head -n 89137319 day_23 > day_23_test`) and finally convert to parquet file with the name `day_23_test.parquet` under the same folder with the train parquet files.
 
