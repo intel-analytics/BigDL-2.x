@@ -270,7 +270,7 @@ This example runs a simple native python program, which is an easy way to verify
 Run the script to run trusted Python Helloworld:
 
 ```bash
-bash start-python-helloworld-sgx.sh
+bash work/start-scripts/start-python-helloworld-sgx.sh
 ```
 
 Open another terminal and check the log:
@@ -290,7 +290,7 @@ This example shows how to run trusted native python numpy.
 Run the script to run trusted Python Numpy:
 
 ```bash
-bash start-python-numpy-sgx.sh
+bash work/start-scripts/start-python-numpy-sgx.sh
 ```
 
 Open another terminal and check the log:
@@ -310,7 +310,7 @@ This example runs a simple Spark PI program.
 Run the script to run trusted Spark Pi:
 
 ```bash
-bash start-spark-local-pi-sgx.sh
+bash work/start-scripts/start-spark-local-pi-sgx.sh
 ```
 
 Open another terminal and check the log:
@@ -330,7 +330,7 @@ This example runs a simple Spark Wordcount program.
 Run the script to run trusted Spark Wordcount:
 
 ```bash
-bash start-spark-local-wordcount-sgx.sh
+bash work/start-scripts/start-spark-local-wordcount-sgx.sh
 ```
 
 Open another terminal and check the log:
@@ -354,7 +354,7 @@ First, make sure that the paths of resource in `/ppml/trusted-big-data-ml/work/s
 Run the script to run trusted Spark SQL:
 
 ```bash
-bash start-spark-local-sql-sgx.sh
+bash work/start-scripts/start-spark-local-sql-sgx.sh
 ```
 
 Open another terminal and check the log:
@@ -388,7 +388,7 @@ This example shows how to run trusted Spark BigDL.
 Run the script to run trusted Spark BigDL and it would take some time to show the final results:
 
 ```bash
-bash start-spark-local-bigdl-sgx.sh
+bash work/start-scripts/start-spark-local-bigdl-sgx.sh
 ```
 
 Open another terminal and check the log:
@@ -414,7 +414,7 @@ First, make sure that `Boston_Housing.csv` is under `work/data` directory or the
 Run the script to run trusted Spark BigDL and it would take some time to show the final results:
 
 ```bash
-bash start-spark-local-xgboost-sgx.sh
+bash work/start-scripts/start-spark-local-xgboost-sgx.sh
 ```
 
 Open another terminal and check the log:
