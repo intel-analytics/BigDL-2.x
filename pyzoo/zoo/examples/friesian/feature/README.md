@@ -66,6 +66,6 @@ __Options:__
 * `driver_cores`: The number of cores to use for the driver. Default to be 4.
 * `driver_memory`: The amount of memory to allocate for the driver. Default to be 36g.
 * `days`: The day range for data preprocessing, such as 0-23 for the full Criteo dataset, 0-1 for the first two days, etc. Default to be 0-23.
-* `frequency_limit`: Categories with frequency below this value will be omitted from the encoding. We recommend using 15 when you preprocess the full 1TB dataset. Default to be 15.
+* `frequency_limit`: Categories with frequency below this value will be omitted from encoding. We recommend using 15 when you preprocess the full 1TB dataset. Default to be 15.
 * `input_folder`: The path to the folder of parquet files, either a local path or an HDFS path.
 * `output_folder`: The path to save the preprocessed data to parquet files. HDFS path is recommended.

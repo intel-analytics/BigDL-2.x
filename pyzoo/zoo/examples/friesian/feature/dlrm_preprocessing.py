@@ -38,7 +38,8 @@ conf = {"spark.network.timeout": "10000000",
         "spark.task.cpus": "1",
         "spark.executor.heartbeatInterval": "200s",
         "spark.driver.maxResultSize": "40G",
-        "spark.hadoop.dfs.replication": "1"}  # Default replication is 3. You may adjust according your cluster settings.
+        # Default replication is 3. You may adjust according your cluster settings.
+        "spark.hadoop.dfs.replication": "1"}
 
 
 def _parse_args():
@@ -60,11 +61,14 @@ def _parse_args():
     parser.add_argument("--days", type=str, default="0-23",
                         help="The day range for data preprocessing, such as 0-23, 0-1.")
     parser.add_argument("--frequency_limit", type=int, default=15,
-                        help="Categories with frequency below this value will be omitted from the encoding.")
+                        help="Categories with frequency below this value will be "
+                             "omitted from encoding.")
     parser.add_argument("--input_folder", type=str, required=True,
-                        help="The path to the folder of parquet files, either a local path or an HDFS path.")
+                        help="The path to the folder of parquet files, "
+                             "either a local path or an HDFS path.")
     parser.add_argument("--output_folder", type=str,
-                        help="The path to save the preprocessed data to parquet files. HDFS path is recommended.")
+                        help="The path to save the preprocessed data to parquet files. "
+                             "HDFS path is recommended.")
 
     args = parser.parse_args()
     start, end = args.days.split("-")
@@ -115,11 +119,12 @@ if __name__ == "__main__":
     train_preprocessed = preprocess_and_save(train_data, idx_list, "train", args.output_folder)
 
     if args.days == 24:  # Full Criteo dataset
-        test_data = FeatureTable.read_parquet(os.path.join(args.input_folder, "day_23_test.parquet"))
+        test_data = FeatureTable.read_parquet(
+            os.path.join(args.input_folder, "day_23_test.parquet"))
         test_preprocessed = preprocess_and_save(test_data, idx_list, "test", args.output_folder)
 
     time_end = time()
-    print("Total time: ", time_end - time_start)
+    print("Total preprocessing time: ", time_end - time_start)
     train_preprocessed.show(5)
     print("Finished")
     stop_orca_context()
