@@ -85,6 +85,9 @@ def _parse_args():
     return args
 
 def preprocess_and_save(data_tbl, models, save_path):
+    columns = dict([("_c{}".format(i), "c{}".format(i)) for i in range(40)])
+    data_tbl = data_tbl.rename(columns)
+
     tbl = data_tbl.encode_string(CAT_COLS, models) \
         .fillna(0, INT_COLS + CAT_COLS) \
         .normalize(INT_COLS) \
