@@ -124,8 +124,8 @@ class TestTSDataset(ZooTestCase):
         assert tsdata.dt_col == "datetime"
         assert tsdata._is_pd_datetime
 
-        tsdata = TSDataset.afrom_pandas(df, dt_col="datetime", target_col=["value"],
-                                        extra_feature_col="extra feature", id_col="id")
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=["value"],
+                                       extra_feature_col="extra feature", id_col="id")
         assert tsdata._id_list == ['00', '01']
         assert tsdata.feature_col == ["extra feature"]
         assert tsdata.target_col == ["value"]
@@ -368,8 +368,7 @@ class TestTSDataset(ZooTestCase):
             _, unscaled_y_test_reproduce = tsdata_test.to_numpy()
 
             assert_array_almost_equal(unscaled_pred, unscaled_y_test_reproduce)
-            assert_array_almost_equal(
-                unscaled_y_test, unscaled_y_test_reproduce)
+            assert_array_almost_equal(unscaled_y_test, unscaled_y_test_reproduce)
 
             tsdata._check_basic_invariants()
 
@@ -401,11 +400,9 @@ class TestTSDataset(ZooTestCase):
         assert set(np.unique(tsdata_valid.to_pandas()["id"])) == {"00"}
         assert set(np.unique(tsdata_test.to_pandas()["id"])) == {"00"}
 
-        assert len(tsdata_train.to_pandas()) == int(df.shape[0] * 0.8)
-        assert len(tsdata_valid.to_pandas()) == int(
-            df.shape[0] * 0.1 + 5 + 2 - 1)
-        assert len(tsdata_test.to_pandas()) == int(
-            df.shape[0] * 0.1 + 5 + 2 - 1)
+        assert len(tsdata_train.to_pandas()) == df[:-(int(df.shape[0]*0.1)*2)].shape[0]
+        assert len(tsdata_valid.to_pandas()) == int(df.shape[0] * 0.1 + 5 + 2 - 1)
+        assert len(tsdata_test.to_pandas()) == int(df.shape[0] * 0.1 + 5 + 2 - 1)
         tsdata_train.feature_col.append("new extra feature")
         assert len(tsdata_train.feature_col) == 2
         assert len(tsdata_valid.feature_col) == 1
