@@ -48,9 +48,10 @@ def get_multi_id_ts_df():
 def get_ugly_ts_df():
     data = np.random.random_sample((100, 5))
     mask = np.random.random_sample((100, 5))
-    mask[mask >= 0.4] = 2
-    mask[np.where((mask < 0.4) & (mask >= 0.2))] = 1
-    mask[mask < 0.2] = 0
+    newmask = mask.copy()
+    mask[newmask >= 0.4] = 2
+    mask[newmask < 0.4] = 1
+    mask[newmask < 0.2] = 0
     data[mask == 0] = None
     data[mask == 1] = np.nan
     df = pd.DataFrame(data, columns=['a', 'b', 'c', 'd', 'e'])
@@ -225,17 +226,6 @@ class TestTSDataset(ZooTestCase):
 
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
-
-        # roll train
-        tsdata.roll(lookback=lookback, horizon=horizon)
-        x, y = tsdata.to_numpy()
-        assert x.shape == ((50-lookback-horizon+1)*2, lookback, 2)
-        assert y.shape == ((50-lookback-horizon+1)*2, horizon, 1)
-
-        tsdata.roll(lookback=lookback, horizon=horizon, id_sensitive=True)
-        x, y = tsdata.to_numpy()
-        assert x.shape == ((50-lookback-horizon+1), lookback, 4)
-        assert y.shape == ((50-lookback-horizon+1), horizon, 2)
 
         # test train
         tsdata.roll(lookback=lookback, horizon=horizon, id_sensitive=True)
