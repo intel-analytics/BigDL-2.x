@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 from optparse import OptionParser
+
 import numpy as np
 from bigdl.nn.criterion import *
 from bigdl.nn.layer import *
@@ -34,48 +35,49 @@ from zoo.pipeline.nnframes import *
 from zoo.util.tf import *
 import csv
 
-def process(filepath, demo):
-    sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testXGBClassifier")
+
+def Processdata(filepath, demo):
+    '''
+         preProcess the data read from filepath
+    :param filepath:
+    :return: assembledf:
+    '''
+    sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testNNClassifer")
     sc = init_nncontext(sparkConf)
     sqlContext = SQLContext(sc)
     if demo:
         data = sc.parallelize([
-            (1.0, 2.0, 3.0, 4.0, 7.0, 1),
-            (1.0, 3.0, 8.0, 2.0, 5.0, 0)
-            (2,0, 3.4, 5.0, 2.0, 4.0, 1)
+            (1.0, 2.0, 3.0, 4.0, 5.0, 1.0, 2.0, 4.0, 8.0, 3.0, 116.3668),
+            (1.0, 3.0, 8.0, 6.0, 5.0, 9.0, 5.0, 6.0, 7.0, 4.0, 116.367),
+            (2.0, 1.0, 5.0, 7.0, 6.0, 7.0, 4.0, 1.0, 2.0, 3.0, 116.367),
+            (2.0, 1.0, 4.0, 3.0, 6.0, 1.0, 3.0, 2.0, 1.0, 3.0, 116.3668)
         ])
-        N = 6
+        N = 11
         train_data = data
         test_data = data
+
     else:
-        dataset = np.loadtxt(filepath, delimiter=',')
-        print(type(dataset))
+        dataset = np.loadtxt(filepath, delimiter=',', skiprows=1)
         M, N = dataset.shape
         train_X = dataset[:(int)(0.8 * M), :]
         test_X = dataset[(int)(0.8 * M):, :]
         train_data = sc.parallelize(train_X.tolist())
         test_data = sc.parallelize(test_X.tolist())
-    columns = ["f" + str(i) for i in range(1, N)]
-    features = ["f" + str(i) for i in range(1, N)]
 
+    columns = ["c" + str(i) for i in range(1, N)]
     columns.append("label")
     df1 = train_data.toDF(columns)
-    vecasembler = VectorAssembler(inputCols=features, outputCol="features")
+    vecasembler = VectorAssembler(inputCols=columns, outputCol="features")
     traindf = vecasembler.transform(df1).select("features", "label").cache()
-    traindf.show()
-
     df2 = test_data.toDF(columns)
-    df2.show()
-    xgbCf0 = XGBClassifier()
-    xgbCf0.setNthread(1)
-    xgbCf0.setNumRound(10)
-    xgbCf0.setMissing(0)
-    xgbmodel: XGBClassifierModel = XGBClassifierModel(xgbCf0.fit(traindf))
-    print(features)
-    xgbmodel.setFeaturesCol(features)
-    y0 = xgbmodel.transform(df2)
-    print(y0)
+    testdf = vecasembler.transform(df2).select("features", "label").cache()
+    xgbRf0 = XGBRegressor()
+    xgbRf0.setNthread(1)
+    xgbRf0.setNumRound(10)
+    xgbmodel = XGBRegressorModel(xgbRf0.fit(traindf))
+    y0 = xgbmodel.transform(testdf)
     y0.show()
+    sc.stop()
 
 
 if __name__ == "__main__":
@@ -83,10 +85,10 @@ if __name__ == "__main__":
     parser.add_option("-f", "--file-path", type=str, dest="data_path",
                       default=".", help="Path where data are stored")
     parser.add_option("-d", "--demo", action="store_true", dest="demo", default=False)
-    parser.add_option("-m", "--master", type=str, dest="the master choice")
+    parser.add_option("-m", "--master", type=str, dest="masterchoice")
     (option, args) = parser.parse_args(sys.argv)
 
     if option.data_path is None:
         errno("data path is not specified")
     datapath = option.data_path
-    process(datapath, option.demo)
+    Processdata(datapath, option.demo)
