@@ -683,12 +683,11 @@ class TestTable(TestCase):
     def test_split(self):
         file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
         feature_tbl = FeatureTable.read_csv(file_path, header=True, dtype="int")
-        tbl1, tbl2 = feature_tbl.split([0.8, 0.2])
+        tbl1, tbl2 = feature_tbl.split([0.8, 0.2], seed=1128)
         total_size = feature_tbl.size()
         size1 = tbl1.size()
         size2 = tbl2.size()
         assert size1 + size2 == total_size
-        assert 3 < size1 / size2 < 5
 
 
 if __name__ == "__main__":
