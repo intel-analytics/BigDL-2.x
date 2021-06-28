@@ -137,7 +137,7 @@ class TestTable(TestCase):
         hash_str = udf(lambda x: getattr(hashlib, "md5")(str(x).encode('utf-8', 'strict')).hexdigest())
         hash_int = udf(lambda x: int(x, 16) % 100)
         df = df.withColumn("A",hash_str(col("A"))).withColumn("A",hash_int(col("A")))
-        tbl = tbl.hash_encode(["A"], 100).hash_encode(["B"], 100)
+        tbl = tbl.hash_encode(["A", "B"], 100)
         assert tbl.to_spark_df().count() == df.count()
 
     def test_cross_hash_encode(self):
@@ -158,7 +158,7 @@ class TestTable(TestCase):
         hash_int = udf(lambda x: int(x, 16) % 100)
         df = df.withColumn("cross",hash_str(col("cross"))) 
         tbl = FeatureTable(df)
-        tbl = tbl.cross_hash_encode(["A", "B"], 100)
+        tbl = tbl.cross_hash_encode("cross", ["A", "B"], 100)
         assert tbl.to_spark_df().count() == df.count()
 
     def test_gen_string_idx(self):

@@ -329,56 +329,61 @@ class FeatureTable(Table):
         return FeatureTable(data_df)
  
     def filter_by_frequency(self, columns, min_freq=2):
-        '''
-        Filter Data by given min frequency
-        :param columns: str list, column names which are considered for filtering
-        :param min_freq: int, min frequency
-        :return: a Data which is filtered
-        '''
+        """
+        Filter Data by given min frequency.
+        
+        :param columns: str or  a list of str, column names which are considered for filtering.
+        :param min_freq: int, min frequency.
+        
+        :return: A new FeatureTable which is filtered.
+        """
         if not isinstance(columns, list):
             columns = [columns]
         freq_df = self.df
-        spark = OrcaContext.get_spark_session()
-        key = freq_df.withColumn("key", concat(*columns))
+        key = freq_df.withColumn('key', concat(*columns))
         group = key.groupby(['key']).count()
         return FeatureTable(group.filter(group['count'] >= min_freq))
-
+ 
     def hash_encode(self, columns, bins, method='md5'):
-        '''
-        Hash encode for single column
-        :param columns: str list, column names which are considered for general feature, for dense feature, you need to cut them to bin
-        :param bins: number of bins
+        """
+        Hash encode for categorical column(s)
+        
+        :param columns: str or a list of str, target columns to be encoded. 
+               For dense feature, you need to cut them to bin.
+        :param bins: number of bins.
         :param method: hashlib supported method, like md5, sha256 etc.
-        :return: A new FeatureTable which hash encode values
-        '''
+        
+        :return: A new FeatureTable which hash encode values.
+        """
         hash_df = self.df
-        spark = OrcaContext.get_spark_session()
         if not isinstance(columns, list):
             columns = [columns]
         for i in range(len(columns)):
             col_name = columns[i]
-        hash_str = udf(lambda x: getattr(hashlib, method)(str(x).encode(encoding='utf_8', errors='strict')).hexdigest())
-        hash_int = udf(lambda x: int(x, 16) % bins)
-        hash_df = hash_df.withColumn(col_name, hash_str(col(col_name))).withColumn(col_name, hash_int(col(col_name)))
+            hash_str = udf(lambda x: getattr(hashlib, method)(str(x).encode(encoding='utf_8', errors='strict')).hexdigest())
+            hash_int = udf(lambda x: int(x, 16) % bins)
+            hash_df = hash_df.withColumn(col_name, hash_str(col(col_name))).withColumn(col_name, hash_int(col(col_name)))
         return FeatureTable(hash_df)
 
-    def cross_hash_encode(self, columns, bins, method='md5'):
-        '''
+    def cross_hash_encode(self, new_col_name, columns, bins, method='md5'):
+        """
         Hash encode for cross column
-        :param columns: str list, column names which are considered for category feature, for dense feature, you need to cut them to bin
-        :param bins: number of bins
+        
+        :param columns: str list, column names which are considered for category feature.
+               For dense feature, you need to cut them to bin.
+        :param bins: number of bins.
         :param method: hashlib supported method, like md5, sha256 etc.
+        
         :return: A new FeatureTable which hash encode values
-        '''
-        hash_df = self.df
+        """
+        cross_hash_df = self.df
         if not isinstance(columns, list):
             columns = [columns]
-        for i in range(len(columns)):
-            col_name = columns[i]
-        hash_df = hash_df.withColumn("cross",
+        assert len(columns) >= 2
+        cross_hash_df = cross_hash_df.withColumn(new_col_name,
             concat(*columns))
-        hash_df = FeatureTable(hash_df).hash_encode(["cross"], 100)
-        return hash_df
+        cross_hash_df = FeatureTable(cross_hash_df).hash_encode([new_col_name], bins)
+        return cross_hash_df
 
     def gen_string_idx(self, columns, freq_limit):
         """
