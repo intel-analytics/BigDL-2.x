@@ -62,16 +62,32 @@ class Table:
         return df
 
     @staticmethod
-    def _read_csv(paths, delimiter=",", schema=None):
-        # TODO: better support schema instead of exposing Spark DataTypes?
+    def _read_csv(paths, delimiter=",", names=None, dtype=None):
         if not isinstance(paths, list):
             paths = [paths]
         spark = OrcaContext.get_spark_session()
-        if schema:
-            df = spark.read.schema(schema).option('sep', delimiter).csv(paths)
-        else:
-            df = spark.read.option('sep', delimiter).csv(paths)
-        return df
+        kwargs = {"inferSchema": True}
+        header = 0 if names is None else None
+        if header == 0:
+            kwargs["header"] = True
+        elif header is None:
+            kwargs["header"] = False
+        df = spark.read.option('sep', delimiter).csv(paths, **kwargs)
+        columns = df.columns
+        if names:
+            assert len(names) == len(columns)
+            for i in range(names):
+                df = df.withColumnRenamed(columns[i], names[i])
+        tbl = Table(df)
+        if dtype:
+            if isinstance(dtype, dict):
+                for col, dtype in dtype.items():
+                    tbl = tbl.cast(col, dtype)
+            elif isinstance(dtype, str):
+                tbl = tbl.cast(columns=None, dtype=dtype)
+            else:
+                raise ValueError("dtype should be str or dict")
+        return tbl.df
 
     def _clone(self, df):
         return Table(df)
@@ -345,7 +361,7 @@ class Table:
         Return a sampled subset of Table.
 
         :param fraction: float, fraction of rows to generate, should be within the
-        range [0, 1].
+               range [0, 1].
         :param replace: allow or disallow sampling of the same row more than once.
         :param seed: seed for sampling.
 
@@ -376,14 +392,14 @@ class Table:
         """
         write_parquet(self.df, path, mode)
 
-    def cast(self, columns, type):
+    def cast(self, columns, dtype):
         """
         Cast columns to the specified type.
 
         :param columns: a string or a list of strings that specifies column names.
-                        If it is None, then cast all of the columns.
-        :param type: a string ("string", "boolean", "int", "long", "short", "float", "double")
-                     that specifies the type.
+               If it is None, then cast all of the columns.
+        :param dtype: a string ("string", "boolean", "int", "long", "short", "float", "double")
+               that specifies the data type.
 
         :return: A new Table that casts all of the specified columns to the specified type.
         """
@@ -394,15 +410,15 @@ class Table:
             check_col_exists(self.df, columns)
         valid_types = ["str", "string", "bool", "boolean", "int",
                        "integer", "long", "short", "float", "double"]
-        if not (isinstance(type, str) and (type in valid_types)) \
-           and not isinstance(type, DataType):
+        if not (isinstance(dtype, str) and (dtype in valid_types)) \
+           and not isinstance(dtype, DataType):
             raise ValueError(
                 "type should be string, boolean, int, long, short, float, double.")
         transform_dict = {"str": "string", "bool": "boolean", "integer": "int"}
-        type = transform_dict[type] if type in transform_dict else type
+        dtype = transform_dict[dtype] if dtype in transform_dict else dtype
         df_cast = self._clone(self.df)
         for i in columns:
-            df_cast.df = df_cast.df.withColumn(i, pyspark_col(i).cast(type))
+            df_cast.df = df_cast.df.withColumn(i, pyspark_col(i).cast(dtype))
         return df_cast
 
     def __getattr__(self, name):
@@ -429,8 +445,23 @@ class FeatureTable(Table):
         return cls(Table._read_json(paths, cols))
 
     @classmethod
-    def read_csv(cls, paths, delimiter=",", schema=None):
-        return cls(Table._read_csv(paths, delimiter, schema))
+    def read_csv(cls, paths, delimiter=",", names=None, dtype=None):
+        """
+        Loads csv files as a FeatureTable.
+
+        :param paths: str or a list of str. The path/paths to csv file(s).
+        :param delimiter: str, delimiter to use for parsing the csv file(s). Default is ",".
+        :param names: list of str, the column names for the csv file(s). You need to provide
+               this if the header cannot be inferred.
+        :param dtype: str or dict, the column data type(s) for the csv file(s). You may need to
+               provide this if you want to change the default inferred types of specified columns.
+               If dtype is a str, then all the columns will be cast to the target dtype.
+               If dtype is a dict, then the key should be the column name and the value should be
+               the str dtype to cast the column to.
+
+        :return: A FeatureTable for recommendation data.
+        """
+        return cls(Table._read_csv(paths, delimiter, names, dtype))
 
     def encode_string(self, columns, indices):
         """
@@ -690,7 +721,7 @@ class FeatureTable(Table):
         Generate a list of item visits in history
 
         :param user_col: string, user column.
-        :param cols:  list of string, ctolumns need to be aggragated
+        :param cols:  list of string, columns need to be aggregated
         :param sort_col:  string, sort by sort_col
         :param min_len:  int, minimal length of a history list
         :param max_len:  int, maximal length of a history list
@@ -740,7 +771,7 @@ class FeatureTable(Table):
 
     def add_length(self, col_name):
         """
-        Generate the length of a columb.
+        Generate the length of a column.
 
         :param col_name: string.
 
@@ -795,7 +826,7 @@ class FeatureTable(Table):
 
         :param item_cols: list[string]
         :param feature_tbl: FeatureTable with two columns [category, item]
-        :param defalut_cat_index: default value for category if key does not exist
+        :param default_value: default value for category if key does not exist
 
         :return: FeatureTable
         """
@@ -832,7 +863,7 @@ class FeatureTable(Table):
 
         :param columns: str or list of str. Columns to group the Table. If it is an empty list,
                aggregation is run directly without grouping. Default is [].
-        :param agg: str, list or dict. Aggragate functions to be applied to grouped Table.
+        :param agg: str, list or dict. Aggregate functions to be applied to grouped Table.
                Default is "count".
                Supported aggregate functions are: "max", "min", "count", "sum", "avg", "mean",
                "sumDistinct", "stddev", "stddev_pop", "variance", "var_pop", "skewness", "kurtosis",
@@ -851,7 +882,7 @@ class FeatureTable(Table):
                agg=["last", "stddev"]
                agg={"*":"count"}
                agg={"col_1":"sum", "col_2":["count", "mean"]}
-        :param join: boolean. If join is True, join the aggragation result with original Table.
+        :param join: boolean. If join is True, join the aggregation result with original Table.
 
         :return: A new Table with aggregated column fields.
         """
@@ -895,6 +926,15 @@ class FeatureTable(Table):
             return FeatureTable(agg_df)
 
     def split(self, ratio, seed=None):
+        """
+        Split the FeatureTable into multiple FeatureTables for train, validation and test.
+
+        :param ratio: a list of portions as weights with which to split the FeatureTable. Weights will
+                      be normalized if they don't sum up to 1.0.
+        :param seed: The seed for sampling.
+
+        :return: A tuple of FeatureTables split by the given ratio.
+        """
         df_list = self.df.randomSplit(ratio, seed)
         tbl_list = [FeatureTable(df) for df in df_list]
         return tuple(tbl_list)
@@ -951,7 +991,12 @@ class StringIndex(Table):
         return cls(df, col_name)
 
     def to_dict(self):
-        # Only if the mapping is small.
+        """
+        Convert the StringIndex to a dict, with the categorical features as keys and indices as values.
+        Only call this if the StringIndex is small.
+
+        :return: A dict for the mapping from string to index.
+        """
         cols = self.df.columns
         index_id = cols.index("id")
         col_id = cols.index(self.col_name)

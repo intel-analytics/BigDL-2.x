@@ -10,7 +10,7 @@ INT_COLS = ["_c%d" % i for i in list(range(1, 14))]
 CAT_COLS = ["_c%d" % i for i in list(range(14, 40))]
 
 tbl = FeatureTable.read_csv("/home/kai/RS/reco_dummy_pipeline/data/small.csv")
-tbl = tbl.cast([LABEL_COL] + INT_COLS, "int")
+tbl = tbl.cast(INT_COLS, "int")
 tbl.show(5)
 count = tbl.size()
 print("Total number of records", count)
