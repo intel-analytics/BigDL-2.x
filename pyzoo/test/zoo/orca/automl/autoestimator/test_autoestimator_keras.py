@@ -56,7 +56,7 @@ def create_linear_search_space():
 class TestTFKerasAutoEstimator(TestCase):
     def setUp(self) -> None:
         from zoo.orca import init_orca_context
-        init_orca_context(cores=8, init_ray_on_spark=True)
+        init_orca_context(cores=4, init_ray_on_spark=True)
 
     def tearDown(self) -> None:
         from zoo.orca import stop_orca_context
@@ -72,7 +72,7 @@ class TestTFKerasAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="mse")
         best_model = auto_est.get_best_model()
@@ -90,14 +90,14 @@ class TestTFKerasAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="mse")
         with pytest.raises(RuntimeError):
             auto_est.fit(data=data,
                          validation_data=validation_data,
                          search_space=create_linear_search_space(),
-                         n_sampling=4,
+                         n_sampling=2,
                          epochs=1,
                          metric="mse")
 
@@ -118,7 +118,7 @@ class TestTFKerasAutoEstimator(TestCase):
             auto_est.fit(data=data,
                          validation_data=validation_data,
                          search_space=create_linear_search_space(),
-                         n_sampling=4,
+                         n_sampling=2,
                          epochs=1,
                          metric=pyrmsle)
         assert "metric_mode" in str(exeinfo)
@@ -126,7 +126,7 @@ class TestTFKerasAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric=pyrmsle,
                      metric_mode="min")

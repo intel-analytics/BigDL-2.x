@@ -117,7 +117,7 @@ def create_linear_search_space():
 class TestPyTorchAutoEstimator(TestCase):
     def setUp(self) -> None:
         from zoo.orca import init_orca_context
-        init_orca_context(cores=8, init_ray_on_spark=True)
+        init_orca_context(cores=4, init_ray_on_spark=True)
 
     def tearDown(self) -> None:
         from zoo.orca import stop_orca_context
@@ -135,7 +135,7 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="accuracy")
         best_model = auto_est.get_best_model()
@@ -156,7 +156,7 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data=train_dataloader_creator,
                      validation_data=valid_dataloader_creator,
                      search_space=search_space,
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="accuracy")
         best_model = auto_est.get_best_model()
@@ -177,7 +177,7 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="accuracy")
         best_model = auto_est.get_best_model()
@@ -195,7 +195,7 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="accuracy")
         best_model = auto_est.get_best_model()
@@ -235,14 +235,14 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="accuracy")
         with pytest.raises(RuntimeError):
             auto_est.fit(data=data,
                          validation_data=validation_data,
                          search_space=create_linear_search_space(),
-                         n_sampling=4,
+                         n_sampling=2,
                          epochs=1,
                          metric="accuracy")
 
@@ -272,7 +272,7 @@ class TestPyTorchAutoEstimator(TestCase):
             auto_est.fit(data=data,
                          validation_data=validation_data,
                          search_space=create_linear_search_space(),
-                         n_sampling=4,
+                         n_sampling=2,
                          epochs=1,
                          metric=f075)
         assert "metric_mode" in str(exeinfo)
@@ -280,7 +280,7 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric=f075,
                      metric_mode="max")
