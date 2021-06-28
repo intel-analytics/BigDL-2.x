@@ -49,6 +49,8 @@
         <data-store-url>http://download.tensorflow.org</data-store-url>
         <inner-ftp-uri>http://10.239.45.10:8081/repository/raw</inner-ftp-uri>
         <tf-shade>bushade</tf-shade>
+        <akka.grpc.version>0.5.0</akka.grpc.version>
+        <grpc.version>1.38.0</grpc.version>
     </properties>
 
     <distributionManagement>
@@ -475,8 +477,23 @@
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-http-core_${scala.major.version}</artifactId>
+            <version>10.1.11</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-stream_${scala.major.version}</artifactId>
             <version>2.5.26</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-actor-typed_${scala.major.version}</artifactId>
+            <version>2.5.21</version>
+        </dependency>
+        <dependency>
+            <groupId>com.lightbend.akka.grpc</groupId>
+            <artifactId>akka-grpc-runtime_${scala.major.version}</artifactId>
+            <version>${akka.grpc.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
@@ -586,11 +603,6 @@
             <groupId>com.github.kstyrc</groupId>
             <artifactId>embedded-redis</artifactId>
             <version>0.6</version>
-        </dependency>
-        <dependency>
-            <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-actor-typed_2.13</artifactId>
-            <version>2.6.15</version>
         </dependency>
 
     </dependencies>

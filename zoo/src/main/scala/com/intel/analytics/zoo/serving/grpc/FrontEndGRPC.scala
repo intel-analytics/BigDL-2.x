@@ -19,10 +19,8 @@ package com.intel.analytics.zoo.serving.grpc
 import org.slf4j.LoggerFactory
 
 
-
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
-
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
@@ -35,16 +33,17 @@ import scala.concurrent.duration._
 import com.typesafe.config.ConfigFactory
 
 
-
 object FrontEndGRPC extends Supportive {
   override val logger = LoggerFactory.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
-    // important to enable HTTP/2 in ActorSystem's config
+    def main(args: Array[String]): Unit = {
+      // important to enable HTTP/2 in ActorSystem's config
       val conf = ConfigFactory.parseString("akka.http.server.preview.enable-http2 = on")
         .withFallback(ConfigFactory.defaultApplication())
       val system = ActorSystem[Nothing](Behaviors.empty, "GreeterServer", conf)
       new GreeterServer(system).run()
+    }
   }
 
   class GreeterServer(system: ActorSystem[_]) {
@@ -56,7 +55,7 @@ object FrontEndGRPC extends Supportive {
       val service: HttpRequest => Future[HttpResponse] =
         GreeterServiceHandler(new GreeterServiceImpl(system))
 
-      val bound: Future[Http.ServerBinding] = Http(system)
+      val bound: Future[Http.ServerBinding] = akka.http.scaladsl.Http(system)
         .newServerAt(interface = "127.0.0.1", port = 8080)
         .enableHttps(serverHttpContext)
         .bind(service)
@@ -73,5 +72,4 @@ object FrontEndGRPC extends Supportive {
 
       bound
     }
-  }
 }
