@@ -143,7 +143,7 @@ cd /ppml/trusted-big-data-ml/
 Then run the script below:
 
 ```bash
-sh start-spark-local-tpc-h-sgx.sh [your_hdfs_tpch_data_dir] [your_hdfs_output_dir]
+bash start-spark-local-tpc-h-sgx.sh [your_hdfs_tpch_data_dir] [your_hdfs_output_dir]
 ```
 
 Open another terminal and check the log:
@@ -229,7 +229,7 @@ Then stop the service:
 Pull docker image from Dockerhub
 
 ```bash
-docker pull 10.239.45.10/arda/intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-python-graphene:0.11-SNAPSHOT
+docker pull intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-python-graphene:0.11-SNAPSHOT
 ```
 
 Alternatively, you can build docker image from Dockerfile (this will take some time):
