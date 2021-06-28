@@ -43,18 +43,18 @@ class ARIMAForecaster(Forecaster):
         seasonal differencing term (D) are automatically estimated from the data.
 
         :param p: hyperparameter p for the ARIMA model, for details you may refer to
-            https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA
+            [here](https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA)
         :param q: hyperparameter q for the ARIMA model, for details you may refer to
-            https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA
+            [here](https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA)
         :param seasonality_mode: hyperparameter seasonality_mode for the ARIMA model,
             for details you may refer to
-            https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA
+            [here](https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA)
         :param P: hyperparameter P for the ARIMA model, for details you may refer to
-            https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA
+            [here](https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA)
         :param Q: hyperparameter Q for the ARIMA model, for details you may refer to
-            https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA
+            [here](https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA)
         :param m: hyperparameter m for the ARIMA model, for details you may refer to
-            https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA
+            [here](https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA)
         :param metric: the metric for validation and evaluation. For regression, we support
             Mean Squared Error: ("mean_squared_error", "MSE" or "mse"),
             Mean Absolute Error: ("mean_absolute_error","MAE" or "mae"),
