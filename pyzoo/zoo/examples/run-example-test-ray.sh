@@ -156,7 +156,14 @@ time11=$((now-start))
 echo "#12 start example for chronos autolstm_nyc_taxi"
 start=$(date "+%s")
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/autolstm_nyc_taxi.py
+if [ -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/lstm/nyc_taxi.csv ]
+then
+    echo "nyc_taxi.csv already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/nyc_taxi.csv -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/lstm/nyc_taxi.csv
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/autolstm_nyc_taxi.py  --datadir ./nyc_taxi.csv
 
 now=$(date "+%s")
 time12=$((now-start))
