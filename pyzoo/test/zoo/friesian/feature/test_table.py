@@ -14,16 +14,15 @@
 # limitations under the License.
 #
 
+import shutil
 import os.path
 import shutil
 import pytest
-import tempfile
 from unittest import TestCase
 
 from pyspark.sql.functions import col, max, min, array
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, \
     DoubleType
-import pyspark.sql.functions as F
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature import FeatureTable, StringIndex
@@ -660,6 +659,91 @@ class TestTable(TestCase):
         df.write_csv(file_path+"df4.csv")
         assert os.path.exists(file_path+"df4.csv")
         shutil.rmtree(file_path+"df4.csv")
+
+    def test_ordinal_shuffle(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("a", 14), ("b", 25), ("c", 23), ("d", 2), ("e", 1)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", IntegerType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema).repartition(1))
+        shuffled_tbl = tbl.ordinal_shuffle_partition()
+        rows = tbl.df.collect()
+        shuffled_rows = shuffled_tbl.df.collect()
+        rows.sort(key=lambda x: x[1])
+        shuffled_rows.sort(key=lambda x: x[1])
+        assert rows == shuffled_rows
+
+    def test_write_parquet(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        feature_tbl.write_parquet("saved.parquet")
+        loaded_tbl = FeatureTable.read_parquet("saved.parquet")
+        if os.path.exists("saved.parquet"):
+            shutil.rmtree("saved.parquet")
+
+    def test_read_csv(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/data.csv")
+        feature_tbl = FeatureTable.read_csv(file_path, header=True)
+        assert feature_tbl.size() == 4
+        columns = feature_tbl.columns
+        assert columns == ["col1", "col2", "col3"]
+        records = feature_tbl.df.collect()
+        assert isinstance(records[0][0], float)
+        assert isinstance(records[0][1], str) and isinstance(records[0][1], str)
+        file_path2 = os.path.join(self.resource_path, "friesian/feature/data_no_header.csv")
+        feature_tbl2 = FeatureTable.read_csv(file_path2, names=["col1", "_col2", "col3"],
+                                             dtype={"col1": "int"})
+        assert feature_tbl2.size() == 4
+        columns2 = feature_tbl2.columns
+        assert columns2 == ["col1", "_col2", "col3"]
+        records2 = feature_tbl2.df.collect()
+        assert isinstance(records2[0][0], int)
+        assert isinstance(records2[0][1], str) and isinstance(records2[0][1], str)
+        feature_tbl3 = FeatureTable.read_csv(file_path, header=True, dtype=["int", "str", "str"])
+        records3 = feature_tbl3.df.collect()
+        assert isinstance(records3[0][0], int)
+        assert isinstance(records3[0][1], str) and isinstance(records3[0][1], str)
+
+    def test_category_encode_and_one_hot_encode(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/data.csv")
+        feature_tbl = FeatureTable.read_csv(file_path, header=True)
+        feature_tbl, indices = feature_tbl.category_encode(columns=["col2", "col3"])
+        assert isinstance(indices, list) and len(indices) == 2
+        assert isinstance(indices[0], StringIndex) and isinstance(indices[1], StringIndex)
+        assert indices[0].size() == 3 and indices[1].size() == 4
+        dict1 = indices[0].to_dict()
+        dict2 = indices[1].to_dict()
+        records = feature_tbl.df.collect()
+        assert records[0][1] == dict1["x"] and records[0][2] == dict2["abc"]
+        assert records[3][1] == dict1["z"] and records[2][2] == dict2["aaa"]
+        feature_tbl = feature_tbl.one_hot_encode(columns=["col2", "col3"], prefix=["o1", "o2"])
+        feature_tbl.show()
+        columns = feature_tbl.columns
+        assert columns == ["col1", "o1_0", "o1_1", "o1_2", "o1_3", "o2_0",
+                           "o2_1", "o2_2", "o2_3", "o2_4"]
+        records = feature_tbl.df.collect()
+        record = records[0]
+        value1 = dict1["x"]
+        value2 = dict2["abc"]
+        for i in range(1, 4):
+            if i == value1:
+                assert record[i+1] == 1
+            else:
+                assert record[i+1] == 0
+        for i in range(1, 5):
+            if i == value2:
+                assert record[i+5] == 1
+            else:
+                assert record[i+5] == 0
+
+    def test_split(self):
+        file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
+        feature_tbl = FeatureTable.read_csv(file_path, header=True, dtype="int")
+        tbl1, tbl2 = feature_tbl.split([0.8, 0.2], seed=1128)
+        total_size = feature_tbl.size()
+        size1 = tbl1.size()
+        size2 = tbl2.size()
+        assert size1 + size2 == total_size
 
 
 if __name__ == "__main__":
