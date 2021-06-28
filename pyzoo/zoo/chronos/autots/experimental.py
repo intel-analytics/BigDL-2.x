@@ -88,7 +88,6 @@ class AutoTSTrainer:
             if loss is None:
                 loss = torch.nn.MSELoss()
 
-        self.model_mode = None
         if isinstance(model, types.FunctionType) and backend == "torch":
             from zoo.orca.automl.auto_estimator import AutoEstimator
             self.model = AutoEstimator.from_torch(model_creator=model,
