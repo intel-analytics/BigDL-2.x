@@ -1727,7 +1727,10 @@ private[zoo] class InternalDistriOptimizerV2[T: ClassTag] (
           Array.tabulate(_subModelNumber)(_ =>
             Some(bcVMethods.value.map(_.clone()))),
           cache.optimMethods,
-          cache.parameterSynchronizer
+          cache.parameterSynchronizer,
+          cache.parameter,
+          cache.parameterSplits,
+          cache.parameterProcessers
         )
       }
     } else {
@@ -1743,6 +1746,9 @@ private[zoo] class InternalDistriOptimizerV2[T: ClassTag] (
           null,
           Array.tabulate(_subModelNumber) { _ =>
             Some(bcVMethods.value.map(_.clone()))},
+          null,
+          null,
+          null,
           null,
           null
         ))

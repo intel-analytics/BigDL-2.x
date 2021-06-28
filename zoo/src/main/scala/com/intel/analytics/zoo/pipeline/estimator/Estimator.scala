@@ -128,6 +128,7 @@ class Estimator[T: ClassTag] private[zoo](
         this.internalEstimator.asInstanceOf[InternalDistriOptimizer[T]].getValidationSummary(tag)
       case OptimizerV2 =>
         this.internalEstimator.asInstanceOf[InternalDistriOptimizerV2[T]].getValidationSummary(tag)
+    }
   }
 
 
