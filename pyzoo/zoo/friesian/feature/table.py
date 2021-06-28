@@ -466,6 +466,18 @@ class FeatureTable(Table):
         return FeatureTable(data_df)
 
     def category_encode(self, columns, freq_limit=None):
+        """
+        Category encode the given columns.
+
+        :param columns: str or a list of str, target columns to encode from string to index.
+        :param freq_limit: int, dict or None. Categories with a count/frequency below freq_limit
+               will be omitted from the encoding. Can be represented as both an integer,
+               dict or None. For instance, 15, {'col_4': 10, 'col_5': 2} etc. None means all the
+               categories that appear will be encoded.
+
+        :return: A tuple of a new FeatureTable which transforms categorical features into unique integer
+                 values, and a list of StringIndex for the mapping.
+        """
         indices = self.gen_string_idx(columns, freq_limit)
         return self.encode_string(columns, indices), indices
 
