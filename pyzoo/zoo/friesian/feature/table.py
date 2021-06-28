@@ -949,8 +949,7 @@ class FeatureTable(Table):
         :param value: value to be append
         """
         self.df = self.df.withColumn(col, lit(value))
-        
-        
+
     def split(self, ratio, seed=None):
         """
         Split the FeatureTable into multiple FeatureTables for train, validation and test.
