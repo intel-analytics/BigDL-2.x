@@ -34,6 +34,7 @@ from zoo.pipeline.nnframes import *
 from zoo.util.tf import *
 import csv
 
+
 def process(filepath, demo):
     sparkConf = init_spark_conf().setMaster("local[1]").setAppName("testXGBClassifier")
     sc = init_nncontext(sparkConf)
@@ -41,7 +42,7 @@ def process(filepath, demo):
     if demo:
         data = sc.parallelize([
             (1.0, 2.0, 3.0, 4.0, 7.0, 1),
-            (1.0, 3.0, 8.0, 2.0, 5.0, 0)
+            (1.0, 3.0, 8.0, 2.0, 5.0, 0), 
             (2,0, 3.4, 5.0, 2.0, 4.0, 1)
         ])
         N = 6
@@ -70,7 +71,7 @@ def process(filepath, demo):
     xgbCf0.setNthread(1)
     xgbCf0.setNumRound(10)
     xgbCf0.setMissing(0)
-    xgbmodel: XGBClassifierModel = XGBClassifierModel(xgbCf0.fit(traindf))
+    xgbmodel = XGBClassifierModel(xgbCf0.fit(traindf))
     print(features)
     xgbmodel.setFeaturesCol(features)
     y0 = xgbmodel.transform(df2)
