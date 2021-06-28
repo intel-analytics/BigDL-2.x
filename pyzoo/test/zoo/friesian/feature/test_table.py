@@ -643,6 +643,10 @@ class TestTable(TestCase):
         records2 = feature_tbl2.df.collect()
         assert isinstance(records2[0][0], int)
         assert isinstance(records2[0][1], str) and isinstance(records2[0][1], str)
+        feature_tbl3 = FeatureTable.read_csv(file_path, header=True, dtype=["int", "str", "str"])
+        records3 = feature_tbl3.df.collect()
+        assert isinstance(records3[0][0], int)
+        assert isinstance(records3[0][1], str) and isinstance(records3[0][1], str)
 
     def test_category_encode_and_one_hot_encode(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/data.csv")
@@ -678,7 +682,7 @@ class TestTable(TestCase):
 
     def test_split(self):
         file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
-        feature_tbl = FeatureTable.read_csv(file_path, header=True)
+        feature_tbl = FeatureTable.read_csv(file_path, header=True, dtype="int")
         tbl1, tbl2 = feature_tbl.split([0.8, 0.2])
         total_size = feature_tbl.size()
         size1 = tbl1.size()

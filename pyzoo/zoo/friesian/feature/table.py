@@ -69,7 +69,9 @@ class Table:
         df = spark.read.options(header=header, inferSchema=True, delimiter=delimiter).csv(paths)
         columns = df.columns
         if names:
-            assert len(names) == len(columns)
+            if not isinstance(names, list):
+                names = [names]
+            assert len(names) == len(columns), "names should have the same length as the columns"
             for i in range(len(names)):
                 df = df.withColumnRenamed(columns[i], names[i])
         tbl = Table(df)
@@ -79,8 +81,14 @@ class Table:
                     tbl = tbl.cast(col, type)
             elif isinstance(dtype, str):
                 tbl = tbl.cast(columns=None, dtype=dtype)
+            elif isinstance(dtype, list):
+                columns = df.columns
+                assert len(dtype) == len(columns),\
+                    "dtype should have the same length as the columns"
+                for i in range(len(columns)):
+                    tbl = tbl.cast(columns=columns[i], dtype=dtype[i])
             else:
-                raise ValueError("dtype should be str or dict")
+                raise ValueError("dtype should be str or list of str or dict")
         return tbl.df
 
     def _clone(self, df):
@@ -428,7 +436,7 @@ class FeatureTable(Table):
         """
         Loads Parquet files as a FeatureTable.
 
-        :param paths: str or a list of str. The path/paths to Parquet file(s).
+        :param paths: str or a list of str. The path(s) to Parquet file(s).
 
         :return: A FeatureTable for recommendation data.
         """
@@ -443,15 +451,19 @@ class FeatureTable(Table):
         """
         Loads csv files as a FeatureTable.
 
-        :param paths: str or a list of str. The path/paths to csv file(s).
+        :param paths: str or a list of str. The path(s) to csv file(s).
         :param delimiter: str, delimiter to use for parsing the csv file(s). Default is ",".
         :param header: boolean, whether the first line of the csv file(s) will be treated
                as the header for column names. Default is False.
-        :param names: list of str, the column names for the csv file(s). You need to provide
-               this if the header cannot be inferred.
-        :param dtype: str or dict, the column data type(s) for the csv file(s). You may need to
-               provide this if you want to change the default inferred types of specified columns.
+        :param names: str or list of str, the column names for the csv file(s). You need to
+               provide this if the header cannot be inferred. If specified, names should
+               have the same length as the number of columns.
+        :param dtype: str or list of str or dict, the column data type(s) for the csv file(s).\
+               You may need to provide this if you want to change the default inferred types
+               of specified columns.
                If dtype is a str, then all the columns will be cast to the target dtype.
+               If dtype is a list of str, then it should have the same length as the number of
+               columns and each column will be cast to the corresponding str dtype.
                If dtype is a dict, then the key should be the column name and the value should be
                the str dtype to cast the column to.
 
