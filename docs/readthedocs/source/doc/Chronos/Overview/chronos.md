@@ -170,7 +170,7 @@ View [ARIMAForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-
 
 ProphetForecaster wraps a Prophet model which is an additive model where non-linear trends are fit with yearly, weekly, and daily seasonality, plus holiday effects and is suitable for univariate time series forecasting. It works best with time series that have strong seasonal effects and several seasons of historical data and is robust to missing data and shifts in the trend, and typically handles outliers well.
 
-View [ProphetForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-prophet-forecaster) for more details.
+View [Prophet Project source repo](https://github.com/facebook/prophet), [ProphetForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-prophet-forecaster) for more details.
 
 ### **5 Anomaly Detection**
 
