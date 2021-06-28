@@ -61,6 +61,18 @@ class Table:
                 raise Exception("cols should be a column name or list of column names")
         return df
 
+    @staticmethod
+    def _read_csv(paths, delimiter=",", schema=None):
+        # TODO: better support schema instead of exposing Spark DataTypes?
+        if not isinstance(paths, list):
+            paths = [paths]
+        spark = OrcaContext.get_spark_session()
+        if schema:
+            df = spark.read.schema(schema).option('sep', delimiter).csv(paths)
+        else:
+            df = spark.read.option('sep', delimiter).csv(paths)
+        return df
+
     def _clone(self, df):
         return Table(df)
 
@@ -416,6 +428,10 @@ class FeatureTable(Table):
     def read_json(cls, paths, cols=None):
         return cls(Table._read_json(paths, cols))
 
+    @classmethod
+    def read_csv(cls, paths, delimiter=",", schema=None):
+        return cls(Table._read_csv(paths, delimiter, schema))
+
     def encode_string(self, columns, indices):
         """
         Encode columns with provided list of StringIndex.
@@ -449,9 +465,64 @@ class FeatureTable(Table):
                 .dropna(subset=[col_name])
         return FeatureTable(data_df)
 
-    def gen_string_idx(self, columns, freq_limit):
+    def category_encode(self, columns, freq_limit=None):
+        indices = self.gen_string_idx(columns, freq_limit)
+        return self.encode_string(columns, indices), indices
+
+    def one_hot_encode(self, columns, sizes=None, keep_original_columns=False):
+        # Assume the columns have been encoded to index and the dimension is small enough for one hot.
+        if not isinstance(columns, list):
+            columns = [columns]
+        if sizes:
+            if not isinstance(sizes, list):
+                sizes = [sizes]
+        else:
+            sizes = [self.select(col_name).distinct().size() for col_name in columns]
+        assert len(columns) == len(sizes), "columns and sizes should have the same length"
+        data_df = self.df
+
+        def one_hot(columns, sizes):
+            one_hot_vectors = []
+            for i in range(len(sizes)):
+                one_hot_vector = [0] * (sizes[i] + 1)
+                one_hot_vector[columns[i]] = 1
+                one_hot_vectors.append(one_hot_vector)
+            return one_hot_vectors
+
+        one_hot_udf = udf(lambda columns: one_hot(columns, sizes), ArrayType(ArrayType(IntegerType())))
+
+        data_df = data_df.withColumn("friesian_onehot", one_hot_udf(array(columns)))
+
+        # TODO: put the implementation to Scala?
+        def binary_encode(value, target):
+            return 1 if value == target else 0
+
+        all_columns = data_df.columns
+        for i in range(len(columns)):
+            col_name = columns[i]
+            col_idx = all_columns.index(col_name)
+            cols_before = all_columns[:col_idx]
+            cols_after = all_columns[col_idx + 1:]
+            one_hot_cols = []
+            # if sizes:
+            #     count = sizes[i]
+            # else:
+            #     count = self.select(col_name).distinct().size()
+            for j in range(sizes[i]):
+                one_hot_col = col_name + "_{}".format(j)
+                one_hot_cols.append(one_hot_col)
+                data_df = data_df.withColumn(one_hot_col, data_df.friesian_onehot[i][j])
+            if keep_original_columns:
+                all_columns = cols_before + [col_name] + one_hot_cols +cols_after
+            else:
+                all_columns = cols_before + one_hot_cols + cols_after
+            data_df = data_df.select(*all_columns)
+        return FeatureTable(data_df)
+
+    def gen_string_idx(self, columns, freq_limit=None):
         """
-        Generate unique index value of categorical features.
+        Generate unique index value of categorical features. The resulting string index would
+        start from 1 with 0 reserved for unknown features.
 
         :param columns: str or a list of str, target columns to generate StringIndex.
         :param freq_limit: int, dict or None. Categories with a count/frequency below freq_limit
@@ -532,9 +603,11 @@ class FeatureTable(Table):
             tolist = udf(lambda x: x.toArray().tolist(), ArrayType(DoubleType()))
 
             # Fitting pipeline on dataframe
-            df = pipeline.fit(df).transform(df) \
+            model = pipeline.fit(df)
+            df = model.transform(df) \
                 .withColumn("scaled_list", tolist(pyspark_col("scaled"))) \
                 .drop("vect").drop("scaled")
+            # TODO: Save model.stages[1].originalMax/originalMin as mapping for inference
             for i in range(len(scalar_cols)):
                 df = df.withColumn(scalar_cols[i], pyspark_col("scaled_list")[i])
             df = df.drop("scaled_list")
@@ -775,6 +848,11 @@ class FeatureTable(Table):
         else:
             return FeatureTable(agg_df)
 
+    def split(self, ratio, seed=None):
+        df_list = self.df.randomSplit(ratio, seed)
+        tbl_list = [FeatureTable(df) for df in df_list]
+        return tuple(tbl_list)
+
 
 class StringIndex(Table):
     def __init__(self, df, col_name):
@@ -825,6 +903,17 @@ class StringIndex(Table):
         indices = map(lambda x: {col_name: x[0], 'id': x[1]}, indices.items())
         df = spark.createDataFrame(Row(**x) for x in indices)
         return cls(df, col_name)
+
+    def to_dict(self):
+        # Only if the mapping is small.
+        cols = self.df.columns
+        index_id = cols.index("id")
+        col_id = cols.index(self.col_name)
+        rows = self.df.collect()
+        res_dict = {}
+        for row in rows:
+            res_dict[row[col_id]] = row[index_id]
+        return res_dict
 
     def _clone(self, df):
         return StringIndex(df, self.col_name)
