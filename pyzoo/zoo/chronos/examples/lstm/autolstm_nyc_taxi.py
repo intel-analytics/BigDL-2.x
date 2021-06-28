@@ -35,33 +35,32 @@ def get_data():
     return df
 
 
-def get_data_tsdataset():
+def get_nyc_taxi_tsdataset():
     df = get_data()
-    return TSDataset.from_pandas(df,
-                                 dt_col="timestamp",
-                                 target_col=["value"],
-                                 with_split=True,
-                                 val_ratio=0.1,
-                                 test_ratio=0.1)
+    tsdata_train, tsdata_valid, tsdata_test = TSDataset.from_pandas(df,
+                                                                    dt_col="timestamp",
+                                                                    target_col=[
+                                                                        "value"],
+                                                                    with_split=True,
+                                                                    val_ratio=0.1,
+                                                                    test_ratio=0.1)
+    stand_scaler = StandardScaler()
+    for tsdata in [tsdata_train, tsdata_valid, tsdata_test]:
+        tsdata.impute(mode="linear")\
+            .scale(stand_scaler, fit=(tsdata is tsdata_train))
+    return tsdata_train, tsdata_valid, tsdata_test
 
 
-tsdata_train, tsdata_valid, tsdata_test = get_data_tsdataset()
-stand_scaler = StandardScaler()
-for tsdata in [tsdata_train, tsdata_valid, tsdata_test]:
-    tsdata.impute(mode="linear")\
-          .scale(stand_scaler, fit=(tsdata is tsdata_train))
-
-
-def get_tensor_data(tsdata):
-    def tensordata_creator(config):
-        x, y = tsdata.roll(lookback=config["past_seq_len"],
-                           horizon=config["future_seq_len"])\
+def get_data_creator(data):
+    def data_creator(config):
+        x, y = data.roll(lookback=config["past_seq_len"],
+                         horizon=config["future_seq_len"])\
             .to_numpy()
         return DataLoader(TensorDataset(torch.from_numpy(x).float(),
                                         torch.from_numpy(y).float()),
                           batch_size=config["batch_size"],
                           shuffle=True)
-    return tensordata_creator
+    return data_creator
 
 
 if __name__ == '__main__':
@@ -91,6 +90,8 @@ if __name__ == '__main__':
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
                       memory=args.memory, num_nodes=num_nodes, init_ray_on_spark=True)
 
+    tsdata_train, tsdata_valid, tsdata_test = get_nyc_taxi_tsdataset()
+
     auto_lstm = AutoLSTM(input_feature_num=1,
                          output_target_num=1,
                          past_seq_len=14,
@@ -104,10 +105,10 @@ if __name__ == '__main__':
                          logs_dir="/tmp/auto_lstm",
                          cpus_per_trial=args.cpus_per_trial,
                          name="auto_lstm")
-    auto_lstm.fit(data=get_tensor_data(tsdata_train),
+    auto_lstm.fit(data=get_data_creator(tsdata_train),
                   epochs=args.epoch,
                   batch_size=hp.choice([32, 64]),
-                  validation_data=get_tensor_data(tsdata_valid),
+                  validation_data=get_data_creator(tsdata_valid),
                   n_sampling=args.n_sampling,
                   )
     best_model = auto_lstm.get_best_model()
@@ -119,8 +120,8 @@ if __name__ == '__main__':
         .to_numpy()
     yhat = best_model.predict(x)
 
-    y_unscale = tsdata.unscale_numpy(y)
-    yhat_unscale = tsdata.unscale_numpy(np.expand_dims(yhat, axis=1))
+    y_unscale = tsdata_test.unscale_numpy(y)
+    yhat_unscale = tsdata_test.unscale_numpy(np.expand_dims(yhat, axis=1))
 
     result = [Evaluator.evaluate(m, y_true=y_unscale, y_pred=yhat_unscale) for m in [
         'rmse', 'smape']]
