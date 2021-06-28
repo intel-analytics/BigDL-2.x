@@ -67,11 +67,6 @@ class Table:
             paths = [paths]
         spark = OrcaContext.get_spark_session()
         kwargs = {"inferSchema": True}
-        header = 0 if names is None else None
-        if header == 0:
-            kwargs["header"] = True
-        elif header is None:
-            kwargs["header"] = False
         df = spark.read.option('sep', delimiter).csv(paths, **kwargs)
         columns = df.columns
         if names:
@@ -506,8 +501,8 @@ class FeatureTable(Table):
                dict or None. For instance, 15, {'col_4': 10, 'col_5': 2} etc. None means all the
                categories that appear will be encoded.
 
-        :return: A tuple of a new FeatureTable which transforms categorical features into unique integer
-                 values, and a list of StringIndex for the mapping.
+        :return: A tuple of a new FeatureTable which transforms categorical features into unique
+                 integer values, and a list of StringIndex for the mapping.
         """
         indices = self.gen_string_idx(columns, freq_limit)
         return self.encode_string(columns, indices), indices
@@ -515,11 +510,12 @@ class FeatureTable(Table):
     def one_hot_encode(self, columns, sizes=None, prefix=None, keep_original_columns=False):
         """
         Convert categorical features into ont hot encodings.
-        If the features are string, you should first call category_encode to encode them into indices
-        before one hot encoding.
-        For each input column, a one hot vector will be created expanding multiple output columns, with
-        the value of each one hot column either 0 or 1.
-        Note that you may only use one hot encoding on columns with small dimensions for memory concerns.
+        If the features are string, you should first call category_encode to encode them into
+        indices before one hot encoding.
+        For each input column, a one hot vector will be created expanding multiple output columns,
+        with the value of each one hot column either 0 or 1.
+        Note that you may only use one hot encoding on the columns with small dimensions
+        for memory concerns.
 
         For example, for column 'x' with size 5:
         Input:
@@ -535,17 +531,20 @@ class FeatureTable(Table):
 
         :param columns: str or a list of str, the target columns to be encoded.
         :param sizes: int or a list of int, the size(s) of the one hot vectors of the column(s).
-               Default is None, and in this case, the sizes will be calculated by the maximum value(s)
-               of the columns(s) + 1, namely the one hot vector will cover 0 to the maximum value.
-               You are recommended to provided the sizes if they are known beforehand.
-               If specified, sizes should have the same length as columns.
-        :param prefix: str or a list of str, the prefix of the one hot columns for the input column(s).
-               Default is None, and in this case, the prefix will be the input column names.
-               If specified, prefix should have the same length as columns.
-               The one hot columns for each input column will have column names: prefix_0,...,prefix_maximum.
-        :param keep_original_columns: boolean, whether to keep the original index column(s) before the
-               one hot encoding. Default is False, and in this case the original column(s) will be replaced
-               by the one hot columns. If True, the one hot columns will be appended to each origial column.
+               Default is None, and in this case, the sizes will be calculated by the maximum
+               value(s) of the columns(s) + 1, namely the one hot vector will cover 0 to the
+               maximum value.
+               You are recommended to provided the sizes if they are known beforehand. If specified,
+               sizes should have the same length as columns.
+        :param prefix: str or a list of str, the prefix of the one hot columns for the input
+               column(s). Default is None, and in this case, the prefix will be the input
+               column names. If specified, prefix should have the same length as columns.
+               The one hot columns for each input column will have column names:
+               prefix_0, prefix_1, ... , prefix_maximum
+        :param keep_original_columns: boolean, whether to keep the original index column(s) before
+               the one hot encoding. Default is False, and in this case the original column(s)
+               will be replaced by the one hot columns. If True, the one hot columns will be
+               appended to each original column.
 
         :return: A new FeatureTable which transforms categorical indices into one hot encodings.
         """
@@ -557,7 +556,8 @@ class FeatureTable(Table):
         else:
             # Take the max of the column to make sure all values are within the range.
             # The vector size is 1 + max (i.e. from 0 to max).
-            sizes = [self.select(col_name).group_by(agg="max").df.collect()[0][0] + 1 for col_name in columns]
+            sizes = [self.select(col_name).group_by(agg="max").df.collect()[0][0] + 1
+                     for col_name in columns]
         assert len(columns) == len(sizes), "columns and sizes should have the same length"
         if prefix:
             if not isinstance(prefix, list):
@@ -573,7 +573,8 @@ class FeatureTable(Table):
                 one_hot_vectors.append(one_hot_vector)
             return one_hot_vectors
 
-        one_hot_udf = udf(lambda columns: one_hot(columns, sizes), ArrayType(ArrayType(IntegerType())))
+        one_hot_udf = udf(lambda columns: one_hot(columns, sizes),
+                          ArrayType(ArrayType(IntegerType())))
         data_df = data_df.withColumn("friesian_onehot", one_hot_udf(array(columns)))
 
         all_columns = data_df.columns
@@ -587,9 +588,10 @@ class FeatureTable(Table):
             for j in range(sizes[i]):
                 one_hot_col = one_hot_prefix + "_{}".format(j)
                 one_hot_cols.append(one_hot_col)
-                data_df = data_df.withColumn(one_hot_col, data_df.friesian_onehot[i][j])
+                data_df = data_df.withColumn(one_hot_col,
+                                             data_df.friesian_onehot[i][j])
             if keep_original_columns:
-                all_columns = cols_before + [col_name] + one_hot_cols +cols_after
+                all_columns = cols_before + [col_name] + one_hot_cols + cols_after
             else:
                 all_columns = cols_before + one_hot_cols + cols_after
             data_df = data_df.select(*all_columns)
@@ -929,8 +931,8 @@ class FeatureTable(Table):
         """
         Split the FeatureTable into multiple FeatureTables for train, validation and test.
 
-        :param ratio: a list of portions as weights with which to split the FeatureTable. Weights will
-                      be normalized if they don't sum up to 1.0.
+        :param ratio: a list of portions as weights with which to split the FeatureTable.
+                      Weights will be normalized if they don't sum up to 1.0.
         :param seed: The seed for sampling.
 
         :return: A tuple of FeatureTables split by the given ratio.
@@ -992,8 +994,9 @@ class StringIndex(Table):
 
     def to_dict(self):
         """
-        Convert the StringIndex to a dict, with the categorical features as keys and indices as values.
-        Only call this if the StringIndex is small.
+        Convert the StringIndex to a dict, with the categorical features as keys and indices
+        as values.
+        Note that you may only call this if the StringIndex is small.
 
         :return: A dict for the mapping from string to index.
         """
