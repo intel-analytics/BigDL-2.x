@@ -71,7 +71,8 @@ class Table:
         if names:
             if not isinstance(names, list):
                 names = [names]
-            assert len(names) == len(columns), "names should have the same length as the columns"
+            assert len(names) == len(columns),\
+                "names should have the same length as the number of columns"
             for i in range(len(names)):
                 df = df.withColumnRenamed(columns[i], names[i])
         tbl = Table(df)
@@ -84,7 +85,7 @@ class Table:
             elif isinstance(dtype, list):
                 columns = df.columns
                 assert len(dtype) == len(columns),\
-                    "dtype should have the same length as the columns"
+                    "dtype should have the same length as the number of columns"
                 for i in range(len(columns)):
                     tbl = tbl.cast(columns=columns[i], dtype=dtype[i])
             else:
@@ -510,9 +511,9 @@ class FeatureTable(Table):
 
         :param columns: str or a list of str, target columns to encode from string to index.
         :param freq_limit: int, dict or None. Categories with a count/frequency below freq_limit
-               will be omitted from the encoding. Can be represented as both an integer,
-               dict or None. For instance, 15, {'col_4': 10, 'col_5': 2} etc. None means all the
-               categories that appear will be encoded.
+               will be omitted from the encoding. Can be represented as either an integer,
+               dict. For instance, 15, {'col_4': 10, 'col_5': 2} etc. Default is None,
+               and in this case all the categories that appear will be encoded.
 
         :return: A tuple of a new FeatureTable which transforms categorical features into unique
                  integer values, and a list of StringIndex for the mapping.
@@ -618,9 +619,9 @@ class FeatureTable(Table):
 
         :param columns: str or a list of str, target columns to generate StringIndex.
         :param freq_limit: int, dict or None. Categories with a count/frequency below freq_limit
-               will be omitted from the encoding. Can be represented as both an integer,
-               dict or None. For instance, 15, {'col_4': 10, 'col_5': 2} etc. None means all the
-               categories that appear will be encoded.
+               will be omitted from the encoding. Can be represented as either an integer,
+               dict. For instance, 15, {'col_4': 10, 'col_5': 2} etc. Default is None,
+               and in this case all the categories that appear will be encoded.
 
         :return: A list of StringIndex.
         """
