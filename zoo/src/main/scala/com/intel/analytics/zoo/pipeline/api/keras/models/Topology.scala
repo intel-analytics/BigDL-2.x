@@ -1718,7 +1718,7 @@ private[zoo] class InternalDistriOptimizerV2[T: ClassTag] (
       val bcVMethods = validateRDD.sparkContext.broadcast(validationMethod)
       val bcModel = ModelBroadcast[T]().broadcast(sc, _model)
       validateRDD.mapPartitions{_ =>
-        Iterator.single(CacheV1[T](
+        Iterator.single(CacheV2[T](
           Array.tabulate(_subModelNumber)(_ => bcModel.value()),
           null,
           null,
