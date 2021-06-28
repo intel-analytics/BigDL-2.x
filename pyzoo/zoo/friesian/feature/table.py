@@ -62,22 +62,21 @@ class Table:
         return df
 
     @staticmethod
-    def _read_csv(paths, delimiter=",", names=None, dtype=None):
+    def _read_csv(paths, delimiter=",", header=False, names=None, dtype=None):
         if not isinstance(paths, list):
             paths = [paths]
         spark = OrcaContext.get_spark_session()
-        kwargs = {"inferSchema": True}
-        df = spark.read.option('sep', delimiter).csv(paths, **kwargs)
+        df = spark.read.options(header=header, inferSchema=True, delimiter=delimiter).csv(paths)
         columns = df.columns
         if names:
             assert len(names) == len(columns)
-            for i in range(names):
+            for i in range(len(names)):
                 df = df.withColumnRenamed(columns[i], names[i])
         tbl = Table(df)
         if dtype:
             if isinstance(dtype, dict):
-                for col, dtype in dtype.items():
-                    tbl = tbl.cast(col, dtype)
+                for col, type in dtype.items():
+                    tbl = tbl.cast(col, type)
             elif isinstance(dtype, str):
                 tbl = tbl.cast(columns=None, dtype=dtype)
             else:
@@ -440,12 +439,14 @@ class FeatureTable(Table):
         return cls(Table._read_json(paths, cols))
 
     @classmethod
-    def read_csv(cls, paths, delimiter=",", names=None, dtype=None):
+    def read_csv(cls, paths, delimiter=",", header=False, names=None, dtype=None):
         """
         Loads csv files as a FeatureTable.
 
         :param paths: str or a list of str. The path/paths to csv file(s).
         :param delimiter: str, delimiter to use for parsing the csv file(s). Default is ",".
+        :param header: boolean, whether the first line of the csv file(s) will be treated
+               as the header for column names. Default is False.
         :param names: list of str, the column names for the csv file(s). You need to provide
                this if the header cannot be inferred.
         :param dtype: str or dict, the column data type(s) for the csv file(s). You may need to
@@ -456,7 +457,7 @@ class FeatureTable(Table):
 
         :return: A FeatureTable for recommendation data.
         """
-        return cls(Table._read_csv(paths, delimiter, names, dtype))
+        return cls(Table._read_csv(paths, delimiter, header, names, dtype))
 
     def encode_string(self, columns, indices):
         """

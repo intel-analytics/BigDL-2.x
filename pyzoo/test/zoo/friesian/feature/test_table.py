@@ -625,6 +625,25 @@ class TestTable(TestCase):
         if os.path.exists("saved.parquet"):
             shutil.rmtree("saved.parquet")
 
+    def test_read_csv(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/data.csv")
+        feature_tbl = FeatureTable.read_csv(file_path, header=True)
+        assert feature_tbl.size() == 4
+        columns = feature_tbl.columns
+        assert columns == ["col1", "col2", "col3"]
+        records = feature_tbl.df.collect()
+        assert isinstance(records[0][0], float)
+        assert isinstance(records[0][1], str) and isinstance(records[0][1], str)
+        file_path2 = os.path.join(self.resource_path, "friesian/feature/data_no_header.csv")
+        feature_tbl2 = FeatureTable.read_csv(file_path2, names=["col1", "_col2", "col3"], dtype={"col1": "int"})
+        assert feature_tbl2.size() == 4
+        columns2 = feature_tbl2.columns
+        assert columns2 == ["col1", "_col2", "col3"]
+        records2 = feature_tbl2.df.collect()
+        assert isinstance(records2[0][0], int)
+        assert isinstance(records2[0][1], str) and isinstance(records2[0][1], str)
+        print("111")
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
