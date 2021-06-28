@@ -26,8 +26,9 @@ class ProphetForecaster(Forecaster):
     It works best with time series that have strong seasonal effects and several seasons of
     historical data. Prophet is robust to missing data and shifts in the trend, and
     typically handles outliers well.
-
-    Source: https://github.com/facebook/prophet
+    
+    For details of the Prophet model hyperparameters, refer to
+    https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
     """
 
     def __init__(self,
@@ -42,20 +43,15 @@ class ProphetForecaster(Forecaster):
         Build a Prophet Forecast Model.
 
         :param changepoint_prior_scale: hyperparameter changepoint_prior_scale for the
-            Prophet model, for details you may refer to
-            https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+            Prophet model.
         :param seasonality_prior_scale: hyperparameter seasonality_prior_scale for the
-            Prophet model, for details you may refer to
-            https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+            Prophet model.
         :param holidays_prior_scale: hyperparameter holidays_prior_scale for the
-            Prophet model, for details you may refer to
-            https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+            Prophet model.
         :param seasonality_mode: hyperparameter seasonality_mode for the
-            Prophet model, for details you may refer to
-            https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+            Prophet model.
         :param changepoint_range: hyperparameter changepoint_range for the
-            Prophet model, for details you may refer to
-            https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+            Prophet model.
         :param metric: the metric for validation and evaluation. For regression, we support
             Mean Squared Error: ("mean_squared_error", "MSE" or "mse"),
             Mean Absolute Error: ("mean_absolute_error","MAE" or "mae"),
