@@ -26,7 +26,7 @@ tbl, idx_list = tbl.category_encode(CAT_COLS)
 tbl.show(5)
 
 for idx in idx_list:
-    size = idx.size()
+    size = idx.size() + 1  # Include 0 for unknown string
     print(size)
     if size < 100:
         tbl = tbl.one_hot_encode(idx.col_name, sizes=size)
