@@ -114,11 +114,20 @@ class Estimator[T: ClassTag] private[zoo](
   }
 
   def getTrainSummary(tag: String): Array[(Long, Float, Double)] = {
-    this.internalEstimator.asInstanceOf[InternalDistriOptimizer[T]].getTrainSummary(tag)
+    EngineRef.getOptimizerVersion() match {
+      case OptimizerV1 =>
+        this.internalEstimator.asInstanceOf[InternalDistriOptimizer[T]].getTrainSummary(tag)
+      case OptimizerV2 =>
+        this.internalEstimator.asInstanceOf[InternalDistriOptimizerV2[T]].getTrainSummary(tag)
+    }
   }
 
   def getValidationSummary(tag: String): Array[(Long, Float, Double)] = {
-    this.internalEstimator.asInstanceOf[InternalDistriOptimizer[T]].getValidationSummary(tag)
+    EngineRef.getOptimizerVersion() match {
+      case OptimizerV1 =>
+        this.internalEstimator.asInstanceOf[InternalDistriOptimizer[T]].getValidationSummary(tag)
+      case OptimizerV2 =>
+        this.internalEstimator.asInstanceOf[InternalDistriOptimizerV2[T]].getValidationSummary(tag)
   }
 
 

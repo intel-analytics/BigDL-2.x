@@ -1608,6 +1608,22 @@ private[zoo] class InternalDistriOptimizerV2[T: ClassTag] (
     this
   }
 
+  def getTrainSummary(tag: String): Array[(Long, Float, Double)] = {
+    if (this.trainSummary isDefined) {
+      this.trainSummary.get.readScalar(tag)
+    } else {
+      null
+    }
+  }
+
+  def getValidationSummary(tag: String): Array[(Long, Float, Double)] = {
+    if (this.validationSummary isDefined) {
+      this.validationSummary.get.readScalar(tag)
+    } else {
+      null
+    }
+  }
+
 
   override def train(
         trainSet: FeatureSet[MiniBatch[T]],
