@@ -587,6 +587,12 @@
             <artifactId>embedded-redis</artifactId>
             <version>0.6</version>
         </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-actor-typed_2.13</artifactId>
+            <version>2.6.15</version>
+        </dependency>
+
     </dependencies>
 
     <build>

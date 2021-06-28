@@ -32,6 +32,7 @@ import com.intel.analytics.zoo.pipeline.inference.EncryptSupportive
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.slf4j.LoggerFactory
 
+
 import scala.collection.mutable
 import scala.concurrent.Await
 
@@ -293,7 +294,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
   val jacksonJsonSerializer = new JacksonJsonSerializer()
 
   val argumentsParser = new scopt.OptionParser[FrontEndAppArguments]("AZ Serving") {
-    head("Analytics Zoo Serving Frontend")
+    head("Analytics Zoo Serving FrontEndGRPC.scala")
     opt[String]('i', "interface")
       .action((x, c) => c.copy(interface = x))
       .text("network interface of frontend")
