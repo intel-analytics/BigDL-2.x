@@ -20,7 +20,6 @@ from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, Decim
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
-from pyspark.ml.feature import StringIndexer
 from pyspark.sql.functions import col as pyspark_col, udf, array, broadcast, lit
 from pyspark.sql import Row
 import pyspark.sql.functions as F
@@ -91,6 +90,7 @@ class Table:
                     tbl = tbl.cast(columns=columns[i], dtype=dtype[i])
             else:
                 raise ValueError("dtype should be str or list of str or dict")
+        return tbl.df
 
     def _clone(self, df):
         return Table(df)
