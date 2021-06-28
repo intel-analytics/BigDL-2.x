@@ -680,7 +680,7 @@ class NNClassifierModel(NNModel, HasThreshold):
     def load(path):
         jvalue = callZooFunc("float", "loadNNClassifierModel", path)
         return NNClassifierModel(model=None, feature_preprocessing=None, jvalue=jvalue)
-        
+
 
 class XGBClassifier():
     def __init__(self):
@@ -702,7 +702,7 @@ class XGBClassifier():
 
     def setMissing(self, value: int):
         return callZooFunc("float", "setXGBClassifierMissing", self.value, value)
-        
+
 
 class XGBClassifierModel:
     '''
