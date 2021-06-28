@@ -407,7 +407,7 @@ class Table:
         if not (isinstance(dtype, str) and (dtype in valid_types)) \
            and not isinstance(dtype, DataType):
             raise ValueError(
-                "type should be string, boolean, int, long, short, float, double.")
+                "dtype should be string, boolean, int, long, short, float, double.")
         transform_dict = {"str": "string", "bool": "boolean", "integer": "int"}
         dtype = transform_dict[dtype] if dtype in transform_dict else dtype
         df_cast = self._clone(self.df)
