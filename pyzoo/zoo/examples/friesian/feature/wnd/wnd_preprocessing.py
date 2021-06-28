@@ -88,11 +88,14 @@ def preprocess_and_save(data_tbl, models, save_path):
     columns = dict([("_c{}".format(i), "c{}".format(i)) for i in range(40)])
     data_tbl = data_tbl.rename(columns)
 
+
     tbl = data_tbl.encode_string(CAT_COLS, models) \
         .fillna(0, INT_COLS + CAT_COLS) \
         .normalize(INT_COLS) \
         .cross_columns(crossed_columns=[CAT_COLS[0:2], CAT_COLS[2:4]],
                        bucket_sizes=cross_sizes)
+
+    tbl = tbl.ordinal_shuffle_partition()
 
     tbl.write_parquet(save_path)
 
