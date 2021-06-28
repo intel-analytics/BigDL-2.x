@@ -1,5 +1,5 @@
-# AutoLSTM examples on household_electricity dataset
-This example will demonstrate that Auto LSTM performs automatic time series forecasting on household electricity. Auto Lstm will return the best hyperparameter set within the specified hyperparameter range.
+# AutoLSTM examples on nyc_taxi dataset
+This example will demonstrate that Auto LSTM performs automatic time series forecasting on nyc_taxi. Auto Lstm will return the best hyperparameter set within the specified hyperparameter range.
 
 ## Prepare the environment
 We recommend you to use Anaconda to prepare the environment, especially if you want to run on a yarn cluster:
@@ -11,7 +11,7 @@ pip install torch==1.8.1 ray[tune]==1.2.0 scikit-learn
 ```
 
 ## Prepare data
-The data set used in this example is a personal household electricity consumption data set, and in order to save the running time of the example, only the first 2000 pieces of data are used. For more details, please refer to [here](https://archive.ics.uci.edu/ml/datasets/Individual+household+electric+power+consumption)
+We are using the nyc taxi provided by NAB, from 2014-07-01 to 2015-01-31 taxi fare information For more details, please refer to [here](https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv)
 
 
 ## Run on local after pip install

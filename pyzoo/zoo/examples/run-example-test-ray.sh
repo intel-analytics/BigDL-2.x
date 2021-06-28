@@ -153,10 +153,10 @@ now=$(date "+%s")
 time11=$((now-start))
 
 
-echo "#12 start example for chronos autolstm_household_electricity"
+echo "#12 start example for chronos autolstm_nyc_taxi"
 start=$(date "+%s")
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/autolstm_household_electricity.py
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/autolstm_nyc_taxi.py
 
 now=$(date "+%s")
 time12=$((now-start))
@@ -173,4 +173,4 @@ echo "#8 orca cifar10 example time used:$time8 seconds"
 echo "#9 orca auto-xgboost-classifier time used:$time9 seconds"
 echo "#10 orca auto-xgboost-regressor time used:$time10 seconds"
 echo "#11 orca autoestimator-pytorch time used:$time11 seconds"
-echo "#12 chronos autolstm_household_electricity time used:$time12 seconds"
+echo "#12 chronos autolstm_nyc_taxi time used:$time12 seconds"
