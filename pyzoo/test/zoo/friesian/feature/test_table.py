@@ -537,45 +537,51 @@ class TestTable(TestCase):
                              StructField("age", IntegerType(), True),
                              StructField("height", IntegerType(), True)])
         tbl = FeatureTable(spark.createDataFrame(data, schema))
-        directory = "data"
-        tbl.write_to_csv(directory, partition=2, header=True)
-        files = [f for f in os.listdir(directory) if
-                 os.path.isfile(os.path.join(directory, f)) and '.csv' in f]
-        pds = []
-        for file in files:
-            file = os.path.join(directory, file)
-            pds.append(pd.read_csv(file))
-        result = pd.concat(pds)
-        assert list(result.loc[:, "name"]) == ["jack", "alice", "rose"], "wrong answer"
-        assert list(result.loc[:, "age"]) == [14, 25, 23], "wrong answer"
-        assert list(result.loc[:, "height"]) == [8, 9, 10], "wrong answer"
-        shutil.rmtree("data")
+        directory = "write.csv"
+        if os.path.exists("write.csv"):
+            shutil.rmtree("write.csv")
+        tbl.write_to_csv(directory, partition=1, header=True)
+        assert os.path.exists("write.csv"), "files not write"
+        result = FeatureTable(spark.read.csv(directory, header=True))
+        assert isinstance(result, FeatureTable)
+        assert result.size() == 3, "the size of result should be 3"
+        assert result.filter("age == 23").size() == 1, "wrong age"
+        assert result.filter("name == 'jack'").size() == 1, "wrong name"
+        assert result.filter("name == 'alice'").size() == 1, "wrong name"
+        shutil.rmtree(directory)
 
     def test_concat(self):
         spark = OrcaContext.get_spark_session()
         data1 = [("jack", 1)]
-        data2 = [("rose", 2)]
+        data2 = [(2, "alice")]
         data3 = [("amy", 3, 50)]
-        schema = StructType([StructField("name", StringType(), True),
+        schema1 = StructType([StructField("name", StringType(), True),
                              StructField("id", IntegerType(), True)])
-        schema2 = StructType([StructField("name", StringType(), True),
+        schema2 = StructType([StructField("id", IntegerType(), True),
+                              StructField("name", StringType(), True)])
+        schema3 = StructType([StructField("name", StringType(), True),
                              StructField("id", IntegerType(), True),
                              StructField("weight", IntegerType(), True)])
-        tbl1 = FeatureTable(spark.createDataFrame(data1, schema))
-        tbl2 = FeatureTable(spark.createDataFrame(data2, schema))
-        tbl3 = FeatureTable(spark.createDataFrame(data3, schema2))
+        tbl1 = FeatureTable(spark.createDataFrame(data1, schema1))
+        tbl2 = FeatureTable(spark.createDataFrame(data2, schema2))
+        tbl3 = FeatureTable(spark.createDataFrame(data3, schema3))
+        tbl = tbl1.concat(tbl1)
+        assert tbl.size() == 2
+        tbl = tbl1.concat(tbl1, distinct=True)
+        assert tbl.size() == 1
+        tbl = tbl1.concat(tbl2)
+        assert tbl.filter("name == 'jack'").size() == 1
+        assert tbl.filter("name == 'alice'").size() == 1
+        tbl = tbl1.concat(tbl3, mode="inner")
+        assert tbl.df.schema.names == ["name", "id"]
+        tbl = tbl1.concat(tbl3, mode="outer")
+        assert tbl.df.schema.names == ["name", "id", "weight"]
+        assert tbl.fillna(0, "weight").filter("weight == 0").size() == 1
         tbl = tbl1.concat([tbl1, tbl2, tbl3])
-        assert tbl.df.count() == 3, "the number of data is incorrect"
-        assert tbl.df.schema.names == ["name", "id", "weight"], "column names are incorrect"
-        data = tbl.df.toPandas()
-        assert list(data.loc[:, "name"]) == ["jack", "rose", "amy"], "wrong answer"
-        assert list(data.loc[:, "id"]) == [1, 2, 3]
-        tbl = tbl1.concat([tbl1, tbl2, tbl3], mode="inner")
-        assert tbl.df.count() == 3, "the number of data is incorrect"
-        assert tbl.df.schema.names == ["name", "id"], "column names are incorrect"
-        data = tbl.df.toPandas()
-        assert list(data.loc[:, "name"]) == ["jack", "rose", "amy"], "wrong answer"
-        assert list(data.loc[:, "id"]) == [1, 2, 3]
+        assert tbl.size() == 4
+        assert tbl.distinct().size() == 3
+        tbl = tbl1.concat([tbl1, tbl2, tbl3], distinct=True)
+        assert tbl.size() == 3
 
     def test_drop_duplicates(self):
         spark = OrcaContext.get_spark_session()
