@@ -49,15 +49,16 @@ class FlinkKafkaSource(params: ClusterServingHelper)
   override def run(sourceContext: SourceFunction
   .SourceContext[List[(String, String, String)]]): Unit = while (isRunning) {
     val records: ConsumerRecords[String, String] = consumer.poll(Duration.ofMillis(1))
-    val messages = records.records(new TopicPartition(params.jobName, 1))
-    val results = List[(String, String, String)]()
-    if (messages != null) {
-      messages.toList.foreach(message => {
-        sourceContext.collect(
-          List((message.key(), message.value(), "serde"))
-        )
-      })
-
+    if (records != null){
+      val messages = records.records(new TopicPartition(params.jobName, 0))
+      if (messages != null) {
+        messages.toList.foreach(message => {
+          sourceContext.collect(
+            List((message.key(), message.value(), "serde"))
+          )
+          logger.info(messages)
+        })
+      }
     }
   }
 

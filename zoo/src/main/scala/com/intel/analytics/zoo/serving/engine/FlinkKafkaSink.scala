@@ -29,10 +29,13 @@ class FlinkKafkaSink(params: ClusterServingHelper)
   extends RichSinkFunction[List[(String, String)]] {
   var producer: KafkaProducer[String, String] = null
   var logger: Logger = null
+  var topic: String = null
+
 
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
     ClusterServing.helper = params
+    topic = Conventions.RESULT_PREFIX + params.jobName
 
     val props = new Properties()
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
@@ -52,14 +55,13 @@ class FlinkKafkaSink(params: ClusterServingHelper)
   override def invoke(value: List[(String, String)], context: SinkFunction.Context[_]): Unit = {
     var cnt = 0
     value.foreach(v => {
-      val key = Conventions.RESULT_PREFIX + params.jobName + v._1
-      val record = new ProducerRecord(params.jobName, key, v._2)
+      val record = new ProducerRecord(topic, v._1, v._2)
       producer.send(record)
       if (v._2 != "NaN") {
         cnt += 1
       }
     })
-    logger.info(s"${cnt} valid records written to redis")
+    logger.info(s"${cnt} valid records written to Kafka")
   }
 
 }
