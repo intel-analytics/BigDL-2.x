@@ -433,7 +433,7 @@ class Table:
 
         :return: A new Table with the appended column.
         """
-        return self._clone(self.df.withColumn(name, lit(value))) 
+        return self._clone(self.df.withColumn(name, lit(value)))
 
     def __getattr__(self, name):
         return self.df.__getattr__(name)
