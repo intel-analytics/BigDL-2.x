@@ -608,9 +608,12 @@ class TestTable(TestCase):
         spark = OrcaContext.get_spark_session()
         file_path = os.path.join(self.resource_path, "friesian/feature/")
         df = FeatureTable.read_csv(file_path+"data.csv", header=True)
-        df = df.append_columns("z", 0)
+        df = df.append_column("z", 0)
         assert df.select("z").size() == 4
         assert df.filter("z == 0").size() == 4
+        df = df.append_column("str", "a")
+        assert df.select("str").size() == 4
+        assert df.filter("str == 'a'").size() == 4
 
     def test_ordinal_shuffle(self):
         spark = OrcaContext.get_spark_session()
