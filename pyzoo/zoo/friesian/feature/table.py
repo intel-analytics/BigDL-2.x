@@ -431,7 +431,7 @@ class Table:
         :param name: str, the name of the new column.
         :param value: The constant column value for the new column.
         
-        :return: A new Table with the appended column
+        :return: A new Table with the appended column.
         """
         return self._clone(self.df.withColumn(name, lit(value)))    
     
