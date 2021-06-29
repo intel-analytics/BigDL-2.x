@@ -614,6 +614,9 @@ class TestTable(TestCase):
         df = df.append_column("str", "a")
         assert df.select("str").size() == 4
         assert df.filter("str == 'a'").size() == 4
+        df = df.append_column("float", 1.2)
+        assert df.select("float").size() == 4
+        assert df.filter("float == 1.2").size() == 4   
 
     def test_ordinal_shuffle(self):
         spark = OrcaContext.get_spark_session()
