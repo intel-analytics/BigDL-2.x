@@ -604,8 +604,7 @@ class TestTable(TestCase):
             .count() == feature_tbl.df.filter("col_4 == 'b' and col_5 == 'dd'").count(), \
             "first of col_1 should be 0 for all col_4 = 'b' and col_5 = 'dd' in groupby_tbl4"
     
-    def test_append_columns(self):
-        spark = OrcaContext.get_spark_session()
+    def test_append_column(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/")
         df = FeatureTable.read_csv(file_path+"data.csv", header=True)
         df = df.append_column("z", 0)
