@@ -21,7 +21,7 @@ from pyspark.sql.types import DoubleType, ArrayType
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
-from pyspark.sql.functions import col, concat, udf, array, broadcast
+from pyspark.sql.functions import col, concat, concat_ws, udf, array, broadcast
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
@@ -364,7 +364,7 @@ class FeatureTable(Table):
             hash_df = hash_df.withColumn(col_name, hash_int(col(col_name)))
         return FeatureTable(hash_df)
 
-    def cross_hash_encode(self, new_col_name, columns, bins, method='md5'):
+    def cross_hash_encode(self, columns, bins, cross_col_name=None):
         """
         Hash encode for cross column(s).
         
@@ -377,12 +377,15 @@ class FeatureTable(Table):
         :return: A new FeatureTable which hash encoded values.
         """
         cross_hash_df = self.df
-        if not isinstance(columns, list):
-            columns = [columns]
         assert isinstance(columns, list), "the columns to be crossed should be a List"
-        assert len(columns) >= 2, "cross_hash_encode should have >= 2 columns" 
-        cross_hash_df = cross_hash_df.withColumn(new_col_name, concat(*columns))
-        cross_hash_df = FeatureTable(cross_hash_df).hash_encode([new_col_name], bins)
+        assert len(columns) >= 2, "cross_hash_encode should have >= 2 columns"
+        if cross_col_name is None and len(columns) >= 2:
+            cross_string = ''
+            for i in range(len(columns)):
+                cross_string = cross_string + '_col' + str(i+1)
+            cross_col_name = 'crossed' + cross_string
+        cross_hash_df = cross_hash_df.withColumn(cross_col_name, concat(*columns))
+        cross_hash_df = FeatureTable(cross_hash_df).hash_encode([cross_col_name], bins)
         return cross_hash_df
 
     def gen_string_idx(self, columns, freq_limit):

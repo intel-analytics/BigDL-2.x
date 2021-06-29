@@ -35,7 +35,7 @@ class TestTable(TestCase):
         class.  setup_method is invoked for every test method of a class.
         """
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
-    
+
     def test_fillna_int(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
@@ -99,6 +99,7 @@ class TestTable(TestCase):
         assert filled_tbl.df.filter("col_4 is null").count() == 0, "col_4 null values should be " \
                                                                    "filled"
         assert filled_tbl.df.filter("col_5 is null").count() == 0, "col_5 null values should be " \
+                                                                   "filled"
  
     def test_filter_by_frequency(self):
         data = [("a", "b", 1),
@@ -141,23 +142,24 @@ class TestTable(TestCase):
     def test_cross_hash_encode(self):
         import hashlib
         spark = OrcaContext.get_spark_session()
-        data = [("a", "b", 1),
-                ("b", "a", 2),
-                ("a", "c", 3),
-                ("c", "c", 2),
-                ("b", "a", 1),
-                ("a", "d", 1)]
+        data = [("a", "b", "c", 1),
+                ("b", "a", "d", 2),
+                ("a", "c", "e", 3),
+                ("c", "c", "c", 2),
+                ("b", "a", "d", 1),
+                ("a", "d", "e", 1)]
         schema = StructType([StructField("A", StringType(), True),
                              StructField("B", StringType(), True),
-                             StructField("C", IntegerType(), True)])
+                             StructField("C", StringType(), True),
+                             StructField("D", IntegerType(), True)])
         df = spark.createDataFrame(data, schema)
-        df = df.withColumn("A_B", concat("A", "B"))
+        hash_df = df.withColumn("A_B_C", concat("A", "B", "C"))
         hash_str = lambda x: getattr(hashlib, "md5")(str(x).encode('utf-8', 'strict')).hexdigest()
         hash_int = udf(lambda x: int(hash_str(x), 16) % 100)
-        df = df.withColumn("A_B",hash_int(col("A_B"))) 
+        hash_df = hash_df.withColumn("A_B_C", hash_int(col("A_B_C"))) 
         tbl = FeatureTable(df)
-        tbl = tbl.cross_hash_encode("A_B", ["A", "B"], 100)
-        assert tbl.to_spark_df().count() == df.count()
+        tbl = tbl.cross_hash_encode(["A", "B", "C"], 100, None)
+        assert tbl.to_spark_df().count() == hash_df.count()
 
     def test_gen_string_idx(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
@@ -392,7 +394,6 @@ class TestTable(TestCase):
         schema = StructType([
             StructField("name", StringType(), True),
             StructField("item_hist_seq", ArrayType(IntegerType()), True)])
-
         df = spark.createDataFrame(data, schema)
         df2 = sc \
             .parallelize([(1, 0), (2, 0), (3, 0), (4, 1), (5, 1), (6, 1), (7, 2), (8, 2), (9, 2)]) \
