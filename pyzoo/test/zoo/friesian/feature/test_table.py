@@ -103,20 +103,22 @@ class TestTable(TestCase):
     def test_filter_by_frequency(self):
         data = [("a", "b", 1),
                 ("b", "a", 2),
-                ("a", "bc", 3),
+                ("a", "c", 3),
                 ("c", "c", 2),
                 ("b", "a", 1),
-                ("ab", "c", 1),
-                ("c", "b", 1),
-                ("a", "b", 1)]
+                ("a", "d", 1)]
         schema = StructType([StructField("A", StringType(), True),
                              StructField("B", StringType(), True),
                              StructField("C", IntegerType(), True)])
         spark = OrcaContext.get_spark_session()
         df = spark.createDataFrame(data, schema)
-        group = df.groupby(["A", "B"]).count().filter("count>=2")
+        sum_cols = udf(lambda x: x[0] + x[1], StringType())
+        key = (df.select(df["A"], df["B"])
+            .withColumn('key', sum_cols(struct('A', 'B')))
+            )
+        group = key.groupby(['key']).count()
         tbl = FeatureTable(df).filter_by_frequency(["A", "B"])
-        assert group.count() == tbl.to_spark_df().count()
+        assert group.filter("count>=2").count() == tbl.to_spark_df().count() 
 
     def test_hash_encode(self):
         import hashlib
@@ -132,11 +134,11 @@ class TestTable(TestCase):
                              StructField("C", IntegerType(), True)])
         df = spark.createDataFrame(data, schema)
         tbl = FeatureTable(df)
-        hash_str = lambda x: getattr(hashlib, "md5")(str(x).encode('utf-8', 'strict')).hexdigest()
-        hash_int = udf(lambda x: int(hash_str(x), 16) % 100)
-        df = df.withColumn("A",hash_int(col("A")))
-        tbl = tbl.hash_encode(["A"], 100)
-        assert tbl.to_spark_df().count() == df.count() 
+        hash_str = udf(lambda x: getattr(hashlib, "md5")(str(x).encode('utf-8', 'strict')).hexdigest())
+        hash_int = udf(lambda x: int(x, 16) % 100)
+        df = df.withColumn("A",hash_str(col("A"))).withColumn("A",hash_int(col("A")))
+        tbl = tbl.hash_encode(["A", "B"], 100)
+        assert tbl.to_spark_df().count() == df.count()
 
     def test_cross_hash_encode(self):
         import hashlib
@@ -151,12 +153,12 @@ class TestTable(TestCase):
                              StructField("B", StringType(), True),
                              StructField("C", IntegerType(), True)])
         df = spark.createDataFrame(data, schema)
-        df = df.withColumn("A_B", concat("A", "B"))
-        hash_str = lambda x: getattr(hashlib, "md5")(str(x).encode('utf-8', 'strict')).hexdigest()
-        hash_int = udf(lambda x: int(hash_str(x), 16) % 100)
-        df = df.withColumn("A_B",hash_int(col("A_B"))) 
+        df = df.withColumn("cross", concat("A", "B"))
+        hash_str = udf(lambda x: getattr(hashlib, "md5")(str(x).encode('utf-8', 'strict')).hexdigest())
+        hash_int = udf(lambda x: int(x, 16) % 100)
+        df = df.withColumn("cross",hash_str(col("cross"))) 
         tbl = FeatureTable(df)
-        tbl = tbl.cross_hash_encode("A_B", ["A", "B"], 100)
+        tbl = tbl.cross_hash_encode("cross", ["A", "B"], 100)
         assert tbl.to_spark_df().count() == df.count()
 
     def test_gen_string_idx(self):
