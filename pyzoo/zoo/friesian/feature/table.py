@@ -374,7 +374,7 @@ class FeatureTable(Table):
         :param bins: int, defined number of equal-width bins in the range of column(s) values. 
         :param method: hashlib supported method, like md5, sha256 etc.
         
-        :return: A new FeatureTable which hash encoded values
+        :return: A new FeatureTable which hash encoded values.
         """
         cross_hash_df = self.df
         if not isinstance(columns, list):
