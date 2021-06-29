@@ -21,7 +21,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
-from zoo.chronos.autots.experimental import AutoTSTrainer
+from zoo.chronos.autots.experimental.autotstrainer import AutoTSTrainer
 from zoo.chronos.data.tsdataset import TSDataset
 from zoo.orca.automl import hp
 import pandas as pd
