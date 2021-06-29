@@ -603,7 +603,7 @@ class TestTable(TestCase):
         assert groupby_tbl4.df.filter("col_4 == 'b' and col_5 == 'dd' and `first(col_1)` == 0") \
             .count() == feature_tbl.df.filter("col_4 == 'b' and col_5 == 'dd'").count(), \
             "first of col_1 should be 0 for all col_4 = 'b' and col_5 = 'dd' in groupby_tbl4"
-    
+
     def test_append_column(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/")
         df = FeatureTable.read_csv(file_path+"data.csv", header=True)
@@ -615,7 +615,7 @@ class TestTable(TestCase):
         assert df.filter("str == 'a'").size() == 4
         df = df.append_column("float", 1.2)
         assert df.select("float").size() == 4
-        assert df.filter("float == 1.2").size() == 4   
+        assert df.filter("float == 1.2").size() == 4
 
     def test_ordinal_shuffle(self):
         spark = OrcaContext.get_spark_session()
