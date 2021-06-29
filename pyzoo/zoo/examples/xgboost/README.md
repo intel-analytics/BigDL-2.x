@@ -21,8 +21,17 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
     --master ${MASTER} \
     --driver-memory 2g \
     --executor-memory 2g \
-    xgboost_classifier.py -f data_path
+    /ppml/trusted-big-data-ml/work/examples/analytics-zoo/pyzoo/zoo/examples/xgboost/xgboost_classifier.py -f /data/sample.csv
 ```
+
+The xgboost_regressor is similar:
+
+${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
+    --master 'local[4]' \
+    --driver-memory 2g \
+    --executor-memory 2g \
+    /ppml/trusted-big-data-ml/work/examples/analytics-zoo/pyzoo/zoo/examples/xgboost/xgboost_example.py \
+    --file-path /ppml/trusted-big-data-ml/work/data/Boston_Housing.csv
 
 ## Options
 * '--file-path' or '-f', where data is stored, default will be current folder (Required Argument).
