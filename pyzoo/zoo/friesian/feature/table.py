@@ -382,15 +382,15 @@ class Table:
         check_col_exists(self.df, [column])
         return self.df.select(column).rdd.flatMap(lambda x: x).collect()
 
-    def convert_to_dict(self):
+    def convert_to_dict(self, orient='dict'):
         """
         Convert the Table to a dictionary.
         Only call this if the Table is small enough.
 
         :return: a Dictionary, the key is the column name, and the value
-        is the dictionary mapping from index to the column value.
+        is the list containing all values in the corresponding column.
         """
-        return self.df.toPandas().to_dict()
+        return self.df.toPandas().to_dict(orient='list')
 
     def add(self, columns, value=1):
         """

@@ -634,9 +634,8 @@ class TestTable(TestCase):
                              StructField("age", IntegerType(), True)])
         tbl = FeatureTable(spark.createDataFrame(data, schema))
         dictionary = tbl.convert_to_dict()
-        print(dictionary)
-        assert dictionary["name"] == {0: 'jack', 1: 'alice', 2: 'rose'}
-        assert dictionary["age"] == {0: 14, 1: 25, 2: 23}
+        assert dictionary["name"] == ['jack', 'alice', 'rose']
+        dictionary = tbl.convert_to_dict()
 
     def test_add(self):
         spark = OrcaContext.get_spark_session()
