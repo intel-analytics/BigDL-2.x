@@ -428,8 +428,10 @@ class Table:
         """
         Append a column with a constant value to the Table.
 
-        :param name: A string that specifies the name of the column.
-        :param value: A constant value that needs to append to the Table.
+        :param name: str, the name of the new column.
+        :param value: The constant column value for the new column.
+        
+        :return: A new Table with the appended column
         """
         return self._clone(self.df.withColumn(name, lit(value)))    
     
