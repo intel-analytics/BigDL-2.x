@@ -10,7 +10,7 @@ To setup the kafka environment, install kafka from [Kafka Download](https://kafk
 To use kafka in python, run `pip install kafka-python`.
     
 ## Test With Example
-### Start Kafka
+### Initial Setup (Start Kafka)
 First go to your kafka folder `cd <pathToKafka>`.
 
 With default settings, you can start the zookeeper by
@@ -46,5 +46,20 @@ receive, key: test, value: 0
 receive, key: test, value: 1
 receive, key: test, value: 2
 ```
+**Make sure to keep the topic set in `producer_demo` and `consumer_demo` the same so that the consumer side can receive the messages sent by producer side.**
 
+### Run KafkaServing
+#### Start CluserServing with Kafka
+If you want to test ClusterServing with Kafka, change [ClusterServing.scala](https://github.com/intel-analytics/analytics-zoo/blob/master/zoo/src/main/scala/com/intel/analytics/zoo/serving/ClusterServing.scala) in `analytics-zoo/blob/master/zoo/src/main/scala/com/intel/analytics/zoo/serving/ClusterServing.scala` as follows:
 
+```scala
+streamingEnv.addSource(new FlinkRedisSource(helper)) -> streamingEnv.addSource(new FlinkKafkaSource(helper))
+```
+```scala
+  .addSink(new FlinkRedisSink(helper)) ->   .addSink(new FlinkKafkaSink(helper))
+```
+then you can start ClusterServing as usual.
+#### Test with python
+You can use python to test KafkaServing, similar to [python test](#run-python-test). Change the topic (producer) in `kafka_example.py` to `serving_stream` and the topic (consumer) in `kafka_example.py` to `cluster-serving_serving_stream`. Modify the message sent by the producer to match the input format for serving and run the producer&consumer. You should be seeing predict results in consumer terminal.
+
+**Make sure to serialize and deserialize the data on Kafka using the same serializer/deserializer** --- For example, on python producer side, the serializer should match the deserializer in `analytics-zoo/blob/master/zoo/src/main/scala/com/intel/analytics/zoo/serving/engine/FlinkKafkaSource.scala`.
