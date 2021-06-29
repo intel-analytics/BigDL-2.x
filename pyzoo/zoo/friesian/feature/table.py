@@ -296,7 +296,7 @@ class Table:
 
         :return: A new Table that replaces columns with a new target column of merged list values.
         """
-        assert isinstance(columns, list)
+        assert isinstance(columns, list), "columns must be a list of column names"
         return self._clone(self.df.withColumn(target, array(columns)).drop(*columns))
 
     def rename(self, columns):
