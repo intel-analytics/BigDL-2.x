@@ -29,13 +29,13 @@ from zoo.orca import init_orca_context, stop_orca_context
 from zoo.automl.common.metrics import Evaluator
 
 
-def get_data(args):
-    df = pd.read_csv(args.datadir)
+def get_data(path):
+    df = pd.read_csv(path, engine='python')
     return df
 
 
-def get_nyc_taxi_tsdataset(args):
-    df = get_data(args)
+def get_nyc_taxi_tsdataset(path):
+    df = get_data(path)
     tsdata_train, tsdata_valid, tsdata_test = TSDataset.from_pandas(df,
                                                                     dt_col="timestamp",
                                                                     target_col=[
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
                       memory=args.memory, num_nodes=num_nodes, init_ray_on_spark=True)
 
-    tsdata_train, tsdata_valid, tsdata_test = get_nyc_taxi_tsdataset(args)
+    tsdata_train, tsdata_valid, tsdata_test = get_nyc_taxi_tsdataset(args.datadir)
 
     auto_lstm = AutoLSTM(input_feature_num=1,
                          output_target_num=1,
