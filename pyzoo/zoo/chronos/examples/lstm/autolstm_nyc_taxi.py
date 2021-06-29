@@ -84,7 +84,7 @@ if __name__ == '__main__':
                         help="Int. Number of cpus for each trial")
     parser.add_argument('--n_sampling', type=int, default=1,
                         help="Number of times to sample from the search_space.")
-    parser.add_argument('--datadir', type=str, default=url,
+    parser.add_argument('--datadir', default=url,
                         help="wget https://raw.githubusercontent.com/numenta/NAB/"
                         "v1.0/data/realKnownCause/nyc_taxi.csv")
 
