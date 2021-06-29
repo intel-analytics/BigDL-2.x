@@ -148,5 +148,5 @@ if __name__ == '__main__':
         preprocess_and_save(data, idx_list, os.path.join(args.output_folder, "data_parquet"))
 
     time_end = time()
-    print("Train data loading and preprocessing time: ", time_end - time_start)
+    print("Total data loading and preprocessing time: ", time_end - time_start)
     stop_orca_context()

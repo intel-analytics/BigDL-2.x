@@ -10,8 +10,6 @@ conda activate zoo
 pip install --pre --upgrade analytics-zoo
 ```
 
-__Note:__ As we test, Spark 3.0.0 will have performance benefit over the default Spark 2.4.3 and you can download the Analytics Zoo package built with Spark 3.0.0 from [here](https://sourceforge.net/projects/analytics-zoo/files/zoo-py/).
-
 ## Prepare the data
 You can download the full __1TB__ Click Logs dataset from [here](https://ailab.criteo.com/download-criteo-1tb-click-logs-dataset/), which includes data of 24 days (day0 to day23) with 4,373,472,329 records in total.
 
@@ -29,10 +27,9 @@ python wnd_preprocessing.py \
     --executor_memory 50g \
     --days 0-1 \
     --input_folder /path/to/the/folder/of/parquet_files \
-    --output_foler /path/to/save/preprocessed/folder/of/parquet_files \
+    --output_foler /path/to/the/folder/to/save/preprocessed/parquet_files \
     --frequency_limit 15 \
     --cross_sizes 10000, 10000
-
 ```
 
 * Spark standalone, example command to run on the full Criteo dataset:
@@ -45,7 +42,7 @@ python wnd_preprocessing.py \
     --num_executor 8 \
     --days 0-23 \
     --input_folder /path/to/the/folder/of/parquet_files \
-    --output_foler /path/to/save/preprocessed/folder/of/parquet_files \
+    --output_foler /path/to/the/folder/to/save/preprocessed/parquet_files \
     --frequency_limit 15 \
     --cross_sizes 10000, 10000
 ```
@@ -59,7 +56,7 @@ python wnd_preprocessing.py \
     --num_nodes 8 \
     --days 0-23 \
     --input_folder /path/to/the/folder/of/parquet_files \
-    --output_foler /path/to/save/preprocessed/folder/of/parquet_files \
+    --output_foler /path/to/the/folder/to/save/preprocessed/parquet_files \
     --frequency_limit 15 \
     --cross_sizes 10000, 10000
 ```
@@ -76,4 +73,4 @@ __Options:__
 * `frequency_limit`: Categories with frequency below this value will be omitted from encoding. We recommend using 15 when you preprocess the full 1TB dataset. Default to be 15.
 * `input_folder`: The path to the folder of parquet files, either a local path or an HDFS path.
 * `output_folder`: The path to save the preprocessed data to parquet files. HDFS path is recommended.
-* `cross_sizes`: bucket sizes for cross columns (`c14-c15` and `c16-c17`)
+* `cross_sizes`: bucket sizes for cross columns (`c14-c15` and `c16-c17`) seperated by comma. Default to be 10000, 10000.
