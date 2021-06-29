@@ -382,15 +382,24 @@ class Table:
         check_col_exists(self.df, [column])
         return self.df.select(column).rdd.flatMap(lambda x: x).collect()
 
-    def convert_to_dict(self, orient='dict'):
+    def convert_to_dict(self, orient='list'):
         """
         Convert the Table to a dictionary.
         Only call this if the Table is small enough.
+        :param orient: determines the type of the values of the dictionary.
+        If orient is "dict", result dict like {column -> {index -> value}}
+        If orient is "list", result dict like {column -> [values]}
+        If orient is "series", result dict like {column -> Series(values)}
+        If orient is "split", result dict like {"index" -> [index], 
+        "columns" -> [columns], "data" -> [values]}
+        If orient is "records", result dict like [{column -> value}, … ,
+        {column -> value}]
+        If orient is "index", result dict like {index -> {column -> value}}
 
         :return: a Dictionary, the key is the column name, and the value
         is the list containing all values in the corresponding column.
         """
-        return self.df.toPandas().to_dict(orient='list')
+        return self.df.toPandas().to_dict(orient)
 
     def add(self, columns, value=1):
         """

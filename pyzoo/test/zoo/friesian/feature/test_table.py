@@ -633,7 +633,7 @@ class TestTable(TestCase):
                              StructField("num", StringType(), True),
                              StructField("age", IntegerType(), True)])
         tbl = FeatureTable(spark.createDataFrame(data, schema))
-        dictionary = tbl.convert_to_dict()
+        dictionary = tbl.convert_to_dict("list")
         assert dictionary["name"] == ['jack', 'alice', 'rose']
         dictionary = tbl.convert_to_dict()
 
