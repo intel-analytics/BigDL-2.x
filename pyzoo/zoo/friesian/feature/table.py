@@ -949,6 +949,7 @@ class FeatureTable(Table):
         :param value: value to be append
         """
         self.df = self.df.withColumn(col, lit(value))
+        return FeatureTable(self.df)
 
     def split(self, ratio, seed=None):
         """
