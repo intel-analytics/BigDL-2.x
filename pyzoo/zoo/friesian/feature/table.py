@@ -424,12 +424,6 @@ class Table:
             df_cast.df = df_cast.df.withColumn(i, pyspark_col(i).cast(dtype))
         return df_cast
 
-    def __getattr__(self, name):
-        return self.df.__getattr__(name)
-
-    def col(self, name):
-        return pyspark_col(name)
-
     def append_column(self, name, value):
         """
         Append a column with a constant value to the Table.
@@ -437,8 +431,13 @@ class Table:
         :param name: A string that specifies the name of the column.
         :param value: A constant value that needs to append to the Table.
         """
-        self.df = self.df.withColumn(name, lit(value))
-        return self._clone(self.df)
+        return self._clone(self.df.withColumn(name, lit(value)))    
+    
+    def __getattr__(self, name):
+        return self.df.__getattr__(name)
+
+    def col(self, name):
+        return pyspark_col(name)
 
 
 class FeatureTable(Table):
