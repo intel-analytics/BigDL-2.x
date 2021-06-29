@@ -119,7 +119,7 @@ if __name__ == '__main__':
 
     tbl_all_data = tbl.encode_string(CAT_COLS, idx_list)\
         .fillna(0, INT_COLS + CAT_COLS)\
-        .normalize(INT_COLS)\
+        .min_max_scaling(INT_COLS)\
         .cross_columns(crossed_columns=[CAT_COLS[0:2], CAT_COLS[2:4]],
                        bucket_sizes=cross_sizes)
     tbl_all_data.compute()

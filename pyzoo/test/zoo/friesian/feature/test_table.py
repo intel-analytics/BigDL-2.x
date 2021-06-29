@@ -270,7 +270,7 @@ class TestTable(TestCase):
         assert min_value >= 0, "col_2 shouldn't be less than 0 after normalization"
 
         tbl2 = FeatureTable(feature_tbl.df.withColumn("col2-col3", array(["col_2", "col_3"])))
-        normalized_tbl2 = tbl2.normalize(["col_2", "col2-col3"])
+        normalized_tbl2 = tbl2.min_max_scaling(["col_2", "col2-col3"])
         normalized_tbl2.compute()
 
     def test_cross(self):
