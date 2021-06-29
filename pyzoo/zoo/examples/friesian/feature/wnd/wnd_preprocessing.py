@@ -67,7 +67,7 @@ def _parse_args():
                         help="Day range for preprocessing, such as 0-23, 0-1.")
     parser.add_argument('--input_folder', type=str, required=True,
                         help="Path to the folder of parquet files.")
-    parser.add_argument('--output_folder',type=str, default=".",
+    parser.add_argument('--output_folder', type=str, default=".",
                         help="The path to save the preprocessed data to parquet files. ")
     parser.add_argument('--frequency_limit', type=int, default=15,
                         help="frequency below frequency_limit will be "
@@ -83,6 +83,7 @@ def _parse_args():
     args.cross_sizes = [int(x) for x in args.cross_sizes.split(',')]
 
     return args
+
 
 def preprocess_and_save(data_tbl, models, save_path):
     columns = dict([("_c{}".format(i), "c{}".format(i)) for i in range(40)])
@@ -143,7 +144,7 @@ if __name__ == '__main__':
         test_data = FeatureTable.read_parquet(
             os.path.join(args.input_folder, "day_23_test.parquet"))
         preprocess_and_save(test_data, idx_list, os.path.join(args.output_folder, "test_parquet"))
-    else: # Sample data
+    else:  # Sample data
         data = FeatureTable.read_parquet(paths)
         preprocess_and_save(data, idx_list, os.path.join(args.output_folder, "data_parquet"))
 
