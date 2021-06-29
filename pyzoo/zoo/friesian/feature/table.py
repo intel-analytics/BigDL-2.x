@@ -430,6 +430,16 @@ class Table:
     def col(self, name):
         return pyspark_col(name)
 
+    def append_column(self, name, value):
+        """
+        Append a column with a constant value to the Table.
+
+        :param name: A string that specifies the name of the column.
+        :param value: A constant value that needs to append to the Table.
+        """
+        self.df = self.df.withColumn(name, lit(value))
+        return self._clone(self.df)
+
 
 class FeatureTable(Table):
     @classmethod
@@ -940,16 +950,6 @@ class FeatureTable(Table):
             return FeatureTable(result_df)
         else:
             return FeatureTable(agg_df)
-
-    def append_columns(self, col, value):
-        """
-        Append the columns with value to table
-
-        :param col: the name of the col
-        :param value: value to be append
-        """
-        self.df = self.df.withColumn(col, lit(value))
-        return FeatureTable(self.df)
 
     def split(self, ratio, seed=None):
         """
