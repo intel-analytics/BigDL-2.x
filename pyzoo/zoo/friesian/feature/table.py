@@ -388,9 +388,9 @@ class Table:
         Only call this if the Table is small enough.
 
         :return: a Dictionary, the key is the column name, and the value
-        is the list containing all values of the target column.
+        is the dictionary mapping from index to the column value.
         """
-        return {column: self.convert_to_list(column) for column in self.columns}
+        return self.df.toPandas().to_dict()
 
     def add(self, columns, value=1):
         """
