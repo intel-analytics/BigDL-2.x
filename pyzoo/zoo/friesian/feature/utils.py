@@ -71,7 +71,7 @@ def check_column_numeric(df, column):
                                           LongType(), FloatType(),
                                           DecimalType(), DoubleType()]
 
-  
+
 def ordinal_shuffle_partition(df):
     return callZooFunc("float", "ordinalShufflePartition", df)
 
