@@ -55,7 +55,95 @@ Then pull the image. It will be faster.
 sudo docker pull intelanalytics/hyper-zoo:latest
 ```
 
-2. Launch a k8s client container:
+2.K8s configuration
+
+Get k8s master as spark master :
+
+```bash
+kubectl cluster-info
+```
+
+After running this commend, it shows "Kubernetes master is running at https://127.0.0.1:12345 "
+
+this means :
+
+```bash
+master="k8s://https://127.0.0.1:12345"
+```
+
+The namespace is default or spark.kubernetes.namespace
+
+RBAC : 
+
+```bash
+kubectl create serviceaccount spark
+kubectl create clusterrolebinding spark-role --clusterrole=edit --serviceaccount=default:spark --namespace=default
+```
+
+View k8s configuration file : 
+
+```
+.kube/config
+```
+
+or
+
+```bash
+kubectl config view --flatten --minify > kuberconfig
+```
+
+The k8s data can stored in nfs or ceph, take nfs as an example
+
+In NFS server, run :
+
+```bash
+yum install nfs-utils
+systemctl enable rpcbind
+systemctl enable nfs
+systemctl start rpcbind
+firewall-cmd --zone=public --permanent --add-service={rpc-bind,mountd,nfs}
+firewall-cmd --reload
+mkdir /disk1/nfsdata
+chmod 755 /disk1/nfsdata
+nano /etc/exports "/disk1/nfsdata *(rw,sync,no_root_squash,no_all_squash)"
+systemctl restart nfs
+```
+
+In NFS client, run :
+
+```bash
+yum install -y nfs-utils && systemctl start rpcbind && showmount -e <nfs-master-ip-address>
+```
+
+k8s conf :
+
+```bash
+git clone https://github.com/kubernetes-incubator/external-storage.git
+cd /XXX/external-storage/nfs-client
+nano deploy/deployment.yaml
+nano deploy/rbac.yaml
+kubectl create -f deploy/rbac.yaml
+kubectl create -f deploy/deployment.yaml
+kubectl create -f deploy/class.yaml
+```
+
+test :
+
+```bash
+kubectl create -f deploy/test-claim.yaml
+kubectl create -f deploy/test-pod.yaml
+kubectl get pvc
+kubectl delete -f deploy/test-pod.yaml
+kubectl delete -f deploy/test-claim.yaml
+```
+
+if the test is success, then run:
+
+```bash
+kubectl create -f deploy/nfs-volume-claim.yaml
+```
+
+3.Launch a k8s client container:
 
 Please note the two different containers: **client container** is for user to submit zoo jobs from here, since it contains all the required env and libs except hadoop/k8s configs; executor container is not need to create manually, which is scheduled by k8s at runtime.
 
@@ -74,8 +162,8 @@ To specify more argument, use:
 sudo docker run -itd --net=host \
     -v /etc/kubernetes:/etc/kubernetes \
     -v /root/.kube:/root/.kube \
-    -e NotebookPort=12345 \
-    -e NotebookToken="your-token" \
+    -e NOTEBOOK_PORT=12345 \
+    -e NOTEBOOK_TOKEN="your-token" \
     -e http_proxy=http://your-proxy-host:your-proxy-port \
     -e https_proxy=https://your-proxy-host:your-proxy-port \
     -e RUNTIME_SPARK_MASTER=k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port> \
@@ -93,8 +181,8 @@ sudo docker run -itd --net=host \
     intelanalytics/hyper-zoo:latest bash 
 ```
 
-- NotebookPort value 12345 is a user specified port number.
-- NotebookToken value "your-token" is a user specified string.
+- NOTEBOOK_PORT value 12345 is a user specified port number.
+- NOTEBOOK_TOKEN value "your-token" is a user specified string.
 - http_proxy is to specify http proxy.
 - https_proxy is to specify https proxy.
 - RUNTIME_SPARK_MASTER is to specify spark master, which should be `k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>` or `spark://<spark-master-host>:<spark-master-port>`. 
@@ -259,7 +347,7 @@ $ kubectl delete pod -l <pod label>
 
 When started a Docker container with specified argument RUNTIME_SPARK_MASTER=`k8s://https://<k8s-apiserver-host>:<k8s-apiserver-port>` or RUNTIME_SPARK_MASTER=`spark://<spark-master-host>:<spark-master-port>`, the container will submit jobs to k8s cluster or spark cluster if you use $RUNTIME_SPARK_MASTER as url of spark master.
 
-You may also need to specify NotebookPort=`<your-port>` and NotebookToken=`<your-token>` to start Jupyter Notebook on the specified port and bind to 0.0.0.0.
+You may also need to specify NOTEBOOK_PORT=`<your-port>` and NOTEBOOK_TOKEN=`<your-token>` to start Jupyter Notebook on the specified port and bind to 0.0.0.0.
 
 To start the Jupyter notebooks on remote spark cluster, please use RUNTIME_SPARK_MASTER=`spark://<spark-master-host>:<spark-master-port>`, and attach the client container with command: “docker exec -it `<container-id>`  bash”, then run the shell script: “/opt/start-notebook-spark.sh”, this will start a Jupyter notebook instance on local container, and each tutorial in it will be submitted to the specified spark cluster. User can access the notebook with url `http://<local-ip>:<your-port>` in a preferred browser, and also need to input required  token with `<your-token>` to browse and run the tutorials of Analytics Zoo. Each tutorial will run driver part code in local container and run executor part code on spark cluster.
 

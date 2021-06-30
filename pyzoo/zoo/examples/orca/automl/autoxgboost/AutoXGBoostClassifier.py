@@ -21,7 +21,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray import RayContext
-from zoo.zouwu.config.recipe import *
+from zoo.chronos.config.recipe import *
 from zoo.orca.automl.xgboost import AutoXGBClassifier
 
 
@@ -141,6 +141,7 @@ if __name__ == '__main__':
     auto_xgb_clf.fit(data=(X_train, y_train),
                      validation_data=(X_val, y_val),
                      metric="error",
+                     metric_mode="min",
                      n_sampling=recipe.num_samples,
                      search_space=recipe.search_space(),
                      search_alg=search_alg,

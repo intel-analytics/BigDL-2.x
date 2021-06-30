@@ -38,6 +38,9 @@ class ClusterServingHelper
   @BeanProperty var jobName = Conventions.SERVING_STREAM_DEFAULT_NAME
   @BeanProperty var postProcessing = ""
 
+  // utils attributes
+  @BeanProperty var imageResize = ""
+
   // performance attributes
   @BeanProperty var inputAlreadyBatched = false
   @BeanProperty var coreNumberPerMachine = -1
@@ -67,6 +70,7 @@ class ClusterServingHelper
   var weightPath: String = _
   var defPath: String = _
   var redisSecureTrustStoreToken: String = ""
+
 
   def parseConfigStrings(): Unit = {
     redisHost = redisUrl.split(":").head.trim

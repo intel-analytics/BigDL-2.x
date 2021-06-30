@@ -13,22 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import warnings
 
 import ray
 from ray import tune
-from copy import deepcopy
-
-from zoo.automl.search.base import *
-from zoo.automl.common.util import *
-from zoo.automl.common.metrics import Evaluator
-from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME
-from ray.tune import Trainable, Stopper
+import os
+from zoo.automl.search.base import SearchEngine, TrialOutput, GoodError
+from zoo.automl.common.util import get_ckpt_hdfs, put_ckpt_hdfs, convert_bayes_configs
+from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME, DEFAULT_METRIC_NAME
+from ray.tune import Stopper
 from zoo.automl.logger import TensorboardXLogger
-from zoo.automl.model import ModelBuilder
-from zoo.orca.automl import hp
-from zoo.zouwu.feature.identity_transformer import IdentityTransformer
-from zoo.zouwu.preprocessing.impute import LastFillImpute, FillZeroImpute
-import pandas as pd
+from zoo.automl.model.abstract import ModelBuilder
 
 
 class RayTuneSearchEngine(SearchEngine):
@@ -58,10 +53,11 @@ class RayTuneSearchEngine(SearchEngine):
 
     def compile(self,
                 data,
-                model_create_func,
+                model_builder,
+                metric_mode,
                 epochs=1,
                 validation_data=None,
-                metric="mse",
+                metric=None,
                 metric_threshold=None,
                 n_sampling=1,
                 search_space=None,
@@ -69,7 +65,6 @@ class RayTuneSearchEngine(SearchEngine):
                 search_alg_params=None,
                 scheduler=None,
                 scheduler_params=None,
-                feature_transformers=None,
                 mc=False):
         """
         Do necessary preparations for the engine
@@ -80,19 +75,15 @@ class RayTuneSearchEngine(SearchEngine):
                    a tuple in form of (x, y)
                         x: ndarray for training input
                         y: ndarray for training output
-        :param model_create_func: model creation function
-        :param search_space: a dict for search space
+        :param model_builder: model creation function
+        :param epochs: max epochs for training
+        :param validation_data: validation data
+        :param metric: metric name or metric function
+        :param metric_mode: mode for metric. "min" or "max". We would infer metric_mode automated
+            if user used our built-in metric in zoo.automl.common.metric.Evaluator.
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: number of sampling
-        :param epochs: max epochs for training
-        :param validation_data: data for validation
-               Pandas Dataframe:
-                   a Pandas dataframe for validation
-               Numpy ndarray:
-                   a tuple in form of (x, y)
-                        x: ndarray for validation input
-                        y: ndarray for validation output
-        :param search_space: search_space
+        :param search_space: a dictionary of search_space
         :param search_alg: str, all supported searcher provided by ray tune
                (i.e."variant_generator", "random", "ax", "dragonfly", "skopt",
                "hyperopt", "bayesopt", "bohb", "nevergrad", "optuna", "zoopt" and
@@ -100,32 +91,29 @@ class RayTuneSearchEngine(SearchEngine):
         :param search_alg_params: extra parameters for searcher algorithm
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
-        :param feature_transformers: feature transformer instance
         :param mc: if calculate uncertainty
-        :param metric: metric name
         """
-
         # metric and metric's mode
-        self.metric = metric
-        self.mode = Evaluator.get_metric_mode(metric)
-        self.num_samples = n_sampling
+        self.metric_name = metric.__name__ if callable(metric) else (metric or DEFAULT_METRIC_NAME)
+        self.mode = metric_mode
         self.stopper = TrialStopper(metric_threshold=metric_threshold,
                                     epochs=epochs,
-                                    metric=self.metric,
+                                    metric=self.metric_name,
                                     mode=self.mode)
-
+        self.num_samples = n_sampling
         self.search_space = search_space
 
         self._search_alg = RayTuneSearchEngine._set_search_alg(search_alg, search_alg_params,
-                                                               self.metric, self.mode)
+                                                               self.metric_name, self.mode)
         self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params,
-                                                             self.metric, self.mode)
-
+                                                             self.metric_name, self.mode)
+        metric_func = None if not callable(metric) else metric
         self.train_func = self._prepare_train_func(data=data,
-                                                   model_create_func=model_create_func,
-                                                   feature_transformers=feature_transformers,
+                                                   model_builder=model_builder,
                                                    validation_data=validation_data,
-                                                   metric=metric,
+                                                   metric_name=self.metric_name,
+                                                   metric_func=metric_func,
+                                                   mode=self.mode,
                                                    mc=mc,
                                                    remote_dir=self.remote_dir
                                                    )
@@ -136,13 +124,12 @@ class RayTuneSearchEngine(SearchEngine):
             if not isinstance(search_alg, str):
                 raise ValueError(f"search_alg should be of type str."
                                  f" Got {search_alg.__class__.__name__}")
-            if search_alg_params is None:
-                search_alg_params = dict()
-            search_alg_params.update(dict(
-                metric=metric,
-                mode=mode,
-            ))
-            search_alg = tune.create_searcher(search_alg, **search_alg_params)
+            params = search_alg_params.copy() if search_alg_params else dict()
+            if metric and "metric" not in params:
+                params["metric"] = metric
+            if mode and "mode" not in params:
+                params["mode"] = mode
+            search_alg = tune.create_searcher(search_alg, **params)
         return search_alg
 
     @staticmethod
@@ -151,14 +138,14 @@ class RayTuneSearchEngine(SearchEngine):
             if not isinstance(scheduler, str):
                 raise ValueError(f"Scheduler should be of type str. "
                                  f"Got {scheduler.__class__.__name__}")
-            if scheduler_params is None:
-                scheduler_params = dict()
-            scheduler_params.update(dict(
-                time_attr="training_iteration",
-                metric=metric,
-                mode=mode,
-            ))
-            scheduler = tune.create_scheduler(scheduler, **scheduler_params)
+            params = scheduler_params.copy() if scheduler_params else dict()
+            if metric and "metric" not in params:
+                params["metric"] = metric
+            if mode and "mode" not in params:
+                params["mode"] = mode
+            if "time_attr" not in params:
+                params["time_attr"] = "training_iteration"
+            scheduler = tune.create_scheduler(scheduler, **params)
         return scheduler
 
     def run(self):
@@ -169,13 +156,14 @@ class RayTuneSearchEngine(SearchEngine):
         analysis = tune.run(
             self.train_func,
             local_dir=self.logs_dir,
-            metric=self.metric,
+            metric=self.metric_name,
             mode=self.mode,
             name=self.name,
             stop=self.stopper,
             config=self.search_space,
             search_alg=self._search_alg,
             num_samples=self.num_samples,
+            trial_dirname_creator=trial_dirname_creator,
             scheduler=self._scheduler,
             resources_per_trial=self.resources_per_trial,
             verbose=1,
@@ -195,6 +183,9 @@ class RayTuneSearchEngine(SearchEngine):
 
         return analysis
 
+    def get_best_trial(self):
+        return self.get_best_trials(k=1)[0]
+
     def get_best_trials(self, k=1):
         """
         get a list of best k trials
@@ -202,14 +193,17 @@ class RayTuneSearchEngine(SearchEngine):
         :return: trials list
         """
         sorted_trials = RayTuneSearchEngine._get_sorted_trials(self.trials,
-                                                               metric=self.metric,
+                                                               metric=self.metric_name,
                                                                mode=self.mode)
         best_trials = sorted_trials[:k]
         return [self._make_trial_output(t) for t in best_trials]
 
     def _make_trial_output(self, trial):
+        model_path = os.path.join(trial.logdir, trial.last_result["checkpoint"])
+        if self.remote_dir:
+            get_ckpt_hdfs(self.remote_dir, model_path)
         return TrialOutput(config=trial.config,
-                           model_path=os.path.join(trial.logdir, trial.last_result["checkpoint"]))
+                           model_path=model_path)
 
     @staticmethod
     def _get_best_trial(trial_list, metric, mode):
@@ -234,7 +228,7 @@ class RayTuneSearchEngine(SearchEngine):
 
     def test_run(self):
         def mock_reporter(**kwargs):
-            assert self.metric in kwargs, "Did not report proper metric"
+            assert self.metric_name in kwargs, "Did not report proper metric"
             assert "checkpoint" in kwargs, "Accidentally removed `checkpoint`?"
             raise GoodError("This works.")
 
@@ -254,19 +248,21 @@ class RayTuneSearchEngine(SearchEngine):
 
     @staticmethod
     def _prepare_train_func(data,
-                            model_create_func,
-                            feature_transformers,
-                            metric,
+                            model_builder,
                             validation_data=None,
+                            metric_name=None,
+                            metric_func=None,
+                            mode=None,
                             mc=False,
                             remote_dir=None,
                             ):
         """
         Prepare the train function for ray tune
         :param data: input data
-        :param model_create_func: model create function
-        :param feature_transformers: feature transformers
-        :param metric: the rewarding metric
+        :param model_builder: model create function
+        :param metric_name: the rewarding metric name
+        :param metric_func: customized metric func
+        :param mode: metric mode
         :param validation_data: validation data
         :param mc: if calculate uncertainty
         :param remote_dir: checkpoint will be uploaded to remote_dir in hdfs
@@ -275,45 +271,14 @@ class RayTuneSearchEngine(SearchEngine):
         """
         data_id = ray.put(data)
         validation_data_id = ray.put(validation_data)
-        ft_id = ray.put(feature_transformers)
 
         def train_func(config):
-            if isinstance(model_create_func, ModelBuilder):
-                trial_model = model_create_func.build(config)
-            else:
-                trial_model = model_create_func()
-
-            global_ft = ray.get(ft_id)
-            if global_ft:
-                trial_ft = deepcopy(global_ft)
-                imputer = None
-                if "imputation" in config:
-                    if config["imputation"] == "LastFillImpute":
-                        imputer = LastFillImpute()
-                    elif config["imputation"] == "FillZeroImpute":
-                        imputer = FillZeroImpute()
-
-                # handling input
-                global_input_df = ray.get(data_id)
-                trial_input_df = deepcopy(global_input_df)
-                if imputer:
-                    trial_input_df = imputer.impute(trial_input_df)
-                config = convert_bayes_configs(config).copy()
-                train_data = trial_ft.fit_transform(trial_input_df, **config)
-
-                # handling validation data
-                global_validation_df = ray.get(validation_data_id)
-                is_val_valid = isinstance(global_validation_df, pd.DataFrame) \
-                    and not global_validation_df.empty
-                if is_val_valid:
-                    trial_validation_df = deepcopy(global_validation_df)
-                    val_data = trial_ft.transform(trial_validation_df)
-                else:
-                    val_data = None
-            else:
-                train_data = ray.get(data_id)
-                val_data = ray.get(validation_data_id)
-                trial_ft = None
+            train_data = ray.get(data_id)
+            val_data = ray.get(validation_data_id)
+            config = convert_bayes_configs(config).copy()
+            if not isinstance(model_builder, ModelBuilder):
+                raise ValueError(f"You must input a ModelBuilder instance for model_builder")
+            trial_model = model_builder.build(config)
 
             # no need to call build since it is called the first time fit_eval is called.
             # callbacks = [TuneCallback(tune_reporter)]
@@ -323,32 +288,31 @@ class RayTuneSearchEngine(SearchEngine):
                 result = trial_model.fit_eval(data=train_data,
                                               validation_data=val_data,
                                               mc=mc,
-                                              metric=metric,
+                                              metric=metric_name,
+                                              metric_func=metric_func,
                                               **config)
-                reward = result
+                reward = result[metric_name]
                 checkpoint_filename = "best.ckpt"
 
                 # Save best reward iteration
-                mode = Evaluator.get_metric_mode(metric)
                 if mode == "max":
                     has_best_reward = best_reward is None or reward > best_reward
-                else:
+                elif mode == "min":
                     has_best_reward = best_reward is None or reward < best_reward
+                else:
+                    has_best_reward = True
 
                 if has_best_reward:
                     best_reward = reward
-                    if isinstance(model_create_func, ModelBuilder):
-                        trial_model.save(checkpoint_filename)
-                    else:
-                        save_zip(checkpoint_filename, trial_ft, trial_model, config)
+                    trial_model.save(checkpoint_filename)
                     # Save to hdfs
                     if remote_dir is not None:
-                        upload_ppl_hdfs(remote_dir, checkpoint_filename)
+                        put_ckpt_hdfs(remote_dir, checkpoint_filename)
 
                 report_dict = {"training_iteration": i,
-                               metric: reward,
                                "checkpoint": checkpoint_filename,
-                               "best_" + metric: best_reward}
+                               "best_" + metric_name: best_reward}
+                report_dict.update(result)
                 tune.report(**report_dict)
 
         return train_func
@@ -374,3 +338,7 @@ class TrialStopper(Stopper):
 
     def stop_all(self):
         return False
+
+
+def trial_dirname_creator(trial):
+    return f"{trial.trainable_name}_{trial.trial_id}"

@@ -288,9 +288,11 @@ class RayXShards(XShards):
             for current_assignments in actor2assignments:
                 if len(current_assignments) < avg_part_num:
                     current_assignments.append(part_idx)
+                    break
                 elif len(current_assignments) == avg_part_num and remainder > 0:
                     current_assignments.append(part_idx)
                     remainder -= 1
+                    break
         return actor2assignments, actor_ips
 
     @staticmethod
@@ -329,8 +331,11 @@ class RayXShards(XShards):
         for key, value in resources.items():
             if key.startswith("node:"):
                 # if running in cluster, filter out driver ip
-                if ray_ctx.is_local or key != f"node:{driver_ip}":
+                if key != f"node:{driver_ip}":
                     nodes.append(key)
+        # for the case of local mode and single node spark standalone
+        if not nodes:
+            nodes.append(f"node:{driver_ip}")
 
         partition_stores = {}
         for node in nodes:
