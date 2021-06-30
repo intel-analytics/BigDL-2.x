@@ -50,6 +50,7 @@ class KerasBaseModel(BaseModel):
         self.model_built = True
 
     def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric=None,
+                 metric_func=None,
                  **config):
         """
         :param data: could be a tuple with numpy ndarray with form (x, y)
@@ -64,7 +65,7 @@ class KerasBaseModel(BaseModel):
         def update_config():
             config.setdefault("input_dim", x.shape[-1])
             config.setdefault("output_dim", y.shape[-1])
-            if metric:
+            if metric and not metric_func:
                 config.update({"metric": metric})
 
         if not self.model_built:
@@ -86,29 +87,41 @@ class KerasBaseModel(BaseModel):
         # model.metrics_names are available only after a keras model has been trained/evaluated
         compiled_metric_names = self.model.metrics_names.copy()
         compiled_metric_names.remove("loss")
-        # check input metric value
-        if not metric:
-            if len(compiled_metric_names) == 1:
-                metric = compiled_metric_names[0]
-                metric_name = metric
+        if not metric_func:
+            # check input metric value
+            if not metric:
+                if len(compiled_metric_names) == 1:
+                    metric = compiled_metric_names[0]
+                    metric_name = metric
+                else:
+                    raise ValueError(f"Got multiple metrics in compile: {compiled_metric_names}. "
+                                     f"Please choose one target metric for automl optimization")
             else:
-                raise ValueError(f"Got multiple metrics in compile: {compiled_metric_names}. Please"
-                                 f" choose one target metric for automl optimization")
-        else:
-            hist_metric_name = tf.keras.metrics.get(metric).__name__
-            if hist_metric_name in compiled_metric_names:
-                metric_name = hist_metric_name
-            elif metric in compiled_metric_names:
-                metric_name = metric
+                hist_metric_name = tf.keras.metrics.get(metric).__name__
+                if hist_metric_name in compiled_metric_names:
+                    metric_name = hist_metric_name
+                elif metric in compiled_metric_names:
+                    metric_name = metric
+                else:
+                    raise ValueError(f"Input metric in fit_eval should be one of the metrics that "
+                                     f"are used to compile the model. Got metric value of {metric} "
+                                     f"and the metrics in compile are {compiled_metric_names}")
+            if validation_data is None:
+                result = hist.history.get(metric_name)[-1]
             else:
-                raise ValueError(f"Input metric in fit_eval should be one of the metrics that are "
-                                 f"used to compile the model. Got metric value of {metric} and the "
-                                 f"metrics in compile are {compiled_metric_names}")
-        if validation_data is None:
-            result = hist.history.get(metric_name)[-1]
+                result = hist.history.get('val_' + metric_name)[-1]
+            return {metric: result}
         else:
-            result = hist.history.get('val_' + metric_name)[-1]
-        return {metric: result}
+            metric_name = metric or metric_func.__name__
+            if validation_data is not None:
+                val_x = validation_data[0]
+                val_y = validation_data[1]
+            else:
+                val_x = x
+                val_y = y
+            y_pred = self.predict(val_x)
+            result = metric_func(val_y, y_pred)
+            return {metric_name: result}
 
     def evaluate(self, x, y, metrics=['mse']):
         """
