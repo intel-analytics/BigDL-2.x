@@ -632,7 +632,7 @@ class Table:
         if isinstance(bins, int):
             maxValue = self.df.agg({column: "max"}).collect()[0][0]
             minValue = self.df.agg({column: "min"}).collect()[0][0]
-            bins = np.linspace(minValue, maxValue, bins+1, endpoint=True)
+            bins = np.linspace(minValue, maxValue, bins+1, endpoint=True).tolist()
         bucketizer = Bucketizer(splits=bins, inputCol=column, outputCol=name)
         df_buck = bucketizer.setHandleInvalid("keep").transform(self.df)
         if labels is not None:
