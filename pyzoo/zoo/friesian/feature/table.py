@@ -21,7 +21,7 @@ from pyspark.sql.types import DoubleType, ArrayType
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
-from pyspark.sql.functions import col, concat, concat_ws, udf, array, broadcast
+from pyspark.sql.functions import col, concat, udf, array, broadcast
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *

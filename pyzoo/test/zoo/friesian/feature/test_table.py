@@ -15,12 +15,11 @@
 #
 
 import os.path
-import pytest
 import tempfile
 from unittest import TestCase
 
 import pyspark.sql.functions as f
-from pyspark.sql.functions import udf, struct
+from pyspark.sql.functions import udf
 from pyspark.sql.functions import col, concat, max, min, array
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
 
@@ -153,13 +152,13 @@ class TestTable(TestCase):
                              StructField("C", StringType(), True),
                              StructField("D", IntegerType(), True)])
         df = spark.createDataFrame(data, schema)
-        hash_df = df.withColumn("A_B_C", concat("A", "B", "C"))
+        cross_hash_df = df.withColumn("A_B_C", concat("A", "B", "C"))
         hash_str = lambda x: getattr(hashlib, "md5")(str(x).encode('utf-8', 'strict')).hexdigest()
         hash_int = udf(lambda x: int(hash_str(x), 16) % 100)
-        hash_df = hash_df.withColumn("A_B_C", hash_int(col("A_B_C"))) 
+        cross_hash_df = cross_hash_df.withColumn("A_B_C", hash_int(col("A_B_C"))) 
         tbl = FeatureTable(df)
         tbl = tbl.cross_hash_encode(["A", "B", "C"], 100, None)
-        assert tbl.to_spark_df().count() == hash_df.count()
+        assert tbl.to_spark_df().count() == cross_hash_df.count()
 
     def test_gen_string_idx(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
