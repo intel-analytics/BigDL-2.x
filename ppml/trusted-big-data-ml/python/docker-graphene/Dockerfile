@@ -84,10 +84,11 @@ ENV SPARK_VERSION		${SPARK_VERSION}
 ENV BIGDL_VERSION		${BIGDL_VERSION}
 ENV ANALYTICS_ZOO_HOME		/analytics-zoo-${ANALYTICS_ZOO_VERSION}
 RUN apt-get update --fix-missing && \
-    apt-get install -y apt-utils curl wget unzip
+    apt-get install -y apt-utils curl wget unzip git
 RUN wget https://raw.githubusercontent.com/intel-analytics/analytics-zoo/master/docker/zoo/download-analytics-zoo.sh && \
     chmod a+x ./download-analytics-zoo.sh
-RUN ./download-analytics-zoo.sh
+RUN ./download-analytics-zoo.sh && \
+    cd /opt && git clone --depth 1 https://github.com/intel-analytics/analytics-zoo.git
 
 # stage.5 az ppml
 FROM ubuntu:18.04
@@ -123,6 +124,7 @@ RUN mkdir -p /graphene && \
     mkdir -p /ppml/trusted-big-data-ml/work/data && \
     mkdir -p /ppml/trusted-big-data-ml/work/models && \
     mkdir -p /ppml/trusted-big-data-ml/work/apps && \
+    mkdir -p /ppml/trusted-big-data-ml/work/examples/bigdl && \
     mkdir -p /graphene/Pal/src/host/Linux-SGX/signer
 
 COPY --from=graphene /graphene/Scripts /graphene/Scripts
@@ -135,7 +137,10 @@ COPY --from=graphene /graphene/Tools/argv_serializer /graphene/Tools
 COPY --from=spark /opt/jdk  /opt/jdk8
 COPY --from=spark /opt/spark-${SPARK_VERSION} /ppml/trusted-big-data-ml/work/spark-${SPARK_VERSION}
 COPY --from=bigdl /BigDL/dist/lib/bigdl-*-jar-with-dependencies.jar /ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar
+COPY --from=bigdl /BigDL/dist/lib/bigdl-*-python-api.zip /ppml/trusted-big-data-ml/work/bigd-python-api.zip
+COPY --from=bigdl /BigDL/pyspark/bigdl/examples /ppml/trusted-big-data-ml/work/examples/bigdl
 COPY --from=analytics-zoo /analytics-zoo-${ANALYTICS_ZOO_VERSION} /ppml/trusted-big-data-ml/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
+COPY --from=analytics-zoo /opt/analytics-zoo/pyzoo/zoo/examples /ppml/trusted-big-data-ml/work/examples/pyzoo
 
 RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils vim curl nano wget unzip maven git tree && \
@@ -169,15 +174,25 @@ ADD ./start-spark-standalone-worker-sgx.sh /ppml/trusted-big-data-ml/start-spark
 ADD ./start-spark-standalone-driver-sgx.sh /ppml/trusted-big-data-ml/start-spark-standalone-driver-sgx.sh
 ADD ./ppml-spark-submit.sh /ppml/trusted-big-data-ml/ppml-spark-submit.sh
 ADD ./check-status.sh /ppml/trusted-big-data-ml/check-status.sh
+ADD tracker.py ./tracker.py
+ADD ./start-scripts /ppml/trusted-big-data-ml/work/start-scripts
 
-RUN chmod a+x /ppml/trusted-big-data-ml/init.sh && \
+RUN jar -uf /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar ./tracker.py && \
+    chmod a+x /ppml/trusted-big-data-ml/init.sh && \
     chmod a+x /ppml/trusted-big-data-ml/clean.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-local-train-sgx.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-master-sgx.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-worker-sgx.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-standalone-driver-sgx.sh && \
     chmod a+x /ppml/trusted-big-data-ml/ppml-spark-submit.sh && \
-    chmod a+x /ppml/trusted-big-data-ml/check-status.sh
+    chmod a+x /ppml/trusted-big-data-ml/check-status.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-python-helloworld-sgx.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-python-numpy-sgx.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-spark-local-bigdl-sgx.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-spark-local-pi-sgx.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-spark-local-sql-sgx.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-spark-local-wordcount-sgx.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-spark-local-xgboost-sgx.sh
 
     
 

@@ -234,6 +234,31 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     NNClassifierModel.load(path)
   }
 
+  def getXGBClassifier(): XGBClassifier = {
+    val model = new XGBClassifier()
+    model
+  }
+
+  def setXGBClassifierNthread(model: XGBClassifier, value: Int): Unit = {
+    model.setNthread(value)
+  }
+
+  def setXGBClassifierNumRound(model: XGBClassifier, value: Int): Unit = {
+    model.setNumRound(value)
+  }
+
+  def fitXGBClassifier(model: XGBClassifier, df : DataFrame): XGBClassifierModel = {
+    model.fit(df)
+  }
+
+  def setXGBClassifierNumWorkers(model: XGBClassifier, value: Int): Unit = {
+    model.setNumWorkers(value)
+  }
+
+  def setXGBClassifierMissing(model: XGBClassifier, value: Int): Unit = {
+    model.setMissing(value)
+  }
+
   def loadXGBClassifierModel(path: String, numClasses: Int): XGBClassifierModel = {
     XGBClassifierModel.load(path, numClasses)
   }
@@ -251,6 +276,52 @@ class PythonNNFrames[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def transformXGBClassifierModel(model: XGBClassifierModel,
                                         dataset: DataFrame): DataFrame = {
     model.transform(dataset)
+  }
+
+  def getXGBRegressor(): XGBRegressor = {
+    val model = new XGBRegressor()
+    model
+  }
+
+  def setXGBRegressorNthread(model: XGBRegressor, value: Int): Unit = {
+    model.setNthread(value)
+  }
+
+  def setXGBRegressorNumRound(model: XGBRegressor, value: Int): Unit = {
+    model.setNumRound(value)
+  }
+
+  def setXGBRegressorNumWorkers(model: XGBRegressor, value: Int): Unit = {
+    model.setNumWorkers(value)
+  }
+
+  def fitXGBRegressor(model: XGBRegressor, df : DataFrame): XGBRegressorModel = {
+    model.fit(df)
+  }
+
+  def loadXGBRegressorModel(path: String) : XGBRegressorModel = {
+    XGBRegressorModel.load(path)
+  }
+
+  def setPredictionXGBRegressorModel(model: XGBRegressorModel, prediction : String): Unit = {
+    model.setPredictionCol(prediction)
+  }
+
+  def setInferBatchSizeXGBRegressorModel(model: XGBRegressorModel, value : Int): Unit = {
+    model.setInferBatchSize(value)
+  }
+
+  def setFeaturesXGBRegressorModel(model: XGBRegressorModel, features: String): Unit = {
+    model.setFeaturesCol(features)
+  }
+
+  def transformXGBRegressorModel(model: XGBRegressorModel,
+                                 dataset: DataFrame): DataFrame = {
+    model.transform(dataset)
+  }
+
+  def saveXGBRegressorModel(model: XGBRegressorModel, path: String): Unit = {
+    model.save(path)
   }
 
   def internalEval(estimator: NNEstimator[T],
