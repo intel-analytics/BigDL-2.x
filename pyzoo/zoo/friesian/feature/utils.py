@@ -70,3 +70,11 @@ def check_column_numeric(df, column):
     return df.schema[column].dataType in [IntegerType(), ShortType(),
                                           LongType(), FloatType(),
                                           DecimalType(), DoubleType()]
+
+  
+def ordinal_shuffle_partition(df):
+    return callZooFunc("float", "ordinalShufflePartition", df)
+
+
+def write_parquet(df, path, mode):
+    callZooFunc("float", "dfWriteParquet", df, path, mode)
