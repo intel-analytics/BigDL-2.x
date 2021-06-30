@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.serving.engine
 
 import java.util.{Collections, Properties}
 import java.time.Duration
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.configuration.Configuration
@@ -54,7 +54,7 @@ class FlinkKafkaSource(params: ClusterServingHelper)
     if (records != null) {
       val messages = records.records(new TopicPartition(params.jobName, 0))
       if (messages != null) {
-        messages.toList.foreach(message => {
+        messages.asScala.foreach(message => {
           sourceContext.collect(
             List((message.key(), message.value(), "serde"))
           )
