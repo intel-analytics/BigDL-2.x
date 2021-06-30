@@ -66,7 +66,7 @@ class LeNet(nn.Module):
 
 criterion = nn.NLLLoss()
 ```
-After defining your model, you need to define a *Model Creator Function* that returns an instance of your model, and a *Optimizer Creator Function* that returns a PyTorch optimizer. Note that both the *Model Creator Function* and the *Optimizer Creator Function* should takes `config` as input and get the hyper-parameter values from `config`.
+After defining your model, you need to define a *Model Creator Function* that returns an instance of your model, and a *Optimizer Creator Function* that returns a PyTorch optimizer. Note that both the *Model Creator Function* and the *Optimizer Creator Function* should take `config` as input and get the hyper-parameter values from `config`.
 
 ```python
 def model_creator(config):
@@ -77,9 +77,9 @@ def optim_creator(model, config):
     return torch.optim.Adam(model.parameters(), lr=config["lr"])
 ```
 
-### **Step 3: Define Train Dataset**
+### **Step 3: Define Dataset**
 
-You can define the dataset using a *Data Creator Function* that returns a PyTorch `DataLoader`.
+You can define the train and validation datasets using *Data Creator Function* that takes `config` as input and returns a PyTorch `DataLoader`.
 
 ```python
 import torch
@@ -110,7 +110,7 @@ def test_loader_creator(config):
     return test_loader
 ```
 
-### **Step 5: Define search space**
+### **Step 4: Define Search Space**
 You should define a dictionary as your hyper-parameter search space. The keys are hyper-parameter names which should be the same with those in your creators, and you can specify how you want to sample each hyper-parameter in the values of the search space. See more about [automl.hp](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/AutoML/automl.html#orca-automl-hp)
 
 ```python
@@ -123,9 +123,9 @@ search_space = {
 }
 ```
 
-### **Step 5: Automatically fit and search with Orca AutoEstimator**
+### **Step 5: Automatically Fit and Search with Orca AutoEstimator**
 
-First, Create an AutoEstimator
+First, create an `AutoEstimator`. You can refer to [AutoEstimator API doc](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/AutoML/automl.html#orca-automl-auto-estimator) for more details.
 
 ```python
 from zoo.orca.automl.auto_estimator import AutoEstimator
@@ -138,7 +138,7 @@ auto_est = AutoEstimator.from_torch(model_creator=model_creator,
                                     name="lenet_mnist")
 ```
 
-Next, use the auto estimator to fit and search for the best hyper-parameter set.
+Next, use the `AutoEstimator` to fit and search for the best hyper-parameter set.
 
 ```python
 auto_est.fit(data=train_loader_creator,
