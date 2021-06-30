@@ -578,8 +578,8 @@ class Table:
         """
         Concatenate a list of tables into one table in the dimension of row.
 
-        :param tables: str or list, a list of table(s).
-        :param mode: string, can only be outer/inner. If mode equals to "inner", then the
+        :param tables: str or a list, a list of table(s).
+        :param mode: str, can only be outer/inner. If mode equals to "inner", then the
         new table only contains columns that are shared by all tables. If mode equals to "outer",
         the the new table contains all columns appered in the list of tables.
         :param distinct: bool, If distinct is True, the result table only contains distinct rows.
@@ -599,7 +599,8 @@ class Table:
     def drop_duplicates(self, subset=None):
         """
         Return a new table with duplicate rows removed.
-        :param subset: specify which columns to be considered when referring to duplication.
+        :param subset: str or a list of str, specifies which column(s) to be considered when
+        referring to duplication.
 
         :return: a new table with duplicate rows removed.
         """
@@ -614,7 +615,7 @@ class Table:
         """
         Segment values of the target column into bins.
 
-        :param bins: list or int. If bins is a list, it defines bins to be used. With n+1 splits,
+        :param bins: list or an int. If bins is a list, it defines bins to be used. With n+1 splits,
         there are n buckets. A bucket defined by splits x,y holds values in the range [x,y) except
         the last bucket, which also includes y. Bins should be of length >= 3 and strictly
         increasing.If bins is an int, it defines the number of equal-width bins in the range of
@@ -625,7 +626,7 @@ class Table:
         :name: str, specifies the name of output categorical column, default name is "bucket".
         :drop: bool, specifies whether to drop the original target column.
 
-        :return: new Table with the updated bin column.
+        :return: a new Table with the updated bin column.
         """
         check_col_exists(self.df, [column])
         if isinstance(bins, int):
@@ -635,9 +636,9 @@ class Table:
         bucketizer = Bucketizer(splits=bins, inputCol=column, outputCol=name)
         df_buck = bucketizer.setHandleInvalid("keep").transform(self.df)
         if labels is not None:
-            t = {i: label for (i, label) in enumerate(labels)}
-            udf_foo = udf(lambda x: t[x], StringType())
-            df_buck = df_buck.withColumn(name, udf_foo(name))
+            to_label = {i: label for (i, label) in enumerate(labels)}
+            udf_label = udf(lambda i: to_label[i], StringType())
+            df_buck = df_buck.withColumn(name, udf_label(name))
         if drop:
             df_buck = df_buck.drop(column)
         return self._clone(df_buck)
