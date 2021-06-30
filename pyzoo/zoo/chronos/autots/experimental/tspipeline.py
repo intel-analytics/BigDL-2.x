@@ -19,10 +19,17 @@ import os
 from zoo.chronos.data import TSDataset
 from zoo.automl.common.metrics import Evaluator
 
+DEFAULT_MODEL_INIT_DIR = "model_init.ckpt"
+DEFAULT_BEST_MODEL_DIR = "best_model.ckpt"
+DEFAULT_DATA_PROCESS_DIR = "data_process.ckpt"
+DEFAULT_BEST_CONFIG_DIR = "best_config.ckpt"
+
 class TSPipeline:
     def __init__(self, best_model, best_config, **kwargs):
         self._best_model = best_model
         self._best_config = best_config
+        self._scaler = None
+        self._scaler_index = None
         if "scaler" in kwargs.keys():
             self._scaler = kwargs["scaler"]
             self._scaler_index = kwargs["scaler_index"]
@@ -41,8 +48,8 @@ class TSPipeline:
                effective when data is a TSDataset. The values defaults to 32.
         '''
         x, y = self._tsdataset_to_numpy(data, is_predict=False)
-        yhat = self.predict(x, batch_size=batch_size)
-        eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput=multioutput)
+        yhat = self.predict(data, batch_size=batch_size)
+        eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat[:y.shape[0]], multioutput=multioutput)
                        for m in metrics]
         return eval_result
 
@@ -77,35 +84,57 @@ class TSPipeline:
         '''
         x, y = self._tsdataset_to_numpy(data, is_predict=False)
         if validation_data is None:
-            x_val, y_val = self._tsdataset_to_numpy(validation_data, is_predict=False)
-        else:
             x_val, y_val = x, y
+        else:
+            x_val, y_val = self._tsdataset_to_numpy(validation_data, is_predict=False)
 
         res = self._best_model.fit_eval(data=(x, y), validation_data=(x_val, y_val), metric=metric)
         return res
 
     def save(self, file_path):
-        # if not os.path.isdir(file_path):
-        #     os.mkdir(file_path)
-        # config_path = os.path.join(file_path, "config.json")
-        # model_path = os.path.join(file_path, "weights_tune.h5")
-        # if feature_transformers is not None:
-        #     feature_transformers.save(config_path, replace=True)
-        # if model is not None:
-        #     model.save(model_path, config_path)
-        # if config is not None:
-        #     save_config(config_path, config)
-        pass
+        import pickle
+        if not os.path.isdir(file_path):
+            os.mkdir(file_path)
+        model_init_path = os.path.join(file_path, DEFAULT_MODEL_INIT_DIR)
+        model_path = os.path.join(file_path, DEFAULT_BEST_MODEL_DIR)
+        data_process_path = os.path.join(file_path, DEFAULT_DATA_PROCESS_DIR)
+        best_config_path = os.path.join(file_path, DEFAULT_BEST_CONFIG_DIR)
+        model_init = {"model_creator": self._best_model.model_creator,
+                      "optimizer_creator": self._best_model.optimizer_creator,
+                      "loss_creator": self._best_model.loss_creator}
+        data_process = {"scaler": self._scaler,
+                        "scaler_index": self._scaler_index}
+        with open(model_init_path, "wb") as f:
+            pickle.dump(model_init, f)
+        with open(data_process_path, "wb") as f:
+            pickle.dump(data_process, f)
+        with open(best_config_path, "wb") as f:
+            pickle.dump(self._best_config, f)
+        self._best_model.save(model_path)
 
     @staticmethod
-    def load(self, file_path):
-        pass
+    def load(file_path):
+        import pickle
+        model_init_path = os.path.join(file_path, DEFAULT_MODEL_INIT_DIR)
+        model_path = os.path.join(file_path, DEFAULT_BEST_MODEL_DIR)
+        data_process_path = os.path.join(file_path, DEFAULT_DATA_PROCESS_DIR)
+        best_config_path = os.path.join(file_path, DEFAULT_BEST_CONFIG_DIR)
+        with open(model_init_path, "rb") as f:
+            model_init = pickle.load(f)
+        with open(data_process_path, "rb") as f:
+            data_process = pickle.load(f)
+        with open(best_config_path, "rb") as f:
+            best_config = pickle.load(f)
+        from zoo.automl.model.base_pytorch_model import PytorchBaseModel
+        best_model = PytorchBaseModel(**model_init)
+        best_model.restore(model_path)
+        return TSPipeline(best_model, best_config, **data_process)
 
     def _tsdataset_to_numpy(self, data, is_predict=False):
         if isinstance(data, TSDataset):
             lookback = self._best_config["past_seq_len"]
             horizon = 0 if is_predict else self._best_config["future_seq_len"]
-            selected_features = self._best_config["selected_feature"]
+            selected_features = self._best_config["selected_features"]
             data.roll(lookback, horizon, feature_col=selected_features)
             x, y = data.to_numpy()
         else:

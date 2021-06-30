@@ -20,6 +20,7 @@ from zoo.orca.automl.auto_estimator import AutoEstimator
 from zoo.chronos.data import TSDataset
 import zoo.orca.automl.hp as hp
 from zoo.chronos.autots.model import AutoModelFactory
+from zoo.chronos.autots.experimental.tspipeline import TSPipeline
 
 
 class AutoTSTrainer:
@@ -203,6 +204,9 @@ class AutoTSTrainer:
                 scheduler=scheduler,
                 scheduler_params=scheduler_params
             )
+
+        return TSPipeline(best_model=self.get_best_model(),
+                          best_config=self.get_best_config())
 
     def _prepare_data_creator(self, search_space, train_data, val_data=None):
         """

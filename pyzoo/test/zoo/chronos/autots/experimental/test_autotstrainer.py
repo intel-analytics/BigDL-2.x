@@ -23,6 +23,7 @@ from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 from zoo.chronos.autots.experimental.autotstrainer import AutoTSTrainer
 from zoo.chronos.data.tsdataset import TSDataset
+from zoo.chronos.autots.experimental.tspipeline import TSPipeline
 from zoo.orca.automl import hp
 import pandas as pd
 
@@ -193,15 +194,51 @@ class TestAutoTrainer(TestCase):
                                      logs_dir="/tmp/auto_trainer",
                                      cpus_per_trial=2,
                                      name="auto_trainer")
+        ts_pipeline = auto_trainer.fit(data=tsdata_train,
+                                       epochs=1,
+                                       batch_size=hp.choice([32, 64]),
+                                       validation_data=tsdata_valid,
+                                       n_sampling=1)
+        best_config = auto_trainer.get_best_config()
+        best_model = auto_trainer.get_best_model()
+        assert 4 <= best_config["past_seq_len"] <= 6
 
-        auto_trainer.fit(data=tsdata_train,
-                         epochs=1,
-                         batch_size=hp.choice([32, 64]),
-                         validation_data=tsdata_valid,
-                         n_sampling=1
-                         )
-        config = auto_trainer.get_best_config()
-        assert 4 <= config["past_seq_len"] <= 6
+        assert isinstance(ts_pipeline, TSPipeline)
+
+        # use raw base model to predic and evaluate
+        tsdata_valid.roll(lookback=best_config["past_seq_len"],
+                          horizon=0,
+                          feature_col=best_config["selected_features"])
+        x_valid, y_valid = tsdata_valid.to_numpy()
+        y_pred_raw = best_model.predict(x_valid)
+
+        tsdata_valid.roll(lookback=best_config["past_seq_len"],
+                          horizon=1,
+                          feature_col=best_config["selected_features"])
+        x_valid, y_valid = tsdata_valid.to_numpy()
+        eval_result_raw = best_model.evaluate(x_valid, y_valid)
+
+        # use tspipeline to predic and evaluate
+        eval_result = ts_pipeline.evaluate(tsdata_valid)
+        y_pred = ts_pipeline.predict(tsdata_valid)
+        
+
+        # check if they are the same
+        np.testing.assert_almost_equal(eval_result[0], eval_result_raw[0])
+        np.testing.assert_almost_equal(y_pred, y_pred_raw)
+
+        # save and load
+        ts_pipeline.save("/tmp/auto_trainer/autots_tmp_model_lstm")
+        new_ts_pipeline = TSPipeline.load("/tmp/auto_trainer/autots_tmp_model_lstm")
+
+        # check if load ppl is the same as previous
+        eval_result_new = new_ts_pipeline.evaluate(tsdata_valid)
+        y_pred_new = new_ts_pipeline.predict(tsdata_valid)
+        np.testing.assert_almost_equal(eval_result[0], eval_result_new[0])
+        np.testing.assert_almost_equal(y_pred, y_pred_new)
+
+        # use tspipeline to incrementally train
+        new_ts_pipeline.fit(tsdata_valid)
 
     def test_fit_tcn_feature(self):
         input_feature_dim = 11  # This param will not be used
@@ -209,7 +246,6 @@ class TestAutoTrainer(TestCase):
 
         tsdata_train = get_tsdataset().gen_dt_feature()
         tsdata_valid = get_tsdataset().gen_dt_feature()
-        tsdata_test = get_tsdataset().gen_dt_feature()
 
         search_space = {
             'hidden_units': hp.grid_search([32, 64]),
@@ -231,30 +267,51 @@ class TestAutoTrainer(TestCase):
                                      logs_dir="/tmp/auto_trainer",
                                      cpus_per_trial=2,
                                      name="auto_trainer")
-        auto_trainer.fit(data=tsdata_train,
-                         epochs=1,
-                         batch_size=hp.choice([32, 64]),
-                         validation_data=tsdata_valid,
-                         n_sampling=1
-                         )
+        ts_pipeline = auto_trainer.fit(data=tsdata_train,
+                                       epochs=1,
+                                       batch_size=hp.choice([32, 64]),
+                                       validation_data=tsdata_valid,
+                                       n_sampling=1)
         best_config = auto_trainer.get_best_config()
         best_model = auto_trainer.get_best_model()
         assert 4 <= best_config["past_seq_len"] <= 6
 
-        # really difficult to use the model currently...
-        tsdata_test.roll(lookback=best_config["past_seq_len"],
-                         horizon=1,
-                         feature_col=best_config["selected_features"])
-        x_test, y_test = tsdata_test.to_numpy()
-        y_pred = best_model.predict(x_test)
-        best_model.save("best.ckpt")
-        from zoo.automl.model.base_pytorch_model import PytorchModelBuilder
-        restore_model = PytorchModelBuilder(model_creator=best_model.model_creator,
-                                            optimizer_creator="Adam",
-                                            loss_creator=torch.nn.MSELoss()).build(best_config)
-        restore_model.restore("best.ckpt")
-        y_pred_restore = restore_model.predict(x_test)
-        np.testing.assert_almost_equal(y_pred, y_pred_restore)
+        assert isinstance(ts_pipeline, TSPipeline)
+
+        # use raw base model to predic and evaluate
+        tsdata_valid.roll(lookback=best_config["past_seq_len"],
+                          horizon=0,
+                          feature_col=best_config["selected_features"])
+        x_valid, y_valid = tsdata_valid.to_numpy()
+        y_pred_raw = best_model.predict(x_valid)
+
+        tsdata_valid.roll(lookback=best_config["past_seq_len"],
+                          horizon=1,
+                          feature_col=best_config["selected_features"])
+        x_valid, y_valid = tsdata_valid.to_numpy()
+        eval_result_raw = best_model.evaluate(x_valid, y_valid)
+
+        # use tspipeline to predic and evaluate
+        eval_result = ts_pipeline.evaluate(tsdata_valid)
+        y_pred = ts_pipeline.predict(tsdata_valid)
+        
+
+        # check if they are the same
+        np.testing.assert_almost_equal(eval_result[0], eval_result_raw[0])
+        np.testing.assert_almost_equal(y_pred, y_pred_raw)
+
+        # save and load
+        ts_pipeline.save("/tmp/auto_trainer/autots_tmp_model_tcn")
+        new_ts_pipeline = TSPipeline.load("/tmp/auto_trainer/autots_tmp_model_tcn")
+
+        # check if load ppl is the same as previous
+        eval_result_new = new_ts_pipeline.evaluate(tsdata_valid)
+        y_pred_new = new_ts_pipeline.predict(tsdata_valid)
+        np.testing.assert_almost_equal(eval_result[0], eval_result_new[0])
+        np.testing.assert_almost_equal(y_pred, y_pred_new)
+
+        # use tspipeline to incrementally train
+        new_ts_pipeline.fit(tsdata_valid)
 
     def test_fit_lstm_data_creator(self):
         input_feature_dim = 4
