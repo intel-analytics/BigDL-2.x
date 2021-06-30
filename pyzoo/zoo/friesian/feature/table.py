@@ -1127,4 +1127,3 @@ class StringIndex(Table):
         """
         path = path + "/" + self.col_name + ".parquet"
         write_parquet(self.df, path, mode)
-        

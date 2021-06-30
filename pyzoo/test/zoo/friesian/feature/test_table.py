@@ -769,6 +769,6 @@ class TestTable(TestCase):
         size2 = tbl2.size()
         assert size1 + size2 == total_size
 
+
 if __name__ == "__main__":
     pytest.main([__file__])
-    
