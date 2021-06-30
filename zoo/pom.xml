@@ -49,7 +49,7 @@
         <data-store-url>http://download.tensorflow.org</data-store-url>
         <inner-ftp-uri>http://10.239.45.10:8081/repository/raw</inner-ftp-uri>
         <tf-shade>bushade</tf-shade>
-        <akka.grpc.version>0.5.0</akka.grpc.version>
+        <akka.grpc.version>2.0.0</akka.grpc.version>
         <grpc.version>1.38.0</grpc.version>
     </properties>
 
@@ -484,11 +484,6 @@
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-stream_${scala.major.version}</artifactId>
             <version>2.5.26</version>
-        </dependency>
-        <dependency>
-            <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-actor-typed_${scala.major.version}</artifactId>
-            <version>2.5.21</version>
         </dependency>
         <dependency>
             <groupId>com.lightbend.akka.grpc</groupId>
@@ -1198,6 +1193,18 @@
                                 ${project.build.outputDirectory}/app.properties
                             </outputFile>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.lightbend.akka.grpc</groupId>
+                <artifactId>akka-grpc-maven-plugin</artifactId>
+                <version>${akka.grpc.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

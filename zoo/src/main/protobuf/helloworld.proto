@@ -1,22 +1,34 @@
-//#service-request-reply
 syntax = "proto3";
 
+
 option java_multiple_files = true;
-option java_package = "com.example.helloworld";
+option java_package = "example.myapp.helloworld.grpc";
 option java_outer_classname = "HelloWorldProto";
 
-// The greeting service definition.
+package helloworld;
+
+////////////////////////////////////// The greeting service definition.
 service GreeterService {
-    // Sends a greeting
+    //////////////////////
+    // Sends a greeting //
+    ////////*****/////////
+    //      HELLO       //
+    ////////*****/////////
     rpc SayHello (HelloRequest) returns (HelloReply) {}
-    //#service-request-reply
-    //#service-stream
-    // The stream of incoming HelloRequest messages are
-    // sent out as corresponding HelloReply. From
-    // all clients to all clients, like a chat room.
-    rpc SayHelloToAll (stream HelloRequest) returns (stream HelloReply) {}
-    //#service-stream
-    //#service-request-reply
+
+    // Comment spanning
+    // on several lines
+    rpc ItKeepsTalking (stream HelloRequest) returns (HelloReply) {}
+
+    /*
+     * C style comments
+     */
+    rpc ItKeepsReplying (HelloRequest) returns (stream HelloReply) {}
+
+    /* C style comments
+     * on several lines
+     * with non-empty heading/trailing line */
+    rpc StreamHellos (stream HelloRequest) returns (stream HelloReply) {}
 }
 
 // The request message containing the user's name.
@@ -28,4 +40,3 @@ message HelloRequest {
 message HelloReply {
     string message = 1;
 }
-//#service-request-reply

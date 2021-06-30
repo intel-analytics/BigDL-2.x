@@ -13,63 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.intel.analytics.zoo.serving.grpc
 
-
-import org.slf4j.LoggerFactory
-
-
-import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.ActorSystem
+import akka.http.scaladsl.model.{ HttpRequest, HttpResponse }
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.model.HttpResponse
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.util.Failure
-import scala.util.Success
-import scala.concurrent.duration._
 import com.typesafe.config.ConfigFactory
+import example.myapp.helloworld.grpc._
 
+import scala.concurrent.{ ExecutionContext, Future }
 
-object FrontEndGRPC extends Supportive {
-  override val logger = LoggerFactory.getLogger(getClass)
-
+object GreeterServer {
   def main(args: Array[String]): Unit = {
-    def main(args: Array[String]): Unit = {
-      // important to enable HTTP/2 in ActorSystem's config
-      val conf = ConfigFactory.parseString("akka.http.server.preview.enable-http2 = on")
-        .withFallback(ConfigFactory.defaultApplication())
-      val system = ActorSystem[Nothing](Behaviors.empty, "GreeterServer", conf)
-      new GreeterServer(system).run()
-    }
+    // Important: enable HTTP/2 in ActorSystem's config
+    // We do it here programmatically, but you can also set it in the application.conf
+    val conf = ConfigFactory
+      .parseString("akka.http.server.preview.enable-http2 = on")
+      .withFallback(ConfigFactory.defaultApplication())
+    val system = ActorSystem("HelloWorld", conf)
+    new GreeterServer(system).run()
+    // ActorSystem threads will keep the app alive until `system.terminate()` is called
   }
+}
 
-  class GreeterServer(system: ActorSystem[_]) {
+class GreeterServer(system: ActorSystem) {
+  def run(): Future[Http.ServerBinding] = {
+    // Akka boot up code
+    implicit val sys: ActorSystem = system
+    implicit val ec: ExecutionContext = sys.dispatcher
 
-    def run(): Future[Http.ServerBinding] = {
-      implicit val sys = system
-      implicit val ec: ExecutionContext = system.executionContext
+    // Create service handlers
+    val service: HttpRequest => Future[HttpResponse] =
+      GreeterServiceHandler(new GreeterServiceImpl())
 
-      val service: HttpRequest => Future[HttpResponse] =
-        GreeterServiceHandler(new GreeterServiceImpl(system))
+    // Bind service handler servers to localhost:8080/8081
+    val binding = Http().newServerAt("127.0.0.1", 8080).bind(service)
 
-      val bound: Future[Http.ServerBinding] = akka.http.scaladsl.Http(system)
-        .newServerAt(interface = "127.0.0.1", port = 8080)
-        .enableHttps(serverHttpContext)
-        .bind(service)
-        .map(_.addToCoordinatedShutdown(hardTerminationDeadline = 10.seconds))
+    // report successful binding
+    binding.foreach { binding => println(s"gRPC server bound to: ${binding.localAddress}") }
 
-      bound.onComplete {
-        case Success(binding) =>
-          val address = binding.localAddress
-          println("gRPC server bound to {}:{}", address.getHostString, address.getPort)
-        case Failure(ex) =>
-          println("Failed to bind gRPC endpoint, terminating system", ex)
-          system.terminate()
-      }
-
-      bound
-    }
+    binding
+  }
 }
