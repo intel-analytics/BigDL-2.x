@@ -297,9 +297,9 @@ class Table:
 
     def get_stats(self, columns, aggr):
         """
-        Calculate the statistics of the values over target column(s).
+        Calculate the statistics of the values over the target column(s).
 
-        :param columns: a str or a list of str that specifies names of the target column(s).
+        :param columns: a str or a list of str that specifies the name(s) of the target column(s).
         If columns is None, then the function will return statistics for all columns.
         :param aggr: str or list of str or dict to specify aggregate functions,
         min/max/avg/sum/count are supported.
@@ -309,7 +309,7 @@ class Table:
         :return: A dictionary, the key is the column name, and the value is aggregate result(s).
         """
         if columns is None:
-            columns = self.columns
+            columns = [column for column in self.columns if check_column_numeric(self.df, column)]
         if not isinstance(columns, list):
             columns = [columns]
         check_col_exists(self.df, columns)
@@ -319,7 +319,8 @@ class Table:
                 aggr_strs = aggr
             elif isinstance(aggr, dict):
                 if column not in aggr:
-                    raise ValueError("aggregate funtion not defined for column {}.".format(column))
+                    raise ValueError("aggregate funtion not defined for the column {}.".
+                                     format(column))
                 aggr_strs = aggr[column]
             else:
                 raise ValueError("aggr must have type str or list or dict.")
@@ -339,7 +340,7 @@ class Table:
         Returns a new Table that has two columns, `column` and `min`, containing the column
         names and the minimum values of the specified numeric columns.
 
-        :param columns: a string or a list of strings that specifies column names. If it is None,
+        :param columns: str or a list of str that specifies column names. If it is None,
                it will operate on all numeric columns.
 
         :return: A new Table that contains the minimum values of the specified columns.
@@ -349,14 +350,14 @@ class Table:
         schema = StructType([StructField("column", StringType(), True),
                              StructField("min", FloatType(), True)])
         spark = OrcaContext.get_spark_session()
-        return FeatureTable(spark.createDataFrame(data, schema))
+        return self._clone(spark.createDataFrame(data, schema))
 
     def max(self, columns):
         """
         Returns a new Table that has two columns, `column` and `max`, containing the column
         names and the maximum values of the specified numeric columns.
 
-        :param columns: a string or a list of strings that specifies column names. If it is None,
+        :param columns: str or a list of str that specifies column names. If it is None,
                it will operate on all numeric columns.
 
         :return: A new Table that contains the maximum values of the specified columns.
@@ -366,9 +367,9 @@ class Table:
         schema = StructType([StructField("column", StringType(), True),
                              StructField("max", FloatType(), True)])
         spark = OrcaContext.get_spark_session()
-        return FeatureTable(spark.createDataFrame(data, schema))
+        return self._clone(spark.createDataFrame(data, schema))
 
-    def convert_to_list(self, column):
+    def to_list(self, column):
         """
         Convert all values of the target column to a list.
         Only call this if the Table is small enougth.
@@ -382,24 +383,19 @@ class Table:
         check_col_exists(self.df, [column])
         return self.df.select(column).rdd.flatMap(lambda x: x).collect()
 
-    def convert_to_dict(self, orient='list'):
+    def to_dict(self):
         """
         Convert the Table to a dictionary.
         Only call this if the Table is small enough.
-        :param orient: determines the type of the values of the dictionary.
-        If orient is "dict", result dict like {column -> {index -> value}}
-        If orient is "list", result dict like {column -> [values]}
-        If orient is "series", result dict like {column -> Series(values)}
-        If orient is "split", result dict like {"index" -> [index], 
-        "columns" -> [columns], "data" -> [values]}
-        If orient is "records", result dict like [{column -> value}, … ,
-        {column -> value}]
-        If orient is "index", result dict like {index -> {column -> value}}
 
         :return: a Dictionary, the key is the column name, and the value
         is the list containing all values in the corresponding column.
         """
-        return self.df.toPandas().to_dict(orient)
+        rows = [list(row) for row in self.df.collect()]
+        dictionary = {}
+        for i, column in enumerate(self.columns):
+            dictionary[column] = [row[i] for row in rows]
+        return dictionary
 
     def add(self, columns, value=1):
         """
