@@ -95,7 +95,7 @@ if __name__ == "__main__":
     def get_category(x):
         cat = x[0][-1] if x[0][-1] is not None else "default"
         return cat.strip().lower()
-    trans_label = lambda x: [1 - float(x), float(x)]
+    trans_label = lambda x: [float(x), 1 - float(x)]
 
     item_tbl = FeatureTable.read_json(args.input_meta).select(['asin', 'categories'])\
         .dropna(columns=['asin', 'categories']) \
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     transaction_tbl = transaction_tbl\
         .encode_string(['user', 'item'], [user_index[0], item_category_indices[0]])\
         .dropna(columns="item")\
-        .add_hist_seq(user_col="user", cols=['item'],
+        .add_hist_seq(cols=['item'], user_col="user",
                       sort_col='time', min_len=1, max_len=100)\
         .add_neg_hist_seq(item_size, 'item_hist_seq', neg_num=5)\
         .add_negative_samples(item_size, item_col='item', neg_num=1)

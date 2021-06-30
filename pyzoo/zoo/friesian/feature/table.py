@@ -488,8 +488,8 @@ class FeatureTable(Table):
         """
         Generate a list of item visits in history
 
-        :param user_col: string, user column.
         :param cols:  list of string, ctolumns need to be aggragated
+        :param user_col: string, user column.
         :param sort_col:  string, sort by sort_col
         :param min_len:  int, minimal length of a history list
         :param max_len:  int, maximal length of a history list
