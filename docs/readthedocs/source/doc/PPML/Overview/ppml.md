@@ -615,7 +615,7 @@ With the trusted realtime compute and ML/DL support, users can run standard Flin
 
 Please refer to [Section 2.1 Prerequisite](#prerequisite). For Occlum backend, if your kernel version is below 5.11, please install [enable_rdfsbase](https://github.com/occlum/enable_rdfsbase).
 
-### 3.2 Prepare Docker Container
+### 3.2 Prepare Docker Image
 
 Pull docker image from Dockerhub
 
