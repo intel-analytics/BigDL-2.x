@@ -331,7 +331,7 @@ class Table:
         Calculate the statistics of the values over the target column(s).
 
         :param columns: a str or a list of str that specifies the name(s) of the target column(s).
-        If columns is None, then the function will return statistics for all columns.
+        If columns is None, then the function will return statistics for all numeric columns.
         :param aggr: str or list of str or dict to specify aggregate functions,
         min/max/avg/sum/count are supported.
         If aggr is a str or a list of str, it contains the name(s) of aggregate function(s).
