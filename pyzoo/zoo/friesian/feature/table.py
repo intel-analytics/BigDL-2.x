@@ -572,7 +572,7 @@ class FeatureTable(Table):
                For dense features, you need to cut them into discrete intervals beforehand.
         :param bins: int, defined the number of equal-width bins in the range of column(s) values. 
         :param cross_col_name: str, the column name for cross columns
-        (i.e. if user input [col1, col2], the default name should be 'crossed_col1_col2').
+        (i.e. if user input ['col1', 'col2'], the default name should be 'crossed_col1_col2').
 
         :return: A new FeatureTable which hash encoded values.
         """
@@ -1127,3 +1127,4 @@ class StringIndex(Table):
         """
         path = path + "/" + self.col_name + ".parquet"
         write_parquet(self.df, path, mode)
+        
