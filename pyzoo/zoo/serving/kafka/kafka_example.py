@@ -30,13 +30,13 @@ def producer_demo():
     # a topic that doesn't exist will be created
     for i in range(0, 3):
         future = producer.send(
-            'kafka_demo',
+            'serving_stream',
             key='test',  # same key will be sent to same partition
             value=str(i),
             partition=0)  # send to partition 0
         print("send {}".format(str(i)))
         try:
-            future.get(timeout=10) # check if send successfully
+            future.get(timeout=10)  # check if send successfully
         except kafka_errors:  # throw kafka_errors if failed
             traceback.format_exc()
     producer.close()
@@ -44,15 +44,14 @@ def producer_demo():
 
 def consumer_demo():
     consumer = KafkaConsumer(
-        'kafka_demo',
+        'cluster-serving_serving_stream',
         bootstrap_servers=['localhost:9092'],
     )
     for message in consumer:
         print("receive, key: {}, value: {}".format(
             json.loads(message.key.decode()),
             json.loads(message.value.decode())
-            )
-        )
+        ))
 
 
 if __name__ == '__main__':

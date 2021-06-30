@@ -39,8 +39,10 @@ class FlinkKafkaSource(params: ClusterServingHelper)
     val props = new Properties()
     props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
     props.put(ConsumerConfig.GROUP_ID_CONFIG, "serving")
-    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer")
-    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer")
+    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+      "org.apache.kafka.common.serialization.StringDeserializer")
+    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+      "org.apache.kafka.common.serialization.StringDeserializer")
 
     consumer = new KafkaConsumer[String, String](props)
     consumer.subscribe(Collections.singletonList(params.jobName))
@@ -49,14 +51,13 @@ class FlinkKafkaSource(params: ClusterServingHelper)
   override def run(sourceContext: SourceFunction
   .SourceContext[List[(String, String, String)]]): Unit = while (isRunning) {
     val records: ConsumerRecords[String, String] = consumer.poll(Duration.ofMillis(1))
-    if (records != null){
+    if (records != null) {
       val messages = records.records(new TopicPartition(params.jobName, 0))
       if (messages != null) {
         messages.toList.foreach(message => {
           sourceContext.collect(
             List((message.key(), message.value(), "serde"))
           )
-          logger.info(messages)
         })
       }
     }
