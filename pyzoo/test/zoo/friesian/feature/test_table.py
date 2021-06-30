@@ -587,7 +587,7 @@ class TestTable(TestCase):
         columns = ["age", "height"]
         min_result = tbl.min(columns)
         assert min_result.to_list("min") == [14, 8.5], \
-            "the min value for age and height is correct"
+            "the min value for age and height is not correct"
 
     def test_max(self):
         spark = OrcaContext.get_spark_session()
@@ -602,7 +602,7 @@ class TestTable(TestCase):
         columns = ["age", "height"]
         min_result = tbl.max(columns)
         assert min_result.to_list("max") == [25, 10.0], \
-            "the maximum value for age and height is correct"
+            "the maximum value for age and height is not correct"
 
     def test_to_list(self):
         spark = OrcaContext.get_spark_session()

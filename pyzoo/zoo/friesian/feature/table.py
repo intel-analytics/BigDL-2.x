@@ -330,14 +330,14 @@ class Table:
         """
         Calculate the statistics of the values over the target column(s).
 
-        :param columns: a str or a list of str that specifies the name(s) of the target column(s).
+        :param columns: str or a list of str that specifies the name(s) of the target column(s).
         If columns is None, then the function will return statistics for all numeric columns.
         :param aggr: str or list of str or dict to specify aggregate functions,
         min/max/avg/sum/count are supported.
         If aggr is a str or a list of str, it contains the name(s) of aggregate function(s).
         If aggr is a dict, the key is the column name, and the value is the aggregate function(s).
 
-        :return: A dictionary, the key is the column name, and the value is aggregate result(s).
+        :return: dict, the key is the column name, and the value is aggregate result(s).
         """
         if columns is None:
             columns = [column for column in self.columns if check_column_numeric(self.df, column)]
@@ -419,14 +419,14 @@ class Table:
         Convert the Table to a dictionary.
         Only call this if the Table is small enough.
 
-        :return: a Dictionary, the key is the column name, and the value
-        is the list containing all values in the corresponding column.
+        :return: dict, the key is the column name, and the value is the list containing
+        all values in the corresponding column.
         """
         rows = [list(row) for row in self.df.collect()]
-        dictionary = {}
+        result = {}
         for i, column in enumerate(self.columns):
-            dictionary[column] = [row[i] for row in rows]
-        return dictionary
+            result[column] = [row[i] for row in rows]
+        return result
 
     def add(self, columns, value=1):
         """
