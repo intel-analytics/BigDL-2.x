@@ -112,7 +112,7 @@ The result should be similar to
 
 
 
-##### Example3: `pytorch`
+##### Example 3: `pytorch`
 
 Before running the pytorch example, first you need to download the pretrained model.
 ```bash
@@ -143,7 +143,7 @@ The result should be
 
 
 
-##### Example4: `tensorflow-lite`
+##### Example 4: `tensorflow-lite`
 
 Before running the tensorflow example, first you need to download the pretrained model and other dependant files.
 
@@ -178,7 +178,7 @@ The result should be
 
 
 
-##### Example5: `tensorflow`
+##### Example 5: `tensorflow`
 
 Run the example with SGX with the following command in the terminal.
 
@@ -228,9 +228,9 @@ cd /ppml/trusted-big-data-ml
 
 #### 2. Run pyspark examples
 
-##### Example1: `pi.py`
+##### Example 1: `pi.py`
 
-Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of ``spark.authenticate.secret`` with your own secret key.
+Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of `your_secret_key` with your own secret key.
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
@@ -255,9 +255,9 @@ The result should be similar to
 
 
 
-##### Example2: `test-wordcount.py`
+##### Example 2: `test-wordcount.py`
 
-Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of ``spark.authenticate.secret`` with your own secret key.
+Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of `your_secret_key` with your own secret key.
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
@@ -284,9 +284,9 @@ The result should be similar to
 
 
 
-##### Example3: Basic SQL
+##### Example 3: Basic SQL
 
-Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of ``spark.authenticate.secret`` with your own secret key.
+Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of `your_secret_key` with your own secret key.
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
@@ -325,9 +325,9 @@ The result should be similar to
 
 
 
-##### Example4: Bigdl lenet
+##### Example 4: Bigdl lenet
 
-Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of ``spark.authenticate.secret`` with your own secret key.
+Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of `your_secret_key` with your own secret key.
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
@@ -370,9 +370,9 @@ The result should be similar to
 
 
 
-##### Example5: Xgboost
+##### Example 5: XGBoost Regressor
 
-Before running the example, make sure that `Boston_Housing.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of ``spark.authenticate.secret`` with your own secret key and `RABIT_TRACKER_IP` with your IP address.
+Before running the example, make sure that `Boston_Housing.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of `your_secret_key` with your own secret key and `RABIT_TRACKER_IP` with your IP address.
 
 ```bash
 SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=your_IP_address && /opt/jdk8/bin/java -cp \
@@ -440,4 +440,148 @@ The result should be similar to
 >|[11.0874,0.0,18.1...| 16.7|16.174896240234375|
 >
 >|[7.02259,0.0,18.1...| 14.2| 13.38729190826416|
+
+
+
+##### Example 6: Orca data
+
+Before running the example, download the [NYC Taxi](https://raw.githubusercontent.com/numenta/NAB/master/data/realKnownCause/nyc_taxi.csv) dataset in Numenta Anoomaly Benchmark for demo manually or with following command. 
+
+```bash
+wget https://raw.githubusercontent.com/numenta/NAB/master/data/realKnownCause/nyc_taxi.csv
+```
+
+After downloading the dataset, make sure that `nyc_taxi.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of `your_secret_key` with your own secret key and `path_of_nyc_taxi_csv` with your path of `nyc_taxi.csv`.
+
+```bash
+SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
+  '/ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+  -Xmx2g \
+  org.apache.spark.deploy.SparkSubmit \
+  --master 'spark://your_master_url' \
+  --conf spark.authenticate=true \
+  --conf spark.authenticate.secret=your_secret_key \
+  --conf spark.driver.memory=2g \
+  --conf spark.executor.extraClassPath=/ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
+  --conf spark.driver.extraClassPath=/ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
+  --properties-file /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/conf/spark-analytics-zoo.conf \
+  --jars /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
+  --py-files /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-python-api.zip \
+  --executor-memory 2g \
+  /ppml/trusted-big-data-ml/work/examples/pyzoo/orca/data/spark_pandas.py \
+  -f path_of_nyc_taxi_csv" | tee test-orca-data-sgx.log
+```
+
+Then check the output with the following command.
+
+```bash
+cat test-orca-data-sgx.log | egrep -a "INFO data|Stopping" -A10
+```
+
+Then the result should contain the similar content as 
+
+>INFO data collected: [        timestamp value
+>
+>0   2014-07-01 00:00:00 10844
+>
+>1   2014-07-01 00:30:00  8127
+>
+>2   2014-07-01 01:00:00  6210
+>
+>3   2014-07-01 01:30:00  4656
+>
+>4   2014-07-01 02:00:00  3820
+>
+>...          ...  ...
+>
+>10315 2015-01-31 21:30:00 24670
+>
+>10316 2015-01-31 22:00:00 25721
+>
+>10317 2015-01-31 22:30:00 27309
+>
+>10318 2015-01-31 23:00:00 26591
+>
+>\--
+>
+> 
+>
+>INFO data2 collected: [        timestamp value      datetime hours awake
+>
+>0  2014-07-01 00:00:00 10844 2014-07-01 00:00:00   0   1
+>
+>1  2014-07-01 00:30:00  8127 2014-07-01 00:30:00   0   1
+>
+>2  2014-07-01 03:00:00  2369 2014-07-01 03:00:00   3   0
+>
+>3  2014-07-01 04:30:00  2158 2014-07-01 04:30:00   4   0
+>
+>4  2014-07-01 05:00:00  2515 2014-07-01 05:00:00   5   0
+>
+>...         ...  ...         ...  ...  ...
+>
+>5215 2015-01-31 17:30:00 23595 2015-01-31 17:30:00   17   1
+>
+>5216 2015-01-31 18:30:00 27286 2015-01-31 18:30:00   18   1
+>
+>5217 2015-01-31 19:00:00 28804 2015-01-31 19:00:00   19   1
+>
+>5218 2015-01-31 19:30:00 27773 2015-01-31 19:30:00   19   1
+>
+>\--
+>
+>Stopping orca context
+
+
+
+##### Example 7: XGBoost Classifier
+
+Before running the example, download the sample dataset from [pima-indians-diabetes](https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv) dataset manually or with following command. 
+
+```bash
+wget https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv
+```
+
+After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace the value of `your_secret_key` with your own secret key and `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv`.
+
+```bash
+SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=192.168.0.111 && /opt/jdk8/bin/java -cp \
+  '/ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+  -Xmx2g \
+  org.apache.spark.deploy.SparkSubmit \
+  --master 'local[4]' \
+  --conf spark.driver.memory=2g \
+  --conf spark.executor.extraClassPath=/ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
+  --conf spark.driver.extraClassPath=/ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
+  --properties-file /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/conf/spark-analytics-zoo.conf \
+  --jars /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
+  --py-files /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-python-api.zip \
+  --executor-memory 2g \
+  /ppml/trusted-big-data-ml/work/examples/pyzoo/xgboost/xgboost_classifier.py \
+  -f /ppml/trusted-big-data-ml/work/data/pima-indians-diabetes.data.csv" | tee test-xgboost-classifier-sgx.log
+```
+
+Then check the output with the following command.
+
+```bash
+cat test-xgboost-classifier-sgx.log | egrep "prediction" -A7
+```
+
+The result should be similar to
+
+> | f1|  f2| f3| f4|  f5| f6|  f7| f8|label|    rawPrediction|     probability|prediction|
+>
+> +----+-----+----+----+-----+----+-----+----+-----+--------------------+--------------------+----------+
+>
+> |11.0|138.0|74.0|26.0|144.0|36.1|0.557|50.0| 1.0|[-0.8209581375122...|[0.17904186248779...|    1.0|
+>
+> | 3.0|106.0|72.0| 0.0| 0.0|25.8|0.207|27.0| 0.0|[-0.0427864193916...|[0.95721358060836...|    0.0|
+>
+> | 6.0|117.0|96.0| 0.0| 0.0|28.7|0.157|30.0| 0.0|[-0.2336160838603...|[0.76638391613960...|    0.0|
+>
+> | 2.0| 68.0|62.0|13.0| 15.0|20.1|0.257|23.0| 0.0|[-0.0315906107425...|[0.96840938925743...|    0.0|
+>
+> | 9.0|112.0|82.0|24.0| 0.0|28.2|1.282|50.0| 1.0|[-0.7087597250938...|[0.29124027490615...|    1.0|
+>
+> | 0.0|119.0| 0.0| 0.0| 0.0|32.4|0.141|24.0| 1.0|[-0.4473398327827...|[0.55266016721725...|    0.0|
 
