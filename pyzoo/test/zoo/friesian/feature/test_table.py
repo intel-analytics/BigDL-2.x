@@ -16,7 +16,6 @@
 
 import shutil
 import os.path
-<<<<<<< HEAD
 import tempfile
 from unittest import TestCase
 
@@ -24,14 +23,12 @@ import pyspark.sql.functions as f
 from pyspark.sql.functions import udf
 from pyspark.sql.functions import col, concat, max, min, array
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
-=======
 import pytest
 from unittest import TestCase
 
 from pyspark.sql.functions import col, max, min, array
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, \
     DoubleType
->>>>>>> 569b2bb47c12798a5117bc8808c9430ab110d97b
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature import FeatureTable, StringIndex
