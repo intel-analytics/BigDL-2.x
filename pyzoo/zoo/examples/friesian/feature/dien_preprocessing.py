@@ -95,7 +95,7 @@ if __name__ == "__main__":
     def get_category(x):
         cat = x[0][-1] if x[0][-1] is not None else "default"
         return cat.strip().lower()
-    trans_label = lambda x: [float(x), 1 - float(x)]
+    trans_label = lambda x: [1 - float(x), float(x)]
 
     item_tbl = FeatureTable.read_json(args.input_meta).select(['asin', 'categories'])\
         .dropna(columns=['asin', 'categories']) \
