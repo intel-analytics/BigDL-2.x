@@ -613,7 +613,7 @@ object InternalOptimizer {
     dataset: DistributedDataSet[MiniBatch[T]],
     criterion: Criterion[T]
   )(implicit ev: TensorNumeric[T]): Optimizer[T, MiniBatch[T]] = {
-    EngineRef.getOptimizerVersion() match {
+    EngineOptimizer.getOptimizerVersion() match {
       case OptimizerV1 =>
         new InternalDistriOptimizer[T](
           _model = model,

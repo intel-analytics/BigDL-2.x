@@ -32,7 +32,7 @@ import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.feature.common.{Preprocessing, _}
 import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType}
 import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
+import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{EngineRef, EngineOptimizer}
 import com.intel.analytics.zoo.pipeline.api.keras.models.{InternalDistriOptimizer, InternalDistriOptimizerV2}
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
@@ -425,7 +425,7 @@ class NNEstimator[T: ClassTag] private[zoo](
   protected override def internalFit(dataFrame: DataFrame): NNModel[T] = {
     val trainingDataSet = getDataSet(dataFrame, $(batchSize))
     val endTrigger = if (isSet(endWhen)) $(endWhen) else Trigger.maxEpoch($(maxEpoch))
-    val optimizer = EngineRef.getOptimizerVersion() match {
+    val optimizer = EngineOptimizer.getOptimizerVersion() match {
       case OptimizerV1 =>
         new InternalDistriOptimizer(model, null, criterion)
           .setOptimMethod($(optimMethod))
@@ -500,7 +500,7 @@ class NNEstimator[T: ClassTag] private[zoo](
   // https://spark.apache.org/docs/latest/api/python/reference/pyspark.ml.html#evaluation
   def internalEval(dataFrame: DataFrame): JList[EvaluatedResult] = {
     val validationFeatureset = getDataSet(dataFrame, validationBatchSize)
-    val optimizer = EngineRef.getOptimizerVersion() match {
+    val optimizer = EngineOptimizer.getOptimizerVersion() match {
       case OptimizerV1 => new InternalDistriOptimizer(model, null, criterion)
       case OptimizerV2 => new InternalDistriOptimizerV2(model, null, criterion)
     }
