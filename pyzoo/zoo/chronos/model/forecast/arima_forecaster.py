@@ -38,9 +38,9 @@ class ARIMAForecaster(Forecaster):
                  ):
         """
         Build a ARIMA Forecast Model.
-        User can customize p, q, seasonality_mode, P, Q, m, metric for the ARIMA model, 
-        the differencing term (d) and seasonal differencing term (D) are automatically estimated from 
-        the data. For details of the ARIMA model hyperparameters, refer to
+        User can customize p, q, seasonality_mode, P, Q, m, metric for the ARIMA model,
+        the differencing term (d) and seasonal differencing term (D) are automatically
+        estimated from the data. For details of the ARIMA model hyperparameters, refer to
         https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA.
 
         :param p: hyperparameter p for the ARIMA model.

@@ -41,7 +41,7 @@ class AutoProphet:
         User need to specify either the exact value or the search space of the
         Prophet model hyperparameters. For details of the Prophet model hyperparameters, refer to
         https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning.
-        
+
         :param changepoint_prior_scale: Int or hp sampling function from an integer space
             for hyperparameter changepoint_prior_scale for the Prophet model.
             For hp sampling, see zoo.chronos.orca.automl.hp for more details.
@@ -92,7 +92,7 @@ class AutoProphet:
             ):
         """
         Automatically fit the model and search for the best hyperparameters.
-        
+
         :param data: Training data, A 1-D numpy array.
         :param epochs: Max number of epochs to train in each trial. Defaults to 1.
                If you have also set metric_threshold, a trial will stop if either it has been

@@ -37,11 +37,11 @@ class ProphetForecaster(Forecaster):
                  ):
         """
         Build a Prophet Forecast Model.
-        User can customize changepoint_prior_scale, seasonality_prior_scale, 
+        User can customize changepoint_prior_scale, seasonality_prior_scale,
         holidays_prior_scale, seasonality_mode, changepoint_range and metric
         of the Prophet model, for details of the Prophet model hyperparameters, refer to
         https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning.
-        
+
         :param changepoint_prior_scale: hyperparameter changepoint_prior_scale for the
             Prophet model.
         :param seasonality_prior_scale: hyperparameter seasonality_prior_scale for the

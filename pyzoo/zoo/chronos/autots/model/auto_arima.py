@@ -38,9 +38,9 @@ class AutoARIMA:
                  **arima_config
                  ):
         """
-        Create an automated ARIMA Model. 
+        Create an automated ARIMA Model.
         User need to specify either the exact value or the search space of
-        the the ARIMA model hyperparameters. For details of the ARIMA model hyperparameters, refer to
+        the ARIMA model hyperparameters. For details of the ARIMA model hyperparameters, refer to
         https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA.
 
         :param p: Int or hp sampling function from an integer space for hyperparameter p
