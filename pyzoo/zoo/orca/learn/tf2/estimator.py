@@ -233,8 +233,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                 worker_stats = ray_xshards.reduce_partitions_for_actors(self.remote_workers,
                                                                         transform_func)
             else:
-                val_ray_xshards = process_spark_xshards(validation_data,
-                                                                        self.num_workers)
+                val_ray_xshards = process_spark_xshards(validation_data, self.num_workers)
 
                 def zip_func(worker, this_partition_refs, that_partition_refs):
                     params["data_creator"] = make_data_creator(this_partition_refs)
