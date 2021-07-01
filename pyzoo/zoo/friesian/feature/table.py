@@ -679,7 +679,7 @@ class FeatureTable(Table):
         :return: A new FeatureTable which hash encoded values.
         """
         cross_hash_df = self.df
-        assert isinstance(columns, list), "columns should be a list of columns"
+        assert isinstance(columns, list), "columns should be a list of column names"
         assert len(columns) >= 2, "cross_hash_encode should have >= 2 columns"
         if cross_col_name is None:
             cross_string = ''
