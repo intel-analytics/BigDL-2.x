@@ -211,7 +211,7 @@ class AutoTSTrainer:
 
         return TSPipeline(best_model=self.get_best_model(),
                           best_config=self.get_best_config(),
-                          scale=self._scaler,
+                          scaler=self._scaler,
                           scaler_index=self._scaler_index)
 
     def _prepare_data_creator(self, search_space, train_data, val_data=None):

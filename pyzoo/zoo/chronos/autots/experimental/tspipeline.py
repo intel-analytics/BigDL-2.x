@@ -67,8 +67,8 @@ class TSPipeline:
         x, _ = self._tsdataset_to_numpy(data, is_predict=True)
         yhat = self._best_model.predict(x, batch_size=batch_size)
         if self._scaler:
-            from zoo.chronos.data.utils import unscale_timeseries_numpy
-            yhat = unscale_timeseries_numpy(y, self._scaler, self._scaler_index)
+            from zoo.chronos.data.utils.scale import unscale_timeseries_numpy
+            yhat = unscale_timeseries_numpy(yhat, self._scaler, self._scaler_index)
         return yhat
 
     def fit(self, data, validation_data=None, epochs=1, metric="mse"):
