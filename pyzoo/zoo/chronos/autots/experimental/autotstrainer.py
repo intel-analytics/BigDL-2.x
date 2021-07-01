@@ -124,6 +124,8 @@ class AutoTSTrainer:
 
         # save selected features setting for data creator generation
         self.selected_features = selected_features
+        self._scaler = None
+        self._scaler_index = None
 
     def fit(self,
             data,
@@ -172,6 +174,8 @@ class AutoTSTrainer:
                 train_data=data,
                 val_data=validation_data,
             )
+            self._scaler = data.scaler
+            self._scaler_index = data.scaler_index
         else:
             train_d, val_d = data, validation_data
 
@@ -206,7 +210,9 @@ class AutoTSTrainer:
             )
 
         return TSPipeline(best_model=self.get_best_model(),
-                          best_config=self.get_best_config())
+                          best_config=self.get_best_config(),
+                          scale=self._scaler,
+                          scaler_index=self._scaler_index)
 
     def _prepare_data_creator(self, search_space, train_data, val_data=None):
         """
