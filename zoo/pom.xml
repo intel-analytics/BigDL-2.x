@@ -30,6 +30,7 @@
         <java.version>1.7</java.version>
         <javac.version>1.7</javac.version>
         <scala-library-scope>compile</scala-library-scope>
+        <spark-mllib-scope>compile</spark-mllib-scope>
         <scala.major.version>2.11</scala.major.version>
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
@@ -210,6 +211,7 @@
             <properties>
                 <core.artifactId>zoo-core-dist-mac</core.artifactId>
                 <core.dependencyType>pom</core.dependencyType>
+                <spark-mllib-scope>provided</spark-mllib-scope>
             </properties>
             <!--these are not supported right now, added to make the project compiles-->
             <dependencies>
@@ -362,7 +364,7 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
-            <scope>${scala-library-scope}</scope>
+            <scope>${spark-mllib-scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.intel.analytics.bigdl</groupId>
