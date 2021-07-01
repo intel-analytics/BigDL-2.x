@@ -19,7 +19,6 @@ import os.path
 import pytest
 import hashlib
 import operator
-import tempfile
 from unittest import TestCase
 
 from pyspark.sql.functions import col, concat, max, min, array
