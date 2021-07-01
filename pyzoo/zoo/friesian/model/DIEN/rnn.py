@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# Modifications copyright (C) 2018 Alibaba Group
 # ==============================================================================
 
 """RNN helpers for TensorFlow models.
@@ -26,13 +28,6 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-import tensorflow as tf
-ver = tf.__version__
-is_v2 = False
-if (ver[0] == '2'):
-  is_v2 = True
-if is_v2:
-    import tensorflow.compat.v1 as tf
 
 from tensorflow.python.framework import constant_op
 from tensorflow.python.framework import dtypes
@@ -78,7 +73,7 @@ def _transpose_batch_time(x):
           ([1, 0], math_ops.range(2, x_rank)), axis=0))
   x_t.set_shape(
       tensor_shape.TensorShape([
-          x_static_shape[1], x_static_shape[0]
+          x_static_shape[1].value, x_static_shape[0].value
       ]).concatenate(x_static_shape[2:]))
   return x_t
 
@@ -103,9 +98,9 @@ def _best_effort_input_batch_size(flat_input):
     if shape.ndims < 2:
       raise ValueError(
           "Expected input tensor %s to have rank at least 2" % input_)
-    batch_size = shape[1]
-    #if batch_size is not None:
-      #return batch_size
+    batch_size = shape[1].value
+    if batch_size is not None:
+      return batch_size
   # Fallback to the dynamic batch size of the first input.
   return array_ops.shape(flat_input[0])[1]
 
@@ -392,12 +387,9 @@ def bidirectional_dynamic_rnn(cell_fw, cell_bw, inputs, sequence_length=None,
   Raises:
     TypeError: If `cell_fw` or `cell_bw` is not an instance of `RNNCell`.
   """
+
   assert_like_rnncell(cell_fw.name, cell_fw)
   assert_like_rnncell(cell_bw.name, cell_bw)
-  #if not _like_rnncell(cell_fw):
-    #raise TypeError("cell_fw must be an instance of RNNCell")
-  #if not _like_rnncell(cell_bw):
-    #raise TypeError("cell_bw must be an instance of RNNCell")
 
   with vs.variable_scope(scope or "bidirectional_rnn"):
     # Forward direction
@@ -558,8 +550,6 @@ def dynamic_rnn(cell, inputs, att_scores=None, sequence_length=None, initial_sta
     ValueError: If inputs is None or an empty list.
   """
   assert_like_rnncell(cell.name, cell)
-  #if not _like_rnncell(cell):
-    #raise TypeError("cell must be an instance of RNNCell")
 
   # By default, time_major==False and inputs are batch-major: shaped
   #   [batch, time, depth]
@@ -694,8 +684,8 @@ def _dynamic_rnn_loop(cell,
       raise ValueError(
           "Input size (depth of inputs) must be accessible via shape inference,"
           " but saw value None.")
-    got_time_steps = shape[0]
-    got_batch_size = shape[1]
+    got_time_steps = shape[0].value
+    got_batch_size = shape[1].value
     if const_time_steps != got_time_steps:
       raise ValueError(
           "Time steps is not the same for all the elements in the input in a "
@@ -980,9 +970,8 @@ def raw_rnn(cell, loop_fn,
     TypeError: If `cell` is not an instance of RNNCell, or `loop_fn` is not
       a `callable`.
   """
+
   assert_like_rnncell(cell.name, cell)
-  #if not _like_rnncell(cell):
-    #raise TypeError("cell must be an instance of RNNCell")
   if not callable(loop_fn):
     raise TypeError("loop_fn must be a callable")
 
@@ -1178,9 +1167,8 @@ def static_rnn(cell,
     ValueError: If `inputs` is `None` or an empty list, or if the input depth
       (column size) cannot be inferred from inputs via shape inference.
   """
+
   assert_like_rnncell(cell.name, cell)
-  #if not _like_rnncell(cell):
-    #raise TypeError("cell must be an instance of RNNCell")
   if not nest.is_sequence(inputs):
     raise TypeError("inputs must be a sequence")
   if not inputs:
@@ -1415,12 +1403,9 @@ def static_bidirectional_rnn(cell_fw,
     TypeError: If `cell_fw` or `cell_bw` is not an instance of `RNNCell`.
     ValueError: If inputs is None or an empty list.
   """
+
   assert_like_rnncell(cell_fw.name, cell_fw)
   assert_like_rnncell(cell_bw.name, cell_bw)
-  #if not _like_rnncell(cell_fw):
-    #raise TypeError("cell_fw must be an instance of RNNCell")
-  #if not _like_rnncell(cell_bw):
-    #raise TypeError("cell_bw must be an instance of RNNCell")
   if not nest.is_sequence(inputs):
     raise TypeError("inputs must be a sequence")
   if not inputs:

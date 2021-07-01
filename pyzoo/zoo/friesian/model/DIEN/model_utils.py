@@ -1,14 +1,22 @@
-from initializers import *
+# Copyright 2015 The TensorFlow Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Modifications copyright (C) 2018 Alibaba Group
+# ==============================================================================
+
 import tensorflow as tf
-ver = tf.__version__
-is_v2 = False
-if (ver[0] == '2'):
-  is_v2 = True
-if is_v2:
-    import tensorflow.compat.v1 as tf
 from tensorflow.python.ops.rnn_cell import *
-#from tensorflow.python.ops.rnn_cell_impl import  _Linear
-from tensorflow import keras
 from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import init_ops
 from tensorflow.python.ops import array_ops
@@ -351,18 +359,14 @@ def din_fcn_attention(query, facts, attention_size, mask, stag='null', mode='SUM
     mask = tf.equal(mask, tf.ones_like(mask))
     facts_size = facts.get_shape().as_list()[-1]  # D value - hidden size of the RNN layer
     querry_size = query.get_shape().as_list()[-1]
-    query = tf.layers.dense(query, facts_size, activation=None, name='f1' + stag,
-                            kernel_initializer=get_dense_initializer())
+    query = tf.layers.dense(query, facts_size, activation=None, name='f1' + stag)
     query = prelu(query)
     queries = tf.tile(query, [1, tf.shape(facts)[1]])
     queries = tf.reshape(queries, tf.shape(facts))
     din_all = tf.concat([queries, facts, queries-facts, queries*facts], axis=-1)
-    d_layer_1_all = tf.layers.dense(din_all, 80, activation=tf.nn.sigmoid, name='f1_att' + stag,
-                                    kernel_initializer=get_dense_initializer())
-    d_layer_2_all = tf.layers.dense(d_layer_1_all, 40, activation=tf.nn.sigmoid, name='f2_att' + stag,
-                                    kernel_initializer=get_dense_initializer())
-    d_layer_3_all = tf.layers.dense(d_layer_2_all, 1, activation=None, name='f3_att' + stag,
-                                    kernel_initializer=get_dense_initializer())
+    d_layer_1_all = tf.layers.dense(din_all, 80, activation=tf.nn.sigmoid, name='f1_att' + stag)
+    d_layer_2_all = tf.layers.dense(d_layer_1_all, 40, activation=tf.nn.sigmoid, name='f2_att' + stag)
+    d_layer_3_all = tf.layers.dense(d_layer_2_all, 1, activation=None, name='f3_att' + stag)
     d_layer_3_all = tf.reshape(d_layer_3_all, [-1, 1, tf.shape(facts)[1]])
     scores = d_layer_3_all
     # Mask
@@ -461,3 +465,36 @@ def din_fcn_shine(query, facts, attention_size, mask, stag='null', mode='SUM', s
     d_layer_2_all = tf.reshape(d_layer_2_all, tf.shape(facts))
     output = d_layer_2_all
     return output
+
+def dice(_x, axis=-1, epsilon=0.000000001, name='', data_type = tf.float32):
+  with tf.variable_scope(name, reuse=tf.AUTO_REUSE):
+    alphas = tf.get_variable('alpha'+name, _x.get_shape()[-1],
+                         initializer=tf.constant_initializer(0.0),
+                         dtype=data_type)
+    input_shape = list(_x.get_shape())
+
+    reduction_axes = list(range(len(input_shape)))
+    del reduction_axes[axis]
+    broadcast_shape = [1] * len(input_shape)
+    broadcast_shape[axis] = input_shape[axis]
+
+  # case: train mode (uses stats of the current batch)
+  mean = tf.reduce_mean(_x, axis=reduction_axes)
+  brodcast_mean = tf.reshape(mean, broadcast_shape)
+  std = tf.reduce_mean(tf.square(_x - brodcast_mean) + epsilon, axis=reduction_axes)
+  std = tf.sqrt(std)
+  brodcast_std = tf.reshape(std, broadcast_shape)
+  x_normed = (_x - brodcast_mean) / (brodcast_std + epsilon)
+  # x_normed = tf.layers.batch_normalization(_x, center=False, scale=False)
+  x_p = tf.sigmoid(x_normed)
+
+  return alphas * (1.0 - x_p) * _x + x_p * _x
+
+def parametric_relu(_x):
+  alphas = tf.get_variable('alpha', _x.get_shape()[-1],
+                       initializer=tf.constant_initializer(0.0),
+                       dtype=tf.float32)
+  pos = tf.nn.relu(_x)
+  neg = alphas * (_x - abs(_x)) * 0.5
+
+  return pos + neg
