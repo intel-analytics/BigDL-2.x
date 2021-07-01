@@ -31,6 +31,9 @@
         <javac.version>1.7</javac.version>
         <scala-library-scope>compile</scala-library-scope>
         <scala.major.version>2.11</scala.major.version>
+        <akka.http.version>10.1.11</akka.http.version>
+        <akka.actor.version>2.5.26</akka.actor.version>
+        <guava.version>15.0</guava.version>
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>3.0.7</scalatest.version>
@@ -95,9 +98,9 @@
 
         <profile>
             <id>spark_2.4+</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+            <!--<activation>-->
+                <!--<activeByDefault>true</activeByDefault>-->
+            <!--</activation>-->
             <build>
                 <plugins>
                     <plugin>
@@ -132,6 +135,9 @@
 
         <profile>
             <id>spark_3.x</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
@@ -148,6 +154,9 @@
                 <scala.major.version>2.12</scala.major.version>
                 <scala.version>2.12.10</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
+                <akka.http.version>10.2.3</akka.http.version>
+                <akka.actor.version>2.6.9</akka.actor.version>
+                <guava.version>23.0</guava.version>
                 <maven.compiler.source>${java.version}</maven.compiler.source>
                 <maven.compiler.target>${java.version}</maven.compiler.target>
                 <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
@@ -162,6 +171,26 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
                     <version>1.7.5</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.lightbend.akka.grpc</groupId>
+                    <artifactId>akka-grpc-runtime_${scala.major.version}</artifactId>
+                    <version>${akka.grpc.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>grpc-core</artifactId>
+                    <version>1.38.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>grpc-netty-shaded</artifactId>
+                    <version>1.38.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.thesamet.scalapb</groupId>
+                    <artifactId>scalapb-runtime_2.12</artifactId>
+                    <version>0.11.3</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -468,27 +497,22 @@
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-actor_${scala.major.version}</artifactId>
-            <version>2.5.26</version>
+            <version>${akka.actor.version}</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-http_${scala.major.version}</artifactId>
-            <version>10.1.11</version>
+            <version>${akka.http.version}</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-http-core_${scala.major.version}</artifactId>
-            <version>10.1.11</version>
+            <version>${akka.http.version}</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-stream_${scala.major.version}</artifactId>
-            <version>2.5.26</version>
-        </dependency>
-        <dependency>
-            <groupId>com.lightbend.akka.grpc</groupId>
-            <artifactId>akka-grpc-runtime_${scala.major.version}</artifactId>
-            <version>${akka.grpc.version}</version>
+            <version>${akka.actor.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
@@ -513,7 +537,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>15.0</version>
+            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.arrow</groupId>
@@ -934,6 +958,33 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>grpc</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>grpc</shadedClassifierName>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>reference.conf</resource>
+                                </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <Main-Class>com.intel.analytics.zoo.serving.grpc.FrontEndGRPC</Main-Class>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                            <artifactSet>
+                                <excludes>
+                                </excludes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>flink-udf</id>
                         <phase>package</phase>
                         <goals>
@@ -1200,13 +1251,11 @@
                 <groupId>com.lightbend.akka.grpc</groupId>
                 <artifactId>akka-grpc-maven-plugin</artifactId>
                 <version>${akka.grpc.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <configuration>
+                    <language>Scala</language>
+                    <generateClient>false</generateClient>
+                    <generateServer>true</generateServer>
+                </configuration>
             </plugin>
         </plugins>
     </build>
