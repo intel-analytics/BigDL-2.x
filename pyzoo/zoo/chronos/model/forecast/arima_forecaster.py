@@ -20,12 +20,11 @@ from zoo.chronos.model.arima import ARIMAModel
 
 class ARIMAForecaster(Forecaster):
     """
-    ARIMA Forecaster
-    AutoRegressive Integrated Moving Average (ARIMA) is a class of statistical models
-    for analyzing and forecasting time series data. It consists of 3 components:
-    AR (AutoRegressive), I (Integrated) and MA (Moving Average). In ARIMAForecaster we use
-    the SARIMA model (Seasonal ARIMA), which is an extension of ARIMA that additionally
-    supports the direct modeling of the seasonal component of the time series.
+    Example:
+        >>> #The dataset is split into data, validation_data
+        >>> model = ARIMAForecaster(p=2, q=2, seasonality_mode=False)
+        >>> model.fit(data, validation_data)
+        >>> predict_result = model.predict(horizon=24)
     """
 
     def __init__(self,
@@ -39,7 +38,7 @@ class ARIMAForecaster(Forecaster):
                  ):
         """
         Build a ARIMA Forecast Model.
-        User need to set p, q, seasonality_mode, P, Q, m, metric for the ARIMA model, 
+        User can customize p, q, seasonality_mode, P, Q, m, metric for the ARIMA model, 
         the differencing term (d) and seasonal differencing term (D) are automatically estimated from 
         the data. For details of the ARIMA model hyperparameters, refer to
         https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA.
