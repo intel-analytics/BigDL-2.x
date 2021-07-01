@@ -1,7 +1,7 @@
 #!/bin/bash
 
 dir=${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/quickstart
-pytorchFiles=("pytorch_lenet_mnist_data_creator_func" "pytorch_lenet_mnist" "pytorch_distributed_lenet_mnist" "autoestimator_pytorch_lenet_mnist")
+pytorchFiles=("pytorch_lenet_mnist_data_creator_func" "pytorch_lenet_mnist" "pytorch_distributed_lenet_mnist" "autoestimator_pytorch_lenet_mnist" "chronos_nyc_taxi_tsdataset_forecaster")
 index=1
 
 set -e
@@ -14,6 +14,13 @@ do
 	#timer
 	start=$(date "+%s")
 
+	# chronos_nyc_taxi_tsdataset_forecaster data download
+    if [ ${f} = "chronos_nyc_taxi_tsdataset_forecaster"]; then
+		if [ ! -f nyc_taxi.csv ]; then
+			wget https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv
+		fi
+	fi
+
 	${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${filename}
 	sed -i "s/get_ipython()/#/g"  ${filename}.py
 	sed -i "s/import os/#import os/g" ${filename}.py
@@ -25,6 +32,7 @@ do
 	sed -i 's/^[^#].*site-packages*/#&/g' ${filename}.py
 	sed -i 's/version_info/#version_info/g' ${filename}.py
 	sed -i 's/python_version/#python_version/g' ${filename}.py
+	sed -i 's/exit()/#exit()/g' ${filename}.py
 
 	python ${filename}.py
 
