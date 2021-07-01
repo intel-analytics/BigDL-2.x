@@ -78,7 +78,7 @@ Use fitted forecaster to predict test data
 ```python
 x_test, y_test = tsdata_test.to_numpy()
 pred = forecaster.predict(x_test)
-pred_unscale, groundtruth_unscale = tsdata_test._unscale_numpy(pred), tsdata_test._unscale_numpy(y_test)
+pred_unscale, groundtruth_unscale = tsdata_test.unscale_numpy(pred), tsdata_test.unscale_numpy(y_test)
 ```
 
 Save & restore the forecaster.
