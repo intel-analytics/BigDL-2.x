@@ -133,6 +133,6 @@ class AutoARIMA:
 
     def get_best_model(self):
         """
-        Get the best arima model.
+        Get the best ARIMA model.
         """
         return self.auto_est.get_best_model()

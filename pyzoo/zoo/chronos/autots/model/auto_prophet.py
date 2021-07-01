@@ -127,6 +127,6 @@ class AutoProphet:
 
     def get_best_model(self):
         """
-        Get the best arima model.
+        Get the best Prophet model.
         """
         return self.auto_est.get_best_model()
