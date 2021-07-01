@@ -240,8 +240,10 @@ class TestAutoTrainer(TestCase):
         input_feature_dim = 11  # This param will not be used
         output_feature_dim = 2  # 2 targets are generated in get_tsdataset
 
-        tsdata_train = get_tsdataset().gen_dt_feature()
-        tsdata_valid = get_tsdataset().gen_dt_feature()
+        from sklearn.preprocessing import StandardScaler
+        scaler = StandardScaler()
+        tsdata_train = get_tsdataset().gen_dt_feature().scale(scaler, fit=True)
+        tsdata_valid = get_tsdataset().gen_dt_feature().scale(scaler, fit=False)
 
         search_space = {
             'hidden_units': hp.grid_search([32, 64]),
@@ -280,20 +282,13 @@ class TestAutoTrainer(TestCase):
                           feature_col=best_config["selected_features"])
         x_valid, y_valid = tsdata_valid.to_numpy()
         y_pred_raw = best_model.predict(x_valid)
-
-        tsdata_valid.roll(lookback=best_config["past_seq_len"],
-                          horizon=1,
-                          feature_col=best_config["selected_features"])
-        x_valid, y_valid = tsdata_valid.to_numpy()
-        eval_result_raw = best_model.evaluate(x_valid, y_valid)
+        y_pred_raw = tsdata_valid.unscale_numpy(y_pred_raw)
 
         # use tspipeline to predic and evaluate
         eval_result = ts_pipeline.evaluate(tsdata_valid)
         y_pred = ts_pipeline.predict(tsdata_valid)
-        
 
         # check if they are the same
-        np.testing.assert_almost_equal(eval_result[0], eval_result_raw[0])
         np.testing.assert_almost_equal(y_pred, y_pred_raw)
 
         # save and load
