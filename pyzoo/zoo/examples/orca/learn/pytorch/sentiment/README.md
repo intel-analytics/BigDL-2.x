@@ -26,7 +26,7 @@ python main.py
 
 ```
 export HADOOP_CONF_DIR=the directory of the hadoop and yarn configurations
-python main.py --cluster_mode yarn-client
+python main.py --cluster_mode yarn
 ```
 
 ## Results
