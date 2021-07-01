@@ -83,7 +83,8 @@ class AutoARIMA:
         model_builder = ARIMABuilder()
         self.auto_est = AutoEstimator(model_builder=model_builder,
                                       logs_dir=logs_dir,
-                                      resources_per_trial={"cpu": cpus_per_trial},
+                                      resources_per_trial={
+                                          "cpu": cpus_per_trial},
                                       name=name)
 
     def fit(self,
@@ -99,7 +100,7 @@ class AutoARIMA:
             ):
         """
         Automatically fit the model and search for the best hyperparameters.
-        
+
         :param data: Training data, A 1-D numpy array.
         :param epochs: Max number of epochs to train in each trial. Defaults to 1.
                If you have also set metric_threshold, a trial will stop if either it has been
