@@ -84,12 +84,8 @@ class ProphetForecaster(Forecaster):
         :param validation_data: evaluation data, should be the same type as x
         """
         self._check_data(data, validation_data)
-        data_dict = {
-            'x': data,
-            'y': None,
-            'val_x': None,
-            'val_y': validation_data}
-        return self.internal.fit_eval(data=data_dict,
+        return self.internal.fit_eval(data=data,
+                                      validation_data=validation_data,
                                       **self.model_config)
 
     def _check_data(self, data, validation_data):
@@ -124,7 +120,9 @@ class ProphetForecaster(Forecaster):
         if self.internal.model is None:
             raise RuntimeError(
                 "You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate(None, validation_data, metrics=metrics)
+        return self.internal.evaluate(target=validation_data,
+                                      data=None,
+                                      metrics=metrics)
 
     def save(self, checkpoint_file):
         """
