@@ -16,10 +16,10 @@
 
 package com.intel.analytics.zoo.friesian.python
 
-
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.friesian.feature.Utils
+
 import java.util.{List => JList}
 
 import org.apache.spark.sql.{DataFrame, Row}
@@ -32,6 +32,8 @@ import org.apache.spark.ml.feature.MinMaxScaler
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
+import scala.collection.mutable.WrappedArray
+import scala.util.Random
 import scala.math.pow
 
 object PythonFriesian {
@@ -50,7 +52,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       columns.asScala.toArray
     }
 
-    val cols_idx: Array[Int] = Utils.getIndex(df, cols)
+    val cols_idx = Utils.getIndex(df, cols)
 
     Utils.fillNaIndex(df, fillVal, cols_idx)
   }
@@ -150,7 +152,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def log(df: DataFrame, columns: JList[String], clipping: Boolean = true): DataFrame = {
     val colsIdx = Utils.getIndex(df, columns.asScala.toArray)
-    for (i <- 0 until columns.size()) {
+    for(i <- 0 until columns.size()) {
       val colName = columns.get(i)
       val colType = df.schema(colsIdx(i)).dataType.typeName
       if (!Utils.checkColumnNumeric(df, colName)) {
@@ -190,7 +192,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       }
     })
 
-    for (i <- 0 until columns.size()) {
+    for(i <- 0 until columns.size()) {
       val colName = columns.get(i)
       val colType = colsType(i)
 
@@ -212,7 +214,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   def crossColumns(df: DataFrame,
                    crossCols: JList[JList[String]],
                    bucketSizes: JList[Int]): DataFrame = {
-    def crossColumns(bucketSize: Int) = udf((cols: collection.mutable.WrappedArray[Any]) => {
+    def crossColumns(bucketSize: Int) = udf((cols: WrappedArray[Any]) => {
       Utils.hashBucket(cols.mkString("_"), bucketSize = bucketSize)
     })
 
@@ -419,7 +421,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       columns.asScala.toArray
     }
 
-    Utils.getIndex(df, cols) // checks if `columns` exist in `df`
+    Utils.getIndex(df, cols)  // checks if `columns` exist in `df`
     val medians = Utils.getMedian(df, cols, relativeError)
     val medians_data = (cols zip medians).map(cm => Row.fromSeq(Array(cm._1, cm._2)))
     val spark = df.sparkSession
@@ -443,8 +445,8 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     val vectoredDF = df.withColumn(column, toVector(col(column)))
     val scaler = new MinMaxScaler()
-        .setInputCol(column)
-        .setOutputCol("scaled")
+      .setInputCol(column)
+      .setOutputCol("scaled")
     val toArray = udf((vec: MLVector) => vec.toArray.map(_.toFloat))
     val resultDF = scaler.fit(vectoredDF).transform(vectoredDF)
       .withColumn(column, toArray(col("scaled"))).drop("scaled")
