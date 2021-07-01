@@ -100,4 +100,3 @@ def ordinal_shuffle_partition(df):
 
 def write_parquet(df, path, mode):
     callZooFunc("float", "dfWriteParquet", df, path, mode)
-
