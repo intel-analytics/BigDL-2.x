@@ -15,6 +15,8 @@
 #
 
 from zoo.common.utils import callZooFunc
+from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, DecimalType, \
+    DoubleType
 
 
 def compute(df):
@@ -84,3 +86,18 @@ def pad(df, cols, seq_len, mask_cols):
     df = callZooFunc("float", "mask", df, mask_cols, seq_len) if mask_cols else df
     df = callZooFunc("float", "postPad", df, cols, seq_len)
     return df
+
+
+def check_column_numeric(df, column):
+    return df.schema[column].dataType in [IntegerType(), ShortType(),
+                                          LongType(), FloatType(),
+                                          DecimalType(), DoubleType()]
+
+
+def ordinal_shuffle_partition(df):
+    return callZooFunc("float", "ordinalShufflePartition", df)
+
+
+def write_parquet(df, path, mode):
+    callZooFunc("float", "dfWriteParquet", df, path, mode)
+

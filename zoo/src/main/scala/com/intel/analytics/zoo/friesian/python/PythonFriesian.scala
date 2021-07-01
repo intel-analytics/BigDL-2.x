@@ -16,24 +16,23 @@
 
 package com.intel.analytics.zoo.friesian.python
 
-import java.util
 
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.friesian.feature.Utils
 import java.util.{List => JList}
 
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{array, col, collect_list, explode, row_number, size, spark_partition_id, struct, udf, log => sqllog}
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Column, DataFrame, Row}
+import org.apache.spark.sql.types.{ArrayType, IntegerType, DoubleType, StringType, LongType, StructField, StructType}
+import org.apache.spark.sql.functions.{collect_list, explode, size, struct, array}
+import org.apache.spark.sql.functions.{col, row_number, spark_partition_id, udf, log => sqllog, rand}
 import org.apache.spark.ml.linalg.{DenseVector, Vector => MLVector}
 import org.apache.spark.ml.feature.MinMaxScaler
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
-import scala.collection.mutable.WrappedArray
-import scala.util.Random
+import scala.math.pow
 
 object PythonFriesian {
   def ofFloat(): PythonFriesian[Float] = new PythonFriesian[Float]()
@@ -412,7 +411,6 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
   }
 
   /* ---- Stat Operator ---- */
-
   def median(df: DataFrame, columns: JList[String] = null, relativeError: Double = 0.00001):
   DataFrame = {
     val cols = if (columns == null) {
@@ -445,11 +443,21 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     val vectoredDF = df.withColumn(column, toVector(col(column)))
     val scaler = new MinMaxScaler()
-      .setInputCol(column)
-      .setOutputCol("scaled");
+        .setInputCol(column)
+        .setOutputCol("scaled")
     val toArray = udf((vec: MLVector) => vec.toArray.map(_.toFloat))
     val resultDF = scaler.fit(vectoredDF).transform(vectoredDF)
       .withColumn(column, toArray(col("scaled"))).drop("scaled")
     resultDF
+  }
+
+  def ordinalShufflePartition(df: DataFrame): DataFrame = {
+    val shuffledDF = df.withColumn("ordinal", (rand() * pow(2, 52)).cast(LongType))
+      .sortWithinPartitions(col("ordinal")).drop(col("ordinal"))
+    shuffledDF
+  }
+
+  def dfWriteParquet(df: DataFrame, path: String, mode: String = "overwrite"): Unit = {
+    df.write.mode(mode).parquet(path)
   }
 }
