@@ -18,10 +18,8 @@ do
 	start=$(date "+%s")
 
 	# chronos_nyc_taxi_tsdataset_forecaster data download
-    if [ ${f} = "chronos_nyc_taxi_tsdataset_forecaster"]; then
-		if [ ! -f nyc_taxi.csv ]; then
-			wget https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv
-		fi
+	if [ ! -f nyc_taxi.csv ]; then
+		wget https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv
 	fi
 
 	${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${filename}
@@ -73,7 +71,6 @@ do
 	sed -i 's/^[^#].*site-packages*/#&/g' ${filename}.py
 	sed -i 's/version_info/#version_info/g' ${filename}.py
 	sed -i 's/python_version/#python_version/g' ${filename}.py
-	sed -i 's/exit()/#exit()/g' ${filename}.py
 
 	python ${filename}.py
 
