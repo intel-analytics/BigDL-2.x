@@ -101,7 +101,7 @@ class TestTable(TestCase):
                                                                    "filled"
         assert filled_tbl.df.filter("col_5 is null").count() == 0, "col_5 null values should be " \
                                                                    "filled"
- 
+
     def test_filter_by_frequency(self):
         data = [("a", "b", 1),
                 ("b", "a", 2),
@@ -140,7 +140,7 @@ class TestTable(TestCase):
         tbl_hash = []
         for record in tbl.hash_encode(["A"], 100).to_spark_df().collect():
             tbl_hash.append(int(record[0]))
-        assert(operator.eq(hash_value, tbl_hash)) == True, "the hash encoded value should be equal"
+        assert(operator.eq(hash_value, tbl_hash)), "the hash encoded value should be equal"
 
     def test_cross_hash_encode(self):
         spark = OrcaContext.get_spark_session()
@@ -165,7 +165,8 @@ class TestTable(TestCase):
         tbl_cross_hash = []
         for record in tbl.cross_hash_encode(["A", "B", "C"], 100).to_spark_df().collect():
             tbl_cross_hash.append(int(record[4]))
-        assert(operator.eq(cross_hash_value, tbl_cross_hash)) == True, "the crossed hash encoded value should be equal"
+        assert(operator.eq(cross_hash_value, tbl_cross_hash)), "the crossed hash encoded value" \
+                                                               "should be equal"
 
     def test_gen_string_idx(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")

@@ -624,17 +624,18 @@ class FeatureTable(Table):
                 .drop(col_name).withColumnRenamed("id", col_name)\
                 .dropna(subset=[col_name])
         return FeatureTable(data_df)
- 
+
     def filter_by_frequency(self, columns, min_freq=2):
         """
         Filter the FeatureTable by the given minimum frequency on the target columns.
-        
+
         :param columns: str or a list of str, column names which are considered for filtering.
-        :param min_freq: int, min frequency, columns with occurrence below this value would be filtered.
-        
+        :param min_freq: int, min frequency.
+               Columns with occurrence below this value would be filtered.
+
         :return: A new FeatureTable with filtered records.
         """
-        freq_df = self.df 
+        freq_df = self.df
         if not isinstance(columns, list):
             columns = [columns]
         name_string = ''
@@ -648,12 +649,12 @@ class FeatureTable(Table):
     def hash_encode(self, columns, bins, method='md5'):
         """
         Hash encode for categorical column(s).
-        
-        :param columns: str or a list of str, the target columns to be encoded. 
+
+        :param columns: str or a list of str, the target columns to be encoded.
                For dense features, you need to cut them into discrete intervals beforehand.
-        :param bins: int, defined the number of equal-width bins in the range of column(s) values. 
+        :param bins: int, defined the number of equal-width bins in the range of column(s) values.
         :param method: hashlib supported method, like md5, sha256 etc.
-        
+
         :return: A new FeatureTable which hash encoded values.
         """
         hash_df = self.df
@@ -661,7 +662,7 @@ class FeatureTable(Table):
             columns = [columns]
         for i in range(len(columns)):
             col_name = columns[i]
-            hash_str = lambda x: getattr(hashlib, method)(str(x).encode(encoding='utf_8', errors='strict')).hexdigest()
+            hash_str = lambda x: getattr(hashlib, method)(str(x).encode('utf_8')).hexdigest()
             hash_int = udf(lambda x: int(hash_str(x), 16) % bins)
             hash_df = hash_df.withColumn(col_name, hash_int(pyspark_col(col_name)))
         return FeatureTable(hash_df)
@@ -669,10 +670,10 @@ class FeatureTable(Table):
     def cross_hash_encode(self, columns, bins, cross_col_name=None):
         """
         Hash encode for cross column(s).
-        
+
         :param columns: str, list of str, the categorical columns to be encoded as cross features.
                For dense features, you need to cut them into discrete intervals beforehand.
-        :param bins: int, defined the number of equal-width bins in the range of column(s) values. 
+        :param bins: int, defined the number of equal-width bins in the range of column(s) values.
         :param cross_col_name: str, the column name for cross columns
         (i.e. if user input ['col1', 'col2'], the default name should be 'crossed_col1_col2').
 
