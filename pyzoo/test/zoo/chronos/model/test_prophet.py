@@ -39,7 +39,9 @@ class TestProphetModel(ZooTestCase):
         self.data = pd.DataFrame(pd.date_range('20130101', periods=self.seq_len), columns=['ds'])
         self.data.insert(1, 'y', np.random.rand(self.seq_len))
         self.horizon = np.random.randint(2, 50)
-        self.validation_data = pd.DataFrame(pd.date_range('20140426', periods=self.horizon), columns=['ds'])
+        self.validation_data = pd.DataFrame(pd.date_range('20140426', periods=self.horizon),
+                                            columns=['ds']
+                                            )
         self.validation_data.insert(1, 'y', np.random.rand(self.horizon))
 
     def teardown_method(self, method):
@@ -49,15 +51,15 @@ class TestProphetModel(ZooTestCase):
 
     def test_prophet(self):
         # test fit_eval
-        evaluate_result = self.model.fit_eval(data=self.data, 
-                                              validation_data=self.validation_data, 
+        evaluate_result = self.model.fit_eval(data=self.data,
+                                              validation_data=self.validation_data,
                                               **self.config)
         # test predict
         result = self.model.predict(horizon=self.horizon)
         assert result.shape[0] == self.horizon
         # test evaluate
-        evaluate_result = self.model.evaluate(target=self.validation_data, 
-                                              data=None, 
+        evaluate_result = self.model.evaluate(target=self.validation_data,
+                                              data=None,
                                               metrics=['mae', 'smape'])
         assert len(evaluate_result) == 2
 
@@ -85,7 +87,7 @@ class TestProphetModel(ZooTestCase):
             self.model.save(model_file)
 
     def test_save_restore(self):
-        self.model.fit_eval(data=self.data, 
+        self.model.fit_eval(data=self.data,
                             validation_data=self.validation_data,
                             **self.config)
         result_save = self.model.predict(horizon=self.horizon)
