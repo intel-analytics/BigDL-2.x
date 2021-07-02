@@ -35,6 +35,7 @@ class ConfigParser(configPath: String) {
       mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
       val helper = mapper.readValue[ClusterServingHelper](configStr, classOf[ClusterServingHelper])
       helper.parseConfigStrings()
+      helper.parseModelType(helper.modelPath)
       helper
     }
     catch {
