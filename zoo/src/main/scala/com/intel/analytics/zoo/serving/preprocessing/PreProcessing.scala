@@ -62,18 +62,31 @@ class PreProcessing()
         }
       ).toList
       val arr = oneInsMap.map(x => x._2)
-      Seq(T.array(arr.toArray))
+      val table = T.array(arr.toArray)
+      if (table.keySet.size == 1){
+          table.keySet.foreach(key => {
+            return Seq(table(key).asInstanceOf[Tensor[Float]])
+          })
+      }
+      Seq(table)
     })
   }
 
   def decodeArrowBase64(key: String, s: String, serde: String = ""): Activity = {
     try {
 
-      val instance = if (serde == "stream") {
+      val instance = if (serde == "stream" && s.contains(",")) {
         Seq(JsonInputDeserializer.deserialize(s))
 
       } else {
-        byteBuffer = java.util.Base64.getDecoder.decode(s)
+        if (serde == "stream") {
+          val pattern = "^.*\"image\":\\s*\"(.+)\".*$".r
+          val pattern(imageStr) = s
+          byteBuffer = java.util.Base64.getDecoder.decode(imageStr)
+        }
+        else {
+          byteBuffer = java.util.Base64.getDecoder.decode(s)
+        }
         val ins = Instances.fromArrow(byteBuffer)
         getInputFromInstance(ins)
       }
