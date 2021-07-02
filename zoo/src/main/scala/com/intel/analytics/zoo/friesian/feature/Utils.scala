@@ -225,17 +225,16 @@ private[friesian] object Utils {
     out.asInstanceOf[T]
   }
 
-  def addNegtiveItem[T](negNum: Int, itemSize: Int): T => Seq[(T, T)] = {
+  def addNegtiveItem[T](negNum: Int, itemSize: Int): Int => Seq[(Int, Int)] = {
     val r = new Random()
-    (itemId: T) =>
+    (itemId: Int) =>
       (1 to negNum).map(x => {
         var neg = 0
         do {
           neg = 1 + r.nextInt(itemSize - 1)
         } while (neg == itemId)
         neg
-      }).map(x => (castValueFromNum(itemId, x), castValueFromNum(itemId, 0))) ++ Seq(
-        (itemId, castValueFromNum(itemId, 1)))
+      }).map(x => (x, 0)) ++ Seq((itemId, 1))
   }
 
   def addNegativeList[T](negNum: Int, itemSize: Int): mutable.WrappedArray[T] => Seq[Seq[T]] = {
