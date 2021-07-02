@@ -52,9 +52,7 @@ def get_nyc_taxi_tsdataset(path):
 
 def get_data_creator(data):
     def data_creator(config):
-        x, y = data.roll(lookback=config["past_seq_len"],
-                         horizon=config["future_seq_len"])\
-            .to_numpy()
+        x, y = data.roll(lookback=14, horizon=1).to_numpy()
         return DataLoader(TensorDataset(torch.from_numpy(x).float(),
                                         torch.from_numpy(y).float()),
                           batch_size=config["batch_size"],
@@ -94,7 +92,8 @@ if __name__ == '__main__':
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
                       memory=args.memory, num_nodes=num_nodes, init_ray_on_spark=True)
 
-    tsdata_train, tsdata_valid, tsdata_test = get_nyc_taxi_tsdataset(args.datadir)
+    tsdata_train, tsdata_valid, tsdata_test = get_nyc_taxi_tsdataset(
+        args.datadir)
 
     auto_lstm = AutoLSTM(input_feature_num=1,
                          output_target_num=1,
@@ -116,7 +115,7 @@ if __name__ == '__main__':
                   n_sampling=args.n_sampling,
                   )
     best_model = auto_lstm.get_best_model()
-    best_config = auto_lstm.get_best_model().config
+    best_config = auto_lstm.get_best_config()
 
     x, y = tsdata_test\
         .roll(lookback=best_config["past_seq_len"],
@@ -127,8 +126,8 @@ if __name__ == '__main__':
     y_unscale = tsdata_test.unscale_numpy(y)
     yhat_unscale = tsdata_test.unscale_numpy(np.expand_dims(yhat, axis=1))
 
-    result = [Evaluator.evaluate(m, y_true=y_unscale, y_pred=yhat_unscale) for m in [
-        'rmse', 'smape']]
-    print(f'rmse is {np.mean(result[0])}, smape is {np.mean(result[1])}')
+    rmse, smape = [Evaluator.evaluate(m, y_true=y_unscale, y_pred=yhat_unscale,
+                                      multioutput="raw_values") for m in ['rmse', 'smape']]
+    print(f'rmse is {np.mean(rmse)}, smape is {np.mean(smape)}')
     print(f'The hyperparameters of the model are {best_config}')
     stop_orca_context()
