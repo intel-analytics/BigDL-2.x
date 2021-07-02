@@ -24,7 +24,14 @@ DEFAULT_BEST_MODEL_DIR = "best_model.ckpt"
 DEFAULT_DATA_PROCESS_DIR = "data_process.ckpt"
 DEFAULT_BEST_CONFIG_DIR = "best_config.ckpt"
 
+
 class TSPipeline:
+    '''
+    TSPipeline is an E2E solution for time series analysis (only forecasting task for now).
+    You can use TSPipeline to:
+    1. Further development on the prototype. (predict, evaluate, incremental fit)
+    2. Deploy the model to their scenario. (save, load)
+    '''
     def __init__(self, best_model, best_config, **kwargs):
         self._best_model = best_model
         self._best_config = best_config
@@ -41,15 +48,18 @@ class TSPipeline:
         :param data: data can be a TSDataset or data creator(will be supported).
                the TSDataset should follow the same operations as the training
                TSDataset used in AutoTSTrainer.fit.
-        :param metrics:
-        :param multioutput:
+        :param metrics: list. The evaluation metric name to optimize. e.g. ["mse"]
+        :param multioutput: Defines aggregating of multiple output values.
+               String in ['raw_values', 'uniform_average']. The value defaults to
+               'raw_values'.
         :param batch_size: predict batch_size, the process will cost more time
                if batch_size is small while cost less memory.  The param is only
                effective when data is a TSDataset. The values defaults to 32.
         '''
         x, y = self._tsdataset_to_numpy(data, is_predict=False)
         yhat = self.predict(data, batch_size=batch_size)
-        eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat[:y.shape[0]], multioutput=multioutput)
+        eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat[:y.shape[0]],
+                                          multioutput=multioutput)
                        for m in metrics]
         return eval_result
 
@@ -92,6 +102,11 @@ class TSPipeline:
         return res
 
     def save(self, file_path):
+        '''
+        Save the TSPipeline to a folder
+
+        :param file_path: the folder location to save the pipeline
+        '''
         import pickle
         if not os.path.isdir(file_path):
             os.mkdir(file_path)
@@ -114,6 +129,11 @@ class TSPipeline:
 
     @staticmethod
     def load(file_path):
+        '''
+        Load the TSPipeline to a folder
+
+        :param file_path: the folder location to load the pipeline
+        '''
         import pickle
         model_init_path = os.path.join(file_path, DEFAULT_MODEL_INIT_DIR)
         model_path = os.path.join(file_path, DEFAULT_BEST_MODEL_DIR)
