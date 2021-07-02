@@ -37,7 +37,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.models.{InternalDistriOptimize
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
-import org.apache.spark.ml.adapter.{HasFeaturesCol, HasPredictionCol, SchemaUtils}
+//import org.apache.spark.ml.adapter.{HasFeaturesCol, HasPredictionCol, SchemaUtils}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util._
 import org.apache.spark.ml.{DLEstimatorBase, DLTransformerBase, DefaultParamsWriterWrapper, VectorCompatibility}
@@ -48,6 +48,39 @@ import org.json4s.{DefaultFormats, JObject}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
+
+trait HasPredictionCol extends org.apache.spark.ml.param.shared.HasPredictionCol
+
+trait HasFeaturesCol extends org.apache.spark.ml.param.shared.HasFeaturesCol
+
+trait HasInputCol extends org.apache.spark.ml.param.shared.HasInputCol
+
+trait HasOutputCol extends org.apache.spark.ml.param.shared.HasOutputCol
+
+object SchemaUtils {
+
+  /**
+   * Appends a new column to the input schema. This fails if the given output column already exists
+   * @param schema input schema
+   * @param colName new column name. If this column name is an empty string "", this method returns
+   *                the input schema unchanged. This allows users to disable output columns.
+   * @param dataType new column data type
+   * @return new schema with the input column appended
+   */
+  def appendColumn(
+                    schema: StructType,
+                    colName: String,
+                    dataType: DataType,
+                    nullable: Boolean = false): StructType = {
+
+    val colSF = StructField(colName, dataType, nullable)
+    require(!schema.fieldNames.contains(colSF.name), s"Column ${colSF.name} already exists.")
+    StructType(schema.fields :+ colSF)
+  }
+
+  def sameType(a: DataType, b: DataType): Boolean = a.sameType(b)
+
+}
 
 private[nnframes] trait HasBatchSize extends Params {
 
