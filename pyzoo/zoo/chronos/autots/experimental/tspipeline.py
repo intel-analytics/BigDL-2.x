@@ -41,23 +41,26 @@ class TSPipeline:
             self._scaler = kwargs["scaler"]
             self._scaler_index = kwargs["scaler_index"]
 
-    def evaluate(self, data, metrics=['mse'], multioutput="raw_values", batch_size=32):
+    def evaluate(self, data, metrics=['mse'], multioutput="uniform_average", batch_size=32):
         '''
         Evaluate the time series pipeline.
 
         :param data: data can be a TSDataset or data creator(will be supported).
-               the TSDataset should follow the same operations as the training
+               The TSDataset should follow the same operations as the training
                TSDataset used in AutoTSTrainer.fit.
         :param metrics: list. The evaluation metric name to optimize. e.g. ["mse"]
         :param multioutput: Defines aggregating of multiple output values.
                String in ['raw_values', 'uniform_average']. The value defaults to
-               'raw_values'.
+               'uniform_average'.
         :param batch_size: predict batch_size, the process will cost more time
-               if batch_size is small while cost less memory.  The param is only
+               if batch_size is small while cost less memory. The param is only
                effective when data is a TSDataset. The values defaults to 32.
         '''
-        x, y = self._tsdataset_to_numpy(data, is_predict=False)
+        _, y = self._tsdataset_to_numpy(data, is_predict=False)
         yhat = self.predict(data, batch_size=batch_size)
+        if self._scaler:
+            from zoo.chronos.data.utils.scale import unscale_timeseries_numpy
+            y = unscale_timeseries_numpy(y, self._scaler, self._scaler_index)
         eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat[:y.shape[0]],
                                           multioutput=multioutput)
                        for m in metrics]
@@ -68,7 +71,7 @@ class TSPipeline:
         Rolling predict with time series pipeline.
 
         :param data: data can be a TSDataset or data creator(will be supported).
-               the TSDataset should follow the same operations as the training
+               The TSDataset should follow the same operations as the training
                TSDataset used in AutoTSTrainer.fit.
         :param batch_size: predict batch_size, the process will cost more time
                if batch_size is small while cost less memory.  The param is only

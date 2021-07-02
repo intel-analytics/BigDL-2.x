@@ -58,7 +58,7 @@ class TSDataset:
         self.roll_feature_df = None
         self.roll_addional_feature = None
         self.scaler = None
-        self.scaler_index = [i for i in range(len(self.feature_col))]
+        self.scaler_index = [i for i in range(len(self.target_col))]
         self.id_sensitive = None
 
         self._check_basic_invariants()
