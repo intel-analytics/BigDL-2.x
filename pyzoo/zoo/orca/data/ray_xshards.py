@@ -89,9 +89,10 @@ def write_to_ray(idx, partition, redis_address, redis_password, partition_store_
     if is_empty:
         partition_ref = ray.put([])
         result.append(local_store.upload_partition.remote(idx, partition_ref))
+        logger.warning(f"Partition {idx} is empty.")
     ray.get(result)
 
-    return [(idx, local_store_name.split(":")[-1], local_store_name, is_empty)]
+    return [(idx, local_store_name.split(":")[-1], local_store_name)]
 
 
 def get_from_ray(idx, redis_address, redis_password, idx_to_store_name):
@@ -350,15 +351,10 @@ class RayXShards(XShards):
         result = spark_xshards.rdd.mapPartitionsWithIndex(lambda idx, part: write_to_ray(
             idx, part, address, password, partition_store_names)).collect()
 
-        num_empty_partitions = 0
         id2ip = {}
         id2store_name = {}
-        for idx, ip, local_store_name, is_empty in result:
+        for idx, ip, local_store_name in result:
             id2ip[idx] = ip
             id2store_name[idx] = local_store_name
-            if is_empty:
-                num_empty_partitions += 1
-        if num_empty_partitions > 0:
-            logger.warning(f"Found {num_empty_partitions} empty partitions in your SparkXShards.")
 
         return RayXShards(uuid_str, dict(id2store_name), dict(id2ip), partition_stores)
