@@ -204,7 +204,7 @@ class RayXShards(XShards):
         """
         assert self.num_partitions() >= len(actors), \
             f"Get number of partitions ({self.num_partitions()}) smaller than " \
-            f"number of actors ({len(actors)}). Make sure repartition works."
+            f"number of actors ({len(actors)}). Please submit an issue to analytics zoo."
         assigned_partitions, _, _ = self.assign_partitions_to_actors(actors)
         result_refs = []
         for actor, part_ids in zip(actors, assigned_partitions):
@@ -222,7 +222,7 @@ class RayXShards(XShards):
             "the rdds to be zipped must have the same number of partitions"
         assert self.num_partitions() >= len(actors), \
             f"Get number of partitions ({self.num_partitions()}) smaller than " \
-            f"number of actors ({len(actors)}). Make sure repartition works."
+            f"number of actors ({len(actors)}). Please submit an issue to analytics zoo."
         assigned_partitions, _, _ = self.assign_partitions_to_actors(actors)
         result_refs = []
         for actor, part_ids in zip(actors, assigned_partitions):
