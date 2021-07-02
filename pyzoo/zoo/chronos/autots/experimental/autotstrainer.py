@@ -227,14 +227,18 @@ class AutoTSTrainer:
         import ray
 
         # append feature selection into search space
+        # TODO: more flexible setting
         all_features = train_data.feature_col
         if self.selected_features not in ("all", "auto"):
             raise ValueError(f"Only \"all\" and \"auto\" are supported for selected_features,\
                 but found {self.selected_features}")
         if self.selected_features == "auto":
-            search_space['selected_features'] = hp.choice_n(all_features,
-                                                            min_items=0,
-                                                            max_items=len(all_features))
+            if len(all_features) == 0:
+                search_space['selected_features'] = all_features
+            else:
+                search_space['selected_features'] = hp.choice_n(all_features,
+                                                                min_items=0,
+                                                                max_items=len(all_features))
         if self.selected_features == "all":
             search_space['selected_features'] = all_features
 
