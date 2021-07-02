@@ -348,8 +348,9 @@ class RayXShards(XShards):
         # actor creation is aync, this is to make sure they all have been started
         ray.get([v.get_partitions.remote() for v in partition_stores.values()])
         partition_store_names = list(partition_stores.keys())
-        result = spark_xshards.rdd.mapPartitionsWithIndex(lambda idx, part: write_to_ray(
-            idx, part, address, password, partition_store_names)).collect()
+        result_rdd = spark_xshards.rdd.mapPartitionsWithIndex(lambda idx, part: write_to_ray(
+            idx, part, address, password, partition_store_names)).cache()
+        result = result_rdd.collect()
 
         id2ip = {}
         id2store_name = {}
