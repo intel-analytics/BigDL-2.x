@@ -208,7 +208,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         from zoo.orca.data import SparkXShards
         data, validation_data = maybe_dataframe_to_xshards(data, validation_data,
                                                            feature_cols, label_cols,
-                                                           mode="fit")
+                                                           mode="fit",
+                                                           num_workers=self.num_workers)
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
@@ -291,7 +292,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                                              validation_data=None,
                                              feature_cols=feature_cols,
                                              label_cols=label_cols,
-                                             mode="evaluate")
+                                             mode="evaluate",
+                                             num_workers=self.num_workers)
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
