@@ -105,11 +105,22 @@ def get_from_ray(idx, redis_address, redis_password, idx_to_store_name):
 
 class RayXShards(XShards):
 
-    def __init__(self, uuid, partition2store_name, partition2ip, partition_stores):
+    def __init__(self, uuid, id_ip_store_rdd, partition_stores):
         self.uuid = uuid
-        self.partition2store_name = partition2store_name
-        self.partition2ip = partition2ip
+        self.rdd = id_ip_store_rdd
         self.partition_stores = partition_stores
+
+    @property
+    def id_ip_store(self):
+        return self.rdd.collect()
+
+    @property
+    def partition2store_name(self):
+        return {idx: store_name for idx, _, store_name in self.id_ip_store}
+
+    @property
+    def partition2ip(self):
+        return {idx: ip for idx, ip, _ in self.id_ip_store}
 
     def transform_shard(self, func, *args):
         raise Exception("Transform is not supported for RayXShards")
@@ -187,7 +198,7 @@ class RayXShards(XShards):
         for actor_ip, part_ids in zip(actor_ips, assigned_partitions):
             actor_ip2part_id[actor_ip].extend(part_ids)
 
-        return RayXShards.from_partition_refs(actor_ip2part_id, new_part_id_refs)
+        return RayXShards.from_partition_refs(actor_ip2part_id, new_part_id_refs, self.rdd)
 
     def reduce_partitions_for_actors(self, actors, reduce_partitions_func, return_refs=False):
         """
@@ -297,7 +308,7 @@ class RayXShards(XShards):
         return actor2assignments, actor_ips
 
     @staticmethod
-    def from_partition_refs(ip2part_id, part_id2ref):
+    def from_partition_refs(ip2part_id, part_id2ref, old_rdd):
         ray_ctx = RayContext.get()
         uuid_str = str(uuid.uuid4())
         id2store_name = {}
@@ -314,7 +325,9 @@ class RayXShards(XShards):
                 id2store_name[idx] = name
                 part_id2ip[idx] = node
         ray.get(result)
-        return RayXShards(uuid_str, id2store_name, part_id2ip, partition_stores)
+        new_id_ip_store_rdd = old_rdd.mapPartitionsWithIndex(
+            lambda idx, _: [(idx, part_id2ip[idx], id2store_name[idx])]).cache()
+        return RayXShards(uuid_str, new_id_ip_store_rdd, partition_stores)
 
     @staticmethod
     def from_spark_xshards(spark_xshards):
@@ -358,4 +371,4 @@ class RayXShards(XShards):
             id2ip[idx] = ip
             id2store_name[idx] = local_store_name
 
-        return RayXShards(uuid_str, dict(id2store_name), dict(id2ip), partition_stores)
+        return RayXShards(uuid_str, result_rdd, partition_stores)
