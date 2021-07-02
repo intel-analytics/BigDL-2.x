@@ -119,7 +119,7 @@ object EngineOptimizer{
    * Default version is OptimizerV2
    */
   private var distriOptimizerVersion: OptimizerVersion = {
-    System.getProperty("bigdl.optimizerVersion", "optimizerv2").toLowerCase(Locale.ROOT) match {
+    System.getProperty("bigdl.optimizerVersion", "optimizerv1").toLowerCase(Locale.ROOT) match {
       case "optimizerv1" => OptimizerV1
       case "optimizerv2" => OptimizerV2
       case optimizerVersion => throw new IllegalArgumentException(s"Unknown type $optimizerVersion")
