@@ -229,25 +229,25 @@ private[friesian] object Utils {
     val r = new Random()
     (itemId: Int) =>
       (1 to negNum).map(x => {
-        var neg = 0
+        var negItem = 0
         do {
-          neg = 1 + r.nextInt(itemSize - 1)
-        } while (neg == itemId)
-        neg
-      }).map(x => (x, 0)) ++ Seq((itemId, 1))
+          negItem = 1 + r.nextInt(itemSize - 1)
+        } while (negItem == itemId)
+        negItem
+      }).map(x => (x, 0)) ++ Seq((itemId,  1))
   }
 
-  def addNegativeList[T](negNum: Int, itemSize: Int): mutable.WrappedArray[T] => Seq[Seq[T]] = {
+  def addNegativeList[T](negNum: Int, itemSize: Int): mutable.WrappedArray[Int] => Seq[Seq[Int]] = {
     val r = new Random()
-    (history: WrappedArray[T]) => {
+    (history: WrappedArray[Int]) => {
       val r = new Random()
-      val negItemSeq: Seq[Seq[T]] = (0 to history.length - 1).map(i => {
+      val negItemSeq: Seq[Seq[Int]] = (0 to history.length - 1).map(i => {
         (0 to negNum - 1).map(j => {
           var negItem = 0
           do {
             negItem = 1 + r.nextInt(itemSize - 1)
           } while (negItem == history(i))
-          castValueFromNum(history(0), negItem)
+          negItem
         })
       })
       negItemSeq

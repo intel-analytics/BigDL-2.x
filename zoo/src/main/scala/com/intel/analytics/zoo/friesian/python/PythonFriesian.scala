@@ -268,7 +268,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
               case "long" => Utils.get1row[Long](full_rows, col.name, i, lowerBound)
               case _ => throw new IllegalArgumentException(
                 s"Unsupported data type ${col.dataType.typeName} " +
-                  s"of column${col.name} in addHistSeq")
+                  s"of column ${col.name} in addHistSeq")
             }
           } else {
             val colValue: Any = full_rows(i).getAs(col.name)
@@ -304,6 +304,8 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     df.sparkSession.conf.set("spark.sql.legacy.allowUntypedScalaUDF", "true")
     val itemType = df.select(explode(col(historyCol))).schema.fields(0).dataType
+    require(itemType.typeName == "integer", throw new IllegalArgumentException(
+      s"Unsupported data type ${itemType.typeName} " + s"of column ${historyCol} in addNegHisSeq"))
     val schema = ArrayType(ArrayType(itemType))
 
     val negativeUdf = udf(Utils.addNegativeList(negNum, itemSize), schema)
@@ -319,6 +321,8 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     df.sparkSession.conf.set("spark.sql.legacy.allowUntypedScalaUDF", "true")
     val itemType = df.select(itemCol).schema.fields(0).dataType
+    require(itemType.typeName == "integer", throw new IllegalArgumentException(
+      s"Unsupported data type ${itemType.typeName} " + s"of column ${itemCol} in addNegSamples"))
     val schema = ArrayType(StructType(Seq(StructField(itemCol, itemType),
       StructField(labelCol, itemType))))
 
