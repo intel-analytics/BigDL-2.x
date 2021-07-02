@@ -151,8 +151,7 @@ class RayXShards(XShards):
         password = ray_ctx.redis_password
         num_parts = self.num_partitions()
         partition2store = self.partition2store_name
-        rdd = sc.parallelize([0] * num_parts * 10, num_parts)\
-            .mapPartitionsWithIndex(
+        rdd = self.rdd.mapPartitionsWithIndex(
             lambda idx, _: get_from_ray(idx, address, password, partition2store))
 
         # the reason why we trigger computation here is to ensure we get the data
