@@ -126,8 +126,8 @@ if __name__ == '__main__':
     y_unscale = tsdata_test.unscale_numpy(y)
     yhat_unscale = tsdata_test.unscale_numpy(np.expand_dims(yhat, axis=1))
 
-    rmse, smape = [Evaluator.evaluate(m, y_true=y_unscale, y_pred=yhat_unscale,
-                                      multioutput="raw_values") for m in ['rmse', 'smape']]
-    print(f'rmse is {np.mean(rmse)}, smape is {np.mean(smape)}')
+    result = [Evaluator.evaluate(m, y_true=y_unscale, y_pred=yhat_unscale,
+                                 multioutput="uniform_average") for m in ['rmse', 'smape']]
+    print(f'rmse is {result[0]}, sampe is {result[1]}')
     print(f'The hyperparameters of the model are {best_config}')
     stop_orca_context()
