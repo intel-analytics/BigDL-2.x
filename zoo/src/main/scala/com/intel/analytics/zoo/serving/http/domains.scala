@@ -45,7 +45,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode, TextNode}
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer, JsonNode, ObjectMapper}
 import com.google.common.collect.ImmutableList
-import com.intel.analytics.zoo.serving.http.FrontEndApp.{handleResponseTimer, makeActivityTimer, metrics, overallRequestTimer, purePredictTimersMap, system, timeout, timing, waitRedisTimer}
+import com.intel.analytics.zoo.serving.http.FrontEndApp.{handleResponseTimer, makeActivityTimer, metrics, overallRequestTimer, system, timeout, timing, waitRedisTimer}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.opencv.imgcodecs.Imgcodecs
@@ -814,7 +814,9 @@ object ServingTimerMetrics {
 class ServableManager {
   private var modelVersionMap = new mutable.HashMap[String, mutable.HashMap[String, Servable]]
 
-  def load(servableManagerConfigDir: String): Unit = {
+  def load(servableManagerConfigDir: String,
+           purePredictTimersMap: mutable.HashMap[String, mutable.HashMap[String, Timer]],
+           modelInferenceTimersMap: mutable.HashMap[String, mutable.HashMap[String, Timer]]): Unit = {
     if (!Files.exists(Paths.get(servableManagerConfigDir))) {
       throw ServableLoadException("servable Manager config dir not exist", null)
     }
@@ -826,25 +828,26 @@ class ServableManager {
         val versionMapper = new mutable.HashMap[String, Servable]
         modelVersionMap(modelInfo.getModelName) = versionMapper
         val timerMapperInference = new mutable.HashMap[String, Timer]
-        FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName) = timerMapperInference
+        modelInferenceTimersMap(modelInfo.getModelName) = timerMapperInference
         val timerMapperPurePredict = new mutable.HashMap[String, Timer]
-        FrontEndApp.purePredictTimersMap(modelInfo.getModelName) = timerMapperPurePredict
+        purePredictTimersMap(modelInfo.getModelName) = timerMapperPurePredict
       }
       if (modelVersionMap(modelInfo.getModelName).contains(modelInfo.getModelVersion)) {
         throw ServableLoadException("duplicated model info. Model Name: " + modelInfo.getModelName
           + ", Model Version: " + modelInfo.getModelVersion, null)
       }
-      FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
+      modelInferenceTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
         metrics.timer("zoo.serving.inference." + modelInfo.getModelName + "."
           + modelInfo.getModelVersion)
-      FrontEndApp.purePredictTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
+      purePredictTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
         metrics.timer("zoo.pure.predict." + modelInfo.getModelName + "."
           + modelInfo.getModelVersion)
       val servable = modelInfo match {
         case clusterServingModelInfo: ClusterServingMetaData =>
           new ClusterServingServable(clusterServingModelInfo)
         case inferenceModelModelInfo: InferenceModelMetaData =>
-          new InferenceModelServable(inferenceModelModelInfo)
+          new InferenceModelServable(inferenceModelModelInfo,
+            purePredictTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion))
       }
       servable.load()
       modelVersionMap(modelInfo.getModelName)(modelInfo.getModelVersion) = servable
@@ -885,13 +888,12 @@ abstract class Servable(modelMetaData: ModelMetaData) {
   def getMetaData: ModelMetaData = modelMetaData
 }
 
-class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
+class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData,
+                             purePredictTimer: Timer)
   extends Servable(inferenceModelMetaData) {
   val logger = LoggerFactory.getLogger(getClass)
   var model: InferenceModel = _
   var isFirstTimePredict = true
-  val purePredictTimer = purePredictTimersMap(inferenceModelMetaData.modelName)(
-    inferenceModelMetaData.modelVersion)
 
   def load(): Unit = {
     model = new InferenceModel(inferenceModelMetaData.modelConCurrentNum)

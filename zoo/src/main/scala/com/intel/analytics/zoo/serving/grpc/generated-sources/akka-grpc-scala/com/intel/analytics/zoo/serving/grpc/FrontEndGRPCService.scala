@@ -32,6 +32,11 @@ trait FrontEndGRPCService {
    */
   def getModelsWithNameAndVersion(in: com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq): scala.concurrent.Future[com.intel.analytics.zoo.serving.grpc.ModelsReply]
   
+  /**
+   * predict
+   */
+  def predict(in: com.intel.analytics.zoo.serving.grpc.PredictReq): scala.concurrent.Future[com.intel.analytics.zoo.serving.grpc.PredictReply]
+  
 }
 
 
@@ -51,11 +56,15 @@ object FrontEndGRPCService extends akka.grpc.ServiceDescription {
     
     val GetModelsWithNameAndVersionReqSerializer = new ScalapbProtobufSerializer(com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq.messageCompanion)
     
+    val PredictReqSerializer = new ScalapbProtobufSerializer(com.intel.analytics.zoo.serving.grpc.PredictReq.messageCompanion)
+    
     val StringReplySerializer = new ScalapbProtobufSerializer(com.intel.analytics.zoo.serving.grpc.StringReply.messageCompanion)
     
     val MetricsReplySerializer = new ScalapbProtobufSerializer(com.intel.analytics.zoo.serving.grpc.MetricsReply.messageCompanion)
     
     val ModelsReplySerializer = new ScalapbProtobufSerializer(com.intel.analytics.zoo.serving.grpc.ModelsReply.messageCompanion)
+    
+    val PredictReplySerializer = new ScalapbProtobufSerializer(com.intel.analytics.zoo.serving.grpc.PredictReply.messageCompanion)
     
   }
 
@@ -133,6 +142,20 @@ object FrontEndGRPCService extends akka.grpc.ServiceDescription {
         .setFullMethodName(MethodDescriptor.generateFullMethodName("grpc.FrontEndGRPCService", "GetModelsWithNameAndVersion"))
         .setRequestMarshaller(new Marshaller(GetModelsWithNameAndVersionReqSerializer))
         .setResponseMarshaller(new Marshaller(ModelsReplySerializer))
+        .setSampledToLocalTracing(true)
+        .build()
+    
+    val predictDescriptor: MethodDescriptor[com.intel.analytics.zoo.serving.grpc.PredictReq, com.intel.analytics.zoo.serving.grpc.PredictReply] =
+      MethodDescriptor.newBuilder()
+        .setType(
+   MethodDescriptor.MethodType.UNARY 
+  
+  
+  
+)
+        .setFullMethodName(MethodDescriptor.generateFullMethodName("grpc.FrontEndGRPCService", "Predict"))
+        .setRequestMarshaller(new Marshaller(PredictReqSerializer))
+        .setResponseMarshaller(new Marshaller(PredictReplySerializer))
         .setSampledToLocalTracing(true)
         .build()
     

@@ -23,7 +23,8 @@ import com.intel.analytics.zoo.serving.utils.Conventions
 import com.typesafe.config.ConfigFactory
 import com.codahale.metrics.{MetricRegistry, Timer}
 import com.intel.analytics.zoo.serving.http.{Supportive, ServableManager, ServableLoadException,
-  InferenceModelMetaData, ClusterServingMetaData}
+  InferenceModelMetaData, ClusterServingMetaData, ClusterServingServable, Instances, JsonUtil,
+  InferenceModelServable, Predictions}
 
 import scala.collection.mutable
 import org.slf4j.LoggerFactory
@@ -52,7 +53,8 @@ object FrontEndGRPC extends Supportive {
     servableManager = new ServableManager
     logger.info("Multi Serving Mode")
     timing("load servable manager")() {
-      try servableManager.load(arguments.servableManagerPath)
+      try servableManager.load(arguments.servableManagerPath, purePredictTimersMap,
+        modelInferenceTimersMap)
       catch {
         case e: ServableLoadException =>
           throw e
@@ -173,109 +175,167 @@ object FrontEndGRPC extends Supportive {
     val logger = LoggerFactory.getLogger(getClass)
 
     override def ping(in: Empty): Future[StringReply] = {
-      println(s"welcome to analytics zoo grpc serving frontend")
-      Future.successful(StringReply("welcome to analytics zoo grpc serving frontend"))
+      timing("ping")(overallRequestTimer) {
+        println(s"welcome to analytics zoo grpc serving frontend")
+        Future.successful(StringReply("welcome to analytics zoo grpc serving frontend"))
+      }
     }
 
     override def getMetrics(in: Empty): Future[MetricsReply] = {
       println(s"welcome to analytics zoo grpc serving frontend")
-      val keys = metrics.getTimers().keySet()
-      val servingMetrics = keys.toArray.map(key => {
-        val timer = metrics.getTimers().get(key)
-        MetricsReply.Metric(key.toString, timer.getCount, timer.getMeanRate,
-          timer.getSnapshot.getMin / 1000000, timer.getSnapshot.getMax / 1000000,
-          timer.getSnapshot.getMean / 1000000, timer.getSnapshot.getMedian / 1000000,
-          timer.getSnapshot.getStdDev / 1000000, timer.getSnapshot.get75thPercentile() / 1000000,
-          timer.getSnapshot.get95thPercentile() / 1000000,
-          timer.getSnapshot.get98thPercentile() / 1000000,
-          timer.getSnapshot.get99thPercentile() / 1000000,
-          timer.getSnapshot.get999thPercentile() / 1000000)
-      }).toList
-      Future.successful(MetricsReply(servingMetrics))
+      timing("metrics")(overallRequestTimer, metricsRequestTimer) {
+        val keys = metrics.getTimers().keySet()
+        val servingMetrics = keys.toArray.map(key => {
+          val timer = metrics.getTimers().get(key)
+          MetricsReply.Metric(key.toString, timer.getCount, timer.getMeanRate,
+            timer.getSnapshot.getMin / 1000000, timer.getSnapshot.getMax / 1000000,
+            timer.getSnapshot.getMean / 1000000, timer.getSnapshot.getMedian / 1000000,
+            timer.getSnapshot.getStdDev / 1000000, timer.getSnapshot.get75thPercentile() / 1000000,
+            timer.getSnapshot.get95thPercentile() / 1000000,
+            timer.getSnapshot.get98thPercentile() / 1000000,
+            timer.getSnapshot.get99thPercentile() / 1000000,
+            timer.getSnapshot.get999thPercentile() / 1000000)
+        }).toList
+        Future.successful(MetricsReply(servingMetrics))
+      }
     }
 
     override def getAllModels(in: Empty): Future[ModelsReply] = {
-      try {
-        val servables = servableManager.retriveAllServables
-        var inferenceModelList = ListBuffer[InferenceModelGRPCMetaData]()
-        var clusterServingList = ListBuffer[ClusterServingGRPCMetaData]()
-        servables.foreach(e =>
-          e.getMetaData match {
-            case (metaData : InferenceModelMetaData) =>
-              inferenceModelList += metaData.getInferenceModelGRPCMetaData
-            case (metaData : ClusterServingMetaData) =>
-              clusterServingList += metaData.getClusterServingGRPCMetaData
-          })
-        Future.successful(ModelsReply(inferenceModelList, clusterServingList))
+      timing("get All Models")(overallRequestTimer, servablesRetriveTimer) {
+        try {
+          val servables = servableManager.retriveAllServables
+          var inferenceModelList = ListBuffer[InferenceModelGRPCMetaData]()
+          var clusterServingList = ListBuffer[ClusterServingGRPCMetaData]()
+          servables.foreach(e =>
+            e.getMetaData match {
+              case (metaData: InferenceModelMetaData) =>
+                inferenceModelList += metaData.getInferenceModelGRPCMetaData
+              case (metaData: ClusterServingMetaData) =>
+                clusterServingList += metaData.getClusterServingGRPCMetaData
+            })
+          Future.successful(ModelsReply(inferenceModelList, clusterServingList))
+        }
+        catch {
+          case e =>
+            Future.failed(e)
+        }
       }
-      catch {
-        case e =>
-          Future.failed(e)
-      }
-
     }
 
     override def getModelsWithName(in: GetModelsWithNameReq): Future[ModelsReply] = {
-      try {
-        val servables = servableManager.retriveServables(in.modelName)
-        var inferenceModelList = ListBuffer[InferenceModelGRPCMetaData]()
-        var clusterServingList = ListBuffer[ClusterServingGRPCMetaData]()
-        servables.foreach(e =>
-          e.getMetaData match {
-            case (metaData : InferenceModelMetaData) =>
-              inferenceModelList += metaData.getInferenceModelGRPCMetaData
-            case (metaData : ClusterServingMetaData) =>
-              clusterServingList += metaData.getClusterServingGRPCMetaData
-          })
-        Future.successful(ModelsReply(inferenceModelList, clusterServingList))
-      }
-      catch {
-        case e =>
-          Future.failed(e)
+      timing("get Models With Name")(overallRequestTimer, servablesRetriveTimer) {
+        try {
+          val servables = servableManager.retriveServables(in.modelName)
+          var inferenceModelList = ListBuffer[InferenceModelGRPCMetaData]()
+          var clusterServingList = ListBuffer[ClusterServingGRPCMetaData]()
+          servables.foreach(e =>
+            e.getMetaData match {
+              case (metaData: InferenceModelMetaData) =>
+                inferenceModelList += metaData.getInferenceModelGRPCMetaData
+              case (metaData: ClusterServingMetaData) =>
+                clusterServingList += metaData.getClusterServingGRPCMetaData
+            })
+          Future.successful(ModelsReply(inferenceModelList, clusterServingList))
+        }
+        catch {
+          case e =>
+            Future.failed(e)
+        }
       }
     }
 
     override def getModelsWithNameAndVersion(in: GetModelsWithNameAndVersionReq):
        Future[ModelsReply] = {
-      try {
-        val servable = servableManager.retriveServable(in.modelName, in.modelVersion)
-        servable.getMetaData match {
-            case (metaData : InferenceModelMetaData) =>
+      timing("get Model With Name And Version")(overallRequestTimer, servableRetriveTimer) {
+        try {
+          val servable = servableManager.retriveServable(in.modelName, in.modelVersion)
+          servable.getMetaData match {
+            case (metaData: InferenceModelMetaData) =>
               val inferenceModelList =
                 List[InferenceModelGRPCMetaData](metaData.getInferenceModelGRPCMetaData)
               val clusterServingList = List[ClusterServingGRPCMetaData]()
               Future.successful(ModelsReply(inferenceModelList, clusterServingList))
-            case (metaData : ClusterServingMetaData) =>
+            case (metaData: ClusterServingMetaData) =>
               val inferenceModelList = List[InferenceModelGRPCMetaData]()
               val clusterServingList =
                 List[ClusterServingGRPCMetaData](metaData.getClusterServingGRPCMetaData)
               Future.successful(ModelsReply(inferenceModelList, clusterServingList))
           }
-      }
-      catch {
-        case e =>
-          Future.failed(e)
+        }
+        catch {
+          case e =>
+            Future.failed(e)
+        }
       }
     }
 
-
-    logger.info(s"metrics init")
-    val metrics = new MetricRegistry
-    val overallRequestTimer = metrics.timer("zoo.serving.request.overall")
-    val predictRequestTimer = metrics.timer("zoo.serving.request.predict")
-    val servableRetriveTimer = metrics.timer("zoo.serving.retrive.servable")
-    val servablesRetriveTimer = metrics.timer("zoo.serving.retrive.servables")
-    val backendInferenceTimer = metrics.timer("zoo.serving.backend.inference")
-    val putRedisTimer = metrics.timer("zoo.serving.redis.put")
-    val getRedisTimer = metrics.timer("zoo.serving.redis.get")
-    val waitRedisTimer = metrics.timer("zoo.serving.redis.wait")
-    val metricsRequestTimer = metrics.timer("zoo.serving.request.metrics")
-    val modelInferenceTimersMap = new mutable.HashMap[String, mutable.HashMap[String, Timer]]
-    val purePredictTimersMap = new mutable.HashMap[String, mutable.HashMap[String, Timer]]
-    val makeActivityTimer = metrics.timer("zoo.serving.activity.make")
-    val handleResponseTimer = metrics.timer("zoo.serving.response.handling")
-
+    override def predict(in: PredictReq): Future[PredictReply] = {
+      timing("backend inference")(overallRequestTimer, backendInferenceTimer) {
+          try {
+            logger.info("model name: " + in.modelName + ", model version: " + in.modelVersion)
+            val servable = timing("servable retrive")(servableRetriveTimer) {
+              servableManager.retriveServable(in.modelName, in.modelVersion)
+            }
+            val modelInferenceTimer = modelInferenceTimersMap(in.modelName)(in.modelVersion)
+            servable match {
+              case _: ClusterServingServable =>
+                val result = timing("cluster serving inference")(predictRequestTimer) {
+                  val instances = timing("json deserialization")() {
+                    JsonUtil.fromJson(classOf[Instances], in.input)
+                  }
+                  val outputs = timing("model inference")(modelInferenceTimer) {
+                    servable.predict(instances)
+                  }
+                  Predictions(outputs)
+                }
+                timing("cluster serving response complete")() {
+                  Future.successful(PredictReply(result.toString))
+                }
+              case _: InferenceModelServable =>
+                val result = timing("inference model inference")(predictRequestTimer) {
+                  val outputs = servable.getMetaData.
+                    asInstanceOf[InferenceModelMetaData].inputCompileType match {
+                    case "direct" => timing("model inference")(modelInferenceTimer) {
+                      servable.predict(in.input)
+                    }
+                    case "instance" =>
+                      val instances = timing("json deserialization")() {
+                        JsonUtil.fromJson(classOf[Instances], in.input)
+                      }
+                      timing("model inference")(modelInferenceTimer) {
+                        servable.predict(instances)
+                      }
+                  }
+                  JsonUtil.toJson(outputs.map(_.result))
+                }
+                timing("inference model response complete")() {
+                  Future.successful(PredictReply(result.toString))
+                }
+            }
+          }
+          catch {
+            case e =>
+              Future.failed(e)
+          }
+        }
+      }
   }
+
+  logger.info(s"metrics init")
+  val metrics = new MetricRegistry
+  val overallRequestTimer = metrics.timer("zoo.serving.request.overall")
+  val predictRequestTimer = metrics.timer("zoo.serving.request.predict")
+  val servableRetriveTimer = metrics.timer("zoo.serving.retrive.servable")
+  val servablesRetriveTimer = metrics.timer("zoo.serving.retrive.servables")
+  val backendInferenceTimer = metrics.timer("zoo.serving.backend.inference")
+  val putRedisTimer = metrics.timer("zoo.serving.redis.put")
+  val getRedisTimer = metrics.timer("zoo.serving.redis.get")
+  val waitRedisTimer = metrics.timer("zoo.serving.redis.wait")
+  val metricsRequestTimer = metrics.timer("zoo.serving.request.metrics")
+  val modelInferenceTimersMap = new mutable.HashMap[String, mutable.HashMap[String, Timer]]
+  val purePredictTimersMap = new mutable.HashMap[String, mutable.HashMap[String, Timer]]
+  val makeActivityTimer = metrics.timer("zoo.serving.activity.make")
+  val handleResponseTimer = metrics.timer("zoo.serving.response.handling")
 }
 
 

@@ -139,6 +139,12 @@ object FrontEndGRPCServiceHandler {
                   .flatMap(implementation.getModelsWithNameAndVersion(_))
                   .map(e => GrpcMarshalling.marshal(e, eHandler)(ModelsReplySerializer, writer, system))
             
+            case "Predict" =>
+                
+                GrpcMarshalling.unmarshal(request.entity.dataBytes)(PredictReqSerializer, mat, reader)
+                  .flatMap(implementation.predict(_))
+                  .map(e => GrpcMarshalling.marshal(e, eHandler)(PredictReplySerializer, writer, system))
+            
             case m => scala.concurrent.Future.failed(new NotImplementedError(s"Not implemented: $m"))
           })
           .recoverWith(GrpcExceptionHandler.from(eHandler(system.classicSystem))(system, writer))

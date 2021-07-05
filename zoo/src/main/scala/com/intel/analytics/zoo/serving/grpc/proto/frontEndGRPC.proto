@@ -22,6 +22,9 @@ service FrontEndGRPCService {
     //get models with model name port
     rpc GetModelsWithNameAndVersion (GetModelsWithNameAndVersionReq) returns (ModelsReply) {}
 
+    //predict
+    rpc Predict (PredictReq) returns (PredictReply) {}
+
 }
 
 message Empty {
@@ -90,4 +93,14 @@ message ClusterServingGRPCMetaData {
 message ModelsReply {
     repeated InferenceModelGRPCMetaData inferenceModelMetaDatas = 1;
     repeated ClusterServingGRPCMetaData clusterServingMetaDatas = 2;
+}
+
+message PredictReq{
+    string modelName = 1;
+    string modelVersion = 2;
+    string input = 3;
+}
+
+message PredictReply{
+    string response = 1;
 }
