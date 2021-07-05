@@ -63,7 +63,7 @@ class PreProcessing()
       ).toList
       val arr = oneInsMap.map(x => x._2)
       val table = T.array(arr.toArray)
-      if (table.keySet.size == 1){
+      if (table.keySet.size == 1) {
           table.keySet.foreach(key => {
             return Seq(table(key).asInstanceOf[Tensor[Float]])
           })
