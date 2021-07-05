@@ -32,16 +32,15 @@ import org.apache.flink.configuration.Configuration
 import org.apache.log4j.Logger
 
 
-class FlinkInference(helperSer: ClusterServingHelper)
+class FlinkInference()
   extends RichMapFunction[List[(String, String, String)], List[(String, String)]] {
 
   var logger: Logger = null
   var inference: ClusterServingInference = null
   var helper: ClusterServingHelper = null
-//  var helper: ClusterServingHelper = null
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
-    ClusterServing.helper = helperSer
+
     helper = ClusterServing.helper
 //    val t = Tensor[Float](1, 2, 3).rand()
 //    val x = T.array(Array(t))
