@@ -88,7 +88,7 @@ class Table:
                 tbl = tbl.cast(columns=None, dtype=dtype)
             elif isinstance(dtype, list):
                 columns = df.columns
-                assert len(dtype) == len(columns), \
+                assert len(dtype) == len(columns),\
                     "dtype should have the same length as the number of columns"
                 for i in range(len(columns)):
                     tbl = tbl.cast(columns=columns[i], dtype=dtype[i])
@@ -526,7 +526,7 @@ class Table:
         valid_types = ["str", "string", "bool", "boolean", "int",
                        "integer", "long", "short", "float", "double"]
         if not (isinstance(dtype, str) and (dtype in valid_types)) \
-                and not isinstance(dtype, DataType):
+           and not isinstance(dtype, DataType):
             raise ValueError(
                 "dtype should be string, boolean, int, long, short, float, double.")
         transform_dict = {"str": "string", "bool": "boolean", "integer": "int"}
@@ -698,7 +698,7 @@ class FeatureTable(Table):
             col_name = columns[i]
             index_tbl.broadcast()
             data_df = data_df.join(index_tbl.df, col_name, how="left") \
-                .drop(col_name).withColumnRenamed("id", col_name) \
+                .drop(col_name).withColumnRenamed("id", col_name)\
                 .dropna(subset=[col_name])
         return FeatureTable(data_df)
 
