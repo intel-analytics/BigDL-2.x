@@ -128,6 +128,8 @@ object RedisUtils {
     if (ClusterServing.jedisPool == null) {
       ClusterServing.synchronized {
         if (ClusterServing.jedisPool == null) {
+          ClusterServing.logger.info(
+            s"Creating JedisPool at ${params.redisHost}:${params.redisPort}")
           ClusterServing.jedisPool = new JedisPool(ClusterServing.jedisPoolConfig,
             params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
         }
