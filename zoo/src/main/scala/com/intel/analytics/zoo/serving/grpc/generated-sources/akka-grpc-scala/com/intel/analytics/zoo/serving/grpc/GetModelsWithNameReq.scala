@@ -5,20 +5,18 @@
 
 package com.intel.analytics.zoo.serving.grpc
 
-/** The request message containing the user's name.
-  */
 @SerialVersionUID(0L)
-final case class HelloRequest(
-    name: _root_.scala.Predef.String = "",
+final case class GetModelsWithNameReq(
+    modelName: _root_.scala.Predef.String = "",
     unknownFields: _root_.scalapb.UnknownFieldSet = _root_.scalapb.UnknownFieldSet.empty
-    ) extends scalapb.GeneratedMessage with scalapb.lenses.Updatable[HelloRequest] {
+    ) extends scalapb.GeneratedMessage with scalapb.lenses.Updatable[GetModelsWithNameReq] {
     @transient
     private[this] var __serializedSizeCachedValue: _root_.scala.Int = 0
     private[this] def __computeSerializedValue(): _root_.scala.Int = {
       var __size = 0
       
       {
-        val __value = name
+        val __value = modelName
         if (!__value.isEmpty) {
           __size += _root_.com.google.protobuf.CodedOutputStream.computeStringSize(1, __value)
         }
@@ -36,20 +34,20 @@ final case class HelloRequest(
     }
     def writeTo(`_output__`: _root_.com.google.protobuf.CodedOutputStream): _root_.scala.Unit = {
       {
-        val __v = name
+        val __v = modelName
         if (!__v.isEmpty) {
           _output__.writeString(1, __v)
         }
       };
       unknownFields.writeTo(_output__)
     }
-    def withName(__v: _root_.scala.Predef.String): HelloRequest = copy(name = __v)
+    def withModelName(__v: _root_.scala.Predef.String): GetModelsWithNameReq = copy(modelName = __v)
     def withUnknownFields(__v: _root_.scalapb.UnknownFieldSet) = copy(unknownFields = __v)
     def discardUnknownFields = copy(unknownFields = _root_.scalapb.UnknownFieldSet.empty)
     def getFieldByNumber(__fieldNumber: _root_.scala.Int): _root_.scala.Any = {
       (__fieldNumber: @_root_.scala.unchecked) match {
         case 1 => {
-          val __t = name
+          val __t = modelName
           if (__t != "") __t else null
         }
       }
@@ -57,18 +55,18 @@ final case class HelloRequest(
     def getField(__field: _root_.scalapb.descriptors.FieldDescriptor): _root_.scalapb.descriptors.PValue = {
       _root_.scala.Predef.require(__field.containingMessage eq companion.scalaDescriptor)
       (__field.number: @_root_.scala.unchecked) match {
-        case 1 => _root_.scalapb.descriptors.PString(name)
+        case 1 => _root_.scalapb.descriptors.PString(modelName)
       }
     }
     def toProtoString: _root_.scala.Predef.String = _root_.scalapb.TextFormat.printToUnicodeString(this)
-    def companion = com.intel.analytics.zoo.serving.grpc.HelloRequest
-    // @@protoc_insertion_point(GeneratedMessage[grpc.HelloRequest])
+    def companion = com.intel.analytics.zoo.serving.grpc.GetModelsWithNameReq
+    // @@protoc_insertion_point(GeneratedMessage[grpc.GetModelsWithNameReq])
 }
 
-object HelloRequest extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.HelloRequest] {
-  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.HelloRequest] = this
-  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.HelloRequest = {
-    var __name: _root_.scala.Predef.String = ""
+object GetModelsWithNameReq extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.GetModelsWithNameReq] {
+  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.GetModelsWithNameReq] = this
+  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.GetModelsWithNameReq = {
+    var __modelName: _root_.scala.Predef.String = ""
     var `_unknownFields__`: _root_.scalapb.UnknownFieldSet.Builder = null
     var _done__ = false
     while (!_done__) {
@@ -76,7 +74,7 @@ object HelloRequest extends scalapb.GeneratedMessageCompanion[com.intel.analytic
       _tag__ match {
         case 0 => _done__ = true
         case 10 =>
-          __name = _input__.readStringRequireUtf8()
+          __modelName = _input__.readStringRequireUtf8()
         case tag =>
           if (_unknownFields__ == null) {
             _unknownFields__ = new _root_.scalapb.UnknownFieldSet.Builder()
@@ -84,35 +82,35 @@ object HelloRequest extends scalapb.GeneratedMessageCompanion[com.intel.analytic
           _unknownFields__.parseField(tag, _input__)
       }
     }
-    com.intel.analytics.zoo.serving.grpc.HelloRequest(
-        name = __name,
+    com.intel.analytics.zoo.serving.grpc.GetModelsWithNameReq(
+        modelName = __modelName,
         unknownFields = if (_unknownFields__ == null) _root_.scalapb.UnknownFieldSet.empty else _unknownFields__.result()
     )
   }
-  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.HelloRequest] = _root_.scalapb.descriptors.Reads{
+  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.GetModelsWithNameReq] = _root_.scalapb.descriptors.Reads{
     case _root_.scalapb.descriptors.PMessage(__fieldsMap) =>
       _root_.scala.Predef.require(__fieldsMap.keys.forall(_.containingMessage eq scalaDescriptor), "FieldDescriptor does not match message type.")
-      com.intel.analytics.zoo.serving.grpc.HelloRequest(
-        name = __fieldsMap.get(scalaDescriptor.findFieldByNumber(1).get).map(_.as[_root_.scala.Predef.String]).getOrElse("")
+      com.intel.analytics.zoo.serving.grpc.GetModelsWithNameReq(
+        modelName = __fieldsMap.get(scalaDescriptor.findFieldByNumber(1).get).map(_.as[_root_.scala.Predef.String]).getOrElse("")
       )
     case _ => throw new RuntimeException("Expected PMessage")
   }
-  def javaDescriptor: _root_.com.google.protobuf.Descriptors.Descriptor = GrpcProto.javaDescriptor.getMessageTypes().get(0)
-  def scalaDescriptor: _root_.scalapb.descriptors.Descriptor = GrpcProto.scalaDescriptor.messages(0)
+  def javaDescriptor: _root_.com.google.protobuf.Descriptors.Descriptor = FrontEndGRPCProto.javaDescriptor.getMessageTypes().get(1)
+  def scalaDescriptor: _root_.scalapb.descriptors.Descriptor = FrontEndGRPCProto.scalaDescriptor.messages(1)
   def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[_] = throw new MatchError(__number)
   lazy val nestedMessagesCompanions: Seq[_root_.scalapb.GeneratedMessageCompanion[_ <: _root_.scalapb.GeneratedMessage]] = Seq.empty
   def enumCompanionForFieldNumber(__fieldNumber: _root_.scala.Int): _root_.scalapb.GeneratedEnumCompanion[_] = throw new MatchError(__fieldNumber)
-  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.HelloRequest(
-    name = ""
+  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.GetModelsWithNameReq(
+    modelName = ""
   )
-  implicit class HelloRequestLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.HelloRequest]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.HelloRequest](_l) {
-    def name: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.name)((c_, f_) => c_.copy(name = f_))
+  implicit class GetModelsWithNameReqLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.GetModelsWithNameReq]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.GetModelsWithNameReq](_l) {
+    def modelName: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.modelName)((c_, f_) => c_.copy(modelName = f_))
   }
-  final val NAME_FIELD_NUMBER = 1
+  final val MODELNAME_FIELD_NUMBER = 1
   def of(
-    name: _root_.scala.Predef.String
-  ): _root_.com.intel.analytics.zoo.serving.grpc.HelloRequest = _root_.com.intel.analytics.zoo.serving.grpc.HelloRequest(
-    name
+    modelName: _root_.scala.Predef.String
+  ): _root_.com.intel.analytics.zoo.serving.grpc.GetModelsWithNameReq = _root_.com.intel.analytics.zoo.serving.grpc.GetModelsWithNameReq(
+    modelName
   )
-  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.HelloRequest])
+  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.GetModelsWithNameReq])
 }

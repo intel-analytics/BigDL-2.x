@@ -25,7 +25,7 @@ import akka.grpc.internal.TelemetryExtension
  * https://github.com/akka/akka-grpc/issues/994
  */
 @ApiMayChange
-object GreeterServiceHandler {
+object FrontEndGRPCServiceHandler {
     private val notFound = scala.concurrent.Future.successful(model.HttpResponse(model.StatusCodes.NotFound))
     private val unsupportedMediaType = scala.concurrent.Future.successful(model.HttpResponse(model.StatusCodes.UnsupportedMediaType))
 
@@ -33,44 +33,44 @@ object GreeterServiceHandler {
      * Creates a `HttpRequest` to `HttpResponse` handler that can be used in for example `Http().bindAndHandleAsync`
      * for the generated partial function handler and ends with `StatusCodes.NotFound` if the request is not matching.
      *
-     * Use `akka.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `GreeterServiceHandler.partial` when combining
+     * Use `akka.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `FrontEndGRPCServiceHandler.partial` when combining
      * several services.
      */
-    def apply(implementation: GreeterService)(implicit system: ClassicActorSystemProvider): model.HttpRequest => scala.concurrent.Future[model.HttpResponse] =
+    def apply(implementation: FrontEndGRPCService)(implicit system: ClassicActorSystemProvider): model.HttpRequest => scala.concurrent.Future[model.HttpResponse] =
       partial(implementation).orElse { case _ => notFound }
 
     /**
      * Creates a `HttpRequest` to `HttpResponse` handler that can be used in for example `Http().bindAndHandleAsync`
      * for the generated partial function handler and ends with `StatusCodes.NotFound` if the request is not matching.
      *
-     * Use `akka.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `GreeterServiceHandler.partial` when combining
+     * Use `akka.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `FrontEndGRPCServiceHandler.partial` when combining
      * several services.
      */
-    def apply(implementation: GreeterService, eHandler: ActorSystem => PartialFunction[Throwable, Trailers])(implicit system: ClassicActorSystemProvider): model.HttpRequest => scala.concurrent.Future[model.HttpResponse] =
-      partial(implementation, GreeterService.name, eHandler).orElse { case _ => notFound }
+    def apply(implementation: FrontEndGRPCService, eHandler: ActorSystem => PartialFunction[Throwable, Trailers])(implicit system: ClassicActorSystemProvider): model.HttpRequest => scala.concurrent.Future[model.HttpResponse] =
+      partial(implementation, FrontEndGRPCService.name, eHandler).orElse { case _ => notFound }
 
     /**
      * Creates a `HttpRequest` to `HttpResponse` handler that can be used in for example `Http().bindAndHandleAsync`
      * for the generated partial function handler and ends with `StatusCodes.NotFound` if the request is not matching.
      *
-     * Use `akka.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `GreeterServiceHandler.partial` when combining
+     * Use `akka.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `FrontEndGRPCServiceHandler.partial` when combining
      * several services.
      *
      * Registering a gRPC service under a custom prefix is not widely supported and strongly discouraged by the specification.
      */
-    def apply(implementation: GreeterService, prefix: String)(implicit system: ClassicActorSystemProvider): model.HttpRequest => scala.concurrent.Future[model.HttpResponse] =
+    def apply(implementation: FrontEndGRPCService, prefix: String)(implicit system: ClassicActorSystemProvider): model.HttpRequest => scala.concurrent.Future[model.HttpResponse] =
       partial(implementation, prefix).orElse { case _ => notFound }
 
     /**
      * Creates a `HttpRequest` to `HttpResponse` handler that can be used in for example `Http().bindAndHandleAsync`
      * for the generated partial function handler and ends with `StatusCodes.NotFound` if the request is not matching.
      *
-     * Use `akka.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `GreeterServiceHandler.partial` when combining
+     * Use `akka.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `FrontEndGRPCServiceHandler.partial` when combining
      * several services.
      *
      * Registering a gRPC service under a custom prefix is not widely supported and strongly discouraged by the specification.
      */
-    def apply(implementation: GreeterService, prefix: String, eHandler: ActorSystem => PartialFunction[Throwable, Trailers])(implicit system: ClassicActorSystemProvider): model.HttpRequest => scala.concurrent.Future[model.HttpResponse] =
+    def apply(implementation: FrontEndGRPCService, prefix: String, eHandler: ActorSystem => PartialFunction[Throwable, Trailers])(implicit system: ClassicActorSystemProvider): model.HttpRequest => scala.concurrent.Future[model.HttpResponse] =
       partial(implementation, prefix, eHandler).orElse { case _ => notFound }
 
 
@@ -78,15 +78,15 @@ object GreeterServiceHandler {
     /**
      * Creates a `HttpRequest` to `HttpResponse` handler that can be used in for example `Http().bindAndHandleAsync`
      * for the generated partial function handler. The generated handler falls back to a reflection handler for
-     * `GreeterService` and ends with `StatusCodes.NotFound` if the request is not matching.
+     * `FrontEndGRPCService` and ends with `StatusCodes.NotFound` if the request is not matching.
      *
-     * Use `akka.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `GreeterServiceHandler.partial` when combining
+     * Use `akka.grpc.scaladsl.ServiceHandler.concatOrNotFound` with `FrontEndGRPCServiceHandler.partial` when combining
      * several services.
      */
-    def withServerReflection(implementation: GreeterService)(implicit system: ClassicActorSystemProvider): model.HttpRequest => scala.concurrent.Future[model.HttpResponse] =
+    def withServerReflection(implementation: FrontEndGRPCService)(implicit system: ClassicActorSystemProvider): model.HttpRequest => scala.concurrent.Future[model.HttpResponse] =
         akka.grpc.scaladsl.ServiceHandler.concatOrNotFound(
-          GreeterServiceHandler.partial(implementation),
-          akka.grpc.scaladsl.ServerReflection.partial(List(GreeterService)))
+          FrontEndGRPCServiceHandler.partial(implementation),
+          akka.grpc.scaladsl.ServerReflection.partial(List(FrontEndGRPCService)))
 
 
     /**
@@ -94,26 +94,50 @@ object GreeterServiceHandler {
      * services with `akka.grpc.scaladsl.ServiceHandler.concatOrNotFound` and then used in for example
      * `Http().bindAndHandleAsync`.
      *
-     * Use `GreeterServiceHandler.apply` if the server is only handling one service.
+     * Use `FrontEndGRPCServiceHandler.apply` if the server is only handling one service.
      *
      * Registering a gRPC service under a custom prefix is not widely supported and strongly discouraged by the specification.
      */
-    def partial(implementation: GreeterService, prefix: String = GreeterService.name, eHandler: ActorSystem => PartialFunction[Throwable, Trailers] = GrpcExceptionHandler.defaultMapper)(implicit system: ClassicActorSystemProvider): PartialFunction[model.HttpRequest, scala.concurrent.Future[model.HttpResponse]] = {
+    def partial(implementation: FrontEndGRPCService, prefix: String = FrontEndGRPCService.name, eHandler: ActorSystem => PartialFunction[Throwable, Trailers] = GrpcExceptionHandler.defaultMapper)(implicit system: ClassicActorSystemProvider): PartialFunction[model.HttpRequest, scala.concurrent.Future[model.HttpResponse]] = {
       implicit val mat = SystemMaterializer(system).materializer
       implicit val ec: ExecutionContext = mat.executionContext
       val spi = TelemetryExtension(system).spi
 
-      import GreeterService.Serializers._
+      import FrontEndGRPCService.Serializers._
 
       def handle(request: model.HttpRequest, method: String): scala.concurrent.Future[model.HttpResponse] =
         GrpcMarshalling.negotiated(request, (reader, writer) =>
           (method match {
             
-            case "SayHello" =>
+            case "Ping" =>
                 
-                GrpcMarshalling.unmarshal(request.entity.dataBytes)(HelloRequestSerializer, mat, reader)
-                  .flatMap(implementation.sayHello(_))
-                  .map(e => GrpcMarshalling.marshal(e, eHandler)(HelloReplySerializer, writer, system))
+                GrpcMarshalling.unmarshal(request.entity.dataBytes)(EmptySerializer, mat, reader)
+                  .flatMap(implementation.ping(_))
+                  .map(e => GrpcMarshalling.marshal(e, eHandler)(StringReplySerializer, writer, system))
+            
+            case "GetMetrics" =>
+                
+                GrpcMarshalling.unmarshal(request.entity.dataBytes)(EmptySerializer, mat, reader)
+                  .flatMap(implementation.getMetrics(_))
+                  .map(e => GrpcMarshalling.marshal(e, eHandler)(MetricsReplySerializer, writer, system))
+            
+            case "GetAllModels" =>
+                
+                GrpcMarshalling.unmarshal(request.entity.dataBytes)(EmptySerializer, mat, reader)
+                  .flatMap(implementation.getAllModels(_))
+                  .map(e => GrpcMarshalling.marshal(e, eHandler)(ModelsReplySerializer, writer, system))
+            
+            case "GetModelsWithName" =>
+                
+                GrpcMarshalling.unmarshal(request.entity.dataBytes)(GetModelsWithNameReqSerializer, mat, reader)
+                  .flatMap(implementation.getModelsWithName(_))
+                  .map(e => GrpcMarshalling.marshal(e, eHandler)(ModelsReplySerializer, writer, system))
+            
+            case "GetModelsWithNameAndVersion" =>
+                
+                GrpcMarshalling.unmarshal(request.entity.dataBytes)(GetModelsWithNameAndVersionReqSerializer, mat, reader)
+                  .flatMap(implementation.getModelsWithNameAndVersion(_))
+                  .map(e => GrpcMarshalling.marshal(e, eHandler)(ModelsReplySerializer, writer, system))
             
             case m => scala.concurrent.Future.failed(new NotImplementedError(s"Not implemented: $m"))
           })

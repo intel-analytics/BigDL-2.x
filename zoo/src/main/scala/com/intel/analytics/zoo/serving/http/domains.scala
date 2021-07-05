@@ -53,6 +53,7 @@ import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.zoo.serving.grpc.{ClusterServingGRPCMetaData, InferenceModelGRPCMetaData}
 import com.intel.analytics.zoo.serving.serialization.StreamSerializer
 import org.slf4j.LoggerFactory
 
@@ -1092,13 +1093,20 @@ abstract class ModelMetaData(modelName: String, modelVersion: String, features: 
 
 case class InferenceModelMetaData(modelName: String,
                                   modelVersion: String,
-                                  modelPath: String,
-                                  modelType: String,
-                                  weightPath: String,
+                                  modelPath: String = "",
+                                  modelType: String = "",
+                                  weightPath: String = "",
                                   modelConCurrentNum: Int = 1,
-                                  inputCompileType: String = "direct",
+                                  inputCompileType: String = "direct", // direct or instance
                                   features: Array[String])
-  extends ModelMetaData(modelName, modelVersion, features)
+  extends ModelMetaData(modelName, modelVersion, features) {
+  def getInferenceModelGRPCMetaData: InferenceModelGRPCMetaData = {
+
+    InferenceModelGRPCMetaData(modelName, modelVersion, modelPath, modelType, weightPath,
+      modelConCurrentNum, inputCompileType, features.mkString(","))
+  }
+
+}
 
 case class ClusterServingMetaData(modelName: String,
                                   modelVersion: String,
@@ -1112,7 +1120,13 @@ case class ClusterServingMetaData(modelName: String,
                                   redisTrustStorePath: String = null,
                                   redisTrustStoreToken: String = "1234qwer",
                                   features: Array[String])
-  extends ModelMetaData(modelName, modelVersion, features)
+  extends ModelMetaData(modelName, modelVersion, features) {
+  def getClusterServingGRPCMetaData: ClusterServingGRPCMetaData = {
+    ClusterServingGRPCMetaData(modelName, modelVersion, redisHost, redisPort, redisInputQueue,
+      redisOutputQueue, timeWindow, countWindow, redisSecureEnabled, redisTrustStorePath,
+      redisTrustStoreToken, features.mkString(","))
+  }
+}
 
 
 case class ServableManagerConf(modelMetaDataList: List[ModelMetaData])

@@ -8,10 +8,10 @@ package com.intel.analytics.zoo.serving.grpc
 /** The response message containing the greetings
   */
 @SerialVersionUID(0L)
-final case class HelloReply(
+final case class StringReply(
     message: _root_.scala.Predef.String = "",
     unknownFields: _root_.scalapb.UnknownFieldSet = _root_.scalapb.UnknownFieldSet.empty
-    ) extends scalapb.GeneratedMessage with scalapb.lenses.Updatable[HelloReply] {
+    ) extends scalapb.GeneratedMessage with scalapb.lenses.Updatable[StringReply] {
     @transient
     private[this] var __serializedSizeCachedValue: _root_.scala.Int = 0
     private[this] def __computeSerializedValue(): _root_.scala.Int = {
@@ -43,7 +43,7 @@ final case class HelloReply(
       };
       unknownFields.writeTo(_output__)
     }
-    def withMessage(__v: _root_.scala.Predef.String): HelloReply = copy(message = __v)
+    def withMessage(__v: _root_.scala.Predef.String): StringReply = copy(message = __v)
     def withUnknownFields(__v: _root_.scalapb.UnknownFieldSet) = copy(unknownFields = __v)
     def discardUnknownFields = copy(unknownFields = _root_.scalapb.UnknownFieldSet.empty)
     def getFieldByNumber(__fieldNumber: _root_.scala.Int): _root_.scala.Any = {
@@ -61,13 +61,13 @@ final case class HelloReply(
       }
     }
     def toProtoString: _root_.scala.Predef.String = _root_.scalapb.TextFormat.printToUnicodeString(this)
-    def companion = com.intel.analytics.zoo.serving.grpc.HelloReply
-    // @@protoc_insertion_point(GeneratedMessage[grpc.HelloReply])
+    def companion = com.intel.analytics.zoo.serving.grpc.StringReply
+    // @@protoc_insertion_point(GeneratedMessage[grpc.StringReply])
 }
 
-object HelloReply extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.HelloReply] {
-  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.HelloReply] = this
-  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.HelloReply = {
+object StringReply extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.StringReply] {
+  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.StringReply] = this
+  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.StringReply = {
     var __message: _root_.scala.Predef.String = ""
     var `_unknownFields__`: _root_.scalapb.UnknownFieldSet.Builder = null
     var _done__ = false
@@ -84,35 +84,35 @@ object HelloReply extends scalapb.GeneratedMessageCompanion[com.intel.analytics.
           _unknownFields__.parseField(tag, _input__)
       }
     }
-    com.intel.analytics.zoo.serving.grpc.HelloReply(
+    com.intel.analytics.zoo.serving.grpc.StringReply(
         message = __message,
         unknownFields = if (_unknownFields__ == null) _root_.scalapb.UnknownFieldSet.empty else _unknownFields__.result()
     )
   }
-  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.HelloReply] = _root_.scalapb.descriptors.Reads{
+  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.StringReply] = _root_.scalapb.descriptors.Reads{
     case _root_.scalapb.descriptors.PMessage(__fieldsMap) =>
       _root_.scala.Predef.require(__fieldsMap.keys.forall(_.containingMessage eq scalaDescriptor), "FieldDescriptor does not match message type.")
-      com.intel.analytics.zoo.serving.grpc.HelloReply(
+      com.intel.analytics.zoo.serving.grpc.StringReply(
         message = __fieldsMap.get(scalaDescriptor.findFieldByNumber(1).get).map(_.as[_root_.scala.Predef.String]).getOrElse("")
       )
     case _ => throw new RuntimeException("Expected PMessage")
   }
-  def javaDescriptor: _root_.com.google.protobuf.Descriptors.Descriptor = GrpcProto.javaDescriptor.getMessageTypes().get(1)
-  def scalaDescriptor: _root_.scalapb.descriptors.Descriptor = GrpcProto.scalaDescriptor.messages(1)
+  def javaDescriptor: _root_.com.google.protobuf.Descriptors.Descriptor = FrontEndGRPCProto.javaDescriptor.getMessageTypes().get(3)
+  def scalaDescriptor: _root_.scalapb.descriptors.Descriptor = FrontEndGRPCProto.scalaDescriptor.messages(3)
   def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[_] = throw new MatchError(__number)
   lazy val nestedMessagesCompanions: Seq[_root_.scalapb.GeneratedMessageCompanion[_ <: _root_.scalapb.GeneratedMessage]] = Seq.empty
   def enumCompanionForFieldNumber(__fieldNumber: _root_.scala.Int): _root_.scalapb.GeneratedEnumCompanion[_] = throw new MatchError(__fieldNumber)
-  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.HelloReply(
+  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.StringReply(
     message = ""
   )
-  implicit class HelloReplyLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.HelloReply]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.HelloReply](_l) {
+  implicit class StringReplyLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.StringReply]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.StringReply](_l) {
     def message: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.message)((c_, f_) => c_.copy(message = f_))
   }
   final val MESSAGE_FIELD_NUMBER = 1
   def of(
     message: _root_.scala.Predef.String
-  ): _root_.com.intel.analytics.zoo.serving.grpc.HelloReply = _root_.com.intel.analytics.zoo.serving.grpc.HelloReply(
+  ): _root_.com.intel.analytics.zoo.serving.grpc.StringReply = _root_.com.intel.analytics.zoo.serving.grpc.StringReply(
     message
   )
-  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.HelloReply])
+  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.StringReply])
 }
