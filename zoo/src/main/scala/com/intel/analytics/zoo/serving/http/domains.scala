@@ -45,6 +45,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode, TextNode}
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer, JsonNode, ObjectMapper}
 import com.google.common.collect.ImmutableList
+import com.google.common.util.concurrent.RateLimiter
 import com.intel.analytics.zoo.serving.http.FrontEndApp.{handleResponseTimer, makeActivityTimer, metrics, overallRequestTimer, purePredictTimersMap, system, timeout, timing, waitRedisTimer}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
@@ -53,8 +54,10 @@ import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.serialization.StreamSerializer
 import org.slf4j.LoggerFactory
+import redis.clients.jedis.JedisPool
 
 sealed trait ServingMessage
 
@@ -972,7 +975,17 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
   var redisPutter: ActorRef = _
   var redisGetter: ActorRef = _
   var querierQueue: LinkedBlockingQueue[ActorRef] = _
-
+  val jedisPool = new JedisPool(ClusterServing.jedisPoolConfig,
+    clusterServingMetaData.redisHost, clusterServingMetaData.redisPort.toInt)
+  val rateLimiter: RateLimiter = clusterServingMetaData.tokenBucketEnabled match {
+    case true => RateLimiter.create(clusterServingMetaData.tokensPerSecond)
+    case false => null
+  }
+  val actorName = s"redis-getter"
+  val ioActor = timing(s"$actorName initialized.")() {
+    val getterProps = Props(new RedisIOActor(jedisPool = jedisPool))
+    system.actorOf(getterProps, name = actorName)
+  }
 
   def load(): Unit = {
     val redisPutterName = s"redis-putter-${clusterServingMetaData.modelName}" +
@@ -1020,7 +1033,7 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
     }
   }
 
-  def predict(input: String, ioActor: ActorRef): Seq[PredictionOutput[String]] = {
+  def predict(input: String): Seq[PredictionOutput[String]] = {
     val result = timing("response waiting")() {
       val id = UUID.randomUUID().toString
       val results = timing(s"query message wait for key $id")() {
@@ -1073,8 +1086,9 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
       clusterServingMetaData.redisHost, clusterServingMetaData.redisPort,
       clusterServingMetaData.redisInputQueue, clusterServingMetaData.redisOutputQueue,
       clusterServingMetaData.timeWindow, clusterServingMetaData.countWindow,
-      clusterServingMetaData.redisSecureEnabled,
-      "*******", "*******", clusterServingMetaData.features)
+      clusterServingMetaData.tokenBucketEnabled, clusterServingMetaData.tokensPerSecond,
+      clusterServingMetaData.redisSecureEnabled, "*******", "*******",
+      clusterServingMetaData.inputCompileType, clusterServingMetaData.features)
   }
 
 }
@@ -1117,6 +1131,8 @@ case class ClusterServingMetaData(modelName: String,
                                   redisOutputQueue: String,
                                   timeWindow: Int = 0,
                                   countWindow: Int = 56,
+                                  tokenBucketEnabled: Boolean = false,
+                                  tokensPerSecond: Int = 100,
                                   redisSecureEnabled: Boolean = false,
                                   redisTrustStorePath: String = null,
                                   redisTrustStoreToken: String = "1234qwer",

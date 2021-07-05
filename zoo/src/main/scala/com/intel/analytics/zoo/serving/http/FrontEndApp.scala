@@ -90,17 +90,6 @@ object FrontEndApp extends Supportive with EncryptSupportive {
         }
       }
       logger.info("Servable Manager Load Success!")
-      val jedisPool = new JedisPool(
-        ClusterServing.jedisPoolConfig, arguments.redisHost, arguments.redisPort)
-      val rateLimiter: RateLimiter = arguments.tokenBucketEnabled match {
-        case true => RateLimiter.create(arguments.tokensPerSecond)
-        case false => null
-      }
-      val actorName = s"redis-getter"
-      val ioActor = timing(s"$actorName initialized.")() {
-        val getterProps = Props(new RedisIOActor(jedisPool = jedisPool))
-        system.actorOf(getterProps, name = actorName)
-      }
       var redisPutter : ActorRef = null
       val route = timing("initialize http route")() {
         path("") {
@@ -218,20 +207,6 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               & extract(_.request.entity.contentType) & entity(as[String])) {
               (modelName, modelVersion, contentType, content) => {
                 timing("backend inference")(overallRequestTimer, backendInferenceTimer) {
-                  val rejected = arguments.tokenBucketEnabled match {
-                    case true =>
-                      if (!rateLimiter.tryAcquire(
-                        arguments.tokenAcquireTimeout, TimeUnit.MILLISECONDS)) {
-                        true
-                      } else {
-                        false
-                      }
-                    case false => false
-                  }
-                  if (rejected) {
-                    val error = ServingError("limited")
-                    complete(500, error.toString)
-                  }
                   try {
                     logger.info("model name: " + modelName + ", model version: " + modelVersion)
                     val servable = timing("servable retrive")(servableRetriveTimer) {
@@ -239,8 +214,22 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                     }
                     val modelInferenceTimer = modelInferenceTimersMap(modelName)(modelVersion)
                     servable match {
-                      case _: ClusterServingServable =>
+                      case clusterServingServable: ClusterServingServable =>
                         val result = timing("cluster serving inference")(predictRequestTimer) {
+                          val rejected = arguments.tokenBucketEnabled match {
+                            case true =>
+                              if (!clusterServingServable.rateLimiter.tryAcquire(
+                                arguments.tokenAcquireTimeout, TimeUnit.MILLISECONDS)) {
+                                true
+                              } else {
+                                false
+                              }
+                            case false => false
+                          }
+                          if (rejected) {
+                            val error = ServingError("limited")
+                            complete(500, error.toString)
+                          }
                           val outputs = servable.getMetaData.
                             asInstanceOf[InferenceModelMetaData].inputCompileType match {
                             case "direct" =>
