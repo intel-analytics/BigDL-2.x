@@ -24,7 +24,7 @@ import com.intel.analytics.zoo.feature.common._
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.nnframes.NNModel.NNModelWriter
 import ml.dmlc.xgboost4j.scala.spark.{XGBoostClassificationModel, XGBoostHelper,
-XGBoostRegressionModel, XGBoostRegressor}
+XGBoostRegressionModel, XGBoostRegressor, XGBoostClassifier}
 import org.apache.spark.ml.DefaultParamsWriterWrapper
 import org.apache.spark.ml.adapter.SchemaUtils
 import org.apache.spark.ml.feature.VectorAssembler
@@ -317,6 +317,57 @@ object NNClassifierModel extends MLReadable[NNClassifierModel[_]] {
   }
 }
 
+class XGBClassifier () {
+  private val model = new XGBoostClassifier()
+  model.setNthread(EngineRef.getCoreNumber())
+  model.setMaxBins(256)
+  def setFeaturesCol(featuresColName: String): this.type = {
+    model.setFeaturesCol(featuresColName)
+    this
+  }
+
+  def fit(df: DataFrame): XGBClassifierModel = {
+    df.repartition(EngineRef.getNodeNumber())
+    val xgbmodel = model.fit(df)
+    new XGBClassifierModel(xgbmodel)
+  }
+
+  def setNthread(value: Int): this.type = {
+    model.setNthread(value)
+    this
+  }
+
+  def setNumRound(value: Int): this.type = {
+    model.setNumRound(value)
+    this
+  }
+
+  def setNumWorkers(value: Int): this.type = {
+    model.setNumWorkers(value)
+    this
+  }
+
+  def setEta(value: Int): this.type = {
+    model.setEta(value)
+    this
+  }
+
+  def setGamma(value: Int): this.type = {
+    model.setGamma(value)
+    this
+  }
+
+  def setMaxDepth(value: Int): this.type = {
+    model.setMaxDepth(value)
+    this
+  }
+
+  def setMissing(value: Float): this.type = {
+    model.setMissing(value)
+    this
+  }
+
+}
 /**
  * [[XGBClassifierModel]] is a trained XGBoost classification model.
  * The prediction column will have the prediction results.
@@ -350,7 +401,6 @@ class XGBClassifierModel private[zoo](
       .setInputCols(featuresCols)
       .setOutputCol("featureAssembledVector")
     val assembledDF = featureVectorAssembler.transform(dataset)
-
     import org.apache.spark.sql.functions.{col, udf}
     import org.apache.spark.ml.linalg.Vector
     val asDense = udf((v: Vector) => v.toDense)
@@ -577,7 +627,7 @@ class XGBRegressor () {
 class XGBRegressorModel private[zoo](val model: XGBoostRegressionModel) {
   var predictionCol: String = null
   var featuresCol: String = "features"
-
+  var featurearray: Array[String] = Array("features")
   def setPredictionCol(value: String): this.type = {
     predictionCol = value
     this
@@ -595,12 +645,16 @@ class XGBRegressorModel private[zoo](val model: XGBoostRegressionModel) {
   }
 
   def transform(dataset: DataFrame): DataFrame = {
+    val featureVectorAssembler = new VectorAssembler()
+      .setInputCols(featurearray)
+      .setOutputCol("featureAssembledVector")
+    val assembledDF = featureVectorAssembler.transform(dataset)
     import org.apache.spark.sql.functions.{col, udf}
     import org.apache.spark.ml.linalg.Vector
     val asDense = udf((v: Vector) => v.toDense)
-    val xgbInput = dataset.withColumn("DenseFeatures", asDense(col(featuresCol)))
+    val xgbInput = assembledDF.withColumn("DenseFeatures", asDense(col("featureAssembledVector")))
     model.setFeaturesCol("DenseFeatures")
-    var output = model.transform(xgbInput).drop("DenseFeatures")
+    var output = model.transform(xgbInput).drop("DenseFeatures", "featureAssembledVector")
     if(predictionCol != null) {
       output = output.withColumnRenamed("prediction", predictionCol)
     }

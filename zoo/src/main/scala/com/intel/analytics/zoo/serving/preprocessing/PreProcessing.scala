@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving
+package com.intel.analytics.zoo.serving.preprocessing
 
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
@@ -27,6 +27,7 @@ import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.pipeline.inference.{EncryptSupportive, InferenceSupportive}
+import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.http.Instances
 import com.intel.analytics.zoo.serving.serialization.{JsonInputDeserializer, StreamSerializer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
@@ -110,6 +111,11 @@ class PreProcessing()
       java.util.Base64.getDecoder.decode(s)
     }
     val mat = OpenCVMethod.fromImageBytes(byteBuffer, Imgcodecs.CV_LOAD_IMAGE_UNCHANGED)
+    if (helper.imageResize != "") {
+      val hw = helper.imageResize.split(",")
+      require(hw.length == 2, "Image dim must be 2")
+      Imgproc.resize(mat, mat, new Size(hw(0).trim.toInt, hw(1).trim.toInt))
+    }
 //    Imgproc.resize(mat, mat, new Size(224, 224))
     val (height, width, channel) = (mat.height(), mat.width(), mat.channels())
 

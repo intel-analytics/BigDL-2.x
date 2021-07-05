@@ -67,6 +67,9 @@ class PytorchBaseModel(BaseModel):
         self._check_config(**config)
         self.config = config
         # build model
+        if "selected_features" in config:
+            config["input_feature_num"] = len(config['selected_features'])\
+                + config['output_feature_num']
         self.model = self.model_creator(config)
         if not isinstance(self.model, torch.nn.Module):
             raise ValueError("You must create a torch model in model_creator")
@@ -89,7 +92,8 @@ class PytorchBaseModel(BaseModel):
                                   shuffle=True)
         return data_creator
 
-    def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
+    def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric=None,
+                 metric_func=None,
                  **config):
         """
         :param data: data could be a tuple with numpy ndarray with form (x, y) or a
@@ -107,6 +111,9 @@ class PytorchBaseModel(BaseModel):
         """
         # todo: support input validation data None
         assert validation_data is not None, "You must input validation data!"
+
+        if not metric:
+            raise ValueError("You must input a valid metric value for fit_eval.")
 
         # update config settings
         def update_config():
@@ -149,9 +156,9 @@ class PytorchBaseModel(BaseModel):
             train_loss = self._train_epoch(train_loader)
             epoch_losses.append(train_loss)
         train_stats = {"loss": np.mean(epoch_losses), "last_loss": epoch_losses[-1]}
-        val_stats = self._validate(validation_loader, metric=metric)
+        val_stats = self._validate(validation_loader, metric_name=metric, metric_func=metric_func)
         self.onnx_model_built = False
-        return val_stats[metric]
+        return val_stats
 
     @staticmethod
     def to_torch(inp):
@@ -196,7 +203,10 @@ class PytorchBaseModel(BaseModel):
     def _forward(self, x, y):
         return self.model(x)
 
-    def _validate(self, validation_loader, metric):
+    def _validate(self, validation_loader, metric_name, metric_func=None):
+        if not metric_name:
+            assert metric_func, "You must input valid metric_func or metric_name"
+            metric_name = metric_func.__name__
         self.model.eval()
         with torch.no_grad():
             yhat_list = []
@@ -207,10 +217,13 @@ class PytorchBaseModel(BaseModel):
             yhat = np.concatenate(yhat_list, axis=0)
             y = np.concatenate(y_list, axis=0)
         # val_loss = self.criterion(yhat, y)
-        eval_result = Evaluator.evaluate(metric=metric,
-                                         y_true=y, y_pred=yhat,
-                                         multioutput='uniform_average')
-        return {metric: eval_result}
+        if metric_func:
+            eval_result = metric_func(y, yhat)
+        else:
+            eval_result = Evaluator.evaluate(metric=metric_name,
+                                             y_true=y, y_pred=yhat,
+                                             multioutput='uniform_average')
+        return {metric_name: eval_result}
 
     def _print_model(self):
         # print model and parameters

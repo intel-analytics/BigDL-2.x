@@ -26,6 +26,7 @@ import org.apache.log4j.Logger
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 
+
 class FlinkRedisSink(helperSer: ClusterServingHelper)
   extends RichSinkFunction[List[(String, String)]] {
   var jedis: Jedis = null
@@ -60,6 +61,7 @@ class FlinkRedisSink(helperSer: ClusterServingHelper)
   }
 
 }
+
 
 class FlinkRedisXStreamSink(helper: ClusterServingHelper) extends FlinkRedisSink(helper) {
   override def invoke(value: List[(String, String)], context: SinkFunction.Context[_]): Unit = {

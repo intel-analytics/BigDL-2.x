@@ -10,6 +10,9 @@
 # default, None
 # postProcessing:
 
+# default, None, only used in image model if resize is needed, e.g. to resize image to height=224, width=448, set imageResize: 224,448
+# imageResize:
+
 # default, false, if input is already batched NdArray, set true
 # inputAlreadyBatched:
 
