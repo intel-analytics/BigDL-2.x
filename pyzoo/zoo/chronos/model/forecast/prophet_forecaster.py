@@ -121,7 +121,6 @@ class ProphetForecaster(Forecaster):
             raise RuntimeError(
                 "You must call fit or restore first before calling evaluate!")
         return self.internal.evaluate(target=validation_data,
-                                      data=None,
                                       metrics=metrics)
 
     def save(self, checkpoint_file):

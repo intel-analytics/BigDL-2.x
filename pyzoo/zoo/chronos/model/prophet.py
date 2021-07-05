@@ -66,7 +66,6 @@ class ProphetModel(BaseModel):
 
         self.model.fit(data)
         val_metric = self.evaluate(target=validation_data,
-                                   data=None,
                                    metrics=[self.metric])[0].item()
         return {self.metric: val_metric}
 

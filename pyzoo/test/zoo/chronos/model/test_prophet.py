@@ -59,7 +59,6 @@ class TestProphetModel(ZooTestCase):
         assert result.shape[0] == self.horizon
         # test evaluate
         evaluate_result = self.model.evaluate(target=self.validation_data,
-                                              data=None,
                                               metrics=['mae', 'smape'])
         assert len(evaluate_result) == 2
 
@@ -71,15 +70,15 @@ class TestProphetModel(ZooTestCase):
             self.model.evaluate(target=self.validation_data, data=1)
 
         with pytest.raises(ValueError, match="Input invalid target of None"):
-            self.model.evaluate(target=None, data=None)
+            self.model.evaluate(target=None)
 
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling predict"):
-            self.model.predict(data=None)
+            self.model.predict()
 
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling evaluate"):
-            self.model.evaluate(target=self.validation_data, data=None)
+            self.model.evaluate(target=self.validation_data)
 
         with pytest.raises(Exception,
                            match="Needs to call fit_eval or restore first before calling save"):
