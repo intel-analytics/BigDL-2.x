@@ -31,6 +31,9 @@ import com.codahale.metrics.{MetricRegistry, Timer}
 import com.intel.analytics.zoo.pipeline.inference.EncryptSupportive
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.slf4j.LoggerFactory
+import redis.clients.jedis.JedisPool
+import com.intel.analytics.zoo.serving.ClusterServing
+import com.google.common.util.concurrent.RateLimiter
 
 import scala.collection.mutable
 import scala.concurrent.Await
@@ -87,7 +90,17 @@ object FrontEndApp extends Supportive with EncryptSupportive {
         }
       }
       logger.info("Servable Manager Load Success!")
-
+      val jedisPool = new JedisPool(
+        ClusterServing.jedisPoolConfig, arguments.redisHost, arguments.redisPort)
+      val rateLimiter: RateLimiter = arguments.tokenBucketEnabled match {
+        case true => RateLimiter.create(arguments.tokensPerSecond)
+        case false => null
+      }
+      val actorName = s"redis-getter"
+      val ioActor = timing(s"$actorName initialized.")() {
+        val getterProps = Props(new RedisIOActor(jedisPool = jedisPool))
+        system.actorOf(getterProps, name = actorName)
+      }
       var redisPutter : ActorRef = null
       val route = timing("initialize http route")() {
         path("") {
@@ -205,6 +218,20 @@ object FrontEndApp extends Supportive with EncryptSupportive {
               & extract(_.request.entity.contentType) & entity(as[String])) {
               (modelName, modelVersion, contentType, content) => {
                 timing("backend inference")(overallRequestTimer, backendInferenceTimer) {
+                  val rejected = arguments.tokenBucketEnabled match {
+                    case true =>
+                      if (!rateLimiter.tryAcquire(
+                        arguments.tokenAcquireTimeout, TimeUnit.MILLISECONDS)) {
+                        true
+                      } else {
+                        false
+                      }
+                    case false => false
+                  }
+                  if (rejected) {
+                    val error = ServingError("limited")
+                    complete(500, error.toString)
+                  }
                   try {
                     logger.info("model name: " + modelName + ", model version: " + modelVersion)
                     val servable = timing("servable retrive")(servableRetriveTimer) {
@@ -214,13 +241,22 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                     servable match {
                       case _: ClusterServingServable =>
                         val result = timing("cluster serving inference")(predictRequestTimer) {
-                          val instances = timing("json deserialization")() {
-                            JsonUtil.fromJson(classOf[Instances], content)
-                          }
-                          val outputs = timing("model inference")(modelInferenceTimer) {
-                            servable.predict(instances)
+                          val outputs = servable.getMetaData.
+                            asInstanceOf[InferenceModelMetaData].inputCompileType match {
+                            case "direct" =>
+                              timing ("model inference direct") (modelInferenceTimer) {
+                                servable.predict(content)
+                              }
+                            case "instance" =>
+                              val instances = timing ("json deserialization") () {
+                              JsonUtil.fromJson (classOf[Instances], content)
+                              }
+                              timing ("model inference") (modelInferenceTimer) {
+                                servable.predict(instances)
+                              }
                           }
                           Predictions(outputs)
+
                         }
                         timing("cluster serving response complete")() {
                           complete(200, result.toString)
@@ -229,7 +265,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                         val result = timing("inference model inference")(predictRequestTimer) {
                           val outputs = servable.getMetaData.
                             asInstanceOf[InferenceModelMetaData].inputCompileType match {
-                            case "direct" => timing("model inference")(modelInferenceTimer) {
+                            case "direct" => timing("model inference direct")(modelInferenceTimer) {
                               servable.predict(content)
                             }
                             case "instance" =>

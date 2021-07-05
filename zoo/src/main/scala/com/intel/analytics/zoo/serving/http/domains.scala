@@ -1020,11 +1020,20 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
     }
   }
 
-  def predict(input: String): Seq[PredictionOutput[String]] = {
-    val instances = timing("json deserialization")() {
-      JsonUtil.fromJson(classOf[Instances], input)
+  def predict(input: String, ioActor: ActorRef): Seq[PredictionOutput[String]] = {
+    val result = timing("response waiting")() {
+      val id = UUID.randomUUID().toString
+      val results = timing(s"query message wait for key $id")() {
+        Await.result(ioActor ? DataInputMessage(id, input), timeout.duration)
+          .asInstanceOf[ModelOutputMessage].valueMap
+      }
+      val objectMapper = new ObjectMapper()
+      results.map(r => {
+        val resultStr = objectMapper.writeValueAsString(r._2)
+        PredictionOutput(r._1, resultStr)
+      })
     }
-    predict(instances)
+    result.toSeq
   }
 
   def predict(instances: Instances):
@@ -1111,6 +1120,7 @@ case class ClusterServingMetaData(modelName: String,
                                   redisSecureEnabled: Boolean = false,
                                   redisTrustStorePath: String = null,
                                   redisTrustStoreToken: String = "1234qwer",
+                                  inputCompileType: String = "direct",
                                   features: Array[String])
   extends ModelMetaData(modelName, modelVersion, features)
 
