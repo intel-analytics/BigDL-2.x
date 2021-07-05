@@ -32,6 +32,7 @@ from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
 from zoo.common.utils import callZooFunc
 
+
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
 
@@ -74,7 +75,7 @@ class Table:
         if names:
             if not isinstance(names, list):
                 names = [names]
-            assert len(names) == len(columns), \
+            assert len(names) == len(columns),\
                 "names should have the same length as the number of columns"
             for i in range(len(names)):
                 df = df.withColumnRenamed(columns[i], names[i])
