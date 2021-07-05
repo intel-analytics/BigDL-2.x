@@ -618,7 +618,10 @@ class RayContext(object):
                     self.ray_service.gen_raylet_start2(redis_address)).collect()
                 raylet_process_infos = [process for process in raylet_process_infos if process]
                 # Here we can only start one ray process (ray master or raylet) on a node.
-                self.num_ray_nodes = len(raylet_process_infos) + 1
+                assert len(raylet_process_infos) == len(self.cluster_ips) - 1, \
+                    "There should be {} raylets launched across the cluster, but got {}"\
+                    .format(len(self.cluster_ips) - 1, len(raylet_process_infos))
+                self.num_ray_nodes = len(self.cluster_ips)
             else:
                 raylet_process_infos = ray_rdd.mapPartitions(
                     self.ray_service.gen_raylet_start(redis_address)).collect()
