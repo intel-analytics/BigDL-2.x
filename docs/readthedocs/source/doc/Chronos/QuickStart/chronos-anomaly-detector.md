@@ -1,4 +1,4 @@
-# Unsupervised Anomaly Detection using Chronos Anomaly Detector
+# Use Anomaly Detector for Unsupervised Anomaly Detection
 
 ---
 
