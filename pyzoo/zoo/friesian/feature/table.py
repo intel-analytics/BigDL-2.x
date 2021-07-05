@@ -21,14 +21,16 @@ from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, Decim
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
-from pyspark.sql.functions import col as pyspark_col, concat, udf, array, broadcast, lit
+from pyspark.sql.functions import col as pyspark_col, concat, udf, array, broadcast, lit, when
 from pyspark.sql import Row
 import pyspark.sql.functions as F
+from pyspark.traceback_utils import SCCallSiteSync
+from pyspark.serializers import BatchedSerializer, PickleSerializer
+from pyspark.rdd import _load_from_socket
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
 from zoo.common.utils import callZooFunc
-
 
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
@@ -72,7 +74,7 @@ class Table:
         if names:
             if not isinstance(names, list):
                 names = [names]
-            assert len(names) == len(columns),\
+            assert len(names) == len(columns), \
                 "names should have the same length as the number of columns"
             for i in range(len(names)):
                 df = df.withColumnRenamed(columns[i], names[i])
@@ -85,7 +87,7 @@ class Table:
                 tbl = tbl.cast(columns=None, dtype=dtype)
             elif isinstance(dtype, list):
                 columns = df.columns
-                assert len(dtype) == len(columns),\
+                assert len(dtype) == len(columns), \
                     "dtype should have the same length as the number of columns"
                 for i in range(len(columns)):
                     tbl = tbl.cast(columns=columns[i], dtype=dtype[i])
@@ -401,19 +403,25 @@ class Table:
         spark = OrcaContext.get_spark_session()
         return self._clone(spark.createDataFrame(data, schema))
 
-    def to_list(self, column):
+    def to_list(self, columns):
         """
-        Convert all values of the target column to a list.
+        Convert all values of the target columns to a list.
         Only call this if the Table is small enougth.
 
-        :param column: str, specifies the name of target column.
+        :param columns: str or a list of str, specifies the name of target columns.
 
-        :return: list, contains all values of the target column.
+        :return: list, contains all values of the target columns.
         """
-        if not isinstance(column, str):
-            raise ValueError("Column must have type str.")
-        check_col_exists(self.df, [column])
-        return self.df.select(column).rdd.flatMap(lambda x: x).collect()
+        if not isinstance(columns, list):
+            columns = [columns]
+            for c in columns:
+                if not isinstance(c, str):
+                    raise ValueError("Column must have type str.")
+        check_col_exists(self.df, columns)
+        if len(columns) == 1:
+            return self.df.select(columns).rdd.flatMap(lambda x: x).collect()
+        else:
+            return self.df.select(columns).rdd.map(lambda x: list(x)).collect()
 
     def to_dict(self):
         """
@@ -517,7 +525,7 @@ class Table:
         valid_types = ["str", "string", "bool", "boolean", "int",
                        "integer", "long", "short", "float", "double"]
         if not (isinstance(dtype, str) and (dtype in valid_types)) \
-           and not isinstance(dtype, DataType):
+                and not isinstance(dtype, DataType):
             raise ValueError(
                 "dtype should be string, boolean, int, long, short, float, double.")
         transform_dict = {"str": "string", "bool": "boolean", "integer": "int"}
@@ -537,6 +545,74 @@ class Table:
         :return: A new Table with the appended column.
         """
         return self._clone(self.df.withColumn(name, lit(value)))
+
+    def sort(self, columns, orders=None):
+        """
+        Sort the target columns with the specified order.
+
+        :param columns: str or a list of str, specifies the name of target columns.
+        :param orders: boolean or a list of boolean,
+        specifies whether sort the corresponding column with an ascending order or not,
+        default to sort the columns with all ascending orders.
+
+        :return: A new Table with sorted columns.
+        """
+        if not isinstance(columns, list):
+            columns = [columns]
+        if orders is None:
+            orders = [True] * len(columns)
+        elif not isinstance(orders, list):
+            orders = [orders]
+        columns = [pyspark_col(columns[i]).asc()
+                   if orders[i] else pyspark_col(columns[i]).desc() for i in range(len(columns))]
+        return self._clone(self.df.sort(columns))
+
+    def iloc(self, column, indexes, value):
+        """
+        Change the value of the column of with specified indexs and value.
+
+        :param columns: str, specifies the name of target column.
+        :param indexes: int or a list of int, specifies the indexes target column.
+        :param value: The constant value for the target column.
+
+        :return: A new Table with changed value.
+        """
+        spark = OrcaContext.get_spark_session()
+        if not isinstance(indexes, list):
+            indexes = [indexes]
+        self.df.createOrReplaceTempView('tbl')
+        temp = spark.sql("select row_number() over (order by '') -1 as index, * from tbl")
+        schema = temp.select(["index", column]).schema
+        origin_data = temp.sort(pyspark_col("index")).select(["index", column])
+        with SCCallSiteSync(origin_data._sc) as css:
+            sock_info = origin_data._jdf.collectToPython()
+        origin_data = list(_load_from_socket(sock_info, BatchedSerializer(PickleSerializer())))
+        data = [Row(i, value) if i in indexes else origin_data[i]
+                for i in range(len(origin_data))]
+        new_temp = spark.createDataFrame(data, schema)
+        temp = temp.drop(column).join(new_temp, on="index", how="left")
+        temp = temp.sort(pyspark_col("index").asc())
+        temp = temp.drop("index")
+        return self._clone(temp)
+
+    def append_list(self, column, list):
+        """
+        Append a list of value to the Table with givn column name.
+
+        :param column: str, specifies the name of the column.
+        :param list: list of tuple,
+        which contains the index of the value and the value.
+
+        :return: A new Tale with the appended list
+        """
+        spark = OrcaContext.get_spark_session()
+        self.df.createOrReplaceTempView('tbl')
+        temp = spark.sql("select row_number() over (order by '') -1 as index, * from tbl")
+        schema = StructType([StructField("index", IntegerType(), True),
+                            StructField(column, StringType(), True)])
+        tbl = spark.createDataFrame(list, schema)
+        temp = temp.join(tbl, on="index", how="left").drop("index")
+        return self._clone(temp)
 
     def __getattr__(self, name):
         """
@@ -621,7 +697,7 @@ class FeatureTable(Table):
             col_name = columns[i]
             index_tbl.broadcast()
             data_df = data_df.join(index_tbl.df, col_name, how="left") \
-                .drop(col_name).withColumnRenamed("id", col_name)\
+                .drop(col_name).withColumnRenamed("id", col_name) \
                 .dropna(subset=[col_name])
         return FeatureTable(data_df)
 
