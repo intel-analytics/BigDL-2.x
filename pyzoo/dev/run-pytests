@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+. `dirname $0`/prepare_env.sh
+
+cd "`dirname $0`"
+
+export PYSPARK_PYTHON=python
+export PYSPARK_DRIVER_PYTHON=python
+py_version="$(python -V 2>&1)"
+
+python -m pytest -v --doctest-modules ../zoo \
+    --ignore=../zoo/pipeline/api/keras2 \
+    --ignore=../zoo/tfpark/text \
+    --ignore=../zoo/examples \
+    --ignore=../zoo/ray/ \
+    --ignore=../zoo/automl/ \
+    --ignore=../zoo/chronos/ \
+    --ignore=../test/zoo/pipeline/api/torch/ \
+    --ignore=../zoo/orca/ \
+    --ignore=../zoo/models/recommendation/txt.py
+exit_status_1=$?
+if [ $exit_status_1 -ne 0 ];
+then
+    exit $exit_status_1
+fi
+
+if [[ $py_version == *"Python 2.7"* ]]; then
+    echo "Running Python 2.7"
+    echo "Skipping OpenVINO tests"
+    echo "Skipping nlp-architect tests"
+    echo "Running TFPark tests"
+    python -m pytest -v ../test/zoo/tfpark/
+    exit_status_2=$?
+    if [ $exit_status_2 -ne 0 ];
+    then
+        exit $exit_status_2
+    fi
+
+    echo "Running Orca estimator tests"
+    python -m pytest -v ../test/zoo/orca/learn/spark/
+    exit_status_2=$?
+    if [ $exit_status_2 -ne 0 ];
+    then
+        exit $exit_status_2
+    fi
+
+    echo "Running other tests"
+    python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
+       --ignore=../test/zoo/automl/ \
+       --ignore-../test/zoo/tfpark/ \
+       --ignore=../test/zoo/pipeline/api/keras2/ \
+       --ignore=../test/zoo/pipeline/autograd/ \
+       --ignore=../test/zoo/pipeline/inference/ \
+       --ignore=../test/zoo/tfpark/test_text_models.py \
+       --ignore=../test/zoo/ray/ \
+       --ignore=../test/zoo/chronos/ \
+       --ignore=../test/zoo/pipeline/api/torch/ \
+       --ignore=../test/zoo/orca/ \
+       --ignore=../zoo/models/recommendation/txt.py \
+       --ignore=../test/zoo/friesian/ \
+       --ignore=../test/zoo/automl/model/test_xgbregressor.py
+    exit_status_2=$?
+    if [ $exit_status_2 -ne 0 ];
+    then
+        exit $exit_status_2
+    fi
+else
+    echo "Running Python 3"
+    
+    echo "Running TFPark tests"
+    python -m pytest -v ../test/zoo/tfpark/
+    exit_status_3=$?
+    if [ $exit_status_3 -ne 0 ];
+    then
+        exit $exit_status_3
+    fi
+
+    echo "Running Orca estimator tests"
+    python -m pytest -v ../test/zoo/orca/learn/spark/
+    exit_status_3=$?
+    if [ $exit_status_3 -ne 0 ];
+    then
+        exit $exit_status_3
+    fi
+
+    echo "Running other tests"
+    python -m pytest -v ../test/ --ignore=../test/zoo/pipeline/utils/test_utils.py \
+       --ignore=../test/zoo/automl/ \
+       --ignore=../test/zoo/tfpark/ \
+       --ignore=../test/zoo/pipeline/api/keras2/ \
+       --ignore=../test/zoo/pipeline/autograd/ \
+       --ignore=../test/zoo/ray/integration/ \
+       --ignore=../test/zoo/ray/ \
+       --ignore=../test/zoo/chronos/ \
+       --ignore=../test/zoo/pipeline/api/torch/ \
+       --ignore=../test/zoo/orca/automl/autoestimator/ \
+       --ignore=../test/zoo/orca/data \
+       --ignore=../test/zoo/orca/learn/spark \
+       --ignore=../test/zoo/orca/learn/ray \
+       --ignore=../test/zoo/orca/learn/jep \
+       --ignore=../test/zoo/friesian/ \
+       --ignore=../zoo/models/recommendation/txt.py \
+       --ignore=../test/zoo/automl/model/test_xgbregressor.py
+    exit_status_3=$?
+    if [ $exit_status_3 -ne 0 ];
+    then
+        exit $exit_status_3
+    fi
+fi
