@@ -56,6 +56,10 @@ class BaseModel(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_model(self):
+        return self.model
+
     def _get_required_parameters(self):
         """
         :return: required parameters to be set into config

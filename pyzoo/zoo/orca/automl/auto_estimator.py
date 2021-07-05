@@ -194,9 +194,9 @@ class AutoEstimator:
         best_trial = self.searcher.get_best_trial()
         best_model_path = best_trial.model_path
         best_config = best_trial.config
-        best_model = self.model_builder.build(best_config)
-        best_model.restore(best_model_path)
-        return best_model
+        best_automl_model = self.model_builder.build(best_config)
+        best_automl_model.restore(best_model_path)
+        return best_automl_model.model
 
     def get_best_config(self):
         """
