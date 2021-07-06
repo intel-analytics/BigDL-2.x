@@ -6,9 +6,10 @@ AutoTSTrainer
 
 AutoTSTrainer trains a time series pipeline (including data processing, feature engineering, and model) with AutoML.
 
-.. automodule:: zoo.chronos.autots.forecast.AutoTSTrainer
-    :members:
-    :show-inheritance:
+.. automodule:: zoo.chronos.autots.forecast
+    .. :autoclass:: AutoTSTrainer
+       :members:
+       :show-inheritance:
 
 
 TSPipeline
@@ -16,9 +17,10 @@ TSPipeline
 
 A pipeline for time series forecasting.
 
-.. automodule:: zoo.chronos.autots.forecast.TSPipeline
-    :members:
-    :show-inheritance:
+.. automodule:: zoo.chronos.autots.forecast
+    .. :autoclass:: TSPipeline
+       :members:
+       :show-inheritance:
 
 
 chronos.config.recipe
