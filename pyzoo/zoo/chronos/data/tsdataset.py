@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-from numpy.core.fromnumeric import size
 import pandas as pd
 import numpy as np
 import functools
@@ -76,6 +75,8 @@ class TSDataset:
                 self._freq = None
             else:
                 self._freq = self.df[self.dt_col].iloc[1] - self.df[self.dt_col].iloc[0]
+        self._is_aligned = hash(str(self.df[self.df[self.id_col]==self._id_list[0]][self.dt_col]\
+            .tolist()*len(self._id_list))) == hash(str(self.df[self.dt_col].to_list()))
 
     @staticmethod
     def from_pandas(df,
