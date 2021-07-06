@@ -20,8 +20,6 @@ import java.util
 import java.util.{HashMap, UUID}
 
 import akka.actor.{Actor, ActorRef}
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.zoo.serving.serialization.{ArrowDeserializer, StreamSerializer}
 import com.intel.analytics.zoo.serving.pipeline.RedisUtils
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.slf4j.LoggerFactory

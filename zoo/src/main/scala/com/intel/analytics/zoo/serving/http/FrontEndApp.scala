@@ -31,9 +31,6 @@ import com.codahale.metrics.{MetricRegistry, Timer}
 import com.intel.analytics.zoo.pipeline.inference.EncryptSupportive
 import com.intel.analytics.zoo.serving.utils.Conventions
 import org.slf4j.LoggerFactory
-import redis.clients.jedis.JedisPool
-import com.intel.analytics.zoo.serving.ClusterServing
-import com.google.common.util.concurrent.RateLimiter
 
 import scala.collection.mutable
 import scala.concurrent.Await

@@ -54,7 +54,8 @@ import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.zoo.serving.ClusterServing
+import redis.clients.jedis.JedisPoolConfig
+// import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.serialization.StreamSerializer
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.JedisPool
@@ -975,7 +976,9 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
   var redisPutter: ActorRef = _
   var redisGetter: ActorRef = _
   var querierQueue: LinkedBlockingQueue[ActorRef] = _
-  val jedisPool = new JedisPool(ClusterServing.jedisPoolConfig,
+  val jedisPoolConfig = new JedisPoolConfig()
+  jedisPoolConfig.setMaxTotal(256)
+  val jedisPool = new JedisPool(jedisPoolConfig,
     clusterServingMetaData.redisHost, clusterServingMetaData.redisPort.toInt)
   val rateLimiter: RateLimiter = clusterServingMetaData.tokenBucketEnabled match {
     case true => RateLimiter.create(clusterServingMetaData.tokensPerSecond)
