@@ -544,8 +544,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         if os.path.isfile(optim_path):
             try:
                 self.optimizer = OptimMethod.load(optim_path)
-            except Exception as e:
-                print(str(e))
+            except Exception:
                 raise ValueError("Cannot load the optimizer. Only `bigdl.optim.optimizer."
                                  "OptimMethod` is supported for loading.")
         else:
@@ -584,9 +583,9 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
             loaded_model = Model.load(os.path.join(path, "model.{}".format(version)))
             self.model = TorchModel.from_value(loaded_model.value)
             self.optimizer = OptimMethod.load(os.path.join(path, "{}.{}".format(prefix, version)))
-        except Exception:
+        except Exception as e:
             raise ValueError("Cannot load PyTorch checkpoint, please check your checkpoint path "
-                             "and checkpoint type.")
+                             "and checkpoint type." + str(e))
         self.estimator = SparkEstimator(self.model, self.optimizer, self.model_dir)
 
     def get_train_summary(self, tag=None):
