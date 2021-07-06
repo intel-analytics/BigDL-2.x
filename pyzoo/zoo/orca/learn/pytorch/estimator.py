@@ -544,7 +544,8 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         if os.path.isfile(optim_path):
             try:
                 self.optimizer = OptimMethod.load(optim_path)
-            except Exception:
+            except Exception as e:
+                print(str(e))
                 raise ValueError("Cannot load the optimizer. Only `bigdl.optim.optimizer."
                                  "OptimMethod` is supported for loading.")
         else:
