@@ -60,6 +60,9 @@ def get_cpu_info():
 
 def schedule_workers(num_workers: int, cores_per_worker: Optional[int] = None):
 
+    # If we are in a docker container whose --cpuset-cpus are set,
+    # we can get available cpus in /sys/fs/cgroup/cpuset/cpuset.cpus.
+    # If we are not in a container, this just return all cpus.
     cpuset = get_cgroup_cpuset()
     cpuset = sorted(cpuset)
     l_core_to_p_core, l_core_to_socket = get_cpu_info()
