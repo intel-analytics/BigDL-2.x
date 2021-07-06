@@ -57,7 +57,7 @@ class RayDLCluster:
                  worker_cores,
                  worker_cls=None,
                  worker_param=None,
-                 cpu_binding=True,  # auto, disabled
+                 cpu_binding=True,
                  ):
         if not ray.is_initialized():
             raise RuntimeError("Ray is not initialize. Please initialize ray.")
