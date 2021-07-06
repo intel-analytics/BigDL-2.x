@@ -25,7 +25,13 @@ from zoo.chronos.autots.experimental.tspipeline import TSPipeline
 
 class AutoTSEstimator:
     """
-    Automated Estimator.
+    Automated Timeseries Estimator.
+    AutoTSEstimator supports time series forecasting task for now.
+    AutoTSEstimator returns a TSPipeline once fit method is called.
+    AutoTSEstimator supports TSDataset and customized data creator as data input.
+    AutoTSEstimator supports built-in model (only "lstm", "tcn" for now) and 3rd party model.
+    Note: Only backend="torch" is supported for now.
+    Note: Customized data creator has not been fully supported by TSPipeline.
     """
 
     def __init__(self,
@@ -38,7 +44,7 @@ class AutoTSEstimator:
                  future_seq_len=1,
                  input_feature_num=None,
                  output_target_num=None,
-                 selected_features="all",
+                 selected_features="auto",
                  backend="torch",
                  logs_dir="/tmp/autots_estimator",
                  cpus_per_trial=1,
@@ -52,13 +58,16 @@ class AutoTSEstimator:
                a string indicates a built-in model, currently "lstm", "tcn" are supported
                a model creation function indicates a 3rd party model, the function should take a
                config param and return a torch.nn.Module (backend="torch") / tf model
-               (backend="keras"). If you use chronos.data.TSDataset as data input, the 3rd party
+               (backend="keras").
+               If you use chronos.data.TSDataset as data input, the 3rd party
                should have 3 dim input (num_sample, past_seq_len, input_feature_num) and 3 dim
                output (num_sample, future_seq_len, output_feature_num) and use the same key
                in the model creation function. If you use a customized data creator, the output of
                data creator should fit the input of model creation function.
         :param search_space: hyper parameter configurations. Read the API docs for each auto model.
-               Some common hyper parameter can be explicitly set in named parameter.
+               Some common hyper parameter can be explicitly set in named parameter. search_space
+               should contain those parameters other than the keyword arguments in this
+               constructor in its key.
         :param metric: String. The evaluation metric name to optimize. e.g. "mse"
         :param loss: String or pytorch/tf.keras loss instance or pytorch loss creator function. The
                default loss function for pytorch backend is nn.MSELoss().
@@ -76,12 +85,13 @@ class AutoTSEstimator:
         :param selected_features: String. "all" and "auto" are supported for now. For "all",
                all features that are generated are used for each trial. For "auto", a subset
                is sampled randomly from all features for each trial. The parameter is ignored
-               if not using chronos.data.TSDataset as input data type.
+               if not using chronos.data.TSDataset as input data type. The value defaults
+               to "auto".
         :param backend: The backend of the auto model. We only support backend as "torch" for now.
         :param logs_dir: Local directory to save logs and results.
                It defaults to "/tmp/autots_estimator"
         :param cpus_per_trial: Int. Number of cpus for each trial. It defaults to 1.
-        :param name: name of the AutoLSTM. It defaults to "auto_lstm".
+        :param name: name of the autots estimator. It defaults to "autots_estimator".
         """
         # check backend and set default loss
         if backend != "torch":
@@ -92,6 +102,7 @@ class AutoTSEstimator:
                 loss = torch.nn.MSELoss()
 
         if isinstance(model, types.FunctionType) and backend == "torch":
+            # pytorch 3rd party model
             from zoo.orca.automl.auto_estimator import AutoEstimator
             self.model = AutoEstimator.from_torch(model_creator=model,
                                                   optimizer=optimizer,
@@ -107,6 +118,7 @@ class AutoTSEstimator:
             self.search_space = search_space
 
         if isinstance(model, str):
+            # built-in model
             # update auto model common search space
             search_space.update({"past_seq_len": past_seq_len,
                                  "future_seq_len": future_seq_len,
@@ -153,7 +165,7 @@ class AutoTSEstimator:
         :param batch_size: Int or hp sampling function from an integer space. Training batch size.
                It defaults to 32.
         :param validation_data: Validation data. Validation data type should be the same as data.
-        :param metric_threshold: a trial will be terminated when metric threshold is met
+        :param metric_threshold: a trial will be terminated when metric threshold is met.
         :param n_sampling: Number of times to sample from the search_space. Defaults to 1.
                If hp.grid_search is in search_space, the grid will be repeated n_sampling of times.
                If this is -1, (virtually) infinite samples are generated
@@ -166,6 +178,8 @@ class AutoTSEstimator:
                metric and searcher mode
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
+
+        :return: a TSPipeline.
         """
         is_third_party_model = isinstance(self.model, AutoEstimator)
 
