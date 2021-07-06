@@ -20,11 +20,12 @@ from zoo.orca.automl.auto_estimator import AutoEstimator
 from zoo.chronos.data import TSDataset
 import zoo.orca.automl.hp as hp
 from zoo.chronos.autots.model import AutoModelFactory
+from zoo.chronos.autots.experimental.tspipeline import TSPipeline
 
 
-class AutoTSTrainer:
+class AutoTSEstimator:
     """
-    Automated Trainer.
+    Automated Estimator.
     """
 
     def __init__(self,
@@ -39,12 +40,12 @@ class AutoTSTrainer:
                  output_target_num=None,
                  selected_features="all",
                  backend="torch",
-                 logs_dir="/tmp/autots_trainer",
+                 logs_dir="/tmp/autots_estimator",
                  cpus_per_trial=1,
-                 name="autots_trainer"
+                 name="autots_estimator"
                  ):
         """
-        AutoTSTrainer trains a model for time series forecasting.
+        AutoTSEstimator trains a model for time series forecasting.
         User can choose one of the built-in models, or pass in a customized pytorch or keras model
         for tuning using AutoML.
         :param model: a string or a model creation function
@@ -59,7 +60,8 @@ class AutoTSTrainer:
         :param search_space: hyper parameter configurations. Read the API docs for each auto model.
                Some common hyper parameter can be explicitly set in named parameter.
         :param metric: String. The evaluation metric name to optimize. e.g. "mse"
-        :param loss: String or pytorch/tf.keras loss instance or pytorch loss creator function.
+        :param loss: String or pytorch/tf.keras loss instance or pytorch loss creator function. The
+               default loss function for pytorch backend is nn.MSELoss().
         :param optimizer: String or pyTorch optimizer creator function or
                tf.keras optimizer instance.
         :param past_seq_len: Int or or hp sampling function. The number of historical steps (i.e.
@@ -68,15 +70,16 @@ class AutoTSTrainer:
         :param future_seq_len: Int. The number of future steps to forecast. The value defaults
                to 1.
         :param input_feature_num: Int. The number of features in the input. The value is ignored if
-               you set selected_features and use chronos.data.TSDataset as input data type.
-        :param output_target_num: Int. The number of targets in the output.
+               you use chronos.data.TSDataset as input data type.
+        :param output_target_num: Int. The number of targets in the output. The value is ignored if
+               you use chronos.data.TSDataset as input data type.
         :param selected_features: String. "all" and "auto" are supported for now. For "all",
                all features that are generated are used for each trial. For "auto", a subset
                is sampled randomly from all features for each trial. The parameter is ignored
                if not using chronos.data.TSDataset as input data type.
         :param backend: The backend of the auto model. We only support backend as "torch" for now.
         :param logs_dir: Local directory to save logs and results.
-               It defaults to "/tmp/autots_trainer"
+               It defaults to "/tmp/autots_estimator"
         :param cpus_per_trial: Int. Number of cpus for each trial. It defaults to 1.
         :param name: name of the AutoLSTM. It defaults to "auto_lstm".
         """
@@ -123,6 +126,8 @@ class AutoTSTrainer:
 
         # save selected features setting for data creator generation
         self.selected_features = selected_features
+        self._scaler = None
+        self._scaler_index = None
 
     def fit(self,
             data,
@@ -171,6 +176,8 @@ class AutoTSTrainer:
                 train_data=data,
                 val_data=validation_data,
             )
+            self._scaler = data.scaler
+            self._scaler_index = data.scaler_index
         else:
             train_d, val_d = data, validation_data
 
@@ -204,6 +211,11 @@ class AutoTSTrainer:
                 scheduler_params=scheduler_params
             )
 
+        return TSPipeline(best_model=self.get_best_model(),
+                          best_config=self.get_best_config(),
+                          scaler=self._scaler,
+                          scaler_index=self._scaler_index)
+
     def _prepare_data_creator(self, search_space, train_data, val_data=None):
         """
         prepare the data creators and add selected features to search_space
@@ -216,15 +228,23 @@ class AutoTSTrainer:
         from torch.utils.data import TensorDataset, DataLoader
         import ray
 
+        # automatically inference output_feature_num
+        # input_feature_num will be set by base pytorch model according to selected features.
+        search_space['output_feature_num'] = len(train_data.target_col)
+
         # append feature selection into search space
+        # TODO: more flexible setting
         all_features = train_data.feature_col
         if self.selected_features not in ("all", "auto"):
             raise ValueError(f"Only \"all\" and \"auto\" are supported for selected_features,\
                 but found {self.selected_features}")
         if self.selected_features == "auto":
-            search_space['selected_features'] = hp.choice_n(all_features,
-                                                            min_items=0,
-                                                            max_items=len(all_features))
+            if len(all_features) == 0:
+                search_space['selected_features'] = all_features
+            else:
+                search_space['selected_features'] = hp.choice_n(all_features,
+                                                                min_items=0,
+                                                                max_items=len(all_features))
         if self.selected_features == "all":
             search_space['selected_features'] = all_features
 
