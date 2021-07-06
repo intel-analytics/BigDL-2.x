@@ -209,12 +209,9 @@ class FriesianSpec extends ZooSpecHelper {
       StructField("history_list", ArrayType(ArrayType(IntegerType)), true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
-    df.printSchema()
-    df.show
     val dft = friesian.postPad(df, Array("history", "history_list").toList.asJava, 4)
     dft.schema.fields.map(x => x.dataType).foreach(println(_))
 
-    dft.show(10, false)
     assert(dft.filter("size(history) = 4").count() == 3)
     assert(dft.filter("size(history_list) = 4").count() == 3)
     assert(dft.filter(dft("name") === "rose").select("history").collect()(0)(0).toString()
@@ -232,12 +229,9 @@ class FriesianSpec extends ZooSpecHelper {
       StructField("history_list", ArrayType(ArrayType(DoubleType)), true)
     ))
     val df = sqlContext.createDataFrame(data, schema)
-    df.printSchema()
-    df.show
     val dft = friesian.postPad(df, Array("history", "history_list").toList.asJava, 4)
     dft.schema.fields.map(x => x.dataType).foreach(println(_))
 
-    dft.show(10, false)
     assert(dft.filter("size(history) = 4").count() == 3)
     assert(dft.filter("size(history_list) = 4").count() == 3)
     assert(dft.filter(dft("name") === "rose").select("history").collect()(0)(0).toString()

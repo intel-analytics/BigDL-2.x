@@ -25,7 +25,7 @@ import java.util.{List => JList}
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.types.{ArrayType, IntegerType, DoubleType, StringType, LongType, StructField, StructType}
-import org.apache.spark.sql.functions.{collect_list, explode, size, struct, array}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.functions.{col, row_number, spark_partition_id, udf, log => sqllog, rand}
 import org.apache.spark.ml.linalg.{DenseVector, Vector => MLVector}
 import org.apache.spark.ml.feature.MinMaxScaler
@@ -268,7 +268,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
               case "long" => Utils.get1row[Long](full_rows, col.name, i, lowerBound)
               case _ => throw new IllegalArgumentException(
                 s"Unsupported data type ${col.dataType.typeName} " +
-                  s"of column ${col.name} in addHistSeq")
+                  s"of column ${col.name} in add_hist_seq")
             }
           } else {
             val colValue: Any = full_rows(i).getAs(col.name)
@@ -288,15 +288,17 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
   def mask(df: DataFrame, cols: JList[String], maxLength: Int): DataFrame = {
 
-    df.sqlContext.udf.register("mask", Utils.maskArr)
+    var maskDF = df
 
-    df.createOrReplaceTempView("tmp")
+    val maskUdf = udf(Utils.maskArr)
 
-    val selectStatement = cols.toArray().map(c =>
-      s"mask($maxLength, $c) as $c" + "_mask").mkString(",")
+    cols.asScala.toList.foreach(c => {
+      maskDF = maskDF.withColumn(c + "_mask", maskUdf(lit(maxLength), col(c)))
+    })
 
-    df.sqlContext.sql(s"select *, $selectStatement from tmp")
+    maskDF
   }
+
 
   def addNegHisSeq(df: DataFrame, itemSize: Int,
                    historyCol: String,
@@ -305,7 +307,8 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     df.sparkSession.conf.set("spark.sql.legacy.allowUntypedScalaUDF", "true")
     val itemType = df.select(explode(col(historyCol))).schema.fields(0).dataType
     require(itemType.typeName == "integer", throw new IllegalArgumentException(
-      s"Unsupported data type ${itemType.typeName} " + s"of column ${historyCol} in addNegHisSeq"))
+      s"Unsupported data type ${itemType.typeName} " +
+        s"of column ${historyCol} in add_neg_hist_seq"))
     val schema = ArrayType(ArrayType(itemType))
 
     val negativeUdf = udf(Utils.addNegativeList(negNum, itemSize), schema)
@@ -322,7 +325,8 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     df.sparkSession.conf.set("spark.sql.legacy.allowUntypedScalaUDF", "true")
     val itemType = df.select(itemCol).schema.fields(0).dataType
     require(itemType.typeName == "integer", throw new IllegalArgumentException(
-      s"Unsupported data type ${itemType.typeName} " + s"of column ${itemCol} in addNegSamples"))
+      s"Unsupported data type ${itemType.typeName} " +
+        s"of column ${itemCol} in add_negative_samples"))
     val schema = ArrayType(StructType(Seq(StructField(itemCol, itemType),
       StructField(labelCol, itemType))))
 
@@ -340,41 +344,24 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     val colFields = df.schema.fields.filter(x => cols.contains(x.name))
 
-    colFields.map(column => {
-      val dataType = column.dataType
-      dataType match {
-        case ArrayType(IntegerType, _) =>
-          df.sqlContext.udf.register("pad_array", Utils.padArr[Int])
-        case ArrayType(LongType, _) =>
-          df.sqlContext.udf.register("pad_array", Utils.padArr[Long])
-        case ArrayType(DoubleType, _) =>
-          df.sqlContext.udf.register("pad_array", Utils.padArr[Double])
-        case ArrayType(ArrayType(IntegerType, _), _) =>
-          df.sqlContext.udf.register("pad_matrix", Utils.padMatrix[Int])
-        case ArrayType(ArrayType(LongType, _), _) =>
-          df.sqlContext.udf.register("pad_matrix", Utils.padMatrix[Long])
-        case ArrayType(ArrayType(DoubleType, _), _) =>
-          df.sqlContext.udf.register("pad_matrix", Utils.padMatrix[Double])
+    var paddedDF = df
+
+    colFields.foreach(c => {
+      val dataType = c.dataType
+      val padUdf = dataType match {
+        case ArrayType(IntegerType, _) => udf(Utils.padArr[Int])
+        case ArrayType(LongType, _) =>  udf(Utils.padArr[Long])
+        case ArrayType(DoubleType, _) => udf(Utils.padArr[Double])
+        case ArrayType(ArrayType(IntegerType, _), _) => udf(Utils.padMatrix[Int])
+        case ArrayType(ArrayType(LongType, _), _) => udf(Utils.padMatrix[Long])
+        case ArrayType(ArrayType(DoubleType, _), _) => udf(Utils.padMatrix[Double])
         case _ => throw new IllegalArgumentException(
-          s"Unsupported data type $dataType of column $column in postPad")
+          s"Unsupported data type $dataType of column $c in pad")
       }
+      paddedDF = paddedDF.withColumn(c.name,padUdf(lit(maxLength), col(c.name)))
     })
 
-    df.createOrReplaceTempView("tmp")
-
-    val selectStatement = df.schema.fields
-      .filter(x => cols.contains(x.name)).map(x => {
-      val c = x.name
-      if (x.dataType.toString.contains("ArrayType(ArrayType")) {
-        s"pad_matrix($maxLength, $c) as $c"
-      } else {
-        s"pad_array($maxLength, $c) as $c"
-      }
-    }).mkString(",")
-
-    val leftCols = df.columns.filter(x => !cols.contains(x)).mkString(",")
-
-    df.sqlContext.sql(s"select $leftCols, $selectStatement from tmp")
+    paddedDF
   }
 
   def fillMedian(df: DataFrame, columns: JList[String] = null): DataFrame = {

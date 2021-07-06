@@ -234,7 +234,7 @@ private[friesian] object Utils {
           negItem = 1 + r.nextInt(itemSize - 1)
         } while (negItem == itemId)
         negItem
-      }).map(x => (x, 0)) ++ Seq((itemId,  1))
+      }).map(x => (x, 0)) ++ Seq((itemId, 1))
   }
 
   def addNegativeList[T](negNum: Int, itemSize: Int): mutable.WrappedArray[Int] => Seq[Seq[Int]] = {
