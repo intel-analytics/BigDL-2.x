@@ -25,12 +25,23 @@ from zoo.chronos.autots.experimental.tspipeline import TSPipeline
 
 class AutoTSEstimator:
     """
-    Automated Timeseries Estimator for time series forecasting task, which supports
+    Automated TimeSeries Estimator for time series forecasting task, which supports
     TSDataset and customized data creator as data input on built-in model (only
     "lstm", "tcn" for now) and 3rd party model.
 
-    Note: Only backend="torch" is supported for now. Customized data creator has not been
-          fully supported by TSPipeline.
+    Only backend="torch" is supported for now. Customized data creator has not been
+    fully supported by TSPipeline.
+
+    >>> # Here is a use case example:
+    >>> # prepare train/valid/test tsdataset
+    >>> autoest = AutoTSEstimator(model="lstm",
+    >>>                           search_space=search_space,
+    >>>                           past_seq_len=6,
+    >>>                           future_seq_len=1)
+    >>> tsppl = autoest.fit(data=tsdata_train,
+    >>>                     validation_data=tsdata_valid)
+    >>> tsppl.predict(tsdata_test)
+    >>> tsppl.save("my_tsppl")
     """
 
     def __init__(self,
@@ -54,11 +65,11 @@ class AutoTSEstimator:
         Users can choose one of the built-in models, or pass in a customized pytorch or keras model
         for tuning using AutoML.
 
-        :param model: a string or a model creation function
-               a string indicates a built-in model, currently "lstm", "tcn" are supported
-               a model creation function indicates a 3rd party model, the function should take a
+        :param model: a string or a model creation function.
+               A string indicates a built-in model, currently "lstm", "tcn" are supported.|br|
+               A model creation function indicates a 3rd party model, the function should take a
                config param and return a torch.nn.Module (backend="torch") / tf model
-               (backend="keras").
+               (backend="keras").|br|
                If you use chronos.data.TSDataset as data input, the 3rd party
                should have 3 dim input (num_sample, past_seq_len, input_feature_num) and 3 dim
                output (num_sample, future_seq_len, output_feature_num) and use the same key
@@ -155,6 +166,7 @@ class AutoTSEstimator:
             ):
         """
         fit using AutoEstimator
+
         :param data: train data.
                For backend of "torch", data can be a TSDataset or a function that takes a
                config dictionary as parameter and returns a PyTorch DataLoader.
@@ -179,7 +191,7 @@ class AutoTSEstimator:
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
 
-        :return: a TSPipeline.
+        :return: a TSPipeline with the best model.
         """
         is_third_party_model = isinstance(self.model, AutoEstimator)
 
