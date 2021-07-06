@@ -25,13 +25,12 @@ from zoo.chronos.autots.experimental.tspipeline import TSPipeline
 
 class AutoTSEstimator:
     """
-    Automated Timeseries Estimator.
-    AutoTSEstimator supports time series forecasting task for now.
-    AutoTSEstimator returns a TSPipeline once fit method is called.
-    AutoTSEstimator supports TSDataset and customized data creator as data input.
-    AutoTSEstimator supports built-in model (only "lstm", "tcn" for now) and 3rd party model.
-    Note: Only backend="torch" is supported for now.
-    Note: Customized data creator has not been fully supported by TSPipeline.
+    Automated Timeseries Estimator for time series forecasting task, which supports
+    TSDataset and customized data creator as data input on built-in model (only
+    "lstm", "tcn" for now) and 3rd party model.
+
+    Note: Only backend="torch" is supported for now. Customized data creator has not been
+          fully supported by TSPipeline.
     """
 
     def __init__(self,
@@ -52,8 +51,9 @@ class AutoTSEstimator:
                  ):
         """
         AutoTSEstimator trains a model for time series forecasting.
-        User can choose one of the built-in models, or pass in a customized pytorch or keras model
+        Users can choose one of the built-in models, or pass in a customized pytorch or keras model
         for tuning using AutoML.
+
         :param model: a string or a model creation function
                a string indicates a built-in model, currently "lstm", "tcn" are supported
                a model creation function indicates a 3rd party model, the function should take a
