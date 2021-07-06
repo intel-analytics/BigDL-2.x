@@ -66,10 +66,10 @@ class AutoTSEstimator:
         for tuning using AutoML.
 
         :param model: a string or a model creation function.
-               A string indicates a built-in model, currently "lstm", "tcn" are supported.|br|
+               A string indicates a built-in model, currently "lstm", "tcn" are supported.
                A model creation function indicates a 3rd party model, the function should take a
                config param and return a torch.nn.Module (backend="torch") / tf model
-               (backend="keras").|br|
+               (backend="keras").
                If you use chronos.data.TSDataset as data input, the 3rd party
                should have 3 dim input (num_sample, past_seq_len, input_feature_num) and 3 dim
                output (num_sample, future_seq_len, output_feature_num) and use the same key
