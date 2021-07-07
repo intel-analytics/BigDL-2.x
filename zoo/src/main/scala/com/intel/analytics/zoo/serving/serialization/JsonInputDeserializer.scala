@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer,
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.zoo.serving.http.Instances
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -45,7 +46,13 @@ class JsonInputDeserializer extends JsonDeserializer[Activity]{
       if (shapeBuffer.isEmpty) shapeBuffer.append(1)
       if (!floatBuffer.isEmpty) {
         tensorBuffer.append(Tensor[Float](floatBuffer.toArray, shapeBuffer.toArray))
-      } else {
+      }
+      else if (!stringBuffer.isEmpty) {
+        val byteBuffer = java.util.Base64.getDecoder.decode(stringBuffer.head)
+        val ins = Instances.fromArrow(byteBuffer)
+
+      }
+      else {
         // add string, string tensor, sparse tensor in the future
         throw new Error("???")
       }

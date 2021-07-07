@@ -75,18 +75,11 @@ class PreProcessing()
   def decodeArrowBase64(key: String, s: String, serde: String = ""): Activity = {
     try {
 
-      val instance = if (serde == "stream" && s.contains(",")) {
+      val instance = if (serde == "stream") {
         Seq(JsonInputDeserializer.deserialize(s))
 
       } else {
-        if (serde == "stream") {
-          val pattern = "^.*\"image\":\\s*\"(.+)\".*$".r
-          val pattern(imageStr) = s
-          byteBuffer = java.util.Base64.getDecoder.decode(imageStr)
-        }
-        else {
-          byteBuffer = java.util.Base64.getDecoder.decode(s)
-        }
+        byteBuffer = java.util.Base64.getDecoder.decode(s)
         val ins = Instances.fromArrow(byteBuffer)
         getInputFromInstance(ins)
       }
