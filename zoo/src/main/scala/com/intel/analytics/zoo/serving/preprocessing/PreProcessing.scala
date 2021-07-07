@@ -62,13 +62,7 @@ class PreProcessing()
         }
       ).toList
       val arr = oneInsMap.map(x => x._2)
-      val table = T.array(arr.toArray)
-      if (table.keySet.size == 1) {
-          table.keySet.foreach(key => {
-            return Seq(table(key).asInstanceOf[Tensor[Float]])
-          })
-      }
-      Seq(table)
+      Seq(T.array(arr.toArray))
     })
   }
 
@@ -76,7 +70,7 @@ class PreProcessing()
     try {
 
       val instance = if (serde == "stream") {
-        Seq(JsonInputDeserializer.deserialize(s))
+        Seq(JsonInputDeserializer.deserialize(s, this))
 
       } else {
         byteBuffer = java.util.Base64.getDecoder.decode(s)

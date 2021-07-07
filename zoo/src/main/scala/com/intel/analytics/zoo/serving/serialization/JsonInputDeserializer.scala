@@ -24,11 +24,12 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.serving.http.Instances
+import com.intel.analytics.zoo.serving.preprocessing.PreProcessing
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-class JsonInputDeserializer extends JsonDeserializer[Activity]{
+class JsonInputDeserializer(preProcessing: PreProcessing = null) extends JsonDeserializer[Activity]{
   var intBuffer: ArrayBuffer[Int] = null
   var floatBuffer: ArrayBuffer[Float] = null
   var stringBuffer: ArrayBuffer[String] = null
@@ -48,9 +49,11 @@ class JsonInputDeserializer extends JsonDeserializer[Activity]{
         tensorBuffer.append(Tensor[Float](floatBuffer.toArray, shapeBuffer.toArray))
       }
       else if (!stringBuffer.isEmpty) {
-        val byteBuffer = java.util.Base64.getDecoder.decode(stringBuffer.head)
-        val ins = Instances.fromArrow(byteBuffer)
-
+        if (preProcessing == null){
+          throw new Error("No PreProcessing provided!")
+        }
+        val ins = Instances.fromArrow(java.util.Base64.getDecoder.decode(stringBuffer.head))
+        tensorBuffer.append(preProcessing.decodeImage(ins.instances.head.head._2.asInstanceOf[String]))
       }
       else {
         // add string, string tensor, sparse tensor in the future
@@ -90,10 +93,10 @@ class JsonInputDeserializer extends JsonDeserializer[Activity]{
 
 }
 object JsonInputDeserializer {
-  def deserialize(str: String): Activity = {
+  def deserialize(str: String, preProcessing: PreProcessing = null): Activity = {
     val mapper = new ObjectMapper()
     val module = new SimpleModule()
-    module.addDeserializer(classOf[Activity], new JsonInputDeserializer())
+    module.addDeserializer(classOf[Activity], new JsonInputDeserializer(preProcessing))
     mapper.registerModule(module)
     mapper.readValue(str, classOf[Activity])
   }
