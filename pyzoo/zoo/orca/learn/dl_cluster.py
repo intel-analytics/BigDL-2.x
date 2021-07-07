@@ -17,6 +17,8 @@
 import ray
 from zoo.orca.cpu_info import schedule_workers
 import os
+import logging
+log = logging.getLogger(__name__)
 
 
 class ClusterInfo:
@@ -80,11 +82,17 @@ class RayDLCluster:
                     ip2workers[ip] = []
                 ip2workers[ip].append(worker)
             ips = ip2workers.keys()
-            cpu_bindings = ray.get([ip2workers[ip][0].run.remote(schedule_workers, len(ip2workers[ip])) for ip in ips])
+
+            cpu_binding_refs = []
+            for ip in ips:
+                ref = ip2workers[ip][0].run.remote(schedule_workers, len(ip2workers[ip]))
+                cpu_binding_refs.append(ref)
+            cpu_bindings = ray.get(cpu_binding_refs)
 
             result = []
             for ip, core_lists in zip(ips, cpu_bindings):
                 for worker, core_list in zip(ip2workers[ip], core_lists):
+                    log.debug(f"Setting thread affinity for worker in {ip}: {core_list}")
                     result.append(worker.set_cpu_affinity.remote(core_list))
 
             ray.get(result)
@@ -94,5 +102,3 @@ class RayDLCluster:
 
     def get_workers(self):
         return self.remote_workers
-
-
