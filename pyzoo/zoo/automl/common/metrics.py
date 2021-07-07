@@ -41,8 +41,9 @@ def _standardize_input(y_true, y_pred, multioutput):
         y_true = np.array(y_true)
     if isinstance(y_pred, (list, tuple)):
         y_pred = np.array(y_pred)
-    if isinstance(y_true, pd.DataFrame) and isinstance(y_pred, pd.DataFrame):
+    if isinstance(y_true, pd.DataFrame):
         y_true = y_true.to_numpy()
+    if isinstance(y_pred, pd.DataFrame):
         y_pred = y_pred.to_numpy()
 
     y_true = y_true.astype(np.float64)
@@ -349,8 +350,13 @@ class Evaluator(object):
 
     @staticmethod
     def evaluate(metric, y_true, y_pred, multioutput='raw_values'):
+        from collections.abc import Iterable
         Evaluator.check_metric(metric)
-        return Evaluator.metrics_func[metric](y_true, y_pred, multioutput=multioutput)
+        result = Evaluator.metrics_func[metric](y_true, y_pred, multioutput=multioutput)
+        if isinstance(result, Iterable) and len(result) == 1:
+            return result[0]
+        else:
+            return result
 
     @staticmethod
     def check_metric(metric):
