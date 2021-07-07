@@ -85,7 +85,9 @@ class RayDLCluster:
 
             cpu_binding_refs = []
             for ip in ips:
-                ref = ip2workers[ip][0].run.remote(schedule_workers, len(ip2workers[ip]))
+                ref = ip2workers[ip][0].run.remote(schedule_workers,
+                                                   len(ip2workers[ip]),
+                                                   self.worker_cores)
                 cpu_binding_refs.append(ref)
             cpu_bindings = ray.get(cpu_binding_refs)
 
