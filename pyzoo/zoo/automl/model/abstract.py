@@ -24,6 +24,7 @@ class BaseModel(ABC):
 
     check_optional_config = False
     config = None
+    model = None
 
     @abstractmethod
     def fit_eval(self, data, validation_data=None, **kwargs):
@@ -56,7 +57,6 @@ class BaseModel(ABC):
         """
         pass
 
-    @abstractmethod
     def get_model(self):
         return self.model
 
