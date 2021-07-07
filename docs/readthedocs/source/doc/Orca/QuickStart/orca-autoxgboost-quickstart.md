@@ -8,7 +8,7 @@
 
 **In this guide we will describe how to use Orca AutoXGBoost for automated xgboost tuning**
 
-Orca AutoXGBoost enables distributed automated hyper-parameter tuning for `xgboost.sklearn`, which includes `AutoXGBRegressor` and `AutoXGBClassifier` for sklearn`XGBRegressor` and `XGBClassifier` respectively. See more about [xgboost scikit-learn API](https://xgboost.readthedocs.io/en/latest/python/python_api.html#module-xgboost.sklearn).
+Orca AutoXGBoost enables distributed automated hyper-parameter tuning for XGBoost, which includes `AutoXGBRegressor` and `AutoXGBClassifier` for sklearn`XGBRegressor` and `XGBClassifier` respectively. See more about [xgboost scikit-learn API](https://xgboost.readthedocs.io/en/latest/python/python_api.html#module-xgboost.sklearn).
 ### **Step 0: Prepare Environment**
 
 [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) is needed to prepare the Python environment for running this example. Please refer to the [install guide](../../UserGuide/python.md) for more details.
@@ -42,7 +42,7 @@ This is the only place where you need to specify local or distributed mode. View
 
 You should define a dictionary as your hyper-parameter search space.
 
-The keys are hyper-parameter names you want to search for `XGBRegressor`, and you can specify how you want to sample each hyper-parameter in the values of the search space. See more about [automl.hp](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/AutoML/automl.html#orca-automl-hp).
+The keys are hyper-parameter names you want to search for `XGBRegressor`, and you can specify how you want to sample each hyper-parameter in the values of the search space. See [automl.hp](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/AutoML/automl.html#orca-automl-hp) for more details.
 
 ```python
 from zoo.orca.automl import hp
@@ -55,7 +55,7 @@ search_space = {
 
 ### **Step 3: Automatically fit and search with Orca AutoXGBoost**
 
-First create an `AutoXGBRegressor` for Boston Housing dataset.
+First create an `AutoXGBRegressor`.
 
 ```python
 from zoo.orca.automl.xgboost import AutoXGBRegressor
