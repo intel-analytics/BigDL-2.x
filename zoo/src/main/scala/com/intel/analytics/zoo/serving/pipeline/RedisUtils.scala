@@ -127,9 +127,12 @@ object RedisUtils {
       System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
       System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStoreToken)
     }
+
     if (jedisPool == null) {
       synchronized {
         if (jedisPool == null) {
+          logger.info(
+            s"Creating JedisPool at ${params.redisHost}:${params.redisPort}")
           val jedisPoolConfig = new JedisPoolConfig()
           jedisPoolConfig.setMaxTotal(256)
           jedisPool = new JedisPool(jedisPoolConfig,

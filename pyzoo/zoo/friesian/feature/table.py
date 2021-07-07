@@ -14,13 +14,14 @@
 # limitations under the License.
 #
 import os
+import hashlib
 
 from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, DecimalType, \
-    DoubleType, ArrayType, DataType
+    DoubleType, ArrayType, DataType, StructType, StringType, StructField
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
-from pyspark.sql.functions import col as pyspark_col, udf, array, broadcast, lit
+from pyspark.sql.functions import col as pyspark_col, concat, udf, array, broadcast, lit
 from pyspark.sql import Row
 import pyspark.sql.functions as F
 
@@ -89,7 +90,7 @@ class Table:
                 for i in range(len(columns)):
                     tbl = tbl.cast(columns=columns[i], dtype=dtype[i])
             else:
-                raise ValueError("dtype should be str or list of str or dict")
+                raise ValueError("dtype should be str or a list of str or dict")
         return tbl.df
 
     def _clone(self, df):
@@ -129,7 +130,7 @@ class Table:
         """
         Select specific columns.
 
-        :param cols: a string or a list of strings that specifies column names. If it is '*',
+        :param cols: str or a list of str that specifies column names. If it is '*',
                      select all the columns.
 
         :return: A new Table that contains the specified columns.
@@ -145,7 +146,7 @@ class Table:
         Returns a new Table that drops the specified column.
         This is a no-op if schema doesn't contain the given column name(s).
 
-        :param cols: a string name of the column to drop, or a list of string name of the columns
+        :param cols: str or a list of str that specifies the name of the columns
                to drop.
 
         :return: A new Table that drops the specified column.
@@ -160,7 +161,7 @@ class Table:
                Value to replace null values with.
         :param columns: list of str, the target columns to be filled. If columns=None and value
                is int, all columns of integer type will be filled. If columns=None and value is
-               long, float, string or boolean, all columns will be filled.
+               long, float, str or boolean, all columns will be filled.
 
         :return: A new Table that replaced the null values with specified value
         """
@@ -182,7 +183,7 @@ class Table:
         """
         Drops the rows containing null values in the specified columns.
 
-        :param columns: a string or a list of strings that specifies column names. If it is None,
+        :param columns: str or a list of str that specifies column names. If it is None,
                it will operate on all columns.
         :param how: If `how` is "any", then drop rows containing any null values in `columns`.
                If `how` is "all", then drop rows only if every column in `columns` is null for
@@ -207,7 +208,7 @@ class Table:
         Filters the rows that satisfy `condition`. For instance, filter("col_1 == 1") will filter
         the rows that has value 1 at column col_1.
 
-        :param condition: a string that gives the condition for filtering.
+        :param condition: str that gives the condition for filtering.
 
         :return: A new Table with filtered rows.
         """
@@ -218,7 +219,7 @@ class Table:
         Clips continuous values so that they are within the range [min, max]. For instance, by
         setting the min value to 0, all negative values in columns will be replaced with 0.
 
-        :param columns: str or list of str, the target columns to be clipped.
+        :param columns: str or a list of str, the target columns to be clipped.
         :param min: numeric, the minimum value to clip values to. Values less than this will be
                replaced with this value.
         :param max: numeric, the maximum value to clip values to. Values greater than this will be
@@ -229,7 +230,7 @@ class Table:
         """
         assert min is not None or max is not None, "at least one of min and max should be not None"
         if columns is None:
-            raise ValueError("columns should be str or list of str, but got None.")
+            raise ValueError("columns should be str or a list of str, but got None.")
         if not isinstance(columns, list):
             columns = [columns]
         check_col_exists(self.df, columns)
@@ -239,7 +240,7 @@ class Table:
         """
         Calculates the log of continuous columns.
 
-        :param columns: str or list of str, the target columns to calculate log.
+        :param columns: str or a list of str, the target columns to calculate log.
         :param clipping: boolean, if clipping=True, the negative values in columns will be
                clipped to 0 and `log(x+1)` will be calculated. If clipping=False, `log(x)` will be
                calculated.
@@ -247,7 +248,7 @@ class Table:
         :return: A new Table that replaced value in columns with logged value.
         """
         if columns is None:
-            raise ValueError("columns should be str or list of str, but got None.")
+            raise ValueError("columns should be str or a list of str, but got None.")
         if not isinstance(columns, list):
             columns = [columns]
         check_col_exists(self.df, columns)
@@ -258,7 +259,7 @@ class Table:
         Replaces null values with the median in the specified numeric columns. Any column to be
         filled should not contain only null values.
 
-        :param columns: a string or a list of strings that specifies column names. If it is None,
+        :param columns: str or a list of str that specifies column names. If it is None,
                it will operate on all numeric columns.
 
         :return: A new Table that replaces null values with the median in the specified numeric
@@ -275,7 +276,7 @@ class Table:
         Returns a new Table that has two columns, `column` and `median`, containing the column
         names and the medians of the specified numeric columns.
 
-        :param columns: a string or a list of strings that specifies column names. If it is None,
+        :param columns: str or a list of str that specifies column names. If it is None,
                it will operate on all numeric columns.
 
         :return: A new Table that contains the medians of the specified columns.
@@ -291,7 +292,7 @@ class Table:
         Merge the target column values as a list to a new column.
         The original columns will be dropped.
 
-        :param columns: list of str, the target columns to be merged.
+        :param columns: a list of str, the target columns to be merged.
         :param target: str, the new column name of the merged column.
 
         :return: A new Table that replaces columns with a new target column of merged list values.
@@ -326,17 +327,119 @@ class Table:
         """
         self.df.show(n, truncate)
 
+    def get_stats(self, columns, aggr):
+        """
+        Calculate the statistics of the values over the target column(s).
+
+        :param columns: str or a list of str that specifies the name(s) of the target column(s).
+        If columns is None, then the function will return statistics for all numeric columns.
+        :param aggr: str or a list of str or dict to specify aggregate functions,
+        min/max/avg/sum/count are supported.
+        If aggr is a str or a list of str, it contains the name(s) of aggregate function(s).
+        If aggr is a dict, the key is the column name, and the value is the aggregate function(s).
+
+        :return: dict, the key is the column name, and the value is aggregate result(s).
+        """
+        if columns is None:
+            columns = [column for column in self.columns if check_column_numeric(self.df, column)]
+        if not isinstance(columns, list):
+            columns = [columns]
+        check_col_exists(self.df, columns)
+        stats = {}
+        for column in columns:
+            if isinstance(aggr, str) or isinstance(aggr, list):
+                aggr_strs = aggr
+            elif isinstance(aggr, dict):
+                if column not in aggr:
+                    raise ValueError("aggregate funtion not defined for the column {}.".
+                                     format(column))
+                aggr_strs = aggr[column]
+            else:
+                raise ValueError("aggr must have type str or a list or dict.")
+            if isinstance(aggr_strs, str):
+                aggr_strs = [aggr_strs]
+            values = []
+            for aggr_str in aggr_strs:
+                if aggr_str not in ["min", "max", "avg", "sum", "count"]:
+                    raise ValueError("aggregate function must be one of min/max/avg/sum/count, \
+                        but got {}.".format(aggr_str))
+                values.append(self.df.agg({column: aggr_str}).collect()[0][0])
+            stats[column] = values[0] if len(values) == 1 else values
+        return stats
+
+    def min(self, columns):
+        """
+        Returns a new Table that has two columns, `column` and `min`, containing the column
+        names and the minimum values of the specified numeric columns.
+
+        :param columns: str or a list of str that specifies column names. If it is None,
+               it will operate on all numeric columns.
+
+        :return: A new Table that contains the minimum values of the specified columns.
+        """
+        data = self.get_stats(columns, "min")
+        data = [(column, float(data[column])) for column in data]
+        schema = StructType([StructField("column", StringType(), True),
+                             StructField("min", FloatType(), True)])
+        spark = OrcaContext.get_spark_session()
+        return self._clone(spark.createDataFrame(data, schema))
+
+    def max(self, columns):
+        """
+        Returns a new Table that has two columns, `column` and `max`, containing the column
+        names and the maximum values of the specified numeric columns.
+
+        :param columns: str or a list of str that specifies column names. If it is None,
+               it will operate on all numeric columns.
+
+        :return: A new Table that contains the maximum values of the specified columns.
+        """
+        data = self.get_stats(columns, "max")
+        data = [(column, float(data[column])) for column in data]
+        schema = StructType([StructField("column", StringType(), True),
+                             StructField("max", FloatType(), True)])
+        spark = OrcaContext.get_spark_session()
+        return self._clone(spark.createDataFrame(data, schema))
+
+    def to_list(self, column):
+        """
+        Convert all values of the target column to a list.
+        Only call this if the Table is small enougth.
+
+        :param column: str, specifies the name of target column.
+
+        :return: list, contains all values of the target column.
+        """
+        if not isinstance(column, str):
+            raise ValueError("Column must have type str.")
+        check_col_exists(self.df, [column])
+        return self.df.select(column).rdd.flatMap(lambda x: x).collect()
+
+    def to_dict(self):
+        """
+        Convert the Table to a dictionary.
+        Only call this if the Table is small enough.
+
+        :return: dict, the key is the column name, and the value is the list containing
+        all values in the corresponding column.
+        """
+        rows = [list(row) for row in self.df.collect()]
+        result = {}
+        for i, column in enumerate(self.columns):
+            result[column] = [row[i] for row in rows]
+        return result
+
     def add(self, columns, value=1):
         """
         Increase all of values of the target numeric column(s) by a constant value.
 
-        :param columns: str or list of str, the target columns to be increased.
+        :param columns: str or a list of str, the target columns to be increased.
         :param value: numeric (int/float/double/short/long), the constant value to be added.
 
         :return: A new Table with updated numeric values on specified columns.
         """
         if columns is None:
-            raise ValueError("Columns should be str or list of str, but got None")
+            raise ValueError("Columns should be str or a list of str, but got None")
         if not isinstance(columns, list):
             columns = [columns]
         check_col_exists(self.df, columns)
@@ -399,9 +502,9 @@ class Table:
         """
         Cast columns to the specified type.
 
-        :param columns: a string or a list of strings that specifies column names.
+        :param columns: str or a list of str that specifies column names.
                If it is None, then cast all of the columns.
-        :param dtype: a string ("string", "boolean", "int", "long", "short", "float", "double")
+        :param dtype: str ("string", "boolean", "int", "long", "short", "float", "double")
                that specifies the data type.
 
         :return: A new Table that casts all of the specified columns to the specified type.
@@ -473,10 +576,10 @@ class FeatureTable(Table):
         :param delimiter: str, delimiter to use for parsing the csv file(s). Default is ",".
         :param header: boolean, whether the first line of the csv file(s) will be treated
                as the header for column names. Default is False.
-        :param names: str or list of str, the column names for the csv file(s). You need to
+        :param names: str or a list of str, the column names for the csv file(s). You need to
                provide this if the header cannot be inferred. If specified, names should
                have the same length as the number of columns.
-        :param dtype: str or list of str or dict, the column data type(s) for the csv file(s).\
+        :param dtype: str or a list of str or dict, the column data type(s) for the csv file(s).\
                You may need to provide this if you want to change the default inferred types
                of specified columns.
                If dtype is a str, then all the columns will be cast to the target dtype.
@@ -521,6 +624,73 @@ class FeatureTable(Table):
                 .drop(col_name).withColumnRenamed("id", col_name)\
                 .dropna(subset=[col_name])
         return FeatureTable(data_df)
+
+    def filter_by_frequency(self, columns, min_freq=2):
+        """
+        Filter the FeatureTable by the given minimum frequency on the target columns.
+
+        :param columns: str or a list of str, column names which are considered for filtering.
+        :param min_freq: int, min frequency. Columns with occurrence below this value
+               would be filtered.
+
+        :return: A new FeatureTable with filtered records.
+        """
+        freq_df = self.df
+        if not isinstance(columns, list):
+            columns = [columns]
+        name_string = ''
+        for column in columns:
+            name_string = name_string + column + '_'
+        filter_col_name = name_string + 'count'
+        key = freq_df.groupby(columns).count().withColumnRenamed('count', filter_col_name)
+        group = key.filter(key[filter_col_name] >= min_freq).drop(filter_col_name)
+        return FeatureTable(group)
+
+    def hash_encode(self, columns, bins, method='md5'):
+        """
+        Hash encode for categorical column(s).
+
+        :param columns: str or a list of str, the target columns to be encoded.
+               For dense features, you need to cut them into discrete intervals beforehand.
+        :param bins: int, defines the number of equal-width bins in the range of column(s) values.
+        :param method: hashlib supported method, like md5, sha256 etc.
+
+        :return: A new FeatureTable which hash encoded columns.
+        """
+        hash_df = self.df
+        if not isinstance(columns, list):
+            columns = [columns]
+        for i in range(len(columns)):
+            col_name = columns[i]
+            hash_str = lambda x: getattr(hashlib, method)(str(x).encode('utf_8')).hexdigest()
+            hash_int = udf(lambda x: int(hash_str(x), 16) % bins)
+            hash_df = hash_df.withColumn(col_name, hash_int(pyspark_col(col_name)))
+        return FeatureTable(hash_df)
+
+    def cross_hash_encode(self, columns, bins, cross_col_name=None):
+        """
+        Hash encode for cross column(s).
+
+        :param columns: a list of str, the categorical columns to be encoded as cross features.
+               For dense features, you need to cut them into discrete intervals beforehand.
+        :param bins: int, defined the number of equal-width bins in the range of column(s) values.
+        :param cross_col_name: str, the column name for output cross column. Default is None, and
+               in this case the default cross column name will be 'crossed_col1_col2'
+               for ['col1', 'col2'].
+
+        :return: A new FeatureTable which the target cross column.
+        """
+        cross_hash_df = self.df
+        assert isinstance(columns, list), "columns should be a list of column names"
+        assert len(columns) >= 2, "cross_hash_encode should have >= 2 columns"
+        if cross_col_name is None:
+            cross_string = ''
+            for column in columns:
+                cross_string = cross_string + '_' + column
+            cross_col_name = 'crossed' + cross_string
+        cross_hash_df = cross_hash_df.withColumn(cross_col_name, concat(*columns))
+        cross_hash_df = FeatureTable(cross_hash_df).hash_encode([cross_col_name], bins)
+        return cross_hash_df
 
     def category_encode(self, columns, freq_limit=None):
         """
@@ -631,7 +801,7 @@ class FeatureTable(Table):
 
     def gen_string_idx(self, columns, freq_limit=None):
         """
-        Generate unique index value of categorical features. The resulting string index would
+        Generate unique index value of categorical features. The resulting index would
         start from 1 with 0 reserved for unknown features.
 
         :param columns: str or a list of str, target columns to generate StringIndex.
@@ -643,7 +813,7 @@ class FeatureTable(Table):
         :return: A list of StringIndex.
         """
         if columns is None:
-            raise ValueError("columns should be str or list of str, but got None.")
+            raise ValueError("columns should be str or a list of str, but got None.")
         if not isinstance(columns, list):
             columns = [columns]
         check_col_exists(self.df, columns)
@@ -678,9 +848,11 @@ class FeatureTable(Table):
     def cross_columns(self, crossed_columns, bucket_sizes):
         """
         Cross columns and hashed to specified bucket size
+
         :param crossed_columns: list of column name pairs to be crossed.
         i.e. [['a', 'b'], ['c', 'd']]
         :param bucket_sizes: hash bucket size for crossed pairs. i.e. [1000, 300]
+
         :return: FeatureTable include crossed columns(i.e. 'a_b', 'c_d')
         """
         df = cross_columns(self.df, crossed_columns, bucket_sizes)
@@ -689,7 +861,9 @@ class FeatureTable(Table):
     def normalize(self, columns):
         """
         Normalize numeric columns
+
         :param columns: list of column names
+
         :return: FeatureTable
         """
         df = self.df
@@ -894,7 +1068,7 @@ class FeatureTable(Table):
         Group the Table with specified columns and then run aggregation. Optionally join the result
         with the original Table.
 
-        :param columns: str or list of str. Columns to group the Table. If it is an empty list,
+        :param columns: str or a list of str. Columns to group the Table. If it is an empty list,
                aggregation is run directly without grouping. Default is [].
         :param agg: str, list or dict. Aggregate functions to be applied to grouped Table.
                Default is "count".
@@ -905,9 +1079,9 @@ class FeatureTable(Table):
                on all columns that are not in `columns`.
                If agg is a list of str, then agg is a list of aggregate function and the aggregation
                is performed on all columns that are not in `columns`.
-               If agg is a single dict mapping from string to string, then the key is the column
+               If agg is a single dict mapping from str to str, then the key is the column
                to perform aggregation on, and the value is the aggregate function.
-               If agg is a single dict mapping from string to list, then the key is the
+               If agg is a single dict mapping from str to list, then the key is the
                column to perform aggregation on, and the value is list of aggregate functions.
 
                Examples:
@@ -921,7 +1095,7 @@ class FeatureTable(Table):
         """
         if isinstance(columns, str):
             columns = [columns]
-        assert isinstance(columns, list), "columns should be str or list of str"
+        assert isinstance(columns, list), "columns should be str or a list of str"
         grouped_data = self.df.groupBy(columns)
 
         if isinstance(agg, str):
@@ -943,7 +1117,7 @@ class FeatureTable(Table):
                 for agg_column, stats in agg.items():
                     if isinstance(stats, str):
                         stats = [stats]
-                    assert isinstance(stats, list), "value in agg should be str or list of str"
+                    assert isinstance(stats, list), "value in agg should be str or a list of str"
                     for stat in stats:
                         stat_func = getattr(F, stat)
                         agg_exprs_list += [stat_func(agg_column)]

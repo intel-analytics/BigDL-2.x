@@ -57,8 +57,8 @@ object ClusterServing {
     // Uncomment this line if you need to check predict time in debug
     // Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
     streamingEnv.setParallelism(helper.modelParallelism)
-    streamingEnv.addSource(new FlinkRedisSource(helper))
-      .map(new FlinkInference(helper))
+    streamingEnv.addSource(new FlinkRedisSource())
+      .map(new FlinkInference())
       .addSink(new FlinkRedisSink(helper))
 
     logger.info(s"Cluster Serving Flink job graph details \n${streamingEnv.getExecutionPlan}")

@@ -26,6 +26,7 @@ from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
 from zoo.orca.learn.utils import maybe_dataframe_to_xshards, dataframe_to_xshards, \
     convert_predict_xshards_to_dataframe, update_predict_xshards, \
     process_xshards_of_pandas_dataframe
+from zoo.orca.data.utils import process_spark_xshards
 from zoo.ray import RayContext
 
 logger = logging.getLogger(__name__)
@@ -76,19 +77,6 @@ def data_length(data):
         return x.shape[0]
     else:
         return x[0].shape[0]
-
-
-def process_spark_xshards(spark_xshards, num_workers):
-    data = spark_xshards
-    if data.num_partitions() != num_workers:
-        data = data.repartition(num_workers)
-
-    # todo currently we need this information to pad the short partitions
-    # so that every model run exactly the same number of steps in one epoch
-    max_length = data.rdd.map(data_length) \
-        .mapPartitions(lambda iterator: [sum(iterator)]).max()
-    ray_xshards = RayXShards.from_spark_xshards(data)
-    return max_length, ray_xshards
 
 
 class TensorFlow2Estimator(OrcaRayEstimator):
@@ -220,15 +208,15 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         from zoo.orca.data import SparkXShards
         data, validation_data = maybe_dataframe_to_xshards(data, validation_data,
                                                            feature_cols, label_cols,
-                                                           mode="fit")
+                                                           mode="fit",
+                                                           num_workers=self.num_workers)
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
                 data, validation_data = process_xshards_of_pandas_dataframe(data, feature_cols,
                                                                             label_cols,
                                                                             validation_data, "fit")
-
-            max_length, ray_xshards = process_spark_xshards(data, self.num_workers)
+            ray_xshards = process_spark_xshards(data, self.num_workers)
 
             if validation_data is None:
                 def transform_func(worker, partition_refs):
@@ -238,8 +226,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                 worker_stats = ray_xshards.reduce_partitions_for_actors(self.remote_workers,
                                                                         transform_func)
             else:
-                val_max_length, val_ray_xshards = process_spark_xshards(validation_data,
-                                                                        self.num_workers)
+                val_ray_xshards = process_spark_xshards(validation_data, self.num_workers)
 
                 def zip_func(worker, this_partition_refs, that_partition_refs):
                     params["data_creator"] = make_data_creator(this_partition_refs)
@@ -305,7 +292,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                                              validation_data=None,
                                              feature_cols=feature_cols,
                                              label_cols=label_cols,
-                                             mode="evaluate")
+                                             mode="evaluate",
+                                             num_workers=self.num_workers)
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':

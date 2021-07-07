@@ -17,74 +17,66 @@
 #
 
 from zoo.orca.automl.auto_estimator import AutoEstimator
-from zoo.chronos.model.arima import ARIMABuilder
+from zoo.chronos.model.prophet import ProphetBuilder
 
 
 # -
 
-class AutoARIMA:
+class AutoProphet:
 
     def __init__(self,
-                 p=2,
-                 q=2,
-                 seasonal=True,
-                 P=1,
-                 Q=1,
-                 m=7,
+                 changepoint_prior_scale=0.05,
+                 seasonality_prior_scale=10.0,
+                 holidays_prior_scale=10.0,
+                 seasonality_mode='additive',
+                 changepoint_range=0.8,
                  metric='mse',
-                 logs_dir="/tmp/auto_arima_logs",
+                 logs_dir="/tmp/auto_prophet_logs",
                  cpus_per_trial=1,
-                 name="auto_arima",
-                 **arima_config
+                 name="auto_prophet",
+                 **prophet_config
                  ):
         """
-        Create an automated ARIMA Model.
-        User need to specify either the exact value or the search space of
-        the ARIMA model hyperparameters. For details of the ARIMA model hyperparameters, refer to
-        https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.ARIMA.html#pmdarima.arima.ARIMA.
+        Create an automated Prophet Model.
+        User need to specify either the exact value or the search space of the
+        Prophet model hyperparameters. For details of the Prophet model hyperparameters, refer to
+        https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning.
 
-        :param p: Int or hp sampling function from an integer space for hyperparameter p
-               of the ARIMA model.
-               For hp sampling, see zoo.chronos.orca.automl.hp for more details.
-               e.g. hp.randint(0, 3).
-        :param q: Int or hp sampling function from an integer space for hyperparameter q
-               of the ARIMA model.
-               e.g. hp.randint(0, 3).
-        :param seasonal: Bool or hp sampling function from an integer space for whether to add
-               seasonal components to the ARIMA model.
-               e.g. hp.choice([True, False]).
-        :param P: Int or hp sampling function from an integer space for hyperparameter P
-               of the ARIMA model.
-               For hp sampling, see zoo.chronos.orca.automl.hp for more details.
-               e.g. hp.randint(0, 3).
-        :param Q: Int or hp sampling function from an integer space for hyperparameter Q
-               of the ARIMA model.
-               e.g. hp.randint(0, 3).
-        :param m: Int or hp sampling function from an integer space for hyperparameter p
-               of the ARIMA model.
-               e.g. hp.choice([4, 7, 12, 24, 365]).
+        :param changepoint_prior_scale: Int or hp sampling function from an integer space
+            for hyperparameter changepoint_prior_scale for the Prophet model.
+            For hp sampling, see zoo.chronos.orca.automl.hp for more details.
+            e.g. hp.loguniform(0.001, 0.5).
+        :param seasonality_prior_scale: hyperparameter seasonality_prior_scale for the
+            Prophet model.
+            e.g. hp.loguniform(0.01, 10).
+        :param holidays_prior_scale: hyperparameter holidays_prior_scale for the
+            Prophet model.
+            e.g. hp.loguniform(0.01, 10).
+        :param seasonality_mode: hyperparameter seasonality_mode for the
+            Prophet model.
+            e.g. hp.choice(['additive', 'multiplicative']).
+        :param changepoint_range: hyperparameter changepoint_range for the
+            Prophet model.
+            e.g. hp.uniform(0.8, 0.95).
         :param metric: String. The evaluation metric name to optimize. e.g. "mse"
         :param logs_dir: Local directory to save logs and results. It defaults to
-               "/tmp/auto_arima_logs"
+            "/tmp/auto_prophet_logs"
         :param cpus_per_trial: Int. Number of cpus for each trial. It defaults to 1.
-        :param name: name of the AutoARIMA. It defaults to "auto_arima"
-        :param arima_config: Other ARIMA hyperparameters.
-
+        :param name: name of the AutoProphet. It defaults to "auto_prophet"
+        :param prophet_config: Other Prophet hyperparameters.
         """
         self.search_space = {
-            "p": p,
-            "q": q,
-            "seasonal": seasonal,
-            "P": P,
-            "Q": Q,
-            "m": m,
+            "changepoint_prior_scale": changepoint_prior_scale,
+            "seasonality_prior_scale": seasonality_prior_scale,
+            "holidays_prior_scale": holidays_prior_scale,
+            "seasonality_mode": 'additive',
+            "changepoint_range": changepoint_range,
         }
         self.metric = metric
-        model_builder = ARIMABuilder()
+        model_builder = ProphetBuilder()
         self.auto_est = AutoEstimator(model_builder=model_builder,
                                       logs_dir=logs_dir,
-                                      resources_per_trial={
-                                          "cpu": cpus_per_trial},
+                                      resources_per_trial={"cpu": cpus_per_trial},
                                       name=name)
 
     def fit(self,
@@ -134,6 +126,6 @@ class AutoARIMA:
 
     def get_best_model(self):
         """
-        Get the best ARIMA model.
+        Get the best Prophet model.
         """
         return self.auto_est.get_best_model()
