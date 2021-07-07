@@ -422,8 +422,9 @@ class TSDataset:
         else:
             default_fc_parameters = settings
 
-        assert window_size < min([len(self.df[self.df[self.id_col] == i]) for i in self._id_list])\
-            + 1, "gen_rolling_feature should have a window_size smaller than time series length."
+        assert window_size < min([len(self.df[self.df[self.id_col] == i]) \
+                    for i in self._id_list]) + 1, "gen_rolling_feature should have a window_size \
+                        smaller than shortest time series length."
         df_rolled = roll_time_series(self.df,
                                      column_id=self.id_col,
                                      column_sort=self.dt_col,
@@ -512,6 +513,8 @@ class TSDataset:
         >>> print(x.shape, y.shape) # x.shape = (1, 1, 6) y.shape = (1, 1, 2)
 
         '''
+        assert id_sensitive and self._is_aligned, \
+            "The time series data should be aligned if id_sensitive is set to True."
         feature_col = _to_list(feature_col, "feature_col") if feature_col is not None \
             else self.feature_col
         target_col = _to_list(target_col, "target_col") if target_col is not None \
@@ -544,12 +547,7 @@ class TSDataset:
                                                             target_col=target_col))
 
         # concat the result on required axis
-        if id_sensitive:
-            concat_axis = 2
-            assert self._is_aligned, 'Use idsensitive to ensure that\
-                 the length of each id is the same.'
-        else:
-            concat_axis = 0
+        concat_axis = 2 if id_sensitive else 0
         self.numpy_x = np.concatenate([rolling_result[i][0]
                                        for i in self._id_list],
                                       axis=concat_axis).astype(np.float32)
