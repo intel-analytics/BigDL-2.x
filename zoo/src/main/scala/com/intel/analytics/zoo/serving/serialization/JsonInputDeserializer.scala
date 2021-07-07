@@ -50,7 +50,7 @@ class JsonInputDeserializer(preProcessing: PreProcessing = null)
         tensorBuffer.append(Tensor[Float](floatBuffer.toArray, shapeBuffer.toArray))
       }
       else if (!stringBuffer.isEmpty) {
-        if (preProcessing == null){
+        if (preProcessing == null) {
           throw new Error("No PreProcessing provided!")
         }
         val ins = Instances.fromArrow(
