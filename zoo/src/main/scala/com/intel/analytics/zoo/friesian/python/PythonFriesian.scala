@@ -350,7 +350,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       val dataType = c.dataType
       val padUdf = dataType match {
         case ArrayType(IntegerType, _) => udf(Utils.padArr[Int])
-        case ArrayType(LongType, _) =>  udf(Utils.padArr[Long])
+        case ArrayType(LongType, _) => udf(Utils.padArr[Long])
         case ArrayType(DoubleType, _) => udf(Utils.padArr[Double])
         case ArrayType(ArrayType(IntegerType, _), _) => udf(Utils.padMatrix[Int])
         case ArrayType(ArrayType(LongType, _), _) => udf(Utils.padMatrix[Long])
@@ -358,7 +358,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         case _ => throw new IllegalArgumentException(
           s"Unsupported data type $dataType of column $c in pad")
       }
-      paddedDF = paddedDF.withColumn(c.name,padUdf(lit(maxLength), col(c.name)))
+      paddedDF = paddedDF.withColumn(c.name, padUdf(lit(maxLength), col(c.name)))
     })
 
     paddedDF
