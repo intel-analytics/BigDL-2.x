@@ -425,27 +425,14 @@ class TSDataset:
         roll_feature_df = None if self.roll_feature_df is None \
             else self.roll_feature_df[additional_feature_col]
 
-        # get rolling result for each sub dataframe
-        # rolling_result = [roll_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
-        #                                             roll_feature_df=roll_feature_df,
-        #                                             lookback=lookback,
-        #                                             horizon=horizon,
-        #                                             feature_col=feature_col,
-        #                                             target_col=target_col)
-        #                   for id_name in self._id_list]
-        rolling_result = self.df.groupby([self.id_col])\
-                                .apply(lambda df:roll_timeseries_dataframe(df=df,
-                                                                           roll_feature_df=roll_feature_df,
-                                                                           lookback=lookback,
-                                                                           horizon=horizon,
-                                                                           feature_col=feature_col,
-                                                                           target_col=target_col))
-
-        # print(type(rolling_result))
-        # print(rolling_result)
-        # print(type(rolling_result[0][0]))
-        # print(rolling_result["00"][0].shape)
-        # assert 1==0
+        rolling_result =\
+            self.df.groupby([self.id_col])\
+                   .apply(lambda df: roll_timeseries_dataframe(df=df,
+                                                               roll_feature_df=roll_feature_df,
+                                                               lookback=lookback,
+                                                               horizon=horizon,
+                                                               feature_col=feature_col,
+                                                               target_col=target_col))
 
         # concat the result on required axis
         concat_axis = 2 if id_sensitive else 0

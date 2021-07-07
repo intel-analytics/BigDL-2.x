@@ -138,8 +138,8 @@ def _roll_timeseries_ndarray(data, window):
     first dim is timestamp
     second dim is feature
     '''
-    assert data.ndim == 2 # (num_timestep, num_feature)
-    data = np.expand_dims(data, axis=1) # (num_timestep, 1, num_feature)
+    assert data.ndim == 2  # (num_timestep, num_feature)
+    data = np.expand_dims(data, axis=1)  # (num_timestep, 1, num_feature)
 
     # window index and capacity
     window_size = window if isinstance(window, int) else max(window)
@@ -150,6 +150,6 @@ def _roll_timeseries_ndarray(data, window):
 
     roll_data = np.concatenate([_shift(data, i) for i in range(0, -window_size, -1)], axis=1)
     roll_data = roll_data[:data.shape[0]-window_size+1, window_idx, :]
-    mask = ~np.any(np.isnan(roll_data), axis=(1,2))
+    mask = ~np.any(np.isnan(roll_data), axis=(1, 2))
 
     return roll_data, mask
