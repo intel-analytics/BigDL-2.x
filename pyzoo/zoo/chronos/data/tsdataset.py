@@ -287,7 +287,13 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
-
+        from warnings import warn
+        if not self._is_aligned:
+            warn("The resample method will not align the time of tsdata for each id,\
+             please set the start_time and end_time to align them.", UserWarning)
+        assert self._is_pd_datetime,\
+            "The time series data does not have a Pandas datetime format\
+            (you can use pandas.to_datetime to convert a string into a datetime format)."
         self.df = self.df.groupby([self.id_col]) \
             .apply(lambda df: resample_timeseries_dataframe(df=df,
                                                             dt_col=self.dt_col,
@@ -332,6 +338,8 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
+        assert self._is_pd_datetime, "The time series data does not have a Pandas datetime format\
+                    (you can use pandas.to_datetime to convert a string into a datetime format.)"
         features_generated = []
         self.df = generate_dt_features(input_df=self.df,
                                        dt_col=self.dt_col,
