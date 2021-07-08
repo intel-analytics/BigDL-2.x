@@ -350,10 +350,9 @@ class Evaluator(object):
 
     @staticmethod
     def evaluate(metric, y_true, y_pred, multioutput='raw_values'):
-        from collections.abc import Iterable
         Evaluator.check_metric(metric)
         result = Evaluator.metrics_func[metric](y_true, y_pred, multioutput=multioutput)
-        if isinstance(result, Iterable) and len(result) == 1:
+        if result.shape == (1,):
             return result[0]
         else:
             return result
