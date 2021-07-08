@@ -69,9 +69,8 @@ def resample_timeseries_dataframe(df,
         res_df = res_df.groupby([dt_col]).sum()
 
     new_start = start_time_stamp + \
-        (interval - divmod(start_time_stamp - zero_time_stamp, pd.Timedelta(interval))[1])
-    new_end = end_time_stamp - \
-        divmod(end_time_stamp - zero_time_stamp, pd.Timedelta(interval))[1]
+        (interval - (start_time_stamp - zero_time_stamp) % pd.Timedelta(interval))
+    new_end = end_time_stamp - (end_time_stamp - zero_time_stamp) % pd.Timedelta(interval)
     new_end = new_start if new_start > new_end else new_end
     new_index = pd.date_range(start=new_start, end=new_end, freq=interval)
     res_df = res_df.reindex(new_index)
@@ -87,7 +86,7 @@ def resample_helper(curr_time,
                     start_time_stamp,
                     end_time_stamp,
                     zero_time_stamp):
-    offset = divmod((curr_time - zero_time_stamp), pd.Timedelta(interval))[1]
+    offset = (curr_time - zero_time_stamp) % pd.Timedelta(interval)
     if(offset / interval) >= 0.5:
         resampled_time = curr_time + (interval - offset)
     else:
