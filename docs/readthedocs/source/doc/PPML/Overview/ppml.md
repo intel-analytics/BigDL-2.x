@@ -409,12 +409,12 @@ The result should look something like:
 
 This example shows how to run trusted Spark XGBoost Regressor.
 
-First, make sure that `Boston_Housing.csv` is under `work/data` directory or the same path in the `start-spark-local-xgboost-sgx.sh`. Replace the value of `RABIT_TRACKER_IP` with your own IP address in the script.
+First, make sure that `Boston_Housing.csv` is under `work/data` directory or the same path in the `start-spark-local-xgboost-regressor-sgx.sh`. Replace the value of `RABIT_TRACKER_IP` with your own IP address in the script.
 
 Run the script to run trusted Spark XGBoost Regressor and it would take some time to show the final results:
 
 ```bash
-bash work/start-scripts/start-spark-local-xgboost-sgx.sh
+bash work/start-scripts/start-spark-local-xgboost-regressor-sgx.sh
 ```
 
 Open another terminal and check the log:
@@ -537,12 +537,12 @@ The result should contain the content look like:
 
 ##### 2.3.2.10 Run Trusted Spark XGBoost Classifier
 
-Before running the example, download the sample dataset from [pima-indians-diabetes](https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv) dataset. After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the `start-spark-local-classifier-sgx.sh`. Replace the value of `your_secret_key` with your own secret key and `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv` in the script.
+Before running the example, download the sample dataset from [pima-indians-diabetes](https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv) dataset. After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the `start-spark-local-xgboost-classifier-sgx.sh`. Replace the value of `your_secret_key` with your own secret key and `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv` in the script.
 
 Run the script to run trusted Spark XGBoost Classifier and it would take some time to show the final results:
 
 ```bash
-bash start-spark-local-classifier-sgx.sh
+bash start-spark-local-xgboost-classifier-sgx.sh
 ```
 
 Open another terminal and check the log:
