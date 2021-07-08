@@ -267,13 +267,13 @@ SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=your_IP_address && /opt/jdk8
   --py-files /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-python-api.zip \
   --executor-memory 2g \
   /ppml/trusted-big-data-ml/work/examples/pyzoo/xgboost/xgboost_example.py \
-  --file-path /ppml/trusted-big-data-ml/work/data/Boston_Housing.csv" | tee test-zoo-xgboost-sgx.log
+  --file-path /ppml/trusted-big-data-ml/work/data/Boston_Housing.csv" | tee test-zoo-xgboost-regressor-sgx.log
 ```
 
 Then check the output with the following command.
 
 ```bash
-cat test-zoo-xgboost-sgx.log | egrep "prediction" -A19
+cat test-zoo-xgboost-regressor-sgx.log | egrep "prediction" -A19
 ```
 
 The result should be similar to
@@ -320,7 +320,60 @@ The result should be similar to
 
 
 
-##### Example 6: Orca data
+##### Example 6: XGBoost Classifier
+
+Before running the example, download the sample dataset from [pima-indians-diabetes](https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv) dataset manually or with following command. 
+
+```bash
+wget https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv
+```
+
+After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace  `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv`.
+
+```bash
+SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=192.168.0.111 && /opt/jdk8/bin/java -cp \
+  '/ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+  -Xmx2g \
+  org.apache.spark.deploy.SparkSubmit \
+  --master 'local[4]' \
+  --conf spark.driver.memory=2g \
+  --conf spark.executor.extraClassPath=/ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
+  --conf spark.driver.extraClassPath=/ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
+  --properties-file /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/conf/spark-analytics-zoo.conf \
+  --jars /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
+  --py-files /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-python-api.zip \
+  --executor-memory 2g \
+  /ppml/trusted-big-data-ml/work/examples/pyzoo/xgboost/xgboost_classifier.py \
+  -f /ppml/trusted-big-data-ml/work/data/pima-indians-diabetes.data.csv" | tee test-xgboost-classifier-sgx.log
+```
+
+Then check the output with the following command.
+
+```bash
+cat test-xgboost-classifier-sgx.log | egrep "prediction" -A7
+```
+
+The result should be similar to
+
+> | f1|  f2| f3| f4|  f5| f6|  f7| f8|label|    rawPrediction|     probability|prediction|
+>
+> +----+-----+----+----+-----+----+-----+----+-----+--------------------+--------------------+----------+
+>
+> |11.0|138.0|74.0|26.0|144.0|36.1|0.557|50.0| 1.0|[-0.8209581375122...|[0.17904186248779...|    1.0|
+>
+> | 3.0|106.0|72.0| 0.0| 0.0|25.8|0.207|27.0| 0.0|[-0.0427864193916...|[0.95721358060836...|    0.0|
+>
+> | 6.0|117.0|96.0| 0.0| 0.0|28.7|0.157|30.0| 0.0|[-0.2336160838603...|[0.76638391613960...|    0.0|
+>
+> | 2.0| 68.0|62.0|13.0| 15.0|20.1|0.257|23.0| 0.0|[-0.0315906107425...|[0.96840938925743...|    0.0|
+>
+> | 9.0|112.0|82.0|24.0| 0.0|28.2|1.282|50.0| 1.0|[-0.7087597250938...|[0.29124027490615...|    1.0|
+>
+> | 0.0|119.0| 0.0| 0.0| 0.0|32.4|0.141|24.0| 1.0|[-0.4473398327827...|[0.55266016721725...|    0.0|
+
+
+
+##### Example 7: Orca data
 
 Before running the example, download the [NYC Taxi](https://raw.githubusercontent.com/numenta/NAB/master/data/realKnownCause/nyc_taxi.csv) dataset in Numenta Anoomaly Benchmark for demo manually or with following command. 
 
@@ -406,59 +459,6 @@ Then the result should contain the similar content as
 >\--
 >
 >Stopping orca context
-
-
-
-##### Example 7: XGBoost Classifier
-
-Before running the example, download the sample dataset from [pima-indians-diabetes](https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv) dataset manually or with following command. 
-
-```bash
-wget https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv
-```
-
-After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace  `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv`.
-
-```bash
-SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=192.168.0.111 && /opt/jdk8/bin/java -cp \
-  '/ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
-  -Xmx2g \
-  org.apache.spark.deploy.SparkSubmit \
-  --master 'local[4]' \
-  --conf spark.driver.memory=2g \
-  --conf spark.executor.extraClassPath=/ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
-  --conf spark.driver.extraClassPath=/ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
-  --properties-file /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/conf/spark-analytics-zoo.conf \
-  --jars /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-jar-with-dependencies.jar \
-  --py-files /ppml/trusted-big-data-ml/work/analytics-zoo-0.11.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-python-api.zip \
-  --executor-memory 2g \
-  /ppml/trusted-big-data-ml/work/examples/pyzoo/xgboost/xgboost_classifier.py \
-  -f /ppml/trusted-big-data-ml/work/data/pima-indians-diabetes.data.csv" | tee test-xgboost-classifier-sgx.log
-```
-
-Then check the output with the following command.
-
-```bash
-cat test-xgboost-classifier-sgx.log | egrep "prediction" -A7
-```
-
-The result should be similar to
-
-> | f1|  f2| f3| f4|  f5| f6|  f7| f8|label|    rawPrediction|     probability|prediction|
->
-> +----+-----+----+----+-----+----+-----+----+-----+--------------------+--------------------+----------+
->
-> |11.0|138.0|74.0|26.0|144.0|36.1|0.557|50.0| 1.0|[-0.8209581375122...|[0.17904186248779...|    1.0|
->
-> | 3.0|106.0|72.0| 0.0| 0.0|25.8|0.207|27.0| 0.0|[-0.0427864193916...|[0.95721358060836...|    0.0|
->
-> | 6.0|117.0|96.0| 0.0| 0.0|28.7|0.157|30.0| 0.0|[-0.2336160838603...|[0.76638391613960...|    0.0|
->
-> | 2.0| 68.0|62.0|13.0| 15.0|20.1|0.257|23.0| 0.0|[-0.0315906107425...|[0.96840938925743...|    0.0|
->
-> | 9.0|112.0|82.0|24.0| 0.0|28.2|1.282|50.0| 1.0|[-0.7087597250938...|[0.29124027490615...|    1.0|
->
-> | 0.0|119.0| 0.0| 0.0| 0.0|32.4|0.141|24.0| 1.0|[-0.4473398327827...|[0.55266016721725...|    0.0|
 
 ## Run as Spark Standalone Mode
 
