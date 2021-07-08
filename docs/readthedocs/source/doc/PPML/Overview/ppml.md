@@ -587,10 +587,18 @@ First run the following command to start the service:
 ./deploy-distributed-standalone-spark.sh
 ```
 
-Then run the following command to start the training:
+Then start the service:
 
 ```bash
-./start-distributed-spark-train-sgx.sh
+./start-distributed-spark-driver.sh
+```
+
+After that, you can run previous examples on cluster by replacing `--master 'local[4]'` in the start scripts with
+
+```bash
+--master 'spark://your_master_url' \
+--conf spark.authenticate=true \
+--conf spark.authenticate.secret=your_secret_key \
 ```
 
 ##### 2.3.3.3 Stop Distributed Big Data and ML Platform
