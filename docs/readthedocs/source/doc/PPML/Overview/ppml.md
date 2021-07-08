@@ -420,7 +420,7 @@ bash work/start-scripts/start-spark-local-xgboost-regressor-sgx.sh
 Open another terminal and check the log:
 
 ```bash
-sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/test-zoo-xgboost-sgx.log | egrep "prediction" -A19
+sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/test-zoo-xgboost-regressor-sgx.log | egrep "prediction" -A19
 ```
 
 The result should look something like:
@@ -465,7 +465,41 @@ The result should look something like:
 >
 > |[7.02259,0.0,18.1...| 14.2| 13.38729190826416|
 
-##### 2.3.2.9 Run Trusted Spark Orca Data
+##### 2.3.2.9 Run Trusted Spark XGBoost Classifier
+
+Before running the example, download the sample dataset from [pima-indians-diabetes](https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv) dataset. After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the `start-spark-local-xgboost-classifier-sgx.sh`. Replace the value of `your_secret_key` with your own secret key and `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv` in the script.
+
+Run the script to run trusted Spark XGBoost Classifier and it would take some time to show the final results:
+
+```bash
+bash start-spark-local-xgboost-classifier-sgx.sh
+```
+
+Open another terminal and check the log:
+
+```bash
+sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/test-xgboost-classifier-sgx.log | egrep "prediction" -A7
+```
+
+The result should look something like:
+
+> | f1|  f2| f3| f4|  f5| f6|  f7| f8|label|    rawPrediction|     probability|prediction|
+>
+> +----+-----+----+----+-----+----+-----+----+-----+--------------------+--------------------+----------+
+>
+> |11.0|138.0|74.0|26.0|144.0|36.1|0.557|50.0| 1.0|[-0.8209581375122...|[0.17904186248779...|    1.0|
+>
+> | 3.0|106.0|72.0| 0.0| 0.0|25.8|0.207|27.0| 0.0|[-0.0427864193916...|[0.95721358060836...|    0.0|
+>
+> | 6.0|117.0|96.0| 0.0| 0.0|28.7|0.157|30.0| 0.0|[-0.2336160838603...|[0.76638391613960...|    0.0|
+>
+> | 2.0| 68.0|62.0|13.0| 15.0|20.1|0.257|23.0| 0.0|[-0.0315906107425...|[0.96840938925743...|    0.0|
+>
+> | 9.0|112.0|82.0|24.0| 0.0|28.2|1.282|50.0| 1.0|[-0.7087597250938...|[0.29124027490615...|    1.0|
+>
+> | 0.0|119.0| 0.0| 0.0| 0.0|32.4|0.141|24.0| 1.0|[-0.4473398327827...|[0.55266016721725...|    0.0|
+
+##### 2.3.2.10 Run Trusted Spark Orca Data
 
 This example shows how to run trusted Spark Orca Data.
 
@@ -534,40 +568,6 @@ The result should contain the content look like:
 >\--
 >
 >Stopping orca context
-
-##### 2.3.2.10 Run Trusted Spark XGBoost Classifier
-
-Before running the example, download the sample dataset from [pima-indians-diabetes](https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv) dataset. After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the `start-spark-local-xgboost-classifier-sgx.sh`. Replace the value of `your_secret_key` with your own secret key and `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv` in the script.
-
-Run the script to run trusted Spark XGBoost Classifier and it would take some time to show the final results:
-
-```bash
-bash start-spark-local-xgboost-classifier-sgx.sh
-```
-
-Open another terminal and check the log:
-
-```bash
-sudo docker exec -it spark-local cat /ppml/trusted-big-data-ml/test-xgboost-classifier-sgx.log | egrep "prediction" -A7
-```
-
-The result should look something like:
-
-> | f1|  f2| f3| f4|  f5| f6|  f7| f8|label|    rawPrediction|     probability|prediction|
->
-> +----+-----+----+----+-----+----+-----+----+-----+--------------------+--------------------+----------+
->
-> |11.0|138.0|74.0|26.0|144.0|36.1|0.557|50.0| 1.0|[-0.8209581375122...|[0.17904186248779...|    1.0|
->
-> | 3.0|106.0|72.0| 0.0| 0.0|25.8|0.207|27.0| 0.0|[-0.0427864193916...|[0.95721358060836...|    0.0|
->
-> | 6.0|117.0|96.0| 0.0| 0.0|28.7|0.157|30.0| 0.0|[-0.2336160838603...|[0.76638391613960...|    0.0|
->
-> | 2.0| 68.0|62.0|13.0| 15.0|20.1|0.257|23.0| 0.0|[-0.0315906107425...|[0.96840938925743...|    0.0|
->
-> | 9.0|112.0|82.0|24.0| 0.0|28.2|1.282|50.0| 1.0|[-0.7087597250938...|[0.29124027490615...|    1.0|
->
-> | 0.0|119.0| 0.0| 0.0| 0.0|32.4|0.141|24.0| 1.0|[-0.4473398327827...|[0.55266016721725...|    0.0|
 
 #### 2.3.3 Run Trusted Big Data and ML on Cluster
 
