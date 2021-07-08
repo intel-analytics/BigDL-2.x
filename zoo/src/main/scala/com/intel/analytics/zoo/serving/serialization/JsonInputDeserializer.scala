@@ -53,10 +53,7 @@ class JsonInputDeserializer(preProcessing: PreProcessing = null)
         if (preProcessing == null) {
           throw new Error("No PreProcessing provided!")
         }
-        val ins = Instances.fromArrow(
-          java.util.Base64.getDecoder.decode(stringBuffer.head))
-        tensorBuffer.append(preProcessing.decodeImage(
-          ins.instances.head.head._2.asInstanceOf[String]))
+        tensorBuffer.append(preProcessing.decodeImage(stringBuffer.head))
       }
       else {
         // add string, string tensor, sparse tensor in the future
