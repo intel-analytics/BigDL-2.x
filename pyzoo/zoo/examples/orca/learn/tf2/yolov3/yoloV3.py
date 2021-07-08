@@ -555,7 +555,7 @@ def main():
     parser.add_argument("--memory", type=str, default="20g",
                         help="The memory you want to use on each node. "
                              "You can change it depending on your own cluster setting.")
-    parser.add_argument("--object_store_memory", type=str, default="5g",
+    parser.add_argument("--object_store_memory", type=str, default="10g",
                         help="The memory you want to use on each node. "
                              "You can change it depending on your own cluster setting.")
     parser.add_argument('--k8s_master', type=str, default="",
