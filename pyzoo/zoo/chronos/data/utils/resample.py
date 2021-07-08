@@ -22,6 +22,7 @@ def resample_timeseries_dataframe(df,
                                   interval,
                                   start_time=None,
                                   end_time=None,
+                                  id_col=None,
                                   merge_mode="mean"):
     '''
     resample and return a dataframe with a new time interval.
@@ -39,12 +40,15 @@ def resample_timeseries_dataframe(df,
     assert merge_mode in ["max", "min", "mean", "sum"],\
         f"merge_mode should be one of [\"max\", \"min\", \"mean\", \"sum\"]," \
         f" but found {merge_mode}."
-
     start_time_stamp = pd.Timestamp(start_time) if start_time else df[dt_col].iloc[0]
     end_time_stamp = pd.Timestamp(end_time) if end_time else df[dt_col].iloc[-1]
     zero_time_stamp = pd.Timestamp(0, unit='ms')
     assert start_time_stamp <= end_time_stamp, "end time must be later than start time."
     res_df = df.copy()
+    id_name = None
+    if id_col:
+        id_name = res_df[id_col].iloc[0]
+        res_df.drop(id_col, axis=1)
     res_df[dt_col] = df.apply(
         lambda row: resample_helper(
             row[dt_col],
@@ -73,6 +77,8 @@ def resample_timeseries_dataframe(df,
     res_df = res_df.reindex(new_index)
     res_df.index.name = dt_col
     res_df = res_df.reset_index()
+    if id_col:
+        res_df[id_col] = id_name
     return res_df
 
 
