@@ -858,7 +858,7 @@ class FeatureTable(Table):
         df = cross_columns(self.df, crossed_columns, bucket_sizes)
         return FeatureTable(df)
 
-    def min_max_scaling(self, columns):
+    def min_max_scale(self, columns):
         """
         Normalize numeric columns
 
