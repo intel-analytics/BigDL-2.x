@@ -877,10 +877,15 @@ class FeatureTable(Table):
         for c in columns:
             df = df.withColumn(c, pyspark_col(c).cast("float"))
 
+
+
         min_list = model.stages[1].originalMin.toArray().tolist()
         max_list = model.stages[1].originalMax.toArray().tolist()
+        min_max_dic = {}
+        for i, min_max in enumerate(zip(min_list, max_list)):
+            min_max_dic[columns[i]] = min_max
 
-        return FeatureTable(df), (min_list, max_list)
+        return FeatureTable(df), min_max_dic
 
     def add_negative_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
         """
