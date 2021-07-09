@@ -1,12 +1,6 @@
 # Java Spark Occlum
 
 ## Spark 2.4.3 local test
-First, download Spark 2.4.3:
-``` bash
-wget https://archive.apache.org/dist/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz
-tar -xvzf spark-2.4.3-bin-hadoop2.7.tgz
-cp spark-2.4.3-bin-hadoop2.7/jars/spark-network-common_2.11-2.4.3.jar spark-network-common_2.11-2.4.3.jar
-```
 
 [Download a BigDL release for spark 2.4.3](https://bigdl-project.github.io/master/#release-download/) and put `bigdl-${BIGDL_VERSION}-jar-with-dependencies.jar` into the working directory.
 

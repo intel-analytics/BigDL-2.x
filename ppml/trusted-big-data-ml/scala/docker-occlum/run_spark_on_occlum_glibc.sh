@@ -2,7 +2,9 @@
 set -x
 #apt-get update
 #apt-get install -y openjdk-11-jdk
+cd /ppml/docker-occlum
 
+cp /ppml/docker-occlum/spark-2.4.3-bin-hadoop2.7/jars/spark-network-common_2.11-2.4.3.jar /ppml/docker-occlum/spark-network-common_2.11-2.4.3.jar
 BLUE='\033[1;34m'
 NC='\033[0m'
 occlum_glibc=/opt/occlum/glibc/lib/
@@ -34,15 +36,16 @@ build_spark() {
     cp $occlum_glibc/librt.so.1 image/$occlum_glibc
     cp $occlum_glibc/libm.so.6 image/$occlum_glibc
     cp $occlum_glibc/libnss_files.so.2 image/$occlum_glibc
-    cp -rf spark-2.4.3-bin-hadoop2.7/* image/bin/
-    cp -rf hosts image/etc/
+    cp -rf ../spark-2.4.3-bin-hadoop2.7/* image/bin/
+    cp -rf ../hosts image/etc/
     cp -rf /etc/ssl image/etc/
     cp -rf /etc/passwd image/etc/
     cp -rf /etc/group image/etc/
     cp -rf /etc/java-11-openjdk image/etc/
-    cp -rf /spark_antgroup/spark_local/bigdl-${BIGDL_VERSION}-jar-with-dependencies.jar image/bin/jars
-    cp -rf /spark_antgroup/spark_loacl/data image/bin/
-    unzip -j analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar linux-x86_64/openvino/* -d image/lib
+    cp -rf ../bigdl-${BIGDL_VERSION}-jar-with-dependencies.jar image/bin/jars
+    cp -rf ../data image/bin/
+    unzip -j ../analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar linux-x86_64/openvino/* -d image/lib
+    /opt/occlum/start_aesm.sh
     occlum build
 }
 
