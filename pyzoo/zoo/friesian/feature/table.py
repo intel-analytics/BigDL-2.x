@@ -403,7 +403,7 @@ class Table:
     def to_list(self, column):
         """
         Convert all values of the target column to a list.
-        Only call this if the Table is small enougth.
+        Only call this if the Table is small enough.
 
         :param column: str, specifies the name of target column.
 
@@ -826,7 +826,10 @@ class FeatureTable(Table):
         df_id_list = generate_string_idx(self.df, columns, freq_limit)
         string_idx_list = list(map(lambda x: StringIndex(x[0], x[1]),
                                    zip(df_id_list, columns)))
-        return string_idx_list
+        if len(string_idx_list) == 1:
+            return string_idx_list[0]
+        else:
+            return string_idx_list
 
     def _clone(self, df):
         return FeatureTable(df)
