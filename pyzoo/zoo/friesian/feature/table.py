@@ -844,11 +844,14 @@ class FeatureTable(Table):
         df = cross_columns(self.df, crossed_columns, bucket_sizes)
         return FeatureTable(df)
 
-    def min_max_scale(self, columns):
+    def min_max_scale(self, columns, min=0.0, max=1.0):
         """
-        Normalize numeric columns
+        Rescale each column individually to a common range [min, max] linearly using
+         column summary statistics, which is also known as min-max normalization or Rescaling.
 
         :param columns: list of column names
+        :param min: Lower bound after transformation, shared by all columns. 0.0 by default.
+        :param max: Upper bound after transformation, shared by all columns. 1.0 by default.
 
         :return: FeatureTable and mapping = {c: (originalMin, originalMax) for c in columns}
         """
@@ -869,7 +872,7 @@ class FeatureTable(Table):
             assembler = VectorAssembler(inputCols=scalar_cols, outputCol="vect")
 
             # MinMaxScaler Transformation
-            scaler = MinMaxScaler(inputCol="vect", outputCol="scaled")
+            scaler = MinMaxScaler(min=min, max=max, inputCol="vect", outputCol="scaled")
 
             # Pipeline of VectorAssembler and MinMaxScaler
             pipeline = Pipeline(stages=[assembler, scaler])
@@ -898,14 +901,14 @@ class FeatureTable(Table):
         for c in array_cols:
             list_to_vector_udf = udf(lambda l: Vectors.dense(l), VectorUDT())
             df = df.withColumn(c, list_to_vector_udf(pyspark_col(c)))
-            scaler = MinMaxScaler(inputCol=c, outputCol="scaled")
+            scaler = MinMaxScaler(min=min, max=max, inputCol=c, outputCol="scaled")
             model = scaler.fit(df)
             df = model.transform(df).drop(c).withColumn(c, tolist("scaled")).drop("scaled")
             min_max_dic[c] = (model.originalMin.toArray().tolist(),
                               model.originalMax.toArray().tolist())
 
         for c in vector_cols:
-            scaler = MinMaxScaler(inputCol=c, outputCol="scaled")
+            scaler = MinMaxScaler(min=min, max=max, inputCol=c, outputCol="scaled")
             model = scaler.fit(df)
             df = model.transform(df).withColumnRenamed("scaled", c)
             min = model.originalMin
