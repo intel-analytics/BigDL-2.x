@@ -169,6 +169,8 @@ The result should be similar to
 
 ##### Example 3: Basic SQL
 
+Before running the example, make sure that the paths of resource in `/ppml/trusted-big-data-ml/work/spark-2.4.3/examples/src/main/python/sql/basic.py` are the same as the paths of `people.json`  and `people.txt`.
+
 Run the example with SGX and standalone mode with the following command in the terminal. 
 
 ```bash
