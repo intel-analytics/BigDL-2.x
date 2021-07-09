@@ -5,5 +5,5 @@ sudo docker run -itd \
 	--device=/dev/sgx \
 	-v ../docker-occlum/:/ppml/docker-occlum \
 	-e LOCAL_IP=$LOCAL_IP \
-	occlum/occlum:0.23.0-ubuntu18.04 \
-	bash /ppml/docker-occlum/init.sh && /ppml/docker-occlum/run_spark_on_occlum_glibc.sh $1 && tail -f /dev/null
+	intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-occlum:0.11-SNAPSHOT \
+	bash /ppml/docker-occlum/run_spark_on_occlum_glibc.sh $1 && tail -f /dev/null
