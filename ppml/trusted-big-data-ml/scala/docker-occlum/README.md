@@ -2,10 +2,6 @@
 
 ## Spark 2.4.3 local test
 
-[Download a BigDL release for spark 2.4.3](https://bigdl-project.github.io/master/#release-download/) and put `bigdl-${BIGDL_VERSION}-jar-with-dependencies.jar` into the working directory.
-
-[Download an Analytics Zoo release for spark 2.4.3](https://analytics-zoo.github.io/master/#release-download/) and put `analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar` into the working directory.
-
 Configure environment variables in `Dockerfile` and `build-docker-image.sh`.
 
 Build the docker image:

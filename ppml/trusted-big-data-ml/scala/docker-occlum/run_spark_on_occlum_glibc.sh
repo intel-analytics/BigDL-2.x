@@ -44,7 +44,6 @@ build_spark() {
     cp -rf /etc/java-11-openjdk image/etc/
     cp -rf ../bigdl-${BIGDL_VERSION}-jar-with-dependencies.jar image/bin/jars
     cp -rf ../data image/bin/
-    unzip -j ../analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar linux-x86_64/openvino/* -d image/lib
     /opt/occlum/start_aesm.sh
     occlum build
 }
@@ -55,11 +54,11 @@ run_spark_test() {
     echo -e "${BLUE}occlum run spark${NC}"
     echo -e "${BLUE}logfile=$log${NC}"
     occlum run /usr/lib/jvm/java-11-openjdk-amd64/bin/java \
-                -Xmx1g -XX:-UseCompressedOops -XX:MaxMetaspaceSize=256m \
+                -XX:-UseCompressedOops -XX:MaxMetaspaceSize=256m \
                 -XX:ActiveProcessorCount=2 \
                 -Divy.home="/tmp/.ivy" \
                 -Dos.name="Linux" \
-                -cp '/bin/conf/:/bin/jars/*' -Xmx1g org.apache.spark.deploy.SparkSubmit --jars /bin/examples/jars/spark-examples_2.11-2.4.3.jar,/bin/examples/jars/scopt_2.11-3.7.0.jar --class org.apache.spark.examples.SparkPi spark-internal
+                -cp '/bin/conf/:/bin/jars/*' -Xmx10g org.apache.spark.deploy.SparkSubmit --jars /bin/examples/jars/spark-examples_2.11-2.4.3.jar,/bin/examples/jars/scopt_2.11-3.7.0.jar --class org.apache.spark.examples.SparkPi spark-internal
 }
 
 run_spark_bigdl(){
@@ -72,7 +71,7 @@ run_spark_bigdl(){
                 -XX:ActiveProcessorCount=24 \
                 -Divy.home="/tmp/.ivy" \
                 -Dos.name="Linux" \
-                -cp '/bin/conf/:/bin/jars/*'  -Xmx1g org.apache.spark.deploy.SparkSubmit --jars /bin/examples/jars/spark-examples_2.11-2.4.3.jar,/bin/examples/jars/scopt_2.11-3.7.0.jar \
+                -cp '/bin/conf/:/bin/jars/*'  -Xmx10g org.apache.spark.deploy.SparkSubmit --jars /bin/examples/jars/spark-examples_2.11-2.4.3.jar,/bin/examples/jars/scopt_2.11-3.7.0.jar \
                 --master 'local[4]' \
                 --conf spark.driver.port=10027 \
                 --conf spark.scheduler.maxRegisteredResourcesWaitingTime=5000000 \
