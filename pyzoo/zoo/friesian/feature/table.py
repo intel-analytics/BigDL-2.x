@@ -29,7 +29,6 @@ from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
 from zoo.common.utils import callZooFunc
 
-
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
 
@@ -72,7 +71,7 @@ class Table:
         if names:
             if not isinstance(names, list):
                 names = [names]
-            assert len(names) == len(columns),\
+            assert len(names) == len(columns), \
                 "names should have the same length as the number of columns"
             for i in range(len(names)):
                 df = df.withColumnRenamed(columns[i], names[i])
@@ -85,7 +84,7 @@ class Table:
                 tbl = tbl.cast(columns=None, dtype=dtype)
             elif isinstance(dtype, list):
                 columns = df.columns
-                assert len(dtype) == len(columns),\
+                assert len(dtype) == len(columns), \
                     "dtype should have the same length as the number of columns"
                 for i in range(len(columns)):
                     tbl = tbl.cast(columns=columns[i], dtype=dtype[i])
@@ -517,7 +516,7 @@ class Table:
         valid_types = ["str", "string", "bool", "boolean", "int",
                        "integer", "long", "short", "float", "double"]
         if not (isinstance(dtype, str) and (dtype in valid_types)) \
-           and not isinstance(dtype, DataType):
+                and not isinstance(dtype, DataType):
             raise ValueError(
                 "dtype should be string, boolean, int, long, short, float, double.")
         transform_dict = {"str": "string", "bool": "boolean", "integer": "int"}
@@ -621,7 +620,7 @@ class FeatureTable(Table):
             col_name = columns[i]
             index_tbl.broadcast()
             data_df = data_df.join(index_tbl.df, col_name, how="left") \
-                .drop(col_name).withColumnRenamed("id", col_name)\
+                .drop(col_name).withColumnRenamed("id", col_name) \
                 .dropna(subset=[col_name])
         return FeatureTable(data_df)
 
@@ -867,47 +866,34 @@ class FeatureTable(Table):
         :return: FeatureTable
         """
         df = self.df
-        types = [x[1] for x in self.df.select(*columns).dtypes]
-        scalar_cols = [columns[i] for i in range(len(columns))
-                       if types[i] == "int" or types[i] == "bigint"
-                       or types[i] == "float" or types[i] == "double"]
-        array_cols = [columns[i] for i in range(len(columns))
-                      if types[i] == "array<int>" or types[i] == "array<bigint>"
-                      or types[i] == "array<float>" or types[i] == "array<double>"]
-        vector_cols = [columns[i] for i in range(len(columns)) if types[i] == "vector"]
-        if scalar_cols:
-            assembler = VectorAssembler(inputCols=scalar_cols, outputCol="vect")
+        assembler = VectorAssembler(inputCols=columns, outputCol="vect")
 
-            # MinMaxScaler Transformation
-            scaler = MinMaxScaler(inputCol="vect", outputCol="scaled")
+        # MinMaxScaler Transformation
+        scaler = MinMaxScaler(inputCol="vect", outputCol="scaled")
 
-            # Pipeline of VectorAssembler and MinMaxScaler
-            pipeline = Pipeline(stages=[assembler, scaler])
+        # Pipeline of VectorAssembler and MinMaxScaler
+        pipeline = Pipeline(stages=[assembler, scaler])
 
-            tolist = udf(lambda x: x.toArray().tolist(), ArrayType(DoubleType()))
+        tolist = udf(lambda x: x.toArray().tolist(), ArrayType(DoubleType()))
 
-            # Fitting pipeline on dataframe
-            model = pipeline.fit(df)
-            df = model.transform(df) \
-                .withColumn("scaled_list", tolist(pyspark_col("scaled"))) \
-                .drop("vect").drop("scaled")
-            # TODO: Save model.stages[1].originalMax/originalMin as mapping for inference
-            for i in range(len(scalar_cols)):
-                df = df.withColumn(scalar_cols[i], pyspark_col("scaled_list")[i])
-            df = df.drop("scaled_list")
+        # Fitting pipeline on dataframe
+        model = pipeline.fit(df)
+        df = model.transform(df) \
+            .withColumn("scaled_list", tolist(pyspark_col("scaled"))) \
+            .drop("vect").drop("scaled")
+        # TODO: Save model.stages[1].originalMax/originalMin as mapping for inference
+        for i in range(len(columns)):
+            df = df.withColumn(columns[i], pyspark_col("scaled_list")[i])
+        df = df.drop("scaled_list")
 
-            # cast to float
-            for c in scalar_cols:
-                df = df.withColumn(c, pyspark_col(c).cast("float"))
+        # cast to float
+        for c in columns:
+            df = df.withColumn(c, pyspark_col(c).cast("float"))
 
-        for c in array_cols:
-            df = normalize_array(df, c)
+        min_list = model.stages[1].originalMin.toArray().tolist()
+        max_list = model.stages[1].originalMax.toArray().tolist()
 
-        for c in vector_cols:
-            scaler = MinMaxScaler(inputCol=c, outputCol="scaled")
-            df = scaler.fit(df).transform(df).withColumnRenamed("scaled", c)
-
-        return FeatureTable(df)
+        return FeatureTable(df), (min_list, max_list)
 
     def add_negative_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
         """
