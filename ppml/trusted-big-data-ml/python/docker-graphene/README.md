@@ -253,7 +253,7 @@ The result should be similar to
 
 ##### Example 5: XGBoost Regressor
 
-Before running the example, make sure that `Boston_Housing.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace `RABIT_TRACKER_IP` with your IP address and `path_of_boston_housing_csv` with your path of `Boston_Housing.csv`.
+Before running the example, make sure that `Boston_Housing.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace `your_IP_address` with your IP address and `path_of_boston_housing_csv` with your path of `Boston_Housing.csv`.
 
 ```bash
 SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=your_IP_address && /opt/jdk8/bin/java -cp \
@@ -330,7 +330,7 @@ Before running the example, download the sample dataset from [pima-indians-diabe
 wget https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv
 ```
 
-After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace `RABIT_TRACKER_IP` with your IP address and `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv`.
+After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace `your_IP_address` with your IP address and `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv`.
 
 ```bash
 SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=your_IP_address && /opt/jdk8/bin/java -cp \
