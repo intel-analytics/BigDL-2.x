@@ -853,37 +853,64 @@ class FeatureTable(Table):
         :return: FeatureTable
         """
         df = self.df
-        assembler = VectorAssembler(inputCols=columns, outputCol="vect")
+        types = [x[1] for x in self.df.select(*columns).dtypes]
+        scalar_cols = [columns[i] for i in range(len(columns))
+                       if types[i] == "int" or types[i] == "bigint"
+                       or types[i] == "float" or types[i] == "double"]
+        array_cols = [columns[i] for i in range(len(columns))
+                      if types[i] == "array<int>" or types[i] == "array<bigint>"
+                      or types[i] == "array<float>" or types[i] == "array<double>"]
+        vector_cols = [columns[i] for i in range(len(columns)) if types[i] == "vector"]
 
-        # MinMaxScaler Transformation
-        scaler = MinMaxScaler(inputCol="vect", outputCol="scaled")
-
-        # Pipeline of VectorAssembler and MinMaxScaler
-        pipeline = Pipeline(stages=[assembler, scaler])
-
+        min_max_dic = {}
         tolist = udf(lambda x: x.toArray().tolist(), ArrayType(DoubleType()))
 
-        # Fitting pipeline on dataframe
-        model = pipeline.fit(df)
-        df = model.transform(df) \
-            .withColumn("scaled_list", tolist(pyspark_col("scaled"))) \
-            .drop("vect").drop("scaled")
-        # TODO: Save model.stages[1].originalMax/originalMin as mapping for inference
-        for i in range(len(columns)):
-            df = df.withColumn(columns[i], pyspark_col("scaled_list")[i])
-        df = df.drop("scaled_list")
+        if scalar_cols:
+            assembler = VectorAssembler(inputCols=scalar_cols, outputCol="vect")
 
-        # cast to float
-        for c in columns:
-            df = df.withColumn(c, pyspark_col(c).cast("float"))
+            # MinMaxScaler Transformation
+            scaler = MinMaxScaler(inputCol="vect", outputCol="scaled")
 
+            # Pipeline of VectorAssembler and MinMaxScaler
+            pipeline = Pipeline(stages=[assembler, scaler])
 
+            # Fitting pipeline on dataframe
+            model = pipeline.fit(df)
+            df = model.transform(df) \
+                .withColumn("scaled_list", tolist(pyspark_col("scaled"))) \
+                .drop("vect").drop("scaled")
+            # TODO: Save model.stages[1].originalMax/originalMin as mapping for inference
+            for i in range(len(scalar_cols)):
+                df = df.withColumn(scalar_cols[i], pyspark_col("scaled_list")[i])
+            df = df.drop("scaled_list")
 
-        min_list = model.stages[1].originalMin.toArray().tolist()
-        max_list = model.stages[1].originalMax.toArray().tolist()
-        min_max_dic = {}
-        for i, min_max in enumerate(zip(min_list, max_list)):
-            min_max_dic[columns[i]] = min_max
+            # cast to float
+            for c in scalar_cols:
+                df = df.withColumn(c, pyspark_col(c).cast("float"))
+
+            min_list = model.stages[1].originalMin.toArray().tolist()
+            max_list = model.stages[1].originalMax.toArray().tolist()
+
+            for i, min_max in enumerate(zip(min_list, max_list)):
+                min_max_dic[scalar_cols[i]] = min_max
+
+        from pyspark.ml.linalg import Vectors, VectorUDT
+        for c in array_cols:
+            list_to_vector_udf = udf(lambda l: Vectors.dense(l), VectorUDT())
+            df = df.withColumn(c, list_to_vector_udf(pyspark_col(c)))
+            scaler = MinMaxScaler(inputCol=c, outputCol="scaled")
+            model = scaler.fit(df)
+            df = model.transform(df).drop(c).withColumn(c, tolist("scaled")).drop("scaled")
+            min_max_dic[c] = (model.originalMin.toArray().tolist(),
+                              model.originalMax.toArray().tolist())
+
+        for c in vector_cols:
+            scaler = MinMaxScaler(inputCol=c, outputCol="scaled")
+            model = scaler.fit(df)
+            df = model.transform(df).withColumnRenamed("scaled", c)
+            min = model.originalMin
+            max = model.originalMax
+            min_max_dic[c] = (min, max)
 
         return FeatureTable(df), min_max_dic
 
