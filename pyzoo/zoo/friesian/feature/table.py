@@ -850,7 +850,7 @@ class FeatureTable(Table):
 
         :param columns: list of column names
 
-        :return: FeatureTable
+        :return: FeatureTable and mapping = {c: (originalMin, originalMax) for c in columns}
         """
         df = self.df
         types = [x[1] for x in self.df.select(*columns).dtypes]
