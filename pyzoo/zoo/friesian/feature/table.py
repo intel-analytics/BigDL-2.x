@@ -808,7 +808,7 @@ class FeatureTable(Table):
                dict. For instance, 15, {'col_4': 10, 'col_5': 2} etc. Default is None,
                and in this case all the categories that appear will be encoded.
 
-        :return: A list of StringIndex.
+        :return: A StringIndex or a list of StringIndex.
         """
         if columns is None:
             raise ValueError("columns should be str or a list of str, but got None.")
