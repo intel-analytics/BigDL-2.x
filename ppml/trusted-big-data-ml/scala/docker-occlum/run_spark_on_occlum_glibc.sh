@@ -6,9 +6,6 @@ set -x
 BLUE='\033[1;34m'
 NC='\033[0m'
 occlum_glibc=/opt/occlum/glibc/lib/
-BIGDL_VERSION=bigdl_version
-SPARK_VERSION=spark_version
-ANALYTICS_ZOO_VERSION=az_version
 
 init_instance() {
     # Init Occlum instance
@@ -37,15 +34,15 @@ build_spark() {
     cp $occlum_glibc/librt.so.1 image/$occlum_glibc
     cp $occlum_glibc/libm.so.6 image/$occlum_glibc
     cp $occlum_glibc/libnss_files.so.2 image/$occlum_glibc
-    cp -rf ../spark-2.4.3-bin-hadoop2.7/* image/bin/
-    cp -rf ../hosts image/etc/
+    cp -rf spark-2.4.3-bin-hadoop2.7/* image/bin/
+    cp -rf hosts image/etc/
     cp -rf /etc/ssl image/etc/
     cp -rf /etc/passwd image/etc/
     cp -rf /etc/group image/etc/
     cp -rf /etc/java-11-openjdk image/etc/
     cp -rf /spark_antgroup/spark_local/bigdl-${BIGDL_VERSION}-jar-with-dependencies.jar image/bin/jars
     cp -rf /spark_antgroup/spark_loacl/data image/bin/
-    unzip -j ../analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar linux-x86_64/openvino/* -d image/lib
+    unzip -j analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar linux-x86_64/openvino/* -d image/lib
     occlum build
 }
 
