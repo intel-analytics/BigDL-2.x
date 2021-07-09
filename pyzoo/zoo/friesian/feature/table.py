@@ -812,7 +812,9 @@ class FeatureTable(Table):
         """
         if columns is None:
             raise ValueError("columns should be str or a list of str, but got None.")
+        columns_is_str = False
         if not isinstance(columns, list):
+            columns_is_str = True
             columns = [columns]
         check_col_exists(self.df, columns)
         if freq_limit:
@@ -826,7 +828,8 @@ class FeatureTable(Table):
         df_id_list = generate_string_idx(self.df, columns, freq_limit)
         string_idx_list = list(map(lambda x: StringIndex(x[0], x[1]),
                                    zip(df_id_list, columns)))
-        if len(string_idx_list) == 1:
+        # If input is a single column (not a list), then the output would be a single StringIndex.
+        if len(string_idx_list) == 1 and columns_is_str:
             return string_idx_list[0]
         else:
             return string_idx_list
