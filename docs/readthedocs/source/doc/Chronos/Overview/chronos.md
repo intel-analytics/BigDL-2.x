@@ -214,19 +214,18 @@ All the preprocessing operations will be done on each independent time series(i.
 
 #### **6.2 Create a TSDataset**
 Currently [`TSDataset`](../../PythonAPI/Chronos/tsdataset.html) only supports initializing from a pandas dataframe though [`TSDataset.from_pandas`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.from_pandas). A typical valid time series dataframe `df` is shown below.
-| Server id | Datetime       | CPU usage | Mem usage |
-| --------- | -------------- | --------------- | ------------------ |
-| 0         | 2021/7/8 08:39 | 93              | 24                 |
-| 0         | 2021/7/8 08:40 | 91              | 24                 |
-| 0         | 2021/7/8 08:41 | 93              | 25                 |
-| 0         | ...            | ...             | ...                |
-| 1         | 2021/7/8 08:39 | 73              | 79                 |
-| 1         | 2021/7/8 08:40 | 72              | 80                 |
-| 1         | 2021/7/8 08:41 | 79              | 80                 |
-| 1         | ...            | ...             | ...                |
 
 You can initialize a [`TSDataset`](../../PythonAPI/Chronos/tsdataset.html) by simply:
 ```python
+# Server id  Datetime         CPU usage   Mem usage
+# 0          08:39 2021/7/9   93          24            
+# 0          08:40 2021/7/9   91          24              
+# 0          08:41 2021/7/9   93          25              
+# 0          ...              ...         ...
+# 1          08:39 2021/7/9   73          79            
+# 1          08:40 2021/7/9   72          80              
+# 1          08:41 2021/7/9   79          80              
+# 1          ...              ...         ...
 tsdata = TSDataset.from_pandas(df,
                                dt_col="Datetime",
                                id_col="Server id",
