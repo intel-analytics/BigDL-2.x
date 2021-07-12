@@ -18,7 +18,7 @@ RUN for f in $(find /graphene/Runtime -type l); do cp --remove-destination $(rea
 
 # stage.2 jdk & spark
 FROM ubuntu:18.04 as spark
-ARG SPARK_VERSION=2.4.3
+ARG SPARK_VERSION=2.4.6
 ARG JDK_VERSION=8u192
 ARG JDK_URL=your_jdk_url
 ENV SPARK_VERSION	${SPARK_VERSION}
