@@ -26,7 +26,6 @@ from zoo.chronos.data.utils.scale import unscale_timeseries_numpy
 from zoo.chronos.data.utils.resample import resample_timeseries_dataframe
 from zoo.chronos.data.utils.split import split_timeseries_dataframe
 
-from sklearn.utils.validation import check_is_fitted
 from tsfresh.utilities.dataframe_functions import roll_time_series
 from tsfresh.utilities.dataframe_functions import impute as impute_tsfresh
 from tsfresh import extract_features
@@ -58,11 +57,11 @@ class TSDataset:
         self.roll_feature = None
         self.roll_target = None
         self.roll_feature_df = None
-        self.roll_addional_feature = None
+        self.roll_addtional_feature = None
         self.scaler = None
         self.scaler_index = [i for i in range(len(self.target_col))]
         self.id_sensitive = None
-
+        self._feature_generation_completed = False
         self._check_basic_invariants()
 
         self._id_list = list(np.unique(self.df[self.id_col]))
@@ -355,6 +354,8 @@ class TSDataset:
         :return: the tsdataset instance.
 
         '''
+        assert not self._feature_generation_completed, "We think get_feature and \
+            gen_rolling do not need to be called multiple times, please remove redundant calls."
         if full_settings is not None:
             self.df,\
                 addtional_feature =\
@@ -381,7 +382,7 @@ class TSDataset:
                                      default_fc_parameters=default_fc_parameters)
 
         self.feature_col += addtional_feature
-
+        self._feature_generation_completed = True
         return self
 
     def gen_rolling_feature(self,
@@ -403,6 +404,8 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
+        assert not self._feature_generation_completed, "We think get_feature and \
+            gen_rolling do not need to be called multiple times, please remove redundant calls."
         if isinstance(settings, str):
             assert settings in ["comprehensive", "minimal", "efficient"], \
                 f"settings str should be one of \"comprehensive\", \"minimal\", \"efficient\"\
@@ -429,8 +432,8 @@ class TSDataset:
         impute_tsfresh(self.roll_feature_df)
 
         self.feature_col += list(self.roll_feature_df.columns)
-        self.roll_addional_feature = list(self.roll_feature_df.columns)
-
+        self.roll_addtional_feature = list(self.roll_feature_df.columns)
+        self._feature_generation_completed = True
         return self
 
     def roll(self,
@@ -601,16 +604,17 @@ class TSDataset:
         >>> tsdata_test.scale(scaler, fit=False)
         '''
         feature_col = self.feature_col
-        if self.roll_addional_feature:
+        if self.roll_addtional_feature:
             feature_col = []
             for feature in self.feature_col:
-                if feature not in self.roll_addional_feature:
+                if feature not in self.roll_addtional_feature:
                     feature_col.append(feature)
         if fit:
             self.df[self.target_col + feature_col] = \
                 scaler.fit_transform(self.df[self.target_col + feature_col])
         else:
-            assert check_is_fitted(scaler,attributes='fit',msg="Not Fitted"),\
+            from sklearn.utils.validation import check_is_fitted
+            assert check_is_fitted(scaler, attributes='fit', msg="Not Fitted"),\
                 "When calling scale for the first time, you need to set fit=True."
             self.df[self.target_col + feature_col] = \
                 scaler.transform(self.df[self.target_col + feature_col])
@@ -624,10 +628,10 @@ class TSDataset:
         :return: the tsdataset instance.
         '''
         feature_col = self.feature_col
-        if self.roll_addional_feature:
+        if self.roll_addtional_feature:
             feature_col = []
             for feature in self.feature_col:
-                if feature not in self.roll_addional_feature:
+                if feature not in self.roll_addtional_feature:
                     feature_col.append(feature)
         self.df[self.target_col + feature_col] = \
             self.scaler.inverse_transform(self.df[self.target_col + feature_col])
@@ -664,7 +668,7 @@ class TSDataset:
         for target_col_name in self.target_col:
             _check_col_within(self.df, target_col_name)
         for feature_col_name in self.feature_col:
-            if self.roll_addional_feature and feature_col_name in self.roll_addional_feature:
+            if self.roll_addtional_feature and feature_col_name in self.roll_addtional_feature:
                 continue
             _check_col_within(self.df, feature_col_name)
 
