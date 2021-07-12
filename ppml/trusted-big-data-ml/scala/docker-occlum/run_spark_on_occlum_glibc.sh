@@ -76,8 +76,8 @@ run_spark_bigdl(){
                 --conf spark.driver.port=10027 \
                 --conf spark.scheduler.maxRegisteredResourcesWaitingTime=5000000 \
                 --conf spark.worker.timeout=600 \
-                --conf spark.executor.extraClassPath=/bin/jars/bigdl-0.12.2-jar-with-dependencies.jar \
-                --conf spark.driver.extraClassPath=/bin/jars/bigdl-0.12.2-jar-with-dependencies.jar \
+                --conf spark.executor.extraClassPath=/bin/jars/bigdl-0.13.0-jar-with-dependencies.jar \
+                --conf spark.driver.extraClassPath=/bin/jars/bigdl-0.13.0-jar-with-dependencies.jar \
                 --conf spark.starvation.timeout=250000 \
                 --conf spark.rpc.askTimeout=600 \
                 --conf spark.blockManager.port=10025 \
@@ -86,7 +86,7 @@ run_spark_bigdl(){
                 --conf spark.io.compression.codec=lz4 \
                 --class com.intel.analytics.bigdl.models.lenet.Train \
                 --driver-memory 10G \
-                /bin/jars/bigdl-0.12.2-jar-with-dependencies.jar \
+                /bin/jars/bigdl-0.13.0-jar-with-dependencies.jar \
                 -f /bin/data \
                 -b 4 \
                 -e 1 | tee spark.local.sgx.log
