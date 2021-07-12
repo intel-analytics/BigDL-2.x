@@ -144,7 +144,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       })
       df_row_number
         .withColumn("id", get_label(col("part_id"), col("row_number")))
-        .drop("part_id", "row_number")
+        .drop("part_id", "row_number", "count")
     }).asJava
   }
 
