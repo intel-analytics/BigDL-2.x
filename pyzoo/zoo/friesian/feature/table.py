@@ -699,6 +699,9 @@ class FeatureTable(Table):
                will be omitted from the encoding. Can be represented as either an integer,
                dict. For instance, 15, {'col_4': 10, 'col_5': 2} etc. Default is None,
                and in this case all the categories that appear will be encoded.
+        :param order_by_freq: boolean, whether the result StringIndex will assign smaller indices
+               to values with more frequencies. Default is False and in this case order may not be
+               preserved for assigning indices.
 
         :return: A tuple of a new FeatureTable which transforms categorical features into unique
                  integer values, and a list of StringIndex for the mapping.
@@ -807,6 +810,9 @@ class FeatureTable(Table):
                will be omitted from the encoding. Can be represented as either an integer,
                dict. For instance, 15, {'col_4': 10, 'col_5': 2} etc. Default is None,
                and in this case all the categories that appear will be encoded.
+        :param order_by_freq: boolean, whether the result StringIndex will assign smaller indices
+               to values with more frequencies. Default is False and in this case order may not be
+               preserved for assigning indices.
 
         :return: A StringIndex or a list of StringIndex.
         """
