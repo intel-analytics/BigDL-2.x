@@ -4,7 +4,7 @@ set -x
 #apt-get install -y openjdk-11-jdk
 cd /ppml/docker-occlum
 
-cp /ppml/docker-occlum/spark-2.4.3-bin-hadoop2.7/jars/spark-network-common_2.11-2.4.3.jar /ppml/docker-occlum/spark-network-common_2.11-2.4.3.jar
+cp /ppml/docker-occlum/spark-2.4.6-bin-hadoop2.7/jars/spark-network-common_2.11-2.4.6.jar /ppml/docker-occlum/spark-network-common_2.11-2.4.6.jar
 BLUE='\033[1;34m'
 NC='\033[0m'
 occlum_glibc=/opt/occlum/glibc/lib/
@@ -36,7 +36,7 @@ build_spark() {
     cp $occlum_glibc/librt.so.1 image/$occlum_glibc
     cp $occlum_glibc/libm.so.6 image/$occlum_glibc
     cp $occlum_glibc/libnss_files.so.2 image/$occlum_glibc
-    cp -rf ../spark-2.4.3-bin-hadoop2.7/* image/bin/
+    cp -rf ../spark-2.4.6-bin-hadoop2.7/* image/bin/
     cp -rf ../hosts image/etc/
     cp -rf /etc/ssl image/etc/
     cp -rf /etc/passwd image/etc/
@@ -58,7 +58,7 @@ run_spark_test() {
                 -XX:ActiveProcessorCount=2 \
                 -Divy.home="/tmp/.ivy" \
                 -Dos.name="Linux" \
-                -cp '/bin/conf/:/bin/jars/*' -Xmx10g org.apache.spark.deploy.SparkSubmit --jars /bin/examples/jars/spark-examples_2.11-2.4.3.jar,/bin/examples/jars/scopt_2.11-3.7.0.jar --class org.apache.spark.examples.SparkPi spark-internal
+                -cp '/bin/conf/:/bin/jars/*' -Xmx10g org.apache.spark.deploy.SparkSubmit --jars /bin/examples/jars/spark-examples_2.11-2.4.6.jar,/bin/examples/jars/scopt_2.11-3.7.0.jar --class org.apache.spark.examples.SparkPi spark-internal
 }
 
 run_spark_bigdl(){
@@ -71,7 +71,7 @@ run_spark_bigdl(){
                 -XX:ActiveProcessorCount=24 \
                 -Divy.home="/tmp/.ivy" \
                 -Dos.name="Linux" \
-                -cp '/bin/conf/:/bin/jars/*'  -Xmx10g org.apache.spark.deploy.SparkSubmit --jars /bin/examples/jars/spark-examples_2.11-2.4.3.jar,/bin/examples/jars/scopt_2.11-3.7.0.jar \
+                -cp '/bin/conf/:/bin/jars/*'  -Xmx10g org.apache.spark.deploy.SparkSubmit --jars /bin/examples/jars/spark-examples_2.11-2.4.6.jar,/bin/examples/jars/scopt_2.11-3.7.0.jar \
                 --master 'local[4]' \
                 --conf spark.driver.port=10027 \
                 --conf spark.scheduler.maxRegisteredResourcesWaitingTime=5000000 \
