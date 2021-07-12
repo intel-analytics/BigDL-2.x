@@ -253,6 +253,7 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
+<<<<<<< HEAD
         features_generated = []
         df_list = [generate_dt_features(input_df=self.df[self.df[self.id_col] == id_name],
                                         dt_col=self.dt_col,
@@ -263,6 +264,16 @@ class TSDataset:
                    for id_name in self._id_list]
         self.df = pd.concat(df_list)
         self.feature_col += features_generated
+=======
+        self.df = generate_dt_features(input_df=self.df,
+                                       dt_col=self.dt_col)
+        from zoo.chronos.data.utils.feature import TIME_FEATURE, \
+            ADDITIONAL_TIME_FEATURE_HOUR, ADDITIONAL_TIME_FEATURE_WEEKDAY
+        increased_attrbutes = list(TIME_FEATURE) +\
+            list(ADDITIONAL_TIME_FEATURE_HOUR) +\
+            list(ADDITIONAL_TIME_FEATURE_WEEKDAY)
+        self.feature_col += [attr + "({})".format(self.dt_col) for attr in increased_attrbutes]
+>>>>>>> boost gendtfeature
         return self
 
     def gen_global_feature(self, settings="comprehensive", full_settings=None):
