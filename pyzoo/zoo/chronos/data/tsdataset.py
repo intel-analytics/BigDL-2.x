@@ -78,7 +78,6 @@ class TSDataset:
         self._is_aligned = hash(str(self.df[self.df[self.id_col]==self._id_list[0]][self.dt_col]\
             .tolist()*len(self._id_list))) == hash(str(self.df[self.dt_col].to_list()))
 
-
     @staticmethod
     def from_pandas(df,
                     dt_col,
