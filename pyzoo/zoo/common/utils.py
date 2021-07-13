@@ -98,6 +98,7 @@ def enable_multi_fs_save(save_func):
 
 def enable_multi_fs_load(load_func):
 
+    @functools.wraps
     def multi_fs_load(path, *args, **kwargs):
         if is_local_path(path):
             return load_func(path, *args, **kwargs)
@@ -112,10 +113,6 @@ def enable_multi_fs_load(load_func):
                 os.remove(temp_path)
 
     return multi_fs_load
-
-def load_from_file(load_func, path):
-    pass
-
 
 
 def get_remote_file_to_local(remote_path, local_path, over_write=False):
