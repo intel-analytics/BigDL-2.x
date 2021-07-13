@@ -57,7 +57,7 @@ if [ -f analytics-zoo-models/checkpoints.zip ]; then
 else
   wget -nv $FTP_URI/analytics-zoo-models/yolov3/checkpoints.zip \
     -P analytics-zoo-models
-  unzip -q analytics-zoo-data/checkpoints.zip -d analytics-zoo-data
+  unzip -q analytics-zoo-models/checkpoints.zip -d analytics-zoo-models
 fi
 
 #echo "yolov3 train"
