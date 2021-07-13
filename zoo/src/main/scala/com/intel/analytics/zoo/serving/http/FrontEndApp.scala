@@ -228,7 +228,7 @@ object FrontEndApp extends Supportive with EncryptSupportive {
                             complete(500, error.toString)
                           }
                           val outputs = servable.getMetaData.
-                            asInstanceOf[InferenceModelMetaData].inputCompileType match {
+                            asInstanceOf[ClusterServingMetaData].inputCompileType match {
                             case "direct" =>
                               timing ("model inference direct") (modelInferenceTimer) {
                                 servable.predict(content)

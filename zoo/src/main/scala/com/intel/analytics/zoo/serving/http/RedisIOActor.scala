@@ -60,7 +60,6 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX +
             requestMap -= result._1
             logger.info(s"${System.currentTimeMillis()} Send ${result._1} back at time ")
           }
-
         })
       }
 

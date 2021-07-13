@@ -110,6 +110,7 @@ object RedisUtils {
   def writeHashMap(ppl: Pipeline, key: String, value: String, name: String): Unit = {
     val hKey = Conventions.RESULT_PREFIX + name + ":" + key
     val hValue = Map[String, String]("value" -> value).asJava
+    println("write key:" + hKey + "write value" + hValue)
     ppl.hmset(hKey, hValue)
   }
   def writeXstream(ppl: Pipeline, key: String, value: String, name: String): Unit = {
@@ -118,40 +119,53 @@ object RedisUtils {
     ppl.xadd(streamKey, StreamEntryID.NEW_ENTRY, streamValue)
   }
   def initializeRedis(): Unit = {
-    val configParser = new ConfigParser("config.yaml")
-    val params = configParser.loadConfig()
-    if (params.redisSecureEnabled) {
-      System.setProperty("javax.net.ssl.trustStore", params.redisSecureTrustStorePath)
-      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStoreToken)
-      System.setProperty("javax.net.ssl.keyStoreType", "JKS")
-      System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
-      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStoreToken)
-    }
+//    val configParser = new ConfigParser("config.yaml")
+//    val params = configParser.loadConfig()
+//    if (params.redisSecureEnabled) {
+//      System.setProperty("javax.net.ssl.trustStore", params.redisSecureTrustStorePath)
+//      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStoreToken)
+//      System.setProperty("javax.net.ssl.keyStoreType", "JKS")
+//      System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
+//      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStoreToken)
+//    }
+//    if (jedisPool == null) {
+//      synchronized {
+//        if (jedisPool == null) {
+//          logger.info(
+//            s"Creating JedisPool at ${params.redisHost}:${params.redisPort}")
+//          val jedisPoolConfig = new JedisPoolConfig()
+//          jedisPoolConfig.setMaxTotal(256)
+//          jedisPool = new JedisPool(jedisPoolConfig,
+//            params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
+//        }
+//      }
+//    }
+//
+//    logger.info(
+//      s"FlinkRedisSource connect to Redis: redis://${params.redisHost}:${params.redisPort} " +
+//        s"with timeout: ${params.redisTimeout} and redisSecureEnabled: " +
+//        s"${params.redisSecureEnabled}")
+//    params.redisSecureEnabled match {
+//      case true => logger.info(
+//        s"FlinkRedisSource connect to secured Redis successfully.")
+//      case false => logger.info(
+//        s"FlinkRedisSource connect to plain Redis successfully.")
+//    }
 
-    if (jedisPool == null) {
-      synchronized {
         if (jedisPool == null) {
-          logger.info(
-            s"Creating JedisPool at ${params.redisHost}:${params.redisPort}")
-          val jedisPoolConfig = new JedisPoolConfig()
-          jedisPoolConfig.setMaxTotal(256)
-          jedisPool = new JedisPool(jedisPoolConfig,
-            params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
+          synchronized {
+            if (jedisPool == null) {
+              logger.info(
+                s"Creating JedisPool at localhost:6379")
+              val jedisPoolConfig = new JedisPoolConfig()
+              jedisPoolConfig.setMaxTotal(1024)
+              jedisPoolConfig.setMaxWaitMillis(100000)
+              jedisPool = new JedisPool(jedisPoolConfig, "127.0.0.1", 6379, 10000)
+            }
+          }
         }
-      }
-    }
 
-    logger.info(
-      s"FlinkRedisSource connect to Redis: redis://${params.redisHost}:${params.redisPort} " +
-        s"with timeout: ${params.redisTimeout} and redisSecureEnabled: " +
-        s"${params.redisSecureEnabled}")
-    params.redisSecureEnabled match {
-      case true => logger.info(
-        s"FlinkRedisSource connect to secured Redis successfully.")
-      case false => logger.info(
-        s"FlinkRedisSource connect to plain Redis successfully.")
-    }
-    // add Redis configuration here if necessary
+//    // add Redis configuration here if necessary
     val jedis = RedisUtils.getRedisClient(jedisPool)
     jedis.close()
   }

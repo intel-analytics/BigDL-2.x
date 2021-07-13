@@ -1,11 +1,11 @@
 ## Analytics-zoo Cluster Serving Config
 
 
-# model path must be provided
-# modelPath: /path/to/model
+# model path must be provided 
+  modelPath: /home/yansu/projects/models/freezed
 
 # name, default is serving_stream, you need to specify if running multiple servings
-# jobName:
+  jobName: serving_stream
 
 # default, None
 # postProcessing:
@@ -14,7 +14,7 @@
 # imageResize:
 
 # default, false, if input is already batched NdArray, set true
-# inputAlreadyBatched:
+  inputAlreadyBatched: true
 
 ######## Performance Configuration
 # default, number of cores per machine

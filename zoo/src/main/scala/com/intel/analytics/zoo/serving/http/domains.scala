@@ -915,6 +915,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   }
 
   def predict(inputs: Instances): Seq[PredictionOutput[String]] = {
+    logger.info(s"inference model predict as instance")
     val activities = timing("activity make")(makeActivityTimer) {
       inputs.makeActivities(inferenceModelMetaData.features)
     }
@@ -938,6 +939,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   }
 
   def predict(input: String): Seq[PredictionOutput[String]] = {
+    logger.info(s"inference model predict as string")
     val activities = timing("activity make")(makeActivityTimer) {
       JsonInputDeserializer.deserialize(input)
     }
@@ -984,7 +986,8 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
     case true => RateLimiter.create(clusterServingMetaData.tokensPerSecond)
     case false => null
   }
-  val actorName = s"redis-getter"
+  val actorName = s"redis-ioActor-getter-${clusterServingMetaData.modelName}" +
+    s"-${clusterServingMetaData.modelVersion}"
   val ioActor = timing(s"$actorName initialized.")() {
     val getterProps = Props(new RedisIOActor(jedisPool = jedisPool))
     system.actorOf(getterProps, name = actorName)
@@ -1020,7 +1023,6 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
         clusterServingMetaData.redisTrustStoreToken))
       system.actorOf(redisGetterProps, name = redisGetterName)
     }
-    println("redisgetter:" + redisGetter)
 
     val querierNum = 1000
     querierQueue = timing(s"queriers initialized.")() {
@@ -1037,10 +1039,15 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
   }
 
   def predict(input: String): Seq[PredictionOutput[String]] = {
+    logger.info(s"cluster serving predict as string, input:" + input)
+    val id = UUID.randomUUID().toString
+    timing("put message send")() {
+      ioActor ! DataInputMessage(id, input)
+    }
     val result = timing("response waiting")() {
       val id = UUID.randomUUID().toString
       val results = timing(s"query message wait for key $id")() {
-        Await.result(ioActor ? DataInputMessage(id, input), timeout.duration)
+        Await.result(ioActor ? DequeueMessage(), timeout.duration)
           .asInstanceOf[ModelOutputMessage].valueMap
       }
       val objectMapper = new ObjectMapper()
@@ -1054,6 +1061,7 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
 
   def predict(instances: Instances):
   Seq[PredictionOutput[String]] = {
+    logger.info(s"cluster serving predict as instance")
     val inputs = instances.instances.map(instance => {
       InstancesPredictionInput(Instances(instance))
     })

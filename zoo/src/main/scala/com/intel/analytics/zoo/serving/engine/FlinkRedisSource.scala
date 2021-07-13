@@ -39,7 +39,7 @@ class FlinkRedisSource()
     logger = Logger.getLogger(getClass)
     helper = ClusterServing.helper
     RedisUtils.initializeRedis()
-    jedis = RedisUtils.getRedisClient(ClusterServing.jedisPool)
+    jedis = RedisUtils.getRedisClient(RedisUtils.jedisPool)
     RedisUtils.createRedisGroupIfNotExist(jedis, helper.jobName)
   }
 
