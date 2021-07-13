@@ -139,7 +139,7 @@ def setup_package():
         url='https://github.com/intel-analytics/analytics-zoo',
         packages=packages,
         install_requires=['pyspark==2.4.6', 'bigdl==0.13.0', 'conda-pack==0.3.1'],
-        extras_require={'ray': ['ray==1.2.0', 'psutil', 
+        extras_require={'ray': ['ray==1.2.0', 'psutil', 'aiohttp==3.7.0',
                                 'setproctitle', 'hiredis==1.1.0', 'aioredis==1.1.0'],
                         'automl': ['tensorflow>=1.15.0,<2.0.0', 'h5py==2.10.0', 'hiredis==1.1.0',
                                    'ray[tune]==1.2.0', 'psutil', 'aiohttp', 'setproctitle',
