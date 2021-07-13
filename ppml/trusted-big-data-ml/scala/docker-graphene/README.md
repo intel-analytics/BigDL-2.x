@@ -50,7 +50,7 @@ sudo bash ../../../scripts/generate-password.sh used_password_when_generate_keys
 Before you run the following commands to start the container, you need to modify the paths in `deploy-local-big-data-ml.sh`. <br>
 Then run the following commands: <br>
 ```bash
-./deploy-local-big-data-ml.sh
+./deploy-local-spark-sgx.sh
 sudo docker exec -it spark-local bash
 cd /ppml/trusted-big-data-ml
 ```
