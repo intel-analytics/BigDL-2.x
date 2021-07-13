@@ -987,12 +987,7 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
     case true => RateLimiter.create(clusterServingMetaData.tokensPerSecond)
     case false => null
   }
-  val actorName = s"redis-ioActor-getter-${clusterServingMetaData.modelName}" +
-    s"-${clusterServingMetaData.modelVersion}"
-  val ioActor = timing(s"$actorName initialized.")() {
-    val getterProps = Props(new RedisIOActor(jedisPool = jedisPool))
-    system.actorOf(getterProps, name = actorName)
-  }
+  var ioActor: ActorRef = _
 
   def load(): Unit = {
     val redisPutterName = s"redis-putter-${clusterServingMetaData.modelName}" +
@@ -1037,10 +1032,15 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
       })
       querierQueue
     }
+    val actorName = s"redis-ioActor-getter-${clusterServingMetaData.modelName}" +
+      s"-${clusterServingMetaData.modelVersion}"
+    ioActor = timing(s"$actorName initialized.")() {
+      val getterProps = Props(new RedisIOActor(jedisPool = jedisPool))
+      system.actorOf(getterProps, name = actorName)
+    }
   }
 
   def predict(input: String): Seq[PredictionOutput[String]] = {
-    logger.info(s"cluster serving predict as string, input:" + input)
     val id = UUID.randomUUID().toString
     system.scheduler.schedule(1 milliseconds, 1 millisecond,
       ioActor, DequeueMessage())(system.dispatcher)

@@ -1025,6 +1025,7 @@
                             <goal>single</goal>
                         </goals>
                     </execution>
+
                     <execution>
                         <id>python</id>
                         <inherited>false</inherited>
