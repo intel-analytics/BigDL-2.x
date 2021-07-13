@@ -70,7 +70,7 @@ sudo docker pull intelanalytics/analytics-zoo:latest
 Launch an Analytics Zoo Docker container with this command line: 
 
 ```
-$sudo docker run -it --rm --net=host -e NotebookPort=12345 -e NotebookToken="your-token" intelanalytics/analytics-zoo:latest bash
+$sudo docker run -it --rm --net=host -e NOTEBOOK_PORT=12345 -e NOTEBOOK_TOKEN="your-token" intelanalytics/analytics-zoo:latest bash
 ```
 
 * The value 12345 is a user specified port number. 
@@ -80,8 +80,8 @@ If you want to specify an Analytics Zoo version, for example 0.7.0, use:
 
 ```
 sudo docker run -it --rm --net=host \
-    -e NotebookPort=12345 \
-    -e NotebookToken="your-token" \
+    -e NOTEBOOK_PORT=12345 \
+    -e NOTEBOOK_TOKEN="your-token" \
     intelanalytics/analytics-zoo:0.7.0-bigdl_0.10.0-spark_2.4.3 bash
 ```
 
@@ -89,8 +89,8 @@ If you need to use http/https proxy, use:
 
 ```
 sudo docker run -it --rm --net=host \
-    -e NotebookPort=12345 \
-    -e NotebookToken="your-token" \
+    -e NOTEBOOK_PORT=12345 \
+    -e NOTEBOOK_TOKEN="your-token" \
     -e http_proxy=http://your-proxy-host:your-proxy-port \
     -e https_proxy=https://your-proxy-host:your-proxy-port \
     intelanalytics/analytics-zoo:default bash
@@ -248,10 +248,10 @@ sudo docker build \
 
 ```
 sudo docker build \
-    --build-arg ANALYTICS_ZOO_VERSION=0.10.0 \
-    --build-arg BIGDL_VERSION=0.12.2 \
-    --build-arg SPARK_VERSION=2.4.3 \
-    --rm -t intelanalytics/analytics-zoo:0.10.0-bigdl_0.12.2-spark_2.4.3 .
+    --build-arg ANALYTICS_ZOO_VERSION=0.11.0 \
+    --build-arg BIGDL_VERSION=0.13.0 \
+    --build-arg SPARK_VERSION=2.4.6 \
+    --rm -t intelanalytics/analytics-zoo:0.11.0-bigdl_0.13.0-spark_2.4.6 .
 ```
 
 ---

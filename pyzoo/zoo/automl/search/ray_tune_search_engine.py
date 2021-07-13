@@ -78,7 +78,7 @@ class RayTuneSearchEngine(SearchEngine):
         :param model_builder: model creation function
         :param epochs: max epochs for training
         :param validation_data: validation data
-        :param metric: metric name
+        :param metric: metric name or metric function
         :param metric_mode: mode for metric. "min" or "max". We would infer metric_mode automated
             if user used our built-in metric in zoo.automl.common.metric.Evaluator.
         :param metric_threshold: a trial will be terminated when metric threshold is met
@@ -94,24 +94,25 @@ class RayTuneSearchEngine(SearchEngine):
         :param mc: if calculate uncertainty
         """
         # metric and metric's mode
-        self.metric = metric or DEFAULT_METRIC_NAME
+        self.metric_name = metric.__name__ if callable(metric) else (metric or DEFAULT_METRIC_NAME)
         self.mode = metric_mode
         self.stopper = TrialStopper(metric_threshold=metric_threshold,
                                     epochs=epochs,
-                                    metric=self.metric,
+                                    metric=self.metric_name,
                                     mode=self.mode)
         self.num_samples = n_sampling
         self.search_space = search_space
 
         self._search_alg = RayTuneSearchEngine._set_search_alg(search_alg, search_alg_params,
-                                                               self.metric, self.mode)
+                                                               self.metric_name, self.mode)
         self._scheduler = RayTuneSearchEngine._set_scheduler(scheduler, scheduler_params,
-                                                             self.metric, self.mode)
-
+                                                             self.metric_name, self.mode)
+        metric_func = None if not callable(metric) else metric
         self.train_func = self._prepare_train_func(data=data,
                                                    model_builder=model_builder,
                                                    validation_data=validation_data,
-                                                   metric=self.metric,
+                                                   metric_name=self.metric_name,
+                                                   metric_func=metric_func,
                                                    mode=self.mode,
                                                    mc=mc,
                                                    remote_dir=self.remote_dir
@@ -155,13 +156,14 @@ class RayTuneSearchEngine(SearchEngine):
         analysis = tune.run(
             self.train_func,
             local_dir=self.logs_dir,
-            metric=self.metric,
+            metric=self.metric_name,
             mode=self.mode,
             name=self.name,
             stop=self.stopper,
             config=self.search_space,
             search_alg=self._search_alg,
             num_samples=self.num_samples,
+            trial_dirname_creator=trial_dirname_creator,
             scheduler=self._scheduler,
             resources_per_trial=self.resources_per_trial,
             verbose=1,
@@ -191,7 +193,7 @@ class RayTuneSearchEngine(SearchEngine):
         :return: trials list
         """
         sorted_trials = RayTuneSearchEngine._get_sorted_trials(self.trials,
-                                                               metric=self.metric,
+                                                               metric=self.metric_name,
                                                                mode=self.mode)
         best_trials = sorted_trials[:k]
         return [self._make_trial_output(t) for t in best_trials]
@@ -226,7 +228,7 @@ class RayTuneSearchEngine(SearchEngine):
 
     def test_run(self):
         def mock_reporter(**kwargs):
-            assert self.metric in kwargs, "Did not report proper metric"
+            assert self.metric_name in kwargs, "Did not report proper metric"
             assert "checkpoint" in kwargs, "Accidentally removed `checkpoint`?"
             raise GoodError("This works.")
 
@@ -248,7 +250,8 @@ class RayTuneSearchEngine(SearchEngine):
     def _prepare_train_func(data,
                             model_builder,
                             validation_data=None,
-                            metric=None,
+                            metric_name=None,
+                            metric_func=None,
                             mode=None,
                             mc=False,
                             remote_dir=None,
@@ -257,7 +260,8 @@ class RayTuneSearchEngine(SearchEngine):
         Prepare the train function for ray tune
         :param data: input data
         :param model_builder: model create function
-        :param metric: the rewarding metric name
+        :param metric_name: the rewarding metric name
+        :param metric_func: customized metric func
         :param mode: metric mode
         :param validation_data: validation data
         :param mc: if calculate uncertainty
@@ -284,9 +288,10 @@ class RayTuneSearchEngine(SearchEngine):
                 result = trial_model.fit_eval(data=train_data,
                                               validation_data=val_data,
                                               mc=mc,
-                                              metric=metric,
+                                              metric=metric_name,
+                                              metric_func=metric_func,
                                               **config)
-                reward = result
+                reward = result[metric_name]
                 checkpoint_filename = "best.ckpt"
 
                 # Save best reward iteration
@@ -305,9 +310,9 @@ class RayTuneSearchEngine(SearchEngine):
                         put_ckpt_hdfs(remote_dir, checkpoint_filename)
 
                 report_dict = {"training_iteration": i,
-                               metric: reward,
                                "checkpoint": checkpoint_filename,
-                               "best_" + metric: best_reward}
+                               "best_" + metric_name: best_reward}
+                report_dict.update(result)
                 tune.report(**report_dict)
 
         return train_func
@@ -333,3 +338,7 @@ class TrialStopper(Stopper):
 
     def stop_all(self):
         return False
+
+
+def trial_dirname_creator(trial):
+    return f"{trial.trainable_name}_{trial.trial_id}"

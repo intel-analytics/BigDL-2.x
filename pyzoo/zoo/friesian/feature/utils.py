@@ -15,6 +15,8 @@
 #
 
 from zoo.common.utils import callZooFunc
+from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, DecimalType, \
+    DoubleType
 
 
 def compute(df):
@@ -53,12 +55,44 @@ def cross_columns(df, cross_column_list, bucket_sizes):
     return callZooFunc("float", "crossColumns", df, cross_column_list, bucket_sizes)
 
 
-def normalize_array(df, column):
-    return callZooFunc("float", "normalizeArray", df, column)
-
-
 def check_col_exists(df, columns):
     df_cols = df.columns
     col_not_exist = list(filter(lambda x: x not in df_cols, columns))
     if len(col_not_exist) > 0:
         raise ValueError(str(col_not_exist) + " do not exist in this Table")
+
+
+def add_negative_samples(df, item_size, item_col, label_col, neg_num):
+    return callZooFunc("float", "addNegSamples", df, item_size, item_col, label_col, neg_num)
+
+
+def add_hist_seq(df, cols, user_col, sort_col, min_len, max_len):
+    return callZooFunc("float", "addHistSeq", df, cols, user_col, sort_col, min_len, max_len)
+
+
+def add_neg_hist_seq(df, item_size, item_history_col, neg_num):
+    return callZooFunc("float", "addNegHisSeq", df, item_size, item_history_col, neg_num)
+
+
+def mask(df, mask_cols, seq_len):
+    return callZooFunc("float", "mask", df, mask_cols, seq_len)
+
+
+def pad(df, cols, seq_len, mask_cols):
+    df = callZooFunc("float", "mask", df, mask_cols, seq_len) if mask_cols else df
+    df = callZooFunc("float", "postPad", df, cols, seq_len)
+    return df
+
+
+def check_column_numeric(df, column):
+    return df.schema[column].dataType in [IntegerType(), ShortType(),
+                                          LongType(), FloatType(),
+                                          DecimalType(), DoubleType()]
+
+
+def ordinal_shuffle_partition(df):
+    return callZooFunc("float", "ordinalShufflePartition", df)
+
+
+def write_parquet(df, path, mode):
+    callZooFunc("float", "dfWriteParquet", df, path, mode)

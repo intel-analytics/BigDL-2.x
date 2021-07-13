@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.serving.models
 
-import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
+import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
 import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
@@ -31,7 +31,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
       "/repository/raw/analytics-zoo-data/openvino_inception_v1.tar").!
     "tar -xvf /tmp/openvino_inception_v1.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
-    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val dataPath = resource.getPath + "/image-3_224_224-arrow-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
 
@@ -59,7 +59,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
       "/repository/raw/analytics-zoo-data/openvino_mobilenet_v1.tar").!
     "tar -xvf /tmp/openvino_mobilenet_v1.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
-    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val dataPath = resource.getPath + "/image-3_224_224-arrow-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     ClusterServing.helper = new ClusterServingHelper()
@@ -89,7 +89,7 @@ class OpenVINOModelSpec extends FlatSpec with Matchers {
       "/repository/raw/analytics-zoo-data/openvino_mobilenet_v2.tar").!
     "tar -xvf /tmp/openvino_mobilenet_v2.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
-    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val dataPath = resource.getPath + "/image-3_224_224-arrow-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     ClusterServing.helper = new ClusterServingHelper()
@@ -119,7 +119,7 @@ val helper = ClusterServing.helper
       "/repository/raw/analytics-zoo-data/openvino2020_resnet50.tar").!
     "tar -xvf /tmp/openvino2020_resnet50.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
-    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val dataPath = resource.getPath + "/image-3_224_224-arrow-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     ClusterServing.helper = new ClusterServingHelper()
@@ -149,7 +149,7 @@ val helper = ClusterServing.helper
       "/repository/raw/analytics-zoo-data/openvino_resnet50.tar").!
     "tar -xvf /tmp/openvino_resnet50.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
-    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val dataPath = resource.getPath + "/image-3_224_224-arrow-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     ClusterServing.helper = new ClusterServingHelper()
@@ -180,7 +180,7 @@ val helper = ClusterServing.helper
       "/repository/raw/analytics-zoo-data/openvino_vgg16.tar").!
     "tar -xvf /tmp/openvino_vgg16.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
-    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val dataPath = resource.getPath + "/image-3_224_224-arrow-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     ClusterServing.helper = new ClusterServingHelper()
@@ -210,7 +210,7 @@ val helper = ClusterServing.helper
       "/repository/raw/analytics-zoo-data/openvino_face_detection_0100.tar").!
     "tar -xvf /tmp/openvino_face_detection_0100.tar -C /tmp/".!
     val resource = getClass().getClassLoader().getResource("serving")
-    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val dataPath = resource.getPath + "/image-3_224_224-arrow-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     ClusterServing.helper = new ClusterServingHelper()

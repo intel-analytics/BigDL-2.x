@@ -14,13 +14,16 @@
 # limitations under the License.
 #
 
+import shutil
 import os.path
 import pytest
-import tempfile
+import hashlib
+import operator
 from unittest import TestCase
 
-from pyspark.sql.functions import col, max, min, array
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
+from pyspark.sql.functions import col, concat, max, min, array
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType, \
+    DoubleType
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature import FeatureTable, StringIndex
@@ -99,6 +102,72 @@ class TestTable(TestCase):
         assert filled_tbl.df.filter("col_5 is null").count() == 0, "col_5 null values should be " \
                                                                    "filled"
 
+    def test_filter_by_frequency(self):
+        data = [("a", "b", 1),
+                ("b", "a", 2),
+                ("a", "bc", 3),
+                ("c", "c", 2),
+                ("b", "a", 2),
+                ("ab", "c", 1),
+                ("c", "b", 1),
+                ("a", "b", 1)]
+        schema = StructType([StructField("A", StringType(), True),
+                             StructField("B", StringType(), True),
+                             StructField("C", IntegerType(), True)])
+        spark = OrcaContext.get_spark_session()
+        df = spark.createDataFrame(data, schema)
+        tbl = FeatureTable(df).filter_by_frequency(["A", "B", "C"])
+        assert tbl.to_spark_df().count() == 2, "the count of frequency >=2 should be 2"
+
+    def test_hash_encode(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("a", "b", 1),
+                ("b", "a", 2),
+                ("a", "c", 3),
+                ("c", "c", 2),
+                ("b", "a", 1),
+                ("a", "d", 1)]
+        schema = StructType([StructField("A", StringType(), True),
+                             StructField("B", StringType(), True),
+                             StructField("C", IntegerType(), True)])
+        df = spark.createDataFrame(data, schema)
+        tbl = FeatureTable(df)
+        hash_str = lambda x: hashlib.md5(str(x).encode('utf-8', 'strict')).hexdigest()
+        hash_int = lambda x: int(hash_str(x), 16) % 100
+        hash_value = []
+        for row in df.collect():
+            hash_value.append(hash_int(row[0]))
+        tbl_hash = []
+        for record in tbl.hash_encode(["A"], 100).to_spark_df().collect():
+            tbl_hash.append(int(record[0]))
+        assert(operator.eq(hash_value, tbl_hash)), "the hash encoded value should be equal"
+
+    def test_cross_hash_encode(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("a", "b", "c", 1),
+                ("b", "a", "d", 2),
+                ("a", "c", "e", 3),
+                ("c", "c", "c", 2),
+                ("b", "a", "d", 1),
+                ("a", "d", "e", 1)]
+        schema = StructType([StructField("A", StringType(), True),
+                             StructField("B", StringType(), True),
+                             StructField("C", StringType(), True),
+                             StructField("D", IntegerType(), True)])
+        df = spark.createDataFrame(data, schema)
+        cross_hash_df = df.withColumn("A_B_C", concat("A", "B", "C"))
+        tbl = FeatureTable(df)
+        cross_hash_str = lambda x: hashlib.md5(str(x).encode('utf-8', 'strict')).hexdigest()
+        cross_hash_int = lambda x: int(cross_hash_str(x), 16) % 100
+        cross_hash_value = []
+        for row in cross_hash_df.collect():
+            cross_hash_value.append(cross_hash_int(row[4]))
+        tbl_cross_hash = []
+        for record in tbl.cross_hash_encode(["A", "B", "C"], 100).to_spark_df().collect():
+            tbl_cross_hash.append(int(record[4]))
+        assert(operator.eq(cross_hash_value, tbl_cross_hash)), "the crossed hash encoded value" \
+                                                               "should be equal"
+
     def test_gen_string_idx(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
@@ -151,7 +220,7 @@ class TestTable(TestCase):
         assert clip_tbl.df.filter("col_3 < 2").count() == 0, "col_3 should >= 2"
         with self.assertRaises(Exception) as context:
             feature_tbl.clip(None, 2)
-        self.assertTrue('columns should be str or list of str, but got None.'
+        self.assertTrue('columns should be str or a list of str, but got None.'
                         in str(context.exception))
 
         feature_tbl = FeatureTable.read_parquet(file_path)
@@ -257,7 +326,7 @@ class TestTable(TestCase):
     def test_norm(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path).fillna(0, ["col_2", "col_3"])
-        normalized_tbl = feature_tbl.normalize(["col_2"])
+        normalized_tbl, min_max = feature_tbl.min_max_scale(["col_2"])
         max_value = normalized_tbl.df.select("col_2") \
             .agg(max(col("col_2")).alias("max")) \
             .rdd.map(lambda row: row['max']).collect()[0]
@@ -269,7 +338,7 @@ class TestTable(TestCase):
         assert min_value >= 0, "col_2 shouldn't be less than 0 after normalization"
 
         tbl2 = FeatureTable(feature_tbl.df.withColumn("col2-col3", array(["col_2", "col_3"])))
-        normalized_tbl2 = tbl2.normalize(["col_2", "col2-col3"])
+        normalized_tbl2, min_max = tbl2.min_max_scale(["col_2", "col2-col3"])
         normalized_tbl2.compute()
 
     def test_cross(self):
@@ -325,7 +394,7 @@ class TestTable(TestCase):
         df = spark.createDataFrame(data=data, schema=schema)
         df = df.withColumn("ts", col("time").cast("timestamp").cast("long"))
         tbl = FeatureTable(df.select("name", "item", "ts")) \
-            .add_hist_seq("name", ["item"], "ts", 1, 4)
+            .add_hist_seq(["item"], "name", "ts", 1, 4)
         assert tbl.size() == 8
         assert tbl.df.filter(col("name") == "alice").count() == 2
         assert tbl.df.filter("name like '%jack'").count() == 6
@@ -341,7 +410,6 @@ class TestTable(TestCase):
         schema = StructType([
             StructField("name", StringType(), True),
             StructField("item_hist_seq", ArrayType(IntegerType()), True)])
-
         df = spark.createDataFrame(data, schema)
         df2 = sc \
             .parallelize([(1, 0), (2, 0), (3, 0), (4, 1), (5, 1), (6, 1), (7, 2), (8, 2), (9, 2)]) \
@@ -351,7 +419,7 @@ class TestTable(TestCase):
         tbl = tbl.add_neg_hist_seq(9, "item_hist_seq", 4)
         assert tbl.df.select("neg_item_hist_seq").count() == 3
 
-    def test_gen_cats_from_items(self):
+    def test_add_value_features(self):
         spark = OrcaContext.get_spark_session()
         sc = OrcaContext.get_spark_context()
         data = [
@@ -371,7 +439,8 @@ class TestTable(TestCase):
             .withColumn("category", col("category").cast("Integer"))
         tbl = FeatureTable(df)
         tbl2 = tbl.add_neg_hist_seq(9, "item_hist_seq", 4)
-        tbl3 = tbl2.add_feature(["item_hist_seq", "neg_item_hist_seq"], FeatureTable(df2), 5)
+        tbl3 = tbl2.add_value_features(["item_hist_seq", "neg_item_hist_seq"],
+                                       FeatureTable(df2), "item", "category")
         assert tbl3.df.select("category_hist_seq").count() == 3
         assert tbl3.df.select("neg_category_hist_seq").count() == 3
         assert tbl3.df.filter("name like '%alice%'").select("neg_category_hist_seq").count() == 1
@@ -387,41 +456,14 @@ class TestTable(TestCase):
                              StructField("list", ArrayType(IntegerType()), True),
                              StructField("matrix", ArrayType(ArrayType(IntegerType())))])
         df = spark.createDataFrame(data, schema)
-        tbl = FeatureTable(df).pad(["list", "matrix"], 4)
-        dft = tbl.df
-        assert dft.filter("size(matrix) = 4").count() == 3
-        assert dft.filter("size(list) = 4").count() == 3
-
-    def test_mask(self):
-        spark = OrcaContext.get_spark_session()
-        data = [
-            ("jack", [1, 2, 3, 4, 5]),
-            ("alice", [4, 5, 6, 7, 8]),
-            ("rose", [1, 2])]
-        schema = StructType([
-            StructField("name", StringType(), True),
-            StructField("history", ArrayType(IntegerType()), True)])
-
-        df = spark.createDataFrame(data, schema)
-        tbl = FeatureTable(df).mask(["history"], 4)
-        assert "history_mask" in tbl.df.columns
-        assert tbl.df.filter("size(history_mask) = 4").count() == 3
-        assert tbl.df.filter("size(history_mask) = 2").count() == 0
-
-    def test_add_length(self):
-        spark = OrcaContext.get_spark_session()
-        data = [("jack", [1, 2, 3, 4, 5]),
-                ("alice", [4, 5, 6, 7, 8]),
-                ("rose", [1, 2])]
-        schema = StructType([StructField("name", StringType(), True),
-                             StructField("history", ArrayType(IntegerType()), True)])
-
-        df = spark.createDataFrame(data, schema)
-        tbl = FeatureTable(df)
-        tbl = tbl.add_length("history")
-        assert "history_length" in tbl.df.columns
-        assert tbl.df.filter("history_length = 5").count() == 2
-        assert tbl.df.filter("history_length = 2").count() == 1
+        tbl1 = FeatureTable(df).pad(["list", "matrix"], seq_len=4)
+        dft1 = tbl1.df
+        tbl2 = FeatureTable(df).pad(cols=["list", "matrix"], mask_cols=["list"], seq_len=4)
+        assert dft1.filter("size(matrix) = 4").count() == 3
+        assert dft1.filter("size(list) = 4").count() == 3
+        assert tbl2.df.filter("size(list_mask) = 4").count() == 3
+        assert tbl2.df.filter("size(list_mask) = 2").count() == 0
+        assert "list_mask" in tbl2.df.columns
 
     def test_median(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
@@ -523,6 +565,291 @@ class TestTable(TestCase):
             "the first row of name should be 1"
         assert tbl.df.where(tbl.df.height == 10).select("num").collect()[0]["num"] == 2, \
             "the third row of num should be 2"
+
+    def test_columns(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        col_names = feature_tbl.columns
+        assert isinstance(col_names, list), "col_names should be a list of strings"
+        assert col_names == ["col_1", "col_2", "col_3", "col_4", "col_5"], \
+            "column names are incorrenct"
+
+    def test_get_stats(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14, 8.5),
+                ("alice", "34", 25, 9.7),
+                ("rose", "25344", 23, 10.0)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True),
+                             StructField("height", DoubleType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        columns = ["age", "height"]
+        # test str
+        statistics = tbl.get_stats(columns, "min")
+        assert len(statistics) == 2, "the dict should contain two statistics"
+        assert statistics["age"] == 14, "the min value of age is not correct"
+        assert statistics["height"] == 8.5, "the min value of height is not correct"
+        columns = ["age", "height"]
+        # test dict
+        statistics = tbl.get_stats(columns, {"age": "max", "height": "avg"})
+        assert len(statistics) == 2, "the dict should contain two statistics"
+        assert statistics["age"] == 25, "the max value of age is not correct"
+        assert statistics["height"] == 9.4, "the avg value of height is not correct"
+        # test list
+        statistics = tbl.get_stats(columns, ["min", "max"])
+        assert len(statistics) == 2, "the dict should contain two statistics"
+        assert statistics["age"][0] == 14, "the min value of age is not correct"
+        assert statistics["age"][1] == 25, "the max value of age is not correct"
+        assert statistics["height"][0] == 8.5, "the min value of height is not correct"
+        assert statistics["height"][1] == 10.0, "the max value of height is not correct"
+        # test dict of list
+        statistics = tbl.get_stats(columns, {"age": ["min", "max"], "height": ["min", "avg"]})
+        assert len(statistics) == 2, "the dict should contain two statistics"
+        assert statistics["age"][0] == 14, "the min value of age is not correct"
+        assert statistics["age"][1] == 25, "the max value of age is not correct"
+        assert statistics["height"][0] == 8.5, "the min value of height is not correct"
+        assert statistics["height"][1] == 9.4, "the max value of height is not correct"
+        statistics = tbl.get_stats(None, "min")
+        assert len(statistics) == 2, "the dict should contain two statistics"
+        assert statistics["age"] == 14, "the min value of age is not correct"
+        assert statistics["height"] == 8.5, "the min value of height is not correct"
+
+    def test_min(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14, 8.5),
+                ("alice", "34", 25, 9.7),
+                ("rose", "25344", 23, 10.0)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True),
+                             StructField("height", DoubleType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        columns = ["age", "height"]
+        min_result = tbl.min(columns)
+        assert min_result.to_list("min") == [14, 8.5], \
+            "the min value for age and height is not correct"
+
+    def test_max(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14, 8.5),
+                ("alice", "34", 25, 9.7),
+                ("rose", "25344", 23, 10.0)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True),
+                             StructField("height", DoubleType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        columns = ["age", "height"]
+        min_result = tbl.max(columns)
+        assert min_result.to_list("max") == [25, 10.0], \
+            "the maximum value for age and height is not correct"
+
+    def test_to_list(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14, 8.5, [0, 0]),
+                ("alice", "34", 25, 9.6, [1, 1]),
+                ("rose", "25344", 23, 10.0, [2, 2])]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True),
+                             StructField("height", DoubleType(), True),
+                             StructField("array", ArrayType(IntegerType()), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        list1 = tbl.to_list("name")
+        list2 = tbl.to_list("num")
+        list3 = tbl.to_list("age")
+        list4 = tbl.to_list("height")
+        list5 = tbl.to_list("array")
+        assert list1 == ["jack", "alice", "rose"], "the result of name is not correct"
+        assert list2 == ["123", "34", "25344"], "the result of num is not correct"
+        assert list3 == [14, 25, 23], "the result of age is not correct"
+        assert list4 == [8.5, 9.6, 10.0], "the result of height is not correct"
+        assert list5 == [[0, 0], [1, 1], [2, 2]], "the result of array is not correct"
+
+    def test_to_dict(self):
+        spark = OrcaContext.get_spark_session()
+        # test the case the column of key is unique
+        data = [("jack", "123", 14),
+                ("alice", "34", 25),
+                ("rose", "25344", 23)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        dictionary = tbl.to_dict()
+        print(dictionary)
+        assert dictionary["name"] == ['jack', 'alice', 'rose']
+
+    def test_add(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14, 8.5),
+                ("alice", "34", 25, 9.6),
+                ("rose", "25344", 23, 10.0)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True),
+                             StructField("height", DoubleType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        columns = ["age", "height"]
+        new_tbl = tbl.add(columns, 1.5)
+        new_list = new_tbl.df.take(3)
+        assert len(new_list) == 3, "new_tbl should have 3 rows"
+        assert new_list[0]['age'] == 15.5, "the age of jack should increase 1.5"
+        assert new_list[0]['height'] == 10, "the height of jack should increase 1.5"
+        assert new_list[1]['age'] == 26.5, "the age of alice should increase 1.5"
+        assert new_list[1]['height'] == 11.1, "the height of alice should increase 1.5"
+        assert new_list[2]['age'] == 24.5, "the age of rose should increase 1.5"
+        assert new_list[2]['height'] == 11.5, "the height of rose should increase 1.5"
+        new_tbl = tbl.add(columns, -1)
+        new_list = new_tbl.df.take(3)
+        assert len(new_list) == 3, "new_tbl should have 3 rows"
+        assert new_list[0]['age'] == 13, "the age of jack should decrease 1"
+        assert new_list[0]['height'] == 7.5, "the height of jack should decrease 1"
+        assert new_list[1]['age'] == 24, "the age of alice should decrease 1"
+        assert new_list[1]['height'] == 8.6, "the height of alice should decrease 1"
+        assert new_list[2]['age'] == 22, "the age of rose should decrease 1"
+        assert new_list[2]['height'] == 9.0, "the height of rose should decrease 1"
+
+    def test_sample(self):
+        spark = OrcaContext.get_spark_session()
+        df = spark.range(1000)
+        feature_tbl = FeatureTable(df)
+        total_line_1 = feature_tbl.size()
+        feature_tbl2 = feature_tbl.sample(0.5)
+        total_line_2 = feature_tbl2.size()
+        assert int(total_line_1/2) - 100 < total_line_2 < int(total_line_1/2) + 100, \
+            "the number of rows should be half"
+        total_distinct_line = feature_tbl2.distinct().size()
+        assert total_line_2 == total_distinct_line, "all rows should be distinct"
+
+    def test_group_by(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data2.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+
+        groupby_tbl1 = feature_tbl.group_by("col_4", agg={"col_1": ["sum", "count"]})
+        assert groupby_tbl1.df.filter("col_4 == 'a' and sum(col_1) == 3").count() == 1, \
+            "the sum of col_1 with col_4 = 'a' should be 3"
+        assert groupby_tbl1.df.filter("col_4 == 'b' and `count(col_1)` == 5").count() == 1, \
+            "the count of col_1 with col_4 = 'b' should be 5"
+
+        groupby_tbl2 = feature_tbl.group_by(agg={"target": "avg", "col_2": "last"})
+        assert groupby_tbl2.df.collect()[0]["avg(target)"] == 0.9, \
+            "the mean of target should be 0.9"
+
+        groupby_tbl3 = feature_tbl.group_by("col_5", agg=["max", "min"], join=True)
+        assert len(groupby_tbl3.df.columns) == len(feature_tbl.df.columns) + 10, \
+            "groupby_tbl3 should have (#df.columns - #columns)*len(agg)=10 more columns"
+        assert groupby_tbl3.df.filter("col_5 == 'cc' and `max(col_2)` == 9").count() == \
+            feature_tbl.df.filter("col_5 == 'cc'").count(), \
+            "max of col_2 should 9 for all col_5 = 'cc' in groupby_tbl3"
+        assert groupby_tbl3.df.filter("col_5 == 'aa' and `min(col_3)` == 1.0").count() == \
+            feature_tbl.df.filter("col_5 == 'aa'").count(), \
+            "min of col_3 should 1.0 for all col_5 = 'aa' in groupby_tbl3"
+
+        groupby_tbl4 = feature_tbl.group_by(["col_4", "col_5"], agg="first", join=True)
+        assert groupby_tbl4.df.filter("col_4 == 'b' and col_5 == 'dd' and `first(col_1)` == 0") \
+            .count() == feature_tbl.df.filter("col_4 == 'b' and col_5 == 'dd'").count(), \
+            "first of col_1 should be 0 for all col_4 = 'b' and col_5 = 'dd' in groupby_tbl4"
+
+    def test_append_column(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/")
+        df = FeatureTable.read_csv(file_path+"data.csv", header=True)
+        df = df.append_column("z", 0)
+        assert df.select("z").size() == 4
+        assert df.filter("z == 0").size() == 4
+        df = df.append_column("str", "a")
+        assert df.select("str").size() == 4
+        assert df.filter("str == 'a'").size() == 4
+        df = df.append_column("float", 1.2)
+        assert df.select("float").size() == 4
+        assert df.filter("float == 1.2").size() == 4
+
+    def test_ordinal_shuffle(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("a", 14), ("b", 25), ("c", 23), ("d", 2), ("e", 1)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", IntegerType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema).repartition(1))
+        shuffled_tbl = tbl.ordinal_shuffle_partition()
+        rows = tbl.df.collect()
+        shuffled_rows = shuffled_tbl.df.collect()
+        rows.sort(key=lambda x: x[1])
+        shuffled_rows.sort(key=lambda x: x[1])
+        assert rows == shuffled_rows
+
+    def test_write_parquet(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        feature_tbl.write_parquet("saved.parquet")
+        loaded_tbl = FeatureTable.read_parquet("saved.parquet")
+        if os.path.exists("saved.parquet"):
+            shutil.rmtree("saved.parquet")
+
+    def test_read_csv(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/data.csv")
+        feature_tbl = FeatureTable.read_csv(file_path, header=True)
+        assert feature_tbl.size() == 4
+        columns = feature_tbl.columns
+        assert columns == ["col1", "col2", "col3"]
+        records = feature_tbl.df.collect()
+        assert isinstance(records[0][0], float)
+        assert isinstance(records[0][1], str) and isinstance(records[0][1], str)
+        file_path2 = os.path.join(self.resource_path, "friesian/feature/data_no_header.csv")
+        feature_tbl2 = FeatureTable.read_csv(file_path2, names=["col1", "_col2", "col3"],
+                                             dtype={"col1": "int"})
+        assert feature_tbl2.size() == 4
+        columns2 = feature_tbl2.columns
+        assert columns2 == ["col1", "_col2", "col3"]
+        records2 = feature_tbl2.df.collect()
+        assert isinstance(records2[0][0], int)
+        assert isinstance(records2[0][1], str) and isinstance(records2[0][1], str)
+        feature_tbl3 = FeatureTable.read_csv(file_path, header=True, dtype=["int", "str", "str"])
+        records3 = feature_tbl3.df.collect()
+        assert isinstance(records3[0][0], int)
+        assert isinstance(records3[0][1], str) and isinstance(records3[0][1], str)
+
+    def test_category_encode_and_one_hot_encode(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/data.csv")
+        feature_tbl = FeatureTable.read_csv(file_path, header=True)
+        feature_tbl, indices = feature_tbl.category_encode(columns=["col2", "col3"])
+        assert isinstance(indices, list) and len(indices) == 2
+        assert isinstance(indices[0], StringIndex) and isinstance(indices[1], StringIndex)
+        assert indices[0].size() == 3 and indices[1].size() == 4
+        dict1 = indices[0].to_dict()
+        dict2 = indices[1].to_dict()
+        records = feature_tbl.df.collect()
+        assert records[0][1] == dict1["x"] and records[0][2] == dict2["abc"]
+        assert records[3][1] == dict1["z"] and records[2][2] == dict2["aaa"]
+        feature_tbl = feature_tbl.one_hot_encode(columns=["col2", "col3"], prefix=["o1", "o2"])
+        feature_tbl.show()
+        columns = feature_tbl.columns
+        assert columns == ["col1", "o1_0", "o1_1", "o1_2", "o1_3", "o2_0",
+                           "o2_1", "o2_2", "o2_3", "o2_4"]
+        records = feature_tbl.df.collect()
+        record = records[0]
+        value1 = dict1["x"]
+        value2 = dict2["abc"]
+        for i in range(1, 4):
+            if i == value1:
+                assert record[i+1] == 1
+            else:
+                assert record[i+1] == 0
+        for i in range(1, 5):
+            if i == value2:
+                assert record[i+5] == 1
+            else:
+                assert record[i+5] == 0
+
+    def test_split(self):
+        file_path = os.path.join(self.resource_path, "orca/learn/ncf.csv")
+        feature_tbl = FeatureTable.read_csv(file_path, header=True, dtype="int")
+        tbl1, tbl2 = feature_tbl.split([0.8, 0.2], seed=1128)
+        total_size = feature_tbl.size()
+        size1 = tbl1.size()
+        size2 = tbl2.size()
+        assert size1 + size2 == total_size
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

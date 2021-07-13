@@ -140,8 +140,12 @@ class AutoEstimator:
             If you have also set metric_threshold, a trial will stop if either it has been
             optimized to the metric_threshold or it has been trained for {epochs} epochs.
         :param validation_data: Validation data. Validation data type should be the same as data.
-        :param metric: String. The evaluation metric name to optimize, e.g. "mse"
+        :param metric: String or customized evaluation metric function.
+            If string, metric is the evaluation metric name to optimize, e.g. "mse".
+            If callable function, it signature should be func(y_true, y_pred), where y_true and
+            y_pred are numpy ndarray. The function should return a float value as evaluation result.
         :param metric_mode: One of ["min", "max"]. "max" means greater metric value is better.
+            You have to specify metric_mode if you use a customized metric function.
             You don't have to specify metric_mode if you use the built-in metric in
             zoo.automl.common.metrics.Evaluator.
         :param metric_threshold: a trial will be terminated when metric threshold is met
@@ -190,9 +194,9 @@ class AutoEstimator:
         best_trial = self.searcher.get_best_trial()
         best_model_path = best_trial.model_path
         best_config = best_trial.config
-        best_model = self.model_builder.build(best_config)
-        best_model.restore(best_model_path)
-        return best_model
+        best_automl_model = self.model_builder.build(best_config)
+        best_automl_model.restore(best_model_path)
+        return best_automl_model.model
 
     def get_best_config(self):
         """
@@ -204,17 +208,33 @@ class AutoEstimator:
         best_config = best_trial.config
         return best_config
 
+    def _get_best_automl_model(self):
+        """
+        This is for internal use only.
+        Return the best automl model found by the AutoEstimator
+
+        :return: an automl base model instance
+        """
+        best_trial = self.searcher.get_best_trial()
+        best_model_path = best_trial.model_path
+        best_config = best_trial.config
+        best_automl_model = self.model_builder.build(best_config)
+        best_automl_model.restore(best_model_path)
+        return best_automl_model
+
     @staticmethod
     def _validate_metric_mode(metric, mode):
-        from zoo.automl.common.metrics import Evaluator
         if not mode:
+            if callable(metric):
+                raise ValueError("You must specify `metric_mode` for your metric function")
             try:
+                from zoo.automl.common.metrics import Evaluator
                 mode = Evaluator.get_metric_mode(metric)
             except ValueError:
                 pass
-        if not mode:
-            raise ValueError(f"We cannot infer metric mode with metric name of {metric}. "
-                             f"Please specify the `metric_mode` parameter in AutoEstimator.fit().")
+            if not mode:
+                raise ValueError(f"We cannot infer metric mode with metric name of {metric}. Please"
+                                 f" specify the `metric_mode` parameter in AutoEstimator.fit().")
         if mode not in ["min", "max"]:
             raise ValueError("`mode` has to be one of ['min', 'max']")
         return mode

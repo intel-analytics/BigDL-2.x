@@ -1,4 +1,4 @@
-Chronos Forecasters API
+Forecasters
 =====================
 
 chronos.model.forecast.lstm_forecaster
@@ -15,7 +15,7 @@ For the detailed algorithm description, please refer to `here <https://github.co
 
 
 chronos.model.forecast.seq2seq_forecaster
-----------------------------------------
+-------------------------------------------
 
 Seq2SeqForecaster wraps a sequence to sequence model based on LSTM, and is suitable for multivariant & multistep time series forecasting.
 
@@ -72,6 +72,30 @@ For the detailed algorithm description, please refer to `here <https://github.co
     :show-inheritance:
 
 
+chronos.model.forecast.arima_forecaster
+----------------------------------------
+
+AutoRegressive Integrated Moving Average (ARIMA) is a class of statistical models for analyzing and forecasting time series data. It consists of 3 components: AR (AutoRegressive), I (Integrated) and MA (Moving Average). In ARIMAForecaster we use the SARIMA model (Seasonal ARIMA), which is an extension of ARIMA that additionally supports the direct modeling of the seasonal component of the time series.
+
+.. automodule:: zoo.chronos.model.forecast.arima_forecaster
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+chronos.model.forecast.prophet_forecaster
+----------------------------------------
+
+Prophet is a procedure for forecasting time series data based on an additive model where non-linear trends are fit with yearly, weekly, and daily seasonality, plus holiday effects. It works best with time series that have strong seasonal effects and several seasons of historical data. Prophet is robust to missing data and shifts in the trend, and typically handles outliers well.
+
+For the detailed algorithm description, please refer to `here <https://github.com/facebook/prophet>`__.
+
+.. automodule:: zoo.chronos.model.forecast.prophet_forecaster
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    
+    
 chronos.model.forecast.tfpark_forecaster
 ----------------------------------------
 

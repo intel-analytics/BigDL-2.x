@@ -20,9 +20,9 @@ MAINTAINER The Analytics-Zoo Authors https://github.com/intel-analytics/analytic
 
 WORKDIR /opt/work
 
-ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.2
-ARG SPARK_VERSION=2.4.3
+ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
+ARG BIGDL_VERSION=0.13.0
+ARG SPARK_VERSION=2.4.6
 ARG RUNTIME_SPARK_MASTER=local[4]
 ARG RUNTIME_DRIVER_CORES=4
 ARG RUNTIME_DRIVER_MEMORY=20g
@@ -64,12 +64,12 @@ RUN apt-get install -y python3-minimal && \
     pip install --upgrade setuptools && \
     pip install numpy scipy && \
     pip install --no-binary pandas -I pandas && \
-    pip install scikit-learn matplotlib seaborn jupyter wordcloud moviepy requests h5py opencv-python tensorflow==1.15.0 && \
+    pip install scikit-learn matplotlib seaborn jupyter notebook==6.1.4 jupyterlab==2.3.1 wordcloud moviepy requests h5py opencv-python tensorflow==1.15.0 && \
     pip install torch==1.1.0 torchvision==0.3.0 -f https://download.pytorch.org/whl/torch_stable.html && \
     ln -s /usr/bin/python3 /usr/bin/python && \
     #Fix tornado await process
     pip uninstall -y -q tornado && \
-    pip install tornado==5.1.1 && \
+    pip install --no-cache-dir tornado==5.1.1 && \
     python3 -m ipykernel.kernelspec
 
 #spark
