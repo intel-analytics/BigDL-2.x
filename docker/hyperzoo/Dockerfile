@@ -110,6 +110,7 @@ ENV PATH                                ${ANALYTICS_ZOO_HOME}/bin/cluster-servin
 ENV TINI_VERSION                        ${TINI_VERSION}
 
 COPY --from=copies-layer /opt /opt
+COPY --from=spark /sbin/tini /sbin/tini
 ADD ./start-notebook-spark.sh /opt
 ADD ./start-notebook-k8s.sh /opt
 
@@ -119,8 +120,6 @@ RUN mkdir -p /opt/analytics-zoo-examples/python && \
     apt-get install -y apt-utils vim curl nano wget unzip maven git && \
     apt-get install -y gcc g++ make && \
     apt-get install -y libsm6 libxext6 libxrender-dev && \
-    ln -s /lib /lib64 && \
-    apt install -y bash tini libc6 libpam-modules libnss3 && \
     rm /bin/sh && \
     ln -sv /bin/bash /bin/sh && \
     echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su && \
@@ -153,7 +152,9 @@ RUN mkdir -p /opt/analytics-zoo-examples/python && \
     pip install --no-cache-dir horovod==0.19.2 && \
 # chmod
     chmod a+x /opt/start-notebook-spark.sh && \
-    chmod a+x /opt/start-notebook-k8s.sh
+    chmod +x /sbin/tini && \
+    chmod a+x /opt/start-notebook-k8s.sh && \
+    cp /sbin/tini /usr/bin/tini
 
 WORKDIR /opt/spark/work-dir
 
