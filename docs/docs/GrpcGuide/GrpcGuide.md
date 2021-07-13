@@ -1,4 +1,7 @@
-Users can write proto and Service, and pass Service to a wrapped `ZooGrpcServer`
+# gRPC Guide
+This guide introduces how to use a wrapped gRPC Server in Analytics Zoo to ease the grpc service development.
+
+Users can write proto and Service, and pass Service to `ZooGrpcServer`
 
 A simple HelloWorld example proto could be
 ```
