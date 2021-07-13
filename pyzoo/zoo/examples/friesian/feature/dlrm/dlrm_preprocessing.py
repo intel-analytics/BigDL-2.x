@@ -67,7 +67,8 @@ def _parse_args():
                         help="The path to the folder of parquet files, "
                              "either a local path or an HDFS path.")
     parser.add_argument("--output_folder", type=str,
-                        help="The path to save the preprocessed data to parquet files. "
+                        help="The path to save the preprocessed data and "
+                             "the generated string indices to parquet files. "
                              "HDFS path is recommended.")
 
     args = parser.parse_args()
@@ -114,6 +115,10 @@ if __name__ == "__main__":
     paths = [os.path.join(args.input_folder, "day_%d.parquet" % i) for i in args.day_range]
     tbl = FeatureTable.read_parquet(paths)
     idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
+
+    if args.output_folder:
+        for idx in idx_list:
+            idx.write_parquet(args.output_folder)
 
     train_data = FeatureTable.read_parquet(paths[:-1])
     train_preprocessed = preprocess_and_save(train_data, idx_list, "train", args.output_folder)
