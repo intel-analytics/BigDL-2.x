@@ -176,8 +176,8 @@ object Frontend2 extends Supportive with EncryptSupportive {
         ioActor ! DequeueMessage()
         Thread.sleep(1)
       }
-      system.scheduler.schedule(1 milliseconds, 1 millisecond,
-        ioActor, DequeueMessage())(system.dispatcher)
+//      system.scheduler.schedule(1 milliseconds, 1 millisecond,
+//        ioActor, DequeueMessage())(system.dispatcher)
     }
   }
 
