@@ -583,7 +583,7 @@ def main():
 
         model_pretrained = YoloV3(
             DEFAULT_IMAGE_SIZE, training=True, classes=80)
-        model_pretrained.load_weights(options.checkpoint).expect_partial()
+        model_pretrained.load_weights(options.checkpoint)
 
         model.get_layer('yolo_darknet').set_weights(
             model_pretrained.get_layer('yolo_darknet').get_weights())
