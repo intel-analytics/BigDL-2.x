@@ -38,6 +38,7 @@ import org.apache.arrow.vector._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration.DurationInt
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.core.JsonParser
@@ -1041,13 +1042,12 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
   def predict(input: String): Seq[PredictionOutput[String]] = {
     logger.info(s"cluster serving predict as string, input:" + input)
     val id = UUID.randomUUID().toString
-    timing("put message send")() {
-      ioActor ! DataInputMessage(id, input)
-    }
+    system.scheduler.schedule(1 milliseconds, 1 millisecond,
+      ioActor, DequeueMessage())(system.dispatcher)
     val result = timing("response waiting")() {
       val id = UUID.randomUUID().toString
       val results = timing(s"query message wait for key $id")() {
-        Await.result(ioActor ? DequeueMessage(), timeout.duration)
+        Await.result(ioActor ? DataInputMessage(id, input), timeout.duration)
           .asInstanceOf[ModelOutputMessage].valueMap
       }
       val objectMapper = new ObjectMapper()
