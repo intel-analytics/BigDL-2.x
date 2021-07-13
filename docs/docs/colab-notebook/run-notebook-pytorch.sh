@@ -89,7 +89,7 @@ done
 echo "orca examples test start"
 
 dir=${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/examples
-pytorchFiles=("fashion_mnist_bigdl")
+pytorchFiles=("fashion_mnist_bigdl" "super_resolution")
 index=1
 
 set -e
