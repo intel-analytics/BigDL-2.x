@@ -7,8 +7,9 @@
     <groupId>com.intel.analytics.zoo</groupId>
     <artifactId>analytics-zoo-bigdl_${bigdl.version}-spark_${spark.version}</artifactId>
     <packaging>jar</packaging>
-    <version>0.11.0-SNAPSHOT</version>
+    <version>0.12.0-SNAPSHOT</version>
 
+    <name>analytics-zoo</name>
     <description>Big Data AI platform for distributed TensorFlow and PyTorch on Apache Spark.</description>
     <url>https://github.com/intel-analytics/analytics-zoo</url>
 
@@ -35,8 +36,8 @@
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>3.0.7</scalatest.version>
-        <spark.version>2.4.3</spark.version>
-        <bigdl.version>0.12.2</bigdl.version>
+        <spark.version>2.4.6</spark.version>
+        <bigdl.version>0.13.0</bigdl.version>
         <bigdl.artifactId>bigdl-SPARK_2.4</bigdl.artifactId>
         <maven-site-plugin.version>3.4</maven-site-plugin.version>
         <wagon-ssh.version>1.0</wagon-ssh.version>
@@ -109,7 +110,7 @@
                 <java.version>1.8</java.version>
                 <javac.version>1.8</javac.version>
                 <spark-version.project>2.4</spark-version.project>
-                <spark.version>2.4.3</spark.version>
+                <spark.version>2.4.6</spark.version>
                 <scala.major.version>2.11</scala.major.version>
                 <scala.version>2.11.8</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
@@ -125,6 +126,22 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
                     <version>1.7.5</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>log4j</groupId>
+                            <artifactId>log4j</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-api</artifactId>
+                    <version>2.14.1</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-core</artifactId>
+                    <version>2.14.1</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -161,6 +178,22 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
                     <version>1.7.5</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>log4j</groupId>
+                            <artifactId>log4j</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-api</artifactId>
+                    <version>2.14.1</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-core</artifactId>
+                    <version>2.14.1</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -218,12 +251,12 @@
                 <dependency>
                     <groupId>com.intel.analytics.zoo</groupId>
                     <artifactId>zoo-core-mkl-linux</artifactId>
-                    <version>0.11.0-SNAPSHOT</version>
+                    <version>0.12.0-SNAPSHOT</version>
                 </dependency>
                 <dependency>
                     <groupId>com.intel.analytics.zoo</groupId>
                     <artifactId>zoo-core-pmem-java-linux</artifactId>
-                    <version>0.11.0-SNAPSHOT</version>
+                    <version>0.12.0-SNAPSHOT</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -447,7 +480,7 @@
         <dependency>
             <groupId>com.intel.analytics.zoo</groupId>
             <artifactId>${core.artifactId}</artifactId>
-            <version>0.11.0-SNAPSHOT</version>
+            <version>0.12.0-SNAPSHOT</version>
             <type>${core.dependencyType}</type>
         </dependency>
         <dependency>
@@ -540,43 +573,43 @@
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-scala_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-scala_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-clients_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-api-scala-bridge_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-common</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-planner-blink_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-csv</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

@@ -69,6 +69,8 @@ class DatasetHandler:
                               validation_steps):
 
         config, local_batch_size = self._handle_batch_size(config)
+        config['rank'] = self.rank
+        config['size'] = self.size
         train_dataset = data_creator(config, config["batch_size"])
         if isinstance(train_dataset, list) and \
                 all([isinstance(x, ray.ObjectID) for x in train_dataset]):
@@ -99,6 +101,8 @@ class DatasetHandler:
 
     def handle_dataset_validation(self, data_creator, config, steps):
         config, local_batch_size = self._handle_batch_size(config)
+        config['rank'] = self.rank
+        config['size'] = self.size
         dataset = data_creator(config, config["batch_size"])
         if isinstance(dataset, list) and all([isinstance(x, ray.ObjectID) for x in dataset]):
             assert steps is not None, "steps must be provided for xshard"
@@ -242,18 +246,17 @@ class TFRunner:
         self.config = {} if config is None else config
         self.inter_op_parallelism = self.config.get("inter_op_parallelism", 1)
         self.intra_op_parallelism = self.config.get("intra_op_parallelism", 1)
-        import tensorflow as tf
-        tf.config.threading.set_inter_op_parallelism_threads(self.inter_op_parallelism)
-        tf.config.threading.set_intra_op_parallelism_threads(self.intra_op_parallelism)
-        os.environ["OMP_NUM_THREADS"] = self.config.get("OMP_NUM_THREADS",
-                                                        str(self.intra_op_parallelism))
-        os.environ["KMP_BLOCKING_TIME"] = self.config.get("KMP_BLOCKING_TIME",
-                                                          os.environ.get("KMP_BLOCKING_TIME", "0"))
-
         self.epoch = 0
         self.verbose = verbose
 
     def setup(self):
+        import tensorflow as tf
+        tf.config.threading.set_inter_op_parallelism_threads(self.inter_op_parallelism)
+        tf.config.threading.set_intra_op_parallelism_threads(self.intra_op_parallelism)
+        os.environ["KMP_BLOCKING_TIME"] = self.config.get("KMP_BLOCKING_TIME",
+                                                          os.environ.get("KMP_BLOCKING_TIME", "0"))
+
+    def setup_local(self):
         """Initializes the model."""
         logger.debug("Creating model")
         self.model = self.model_creator(self.config)

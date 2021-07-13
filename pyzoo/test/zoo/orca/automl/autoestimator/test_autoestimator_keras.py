@@ -75,9 +75,9 @@ class TestTFKerasAutoEstimator(TestCase):
                      n_sampling=2,
                      epochs=1,
                      metric="mse")
-        best_model = auto_est.get_best_model()
-        assert "hidden_size" in best_model.config
+        assert auto_est.get_best_model()
         best_config = auto_est.get_best_config()
+        assert "hidden_size" in best_config
         assert all(k in best_config.keys() for k in create_linear_search_space().keys())
 
     def test_fit_multiple_times(self):
