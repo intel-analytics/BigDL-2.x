@@ -1,11 +1,11 @@
 ## Analytics-zoo Cluster Serving Config
 
 
-# model path must be provided 
+# model path must be provided
 # modelPath: /path/to/model
 
 # name, default is serving_stream, you need to specify if running multiple servings
-# jobName: serving_stream
+# jobName:
 
 # default, None
 # postProcessing:
@@ -14,7 +14,7 @@
 # imageResize:
 
 # default, false, if input is already batched NdArray, set true
-# inputAlreadyBatched: true
+# inputAlreadyBatched:
 
 ######## Performance Configuration
 # default, number of cores per machine
