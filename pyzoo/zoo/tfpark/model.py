@@ -74,7 +74,6 @@ class KerasModel(object):
         self.model.save(path, overwrite=overwrite)
 
     @staticmethod
-    @enable_multi_fs_load
     def load_model(path):
         """
         Load an existing keras model (with weights) from HDF5 file.

@@ -75,16 +75,16 @@ def append_suffix(prefix, path):
 def enable_multi_fs_save(save_func):
 
     @functools.wraps(save_func)
-    def save_mult_fs(path, *args, **kwargs):
+    def save_mult_fs(obj, path, *args, **kwargs):
         if is_local_path(path):
-            return save_func(path, *args, **kwargs)
+            return save_func(obj, path, *args, **kwargs)
         else:
             file_name = str(uuid.uuid1())
             file_name = append_suffix(file_name, path)
             temp_path = os.path.join(tempfile.gettempdir(), file_name)
 
             try:
-                result = save_func(temp_path, *args, **kwargs)
+                result = save_func(obj, temp_path, *args, **kwargs)
                 if "overwrite" in kwargs:
                     put_local_file_to_remote(temp_path, path, over_write=kwargs['overwrite'])
                 else:
@@ -99,16 +99,16 @@ def enable_multi_fs_save(save_func):
 def enable_multi_fs_load(load_func):
 
     @functools.wraps(load_func)
-    def multi_fs_load(path, *args, **kwargs):
+    def multi_fs_load(obj, path, *args, **kwargs):
         if is_local_path(path):
-            return load_func(path, *args, **kwargs)
+            return load_func(obj, path, *args, **kwargs)
         else:
             file_name = str(uuid.uuid1())
             file_name = append_suffix(file_name, path)
             temp_path = os.path.join(tempfile.gettempdir(), file_name)
             get_remote_file_to_local(path, temp_path)
             try:
-                return load_func(temp_path, *args, **kwargs)
+                return load_func(obj, temp_path, *args, **kwargs)
             finally:
                 os.remove(temp_path)
 

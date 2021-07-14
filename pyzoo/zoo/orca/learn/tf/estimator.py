@@ -348,7 +348,6 @@ class Estimator(SparkEstimator):
         return KerasEstimator(keras_model, metrics, model_dir, optimizer)
 
     @staticmethod
-    @enable_multi_fs_load
     def load_keras_model(path):
         """
         Create Estimator by loading an existing keras model (with weights) from HDF5 file.
