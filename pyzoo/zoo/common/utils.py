@@ -95,6 +95,22 @@ def enable_multi_fs_save(save_func):
 
     return save_mult_fs
 
+def enable_multi_fs_load_static(load_func):
+    @functools.wraps(load_func)
+    def multi_fs_load(path, *args, **kwargs):
+        if is_local_path(path):
+            return load_func(path, *args, **kwargs)
+        else:
+            file_name = str(uuid.uuid1())
+            file_name = append_suffix(file_name, path)
+            temp_path = os.path.join(tempfile.gettempdir(), file_name)
+            get_remote_file_to_local(path, temp_path)
+            try:
+                return load_func(temp_path, *args, **kwargs)
+            finally:
+                os.remove(temp_path)
+
+    return multi_fs_load
 
 def enable_multi_fs_load(load_func):
 

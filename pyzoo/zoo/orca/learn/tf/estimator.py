@@ -18,7 +18,8 @@ from pyspark.sql import DataFrame
 from bigdl.optim.optimizer import MaxEpoch
 
 from zoo.tfpark.tf_dataset import _standardize_keras_target_data
-from zoo.common.utils import enable_multi_fs_load, enable_multi_fs_save
+from zoo.common.utils import enable_multi_fs_load, enable_multi_fs_load_static, \
+    enable_multi_fs_save
 from zoo.orca import OrcaContext
 from zoo.orca.data.tf.data import Dataset, TFDataDataset2
 from zoo.orca.data import SparkXShards
@@ -348,6 +349,7 @@ class Estimator(SparkEstimator):
         return KerasEstimator(keras_model, metrics, model_dir, optimizer)
 
     @staticmethod
+    @enable_multi_fs_load_static
     def load_keras_model(path):
         """
         Create Estimator by loading an existing keras model (with weights) from HDF5 file.
