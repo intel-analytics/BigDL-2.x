@@ -70,7 +70,7 @@ class PreProcessing()
     try {
 
       val instance = if (serde == "stream") {
-        Seq(JsonInputDeserializer.deserialize(s))
+        Seq(JsonInputDeserializer.deserialize(s, this))
 
       } else {
         byteBuffer = java.util.Base64.getDecoder.decode(s)

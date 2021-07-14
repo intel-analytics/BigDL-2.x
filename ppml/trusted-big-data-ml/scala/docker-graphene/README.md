@@ -47,10 +47,10 @@ sudo bash ../../../scripts/generate-password.sh used_password_when_generate_keys
 
 #### In spark local mode
 ##### Start the container to run spark applications in ppml
-Before you run the following commands to start the container, you need to modify the paths in `deploy-local-big-data-ml.sh`. <br>
+Before you run the following commands to start the container, you need to modify the paths in `./deploy-local-spark-sgx.sh`. <br>
 Then run the following commands: <br>
 ```bash
-./deploy-local-big-data-ml.sh
+./deploy-local-spark-sgx.sh
 sudo docker exec -it spark-local bash
 cd /ppml/trusted-big-data-ml
 ```
@@ -67,7 +67,7 @@ Add these code in `start-spark-local-pi-sgx.sh`: <br>
 set -x
 
 SGX=1 ./pal_loader /opt/jdk8/bin/java \
-        -cp '/ppml/trusted-big-data-ml/work/spark-2.4.3/examples/jars/spark-examples_2.11-2.4.3.jar:/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+        -cp '/ppml/trusted-big-data-ml/work/spark-2.4.6/examples/jars/spark-examples_2.11-2.4.6.jar:/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*' \
         -Xmx10g \
         -Dbigdl.mklNumThreads=1 \
         -XX:ActiveProcessorCount=24 \
@@ -86,7 +86,7 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
         --executor-cores 4 \
         --total-executor-cores 4 \
         --executor-memory 10G \
-        /ppml/trusted-big-data-ml/work/spark-2.4.3/examples/jars/spark-examples_2.11-2.4.3.jar | tee spark.local.pi.sgx.log
+        /ppml/trusted-big-data-ml/work/spark-2.4.6/examples/jars/spark-examples_2.11-2.4.6.jar | tee spark.local.pi.sgx.log
 ```
 
 Then run the script to run pi test in spark: <br>
@@ -143,7 +143,7 @@ Please modify HDFS_NAMENODE_IP in this script and then add these code in the `st
 set -x
 
 SGX=1 ./pal_loader /opt/jdk8/bin/java \
-        -cp '/ppml/trusted-big-data-ml/work/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar:/ppml/trusted-big-data-ml/work/tpch-spark/dbgen/*:/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.3/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.3/jars/*' \
+        -cp '/ppml/trusted-big-data-ml/work/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar:/ppml/trusted-big-data-ml/work/tpch-spark/dbgen/*:/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*' \
         -Xmx10g \
         -Dbigdl.mklNumThreads=1 \
         -XX:ActiveProcessorCount=24 \
