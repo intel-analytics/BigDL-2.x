@@ -74,7 +74,7 @@ def append_suffix(prefix, path):
 
 def enable_multi_fs_save(save_func):
 
-    @functools.wraps
+    @functools.wraps(save_func)
     def save_mult_fs(path, *args, **kwargs):
         if is_local_path(path):
             return save_func(path, *args, **kwargs)
@@ -98,7 +98,7 @@ def enable_multi_fs_save(save_func):
 
 def enable_multi_fs_load(load_func):
 
-    @functools.wraps
+    @functools.wraps(load_func)
     def multi_fs_load(path, *args, **kwargs):
         if is_local_path(path):
             return load_func(path, *args, **kwargs)
