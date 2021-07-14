@@ -39,7 +39,7 @@ object RedisUtils {
     var redisInfo = RedisUtils.getMapFromInfo(db.info())
     if (redisInfo("used_memory").toLong >=
       redisInfo("maxmemory").toLong * inputThreshold) {
-      synchronized {
+      this.synchronized {
         redisInfo = RedisUtils.getMapFromInfo(db.info())
         if (redisInfo("maxmemory").toLong > 0 && redisInfo("used_memory").toLong >=
           redisInfo("maxmemory").toLong * inputThreshold) {
@@ -128,7 +128,7 @@ object RedisUtils {
       System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStoreToken)
     }
     if (jedisPool == null) {
-      synchronized {
+      this.synchronized {
         if (jedisPool == null) {
           logger.info(
             s"Creating JedisPool at ${params.redisHost}:${params.redisPort}")
