@@ -27,7 +27,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.codahale.metrics.{MetricRegistry, Timer}
-import com.intel.analytics.zoo.serving.http.FrontEndApp.metrics
+
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
@@ -55,6 +55,7 @@ object MockMultipleServingHttpClient extends App with Supportive {
     val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "Caffe",
       weightPath, 1, "instance", features)
     val inferenceServable = new InferenceModelServable(inferenceModelMetaData, timer)
+
     inferenceServable.load()
     val content =
       """{
@@ -74,6 +75,7 @@ object MockMultipleServingHttpClient extends App with Supportive {
       1, "instance", null)
 
     val inferenceServable = new InferenceModelServable(inferenceModelMetaData, timer)
+
     inferenceServable.load()
   }
 
@@ -85,6 +87,7 @@ object MockMultipleServingHttpClient extends App with Supportive {
       weightPath, 1, "instance", null)
 
     val inferenceServable = new InferenceModelServable(inferenceModelMetaData, timer)
+
   }
 
   // Test Model Retrive Path. Starting FrontEnd App with MultiServing Tag

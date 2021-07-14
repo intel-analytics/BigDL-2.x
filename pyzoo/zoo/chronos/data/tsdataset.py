@@ -58,6 +58,7 @@ class TSDataset:
         self.roll_feature_df = None
         self.roll_addional_feature = None
         self.scaler = None
+        self.scaler_index = [i for i in range(len(self.target_col))]
         self.id_sensitive = None
 
         self._check_basic_invariants()
@@ -186,7 +187,7 @@ class TSDataset:
         self.df = pd.concat(df_list)
         return self
 
-    def resample(self, interval, start_time, end_time, merge_mode="mean"):
+    def resample(self, interval, start_time=None, end_time=None, merge_mode="mean"):
         '''
         Resample on a new interval for each univariate time series distinguished
         by id_col and feature_col.
@@ -424,24 +425,24 @@ class TSDataset:
         roll_feature_df = None if self.roll_feature_df is None \
             else self.roll_feature_df[additional_feature_col]
 
-        # get rolling result for each sub dataframe
-        rolling_result = [roll_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
-                                                    roll_feature_df=roll_feature_df,
-                                                    lookback=lookback,
-                                                    horizon=horizon,
-                                                    feature_col=feature_col,
-                                                    target_col=target_col)
-                          for id_name in self._id_list]
+        rolling_result =\
+            self.df.groupby([self.id_col])\
+                   .apply(lambda df: roll_timeseries_dataframe(df=df,
+                                                               roll_feature_df=roll_feature_df,
+                                                               lookback=lookback,
+                                                               horizon=horizon,
+                                                               feature_col=feature_col,
+                                                               target_col=target_col))
 
         # concat the result on required axis
         concat_axis = 2 if id_sensitive else 0
         self.numpy_x = np.concatenate([rolling_result[i][0]
-                                       for i in range(num_id)],
-                                      axis=concat_axis)
+                                       for i in self._id_list],
+                                      axis=concat_axis).astype(np.float64)
         if horizon != 0:
             self.numpy_y = np.concatenate([rolling_result[i][1]
-                                           for i in range(num_id)],
-                                          axis=concat_axis)
+                                           for i in self._id_list],
+                                          axis=concat_axis).astype(np.float64)
         else:
             self.numpy_y = None
 
@@ -453,7 +454,15 @@ class TSDataset:
                                        feature_start_idx+(i+1)*num_feature_col))
                             for i in range(num_id)]
             reindex_list = functools.reduce(lambda a, b: a+b, reindex_list)
-            self.numpy_x = self.numpy_x[:, :, reindex_list]
+            sorted_index = sorted(range(len(reindex_list)), key=reindex_list.__getitem__)
+            self.numpy_x = self.numpy_x[:, :, sorted_index]
+
+        # scaler index
+        num_roll_target = len(self.roll_target)
+        repeat_factor = len(self._id_list) if self.id_sensitive else 1
+        scaler_index = [self.target_col.index(self.roll_target[i])
+                        for i in range(num_roll_target)] * repeat_factor
+        self.scaler_index = scaler_index
 
         return self
 
@@ -461,7 +470,8 @@ class TSDataset:
         '''
         Export rolling result in form of a tuple of numpy ndarray (x, y).
 
-        :return: a 2-dim tuple. each item is a 3d numpy ndarray.
+        :return: a 2-dim tuple. each item is a 3d numpy ndarray. The ndarray
+                 is casted to float64.
         '''
         if self.numpy_x is None:
             raise RuntimeError("Please call \"roll\" method\
@@ -528,7 +538,7 @@ class TSDataset:
             self.scaler.inverse_transform(self.df[self.target_col + feature_col])
         return self
 
-    def _unscale_numpy(self, data):
+    def unscale_numpy(self, data):
         '''
         Unscale the time series forecaster's numpy prediction result/ground truth.
 
@@ -537,11 +547,7 @@ class TSDataset:
 
         :return: the unscaled numpy ndarray.
         '''
-        num_roll_target = len(self.roll_target)
-        repeat_factor = len(self._id_list) if self.id_sensitive else 1
-        scaler_index = [self.target_col.index(self.roll_target[i])
-                        for i in range(num_roll_target)] * repeat_factor
-        return unscale_timeseries_numpy(data, self.scaler, scaler_index)
+        return unscale_timeseries_numpy(data, self.scaler, self.scaler_index)
 
     def _check_basic_invariants(self):
         '''

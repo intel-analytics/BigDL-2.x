@@ -45,7 +45,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode, TextNode}
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer, JsonNode, ObjectMapper}
 import com.google.common.collect.ImmutableList
+
 import com.intel.analytics.zoo.serving.http.FrontEndApp.{handleResponseTimer, makeActivityTimer, metrics, overallRequestTimer, system, timeout, timing, waitRedisTimer}
+
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.opencv.imgcodecs.Imgcodecs
@@ -53,7 +55,9 @@ import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
+
 import com.intel.analytics.zoo.serving.grpc.{ClusterServingGRPCMetaData, InferenceModelGRPCMetaData}
+
 import com.intel.analytics.zoo.serving.serialization.StreamSerializer
 import org.slf4j.LoggerFactory
 
@@ -888,6 +892,7 @@ abstract class Servable(modelMetaData: ModelMetaData) {
   def getMetaData: ModelMetaData = modelMetaData
 }
 
+
 class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData,
                              purePredictTimer: Timer)
   extends Servable(inferenceModelMetaData) {
@@ -1007,7 +1012,6 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
         clusterServingMetaData.redisTrustStoreToken))
       system.actorOf(redisGetterProps, name = redisGetterName)
     }
-    println("redisgetter:" + redisGetter)
 
     val querierNum = 1000
     querierQueue = timing(s"queriers initialized.")() {

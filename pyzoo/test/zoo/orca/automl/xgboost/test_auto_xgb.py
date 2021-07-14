@@ -79,8 +79,8 @@ class TestAutoXGBRegressor(TestCase):
                          epochs=1,
                          metric="mae")
         best_model = auto_xgb_reg.get_best_model()
-        assert 5 <= best_model.model.n_estimators <= 10
-        assert 2 <= best_model.model.max_depth <= 5
+        assert 5 <= best_model.n_estimators <= 10
+        assert 2 <= best_model.max_depth <= 5
         best_config = auto_xgb_reg.get_best_config()
         assert all(k in best_config.keys() for k in get_xgb_search_space().keys())
 
@@ -101,6 +101,34 @@ class TestAutoXGBRegressor(TestCase):
                          epochs=1,
                          validation_data=validation_data,
                          metric="logloss",
+                         metric_mode="min",
+                         search_space=get_xgb_search_space(),
+                         n_sampling=4)
+
+    def test_metric_func(self):
+        auto_xgb_reg = AutoXGBRegressor(cpus_per_trial=2,
+                                        name="auto_xgb_regressor",
+                                        tree_method='hist')
+        data, validation_data = get_data()
+
+        def pyrmsle(y_true, y_pred):
+            y_pred[y_pred < -1] = -1 + 1e-6
+            elements = np.power(np.log1p(y_true) - np.log1p(y_pred), 2)
+            return float(np.sqrt(np.sum(elements) / len(y_true)))
+
+        with pytest.raises(ValueError) as exeinfo:
+            auto_xgb_reg.fit(data=data,
+                             epochs=1,
+                             validation_data=validation_data,
+                             metric=pyrmsle,
+                             search_space=get_xgb_search_space(),
+                             n_sampling=4)
+        assert "metric_mode" in str(exeinfo)
+
+        auto_xgb_reg.fit(data=data,
+                         epochs=1,
+                         validation_data=validation_data,
+                         metric=pyrmsle,
                          metric_mode="min",
                          search_space=get_xgb_search_space(),
                          n_sampling=4)

@@ -195,6 +195,6 @@ class BasePredictor(object):
                      scheduler_params=self.scheduler_params,
                      metric=metric)
 
-        best_model = auto_est.get_best_model()
+        best_model = auto_est._get_best_automl_model()
         pipeline = TimeSequencePipeline(name=self.name, model=best_model)
         return pipeline

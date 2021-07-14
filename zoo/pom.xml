@@ -7,7 +7,9 @@
     <groupId>com.intel.analytics.zoo</groupId>
     <artifactId>analytics-zoo-bigdl_${bigdl.version}-spark_${spark.version}</artifactId>
     <packaging>jar</packaging>
-    <version>0.11.0-SNAPSHOT</version>
+    <version>0.12.0-SNAPSHOT</version>
+
+    <name>analytics-zoo</name>
 
     <description>Big Data AI platform for distributed TensorFlow and PyTorch on Apache Spark.</description>
     <url>https://github.com/intel-analytics/analytics-zoo</url>
@@ -30,6 +32,7 @@
         <java.version>1.7</java.version>
         <javac.version>1.7</javac.version>
         <scala-library-scope>compile</scala-library-scope>
+        <spark-mllib-scope>compile</spark-mllib-scope>
         <scala.major.version>2.11</scala.major.version>
         <akka.http.version>10.1.11</akka.http.version>
         <akka.actor.version>2.5.26</akka.actor.version>
@@ -37,8 +40,8 @@
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>3.0.7</scalatest.version>
-        <spark.version>2.4.3</spark.version>
-        <bigdl.version>0.12.2</bigdl.version>
+        <spark.version>2.4.6</spark.version>
+        <bigdl.version>0.13.0</bigdl.version>
         <bigdl.artifactId>bigdl-SPARK_2.4</bigdl.artifactId>
         <maven-site-plugin.version>3.4</maven-site-plugin.version>
         <wagon-ssh.version>1.0</wagon-ssh.version>
@@ -113,7 +116,7 @@
                 <java.version>1.8</java.version>
                 <javac.version>1.8</javac.version>
                 <spark-version.project>2.4</spark-version.project>
-                <spark.version>2.4.3</spark.version>
+                <spark.version>2.4.6</spark.version>
                 <scala.major.version>2.11</scala.major.version>
                 <scala.version>2.11.8</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
@@ -129,6 +132,22 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
                     <version>1.7.5</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>log4j</groupId>
+                            <artifactId>log4j</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-api</artifactId>
+                    <version>2.14.1</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-core</artifactId>
+                    <version>2.14.1</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -171,6 +190,22 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
                     <version>1.7.5</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>log4j</groupId>
+                            <artifactId>log4j</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-api</artifactId>
+                    <version>2.14.1</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-core</artifactId>
+                    <version>2.14.1</version>
                 </dependency>
                 <dependency>
                     <groupId>com.lightbend.akka.grpc</groupId>
@@ -241,18 +276,19 @@
             <properties>
                 <core.artifactId>zoo-core-dist-mac</core.artifactId>
                 <core.dependencyType>pom</core.dependencyType>
+                <spark-mllib-scope>provided</spark-mllib-scope>
             </properties>
             <!--these are not supported right now, added to make the project compiles-->
             <dependencies>
                 <dependency>
                     <groupId>com.intel.analytics.zoo</groupId>
                     <artifactId>zoo-core-mkl-linux</artifactId>
-                    <version>0.11.0-SNAPSHOT</version>
+                    <version>0.12.0-SNAPSHOT</version>
                 </dependency>
                 <dependency>
                     <groupId>com.intel.analytics.zoo</groupId>
                     <artifactId>zoo-core-pmem-java-linux</artifactId>
-                    <version>0.11.0-SNAPSHOT</version>
+                    <version>0.12.0-SNAPSHOT</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -393,7 +429,7 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
-            <scope>${scala-library-scope}</scope>
+            <scope>${spark-mllib-scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.intel.analytics.bigdl</groupId>
@@ -476,7 +512,7 @@
         <dependency>
             <groupId>com.intel.analytics.zoo</groupId>
             <artifactId>${core.artifactId}</artifactId>
-            <version>0.11.0-SNAPSHOT</version>
+            <version>0.12.0-SNAPSHOT</version>
             <type>${core.dependencyType}</type>
         </dependency>
         <dependency>
@@ -574,43 +610,43 @@
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-scala_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-scala_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-clients_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-api-scala-bridge_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-common</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-planner-blink_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-csv</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -855,76 +891,78 @@
                     </relocations>
                 </configuration>
                 <executions>
-                    <!--<execution>-->
-                        <!--<id>shade</id>-->
-                        <!--<phase>package</phase>-->
-                        <!--<configuration>-->
-                            <!--<artifactSet>-->
-                                <!--<includes>-->
-                                    <!--<include>org.spark-project.spark:unused</include>-->
-                                    <!--<include>com.google.protobuf</include>-->
-                                    <!--<include>io.netty</include>-->
-                                    <!--<include>org.apache.arrow</include>-->
-                                <!--</includes>-->
-                                <!--<excludes>-->
-                                    <!--<exclude>org.apache.spark:*</exclude>-->
-                                    <!--<exclude>net.sf.py4j:*</exclude>-->
-                                    <!--<exclude>org.apache.hadoop:*</exclude>-->
-                                    <!--<exclude>org.apache.parquet:*</exclude>-->
-                                    <!--<exclude>org.apache.orc:*</exclude>-->
-                                    <!--<exclude>org.apache.avro:*</exclude>-->
-                                    <!--<exclude>org.apache.ivy:*</exclude>-->
-                                    <!--<exclude>org.xerial.snappy:*</exclude>-->
-                                    <!--<exclude>org.glassfish.hk2:*</exclude>-->
-                                    <!--<exclude>org.glassfish.jersey.core:*</exclude>-->
-                                    <!--<exclude>org.codehaus.jackson:*</exclude>-->
-                                    <!--<exclude>org.codehaus.janino:janino</exclude>-->
-                                    <!--<exclude>io.netty:netty</exclude>-->
-                                    <!--<exclude>org.apache.commons:commons-math3</exclude>-->
-                                    <!--<exclude>org.apache.commons:commons-compress</exclude>-->
-                                    <!--<exclude>org.scala-lang:scala-reflect</exclude>-->
-                                    <!--<exclude>xerces:xercesImpl</exclude>-->
-                                <!--</excludes>-->
-                            <!--</artifactSet>-->
-                        <!--</configuration>-->
-                        <!--<goals>-->
-                            <!--<goal>shade</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
 
-                    <!--<execution>-->
-                        <!--<id>without-spark</id>-->
-                        <!--<phase>package</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>shade</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<shadedArtifactAttached>true</shadedArtifactAttached>-->
-                            <!--<shadedClassifierName>jar-with-dependencies</shadedClassifierName>-->
-                            <!--<artifactSet>-->
-                                <!--<excludes>-->
-                                    <!--<exclude>org.scala-lang:scala-library</exclude>-->
-                                    <!--<exclude>org.apache.spark:*</exclude>-->
-                                    <!--<exclude>net.sf.py4j:*</exclude>-->
-                                    <!--<exclude>org.apache.hadoop:*</exclude>-->
-                                    <!--<exclude>org.apache.parquet:*</exclude>-->
-                                    <!--<exclude>org.apache.orc:*</exclude>-->
-                                    <!--<exclude>org.apache.avro:*</exclude>-->
-                                    <!--<exclude>org.apache.ivy:*</exclude>-->
-                                    <!--<exclude>org.xerial.snappy:*</exclude>-->
-                                    <!--<exclude>org.glassfish.hk2:*</exclude>-->
-                                    <!--<exclude>org.glassfish.jersey.core:*</exclude>-->
-                                    <!--<exclude>org.codehaus.jackson:*</exclude>-->
-                                    <!--<exclude>org.codehaus.janino:janino</exclude>-->
-                                    <!--<exclude>io.netty:netty</exclude>-->
-                                    <!--<exclude>org.apache.commons:commons-math3</exclude>-->
-                                    <!--<exclude>org.apache.commons:commons-compress</exclude>-->
-                                    <!--<exclude>org.scala-lang:scala-reflect</exclude>-->
-                                    <!--<exclude>xerces:xercesImpl</exclude>-->
-                                <!--</excludes>-->
-                            <!--</artifactSet>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
+                    <execution>
+                        <id>shade</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <artifactSet>
+                                <includes>
+                                    <include>org.spark-project.spark:unused</include>
+                                    <include>com.google.protobuf</include>
+                                    <include>io.netty</include>
+                                    <include>org.apache.arrow</include>
+                                </includes>
+                                <excludes>
+                                    <exclude>org.apache.spark:*</exclude>
+                                    <exclude>net.sf.py4j:*</exclude>
+                                    <exclude>org.apache.hadoop:*</exclude>
+                                    <exclude>org.apache.parquet:*</exclude>
+                                    <exclude>org.apache.orc:*</exclude>
+                                    <exclude>org.apache.avro:*</exclude>
+                                    <exclude>org.apache.ivy:*</exclude>
+                                    <exclude>org.xerial.snappy:*</exclude>
+                                    <exclude>org.glassfish.hk2:*</exclude>
+                                    <exclude>org.glassfish.jersey.core:*</exclude>
+                                    <exclude>org.codehaus.jackson:*</exclude>
+                                    <exclude>org.codehaus.janino:janino</exclude>
+                                    <exclude>io.netty:netty</exclude>
+                                    <exclude>org.apache.commons:commons-math3</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
+                                    <exclude>xerces:xercesImpl</exclude>
+                                </excludes>
+                            </artifactSet>
+                        </configuration>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+
+                    <execution>
+                        <id>without-spark</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>jar-with-dependencies</shadedClassifierName>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.scala-lang:scala-library</exclude>
+                                    <exclude>org.apache.spark:*</exclude>
+                                    <exclude>net.sf.py4j:*</exclude>
+                                    <exclude>org.apache.hadoop:*</exclude>
+                                    <exclude>org.apache.parquet:*</exclude>
+                                    <exclude>org.apache.orc:*</exclude>
+                                    <exclude>org.apache.avro:*</exclude>
+                                    <exclude>org.apache.ivy:*</exclude>
+                                    <exclude>org.xerial.snappy:*</exclude>
+                                    <exclude>org.glassfish.hk2:*</exclude>
+                                    <exclude>org.glassfish.jersey.core:*</exclude>
+                                    <exclude>org.codehaus.jackson:*</exclude>
+                                    <exclude>org.codehaus.janino:janino</exclude>
+                                    <exclude>io.netty:netty</exclude>
+                                    <exclude>org.apache.commons:commons-math3</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
+                                    <exclude>xerces:xercesImpl</exclude>
+                                </excludes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+
 
                     <!--<execution>-->
                         <!--<id>http</id>-->
@@ -980,6 +1018,60 @@
                             </transformers>
                             <artifactSet>
                                 <excludes>
+                                    <exclude>ml.dmlc:xgboost4j</exclude>
+                                    <exclude>black.ninia:jep</exclude>
+                                    <exclude>org.tensorflow:tensorflow-hadoop</exclude>
+                                    <exclude>it.unimi.dsi:fastutil</exclude>
+                                </excludes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>flink-udf</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>flink-udf</shadedClassifierName>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>reference.conf</resource>
+                                </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <Main-Class>com.intel.analytics.zoo.serving.http.Frontend2</Main-Class>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>ml.dmlc:xgboost4j</exclude>
+                                    <exclude>black.ninia:jep</exclude>
+                                    <exclude>org.tensorflow:tensorflow-hadoop</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-dist-mac</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
+                                    <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
+                                    <exclude>org.apache.spark:*</exclude>
+                                    <exclude>net.sf.py4j:*</exclude>
+                                    <exclude>org.apache.hadoop:*</exclude>
+                                    <exclude>org.apache.parquet:*</exclude>
+                                    <exclude>org.apache.orc:*</exclude>
+                                    <exclude>org.apache.avro:*</exclude>
+                                    <exclude>org.apache.ivy:*</exclude>
+                                    <exclude>org.xerial.snappy:*</exclude>
+                                    <exclude>org.glassfish.hk2:*</exclude>
+                                    <exclude>org.glassfish.jersey.core:*</exclude>
+                                    <exclude>org.codehaus.jackson:*</exclude>
+                                    <exclude>org.codehaus.janino:janino</exclude>
+                                    <exclude>io.netty:netty</exclude>
+                                    <exclude>org.apache.commons:commons-math3</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
+                                    <exclude>xerces:xercesImpl</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
