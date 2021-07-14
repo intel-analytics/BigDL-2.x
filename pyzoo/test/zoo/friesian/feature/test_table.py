@@ -653,12 +653,29 @@ class TestTable(TestCase):
     def test_drop_duplicates(self):
         spark = OrcaContext.get_spark_session()
         schema = StructType([StructField("name", StringType(), True),
+                             StructField("grade", StringType(), True),
                              StructField("id", IntegerType(), True)])
-        data = [("jack", 1), ("jack", 1), ("jack", 2)]
+        data = [("jack", "a", 1), ("jack", "a", 3), ("jack", "b", 2), ("amy", "a", 2),
+                ("amy", "a", 5), ("amy", "a", 4)]
         tbl = FeatureTable(spark.createDataFrame(data, schema))
-        assert tbl.drop_duplicates().df.count() == 2
-        assert tbl.drop_duplicates(["name"]).df.count() == 1
-        assert tbl.drop_duplicates(["id"]).df.count() == 2
+        tbl2 = tbl.drop_duplicates(subset=['name', 'grade'], order='id', keep_min=True)
+        tbl2.df.show()
+        assert tbl2.size() == 3
+        assert tbl2.df.filter((tbl2.df.name == 'jack') & (tbl2.df.grade == 'a'))\
+            .select("id").collect()[0]["id"] == 1
+        assert tbl2.df.filter((tbl2.df.name == 'jack') & (tbl2.df.grade == 'b'))\
+            .select("id").collect()[0]["id"] == 2
+        assert tbl2.df.filter((tbl2.df.name == 'amy') & (tbl2.df.grade == 'a'))\
+            .select("id").collect()[0]["id"] == 2
+        tbl3 = tbl.drop_duplicates(subset=['name', 'grade'], order='id', keep_min=False)
+        tbl3.df.show()
+        assert tbl3.size() == 3
+        assert tbl3.df.filter((tbl2.df.name == 'jack') & (tbl2.df.grade == 'a'))\
+            .select("id").collect()[0]["id"] == 3
+        assert tbl3.df.filter((tbl2.df.name == 'jack') & (tbl2.df.grade == 'b'))\
+            .select("id").collect()[0]["id"] == 2
+        assert tbl3.df.filter((tbl2.df.name == 'amy') & (tbl2.df.grade == 'a'))\
+            .select("id").collect()[0]["id"] == 5
 
     def test_join(self):
         spark = OrcaContext.get_spark_session()

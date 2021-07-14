@@ -29,9 +29,9 @@ from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
 
-from pyspark.sql.functions import col as pyspark_col, udf, array, broadcast, lit
-from pyspark.sql.functions import col as pyspark_col, concat, udf, array, broadcast, lit
-from pyspark.sql import Row
+from pyspark.sql.functions import col as pyspark_col, concat, udf, array, broadcast, \
+    lit, rank, col, monotonically_increasing_id
+from pyspark.sql import Row, Window
 import pyspark.sql.functions as F
 
 from zoo.orca import OrcaContext
@@ -598,11 +598,14 @@ class Table:
             df = df.distinct()
         return self._clone(df)
 
-    def drop_duplicates(self, subset=None):
+    def drop_duplicates(self, subset=None, order=None, keep_min=True):
         """
         Return a new table with duplicate rows removed.
         :param subset: str or a list of str, specifies which column(s) to be considered when
         referring to duplication.
+        :param order: str, specifies the column to determine which item to keep when duplicated
+        items are found.
+        :param keep_min: bool, specifies keep the smallest one or largest one.
 
         :return: a new table with duplicate rows removed.
         """
@@ -611,7 +614,15 @@ class Table:
         if not isinstance(subset, list):
             subset = [subset]
         check_col_exists(self.df, subset)
-        return self._clone(self.df.dropDuplicates(subset))
+        check_col_exists(self.df, [order])
+        if keep_min:
+            window = Window.partitionBy(subset).orderBy(order)
+        else:
+            window = Window.partitionBy(subset).orderBy(col(order).desc())
+        df = self.df.withColumn('tiebreak', monotonically_increasing_id())\
+            .withColumn('rank', rank().over(window))
+        df = df.filter(col('rank') == 1).drop('rank', 'tiebreak')
+        return self._clone(df)
 
     def cut_bins(self, bins, column, labels=None, name="bucket", drop=True):
         """
