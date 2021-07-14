@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.serving.pipeline
 
-import com.intel.analytics.zoo.serving.utils.{ConfigParser, Conventions}
+import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Conventions}
 
 import scala.collection.JavaConverters._
 import redis.clients.jedis.exceptions.JedisConnectionException
@@ -117,8 +117,8 @@ object RedisUtils {
     val streamValue = Map[String, String]("value" -> value).asJava
     ppl.xadd(streamKey, StreamEntryID.NEW_ENTRY, streamValue)
   }
-  def initializeRedis(): Unit = {
-    val configParser = new ConfigParser("config.yaml")
+  def initializeRedis(helperSer: ClusterServingHelper): Unit = {
+    val configParser = new ConfigParser(helperSer.configPath)
     val params = configParser.loadConfig()
     if (params.redisSecureEnabled) {
       System.setProperty("javax.net.ssl.trustStore", params.redisSecureTrustStorePath)

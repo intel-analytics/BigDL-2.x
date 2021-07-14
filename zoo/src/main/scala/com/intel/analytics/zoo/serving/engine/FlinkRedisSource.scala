@@ -38,7 +38,7 @@ class FlinkRedisSource()
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
     helper = ClusterServing.helper
-    RedisUtils.initializeRedis()
+    RedisUtils.initializeRedis(helper)
     jedis = RedisUtils.getRedisClient(RedisUtils.jedisPool)
     RedisUtils.createRedisGroupIfNotExist(jedis, helper.jobName)
   }

@@ -46,8 +46,7 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX +
         logger.info(s"${System.currentTimeMillis()} Input enqueue ${message.id} at time ")
         enqueue(redisInputQueue, message)
 
-        requestMap += (Conventions.RESULT_PREFIX +
-          Conventions.SERVING_STREAM_DEFAULT_NAME + ":" + message.id -> sender())
+        requestMap += (redisOutputQueue + message.id -> sender())
       }
     case message: DequeueMessage =>
       if (!requestMap.isEmpty) {

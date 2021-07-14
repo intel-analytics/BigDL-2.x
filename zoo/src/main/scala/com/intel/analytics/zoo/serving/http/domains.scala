@@ -989,6 +989,7 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
   }
   var ioActor: ActorRef = _
 
+
   def load(): Unit = {
     val redisPutterName = s"redis-putter-${clusterServingMetaData.modelName}" +
       s"-${clusterServingMetaData.modelVersion}"
@@ -1035,15 +1036,17 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
     val actorName = s"redis-ioActor-getter-${clusterServingMetaData.modelName}" +
       s"-${clusterServingMetaData.modelVersion}"
     ioActor = timing(s"$actorName initialized.")() {
-      val getterProps = Props(new RedisIOActor(jedisPool = jedisPool))
+      val getterProps = Props(new RedisIOActor(jedisPool = jedisPool,
+        redisOutputQueue = clusterServingMetaData.redisOutputQueue,
+        redisInputQueue = clusterServingMetaData.redisInputQueue))
       system.actorOf(getterProps, name = actorName)
     }
+    system.scheduler.schedule(1 milliseconds, 1 millisecond,
+      ioActor, DequeueMessage())(system.dispatcher)
   }
 
   def predict(input: String): Seq[PredictionOutput[String]] = {
     val id = UUID.randomUUID().toString
-    system.scheduler.schedule(1 milliseconds, 1 millisecond,
-      ioActor, DequeueMessage())(system.dispatcher)
     val result = timing("response waiting")() {
       val id = UUID.randomUUID().toString
       val results = timing(s"query message wait for key $id")() {

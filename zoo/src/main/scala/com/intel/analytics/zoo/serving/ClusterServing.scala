@@ -69,6 +69,7 @@ object ClusterServing {
     argv = parser.parse(args, ServingParams()).head
     val configParser = new ConfigParser(argv.configPath)
     helper = configParser.loadConfig()
+    helper.configPath = argv.configPath
     uploadModel()
     executeJob()
   }
