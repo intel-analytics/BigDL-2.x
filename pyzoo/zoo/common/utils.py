@@ -95,6 +95,7 @@ def enable_multi_fs_save(save_func):
 
     return save_mult_fs
 
+
 def enable_multi_fs_load_static(load_func):
     @functools.wraps(load_func)
     def multi_fs_load(path, *args, **kwargs):
@@ -111,6 +112,7 @@ def enable_multi_fs_load_static(load_func):
                 os.remove(temp_path)
 
     return multi_fs_load
+
 
 def enable_multi_fs_load(load_func):
 
