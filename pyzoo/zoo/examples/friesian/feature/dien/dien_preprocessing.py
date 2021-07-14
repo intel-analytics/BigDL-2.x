@@ -14,18 +14,15 @@
 # limitations under the License.
 #
 
-from zoo.friesian.feature import FeatureTable
-
+import sys
 import os
-
-from argparse import ArgumentParser
-from time import time
-
+import time
+from pyspark import StorageLevel
 from zoo.orca import init_orca_context, stop_orca_context
-
-LABEL_COL = 0
-INT_COLS = ["_c{}".format(i) for i in list(range(1, 14))]
-CAT_COLS = ["_c{}".format(i) for i in list(range(14, 40))]
+from pyspark.sql.functions import udf, col
+from zoo.friesian.feature import FeatureTable
+from pyspark.sql.types import StringType, ArrayType, FloatType
+from argparse import ArgumentParser
 
 conf = {"spark.network.timeout": "10000000",
         "spark.sql.broadcastTimeout": "7200",
@@ -58,45 +55,20 @@ def _parse_args():
                         help='The driver core number.')
     parser.add_argument('--driver_memory', type=str, default="36g",
                         help='The driver memory.')
-    parser.add_argument('--days', type=str, required=True,
-                        help="Day range for preprocessing, such as 0-23, 0-1.")
-    parser.add_argument('--input_folder', type=str, required=True,
-                        help="Path to the folder of parquet files.")
-    parser.add_argument('--output_folder')
+    parser.add_argument('--input_transaction', type=str, required=True,
+                        help="transaction files.")
+    parser.add_argument('--input_meta', type=str, required=True,
+                        help="item metadata file")
+    parser.add_argument('--output')
     parser.add_argument(
         '--write_mode',
         choices=['overwrite', 'errorifexists'],
-        default='errorifexists')
-
-    parser.add_argument('--frequency_limit', type=str, default="15",
-                        help="Categories with a count/frequency below frequency_limit will be "
-                             "omitted from the encoding. For instance, '15', '_c14:15,_c15:16', "
-                             "etc")
+        default='overwrite')
 
     args = parser.parse_args()
-    start, end = args.days.split('-')
-    args.day_range = list(range(int(start), int(end) + 1))
-    args.days = len(args.day_range)
-
-    frequency_limit_dict = {}
-    default_limit = None
-    if args.frequency_limit:
-        frequency_limit = args.frequency_limit.split(",")
-        for fl in frequency_limit:
-            frequency_pair = fl.split(":")
-            if len(frequency_pair) == 1:
-                default_limit = int(frequency_pair[0])
-            elif len(frequency_pair) == 2:
-                frequency_limit_dict[frequency_pair[0]] = frequency_pair[1]
-    if len(frequency_limit_dict) > 0:
-        args.frequency_limit = frequency_limit_dict
-    else:
-        args.frequency_limit = default_limit
-
     return args
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = _parse_args()
     if args.cluster_mode == "local":
         init_orca_context("local", cores=args.executor_cores, memory=args.executor_memory)
@@ -111,17 +83,61 @@ if __name__ == '__main__':
                           num_nodes=args.num_executor, memory=args.executor_memory,
                           driver_cores=args.driver_cores, driver_memory=args.driver_memory,
                           conf=conf)
-    time_start = time()
-    paths = [os.path.join(args.input_folder, 'day_%d.parquet' % i) for i in args.day_range]
-    tbl = FeatureTable.read_parquet(paths)
-    idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
-    tbl_all_data = FeatureTable.read_parquet(paths[:-1])
-    tbl_all_data = tbl_all_data.encode_string(CAT_COLS, idx_list)\
-        .fillna(0, INT_COLS + CAT_COLS).log(INT_COLS)
-    tbl_all_data = tbl_all_data.merge_cols(INT_COLS, "X_int").merge_cols(CAT_COLS, "X_cat")
-    tbl_all_data.compute()
-    time_end = time()
-    print("Train data loading and preprocessing time: ", time_end - time_start)
-    tbl_all_data.show(5)
-    print("Finished")
+
+    begin = time.time()
+    transaction_tbl = FeatureTable.read_json(args.input_transaction).select(
+        ['reviewerID', 'asin', 'unixReviewTime']) \
+        .rename({'reviewerID': 'user', 'asin': 'item', 'unixReviewTime': 'time'}) \
+        .dropna(columns=['user', 'item'])
+    print("transaction_tbl, ", transaction_tbl.size())
+
+    # read meta data
+    def get_category(x):
+        cat = x[0][-1] if x[0][-1] is not None else "default"
+        return cat.strip().lower()
+    trans_label = lambda x: [1 - float(x), float(x)]
+
+    item_tbl = FeatureTable.read_json(args.input_meta).select(['asin', 'categories'])\
+        .dropna(columns=['asin', 'categories']) \
+        .apply("categories", "category", get_category, "string") \
+        .rename({"asin": "item"}).drop("categories").distinct()
+    print("item_tbl, ", item_tbl.size())
+
+    user_index = transaction_tbl.gen_string_idx('user', 1)
+    item_category_indices = item_tbl.gen_string_idx(["item", "category"], 1)
+    item_size = item_category_indices[0].size()
+    category_index = item_category_indices[1]
+
+    item_tbl = item_tbl\
+        .encode_string(["item", "category"], [item_category_indices[0], category_index])\
+        .distinct()
+
+    transaction_tbl = transaction_tbl\
+        .encode_string(['user', 'item'], [user_index, item_category_indices[0]])\
+        .dropna(columns="item")\
+        .add_hist_seq(cols=['item'], user_col="user",
+                      sort_col='time', min_len=1, max_len=100)\
+        .add_neg_hist_seq(item_size, 'item_hist_seq', neg_num=5)\
+        .add_negative_samples(item_size, item_col='item', neg_num=1)
+
+    full_tbl = transaction_tbl.join(item_tbl, "item")\
+        .add_value_features(key_cols=["item_hist_seq", "neg_item_hist_seq"],
+                            tbl=item_tbl, key="item", value="category")\
+        .pad(cols=['item_hist_seq', 'category_hist_seq',
+             'neg_item_hist_seq', 'neg_category_hist_seq'],
+             seq_len=100,
+             mask_cols=['item_hist_seq']) \
+        .apply("item_hist_seq", "item_hist_seq_len", len, "int") \
+        .apply("label", "label", trans_label, "array<float>")
+
+    # write out
+    user_index.write_parquet(args.output)
+    item_category_indices[0].write_parquet(args.output + "item_index")
+    category_index.write_parquet(args.output + "category_index")
+    item_tbl.write_parquet(args.output + "item2cat")
+    full_tbl.write_parquet(args.output + "data")
+
+    print("final output count, ", full_tbl.size())
     stop_orca_context()
+    end = time.time()
+    print(f"perf preprocessing time: {(end - begin):.2f}s")

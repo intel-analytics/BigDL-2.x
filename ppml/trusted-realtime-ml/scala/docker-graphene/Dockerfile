@@ -46,9 +46,9 @@ ARG HTTP_PROXY_HOST
 ARG HTTP_PROXY_PORT
 ARG HTTPS_PROXY_HOST
 ARG HTTPS_PROXY_PORT
-ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.2
-ARG SPARK_VERSION=2.4.3
+ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
+ARG BIGDL_VERSION=0.13.0
+ARG SPARK_VERSION=2.4.6
 ARG SPARK_MAJOR_VERSION=2.4
 ENV ANALYTICS_ZOO_VERSION	${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION		${SPARK_VERSION}
@@ -60,7 +60,7 @@ COPY --from=flink /opt/jdk  /opt/jdk8
 
 RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils curl wget unzip git maven
-RUN git clone https://github.com/intel-analytics/analytics-zoo.git && \
+RUN git clone --single-branch --branch master https://github.com/intel-analytics/analytics-zoo.git && \
     cd analytics-zoo/zoo && \
     export MAVEN_OPTS="-XX:ReservedCodeCacheSize=512m -XX:MaxPermSize=3G \
         -Dhttp.proxyHost=$HTTP_PROXY_HOST \
@@ -77,9 +77,9 @@ RUN cd /opt && \
 
 # stage.4 az ppml
 FROM ubuntu:18.04
-ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.2
-ARG SPARK_VERSION=2.4.3
+ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
+ARG BIGDL_VERSION=0.13.0
+ARG SPARK_VERSION=2.4.6
 ARG FLINK_VERSION=1.10.1
 ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION			${SPARK_VERSION}
