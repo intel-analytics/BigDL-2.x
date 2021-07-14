@@ -116,10 +116,6 @@ if __name__ == "__main__":
     tbl = FeatureTable.read_parquet(paths)
     idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
 
-    if args.output_folder:
-        for idx in idx_list:
-            idx.write_parquet(args.output_folder)
-
     train_data = FeatureTable.read_parquet(paths[:-1])
     train_preprocessed = preprocess_and_save(train_data, idx_list, "train", args.output_folder)
 
@@ -131,5 +127,10 @@ if __name__ == "__main__":
     time_end = time()
     print("Total preprocessing time: ", time_end - time_start)
     train_preprocessed.show(5)
+
+    if args.output_folder:
+        for idx in idx_list:
+            idx.write_parquet(args.output_folder)
+
     print("Finished")
     stop_orca_context()
