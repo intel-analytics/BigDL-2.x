@@ -164,7 +164,7 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
         --total-executor-cores 4 \
         --executor-memory 10G \
         /ppml/trusted-big-data-ml/work/tpch-spark/target/scala-2.11/spark-tpc-h-queries_2.11-1.0.jar \
-        file:///ppml/trusted-big-data-ml/work/tpch-spark/dbgen | tee spark.local.tpc.h.sgx.log
+        file:///ppml/trusted-big-data-ml/work/tpch-spark/dbgen file:///ppml/trusted-big-data-ml/work/tpch-spark/dbgen/output | tee spark.local.tpc.h.sgx.log
 ```
 
 Then run the script to run TPC-H test in spark: <br>
