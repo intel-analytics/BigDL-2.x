@@ -50,7 +50,7 @@ FEATURE_INTERVAL = {"MINUTE": pd.Timedelta('1m'),
                     "IS_WEEKEND": pd.Timedelta('1D')}
 FEATURE_BIN_NUM = {"MINUTE": range(0, 60),
                    "DAY": range(1, 32),
-                   "DAYOFYEAR": range(1, 366),
+                   "DAYOFYEAR": range(1, 367),
                    "HOUR": range(0, 24),
                    "WEEKDAY": range(0, 7),
                    "WEEKOFYEAR": range(1, 54),

@@ -65,9 +65,13 @@ class TSDataset:
 
         self._id_list = list(np.unique(self.df[self.id_col]))
         self._freq_certainty = False
+        self._freq = None
         self._is_pd_datetime = pd.api.types.is_datetime64_any_dtype(self.df[self.dt_col].dtypes)
         if self._is_pd_datetime:
-            self._freq = self.df[self.dt_col].iloc[1] - self.df[self.dt_col].iloc[0]
+            if len(self.df[self.dt_col]) < 2:
+                self._freq = None
+            else:
+                self._freq = self.df[self.dt_col].iloc[1] - self.df[self.dt_col].iloc[0]
 
     @staticmethod
     def from_pandas(df,
@@ -235,19 +239,19 @@ class TSDataset:
                feature. The value defaults to None, which means no features will be generated with\
                one-hot-encoded.
 
-        | "MINUTE": The minute of the time stamp. (m)
-        | "DAY": The day of the time stamp. (D)
-        | "DAYOFYEAR": The ordinal day of the year of the time stamp. (D)
-        | "HOUR": The hour of the time stamp. (T)
-        | "WEEKDAY": The day of the week of the time stamp, Monday=0, Sunday=6. (D)
-        | "WEEKOFYEAR": The ordinal week of the year of the time stamp. (W)
-        | "MONTH": The month of the time stamp. (M)
+        | "MINUTE": The minute of the time stamp.
+        | "DAY": The day of the time stamp.
+        | "DAYOFYEAR": The ordinal day of the year of the time stamp.
+        | "HOUR": The hour of the time stamp.
+        | "WEEKDAY": The day of the week of the time stamp, Monday=0, Sunday=6.
+        | "WEEKOFYEAR": The ordinal week of the year of the time stamp.
+        | "MONTH": The month of the time stamp.
         | "IS_AWAKE": Bool value indicating whether it belongs to awake hours for the time stamp,
-        | True for hours between 6A.M. and 1A.M. (T)
+        | True for hours between 6A.M. and 1A.M.
         | "IS_BUSY_HOURS": Bool value indicating whether it belongs to busy hours for the time
-        | stamp, True for hours between 7A.M. and 10A.M. and hours between 4P.M. and 8P.M. (T)
+        | stamp, True for hours between 7A.M. and 10A.M. and hours between 4P.M. and 8P.M.
         | "IS_WEEKEND": Bool value indicating whether it belongs to weekends for the time stamp,
-        | True for Saturdays and Sundays. (D)
+        | True for Saturdays and Sundays.
 
         :return: the tsdataset instance.
         '''

@@ -35,17 +35,18 @@ class TestFeature(ZooTestCase):
         data = np.random.randn(8, 3)
         df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
                            "A": data[:, 1], "B": data[:, 2]})
-        df = generate_dt_features(df, dt_col="datetime")
-        assert set(df.columns) == {'IS_AWAKE',
-                                   'IS_BUSY_HOURS',
-                                   'HOUR',
-                                   'DAY',
+        df = generate_dt_features(df,
+                                  dt_col="datetime",
+                                  features="auto",
+                                  one_hot_features=None,
+                                  freq=pd.Timedelta("1D"),
+                                  features_generated=[])
+        assert set(df.columns) == {'DAY',
                                    'IS_WEEKEND',
                                    'WEEKDAY',
                                    'MONTH',
                                    'DAYOFYEAR',
                                    'WEEKOFYEAR',
-                                   'MINUTE',
                                    'A',
                                    'B',
                                    'values',
