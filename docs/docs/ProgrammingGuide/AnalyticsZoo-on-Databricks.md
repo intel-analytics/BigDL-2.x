@@ -10,7 +10,7 @@
 Before you start this guide, make sure a Databricks workspace is ready and a cluster is created using the Databricks UI.
 
 1. Create either [AWS Databricks](https://docs.databricks.com/getting-started/try-databricks.html)  workspace or [Azure Databricks](https://docs.microsoft.com/en-us/azure/azure-databricks/) workspace.
-2. Create Databricks [clusters](https://docs.databricks.com/clusters/create.html) using the UI. Choose Databricks runtime version. This guide is tested on Runtime 5.5 LTS (includes Apache Spark 2.4.6, Scala 2.11).
+2. Create Databricks [clusters](https://docs.databricks.com/clusters/create.html) using the UI. Choose Databricks runtime version. This guide is tested on Runtime 7.5 LTS (includes Apache Spark 3.0.0, Scala 2.12).
 
 ### **Installing Analytics Zoo libraries**  
 
