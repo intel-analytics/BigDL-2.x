@@ -114,6 +114,7 @@ do
 	sed -i 's/^[^#].*site-packages*/#&/g' ${filename}.py
 	sed -i 's/version_info/#version_info/g' ${filename}.py
 	sed -i 's/python_version/#python_version/g' ${filename}.py
+	sed -i 's/batch_size = 32/batch_size = 320/g' ${filename}.py
 	sed -i 's/epochs = 30/epochs = 1/g' ${filename}.py
 
 	python ${filename}.py
