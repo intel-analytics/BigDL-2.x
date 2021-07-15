@@ -288,7 +288,7 @@ class TSDataset:
         :return: the tsdataset instance.
         '''
         from warnings import warn
-        if not self._is_aligned:
+        if (start_time is None or end_time is None) and not self._is_aligned:
             warn("The resample method will not align the time of tsdata for each id,\
              please set the start_time and end_time to align them.", UserWarning)
         assert self._is_pd_datetime,\
