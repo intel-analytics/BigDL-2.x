@@ -23,7 +23,7 @@ ssh root@$MASTER "docker run -itd \
       -v $ZOO_PATH:/ppml/trusted-big-data-ml/work/zoo \
       --name=spark-driver \
       -e LOCAL_IP=$MASTER \
-      -e SGX_MEM_SIZE=64G \
+      -e SGX_MEM_SIZE=32G \
       -e SPARK_MASTER=spark://$MASTER:7077 \
       -e SPARK_DRIVER_PORT=10027 \
       -e SPARK_DRIVER_BLOCK_MANAGER_PORT=10026 \

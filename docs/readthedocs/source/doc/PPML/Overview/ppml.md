@@ -575,7 +575,7 @@ The result should contain the content look like:
 
 This example shows how to run trusted Spark Orca learn Tensorflow basic text classification.
 
-Run the script to run trusted Spark Orca learn Tensorflow basic text classification and it would take some time to show the final results:
+Run the script to run trusted Spark Orca learn Tensorflow basic text classification and it would take some time to show the final results. To run this example in standalone mode, replace `-e SGX_MEM_SIZE=32G \` with `-e SGX_MEM_SIZE=64G \` in `start-distributed-spark-driver.sh`
 
 ```bash
 bash start-spark-local-orca-tf-text.sh

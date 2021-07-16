@@ -117,7 +117,7 @@ cd /ppml/trusted-big-data-ml
 
 ##### Example 1: `pi.py`
 
-Run the example with SGX and standalone mode with the following command in the terminal. 
+Run the example with SGX spark local mode with the following command in the terminal. 
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
@@ -142,7 +142,7 @@ The result should be similar to
 
 ##### Example 2: `test-wordcount.py`
 
-Run the example with SGX and standalone mode with the following command in the terminal. 
+Run the example with SGX spark local mode with the following command in the terminal. 
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
@@ -171,7 +171,7 @@ The result should be similar to
 
 Before running the example, make sure that the paths of resource in `/ppml/trusted-big-data-ml/work/spark-2.4.6/examples/src/main/python/sql/basic.py` are the same as the paths of `people.json`  and `people.txt`.
 
-Run the example with SGX and standalone mode with the following command in the terminal. 
+Run the example with SGX spark local mode with the following command in the terminal. 
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
@@ -210,7 +210,7 @@ The result should be similar to
 
 ##### Example 4: Bigdl lenet
 
-Run the example with SGX and standalone mode with the following command in the terminal. 
+Run the example with SGX spark local mode with the following command in the terminal. 
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
@@ -253,7 +253,7 @@ The result should be similar to
 
 ##### Example 5: XGBoost Regressor
 
-Before running the example, make sure that `Boston_Housing.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace `your_IP_address` with your IP address and `path_of_boston_housing_csv` with your path of `Boston_Housing.csv`.
+Before running the example, make sure that `Boston_Housing.csv` is under `work/data` directory or the same path in the command. Run the example with SGX spark local mode with the following command in the terminal. Replace `your_IP_address` with your IP address and `path_of_boston_housing_csv` with your path of `Boston_Housing.csv`.
 
 ```bash
 SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=your_IP_address && /opt/jdk8/bin/java -cp \
@@ -330,7 +330,7 @@ Before running the example, download the sample dataset from [pima-indians-diabe
 wget https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv
 ```
 
-After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace `your_IP_address` with your IP address and `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv`.
+After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the command. Run the example with SGX spark local mode with the following command in the terminal. Replace `your_IP_address` with your IP address and `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv`.
 
 ```bash
 SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=your_IP_address && /opt/jdk8/bin/java -cp \
@@ -383,7 +383,7 @@ Before running the example, download the [NYC Taxi](https://raw.githubuserconten
 wget https://raw.githubusercontent.com/numenta/NAB/master/data/realKnownCause/nyc_taxi.csv
 ```
 
-After downloading the dataset, make sure that `nyc_taxi.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace `path_of_nyc_taxi_csv` with your path of `nyc_taxi.csv`.
+After downloading the dataset, make sure that `nyc_taxi.csv` is under `work/data` directory or the same path in the command. Run the example with SGX spark local mode with the following command in the terminal. Replace `path_of_nyc_taxi_csv` with your path of `nyc_taxi.csv`.
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
@@ -466,7 +466,7 @@ Then the result should contain the similar content as
 
 ##### Example 8: Orca learn Tensorflow basic text classification
 
-Run the example with SGX and standalone mode with the following command in the terminal. 
+Run the example with SGX spark local mode with the following command in the terminal. To run the example in SGX standalone mode, replace `-e SGX_MEM_SIZE=32G \` with `-e SGX_MEM_SIZE=64G \` in `start-distributed-spark-driver.sh`
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
