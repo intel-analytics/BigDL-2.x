@@ -14,7 +14,40 @@
 # limitations under the License.
 #
 
+import orca.automl.hp as hp
 AUTO_MODEL_SUPPORT_LIST = ["lstm", "tcn", "seq2seq"]
+
+AUTO_MODEL_DEFAULT_SEARCH_SPAECE = {
+    "lstm": {"minimal":{"hidden_dim":hp.grid_search([16, 32]),
+                        "layer_num":hp.randint(1, 2),
+                        "lr":hp.loguniform(0.001, 0.005),
+                        "dropout":hp.uniform(0.1, 0.2)},
+             "normal":{"hidden_dim":hp.grid_search([16, 32, 64]),
+                       "layer_num":hp.grid_search([1, 2]),
+                       "lr":hp.loguniform(0.0005, 0.01),
+                       "dropout":hp.uniform(0, 0.2)},
+             "large":{"hidden_dim":hp.grid_search([16, 32, 48, 64]),
+                      "layer_num":hp.grid_search([1, 2, 3, 4]),
+                      "lr":hp.loguniform(0.0005, 0.01),
+                      "dropout":hp.uniform(0, 0.2)}},
+
+    "tcn": {"minimal": {"hidden_units":hp.grid_search([16, 32]),
+                        "levels":hp.randint(4, 6),
+                        "kernel_size":3,
+                        "lr":hp.loguniform(0.001, 0.005),
+                        "dropout":hp.uniform(0.1, 0.2)},
+            "normal": {"hidden_units":hp.grid_search([16, 32, 48]),
+                       "levels":hp.grid_search([6, 8]),
+                       "kernel_size":hp.grid_search([3, 5]),
+                       "lr":hp.loguniform(0.001, 0.01),
+                       "dropout":hp.uniform(0, 0.2)},
+            "large": {"hidden_units":hp.grid_search([16, 32, 48, 64]),
+                      "levels":hp.grid_search([4, 5, 6, 7, 8]),
+                      "kernel_size":hp.grid_search([3, 5, 7]),
+                      "lr":hp.loguniform(0.0005, 0.015),
+                      "dropout":hp.uniform(0, 0.25)}
+    }
+}
 
 
 class AutoModelFactory:
@@ -34,3 +67,19 @@ class AutoModelFactory:
             return AutoSeq2Seq(**search_space)
         return NotImplementedError(f"{AUTO_MODEL_SUPPORT_LIST} are supported for auto model,\
                                     but get {name}.")
+
+    @staticmethod
+    def get_default_search_space(model, computing_resource="normal"):
+        '''
+        This function should be called internally to get a default search_space experimentally.
+
+        :param model: model name, only tcn and lstm are supported
+        :param mode: one of "minimal", "normal", "large"
+        '''
+        name = name.lower()
+        if name == "lstm":
+            return AUTO_MODEL_DEFAULT_SEARCH_SPAECE[name][computing_resource]
+        if name == "tcn":
+            return AUTO_MODEL_DEFAULT_SEARCH_SPAECE[name][computing_resource]
+        return NotImplementedError(f"{AUTO_MODEL_SUPPORT_LIST} are supported for auto model,\
+                                        but get {name}.")
