@@ -59,7 +59,7 @@
 
 ## AI Application Case
 
-- **Fashion MNIST Image Classification**
+- **Use Pytorch for Fashion MNIST Image Classification**
 
 ![](../../../image/colab_logo_32px.png)[Run in Google Colab](https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/examples/fashion_mnist_bigdl.ipynb) &nbsp;![](../../../image/GitHub-Mark-32px.png)[View source on GitHub](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/examples/fashion_mnist_bigdl.ipynb)
 
@@ -67,6 +67,6 @@
 
 ![](../../../image/colab_logo_32px.png)[Run in Google Colab](https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/examples/basic_text_classification.ipynb) &nbsp;![](../../../image/GitHub-Mark-32px.png)[View source on GitHub](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/examples/basic_text_classification.ipynb)
 
-- **Image Super Resolution**
+- **Use Pytorch for Image Super Resolution**
 
 ![](../../../image/colab_logo_32px.png)[Run in Google Colab](https://colab.research.google.com/github/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/examples/super_resolution.ipynb) &nbsp;![](../../../image/GitHub-Mark-32px.png)[View source on GitHub](https://github.com/intel-analytics/analytics-zoo/blob/master/docs/docs/colab-notebook/orca/examples/super_resolution.ipynb)
