@@ -618,9 +618,9 @@ class Table:
         check_col_exists(self.df, subset)
         check_col_exists(self.df, [order])
         if keep_min:
-            window = Window.partitionBy(subset).orderBy(order)
+            window = Window.partitionBy(subset).orderBy(order, 'tiebreak')
         else:
-            window = Window.partitionBy(subset).orderBy(col(order).desc())
+            window = Window.partitionBy(subset).orderBy(col(order).desc(), 'tiebreak')
         df = self.df.withColumn('tiebreak', monotonically_increasing_id())\
             .withColumn('rank', rank().over(window))
         df = df.filter(col('rank') == 1).drop('rank', 'tiebreak')
