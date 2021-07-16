@@ -11,7 +11,7 @@ You can use _Chronos_ to do:
 
 ### **2. Install**
 
-Install analytics-zoo with target `[automl]` to install the additional dependencies for _Chronos_. 
+Install analytics-zoo with target `[ray]` and some additional dependencies for _Chronos_. 
 
 ```bash
 conda create -n my_env python=3.7
