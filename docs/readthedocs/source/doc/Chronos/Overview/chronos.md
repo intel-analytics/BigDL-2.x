@@ -16,8 +16,12 @@ Install analytics-zoo with target `[automl]` to install the additional dependenc
 ```bash
 conda create -n my_env python=3.7
 conda activate my_env
-pip install --pre --upgrade analytics-zoo[automl]
+pip install analytics-zoo[ray]==0.11.0
 ```
+
+Some dependencies are needed by different components in Chronos. Please install them: `tensorflow>=1.15.0,<2.0.0`, `h5py==2.10.0`, `ray[tune]==1.2.0`, `pandas`, `scikit-learn>=0.20.0,<=0.22.0`, `requests`, `tsfresh`, `torch==1.8.1`.
+
+Note: `[automl]` config is not officially provided in 0.11.0.
 
 ### **3 Initialization**
 
