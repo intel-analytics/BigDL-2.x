@@ -152,13 +152,10 @@ search_space = {
 
 #### **4.2 Advanced Search Algorithms**
 Beside grid search and random search, user could also choose to use some advanced hyper-parameter optimization methods, 
-such as [Ax](https://ax.dev/), [Bayesian Optimization](https://github.com/fmfn/BayesianOptimization), [Scikit-Optimize](https://scikit-optimize.github.io), etc. 
+such as [Ax](https://ax.dev/), [Bayesian Optimization](https://github.com/fmfn/BayesianOptimization), [Scikit-Optimize](https://scikit-optimize.github.io), etc. We supported all *Search Algorithms* in [Ray Tune](https://docs.ray.io/en/master/index.html).
 Note that you should install the dependency for the method manually. 
 
-We supported all *Search Algorithms* in [Ray Tune](https://docs.ray.io/en/master/index.html).
-
-Take bayesian optimization as an instance,
-You need to first install the dependency with
+Take bayesian optimization as an instance. You need to first install the dependency with
 
 ```bash
 pip install bayesian-optimization
