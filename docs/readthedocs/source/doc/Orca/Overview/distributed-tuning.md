@@ -13,12 +13,12 @@ HDFS is used to save temporary results of each trial and all the results will be
 
 ### **2. Pytorch AutoEstimator**
 
-User could pass creator functions, including *Data Creator Function*, *Model Creator Function* and *Optimizer Creator Function* to `AutoEstimator` for training. 
+User could pass *Creator Function*s, including *Data Creator Function*, *Model Creator Function* and *Optimizer Creator Function* to `AutoEstimator` for training. 
 
-The creator functions should take a parameter of `config` as input and get the hyper-parameter values from `config` to enable hyper parameter search.
+The *Creator Function*s should take a parameter of `config` as input and get the hyper-parameter values from `config` to enable hyper parameter search.
 
 #### **2.1 Data Creator Function**
-You can define the train and validation datasets using *Data Creator Function*. The *Data Creator Function* takes config as input and returns a `torch.utils.data.DataLoader object`, as shown below.
+You can define the train and validation datasets using *Data Creator Function*. The *Data Creator Function* takes `config` as input and returns a `torch.utils.data.DataLoader` object, as shown below.
 ```python
 # "batch_size" is the hyper-parameter to be tuned.
 def train_loader_creator(config):
@@ -31,7 +31,7 @@ def train_loader_creator(config):
         batch_size=config["batch_size"], shuffle=True)
     return train_loader
 ```
-The input data for `Pytorch AutoEstimator` can be a *Data Creator Function* or a tuple of numpy ndarrays in the form of (x, y), where x is training input data and y is training target data.
+The input data for Pytorch `AutoEstimator` can be a *Data Creator Function* or a tuple of numpy ndarrays in the form of (x, y), where x is training input data and y is training target data.
 
 #### **2.2 Model Creator Function**
 *Model Creator Function* also takes `config` as input and returns a `torch.nn.Module` object, as shown below.
@@ -63,10 +63,10 @@ def optim_creator(model, config):
     return torch.optim.Adam(model.parameters(), lr=config["lr"])
 ```
 
-Note that the input optimizer for `Pytorch AutoEstimator` could be a *Optimizer Creator Function* or a string, which is the name of Pytorch Optimizer. The above *Optimizer Creator Function* has the same functionality with "Adam".
+Note that the input optimizer for Pytorch `AutoEstimator` could be a *Optimizer Creator Function* or a string, which is the name of Pytorch Optimizer. The above *Optimizer Creator Function* has the same functionality with "Adam".
 
 #### **2.4 Create and Fit Pytorch AutoEstimator**
-User could create a `Pytorch AutoEstimator` as below.
+User could create a Pytorch `AutoEstimator` as below.
 ```python
 from zoo.orca.automl.auto_estimator import AutoEstimator
 
@@ -94,7 +94,7 @@ best_config = auto_est.get_best_config() # a dictionary of hyper-parameter names
 View the related [Python API doc](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/AutoML/automl.html#orca-automl-auto-estimator) for more details.
 
 ### **3. TensorFlow/Keras AutoEstimator**
-Users can create an AutoEstimator for TensorFlow Keras from a `tf.keras` model (using a *Model Creator Function*). For example:
+Users can create an `AutoEstimator` for TensorFlow Keras from a `tf.keras` model (using a *Model Creator Function*). For example:
 
 ```python
 def model_creator(config):
@@ -155,7 +155,7 @@ Beside grid search and random search, user could also choose to use some advance
 such as [Ax](https://ax.dev/), [Bayesian Optimization](https://github.com/fmfn/BayesianOptimization), [Scikit-Optimize](https://scikit-optimize.github.io), etc. 
 Note that you should install the dependency for the method manually. 
 
-We supported all *Search Algorithms* in [Ray Tune]().
+We supported all *Search Algorithms* in [Ray Tune](https://docs.ray.io/en/master/index.html).
 
 Take bayesian optimization as an instance,
 You need to first install the dependency with
@@ -184,7 +184,7 @@ auto_estimator.fit(
 See [API Doc](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/AutoML/automl.html#orca-automl-auto-estimator) for more details.
 
 ### **4. Scheduler**
-*Scheduler* can stop/pause/tweak the hyper-parameters of running trials, making your hyper-parameter tuning process much efficient.
+*Scheduler* can stop/pause/tweak the hyper-parameters of running trials, making the hyper-parameter tuning process much efficient.
 
 User can also pass the *Scheduler* name to `scheduler` in `AutoEstimator.fit`. The *Scheduler* names supported and the corresponding reference are listed as below. The default `scheduler` is "fifo", which just runs trials in submission order.
 
