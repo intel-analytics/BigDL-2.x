@@ -21,8 +21,6 @@ pip install analytics-zoo[ray]==0.11.0
 
 Some dependencies are needed by different components in Chronos. Please install them: `tensorflow>=1.15.0,<2.0.0`, `h5py==2.10.0`, `ray[tune]==1.2.0`, `pandas`, `scikit-learn>=0.20.0,<=0.22.0`, `requests`, `tsfresh`, `torch==1.8.1`.
 
-Note: `[automl]` config is not officially provided in 0.11.0.
-
 ### **3 Initialization**
 
 _Chronos_ uses [Orca](../../Orca/Overview/orca.md) to enable distributed training and AutoML capabilities. Init orca as below. View [Orca Context](../../Orca/Overview/orca-context.md) for more details. Note that argument `init_ray_on_spark` must be `True` for _Chronos_. 
