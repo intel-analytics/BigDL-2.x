@@ -138,9 +138,7 @@ class TestPyTorchAutoEstimator(TestCase):
                      n_sampling=2,
                      epochs=1,
                      metric="accuracy")
-        best_model = auto_est.get_best_model()
-        assert best_model.optimizer.__class__.__name__ == "SGD"
-        assert isinstance(best_model.loss_creator, nn.BCELoss)
+        assert auto_est.get_best_model()
         best_config = auto_est.get_best_config()
         assert all(k in best_config.keys() for k in create_linear_search_space().keys())
 
@@ -159,9 +157,7 @@ class TestPyTorchAutoEstimator(TestCase):
                      n_sampling=2,
                      epochs=1,
                      metric="accuracy")
-        best_model = auto_est.get_best_model()
-        assert best_model.optimizer.__class__.__name__ == "SGD"
-        assert isinstance(best_model.loss_creator, nn.BCELoss)
+        assert auto_est.get_best_model()
         best_config = auto_est.get_best_config()
         assert all(k in best_config.keys() for k in search_space.keys())
 
@@ -180,8 +176,7 @@ class TestPyTorchAutoEstimator(TestCase):
                      n_sampling=2,
                      epochs=1,
                      metric="accuracy")
-        best_model = auto_est.get_best_model()
-        assert isinstance(best_model.loss_creator, nn.BCELoss)
+        assert auto_est.get_best_model()
 
     def test_fit_optimizer_name(self):
         auto_est = AutoEstimator.from_torch(model_creator=model_creator,
@@ -198,8 +193,7 @@ class TestPyTorchAutoEstimator(TestCase):
                      n_sampling=2,
                      epochs=1,
                      metric="accuracy")
-        best_model = auto_est.get_best_model()
-        assert best_model.optimizer.__class__.__name__ == "SGD"
+        assert auto_est.get_best_model()
 
     def test_fit_invalid_optimizer_name(self):
         invalid_optimizer_name = "ADAM"
@@ -284,7 +278,7 @@ class TestPyTorchAutoEstimator(TestCase):
                      epochs=1,
                      metric=f075,
                      metric_mode="max")
-        best_model = auto_est.get_best_model()
+        assert auto_est.get_best_model()
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
-ARG SPARK_VERSION=2.4.3
+ARG SPARK_VERSION=2.4.6
 ARG SPARK_HOME=/opt/spark
 ARG JDK_VERSION=8u192
 ARG JDK_URL=your_jdk_url
-ARG BIGDL_VERSION=0.12.2
-ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
+ARG BIGDL_VERSION=0.13.0
+ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
 ARG TINI_VERSION=v0.18.0
 
 # stage.1 jdk & spark
@@ -148,10 +148,13 @@ RUN mkdir -p /opt/analytics-zoo-examples/python && \
     pip install --no-cache-dir psutil aiohttp && \
     pip install --no-cache-dir py4j && \
     pip install --no-cache-dir cmake==3.16.3 && \
+    pip install --no-cache-dir torch==1.7.1 torchvision==0.8.2 && \
+    pip install --no-cache-dir horovod==0.19.2 && \
 # chmod
     chmod a+x /opt/start-notebook-spark.sh && \
     chmod a+x /opt/start-notebook-k8s.sh && \
-    chmod +x /sbin/tini
+    chmod +x /sbin/tini && \
+    cp /sbin/tini /usr/bin/tini    
 
 WORKDIR /opt/spark/work-dir
 

@@ -19,13 +19,16 @@ import pickle
 
 import numpy as np
 import ray
+from zoo.common.utils import enable_multi_fs_load, enable_multi_fs_save
 
 from zoo.orca.data.ray_xshards import RayXShards
+from zoo.orca.learn.dl_cluster import RayDLCluster
 from zoo.orca.learn.tf2.tf_runner import TFRunner
 from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
 from zoo.orca.learn.utils import maybe_dataframe_to_xshards, dataframe_to_xshards, \
     convert_predict_xshards_to_dataframe, update_predict_xshards, \
     process_xshards_of_pandas_dataframe
+from zoo.orca.data.utils import process_spark_xshards
 from zoo.ray import RayContext
 
 logger = logging.getLogger(__name__)
@@ -39,7 +42,8 @@ class Estimator(object):
                    verbose=False,
                    workers_per_node=1,
                    compile_args_creator=None,
-                   backend="tf2"
+                   backend="tf2",
+                   cpu_binding=True,
                    ):
         """
         Create an Estimator for tensorflow 2.
@@ -57,10 +61,12 @@ class Estimator(object):
                dictionary like {"optimizer": tf.keras.optimizers.SGD(lr), "loss":
                "mean_squared_error", "metrics": ["mean_squared_error"]}
         :param backend: (string) You can choose "horovod" or "tf2" as backend. Default: `tf2`.
+        :param cpu_binding: (bool) Whether to binds threads to specific CPUs. Default: True
         """
         return TensorFlow2Estimator(model_creator=model_creator, config=config,
                                     verbose=verbose, workers_per_node=workers_per_node,
-                                    backend=backend, compile_args_creator=compile_args_creator)
+                                    backend=backend, compile_args_creator=compile_args_creator,
+                                    cpu_binding=cpu_binding)
 
 
 def make_data_creator(refs):
@@ -78,14 +84,6 @@ def data_length(data):
         return x[0].shape[0]
 
 
-def process_spark_xshards(spark_xshards, num_workers):
-    data = spark_xshards
-    if data.num_partitions() != num_workers:
-        data = data.repartition(num_workers)
-    ray_xshards = RayXShards.from_spark_xshards(data)
-    return ray_xshards
-
-
 class TensorFlow2Estimator(OrcaRayEstimator):
     def __init__(self,
                  model_creator,
@@ -93,7 +91,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                  config=None,
                  verbose=False,
                  backend="tf2",
-                 workers_per_node=1):
+                 workers_per_node=1,
+                 cpu_binding=True):
         self.model_creator = model_creator
         self.compile_args_creator = compile_args_creator
         self.config = {} if config is None else config
@@ -125,9 +124,14 @@ class TensorFlow2Estimator(OrcaRayEstimator):
             cores_per_node = ray_ctx.ray_node_cpu_cores // workers_per_node
             num_nodes = ray_ctx.num_ray_nodes * workers_per_node
 
-            worker_class = ray.remote(num_cpus=cores_per_node)(TFRunner)
-            self.remote_workers = [worker_class.remote(**params)
-                                   for i in range(0, num_nodes)]
+            self.cluster = RayDLCluster(
+                num_workers=num_nodes,
+                worker_cores=cores_per_node,
+                worker_cls=TFRunner,
+                worker_param=params,
+                cpu_binding=cpu_binding
+            )
+            self.remote_workers = self.cluster.get_workers()
             ips = ray.get(
                 [worker.get_node_ip.remote() for worker in self.remote_workers])
             ports = ray.get(
@@ -135,7 +139,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
 
             urls = ["{ip}:{port}".format(ip=ips[i], port=ports[i])
                     for i in range(len(self.remote_workers))]
-
+            ray.get([worker.setup.remote() for worker in self.remote_workers])
             # Get setup tasks in order to throw errors on failure
             ray.get([
                 worker.setup_distributed.remote(urls, i, len(self.remote_workers))
@@ -149,6 +153,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                                               workers_per_node=workers_per_node)
             horovod_runner.run(lambda: print("worker initialized"))
             self.remote_workers = horovod_runner.remote_workers
+            ray.get([worker.setup.remote() for worker in self.remote_workers])
             ray.get([
                 worker.setup_horovod.remote()
                 for i, worker in enumerate(self.remote_workers)])
@@ -215,14 +220,14 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         from zoo.orca.data import SparkXShards
         data, validation_data = maybe_dataframe_to_xshards(data, validation_data,
                                                            feature_cols, label_cols,
-                                                           mode="fit")
+                                                           mode="fit",
+                                                           num_workers=self.num_workers)
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
                 data, validation_data = process_xshards_of_pandas_dataframe(data, feature_cols,
                                                                             label_cols,
                                                                             validation_data, "fit")
-
             ray_xshards = process_spark_xshards(data, self.num_workers)
 
             if validation_data is None:
@@ -299,7 +304,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                                              validation_data=None,
                                              feature_cols=feature_cols,
                                              label_cols=label_cols,
-                                             mode="evaluate")
+                                             mode="evaluate",
+                                             num_workers=self.num_workers)
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
@@ -397,6 +403,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         state = ray.get(state_refs[0])
         return self._get_model_from_state(state)
 
+    @enable_multi_fs_save
     def save(self, checkpoint):
         """
         Saves the model at the provided checkpoint.
@@ -418,6 +425,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
 
         return checkpoint
 
+    @enable_multi_fs_load
     def load(self, checkpoint, **kwargs):
         """
         Loads the model from the provided checkpoint.

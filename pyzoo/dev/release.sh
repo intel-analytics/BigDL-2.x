@@ -25,10 +25,10 @@ ANALYTICS_ZOO_PYTHON_DIR="$(cd ${RUN_SCRIPT_DIR}/../../pyzoo; pwd)"
 echo $ANALYTICS_ZOO_PYTHON_DIR
 
 if (( $# < 3)); then
-  echo "Usage: release.sh platform version upload quick_build mvn_parameters"
+  echo "Usage: release.sh platform version quick_build upload mvn_parameters"
   echo "Usage example: bash release.sh linux default false true"
-  echo "Usage example: bash release.sh mac 0.6.0.dev0 true true"
-  echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.4+"
+  echo "Usage example: bash release.sh mac 0.12.0.dev0 true true"
+  echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.6 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.4+"
   exit -1
 fi
 

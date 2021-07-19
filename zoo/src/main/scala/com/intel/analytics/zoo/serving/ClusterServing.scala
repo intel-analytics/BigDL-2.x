@@ -59,8 +59,8 @@ object ClusterServing {
     // Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
     streamingEnv.setParallelism(helper.modelParallelism)
     streamingEnv.addSource(new FlinkRedisSource())
-      .map(new FlinkInference(helper))
-      .addSink(new FlinkRedisSink())
+      .map(new FlinkInference())
+      .addSink(new FlinkRedisSink(helper))
 
     logger.info(s"Cluster Serving Flink job graph details \n${streamingEnv.getExecutionPlan}")
     streamingEnv.executeAsync()

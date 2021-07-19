@@ -20,14 +20,11 @@ from zoo.chronos.model.prophet import ProphetModel
 
 class ProphetForecaster(Forecaster):
     """
-    Prophet Forecaster
-    Prophet is a procedure for forecasting time series data based on an additive model where
-    non-linear trends are fit with yearly, weekly, and daily seasonality, plus holiday effects.
-    It works best with time series that have strong seasonal effects and several seasons of
-    historical data. Prophet is robust to missing data and shifts in the trend, and
-    typically handles outliers well.
-
-    Source: https://github.com/facebook/prophet
+    Example:
+        >>> #The dataset is split into data, validation_data
+        >>> model = ProphetForecaster(changepoint_prior_scale=0.05, seasonality_mode='additive')
+        >>> model.fit(data, validation_data)
+        >>> predict_result = model.predict(horizon=24)
     """
 
     def __init__(self,
@@ -40,22 +37,21 @@ class ProphetForecaster(Forecaster):
                  ):
         """
         Build a Prophet Forecast Model.
+        User can customize changepoint_prior_scale, seasonality_prior_scale,
+        holidays_prior_scale, seasonality_mode, changepoint_range and metric
+        of the Prophet model, for details of the Prophet model hyperparameters, refer to
+        https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning.
 
         :param changepoint_prior_scale: hyperparameter changepoint_prior_scale for the
-            Prophet model, for details you may refer to
-            https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+            Prophet model.
         :param seasonality_prior_scale: hyperparameter seasonality_prior_scale for the
-            Prophet model, for details you may refer to
-            https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+            Prophet model.
         :param holidays_prior_scale: hyperparameter holidays_prior_scale for the
-            Prophet model, for details you may refer to
-            https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+            Prophet model.
         :param seasonality_mode: hyperparameter seasonality_mode for the
-            Prophet model, for details you may refer to
-            https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+            Prophet model.
         :param changepoint_range: hyperparameter changepoint_range for the
-            Prophet model, for details you may refer to
-            https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+            Prophet model.
         :param metric: the metric for validation and evaluation. For regression, we support
             Mean Squared Error: ("mean_squared_error", "MSE" or "mse"),
             Mean Absolute Error: ("mean_absolute_error","MAE" or "mae"),
@@ -84,12 +80,8 @@ class ProphetForecaster(Forecaster):
         :param validation_data: evaluation data, should be the same type as x
         """
         self._check_data(data, validation_data)
-        data_dict = {
-            'x': data,
-            'y': None,
-            'val_x': None,
-            'val_y': validation_data}
-        return self.internal.fit_eval(data=data_dict,
+        return self.internal.fit_eval(data=data,
+                                      validation_data=validation_data,
                                       **self.model_config)
 
     def _check_data(self, data, validation_data):
@@ -124,7 +116,8 @@ class ProphetForecaster(Forecaster):
         if self.internal.model is None:
             raise RuntimeError(
                 "You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate(None, validation_data, metrics=metrics)
+        return self.internal.evaluate(target=validation_data,
+                                      metrics=metrics)
 
     def save(self, checkpoint_file):
         """
