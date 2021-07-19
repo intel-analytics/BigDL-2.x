@@ -415,9 +415,9 @@ class Table:
         """
         if not isinstance(columns, list):
             columns = [columns]
-            for c in columns:
-                if not isinstance(c, str):
-                    raise ValueError("Column must have type str.")
+        for c in columns:
+            if not isinstance(c, str):
+                raise ValueError("Column must have type str.")
         check_col_exists(self.df, columns)
         if len(columns) == 1:
             return self.df.select(columns).rdd.flatMap(lambda x: x).collect()
