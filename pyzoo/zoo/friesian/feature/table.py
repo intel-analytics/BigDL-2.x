@@ -547,7 +547,7 @@ class Table:
         """
         return self._clone(self.df.withColumn(name, lit(value)))
 
-    def sort(self, columns, orders=None):
+    def sort(self, columns, ascending=None):
         """
         Sort the target columns with the specified order.
 
