@@ -63,7 +63,7 @@ def optim_creator(model, config):
     return torch.optim.Adam(model.parameters(), lr=config["lr"])
 ```
 
-Note that the input optimizer for Pytorch `AutoEstimator` could be a *Optimizer Creator Function* or a string, which is the name of Pytorch Optimizer. The above *Optimizer Creator Function* has the same functionality with "Adam".
+Note that the `optimizer` argument in Pytorch `AutoEstimator` constructor could be a *Optimizer Creator Function* or a string, which is the name of Pytorch Optimizer. The above *Optimizer Creator Function* has the same functionality with "Adam".
 
 #### **2.4 Create and Fit Pytorch AutoEstimator**
 User could create a Pytorch `AutoEstimator` as below.
@@ -77,7 +77,7 @@ auto_est = AutoEstimator.from_torch(model_creator=model_creator,
                                     resources_per_trial={"cpu": 2},
                                     name="lenet_mnist")
 ```
-Then user can perform distributed hyper-parameter tuning as follows. For more details about `search_space`, view the *search space and search algorithms* [page](#search-space-and-search-algorithms).
+Then user can perform distributed hyper-parameter tuning as follows. For more details about the `search_space` argument, view the *search space and search algorithms* [page](#search-space-and-search-algorithms).
 ```python
 auto_est.fit(data=train_loader_creator,
              validation_data=test_loader_creator,
@@ -121,7 +121,7 @@ auto_est.fit(data=train_data,
              epochs=1,
              metric="accuracy")
 ```
-The `data` and `validation_data` can only be a tuple of numpy ndarrays. We haven't support *Data Create Function* now. The numpy ndarray should also be in the form of (x, y), where x is training input data and y is training target data.
+The `data` and `validation_data` in `fit` method can only be a tuple of numpy ndarrays. We haven't support *Data Create Function* now. The numpy ndarray should also be in the form of (x, y), where x is training input data and y is training target data.
 
 Finally, user can get the best learned model and the best hyper-parameters for further deployment.
 ```python
@@ -137,7 +137,7 @@ For Hyper-parameter Optimization, user should define the search space of various
 
 For basic search algorithms like **Grid Search** and **Random Search**, we provide several sampling functions with `automl.hp`. See [API doc](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/AutoML/automl.html#orca-automl-hp) for more details.
 
-`AutoEstimator` requires a dictionary for the `search_space` parameter in `fit`. 
+`AutoEstimator` requires a dictionary for the `search_space` argument in `fit`.
 In the dictionary, the keys are the hyper-parameter names, and the values specify how to sample the search spaces for the hyper-parameters.
 
 ```python
@@ -152,8 +152,8 @@ search_space = {
 
 #### **4.2 Advanced Search Algorithms**
 Beside grid search and random search, user could also choose to use some advanced hyper-parameter optimization methods, 
-such as [Ax](https://ax.dev/), [Bayesian Optimization](https://github.com/fmfn/BayesianOptimization), [Scikit-Optimize](https://scikit-optimize.github.io), etc. We supported all *Search Algorithms* in [Ray Tune](https://docs.ray.io/en/master/index.html).
-Note that you should install the dependency for the method manually. 
+such as [Ax](https://ax.dev/), [Bayesian Optimization](https://github.com/fmfn/BayesianOptimization), [Scikit-Optimize](https://scikit-optimize.github.io), etc. We supported all *Search Algorithms* in [Ray Tune](https://docs.ray.io/en/master/index.html). View the [Ray Tune Search Algorithms](https://docs.ray.io/en/master/tune/api_docs/suggestion.html) for more details.
+Note that you should install the dependency for your search algorithm manually.
 
 Take bayesian optimization as an instance. You need to first install the dependency with
 
@@ -183,17 +183,10 @@ See [API Doc](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/AutoM
 ### **4. Scheduler**
 *Scheduler* can stop/pause/tweak the hyper-parameters of running trials, making the hyper-parameter tuning process much efficient.
 
-User can also pass the *Scheduler* name to `scheduler` in `AutoEstimator.fit`. The *Scheduler* names supported and the corresponding reference are listed as below. The default `scheduler` is "fifo", which just runs trials in submission order.
+We support all *Schedulers* in [Ray Tune](https://docs.ray.io/en/master/index.html). See [Ray Tune Schedulers](https://docs.ray.io/en/master/tune/api_docs/schedulers.html#schedulers-ref) for more details.
 
-| Name | Reference| 
-| ---- | ---------|
-| "fifo"| - |
-|"hyperband"|[HyperBand](https://arxiv.org/abs/1603.06560)|
-| "async_hyperband" or "asynchyperband"|[Async HyperBand](https://arxiv.org/abs/1810.05934)|
-|"median_stopping_rule" or "medianstopping"| [Median Stopping Rule](https://research.google.com/pubs/pub46180.html)|
-|"hb_bohb"|[HyperBand For BOHB](https://arxiv.org/abs/1807.01774)|
-|"pbt"|[Population Based Training](https://deepmind.com/blog/article/population-based-training-neural-networks)|
-|"pbt_replay"| [Population Based Training Replay](https://docs.ray.io/en/master/tune/api_docs/schedulers.html#population-based-training-replay-tune-schedulers-populationbasedtrainingreplay)|
+User can pass the *Scheduler* name to `scheduler` in `AutoEstimator.fit`. The *Scheduler* names supported are "fifo", "hyperband", "async_hyperband", "median_stopping_rule", "hb_bohb", "pbt", "pbt_replay".
+The default `scheduler` is "fifo", which just runs trials in submission order.
 
 See examples below about how to use *Scheduler* in `AutoEstimator`. 
 ```python
@@ -214,7 +207,5 @@ auto_estimator.fit(
     scheduler_params=scheduler_params
 )
 ```
-We support all *Schedulers* in [Ray Tune](https://docs.ray.io/en/master/index.html). See [Ray Tune Schedulers](https://docs.ray.io/en/master/tune/api_docs/schedulers.html#schedulers-ref) for more details.
-And the *Scheduler* shares the same parameters as ray tune schedulers.
-
-The *Scheduler* `scheduler_params` are extra parameters for `scheduler` other than `metric` and `mode`. 
+*Scheduler* shares the same parameters as ray tune schedulers.
+And `scheduler_params` are extra parameters for `scheduler` other than `metric` and `mode`.
