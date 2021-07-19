@@ -615,6 +615,26 @@ class Table:
         temp = temp.join(tbl, on="index", how="left").drop("index")
         return self._clone(temp)
 
+    def shift(self, in_col, out_col, offset=1, nan=None):
+        """
+        Shift down a column with offset.
+
+        :param in_col: str, specifies the name of the input column.
+        :param out_col: str,specifies the name of the output column.
+        :offset: int, number of cells that need to shift down, default to 1.
+        :nan: value to be replaced in the cell.
+
+        :return: A new Table with shifted column.
+        """
+        spark = OrcaContext.get_spark_session()
+        self.df.createOrReplaceTempView("tbl")
+        temp = spark.sql("select row_number() over (order by '') -1 as index, * from tbl")
+        w = Window().partitionBy().orderBy(pyspark_col("index"))
+        temp = temp.drop(out_col) if out_col in temp.columns else temp
+        temp = temp.select("*", lag(in_col, offset, nan).over(w).alias(out_col))
+        temp = temp.drop("index")
+        return self._clone(temp)
+
     def __getattr__(self, name):
         """
         Get the target column of the Table.
