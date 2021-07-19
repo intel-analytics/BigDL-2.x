@@ -891,6 +891,18 @@ class TestTable(TestCase):
         df = df.append_list("col5", list)
         assert df.dropna("col5").size() == 2
 
+    def test_shift(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/")
+        df = FeatureTable.read_csv(file_path+"data.csv", header=True)
+        df = df.shift("col1", "col4")
+        assert df.select("col4").size() == 4
+        assert df.to_list("col4")[0] is None
+        df = df.shift("col1", "col4", 2)
+        assert df.to_list("col4")[0] is None
+        assert df.to_list("col4")[1] is None
+        df = df.shift("col1", "col4", 1, -1)
+        assert df.to_list("col4")[0] == -1
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
