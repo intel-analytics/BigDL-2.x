@@ -1,7 +1,8 @@
-ARG JOBMANAGER_MEMORY_PROCESS_SIZE=10g
-ARG TASKMANAGER_MEMORY_PROCESS_SIZE=10g
+ARG JOBMANAGER_MEMORY_PROCESS_SIZE=15g
+ARG TASKMANAGER_MEMORY_PROCESS_SIZE=15g
 ARG TASKMANAGER_MEMORY_TASK_OFF_HEAP_SIZE=2097152b
 ARG TASKMANAGER_MEMORY_FRAMEWORK_OFF_HEAP_SIZE=2048mb
+ARG TASKMANAGER_CPU_NUM=20.0
 ARG RUNTIME_K8S_FLINK_NAME_SPACE=stream
 ARG RUNTIME_K8S_FLINK_SERVICE_ACCOUNT=stream
 ARG RUNTIME_K8S_FLINK_IMAGE=${RUNTIME_K8S_FLINK_IMAGE}
@@ -12,6 +13,10 @@ ARG REDIS_HOME=/opt/redis-5.0.5
 ARG REDIS_STORAGE=/opt/redis-storage
 ARG REDIS_PORT=36379
 ARG REDIS_VERSION=5.0.5
+ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
+ARG SPARK_VERSION=2.4.6
+ARG BIGDL_VERSION=0.13.0
+ARG SERVING_MODELS_URL=models_url
 
 #stage.1 redis
 FROM ubuntu:18.04 as redis
@@ -32,6 +37,7 @@ ARG JOBMANAGER_MEMORY_PROCESS_SIZE
 ARG TASKMANAGER_MEMORY_PROCESS_SIZE
 ARG TASKMANAGER_MEMORY_TASK_OFF_HEAP_SIZE
 ARG TASKMANAGER_MEMORY_FRAMEWORK_OFF_HEAP_SIZE
+ARG TASKMANAGER_CPU_NUM
 ARG RUNTIME_K8S_FLINK_NAME_SPACE
 ARG RUNTIME_K8S_FLINK_SERVICE_ACCOUNT
 ARG RUNTIME_K8S_FLINK_IMAGE
@@ -41,7 +47,14 @@ ARG FLINK_UI_PORT
 ARG REDIS_HOME
 ARG REDIS_STORAGE
 ARG REDIS_PORT
+ARG SPARK_VERSION
+ARG ANALYTICS_ZOO_VERSION
+ARG BIGDL_VERSION
+ARG SERVING_MODELS_URL
 
+ENV BIGDL_VERSION                               ${BIGDL_VERSION}
+ENV ANALYTICS_ZOO_VERSION                       ${ANALYTICS_ZOO_VERSION}
+ENV SPARK_VERSION                               ${SPARK_VERSION}
 ENV JOBMANAGER_MEMORY_PROCESS_SIZE              ${JOBMANAGER_MEMORY_PROCESS_SIZE}
 ENV TASKMANAGER_MEMORY_PROCESS_SIZE             ${TASKMANAGER_MEMORY_PROCESS_SIZE}
 ENV TASKMANAGER_MEMORY_TASK_OFF_HEAP_SIZE       ${TASKMANAGER_MEMORY_TASK_OFF_HEAP_SIZE}
@@ -56,20 +69,26 @@ ENV REDIS_HOME                                  ${REDIS_HOME}
 ENV REDIS_PORT                                  ${REDIS_PORT}
 ENV CONFIG_DIR                                  /opt/work/conf
 ENV REDIS_STORAGE                               ${REDIS_STORAGE}
+ENV ANALYTICS_ZOO_VERSION                       0.11.0
+ENV TF_DISABLE_MKL                              1
+ENV TASKMANAGER_CPU_NUM                         ${TASKMANAGER_CPU_NUM}
 
 COPY --from=redis ${REDIS_HOME} ${REDIS_HOME}
 COPY ./download-cluster-serving-all-zip.sh /hyper-zoo/
-COPY ./*.yaml ${CONFIG_DIR}/
 COPY ./start*.sh /opt/work/scripts/
-COPY ./models /opt/models
-
 RUN apt-get update --fix-missing && \
-    apt-get -y install vim && \
+    apt-get -y install apt-utils vim unzip wget && \
     mkdir ${REDIS_STORAGE} && \
     cd /hyper-zoo && \
     chmod a+x /hyper-zoo/download-cluster-serving-all-zip.sh && \
     /hyper-zoo/download-cluster-serving-all-zip.sh && \
-    cp /hyper-zoo/cluster-serving/analytics-zoo-bigdl_0.12.2-spark_2.4.3-0.11.0-SNAPSHOT-*jar /opt/work/ && \
+    cp /hyper-zoo/cluster-serving/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-*jar /opt/work/ && \
     cd .. && \
     rm -rf /hyper-zoo && \
-    chmod a+x /opt/work/scripts/*
+    chmod a+x /opt/work/scripts/* && \
+#downloads models
+    wget ${SERVING_MODELS_URL} && \
+    tar -xvf ./*tgz -C /opt && \
+    rm -rf ./*tgz
+
+COPY ./*.yaml ${CONFIG_DIR}/

@@ -1,8 +1,8 @@
 # model path must be provided
-    modelPath: /opt/models
+    modelPath: /opt/models/dien/freezed
 #
 # name, default is serving_stream, you need to specify if running multiple servings
-    jobName: stream-yolov3-1
+    jobName: stream-dien-1
 
 # default, None
 # postProcessing:
@@ -28,10 +28,10 @@
 
 ######## Specific Configuration
 # default: localhost:8081
-    flinkRestUrl: localhost:8082
+#    flinkRestUrl: 
 
 # default: localhost:6379
-    redisUrl: 172.16.0.200:36379
+#   redisUrl: 
 
 # default: 8g
 # redisMaxmemory:
@@ -54,3 +54,5 @@
 
 # default: false
 # recordEncrypted:
+#
+# inputAlreadyBatched: true
