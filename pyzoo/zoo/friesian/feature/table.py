@@ -555,17 +555,21 @@ class Table:
         :param orders: boolean or a list of boolean,
         specifies whether sort the corresponding column with an ascending order or not,
         default to sort the columns with all ascending orders.
-
+        
+        For example, if a table contains columns id and user,
+        Sort the table with sort(["id", "user"], [True, False]) will sort with id in ascending order first,
+        then if it contains duplicate values for id, then sorts with user in decending order.
+        
         :return: A new Table with sorted columns.
         """
         if not isinstance(columns, list):
             columns = [columns]
-        if orders is None:
-            orders = [True] * len(columns)
-        elif not isinstance(orders, list):
-            orders = [orders]
+        if ascending is None:
+            ascending = [True] * len(columns)
+        elif not isinstance(ascending, list):
+            ascending = [ascending]
         columns = [pyspark_col(columns[i]).asc()
-                   if orders[i] else pyspark_col(columns[i]).desc() for i in range(len(columns))]
+                   if ascending[i] else pyspark_col(columns[i]).desc() for i in range(len(columns))]
         return self._clone(self.df.sort(columns))
 
     def iloc(self, column, indexes, value):
