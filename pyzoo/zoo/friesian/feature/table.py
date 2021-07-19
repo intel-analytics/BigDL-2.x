@@ -568,6 +568,7 @@ class Table:
             ascending = [True] * len(columns)
         elif not isinstance(ascending, list):
             ascending = [ascending]
+        assert len(ascending) == len(columns)
         columns = [pyspark_col(columns[i]).asc()
                    if ascending[i] else pyspark_col(columns[i]).desc() for i in range(len(columns))]
         return self._clone(self.df.sort(columns))
