@@ -406,7 +406,7 @@ class Table:
     def to_list(self, columns):
         """
         Convert all values of the target columns to a list.
-        Only call this if the Table is small enougth.
+        Only call this if the Table is small enough.
 
         :param columns: str or a list of str, specifies the name of target columns, 
                if the columns is a list of column, then return a list of lists.
