@@ -342,7 +342,7 @@ class PytorchBaseModel(BaseModel):
         x = PytorchBaseModel.to_torch(x).float()
         if not self.onnx_model_built:
             self._build_onnx(x[0:1], dirname=dirname)
-        
+
         test_loader = DataLoader(TensorDataset(x),
                                  batch_size=int(batch_size))
         yhat_list = []
