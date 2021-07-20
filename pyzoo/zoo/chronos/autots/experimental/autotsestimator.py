@@ -81,7 +81,8 @@ class AutoTSEstimator:
                our built-in model with different computing requirement. For dict, Read the API docs
                for each auto model. Some common hyper parameter can be explicitly set in named
                parameter. search_space should contain those parameters other than the keyword
-               arguments in this constructor in its key.
+               arguments in this constructor in its key. If a 3rd parth model is used, then you
+               must set search_space to a dict.
         :param metric: String. The evaluation metric name to optimize. e.g. "mse"
         :param loss: String or pytorch/tf.keras loss instance or pytorch loss creator function. The
                default loss function for pytorch backend is nn.MSELoss().

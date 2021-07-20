@@ -253,15 +253,8 @@ class TestAutoTrainer(TestCase):
         tsdata_train = get_tsdataset().gen_dt_feature().scale(scaler, fit=True)
         tsdata_valid = get_tsdataset().gen_dt_feature().scale(scaler, fit=False)
 
-        search_space = {
-            'hidden_units': hp.grid_search([32, 64]),
-            'levels': hp.randint(4, 6),
-            'kernel_size': hp.randint(3, 5),
-            'dropout': hp.uniform(0.1, 0.2),
-            'lr': hp.loguniform(0.001, 0.01)
-        }
         auto_estimator = AutoTSEstimator(model='tcn',
-                                         search_space=search_space,
+                                         search_space="minimal",
                                          past_seq_len=hp.randint(4, 6),
                                          future_seq_len=1,
                                          selected_features="auto",
