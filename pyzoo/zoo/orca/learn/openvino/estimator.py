@@ -111,7 +111,8 @@ class OpenvinoEstimator(SparkEstimator):
                                               validation_data=None,
                                               feature_cols=feature_cols,
                                               label_cols=None,
-                                              mode="predict")
+                                              mode="predict",
+                                              accept_str_col=False)
             transformed_data = xshards.transform_shard(predict_transform, self.batch_size)
             result_rdd = self.model.distributed_predict(transformed_data.rdd, sc)
             return convert_predict_rdd_to_dataframe(data, result_rdd.flatMap(lambda data: data))
