@@ -23,6 +23,7 @@ class AutoSeq2Seq:
     def __init__(self,
                  input_feature_num,
                  output_target_num,
+                 past_seq_len,
                  future_seq_len,
                  optimizer,
                  loss,
@@ -41,6 +42,7 @@ class AutoSeq2Seq:
 
         :param input_feature_num: Int. The number of features in the input
         :param output_target_num: Int. The number of targets in the output
+        :param past_seq_len: Int. The number of historical steps used for forecasting.
         :param future_seq_len: Int. The number of future steps to forecast.
         :param optimizer: String or pyTorch optimizer creator function or
                tf.keras optimizer instance.
@@ -69,6 +71,7 @@ class AutoSeq2Seq:
         self.search_space = dict(
             input_feature_num=input_feature_num,
             output_feature_num=output_target_num,
+            past_seq_len=past_seq_len,
             future_seq_len=future_seq_len,
             lstm_hidden_dim=lstm_hidden_dim,
             lstm_layer_num=lstm_layer_num,
