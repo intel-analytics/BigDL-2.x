@@ -26,10 +26,10 @@ AUTO_MODEL_DEFAULT_SEARCH_SPAECE = {
                        "layer_num":hp.grid_search([1, 2]),
                        "lr":hp.loguniform(0.0005, 0.01),
                        "dropout":hp.uniform(0, 0.2)},
-             "large":{"hidden_dim":hp.grid_search([16, 32, 48, 64]),
+             "large":{"hidden_dim":hp.grid_search([16, 32, 64, 128]),
                       "layer_num":hp.grid_search([1, 2, 3, 4]),
                       "lr":hp.loguniform(0.0005, 0.01),
-                      "dropout":hp.uniform(0, 0.2)}},
+                      "dropout":hp.uniform(0, 0.3)}},
 
     "tcn": {"minimal": {"hidden_units":hp.grid_search([16, 32]),
                         "levels":hp.randint(4, 6),
@@ -76,10 +76,10 @@ class AutoModelFactory:
         :param model: model name, only tcn and lstm are supported
         :param mode: one of "minimal", "normal", "large"
         '''
-        name = name.lower()
-        if name == "lstm":
-            return AUTO_MODEL_DEFAULT_SEARCH_SPAECE[name][computing_resource]
-        if name == "tcn":
-            return AUTO_MODEL_DEFAULT_SEARCH_SPAECE[name][computing_resource]
+        model = model.lower()
+        if model == "lstm":
+            return AUTO_MODEL_DEFAULT_SEARCH_SPAECE[model][computing_resource]
+        if model == "tcn":
+            return AUTO_MODEL_DEFAULT_SEARCH_SPAECE[model][computing_resource]
         return NotImplementedError(f"{AUTO_MODEL_SUPPORT_LIST} are supported for auto model,\
-                                        but get {name}.")
+                                        but get {model}.")
