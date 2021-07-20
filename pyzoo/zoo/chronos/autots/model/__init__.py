@@ -17,7 +17,7 @@
 import orca.automl.hp as hp
 AUTO_MODEL_SUPPORT_LIST = ["lstm", "tcn", "seq2seq"]
 
-AUTO_MODEL_DEFAULT_SEARCH_SPAECE = {
+AUTO_MODEL_DEFAULT_SEARCH_SPACE = {
     "lstm": {"minimal":{"hidden_dim":hp.grid_search([16, 32]),
                         "layer_num":hp.randint(1, 2),
                         "lr":hp.loguniform(0.001, 0.005),
@@ -78,8 +78,8 @@ class AutoModelFactory:
         '''
         model = model.lower()
         if model == "lstm":
-            return AUTO_MODEL_DEFAULT_SEARCH_SPAECE[model][computing_resource]
+            return AUTO_MODEL_DEFAULT_SEARCH_SPACE[model][computing_resource]
         if model == "tcn":
-            return AUTO_MODEL_DEFAULT_SEARCH_SPAECE[model][computing_resource]
+            return AUTO_MODEL_DEFAULT_SEARCH_SPACE[model][computing_resource]
         return NotImplementedError(f"{AUTO_MODEL_SUPPORT_LIST} are supported for auto model,\
                                         but get {model}.")
