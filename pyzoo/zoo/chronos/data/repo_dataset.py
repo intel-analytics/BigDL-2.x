@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from zoo.chronos.data.utils.publicdataset import PublicDataset
+from zoo.chronos.data.utils.public_dataset import PublicDataset
 
 
-def get_public_dataset(name, path='~/.chronos/dataset', redownload=False):
+def get_public_dataset(name='network_traffic',path='~/.chronos/dataset',redownload=False):
     """
     Get public dataset.
 
@@ -27,14 +27,13 @@ def get_public_dataset(name, path='~/.chronos/dataset', redownload=False):
     :param path: str, download path, the value defatults to "~/.chronos/dataset/".
     :param redownload: bool, if redownload the raw dataset file(s).
     """
-    assert not isinstance(name, str) or not isinstance(path, str),\
-        "The name and path must be of type str."
+    assert isinstance(name, str) or isinstance(path, str),\
+        "Name and path must be string."
 
-    public_dataset = PublicDataset(
-        name=name, path=path, redownload=redownload).get_public_data()
+    public_dataset = PublicDataset(name=name, path=path, redownload=redownload).get_public_data()
     if name == 'network_traffic':
-        public_dataset.preprocess_network_traffic()
+        return public_dataset.preprocess_network_traffic()
     elif name == '':
         pass
     else:
-        pass
+        raise NameError('The dataset is not currently supported.')
