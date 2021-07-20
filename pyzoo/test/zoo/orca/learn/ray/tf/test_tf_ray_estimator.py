@@ -457,6 +457,7 @@ class TestTFRayEstimator(TestCase):
         assert df.rdd.getNumPartitions() < trainer.num_workers
 
         trainer.fit(df, epochs=1, batch_size=4, steps_per_epoch=25,
+                    validation_data=df, validation_steps=1,
                     feature_cols=["feature"],
                     label_cols=["label"])
         trainer.evaluate(df, batch_size=4, num_steps=25, feature_cols=["feature"],
