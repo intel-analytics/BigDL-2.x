@@ -313,7 +313,7 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
     val _labelPaddingParam = if (labelPaddingParam != null) {
       Some(labelPaddingParam)
     } else None
-
+      println("@getInto dataset")
     if (x != null) DataSet.rdd(x) -> SampleToMiniBatch[T](batchSize, _featurePaddingParam,
       _labelPaddingParam)
     else null
@@ -350,6 +350,7 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       validationData: DataSet[MiniBatch[T]])(implicit ev: TensorNumeric[T]): Unit = {
     require(this.optimMethod != null && this.criterion != null,
       "compile must be called before fit")
+    println("@OPtimize fit")
     this.internalOptimizer = this.getOrCreateOptimizer(x)
     if (validationData != null) {
       require(this.vMethods != null, "Validation metrics haven't been set yet")
@@ -361,9 +362,10 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
         dataset = validationData,
         vMethods = this.vMethods)
     }
+    println("@validation data")
     internalOptimizer.setOptimMethod(this.optimMethod)
       .setEndWhen(Trigger.maxEpoch(getFinishedEpoch() + nbEpoch))
-
+println("@traindata")
     internalOptimizer match {
       case local: InternalLocalOptimizer[T] =>
         local.setTrainData(x)
@@ -372,7 +374,7 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       case disV2: InternalDistriOptimizerV2[T] =>
         disV2.setTrainData(x)
     }
-
+println("@optimize")
     internalOptimizer.optimize()
   }
 
@@ -430,11 +432,13 @@ abstract class KerasNet[T](implicit val tag: ClassTag[T], implicit val ev: Tenso
       validationData: RDD[Sample[T]] = null,
       featurePaddingParam: PaddingParam[T] = null,
       labelPaddingParam: PaddingParam[T] = null)(implicit ev: TensorNumeric[T]): Unit = {
+        println("@kerasNET fit")
     KerasUtils.validateBatchSize(batchSize)
     val trainData = toDataSet(x, batchSize, featurePaddingParam, labelPaddingParam)
     val valData = toDataSet(validationData, batchSize, featurePaddingParam, labelPaddingParam)
+    println("@after rdd -> dataset")
     this.fit(trainData, nbEpoch, valData)
-
+    println("@completed fit")
     releaseDataSets(Array(trainData, valData))
   }
 

@@ -23,9 +23,14 @@ import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
+import com.intel.analytics.bigdl.tensor.Tensor
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.rdd.RDD
+import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dataset.Sample
+
+
 
 case class User(userId: Int, gender: String, age: Int, occupation: Int)
 
@@ -64,10 +69,22 @@ object Ml1mWideAndDeep {
     val featureRdds =
       assemblyFeature(isImplicit, ratingsDF, userDF, itemDF, localColumnInfo, params.modelType)
 
+    println("Feature RDD")
+    featureRdds.foreach(println)
+    featureRdds.collect().foreach(println)
+    println("Blablabla Features")
+
+
     val Array(trainpairFeatureRdds, validationpairFeatureRdds) =
       featureRdds.randomSplit(Array(0.8, 0.2))
     val trainRdds = trainpairFeatureRdds.map(x => x.sample)
     val validationRdds = validationpairFeatureRdds.map(x => x.sample)
+
+    println("Train RDD")
+    trainRdds.collect().foreach(println)
+
+    println("Validation RDD")
+    validationRdds.collect().foreach(println)
 
     val optimMethod = new Adam[Float](
       learningRate = 1e-3,
@@ -166,4 +183,29 @@ object Ml1mWideAndDeep {
     })
     rddOfSample
   }
+
+  // def assemblyFeature(isImplicit: Boolean = false,
+  //                     indexed: DataFrame,
+  //                     userCount: Int,
+  //                     itemCount: Int): RDD[UserItemFeature[Float]] = {
+
+  //   val unioned = if (isImplicit) {
+  //     val negativeDF = Utils.getNegativeSamples(indexed)
+  //     negativeDF.unionAll(indexed.withColumn("label", lit(2)))
+  //   }
+  //   else indexed
+
+  //   val rddOfSample: RDD[UserItemFeature[Float]] = unioned
+  //     .select("userId", "itemId", "label")
+  //     .rdd.map(row => {
+  //     val uid = row.getAs[Int](0)
+  //     val iid = row.getAs[Int](1)
+
+  //     val label = row.getAs[Int](2)
+  //     val feature: Tensor[Float] = Tensor[Float](T(uid.toFloat, iid.toFloat))
+
+  //     UserItemFeature(uid, iid, Sample(feature, Tensor[Float](T(label))))
+  //   })
+  //   rddOfSample
+  // }
 }
