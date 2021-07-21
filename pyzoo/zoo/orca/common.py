@@ -15,7 +15,6 @@
 #
 
 import os
-from re import S
 from zoo import ZooContext
 
 
