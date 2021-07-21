@@ -929,6 +929,58 @@ class FeatureTable(Table):
 
         return FeatureTable(df), min_max_dic
 
+    def transform_min_max_scale(self, columns, min_max_dic):
+        """
+        Rescale each column individually with [min, max] range.
+
+        :param columns: a column name or a list of column names
+        :param min_max_dic: mapping of (min, max) for each column
+        :return: Rescaled FeatureTable
+        """
+        if not isinstance(columns, list):
+            columns = [columns]
+        types = [x[1] for x in self.df.select(*columns).dtypes]
+        scalar_cols = [columns[i] for i in range(len(columns))
+                       if types[i] == "int" or types[i] == "bigint"
+                       or types[i] == "float" or types[i] == "double"]
+        array_cols = [columns[i] for i in range(len(columns))
+                      if types[i] == "array<int>" or types[i] == "array<bigint>"
+                      or types[i] == "array<float>" or types[i] == "array<double>"]
+        vector_cols = [columns[i] for i in range(len(columns)) if types[i] == "vector"]
+
+        tbl = self
+        import numpy as np
+        def normalize_array(c_min, c_max):
+            def normalize(x):
+                np_x = np.array(x)
+                np_min = np.array(c_min)
+                np_max = np.array(c_max)
+                normalized = (np_x - np_min) / (np_max - np_min)
+                return normalized.tolist()
+            return normalize
+
+        def normalize_scalar_vector(c_min, c_max):
+            def normalize(x):
+                return (x - c_min) / (c_max - c_min)
+            return normalize
+
+        for column in scalar_cols:
+            if column in min_max_dic:
+                col_min, col_max = min_max_dic[column]
+                tbl = tbl.apply(column, column, normalize_scalar_vector(col_min, col_max), "float")
+
+        for column in array_cols:
+            if column in min_max_dic:
+                col_min, col_max = min_max_dic[column]
+                tbl = tbl.apply(column, column, normalize_array(col_min, col_max), "array<float>")
+
+        for column in vector_cols:
+            if column in min_max_dic:
+                col_min, col_max = min_max_dic[column]
+                tbl = tbl.apply(column, column, normalize_scalar_vector(col_min, col_max), "vector")
+
+        return tbl
+
     def add_negative_samples(self, item_size, item_col="item", label_col="label", neg_num=1):
         """
         Generate negative item visits for each positive item visit
