@@ -876,8 +876,8 @@ class TestTable(TestCase):
         target_code1 = target_list1[0]
         assert isinstance(target_code1, TargetCode), "target_list1 should be list of TargetCode"
         assert target_code1.df.filter("col_4 == 'a'").collect()[0]["col_4_te_target"] == \
-               feature_tbl.df.filter("col_4 == 'a'").agg({"target": "mean"}) \
-                   .collect()[0]["avg(target)"], \
+            feature_tbl.df.filter("col_4 == 'a'").agg({"target": "mean"}) \
+                .collect()[0]["avg(target)"], \
             "col_4_te_target should contain mean of target grouped by col_4"
 
         cat_cols = ["col_4", "col_5"]
@@ -905,7 +905,7 @@ class TestTable(TestCase):
                 assert out_col in target_list2[i].all_df.columns, \
                     "every out_cols should be one of the columns of all_df in returned TargetCode"
                 assert target_mean[target_list2[i].out_target_mean[out_col][0]] == \
-                       target_list2[i].out_target_mean[out_col][1], \
+                    target_list2[i].out_target_mean[out_col][1], \
                     "the global mean in TargetCode should be the same as the assigned mean in " \
                     "target_mean"
 
@@ -947,7 +947,7 @@ class TestTable(TestCase):
         target_code1 = target_code0.rename({"unknown": "col_5"})
         target_tbl1 = feature_tbl.encode_target(target_code1, is_train=False)
         assert target_tbl1.df.filter("col_5_te_col_1 == 1").count() == \
-               feature_tbl.df.filter("col_5 == 'aa'").count(), \
+            feature_tbl.df.filter("col_5 == 'aa'").count(), \
             "the row with col_5 = 'aa' be encoded as col_5_te_col_1 = 1 in target_tbl1"
         assert target_tbl1.df.filter("col_3 == 8.0 and col_4 == 'd'") \
             .filter("col_5_te_col_1 == 3"), \
@@ -955,7 +955,7 @@ class TestTable(TestCase):
             "so it should be encoded with col_5_te_col_1 = 3 in target_tbl1"
         target_tbl1_ = feature_tbl.encode_target(target_code1, is_train=True)
         assert target_tbl1_.df.filter("col_5_te_col_1 == 1").count() == \
-               feature_tbl.df.filter("col_5 == 'aa' and target == 0").count(), \
+            feature_tbl.df.filter("col_5 == 'aa' and target == 0").count(), \
             "the row with col_5 = 'aa' and target = 0 should be encoded as col_5_te_col_1 = 1" \
             " in target_tbl1"
 

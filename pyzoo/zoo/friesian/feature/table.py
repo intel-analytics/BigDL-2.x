@@ -1256,9 +1256,10 @@ class FeatureTable(Table):
             all_df = org_all_df
             for target_col, out_col in zip(target_cols, out_col_list):
                 global_target_mean = target_mean_dict[target_col]
-                all_func = udf(lambda s, count: None if s is None else
-                (s + global_target_mean * smooth) / (count + smooth),
-                               DoubleType())
+                all_func = udf(
+                    lambda s, count:
+                    None if s is None else (s + global_target_mean * smooth) / (count + smooth),
+                    DoubleType())
                 all_df = all_df.withColumn(out_col,
                                            all_func(cat_col_name + "_all_sum_" + target_col,
                                                     cat_col_name + "_all_count")) \
@@ -1278,10 +1279,11 @@ class FeatureTable(Table):
                 fold_df = fold_df.join(org_all_df, cat_col, how="left")
                 for target_col, out_col in zip(target_cols, out_col_list):
                     global_target_mean = target_mean_dict[target_col]
-                    target_func = udf(lambda s_all, s, c_all, c:
-                            None if c_all == c or s_all is None or s is None else
-                            ((s_all - s) + global_target_mean * smooth) / ((c_all - c) + smooth),
-                                      DoubleType())
+                    target_func = udf(
+                        lambda s_all, s, c_all, c:
+                        None if c_all == c or s_all is None or s is None else
+                        ((s_all - s) + global_target_mean * smooth) / ((c_all - c) + smooth),
+                        DoubleType())
                     fold_df = fold_df.withColumn(
                         out_col,
                         target_func(cat_col_name + "_all_sum_" + target_col,
@@ -1513,8 +1515,8 @@ class TargetCode(Table):
             assert column in out_target_mean, column + " should be in out_target_mean"
             column_mean = out_target_mean[column][1]
             assert isinstance(column_mean, int) or isinstance(column_mean, float), \
-                "mean in target_mean should be numeric but get {} of type {} in {}" \
-                    .format(column_mean, type(column_mean), out_target_mean)
+                "mean in target_mean should be numeric but get {} of type {}" \
+                " in {}".format(column_mean, type(column_mean), out_target_mean)
 
     def _clone(self, df):
         return TargetCode(df, self.all_df, self.cat_col, self.out_target_mean, self.kfold,

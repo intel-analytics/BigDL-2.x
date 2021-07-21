@@ -103,8 +103,8 @@ def check_col_str_list_exists(df, column, arg_name):
         assert column in df.columns, column + " in " + arg_name + " does not exist in Table"
     elif isinstance(column, list):
         for sing_column in column:
-            assert sing_column in df.columns, sing_column + " in " + arg_name + \
-                                              " does not exist in Table"
+            assert sing_column in df.columns, sing_column + " in " + \
+                                              arg_name + " does not exist in Table"
     else:
         raise TypeError("elements in cat_cols should be str or list of str but get " + str(column))
 
