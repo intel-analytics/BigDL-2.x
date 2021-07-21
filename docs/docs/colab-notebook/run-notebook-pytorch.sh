@@ -95,6 +95,14 @@ index=1
 
 set -e
 
+if [ ! -f BSDS300-images.tgz ]; then
+  wget -nv $FTP_URI/analytics-zoo-data/BSDS300-images.tgz
+fi
+if [ ! -d dataset/BSDS300/images ]; then
+  mkdir dataset
+  tar -xzf BSDS300-images.tgz -C dataset
+fi
+
 for f in "${pytorchFiles[@]}"
 do
    
