@@ -96,10 +96,12 @@ index=1
 set -e
 
 if [ ! -f BSDS300-images.tgz ]; then
-  wget -nv $FTP_URI/analytics-zoo-data/BSDS300-images.tgz
+  wget $FTP_URI/analytics-zoo-data/BSDS300-images.tgz
 fi
 if [ ! -d dataset/BSDS300/images ]; then
-  mkdir dataset
+  if [ ! -d dataset ]; then
+    mkdir dataset
+  fi
   tar -xzf BSDS300-images.tgz -C dataset
 fi
 
