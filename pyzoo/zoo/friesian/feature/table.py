@@ -408,7 +408,7 @@ class Table:
         Convert all values of the target columns to a list.
         Only call this if the Table is small enough.
 
-        :param columns: str or a list of str, specifies the name of target columns, 
+        :param columns: str or a list of str, specifies the name of target columns,
                if the columns is a list of column, then return a list of lists.
 
         :return: list, contains all values of the target columns.
@@ -555,11 +555,11 @@ class Table:
         :param orders: boolean or a list of boolean,
         specifies whether sort the corresponding column with an ascending order or not,
         default to sort the columns with all ascending orders.
-        
+
         For example, if a table contains columns id and user,
-        Sort the table with sort(["id", "user"], [True, False]) will sort with id in ascending order first,
+        Sort(["id", "user"], [True, False]) will sort with id in ascending order first,
         then if it contains duplicate values for id, then sorts with user in decending order.
-        
+
         :return: A new Table with sorted columns.
         """
         if not isinstance(columns, list):
