@@ -877,7 +877,7 @@ class TestTable(TestCase):
         assert isinstance(target_code1, TargetCode), "target_list1 should be list of TargetCode"
         assert target_code1.df.filter("col_4 == 'a'").collect()[0]["col_4_te_target"] == \
             feature_tbl.df.filter("col_4 == 'a'").agg({"target": "mean"}) \
-                .collect()[0]["avg(target)"], \
+            .collect()[0]["avg(target)"], \
             "col_4_te_target should contain mean of target grouped by col_4"
 
         cat_cols = ["col_4", "col_5"]
