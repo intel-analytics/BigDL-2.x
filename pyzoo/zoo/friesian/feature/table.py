@@ -21,7 +21,8 @@ from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, Decim
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
-from pyspark.sql.functions import col as pyspark_col, concat, udf, array, broadcast, lit, lag, window
+from pyspark.sql.functions import col as pyspark_col, concat, udf, array, broadcast, lit, \
+    lag, window
 from pyspark.sql import Row
 import pyspark.sql.functions as F
 from pyspark.traceback_utils import SCCallSiteSync
