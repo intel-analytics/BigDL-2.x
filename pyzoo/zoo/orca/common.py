@@ -190,24 +190,20 @@ def init_orca_context(cluster_mode=None, cores=None, memory=None, num_nodes=None
     print("Initializing orca context")
     import atexit
     atexit.register(stop_orca_context)
+    from pyspark import SparkContext, SparkConf
+    conf = SparkConf()
+    activate_sc = SparkContext._active_spark_context is not None
     if cluster_mode is not None:
         cluster_mode = cluster_mode.lower()
-        from pyspark import SparkContext, SparkConf
-        conf = SparkConf()
-        activate_sc = SparkContext._active_spark_context is not None
         if activate_sc:
             cores = conf.get("spark.executor.cores") if cores is None else cores
             memory = conf.get("spark.executor.memory") if memory is None else memory
             num_nodes = conf.get("spark.executor.instances") if num_nodes is None else num_nodes
-        else:
-            cores = 2 if cores is None else cores
-            memory = "2g" if memory is None else memory
-            num_nodes = 1 if num_nodes is None else num_nodes
     spark_args = {}
     for key in ["conf", "spark_log_level", "redirect_spark_log"]:
         if key in kwargs:
             spark_args[key] = kwargs[key]
-    if cluster_mode is None:
+    if cluster_mode is None or not activate_sc:
         cores = 2 if cores is None else cores
         memory = "2g" if memory is None else memory
         num_nodes = 1 if num_nodes is None else num_nodes
