@@ -16,7 +16,7 @@
 from zoo.chronos.data.utils.public_dataset import PublicDataset
 
 
-def get_public_dataset(name='network_traffic',path='~/.chronos/dataset',redownload=False):
+def get_public_dataset(name, path='~/.chronos/dataset', redownload=False):
     """
     Get public dataset.
 
@@ -30,10 +30,16 @@ def get_public_dataset(name='network_traffic',path='~/.chronos/dataset',redownlo
     assert isinstance(name, str) or isinstance(path, str),\
         "Name and path must be string."
 
-    public_dataset = PublicDataset(name=name, path=path, redownload=redownload).get_public_data()
+    public_dataset = PublicDataset(name=name, path=path, redownload=redownload)\
+        .get_public_data()
     if name == 'network_traffic':
-        return public_dataset.preprocess_network_traffic()
-    elif name == '':
-        pass
+        return public_dataset.preprocess_network_traffic()\
+            .get_tsdata(dt_col='StartTime', target_col=['AvgRate', 'total'])
+    elif name == 'AIOps':
+        raise NotImplementedError('The AIOps is not currently supported.')
+    elif name == 'fsi':
+        raise NotImplementedError('The fsi is not currently supported.')
+    elif name == 'nyc_taxi':
+        raise NotImplementedError('The nyc_taxi is not currently supported.')
     else:
         raise NameError('The dataset is not currently supported.')

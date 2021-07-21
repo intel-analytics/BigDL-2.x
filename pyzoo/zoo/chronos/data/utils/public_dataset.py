@@ -15,17 +15,17 @@
 #
 import os
 import re
-import warnings
 import requests
 
 import pandas as pd
 from zoo.chronos.data.tsdataset import TSDataset
 
-NETWORK_TRAFFIC_DATA = ['2018%02d' % i for i in range(
-    1, 13)] + ['2019%02d' % i for i in range(1, 13)]
-
-BASE_URL = {'network_traffic': [
-    f'http://mawi.wide.ad.jp/~agurim/dataset/{val}/{val}.agr' for val in NETWORK_TRAFFIC_DATA]}
+NETWORK_TRAFFIC_DATA = ['2018%02d' % i for i in range(1, 13)]\
+    + ['2019%02d' % i for i in range(1, 13)]
+BASE_URL = {'network_traffic': [f'http://mawi.wide.ad.jp/~agurim/dataset/{val}/{val}.agr'
+                                for val in NETWORK_TRAFFIC_DATA],
+            'AIOps': 'http://clusterdata2018pubcn.oss-cn-beijing.aliyuncs.com/machine_usage.tar.gz'
+            }
 
 
 class PublicDataset:
@@ -34,21 +34,19 @@ class PublicDataset:
         self.name = name
         self.redownload = redownload
 
-        
+        self.url = BASE_URL[self.name]
         self.abspath = os.path.join(os.path.expanduser(path), self.name)
         self.data_path = os.path.join(self.abspath, self.name + '_data.csv')
-        
 
-    def get_public_data(self, chunk_size=1024, progress_bar=True):
+    def get_public_data(self, chunk_size=1024):
         """
-        param chunk_size: Byte size of a single download, preferably an integer multiple of 2.
-        param progress_bar: Set the progress bar to display when downloading, default True.
+        Complete path stitching and download files.
+        param chunk_size: Byte size of a single read, preferably an integer multiple of 2.
         """
-        # TODO progress_bar
         assert isinstance(chunk_size, int), "chunk_size must be int."
         if not os.path.exists(self.abspath):
             os.makedirs(self.abspath)
-        
+
         if self.redownload:
             try:
                 exists_file = os.listdir(self.abspath)
@@ -59,25 +57,22 @@ class PublicDataset:
                 raise OSError(
                     'File download is not completed, you should set redownload=False.')
 
-        url = BASE_URL[self.name]
-
         if not set(NETWORK_TRAFFIC_DATA).issubset(set(os.listdir(self.abspath))):
             if isinstance(BASE_URL[self.name], list):
-                for val in url:
+                for val in self.url:
                     download(val, self.abspath, chunk_size)
             else:
-                download(url, self.abspath, chunk_size)
+                download(self.url, self.abspath, chunk_size)
         return self
 
     def preprocess_network_traffic(self):
         """ 
         preprocess_network_traffic will match the Starttime and endtime(avgrate, total)
         of data accordingto the regularity, and generate a csv file, the file name 
-        is network_traffic_data.csv
-        return partially preprocessed tsdata.
+        is network_traffic_data.csv.
         """
         _is_first_columns = True
-        pattern = r"%Sta.*?\((.*?)\)\n%%End.*?\((.*?)\)\n%Avg.*?\s(\d+\.\w+).*?\n%total:\s(\d+)"
+        pattern = r"%Start.*?\((.*?)\)\n%%End.*?\((.*?)\)\n%Avg.*?\s(\d+\.\w+).*?\n%total:\s(\d+)"
 
         if not os.path.exists(self.data_path):
             for val in NETWORK_TRAFFIC_DATA:
@@ -95,32 +90,40 @@ class PublicDataset:
         self.df['AvgRate'] = raw_df.AvgRate.apply(lambda x: float(x[:-4]) if
                                                   x.endswith("Mbps") else float(x[:-4])*1000)
         self.df["total"] = raw_df["total"]
-        return TSDataset.from_pandas(self.df, dt_col="StartTime", target_col=["AvgRate", "total"],
-                                     with_split=True, val_ratio=0.1, test_ratio=0.1)
+        return self
 
-    def preprocess_zip_file(self):
-        pass
+    def get_tsdata(self, dt_col, target_col, extra_feature=None, id_col=None):
+        """
+        param dt_col: same as tsdata.from_pandas.
+        param target_col: same as tsdata.from_pandas.
+        param extra_feature: same as tsdata.from_pandas.
+        param id_col: same as tsdata.from_pandas.
+        return tsdata_train,tsdata_valid,tsdata_test, The sample ratio is 0.8:0.1:0.1.
+        """
+        return TSDataset.from_pandas(self.df, dt_col=dt_col, target_col=target_col,
+                                     extra_feature_col=extra_feature, id_col=id_col,
+                                     with_split=True, val_ratio=0.1, test_ratio=0.1)
 
 
 def download(url, path, chunk_size):
     """
-    param url: File download source address,can be a str or a list.
-    param path: File save path.
+    param url: File download source address, str or list.
+    param path: File save path.default path/name/name_data.csv.
     """
     req = requests.get(url, stream=True)
     size, content_size = 0, int(req.headers['content-length'])
     try:
         req.status_code != 200
     except Exception:
-        raise RuntimeError('download failure.')
+        raise RuntimeError('download failure, please check the network.')
     file_name = url.split('/')[-1].partition('.')[0]
     with open(os.path.join(path, file_name), 'wb') as f:
         for chunk in req.iter_content(1024 * chunk_size):
             if chunk:
                 f.write(chunk)
                 size += len(chunk)
-                print('\r'+'file %s:%s%.2f%%' % (file_name,
-                    '>'*int(size * 50/content_size), float(size/content_size*100)), end='')
+                print('\r'+'file %s:%s%.2f%%' %
+                      (file_name, '>'*int(size * 50 / content_size),
+                       float(size / content_size * 100)), end='')
                 f.flush()
         print('')
-
