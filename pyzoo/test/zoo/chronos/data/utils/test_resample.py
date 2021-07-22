@@ -144,4 +144,4 @@ class TestResampleTimeSeries(ZooTestCase):
             dt_col="datetime",
             interval="2ms",
             merge_mode='max')
-        assert len(res_df) == 2
+        assert len(res_df) == 3

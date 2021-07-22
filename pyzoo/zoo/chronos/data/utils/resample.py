@@ -41,9 +41,6 @@ def resample_timeseries_dataframe(df,
     assert merge_mode in ["max", "min", "mean", "sum"],\
         f"merge_mode should be one of [\"max\", \"min\", \"mean\", \"sum\"]," \
         f" but found {merge_mode}."
-    start_time_stamp = pd.Timestamp(start_time) if start_time else df[dt_col].iloc[0]
-    end_time_stamp = pd.Timestamp(end_time) if end_time else df[dt_col].iloc[-1]
-    assert start_time_stamp <= end_time_stamp, "end time must be later than start time."
 
     res_df = df.copy()
     id_name = None
@@ -61,6 +58,10 @@ def resample_timeseries_dataframe(df,
         res_df = res_df.mean()
     elif merge_mode == "sum":
         res_df = res_df.sum()
+
+    start_time_stamp = pd.Timestamp(start_time) if start_time else res_df.index[0]
+    end_time_stamp = pd.Timestamp(end_time) if end_time else res_df.index[-1]
+    assert start_time_stamp <= end_time_stamp, "end time must be later than start time."
 
     offset = abs(start_time_stamp - res_df.index[0]) % pd.Timedelta(interval)
     new_index = pd.date_range(start=start_time_stamp+offset, end=end_time_stamp, freq=interval)
