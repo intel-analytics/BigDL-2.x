@@ -2,12 +2,15 @@ package com.intel.analytics.zoo.serving.preprocessing
 
 import com.intel.analytics.zoo.serving.utils.ConfigParser
 import com.intel.analytics.zoo.serving.{ClusterServing, TestUtils}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
-class ImageProcessingSpec extends FlatSpec with Matchers {
-  ClusterServing.helper = new ConfigParser(
-    getClass().getClassLoader().getResource("serving").getPath
-      + "/image-test-config.yaml").loadConfig()
+class ImageProcessingSpec extends FlatSpec with Matchers with BeforeAndAfter{
+  before {
+    ClusterServing.helper = new ConfigParser(
+      getClass().getClassLoader().getResource("serving").getPath
+        + "/image-test-config.yaml").loadConfig()
+  }
+
   "image resize" should "work" in {
     val imageB64 = TestUtils.getStrFromResourceFile("image-3_224_224-jpg-base64")
     val preProcessing = new PreProcessing()
