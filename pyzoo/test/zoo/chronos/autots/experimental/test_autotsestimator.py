@@ -244,6 +244,17 @@ class TestAutoTrainer(TestCase):
         np.testing.assert_almost_equal(eval_result[0], eval_result_new[0])
         np.testing.assert_almost_equal(y_pred, y_pred_new)
 
+        # check if load ppl is the same as previous with onnx
+        try:
+            import onnx
+            import onnxruntime
+            eval_result_new_onnx = new_ts_pipeline.evaluate_with_onnx(tsdata_valid)
+            y_pred_new_onnx = new_ts_pipeline.predict_with_onnx(tsdata_valid)
+            np.testing.assert_almost_equal(eval_result[0], eval_result_new_onnx[0])
+            np.testing.assert_almost_equal(y_pred, y_pred_new_onnx)
+        except ImportError:
+            pass
+
         # use tspipeline to incrementally train
         new_ts_pipeline.fit(tsdata_valid)
 
@@ -299,6 +310,17 @@ class TestAutoTrainer(TestCase):
         y_pred_new = new_ts_pipeline.predict(tsdata_valid)
         np.testing.assert_almost_equal(eval_result[0], eval_result_new[0])
         np.testing.assert_almost_equal(y_pred, y_pred_new)
+
+        # check if load ppl is the same as previous with onnx
+        try:
+            import onnx
+            import onnxruntime
+            eval_result_new_onnx = new_ts_pipeline.evaluate_with_onnx(tsdata_valid)
+            y_pred_new_onnx = new_ts_pipeline.predict_with_onnx(tsdata_valid)
+            np.testing.assert_almost_equal(eval_result[0], eval_result_new_onnx[0])
+            np.testing.assert_almost_equal(y_pred, y_pred_new_onnx)
+        except ImportError:
+            pass
 
         # use tspipeline to incrementally train
         new_ts_pipeline.fit(tsdata_valid)
