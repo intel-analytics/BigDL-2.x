@@ -1345,9 +1345,13 @@ class FeatureTable(Table):
 
             # select target_cols to join
             if target_cols is not None:
+                new_out_target_mean = {}
                 for out_col, target_mean in out_target_mean.items():
                     if target_mean[0] not in target_cols:
                         join_df = join_df.drop(out_col)
+                    else:
+                        new_out_target_mean[out_col] = target_mean
+                out_target_mean = new_out_target_mean
 
             if not is_train or target_code.kfold == 1:
                 result_df = result_df.join(join_df, cat_col, how="left")
