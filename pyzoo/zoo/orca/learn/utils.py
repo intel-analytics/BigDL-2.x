@@ -263,7 +263,7 @@ def process_xshards_of_pandas_dataframe(data, feature_cols, label_cols=None, val
         return data
 
 
-def _dataframe_to_xshards(data, feature_cols, label_cols=None, accept_str_col=True):
+def _dataframe_to_xshards(data, feature_cols, label_cols=None, accept_str_col=False):
     from zoo.orca import OrcaContext
     schema = data.schema
     shard_size = OrcaContext._shard_size
@@ -280,7 +280,7 @@ def _dataframe_to_xshards(data, feature_cols, label_cols=None, accept_str_col=Tr
 
 
 def dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit",
-                         num_workers=None, accept_str_col=True):
+                         num_workers=None, accept_str_col=False):
     from pyspark.sql import DataFrame
     valid_mode = {"fit", "evaluate", "predict"}
     assert mode in valid_mode, f"invalid mode {mode} " \
@@ -306,14 +306,15 @@ def dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="
 
 
 def maybe_dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit",
-                               num_workers=None):
+                               num_workers=None, accept_str_col=False):
     from pyspark.sql import DataFrame
     if isinstance(data, DataFrame):
         data, validation_data = dataframe_to_xshards(data, validation_data,
                                                      feature_cols=feature_cols,
                                                      label_cols=label_cols,
                                                      mode=mode,
-                                                     num_workers=num_workers)
+                                                     num_workers=num_workers,
+                                                     accept_str_col=accept_str_col)
     return data, validation_data
 
 

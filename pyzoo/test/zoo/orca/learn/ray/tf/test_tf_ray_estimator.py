@@ -598,6 +598,7 @@ class TestTFRayEstimator(TestCase):
         estimator = Estimator.from_keras(model_creator=model_creator)
         output_df = estimator.predict(input_df, batch_size=1, feature_cols=["input"])
         output = output_df.collect()
+        print(output)
 
 
 if __name__ == "__main__":
