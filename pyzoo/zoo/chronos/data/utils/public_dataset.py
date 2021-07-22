@@ -41,7 +41,7 @@ class PublicDataset:
     def get_public_data(self, chunk_size=1024):
         """
         Complete path stitching and download files.
-        param chunk_size: Byte file_size of a single read, preferably an integer multiple of 2.
+        param chunk_size: Byte size of a single read, preferably an integer multiple of 2.
         """
         assert isinstance(chunk_size, int), "chunk_size must be int."
         if not os.path.exists(self.abspath):
@@ -66,9 +66,9 @@ class PublicDataset:
         return self
 
     def preprocess_network_traffic(self):
-        """
+        """ 
         preprocess_network_traffic will match the Starttime and endtime(avgrate, total)
-        of data accordingto the regularity, and generate a csv file, the file name
+        of data accordingto the regularity, and generate a csv file, the file name 
         is network_traffic_data.csv.
         """
         _is_first_columns = True
@@ -91,6 +91,18 @@ class PublicDataset:
                                                   x.endswith("Mbps") else float(x[:-4])*1000)
         self.df["total"] = raw_df["total"]
         return self
+
+
+    def proprecess_AIOps(self):
+        """
+        
+        """
+        self.df = pd.read_csv(self.data_path, header=None, nrows=61570, names=[
+                              'time_step', 'cpu_useage', 'mem_usage'], usecols=[1, 2, 3])
+        self.df['time_step'] = pd.to_datetime(
+            self.df["time_step"], unit='s', origin=pd.Timestamp('2018-01-01'))
+        return self
+
 
     def get_tsdata(self, dt_col, target_col, extra_feature=None, id_col=None):
         """

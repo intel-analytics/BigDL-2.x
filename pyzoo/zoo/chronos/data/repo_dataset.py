@@ -36,10 +36,19 @@ def get_public_dataset(name="network_traffic", path='~/.chronos/dataset', redown
         return public_dataset.preprocess_network_traffic()\
             .get_tsdata(dt_col='StartTime', target_col=['AvgRate', 'total'])
     elif name == 'AIOps':
+<<<<<<< HEAD
         raise NotImplementedError('The AIOps is not currently supported.')
+=======
+        return public_dataset.preprocess_network_traffic()\
+            .get_tsdata(dt_col='StartTime', target_col=['AvgRate', 'total'])
+>>>>>>> add AIOps dataset for repo_dataset
     elif name == 'fsi':
         raise NotImplementedError('The fsi is not currently supported.')
     elif name == 'nyc_taxi':
         raise NotImplementedError('The nyc_taxi is not currently supported.')
     else:
+<<<<<<< HEAD
         raise NameError('The dataset is not currently supported.')
+=======
+        raise NameError('The dataset is not currently supported.')
+>>>>>>> add AIOps dataset for repo_dataset
