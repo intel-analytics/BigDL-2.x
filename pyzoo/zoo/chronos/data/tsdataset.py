@@ -253,7 +253,6 @@ class TSDataset:
         :return: the tsdataset instance.
         '''
         features_generated = []
-
         df_list = [generate_dt_features(input_df=self.df[self.df[self.id_col] == id_name],
                                         dt_col=self.dt_col,
                                         features=features,
