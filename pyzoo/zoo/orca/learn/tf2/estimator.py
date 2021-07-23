@@ -19,6 +19,7 @@ import pickle
 
 import numpy as np
 import ray
+from zoo.common.utils import enable_multi_fs_load, enable_multi_fs_save
 
 from zoo.orca.data.ray_xshards import RayXShards
 from zoo.orca.learn.dl_cluster import RayDLCluster
@@ -220,7 +221,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         data, validation_data = maybe_dataframe_to_xshards(data, validation_data,
                                                            feature_cols, label_cols,
                                                            mode="fit",
-                                                           num_workers=self.num_workers)
+                                                           num_workers=self.num_workers,
+                                                           accept_str_col=True)
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
@@ -304,7 +306,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                                              feature_cols=feature_cols,
                                              label_cols=label_cols,
                                              mode="evaluate",
-                                             num_workers=self.num_workers)
+                                             num_workers=self.num_workers,
+                                             accept_str_col=True)
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
@@ -379,7 +382,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                                               validation_data=None,
                                               feature_cols=feature_cols,
                                               label_cols=None,
-                                              mode="predict")
+                                              mode="predict",
+                                              accept_str_col=True)
             pred_shards = self._predict_spark_xshards(xshards, params)
             result = convert_predict_xshards_to_dataframe(data, pred_shards)
         elif isinstance(data, SparkXShards):
@@ -402,6 +406,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         state = ray.get(state_refs[0])
         return self._get_model_from_state(state)
 
+    @enable_multi_fs_save
     def save(self, checkpoint):
         """
         Saves the model at the provided checkpoint.
@@ -423,6 +428,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
 
         return checkpoint
 
+    @enable_multi_fs_load
     def load(self, checkpoint, **kwargs):
         """
         Loads the model from the provided checkpoint.

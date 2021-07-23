@@ -83,12 +83,18 @@ ENV ANALYTICS_ZOO_VERSION	${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION		${SPARK_VERSION}
 ENV BIGDL_VERSION		${BIGDL_VERSION}
 ENV ANALYTICS_ZOO_HOME		/analytics-zoo-${ANALYTICS_ZOO_VERSION}
+ADD orca.data.patch		/opt/orca.data.patch
+ADD orca.learn.tf.text.patch	/opt/orca.learn.tf.text.patch
+ADD orca.learn.tf.transfer.patch /opt/orca.learn.tf.transfer.patch
 RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils curl wget unzip git
 RUN wget https://raw.githubusercontent.com/intel-analytics/analytics-zoo/master/docker/zoo/download-analytics-zoo.sh && \
     chmod a+x ./download-analytics-zoo.sh
 RUN ./download-analytics-zoo.sh && \
     cd /opt && git clone --depth 1 https://github.com/intel-analytics/analytics-zoo.git
+RUN patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/data/spark_pandas.py /opt/orca.data.patch && \
+    patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/learn/tf/basic_text_classification/basic_text_classification.py /opt/orca.learn.tf.text.patch && \
+    patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/learn/tf/transfer_learning/transfer_learning.py /opt/orca.learn.tf.transfer.patch
 
 # stage.5 az ppml
 FROM ubuntu:18.04
@@ -125,6 +131,7 @@ RUN mkdir -p /graphene && \
     mkdir -p /ppml/trusted-big-data-ml/work/models && \
     mkdir -p /ppml/trusted-big-data-ml/work/apps && \
     mkdir -p /ppml/trusted-big-data-ml/work/examples/bigdl && \
+    mkdir -p /root/.keras/datasets && \
     mkdir -p /graphene/Pal/src/host/Linux-SGX/signer
 
 COPY --from=graphene /graphene/Scripts /graphene/Scripts
@@ -162,6 +169,7 @@ RUN apt-get install -y python3-minimal && \
     pip uninstall -y -q tornado && \
     pip install tornado && \
     pip install filelock && \
+    pip install tensorflow_datasets==3.2.0 h5py==2.10.0 && \
     python3 -m ipykernel.kernelspec
 
 ADD ./bash.manifest.template /ppml/trusted-big-data-ml/bash.manifest.template
@@ -175,7 +183,7 @@ ADD ./start-spark-standalone-worker-sgx.sh /ppml/trusted-big-data-ml/start-spark
 ADD ./start-spark-standalone-driver-sgx.sh /ppml/trusted-big-data-ml/start-spark-standalone-driver-sgx.sh
 ADD ./ppml-spark-submit.sh /ppml/trusted-big-data-ml/ppml-spark-submit.sh
 ADD ./check-status.sh /ppml/trusted-big-data-ml/check-status.sh
-ADD tracker.py ./tracker.py
+ADD ./tracker.py ./tracker.py
 ADD ./start-scripts /ppml/trusted-big-data-ml/work/start-scripts
 
 RUN jar -uf /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_2.4.6-0.12.0-SNAPSHOT-jar-with-dependencies.jar ./tracker.py && \
@@ -195,7 +203,8 @@ RUN jar -uf /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/ana
     chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-spark-local-wordcount-sgx.sh && \
     chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-spark-local-xgboost-regressor-sgx.sh && \
     chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-spark-local-xgboost-classifier-sgx.sh && \
-    chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-spark-local-orca-data-sgx.sh
+    chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-spark-local-orca-data-sgx.sh && \
+    chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-spark-local-orca-tf-text.sh 
 
     
 
