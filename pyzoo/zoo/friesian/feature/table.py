@@ -1151,8 +1151,8 @@ class FeatureTable(Table):
         tbl_list = [FeatureTable(df) for df in df_list]
         return tuple(tbl_list)
 
-    def gen_target(self, cat_cols, target_cols, target_mean=None, smooth=20, kfold=2, fold_seed=42,
-                   fold_col="__fold__", out_cols=None, name_sep="_"):
+    def gen_target(self, cat_cols, target_cols, target_mean=None, smooth=20, kfold=2,
+                   fold_seed=None, fold_col="__fold__", out_cols=None, name_sep="_"):
         """
         For each categorical column / column group in cat_cols, calculate the mean of target
         columns in target_cols.
@@ -1160,15 +1160,16 @@ class FeatureTable(Table):
                to target encode. If an element in the list is a str, then it is a categorical
                column; otherwise if it is a list of str, then it is a categorical column group.
         :param target_cols: str, or list of str. Numeric target column to calculate the mean.
-        :param target_mean: dict. {target column : mean}. Provides mean of target column to
-               save caculation. Default is None.
+        :param target_mean: dict. {target column : mean}. Provides global mean of target column(s)
+               to save calculation. Default is None.
         :param smooth: int. The mean of each category is smoothed by the overall mean. Default is
                20.
         :param kfold: int. Specifies number of folds for cross validation. The mean values within
                the i-th fold are calculated with data from all other folds. If kfold is 1,
                global-mean statistics are applied; otherwise, cross validation is applied. Default
                is 2.
-        :param fold_seed: int. Random seed used for generating folds. Default is 42.
+        :param fold_seed: int. Random seed used for generating folds if it is not None. If it is
+               None, folds will be generated with row number in each partition. Default is None.
         :param fold_col: str. Name of integer column used for splitting folds. If fold_col exists
                in the Table, then this column is used; otherwise, it is randomly generated with
                range [0, kfold). Default is "__fold__".
@@ -1228,10 +1229,9 @@ class FeatureTable(Table):
         if kfold > 1:
             if fold_col not in self.df.columns:
                 if fold_seed is None:
-                    windowSpec = Window.orderBy(F.lit(1))
                     result_df = result_df.withColumn(
                         fold_col,
-                        F.row_number().over(windowSpec) % F.lit(kfold)
+                        F.monotonically_increasing_id() % F.lit(kfold)
                     )
                 else:
                     result_df = result_df.withColumn(
@@ -1257,8 +1257,8 @@ class FeatureTable(Table):
             for target_col, out_col in zip(target_cols, out_col_list):
                 global_target_mean = target_mean_dict[target_col]
                 all_func = udf(
-                    lambda s, count:
-                    None if s is None else (s + global_target_mean * smooth) / (count + smooth),
+                    lambda cat_sum, cat_count:
+                    (cat_sum + global_target_mean * smooth) / (cat_count + smooth),
                     DoubleType())
                 all_df = all_df.withColumn(out_col,
                                            all_func(cat_col_name + "_all_sum_" + target_col,
@@ -1281,7 +1281,7 @@ class FeatureTable(Table):
                     global_target_mean = target_mean_dict[target_col]
                     target_func = udf(
                         lambda s_all, s, c_all, c:
-                        None if c_all == c or s_all is None or s is None else
+                        None if c_all == c else
                         ((s_all - s) + global_target_mean * smooth) / ((c_all - c) + smooth),
                         DoubleType())
                     fold_df = fold_df.withColumn(
