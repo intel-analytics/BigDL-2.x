@@ -22,9 +22,7 @@ import akka.http.scaladsl.Http
 import com.intel.analytics.zoo.serving.utils.Conventions
 import com.typesafe.config.ConfigFactory
 import com.codahale.metrics.{MetricRegistry, Timer}
-import com.intel.analytics.zoo.serving.http.{Supportive, ServableManager, ServableLoadException,
-  InferenceModelMetaData, ClusterServingMetaData, ClusterServingServable, Instances, JsonUtil,
-  InferenceModelServable, Predictions}
+import com.intel.analytics.zoo.serving.http.{ClusterServingMetaData, ClusterServingServable, InferenceModelMetaData, InferenceModelServable, Instances, JsonUtil, Predictions, ServableLoadException, ServableManager, Supportive}
 
 import scala.collection.mutable
 import org.slf4j.LoggerFactory
@@ -32,7 +30,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
 
-object FrontEndGRPC extends Supportive {
+object FrontEndGRPC extends Supportive{
   var servableManager : ServableManager = _
   def main(args: Array[String]): Unit = {
     // Important: enable HTTP/2 in ActorSystem's config

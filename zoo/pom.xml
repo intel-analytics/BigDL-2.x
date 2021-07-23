@@ -56,7 +56,7 @@
         <inner-ftp-uri>http://10.239.45.10:8081/repository/raw</inner-ftp-uri>
         <tf-shade>bushade</tf-shade>
         <akka.grpc.version>2.0.0</akka.grpc.version>
-        <grpc.version>1.38.0</grpc.version>
+        <grpc.version>1.37.0</grpc.version>
     </properties>
 
     <distributionManagement>
@@ -82,6 +82,7 @@
                                 <exclude>**/com/intel/analytics/zoo/friesian/python/PythonFriesian.scala</exclude>
                                 <exclude>**/com/intel/analytics/zoo/friesian/feature/Utils.scala</exclude>
                                 <exclude>**/com/intel/analytics/zoo/friesian/FriesianSpec.scala</exclude>
+                                <exclude>**/com/intel/analytics/zoo/serving/grpc</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
@@ -109,6 +110,11 @@
                     <plugin>
                         <groupId>net.alchim31.maven</groupId>
                         <artifactId>scala-maven-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/com/intel/analytics/zoo/serving/grpc</exclude>
+                            </excludes>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -159,6 +165,72 @@
                     <plugin>
                         <groupId>net.alchim31.maven</groupId>
                         <artifactId>scala-maven-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <version>3.2.1</version>
+                        <configuration>
+                            <createDependencyReducedPom>true</createDependencyReducedPom>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.google.protobuf</pattern>
+                                    <shadedPattern>com.intel.analytics.shaded.protobuf_v_3_5_1</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>io.netty</pattern>
+                                    <shadedPattern>com.intel.analytics.zoo.shaded.io.netty</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.apache.arrow</pattern>
+                                    <shadedPattern>com.intel.analytics.zoo.shaded.arrow</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>grpc</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>shade</goal>
+                                </goals>
+                                <configuration>
+                                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                                    <shadedClassifierName>grpc</shadedClassifierName>
+                                    <transformers>
+                                        <transformer
+                                                implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                            <resource>reference.conf</resource>
+                                        </transformer>
+                                        <transformer
+                                                implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                            <manifestEntries>
+                                                <Main-Class>com.intel.analytics.zoo.serving.grpc.FrontEndGRPC</Main-Class>
+                                            </manifestEntries>
+                                        </transformer>
+                                    </transformers>
+                                    <artifactSet>
+                                        <excludes>
+                                            <exclude>ml.dmlc:xgboost4j</exclude>
+                                            <exclude>black.ninia:jep</exclude>
+                                            <exclude>org.tensorflow:tensorflow-hadoop</exclude>
+                                            <exclude>it.unimi.dsi:fastutil</exclude>
+                                        </excludes>
+                                    </artifactSet>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -212,16 +284,11 @@
                 <dependency>
                     <groupId>io.grpc</groupId>
                     <artifactId>grpc-core</artifactId>
-                    <version>1.38.0</version>
-                </dependency>
-                <dependency>
-                    <groupId>io.grpc</groupId>
-                    <artifactId>grpc-netty-shaded</artifactId>
-                    <version>1.38.0</version>
+                    <version>${grpc.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>com.thesamet.scalapb</groupId>
-                    <artifactId>scalapb-runtime_2.12</artifactId>
+                    <artifactId>scalapb-runtime_${scala.major.version}</artifactId>
                     <version>0.11.3</version>
                 </dependency>
             </dependencies>
@@ -1326,6 +1393,9 @@
                             <version>${scala.macros.version}</version>
                         </compilerPlugin>
                     </compilerPlugins>
+                    <excludes>
+                        <exclude>**/com/intel/analytics/zoo/serving/grpc</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
