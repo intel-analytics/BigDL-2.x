@@ -352,34 +352,29 @@ class TCNForecaster(Forecaster):
             self.internal.load(checkpoint_file)
         else:
             self.internal.restore(checkpoint_file)
-
-    def to_local(self, cache_dir="/tmp/chronos/tcn_forecaster"):
+    
+    def to_local(self):
         """
-        Transform a distributed model to a local one (experimental).
+        Transform a distributed model to a local (non-distributed) one.
 
-        Please note that this function is not stable.
+        The optimizer is refreshed, incremental training after to_local
+        might have some problem.
 
         :return: a forecaster instance.
         """
+        # TODO: optimizer is refreshed, which is not reasonable
         if not self.distributed:
             raise RuntimeError("The forecaster has become local.")
-
-        if not os.path.exists(cache_dir):
-            os.makedirs(cache_dir)
-
-        distributed_file_dir = os.path.join(cache_dir, "old_cache")
-        self.internal.save(distributed_file_dir)
-        state_dict = torch.load(distributed_file_dir)
-
-        new_state_dict = {}
-        new_state_dict["model"] = state_dict["models"][0]
-        new_state_dict["optimizer"] = state_dict["optimizers"][0]
-        new_state_dict["config"] = {**self.data_config, **self.config}
-        torch.save(new_state_dict, os.path.join(cache_dir, "new_cache"))
-
+        model = self.internal.get_model()
+        state = {
+            "config": {**self.data_config, **self.config},
+            "model": model.state_dict(),
+            "optimizer": optimizer_creator(model, {"lr": self.config["lr"]}).state_dict(),
+        }
         self.internal = TCNPytorch(check_optional_config=False)
-        self.internal.restore(os.path.join(cache_dir, "new_cache"))
+        self.internal.load_state_dict(state)
         self.distributed = False
+        return self
 
     def shutdown(self, force=False):
         """
