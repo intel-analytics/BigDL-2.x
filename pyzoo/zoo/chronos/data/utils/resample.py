@@ -63,8 +63,8 @@ def resample_timeseries_dataframe(df,
     end_time_stamp = pd.Timestamp(end_time) if end_time else res_df.index[-1]
     assert start_time_stamp <= end_time_stamp, "end time must be later than start time."
 
-    offset = abs(start_time_stamp - res_df.index[0]) % pd.Timedelta(interval)
-    new_index = pd.date_range(start=start_time_stamp+offset, end=end_time_stamp, freq=interval)
+    offset = (start_time_stamp - res_df.index[0]) % pd.Timedelta(interval)
+    new_index = pd.date_range(start=start_time_stamp-offset, end=end_time_stamp, freq=interval)
     res_df = res_df.reindex(new_index)
     res_df.index.name = dt_col
     res_df = res_df.reset_index()
