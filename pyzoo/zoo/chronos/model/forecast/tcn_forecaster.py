@@ -16,6 +16,13 @@
 
 from zoo.chronos.model.forecast.abstract import Forecaster
 from zoo.chronos.model.tcn import TCNPytorch
+from zoo.chronos.model.tcn import model_creator, optimizer_creator, loss_creator
+from zoo.orca.data import XShards
+
+from torch.utils.data import TensorDataset, DataLoader
+import torch
+import numpy as np
+import os
 
 
 class TCNForecaster(Forecaster):
@@ -41,14 +48,17 @@ class TCNForecaster(Forecaster):
                  future_seq_len,
                  input_feature_num,
                  output_feature_num,
-                 num_channels=[30]*8,
-                 kernel_size=7,
+                 num_channels=[30]*7,
+                 kernel_size=3,
                  repo_initialization=True,
-                 dropout=0.2,
+                 dropout=0.1,
                  optimizer="Adam",
                  loss="mse",
                  lr=0.001,
-                 seed=None):
+                 seed=None,
+                 distributed=False,
+                 workers_per_node=1,
+                 distributed_backend="torch_distributed"):
         """
         Build a TCN Forecast Model.
 
@@ -61,21 +71,32 @@ class TCNForecaster(Forecaster):
         :param input_feature_num: Specify the feature dimension.
         :param output_feature_num: Specify the output dimension.
         :param num_channels: Specify the convolutional layer filter number in
-               TCN's encoder. This value defaults to [30]*8.
+               TCN's encoder. This value defaults to [30]*7.
         :param kernel_size: Specify convolutional layer filter height in TCN's
-               encoder. This value defaults to 7.
+               encoder. This value defaults to 3.
         :param repo_initialization: if to use framework default initialization,
                True to use paper author's initialization and False to use the
                framework's default initialization. The value defaults to True.
         :param dropout: Specify the dropout close possibility (i.e. the close
-               possibility to a neuron). This value defaults to 0.2.
+               possibility to a neuron). This value defaults to 0.1.
         :param optimizer: Specify the optimizer used for training. This value
                defaults to "Adam".
         :param loss: Specify the loss function used for training. This value
                defaults to "mse". You can choose from "mse", "mae" and
                "huber_loss".
         :param lr: Specify the learning rate. This value defaults to 0.001.
-        :param seed: random seed for training. This value defaults to None.
+        :param seed: int, random seed for training. This value defaults to None.
+        :param distributed: bool, if init the forecaster in a distributed
+               fashion. If True, the internal model will use an Orca Estimator.
+               If False, the internal model will use a pytorch model. The value
+               defaults to False.
+        :param workers_per_node: int, the number of worker you want to use.
+               The value defaults to 1.
+        :param distributed_backend: str, select from "torch_distributed",
+               "horovod" and "bigdl". The value defaults to "torch_distributed".
+               It is recommended to use "torch_distributed" since it is much more
+               stable.
+
         """
         if seed is not None and isinstance(seed, int):
             import torch
@@ -84,7 +105,7 @@ class TCNForecaster(Forecaster):
             torch.manual_seed(seed)
             numpy.random.seed(seed)
             random.seed(seed)
-        self.internal = TCNPytorch(check_optional_config=False)
+
         self.data_config = {
             "past_seq_len": past_seq_len,
             "future_seq_len": future_seq_len,
@@ -100,6 +121,26 @@ class TCNForecaster(Forecaster):
             "optim": optimizer,
             "dropout": dropout
         }
+
+        self.internal = None
+        self.distributed = distributed
+        if self.distributed:
+            from zoo.orca.learn.pytorch.estimator import Estimator
+            from zoo.orca.learn.metrics import MSE
+            def model_creator_tcn(config):
+                model = model_creator({**self.config, **self.data_config})
+                model.train()
+                return model
+            self.internal = Estimator.from_torch(model=model_creator_tcn,
+                                                 optimizer=optimizer_creator,
+                                                 loss=loss_creator,
+                                                 metrics=[MSE()],  # TODO: metrics setting
+                                                 backend=distributed_backend,
+                                                 use_tqdm=True,
+                                                 config={"lr": lr},
+                                                 workers_per_node=workers_per_node)
+        else:
+            self.internal = TCNPytorch(check_optional_config=False)
 
     def fit(self, x, y, validation_data=None, epochs=1, metric="mse", batch_size=32):
         """
@@ -120,11 +161,17 @@ class TCNForecaster(Forecaster):
             validation_data = (x, y)
         self.config["batch_size"] = batch_size
         self._check_data(x, y)
-        return self.internal.fit_eval(data=(x, y),
-                                      validation_data=validation_data,
-                                      epochs=epochs,
-                                      metric=metric,
-                                      **self.config)
+
+        if self.distributed:
+            return self.internal.fit(data=self._np_to_creator((x, y)),
+                                     epochs=epochs,
+                                     batch_size=batch_size)
+        else:
+            return self.internal.fit_eval(data=(x, y),
+                                        validation_data=validation_data,
+                                        epochs=epochs,
+                                        metric=metric,
+                                        **self.config)
 
     def _check_data(self, x, y):
         assert self.data_config["past_seq_len"] == x.shape[-2], \
@@ -144,7 +191,7 @@ class TCNForecaster(Forecaster):
             Got output_feature_num of {} in config while y input shape of {}."\
             .format(self.data_config["output_feature_num"], y.shape[-1])
 
-    def predict(self, x):
+    def predict(self, x, batch_size=32):
         """
         Predict using a trained forecaster.
 
@@ -152,11 +199,21 @@ class TCNForecaster(Forecaster):
 
         :return: A numpy array with shape (num_samples, lookback, feature_dim).
         """
-        if not self.internal.model_built:
-            raise RuntimeError("You must call fit or restore first before calling predict!")
-        return self.internal.predict(x)
+        if self.distributed:
+            x = XShards.partition(x)
+            def transform_to_dict(train_data):
+                return {"x": train_data}
+            x = x.transform_shard(transform_to_dict)
+            yhat = self.internal.predict(x, batch_size=batch_size)
+            yhat = yhat.collect()
+            yhat = np.concatenate([yhat[i]['prediction'] for i in range(len(yhat))], axis=0)
+            return yhat
+        else:
+            if not self.internal.model_built:
+                raise RuntimeError("You must call fit or restore first before calling predict!")
+            return self.internal.predict(x, batch_size=batch_size)
 
-    def predict_with_onnx(self, x, dirname=None):
+    def predict_with_onnx(self, x, batch_size=32, dirname=None):
         """
         Predict using a trained forecaster with onnxruntime.
 
@@ -166,16 +223,20 @@ class TCNForecaster(Forecaster):
 
         :return: A numpy array with shape (num_samples, lookback, feature_dim).
         """
+        if self.distributed:
+            raise NotImplementedError("ONNX inference has not been supported for distributed\
+                                       forecaster!")
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling predict!")
-        return self.internal.predict_with_onnx(x, dirname=dirname)
+        return self.internal.predict_with_onnx(x, batch_size=batch_size, dirname=dirname)
 
-    def evaluate(self, x, y, metrics=['mse'], multioutput="raw_values"):
+    def evaluate(self, x, y, batch_size=32, metrics=['mse'], multioutput="raw_values"):
         """
         Evaluate using a trained forecaster.
 
         :param x: A numpy array with shape (num_samples, lookback, feature_dim).
         :param y: A numpy array with shape (num_samples, horizon, target_dim).
+        :param batch_size:
         :param metrics: A list contains metrics for test/valid data.
         :param multioutput: Defines aggregating of multiple output values.
                String in ['raw_values', 'uniform_average']. The value defaults to
@@ -183,11 +244,17 @@ class TCNForecaster(Forecaster):
 
         :return: A list of evaluation results. Each item represents a metric.
         """
-        if not self.internal.model_built:
-            raise RuntimeError("You must call fit or restore first before calling evaluate!")
-        return self.internal.evaluate(x, y, metrics=metrics, multioutput=multioutput)
+        if self.distributed:
+            return self.internal.evaluate(data=self._np_to_creator((x, y)),
+                                          batch_size=batch_size)
+        else:
+            if not self.internal.model_built:
+                raise RuntimeError("You must call fit or restore first before calling evaluate!")
+            return self.internal.evaluate(x, y, metrics=metrics,
+                                          multioutput=multioutput, batch_size=batch_size)
 
     def evaluate_with_onnx(self, x, y,
+                           batch_size=32,
                            metrics=['mse'],
                            dirname=None,
                            multioutput="raw_values"):
@@ -196,6 +263,7 @@ class TCNForecaster(Forecaster):
 
         :param x: A numpy array with shape (num_samples, lookback, feature_dim).
         :param y: A numpy array with shape (num_samples, horizon, target_dim).
+        :param batch_size: 
         :param metrics: A list contains metrics for test/valid data.
         :param dirname: The directory to save onnx model file. This value defaults
                to None for no saving file.
@@ -205,12 +273,16 @@ class TCNForecaster(Forecaster):
 
         :return: A list of evaluation results. Each item represents a metric.
         """
+        if self.distributed:
+            raise NotImplementedError("ONNX inference has not been supported for distributed\
+                                       forecaster!")
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
         return self.internal.evaluate_with_onnx(x, y,
                                                 metrics=metrics,
                                                 dirname=dirname,
-                                                multioutput=multioutput)
+                                                multioutput=multioutput,
+                                                batch_size=batch_size)
 
     def save(self, checkpoint_file):
         """
@@ -218,9 +290,12 @@ class TCNForecaster(Forecaster):
 
         :param checkpoint_file: The location you want to save the forecaster.
         """
-        if not self.internal.model_built:
-            raise RuntimeError("You must call fit or restore first before calling save!")
-        self.internal.save(checkpoint_file)
+        if self.distributed:
+            self.internal.save(checkpoint_file)
+        else:
+            if not self.internal.model_built:
+                raise RuntimeError("You must call fit or restore first before calling save!")
+            self.internal.save(checkpoint_file)
 
     def restore(self, checkpoint_file):
         """
@@ -228,4 +303,54 @@ class TCNForecaster(Forecaster):
 
         :param checkpoint_file: The checkpoint file location you want to load the forecaster.
         """
-        self.internal.restore(checkpoint_file)
+        if self.distributed:
+            self.internal.load(checkpoint_file)
+        else:
+            self.internal.restore(checkpoint_file)
+
+    def to_local(self, cache_dir="/tmp/chronos/tcn_forecaster"):
+        """
+        Transform a distributed model to a local one (experimental).
+
+        Please note that this function is not stable.
+
+        :return: a forecaster instance.
+        """
+        if not self.distributed:
+            raise RuntimeError("The forecaster has become local.")
+
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+
+        distributed_file_dir = os.path.join(cache_dir, "old_cache")
+        self.internal.save(distributed_file_dir)
+        state_dict = torch.load(distributed_file_dir)
+
+        new_state_dict = {}
+        new_state_dict["model"] = state_dict["models"][0]
+        new_state_dict["optimizer"] = state_dict["optimizers"][0]
+        new_state_dict["config"] = {**self.data_config, **self.config}
+        torch.save(new_state_dict, os.path.join(cache_dir, "new_cache"))
+
+        self.internal = TCNPytorch(check_optional_config=False)
+        self.internal.restore(os.path.join(cache_dir, "new_cache"))
+        self.distributed = False
+
+    def shutdown(self, force=False):
+        """
+        Only used when you what to shut down a distributed forecaster's
+        workers and releases resources.
+
+        :param force: bool, if force to shut down the resources.
+        """
+        if not self.distributed:
+            raise RuntimeError("A local forecaster does not need shutdown.")
+        self.internal.shutdown(force)
+
+    def _np_to_creator(self, data):
+        def data_creator(config, batch_size):
+                return DataLoader(TensorDataset(torch.from_numpy(data[0]).float(),
+                                                torch.from_numpy(data[1]).float()),
+                                  batch_size=batch_size,
+                                  shuffle=True)
+        return data_creator

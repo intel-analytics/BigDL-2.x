@@ -232,12 +232,12 @@ class PytorchBaseModel(BaseModel):
         for i in range(len(list(self.model.parameters()))):
             print(list(self.model.parameters())[i].size())
 
-    def evaluate(self, x, y, metrics=['mse'], multioutput="raw_values"):
+    def evaluate(self, x, y, metrics=['mse'], multioutput="raw_values", batch_size=32):
         # reshape 1dim input
         x = self._reshape_input(x)
         y = self._reshape_input(y)
 
-        yhat = self.predict(x)
+        yhat = self.predict(x, batch_size=batch_size)
         eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput=multioutput)
                        for m in metrics]
         return eval_result
@@ -297,12 +297,13 @@ class PytorchBaseModel(BaseModel):
         state_dict = torch.load(checkpoint)
         self.load_state_dict(state_dict)
 
-    def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None, multioutput="raw_values"):
+    def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None,
+                           multioutput="raw_values", batch_size=32):
         # reshape 1dim input
         x = self._reshape_input(x)
         y = self._reshape_input(y)
 
-        yhat = self.predict_with_onnx(x, dirname=dirname)
+        yhat = self.predict_with_onnx(x, dirname=dirname, batch_size=batch_size)
         eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput=multioutput)
                        for m in metrics]
         return eval_result

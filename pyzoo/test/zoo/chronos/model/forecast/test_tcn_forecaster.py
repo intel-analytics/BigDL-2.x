@@ -138,3 +138,22 @@ class TestChronosModelTCNForecaster(TestCase):
                                    lr=0.01)
         with pytest.raises(AssertionError):
             forecaster.fit(train_data[0], train_data[1], epochs=2)
+    
+    def test_tcn_forecaster_distributed(self):
+        train_data, val_data, test_data = create_data()
+        from zoo.orca import init_orca_context, stop_orca_context
+        init_orca_context(cores=4, memory="2g")
+
+        forecaster = TCNForecaster(past_seq_len=24,
+                                   future_seq_len=5,
+                                   input_feature_num=1,
+                                   output_feature_num=1,
+                                   kernel_size=3,
+                                   lr=0.01,
+                                   distributed=True)
+
+        forecaster.fit(train_data[0], train_data[1], epochs=2)
+        forecaster.predict(test_data[0])
+        forecaster.evaluate(val_data[0], val_data[1])
+
+        stop_orca_context()
