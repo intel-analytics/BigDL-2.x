@@ -15,13 +15,13 @@
 #
 
 from zoo.chronos.model.forecast.abstract import Forecaster
+from zoo.chronos.model.forecast.utils import np_to_creator, set_pytorch_seed
 from zoo.chronos.model.tcn import TCNPytorch
 from zoo.chronos.model.tcn import model_creator, optimizer_creator, loss_creator
 from zoo.orca.data import XShards
 from zoo.orca.learn.pytorch.estimator import Estimator
 from zoo.orca.learn.metrics import MSE, MAE
 
-from torch.utils.data import TensorDataset, DataLoader
 import torch
 import numpy as np
 import os
@@ -105,7 +105,7 @@ class TCNForecaster(Forecaster):
                is set to True. Only "mse" and "mae" is supported currently.
         """
         # random seed setting
-        TCNForecaster._set_seed(seed)
+        set_pytorch_seed(seed)
 
         # config setting
         self.data_config = {
@@ -129,7 +129,7 @@ class TCNForecaster(Forecaster):
         self.distributed = distributed
         if self.distributed:
             def model_creator_tcn(config):
-                TCNForecaster._set_seed(seed)
+                set_pytorch_seed(seed)
                 model = model_creator({**self.config, **self.data_config})
                 model.train()
                 return model
@@ -173,7 +173,7 @@ class TCNForecaster(Forecaster):
 
         # fit on internal
         if self.distributed:
-            return self.internal.fit(data=self._np_to_creator((x, y)),
+            return self.internal.fit(data=np_to_creator((x, y)),
                                      epochs=epochs,
                                      batch_size=batch_size)
         else:
@@ -277,7 +277,7 @@ class TCNForecaster(Forecaster):
         :return: A list of evaluation results. Each item represents a metric.
         """
         if self.distributed:
-            return self.internal.evaluate(data=self._np_to_creator((x, y)),
+            return self.internal.evaluate(data=np_to_creator((x, y)),
                                           batch_size=batch_size)
         else:
             if not self.internal.model_built:
@@ -371,6 +371,7 @@ class TCNForecaster(Forecaster):
             "model": model.state_dict(),
             "optimizer": optimizer_creator(model, {"lr": self.config["lr"]}).state_dict(),
         }
+        self.shutdown()
         self.internal = TCNPytorch(check_optional_config=False)
         self.internal.load_state_dict(state)
         self.distributed = False
@@ -386,21 +387,3 @@ class TCNForecaster(Forecaster):
         if not self.distributed:
             raise RuntimeError("A local forecaster does not need shutdown.")
         self.internal.shutdown(force)
-
-    def _np_to_creator(self, data):
-        def data_creator(config, batch_size):
-                return DataLoader(TensorDataset(torch.from_numpy(data[0]).float(),
-                                                torch.from_numpy(data[1]).float()),
-                                  batch_size=batch_size,
-                                  shuffle=True)
-        return data_creator
-
-    @staticmethod
-    def _set_seed(seed):
-        if seed is not None and isinstance(seed, int):
-            import torch
-            import random
-            import numpy
-            torch.manual_seed(seed)
-            numpy.random.seed(seed)
-            random.seed(seed)
