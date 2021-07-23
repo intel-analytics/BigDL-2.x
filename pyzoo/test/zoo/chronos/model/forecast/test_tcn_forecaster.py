@@ -153,7 +153,22 @@ class TestChronosModelTCNForecaster(TestCase):
                                    distributed=True)
 
         forecaster.fit(train_data[0], train_data[1], epochs=2)
-        forecaster.predict(test_data[0])
-        forecaster.evaluate(val_data[0], val_data[1])
+        distributed_pred = forecaster.predict(test_data[0])
+        distributed_eval = forecaster.evaluate(val_data[0], val_data[1])
+
+        forecaster.to_local()
+        local_pred = forecaster.predict(test_data[0])
+        local_eval = forecaster.evaluate(val_data[0], val_data[1])
+
+        np.testing.assert_almost_equal(distributed_pred, local_pred, decimal=5)
+
+        try:
+            import onnx
+            import onnxruntime
+            local_pred_onnx = forecaster.predict_with_onnx(test_data[0])
+            local_eval_onnx = forecaster.evaluate_with_onnx(val_data[0], val_data[1])
+            np.testing.assert_almost_equal(distributed_pred, local_pred_onnx, decimal=5)
+        except ImportError:
+            pass
 
         stop_orca_context()

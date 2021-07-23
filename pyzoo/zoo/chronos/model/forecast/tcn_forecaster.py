@@ -222,6 +222,8 @@ class TCNForecaster(Forecaster):
             # collect result from xshard to numpy
             yhat = yhat.collect()
             yhat = np.concatenate([yhat[i]['prediction'] for i in range(len(yhat))], axis=0)
+            if yhat.ndim == 2:
+                yhat = np.expand_dims(yhat, axis=2)
             return yhat
         else:
             if not self.internal.model_built:
