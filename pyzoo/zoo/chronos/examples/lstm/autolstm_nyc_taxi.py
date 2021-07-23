@@ -29,13 +29,14 @@ from zoo.orca import init_orca_context, stop_orca_context
 from zoo.automl.common.metrics import Evaluator
 
 
-def get_data(path):
-    df = pd.read_csv(path, engine='python')
+def get_data():
+    url = 'https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv'
+    df = pd.read_csv(url)
     return df
 
 
-def get_nyc_taxi_tsdataset(path):
-    df = get_data(path)
+def get_nyc_taxi_tsdataset():
+    df = get_data()
     tsdata_train, tsdata_valid, tsdata_test = TSDataset.from_pandas(df,
                                                                     dt_col="timestamp",
                                                                     target_col=[
@@ -74,17 +75,12 @@ if __name__ == '__main__':
                         help="The memory you want to use on each node."
                         "You can change it depending on your own cluster setting.")
 
-    url = 'https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv'
-
     parser.add_argument('--epoch', type=int, default=1,
                         help="Max number of epochs to train in each trial.")
     parser.add_argument('--cpus_per_trial', type=int, default=2,
                         help="Int. Number of cpus for each trial")
     parser.add_argument('--n_sampling', type=int, default=1,
                         help="Number of times to sample from the search_space.")
-    parser.add_argument('--datadir', default=url,
-                        help="wget https://raw.githubusercontent.com/numenta/NAB/"
-                        "v1.0/data/realKnownCause/nyc_taxi.csv")
 
     args = parser.parse_args()
 
@@ -92,8 +88,7 @@ if __name__ == '__main__':
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
                       memory=args.memory, num_nodes=num_nodes, init_ray_on_spark=True)
 
-    tsdata_train, tsdata_valid, tsdata_test = get_nyc_taxi_tsdataset(
-        args.datadir)
+    tsdata_train, tsdata_valid, tsdata_test = get_nyc_taxi_tsdataset()
 
     auto_lstm = AutoLSTM(input_feature_num=1,
                          output_target_num=1,
