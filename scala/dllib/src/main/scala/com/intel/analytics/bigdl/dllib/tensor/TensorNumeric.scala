@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.tensor
+package com.intel.analytics.bigdl.dllib.tensor
 
 import java.util
 
 import com.intel.analytics.bigdl.mkl.MKL
-import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.common.utils.RandomGenerator._
 
 /**
  * class of math operation

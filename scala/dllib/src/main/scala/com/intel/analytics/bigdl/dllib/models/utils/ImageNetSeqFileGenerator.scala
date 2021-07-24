@@ -17,8 +17,8 @@ package com.intel.analytics.bigdl.models.utils
 
 import java.nio.file.{Files, Paths}
 
-import com.intel.analytics.bigdl.dataset.DataSet
-import com.intel.analytics.bigdl.dataset.image._
+import com.intel.analytics.bigdl.dllib.feature.dataset.DataSet
+import com.intel.analytics.bigdl.dllib.feature.dataset.image._
 import scopt.OptionParser
 
 object ImageNetSeqFileGenerator {

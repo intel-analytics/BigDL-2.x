@@ -19,10 +19,10 @@
 package com.intel.analytics.bigdl.models.inception
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.nn.Graph._
-import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.bigdl.dllib.nn.Graph._
+import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.common.utils.{T, Table}
 
 object Inception_Layer_v2 {
   def apply(inputSize: Int, config: Table, namePrefix : String): Module[Float] = {

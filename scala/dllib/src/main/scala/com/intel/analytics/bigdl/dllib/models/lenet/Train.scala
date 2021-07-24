@@ -17,12 +17,12 @@
 package com.intel.analytics.bigdl.models.lenet
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.dataset.DataSet
-import com.intel.analytics.bigdl.dataset.image.{BytesToGreyImg, GreyImgNormalizer, GreyImgToBatch}
-import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, CrossEntropyCriterion, Module}
+import com.intel.analytics.bigdl.dllib.feature.dataset.DataSet
+import com.intel.analytics.bigdl.dllib.feature.dataset.image.{BytesToGreyImg, GreyImgNormalizer, GreyImgToBatch}
+import com.intel.analytics.bigdl.dllib.nn.{ClassNLLCriterion, CrossEntropyCriterion, Module}
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.utils._
+import com.intel.analytics.bigdl.dllib.optim._
+import com.intel.analytics.bigdl.common.utils._
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 

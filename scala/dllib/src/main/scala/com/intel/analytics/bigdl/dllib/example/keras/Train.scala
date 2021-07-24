@@ -17,12 +17,12 @@
 package com.intel.analytics.bigdl.example.keras
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.dataset.DataSet
-import com.intel.analytics.bigdl.dataset.image.{BytesToGreyImg, GreyImgNormalizer, GreyImgToBatch}
-import com.intel.analytics.bigdl.nn.ClassNLLCriterion
+import com.intel.analytics.bigdl.dllib.feature.dataset.DataSet
+import com.intel.analytics.bigdl.dllib.feature.dataset.image.{BytesToGreyImg, GreyImgNormalizer, GreyImgToBatch}
+import com.intel.analytics.bigdl.dllib.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.dllib.optim._
+import com.intel.analytics.bigdl.common.utils.Engine
 import com.intel.analytics.bigdl.models.lenet.LeNet5
 import org.apache.spark.SparkContext
 
@@ -43,7 +43,7 @@ object Train {
       val validationLabel = param.folder + "/t10k-labels-idx1-ubyte"
 
       val model = if (param.graphModel) LeNet5.kerasGraph(classNum = 10)
-                  else LeNet5.keras(classNum = 10)
+                  else LeNet5.kerasLayer(classNum = 10)
 
       val optimMethod = if (param.stateSnapshot.isDefined) {
         OptimMethod.load[Float](param.stateSnapshot.get)

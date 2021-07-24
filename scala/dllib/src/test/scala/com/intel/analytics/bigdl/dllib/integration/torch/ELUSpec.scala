@@ -15,10 +15,10 @@
  */
 package com.intel.analytics.bigdl.integration.torch
 
-import com.intel.analytics.bigdl.nn.ELU
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.RandomGenerator
-import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.dllib.nn.ELU
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.utils.RandomGenerator
+import com.intel.analytics.bigdl.common.utils.RandomGenerator._
 
 @com.intel.analytics.bigdl.tags.Serial
 class ELUSpec extends TorchSpec {

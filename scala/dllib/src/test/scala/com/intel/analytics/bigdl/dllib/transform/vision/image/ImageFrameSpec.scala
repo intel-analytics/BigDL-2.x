@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.transform.vision.image
+package com.intel.analytics.bigdl.dllib.feature.transform.vision.image
 
 import java.io.File
 import java.nio.file.Paths
 
 import com.google.common.io.Files
-import com.intel.analytics.bigdl.dataset.image.{BGRImage, BGRImgToLocalSeqFile, BytesToGreyImg, GreyImgNormalizer, GreyImgToSample, LocalImgReaderWithName, HFlip => BHFlip}
-import com.intel.analytics.bigdl.dataset.{DataSet, Sample}
+import com.intel.analytics.bigdl.dllib.feature.dataset.image.{BGRImage, BGRImgToLocalSeqFile, BytesToGreyImg, GreyImgNormalizer, GreyImgToSample, LocalImgReaderWithName, HFlip => BHFlip}
+import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, Sample}
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.transform.vision.image.augmentation._
-import com.intel.analytics.bigdl.utils.{Engine, TestUtils}
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation._
+import com.intel.analytics.bigdl.common.utils.{Engine, TestUtils}
 import org.apache.commons.io.FileUtils
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext

@@ -16,8 +16,8 @@
 package com.intel.analytics.bigdl.models.vgg
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.nn.Graph._
-import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.bigdl.dllib.nn.Graph._
+import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.numeric.NumericFloat
 
 object VggForCifar10 {

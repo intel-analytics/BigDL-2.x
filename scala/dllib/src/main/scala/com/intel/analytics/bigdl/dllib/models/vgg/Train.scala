@@ -19,13 +19,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.dataset.DataSet
-import com.intel.analytics.bigdl.dataset.image._
-import com.intel.analytics.bigdl.nn.{ClassNLLCriterion, Module}
-import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric._
-import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, OptimizerV1, OptimizerV2, T, Table}
-import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.dllib.feature.dataset.DataSet
+import com.intel.analytics.bigdl.dllib.feature.dataset.image._
+import com.intel.analytics.bigdl.dllib.nn.{ClassNLLCriterion, Module}
+import com.intel.analytics.bigdl.dllib.optim._
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric._
+import com.intel.analytics.bigdl.common.utils.{Engine, LoggerFilter, OptimizerV1, OptimizerV2, T, Table}
+import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 

@@ -20,9 +20,9 @@ import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
 import java.util.{ArrayList => JArrayList, HashMap => JHashMap, List => JList, Map => JMap}
 
-import com.intel.analytics.bigdl.nn
-import com.intel.analytics.bigdl.nn.onnx._
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.dllib.nn
+import com.intel.analytics.bigdl.dllib.nn.onnx._
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 
 
 private[bigdl] object PythonBigDLOnnx {

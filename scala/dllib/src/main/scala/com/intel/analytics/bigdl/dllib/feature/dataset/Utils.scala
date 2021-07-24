@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.dataset
+package com.intel.analytics.bigdl.dllib.feature.dataset
 
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.common.utils.Engine
 import org.apache.log4j.Logger
 
 object Utils {

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.dataset.image
+package com.intel.analytics.bigdl.dllib.feature.dataset.image
 
-import com.intel.analytics.bigdl.dataset.Transformer
+import com.intel.analytics.bigdl.dllib.feature.dataset.Transformer
 
 import scala.collection.Iterator
 
@@ -35,7 +35,7 @@ object GreyImgCropper {
 class GreyImgCropper(cropWidth: Int, cropHeight: Int)
   extends Transformer[LabeledGreyImage, LabeledGreyImage] {
 
-  import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
+  import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
 
   private val buffer = new LabeledGreyImage(cropWidth, cropHeight)
 

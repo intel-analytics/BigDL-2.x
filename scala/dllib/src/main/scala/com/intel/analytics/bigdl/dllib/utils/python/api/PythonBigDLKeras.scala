@@ -18,18 +18,19 @@ package com.intel.analytics.bigdl.python.api
 
 import java.util.{List => JList}
 
-import com.intel.analytics.bigdl.{Criterion, DataSet, nn}
-import com.intel.analytics.bigdl.dataset.{DataSet, LocalDataSet, MiniBatch}
-import com.intel.analytics.bigdl.nn.Graph.ModuleNode
-import com.intel.analytics.bigdl.nn.{Container, SpatialBatchNormalization}
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras._
+import com.intel.analytics.bigdl.{Criterion, DataSet}
+import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, LocalDataSet, MiniBatch}
+import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
+import com.intel.analytics.bigdl.dllib.nn.{Container, SpatialBatchNormalization}
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.keras
+import com.intel.analytics.bigdl.dllib.keras._
 import com.intel.analytics.bigdl.numeric._
-import com.intel.analytics.bigdl.optim.{OptimMethod, Regularizer, ValidationMethod}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFeatureToMiniBatch}
-import com.intel.analytics.bigdl.utils.{Engine, MultiShape, Shape, SingleShape}
+import com.intel.analytics.bigdl.dllib.optim.{OptimMethod, Regularizer, ValidationMethod}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{ImageFeature, ImageFeatureToMiniBatch}
+import com.intel.analytics.bigdl.common.utils.{Engine, MultiShape, Shape, SingleShape}
 import org.apache.spark.api.java.JavaRDD
 
 import scala.collection.JavaConverters._
@@ -72,11 +73,11 @@ class PythonBigDLKeras[T: ClassTag](implicit ev: TensorNumeric[T]) extends Pytho
 
   def createKerasModel(input: JList[ModuleNode[T]],
       output: JList[ModuleNode[T]]): Model[T] = {
-      nn.keras.Model(input.asScala.toArray, output.asScala.toArray)
+      keras.Model(input.asScala.toArray, output.asScala.toArray)
   }
 
-  def createKerasSequential(): nn.keras.Sequential[T] = {
-      nn.keras.Sequential[T]()
+  def createKerasSequential(): keras.Sequential[T] = {
+      keras.Sequential[T]()
   }
 
   def createKerasInput(

@@ -21,10 +21,10 @@ import java.io.{File, InputStream, PrintWriter}
 import com.intel.analytics.bigdl.example.utils.WordMeta
 import com.intel.analytics.bigdl.example.utils.TextClassifier
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.dllib.nn.Module
 import org.apache.spark.SparkContext
 
 import scala.io.Source

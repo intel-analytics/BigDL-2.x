@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="Maven: org.scala-lang:scala-library:2.11.8" type="Scala">
+    <properties>
+      <compiler-classpath>
+        <root url="file://$MAVEN_REPOSITORY$/org/scala-lang/scala-compiler/2.11.8/scala-compiler-2.11.8.jar" />
+        <root url="file://$MAVEN_REPOSITORY$/org/scala-lang/scala-library/2.11.8/scala-library-2.11.8.jar" />
+        <root url="file://$MAVEN_REPOSITORY$/org/scala-lang/scala-reflect/2.11.8/scala-reflect-2.11.8.jar" />
+      </compiler-classpath>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/scala-lang/scala-library/2.11.8/scala-library-2.11.8.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/scala-lang/scala-library/2.11.8/scala-library-2.11.8-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/scala-lang/scala-library/2.11.8/scala-library-2.11.8-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

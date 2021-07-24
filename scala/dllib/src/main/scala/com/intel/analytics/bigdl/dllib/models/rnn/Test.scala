@@ -17,13 +17,13 @@
 package com.intel.analytics.bigdl.models.rnn
 
 
-import com.intel.analytics.bigdl.dataset.text.utils.SentenceToken
-import com.intel.analytics.bigdl.dataset.{DataSet, FixedLength, PaddingParam, SampleToMiniBatch, _}
-import com.intel.analytics.bigdl.dataset.text.{Dictionary, LabeledSentence, LabeledSentenceToSample, TextToLabeledSentence}
-import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.optim.{Loss, ValidationMethod, ValidationResult}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, T}
+import com.intel.analytics.bigdl.dllib.feature.dataset.text.utils.SentenceToken
+import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, FixedLength, PaddingParam, SampleToMiniBatch, _}
+import com.intel.analytics.bigdl.dllib.feature.dataset.text.{Dictionary, LabeledSentence, LabeledSentenceToSample, TextToLabeledSentence}
+import com.intel.analytics.bigdl.dllib.nn._
+import com.intel.analytics.bigdl.dllib.optim.{Loss, ValidationMethod, ValidationResult}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.utils.{Engine, T}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD

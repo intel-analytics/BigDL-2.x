@@ -19,9 +19,9 @@ package com.intel.analytics.bigdl.python.api
 import java.lang.{Boolean => JBoolean}
 import java.util.{ArrayList => JArrayList, HashMap => JHashMap, List => JList, Map => JMap}
 
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.Table
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.Map

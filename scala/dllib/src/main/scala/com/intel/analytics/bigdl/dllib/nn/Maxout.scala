@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.nn
+package com.intel.analytics.bigdl.dllib.nn
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, TensorModule}
-import com.intel.analytics.bigdl.optim.Regularizer
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity, TensorModule}
+import com.intel.analytics.bigdl.dllib.optim.Regularizer
 import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
-import com.intel.analytics.bigdl.tensor.{DenseTensorApply, Tensor, TensorFunc6}
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
-import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleSerializable, ModuleSerializer, SerializeContext}
-import com.intel.analytics.bigdl.utils.{Shape, Table}
+import com.intel.analytics.bigdl.dllib.tensor.{DenseTensorApply, Tensor, TensorFunc6}
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.common.utils.serializer.{DeserializeContext, ModuleSerializable, ModuleSerializer, SerializeContext}
+import com.intel.analytics.bigdl.common.utils.{Shape, Table}
 
 import scala.reflect.ClassTag
 

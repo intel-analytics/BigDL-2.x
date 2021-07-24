@@ -17,11 +17,11 @@
 package com.intel.analytics.bigdl.models.resnet
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.dllib.nn.Module
+import com.intel.analytics.bigdl.common.utils.Engine
 import com.intel.analytics.bigdl.models.resnet.Utils._
-import com.intel.analytics.bigdl.optim.{Top1Accuracy, ValidationMethod, ValidationResult}
-import com.intel.analytics.bigdl.dataset.image.{BGRImgNormalizer, BGRImgToSample, BytesToBGRImg}
+import com.intel.analytics.bigdl.dllib.optim.{Top1Accuracy, ValidationMethod, ValidationResult}
+import com.intel.analytics.bigdl.dllib.feature.dataset.image.{BGRImgNormalizer, BGRImgToSample, BytesToBGRImg}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 
