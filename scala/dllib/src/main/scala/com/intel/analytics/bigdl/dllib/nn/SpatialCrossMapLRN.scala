@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.nn
+package com.intel.analytics.bigdl.dllib.nn
 
-import com.intel.analytics.bigdl.nn.abstractnn.{DataFormat, TensorModule}
-import com.intel.analytics.bigdl.tensor.{FloatType, Tensor}
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{DataFormat, TensorModule}
+import com.intel.analytics.bigdl.dllib.tensor.{FloatType, Tensor}
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.Engine
 
 import scala.concurrent.Future
 import scala.reflect._

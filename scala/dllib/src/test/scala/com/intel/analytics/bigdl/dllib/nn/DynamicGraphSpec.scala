@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.nn
+package com.intel.analytics.bigdl.dllib.nn
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.Module
@@ -22,15 +22,15 @@ import com.intel.analytics.bigdl.models.autoencoder.Autoencoder
 import com.intel.analytics.bigdl.models.inception.Inception_v1_NoAuxClassifier
 import com.intel.analytics.bigdl.models.lenet.LeNet5
 import com.intel.analytics.bigdl.models.vgg.{VggForCifar10, Vgg_16, Vgg_19}
-import com.intel.analytics.bigdl.nn.Graph.ModuleNode
-import com.intel.analytics.bigdl.nn.abstractnn.EmptyGradInput
-import com.intel.analytics.bigdl.nn.ops.Less
-import com.intel.analytics.bigdl.nn.tf.{ControlNodes, Enter, Const}
+import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.EmptyGradInput
+import com.intel.analytics.bigdl.dllib.nn.ops.Less
+import com.intel.analytics.bigdl.dllib.nn.tf.{ControlNodes, Enter, Const}
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils._
-import com.intel.analytics.bigdl.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.common.utils.RandomGenerator._
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.utils._
+import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
 
 import scala.reflect.ClassTag
 import scala.util.Random
@@ -1273,7 +1273,7 @@ class DynamicGraphSpec  extends FlatSpec with Matchers {
     val input = Input("input")
 
     val conditionInput = Input("conditionInput")
-    val const = new com.intel.analytics.bigdl.nn.tf.Const(Tensor(T(9))).inputs()
+    val const = new com.intel.analytics.bigdl.dllib.nn.tf.Const(Tensor(T(9))).inputs()
     val constEnter = new Enter("test_frame").inputs(const)
     val less = Less().inputs(constEnter, conditionInput)
 
@@ -1297,7 +1297,7 @@ class DynamicGraphSpec  extends FlatSpec with Matchers {
     val input = Input()
 
     val conditionInput = Input()
-    val const = new com.intel.analytics.bigdl.nn.tf.Const(Tensor(T(9))).inputs()
+    val const = new com.intel.analytics.bigdl.dllib.nn.tf.Const(Tensor(T(9))).inputs()
     var count = 0
     def feval(module: Echo[Float], input: Tensor[Float]): Unit = {
       count += 1
@@ -1321,10 +1321,10 @@ class DynamicGraphSpec  extends FlatSpec with Matchers {
   }
 
   "Dynamic Graph" should "support loop twice and merge after const node should be triggered" in {
-    val input = new com.intel.analytics.bigdl.nn.tf.Const(Tensor(T(1))).inputs()
+    val input = new com.intel.analytics.bigdl.dllib.nn.tf.Const(Tensor(T(1))).inputs()
 
     val conditionInput = Input()
-    val const = new com.intel.analytics.bigdl.nn.tf.Const(Tensor(T(9))).inputs()
+    val const = new com.intel.analytics.bigdl.dllib.nn.tf.Const(Tensor(T(9))).inputs()
     var count = 0
     def feval(module: Echo[Float], input: Tensor[Float]): Unit = {
       count += 1
@@ -1353,7 +1353,7 @@ class DynamicGraphSpec  extends FlatSpec with Matchers {
 
     val conditionInput1 = Input("conditionInput1")
     val conditionInput2 = Input("conditionInput2")
-    val const = new com.intel.analytics.bigdl.nn.tf.Const(Tensor(T(9))).setName("inc").inputs()
+    val const = new com.intel.analytics.bigdl.dllib.nn.tf.Const(Tensor(T(9))).setName("inc").inputs()
     val less = Less().setName("less").inputs(const, conditionInput1)
 
     val updateInput1 = Input("updateInput1")

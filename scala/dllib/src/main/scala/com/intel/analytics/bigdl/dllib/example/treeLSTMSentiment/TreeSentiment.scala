@@ -17,9 +17,9 @@
 package com.intel.analytics.bigdl.example.treeLSTMSentiment
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
 
 import scala.language.existentials
 

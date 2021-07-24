@@ -16,12 +16,12 @@
 
 package com.intel.analytics.bigdl.example.treeLSTMSentiment
 
-import com.intel.analytics.bigdl.dataset.Sample
+import com.intel.analytics.bigdl.dllib.feature.dataset.Sample
 import com.intel.analytics.bigdl.example.utils.AbstractTextClassificationParams
-import com.intel.analytics.bigdl.nn.TensorTree
+import com.intel.analytics.bigdl.dllib.nn.TensorTree
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
+import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD

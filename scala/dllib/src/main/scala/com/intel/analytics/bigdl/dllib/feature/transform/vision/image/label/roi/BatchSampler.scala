@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.transform.vision.image.label.roi
+package com.intel.analytics.bigdl.dllib.feature.transform.vision.image.label.roi
 
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.util.{BboxUtil, BoundingBox}
-import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.util.{BboxUtil, BoundingBox}
+import com.intel.analytics.bigdl.common.utils.RandomGenerator._
 
 import scala.collection.mutable.ArrayBuffer
 

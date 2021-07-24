@@ -18,12 +18,12 @@ package com.intel.analytics.bigdl.example.tensorflow.transferlearning
 
 import java.nio.ByteOrder
 
-import com.intel.analytics.bigdl.dataset.Sample
-import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter}
-import com.intel.analytics.bigdl.utils.tf.{BigDLSessionImpl, TensorflowLoader}
+import com.intel.analytics.bigdl.dllib.feature.dataset.Sample
+import com.intel.analytics.bigdl.dllib.nn._
+import com.intel.analytics.bigdl.dllib.optim._
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.utils.{Engine, LoggerFilter}
+import com.intel.analytics.bigdl.common.utils.tf.{BigDLSessionImpl, TensorflowLoader}
 import org.apache.spark.SparkContext
 import scopt.OptionParser
 

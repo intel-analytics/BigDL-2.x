@@ -16,11 +16,11 @@
 package com.intel.analytics.bigdl.example.imageclassification
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.dataset.Transformer
-import com.intel.analytics.bigdl.dataset.image.{BGRImage, LocalLabeledImagePath}
-import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.dataset.DataSet.SeqFileFolder
+import com.intel.analytics.bigdl.dllib.feature.dataset.Transformer
+import com.intel.analytics.bigdl.dllib.feature.dataset.image.{BGRImage, LocalLabeledImagePath}
+import com.intel.analytics.bigdl.dllib.nn.Module
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.dllib.feature.dataset.DataSet.SeqFileFolder
 import org.apache.hadoop.io.Text
 import org.apache.spark.SparkContext
 import org.apache.spark.mllib.linalg.DenseVector

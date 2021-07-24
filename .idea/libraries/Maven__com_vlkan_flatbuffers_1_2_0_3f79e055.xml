@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.vlkan:flatbuffers:1.2.0-3f79e055">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/vlkan/flatbuffers/1.2.0-3f79e055/flatbuffers-1.2.0-3f79e055.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/vlkan/flatbuffers/1.2.0-3f79e055/flatbuffers-1.2.0-3f79e055-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/vlkan/flatbuffers/1.2.0-3f79e055/flatbuffers-1.2.0-3f79e055-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

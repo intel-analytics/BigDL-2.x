@@ -17,7 +17,7 @@
 package com.intel.analytics.bigdl.models.autoencoder
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.nn.{Graph, _}
+import com.intel.analytics.bigdl.dllib.nn.{Graph, _}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 
 object Autoencoder {

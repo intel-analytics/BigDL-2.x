@@ -16,9 +16,9 @@
 
 package com.intel.analytics.bigdl.example.tensorflow.loadandsave
 
-import com.intel.analytics.bigdl.nn.Module
+import com.intel.analytics.bigdl.dllib.nn.Module
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
 
 /**
  * This example show how to load a tensorflow model defined in slim and

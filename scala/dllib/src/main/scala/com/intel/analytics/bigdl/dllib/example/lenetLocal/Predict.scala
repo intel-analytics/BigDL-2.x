@@ -15,11 +15,11 @@
  */
 
 package com.intel.analytics.bigdl.example.lenetLocal
-import com.intel.analytics.bigdl.dataset.image.{BytesToGreyImg, GreyImgNormalizer, GreyImgToSample}
-import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.bigdl.dataset.Sample
-import com.intel.analytics.bigdl.optim.LocalPredictor
+import com.intel.analytics.bigdl.dllib.feature.dataset.image.{BytesToGreyImg, GreyImgNormalizer, GreyImgToSample}
+import com.intel.analytics.bigdl.dllib.nn.Module
+import com.intel.analytics.bigdl.common.utils.Engine
+import com.intel.analytics.bigdl.dllib.feature.dataset.Sample
+import com.intel.analytics.bigdl.dllib.optim.LocalPredictor
 import org.apache.log4j.{Level, Logger}
 
 import scala.collection.mutable.ArrayBuffer

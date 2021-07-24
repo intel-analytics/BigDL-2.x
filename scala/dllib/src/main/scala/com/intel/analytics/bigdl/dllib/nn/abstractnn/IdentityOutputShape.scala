@@ -15,9 +15,9 @@
  */
 
 
-package com.intel.analytics.bigdl.nn.abstractnn
+package com.intel.analytics.bigdl.dllib.nn.abstractnn
 
-import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.common.utils.Shape
 
 trait IdentityOutputShape extends InferShape{
   override def computeOutputShape(inputShape: Shape): Shape = inputShape

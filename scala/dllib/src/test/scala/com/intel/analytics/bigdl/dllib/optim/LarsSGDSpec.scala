@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.optim
+package com.intel.analytics.bigdl.dllib.optim
 
 
 import com.intel.analytics.bigdl.DataSet
-import com.intel.analytics.bigdl.dataset.{DataSet, MiniBatch}
-import com.intel.analytics.bigdl.nn.{Linear, MSECriterion, ReLU, Sequential}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, T, TestUtils}
+import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, MiniBatch}
+import com.intel.analytics.bigdl.dllib.nn.{Linear, MSECriterion, ReLU, Sequential}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.utils.{Engine, T, TestUtils}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
-import com.intel.analytics.bigdl.optim._
+import com.intel.analytics.bigdl.dllib.optim._
 
 import scala.collection.mutable.ArrayBuffer
 

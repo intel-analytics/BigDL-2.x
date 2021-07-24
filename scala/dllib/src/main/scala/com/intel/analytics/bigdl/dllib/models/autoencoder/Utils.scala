@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.models.autoencoder
 import java.nio.ByteBuffer
 import java.nio.file.{Files, Path}
 
-import com.intel.analytics.bigdl.dataset.ByteRecord
+import com.intel.analytics.bigdl.dllib.feature.dataset.ByteRecord
 
 import scopt.OptionParser
 

@@ -17,13 +17,13 @@
 package com.intel.analytics.bigdl.models.maskrcnn
 
 import com.intel.analytics.bigdl.models.resnet.Utils.{TestParams, _}
-import com.intel.analytics.bigdl.transform.vision.image._
-import com.intel.analytics.bigdl.transform.vision.image.augmentation._
-import com.intel.analytics.bigdl.utils.{Engine, T}
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation._
+import com.intel.analytics.bigdl.common.utils.{Engine, T}
 import scopt.OptionParser
-import com.intel.analytics.bigdl.dataset.{DataSet, MiniBatch, segmentation}
-import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.bigdl.optim.MeanAveragePrecision
+import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, MiniBatch, segmentation}
+import com.intel.analytics.bigdl.dllib.nn.Module
+import com.intel.analytics.bigdl.dllib.optim.MeanAveragePrecision
 import org.apache.spark.{SparkContext, rdd}
 object Test {
   case class TestParams(

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/spark/spark-version/2.0/2.0.iml" filepath="$PROJECT_DIR$/spark/spark-version/2.0/2.0.iml" />
+      <module fileurl="file://$PROJECT_DIR$/spark/dl/bigdl.iml" filepath="$PROJECT_DIR$/spark/dl/bigdl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bigdl-parent.iml" filepath="$PROJECT_DIR$/bigdl-parent.iml" />
+      <module fileurl="file://$PROJECT_DIR$/spark/dist/dist-spark-2.4.6-scala-2.11.8-all.iml" filepath="$PROJECT_DIR$/spark/dist/dist-spark-2.4.6-scala-2.11.8-all.iml" />
+      <module fileurl="file://$PROJECT_DIR$/spark/spark-version/spark-version.iml" filepath="$PROJECT_DIR$/spark/spark-version/spark-version.iml" />
+      <module fileurl="file://$PROJECT_DIR$/spark/spark_bigdl.iml" filepath="$PROJECT_DIR$/spark/spark_bigdl.iml" />
+    </modules>
+  </component>
+</project>

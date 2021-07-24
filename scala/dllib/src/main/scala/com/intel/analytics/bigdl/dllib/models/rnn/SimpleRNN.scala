@@ -17,7 +17,7 @@
 package com.intel.analytics.bigdl.models.rnn
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.bigdl.dllib.nn._
 
 object SimpleRNN {
   def apply(

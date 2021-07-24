@@ -17,12 +17,12 @@
 package com.intel.analytics.bigdl.example.languagemodel
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.dataset.text.{LabeledSentenceToSample, _}
-import com.intel.analytics.bigdl.dataset.{DataSet, SampleToMiniBatch}
-import com.intel.analytics.bigdl.nn.{CrossEntropyCriterion, Module, TimeDistributedCriterion}
-import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric._
-import com.intel.analytics.bigdl.utils.{Engine, OptimizerV1, OptimizerV2}
+import com.intel.analytics.bigdl.dllib.feature.dataset.text.{LabeledSentenceToSample, _}
+import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, SampleToMiniBatch}
+import com.intel.analytics.bigdl.dllib.nn.{CrossEntropyCriterion, Module, TimeDistributedCriterion}
+import com.intel.analytics.bigdl.dllib.optim._
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric._
+import com.intel.analytics.bigdl.common.utils.{Engine, OptimizerV1, OptimizerV2}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import com.intel.analytics.bigdl.example.languagemodel.Utils._

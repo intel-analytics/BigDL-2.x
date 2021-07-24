@@ -16,9 +16,9 @@
 
 package com.intel.analytics.bigdl.models.maskrcnn
 
-import com.intel.analytics.bigdl.dataset.segmentation.MaskUtils
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.feature.dataset.segmentation.MaskUtils
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.utils.T
 import org.scalatest.{FlatSpec, Matchers}
 
 class UtilsSpec extends FlatSpec with Matchers {

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <profile name="Maven 1" modules="bigdl,spark-version,spark_bigdl,dist-spark-2.4.6-scala-2.11.8-all,2.0,bigdl-parent">
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <plugins>
+        <plugin path="$MAVEN_REPOSITORY$/org/scalamacros/paradise_2.11.8/2.1.0/paradise_2.11.8-2.1.0.jar" />
+      </plugins>
+    </profile>
+  </component>
+</project>

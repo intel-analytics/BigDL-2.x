@@ -22,17 +22,17 @@ import java.util.UUID
 import com.google.protobuf.GeneratedMessage
 import com.intel.analytics.bigdl.models.lenet.LeNet5
 import com.intel.analytics.bigdl.models.resnet.Convolution
-import com.intel.analytics.bigdl.nn.Graph.ModuleNode
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericDouble
-import com.intel.analytics.bigdl.utils.caffe.{CaffeLoader, CaffePersister}
-import com.intel.analytics.bigdl.utils.tf._
-import com.intel.analytics.bigdl.utils.{Engine, File}
-import com.intel.analytics.bigdl.visualization.Summary
-import com.intel.analytics.bigdl.visualization.tensorboard.{FileReader, FileWriter}
+import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.nn._
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.NumericDouble
+import com.intel.analytics.bigdl.common.utils.caffe.{CaffeLoader, CaffePersister}
+import com.intel.analytics.bigdl.common.utils.tf._
+import com.intel.analytics.bigdl.common.utils.{Engine, File}
+import com.intel.analytics.bigdl.common.visualization.Summary
+import com.intel.analytics.bigdl.common.visualization.tensorboard.{FileReader, FileWriter}
 import org.apache.commons.compress.utils.IOUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
