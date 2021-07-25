@@ -191,17 +191,27 @@ def init_orca_context(cluster_mode=None, cores=None, memory=None, num_nodes=None
     import atexit
     atexit.register(stop_orca_context)
     from pyspark import SparkContext
+    activate_sc = SparkContext._active_spark_context is not None
     if cluster_mode is not None:
-        cluster_mode = cluster_mode.lower() 
-        if cluster_mode is not "spark-submit":
-            cores = 4 if cores is None else cores
-            memory = "2g" if memory is None else memory
-            num_nodes = 2 if num_nodes is None else num_nodes
+        cluster_mode = cluster_mode.lower()
+        if cluster_mode != "local" and not activate_sc:
+                cores = 4 if cores is None else cores
+                memory = "2g" if memory is None else memory
+                num_nodes = 2 if num_nodes is None else num_nodes
+        elif cluster_mode != "local" and activate_sc:
+                scc = SparkContext.getOrCreate()
+                cores = scc.getConf().get("spark.executor.cores")
+                memory = scc.getConf().get("spark.executor.memory")
+                num_nodes = scc.getConf().get("spark.executor.instances")
     spark_args = {}
     for key in ["conf", "spark_log_level", "redirect_spark_log"]:
         if key in kwargs:
             spark_args[key] = kwargs[key]
-    if cluster_mode is None:
+    if cluster_mode is None and activate_sc:
+        conf = SparkContext().getConf().getAll()
+        from zoo import init_nncontext
+        sc = init_nncontext(conf=conf, spark_log_level="WARN", redirect_spark_log=True)
+    elif cluster_mode == "local" or cluster_mode is None and not activate_sc:
         cores = 2 if cores is None else cores
         memory = "2g" if memory is None else memory
         num_nodes = 1 if num_nodes is None else num_nodes
@@ -211,10 +221,10 @@ def init_orca_context(cluster_mode=None, cores=None, memory=None, num_nodes=None
             spark_args["python_location"] = kwargs["python_location"]
         from zoo import init_spark_on_local
         sc = init_spark_on_local(cores, **spark_args)
-    elif cluster_mode is not None and cluster_mode == "spark-submit":
+    elif cluster_mode == "spark-submit":
         from zoo import init_nncontext
         sc = init_nncontext(**spark_args)
-    elif cluster_mode is not None and cluster_mode.startswith("yarn"):  # yarn or yarn-client
+    elif cluster_mode.startswith("yarn"):  # yarn or yarn-client
         if cluster_mode == "yarn-cluster":
             raise ValueError('For yarn-cluster mode, please set cluster_mode to "spark-submit" '
                              'and submit the application via spark-submit instead')
@@ -236,7 +246,7 @@ def init_orca_context(cluster_mode=None, cores=None, memory=None, num_nodes=None
                                 conda_name=conda_env_name,
                                 num_executors=num_nodes, executor_cores=cores,
                                 executor_memory=memory, **spark_args)
-    elif cluster_mode is not None and cluster_mode.startswith("k8s"):  # k8s or k8s-client
+    elif cluster_mode.startswith("k8s"):  # k8s or k8s-client
         if cluster_mode == "k8s-cluster":
             raise ValueError('For k8s-cluster mode, please set cluster_mode to "spark-submit" '
                              'and submit the application via spark-submit instead')
@@ -251,7 +261,7 @@ def init_orca_context(cluster_mode=None, cores=None, memory=None, num_nodes=None
                                container_image=kwargs["container_image"],
                                num_executors=num_nodes, executor_cores=cores,
                                executor_memory=memory, **spark_args)
-    elif cluster_mode is not None and cluster_mode == "standalone":
+    elif cluster_mode == "standalone":
         for key in ["driver_cores", "driver_memory", "extra_executor_memory_for_ray",
                     "extra_python_lib", "jars", "master", "python_location", "enable_numa_binding"]:
             if key in kwargs:
