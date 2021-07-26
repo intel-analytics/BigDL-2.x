@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.inference
+package com.intel.analytics.bigdl.dllib.inference
 
-import com.intel.analytics.zoo.pipeline.api.net.TFNet
-import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
+import com.intel.analytics.bigdl.dllib.inference.net.TFNet
+import com.intel.analytics.bigdl.dllib.inference.DeviceType.DeviceTypeEnumVal
 
 object InferenceModelFactory extends InferenceSupportive {
 

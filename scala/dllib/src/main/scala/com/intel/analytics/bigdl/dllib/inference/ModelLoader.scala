@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.inference
+package com.intel.analytics.bigdl.dllib.inference
 
 import java.io.{ByteArrayInputStream, File, FileOutputStream}
 import java.nio.channels.Channels
 
-import com.intel.analytics.bigdl.nn.Graph
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
-import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
-import com.intel.analytics.zoo.common.Utils
-import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding
-import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
-import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, TFNet, TorchModel}
+import com.intel.analytics.bigdl.dllib.nn.Graph
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.common.utils.caffe.CaffeLoader
+import com.intel.analytics.bigdl.common.utils.serializer.ModuleLoader
+import com.intel.analytics.bigdl.common.zooUtils
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.WordEmbedding
+import com.intel.analytics.bigdl.dllib.zooKeras.models.{Model, Sequential}
+import com.intel.analytics.bigdl.dllib.inference.net.{GraphNet, TFNet, TorchModel}
 import org.slf4j.LoggerFactory
 
 import scala.language.postfixOps
@@ -91,7 +91,7 @@ object ModelLoader extends InferenceSupportive {
     : AbstractModule[Activity, Activity, Float] = {
       timing("load model") {
         logger.info(s"load model from $frozenModelBytes")
-        val tmpDir = Utils.createTmpDir("ZOOTFNet").toFile()
+        val tmpDir = zooUtils.createTmpDir("ZOOTFNet").toFile()
         val outputPath: String = tmpDir.getCanonicalPath
 
         val tarFilePath = (frozenModelBytes == null) match {
@@ -138,7 +138,7 @@ object ModelLoader extends InferenceSupportive {
   : AbstractModule[Activity, Activity, Float] = {
     timing("load model") {
       logger.info(s"load model from $savedModelBytes")
-      val tmpDir = Utils.createTmpDir("ZOOTFNet").toFile()
+      val tmpDir = zooUtils.createTmpDir("ZOOTFNet").toFile()
       val outputPath: String = tmpDir.getCanonicalPath
 
       val tarFilePath = (savedModelBytes == null) match {

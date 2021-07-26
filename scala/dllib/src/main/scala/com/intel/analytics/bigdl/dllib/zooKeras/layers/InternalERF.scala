@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
+package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 
-import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.common.MKLBlas
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.TensorModule
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.MKLBlas
 
 import scala.reflect.ClassTag
 
-private[zoo] class InternalERF[T: ClassTag]()(
+private[bigdl]  class InternalERF[T: ClassTag]()(
   implicit ev: TensorNumeric[T]) extends TensorModule[T] {
   val derivativeFactor = ev.fromType(1.1283791670955126)
   override def updateOutput(input: Tensor[T]): Tensor[T] = {

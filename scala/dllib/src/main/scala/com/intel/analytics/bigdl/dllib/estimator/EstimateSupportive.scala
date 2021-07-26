@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.estimator
+package com.intel.analytics.bigdl.dllib.estimator
 
-import com.intel.analytics.zoo.pipeline.inference.InferenceSupportive
+import com.intel.analytics.bigdl.dllib.inference.InferenceSupportive
 import org.slf4j.LoggerFactory
 
 /**

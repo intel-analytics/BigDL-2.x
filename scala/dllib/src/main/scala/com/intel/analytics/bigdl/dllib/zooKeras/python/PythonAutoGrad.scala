@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.python
+package com.intel.analytics.bigdl.dllib.zooKeras.python
 
 import java.util.{List => JList}
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.Node
-import com.intel.analytics.zoo.pipeline.api.autograd
-import com.intel.analytics.zoo.pipeline.api.autograd._
-import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
-import com.intel.analytics.zoo.pipeline.api.keras.objectives.TensorLossFunction
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.keras.KerasLayer
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.Node
+import com.intel.analytics.bigdl.dllib.zooKeras.autograd
+import com.intel.analytics.bigdl.dllib.zooKeras.autograd._
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.Input
+import com.intel.analytics.bigdl.dllib.zooKeras.objectives.TensorLossFunction
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag

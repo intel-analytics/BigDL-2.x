@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers
+package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
-import com.intel.analytics.bigdl.nn.{RandomNormal, StaticGraph}
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasLayerSerializable}
+import com.intel.analytics.bigdl.dllib.nn.{RandomNormal, StaticGraph}
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.keras.{KerasLayer, KerasLayerSerializable}
 import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.serializer._
-import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
-import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
-import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Variable}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{GraphRef, KerasUtils}
-import com.intel.analytics.zoo.pipeline.api.keras.models.Model
-import com.intel.analytics.zoo.pipeline.api.keras.models.Model.{apply => _, _}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.serializer._
+import com.intel.analytics.bigdl.common.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.common.utils.{MultiShape, Shape}
+import com.intel.analytics.bigdl.dllib.inference.Net
+import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{AutoGrad, Variable}
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.{GraphRef, KerasUtils}
+import com.intel.analytics.bigdl.dllib.zooKeras.models.Model
+import com.intel.analytics.bigdl.dllib.zooKeras.models.Model.{apply => _, _}
 import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
@@ -110,7 +110,7 @@ class BERT[T: ClassTag] private (
 object BERT extends KerasLayerSerializable {
   Model
   ModuleSerializer.registerModule(
-    "com.intel.analytics.zoo.pipeline.api.keras.layers.BERT",
+    "com.intel.analytics.bigdl.dllib.zooKeras.layers.BERT",
     BERT)
 
   private val logger = Logger.getLogger(getClass)

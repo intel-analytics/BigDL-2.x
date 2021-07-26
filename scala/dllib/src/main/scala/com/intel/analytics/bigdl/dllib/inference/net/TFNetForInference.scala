@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.net
+package com.intel.analytics.bigdl.dllib.inference.net
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.common.Utils
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.common.Utils
 import com.intel.analytics.zoo.pipeline.api.Predictable
 import com.intel.analytics.zoo.tfpark.{GraphRunner, TFUtils}
 import org.slf4j.LoggerFactory
@@ -32,7 +32,7 @@ import org.tensorflow.{DataType, Graph, SavedModelBundle}
 
 import scala.reflect.ClassTag
 
-private[zoo] class TFNetForInference(graphRunner: GraphRunner,
+private[bigdl]  class TFNetForInference(graphRunner: GraphRunner,
                                      inputs: Array[String],
                                      inputTypes: Array[Int],
                                      outputs: Array[String],

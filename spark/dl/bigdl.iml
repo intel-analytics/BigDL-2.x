@@ -74,8 +74,6 @@
     <orderEntry type="library" name="Maven: javax.servlet:javax.servlet-api:3.0.1" level="project" />
     <orderEntry type="library" name="Maven: com.intel.analytics.bigdl.core.dist:all:0.14.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: com.intel.analytics.bigdl.core.native.mkl:mkl-java-x86_64-linux:0.14.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" name="Maven: junit:junit:4.11" level="project" />
-    <orderEntry type="library" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />
     <orderEntry type="library" name="Maven: com.intel.analytics.bigdl.core.native.bigquant:bigquant-java-x86_64-linux:0.14.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: com.intel.analytics.bigdl.core.native.opencv:opencv-java-x86_64-linux:0.14.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: com.intel.analytics.bigdl.core.native.dnn:dnn-java-x86_64-linux:0.14.0-SNAPSHOT" level="project" />
@@ -96,6 +94,10 @@
     <orderEntry type="library" name="Maven: org.codehaus.plexus:plexus-container-default:1.0-alpha-9-stable-1" level="project" />
     <orderEntry type="library" name="Maven: classworlds:classworlds:1.1-alpha-2" level="project" />
     <orderEntry type="library" name="Maven: org.codehaus.plexus:plexus-utils:3.0.16" level="project" />
+    <orderEntry type="library" name="Maven: com.intel.analytics.zoo:zoo-core-mkl-linux:0.11.0-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: junit:junit:4.11" level="project" />
+    <orderEntry type="library" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />
+    <orderEntry type="library" name="Maven: black.ninia:jep:3.9.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.spark:spark-core_2.11:2.4.6" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.thoughtworks.paranamer:paranamer:2.8" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.avro:avro:1.8.2" level="project" />

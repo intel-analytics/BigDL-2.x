@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers
+package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
-import com.intel.analytics.bigdl.nn.Graph.ModuleNode
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{Node, Shape}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.bigdl.nn.{Input => TInput}
-import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.keras.KerasLayer
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.{Node, Shape}
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
+import com.intel.analytics.bigdl.dllib.nn.{Input => TInput}
+import com.intel.analytics.bigdl.dllib.inference.Net
 
 import scala.reflect.ClassTag
 
@@ -45,7 +45,7 @@ class Input[T: ClassTag](val inputShape: Shape)(implicit ev: TensorNumeric[T])
 
   override def skipDuplicateCheck(): Boolean = skipDuplicate
 
-  override private[zoo] def toKeras2(): String = {
+  override private[bigdl]  def toKeras2(): String = {
     val params = Net.inputShapeToString(inputShape, "shape") ++
       Net.param(getName())
     Net.kerasDef(this, params)

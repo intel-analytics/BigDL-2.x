@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.pipeline.estimator
+package com.intel.analytics.bigdl.dllib.estimator
 
-import com.intel.analytics.bigdl.dataset.MiniBatch
-import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.feature.dataset.MiniBatch
+import com.intel.analytics.bigdl.dllib.nn.Module
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.{Criterion, Module}
-import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.utils.{RandomGenerator, ThreadPool}
+import com.intel.analytics.bigdl.dllib.optim.{OptimMethod, ValidationMethod, ValidationResult}
+import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.common.utils.{RandomGenerator, ThreadPool}
 import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag

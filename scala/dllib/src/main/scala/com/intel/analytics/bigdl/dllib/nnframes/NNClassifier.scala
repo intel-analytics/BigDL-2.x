@@ -17,11 +17,11 @@
 package com.intel.analytics.zoo.pipeline.nnframes
 
 import com.intel.analytics.bigdl.dataset.{Sample, Transformer}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.zoo.feature.common._
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.nnframes.NNModel.NNModelWriter
 import ml.dmlc.xgboost4j.scala.spark.{XGBoostClassificationModel, XGBoostHelper,
 XGBoostRegressionModel, XGBoostRegressor, XGBoostClassifier}
@@ -45,7 +45,7 @@ import scala.reflect.ClassTag
  * @param model BigDL module to be optimized
  * @param criterion  BigDL criterion method
  */
-class NNClassifier[T: ClassTag] private[zoo]  (
+class NNClassifier[T: ClassTag] private[bigdl]   (
     @transient override val model: Module[T],
     override val criterion : Criterion[T],
     override val uid: String = Identifiable.randomUID("nnClassifier")
@@ -176,7 +176,7 @@ object NNClassifier {
  *
  * @param model trained BigDL models to use in prediction.
  */
-class NNClassifierModel[T: ClassTag] private[zoo] (
+class NNClassifierModel[T: ClassTag] private[bigdl]  (
     @transient override val model: Module[T],
     override val uid: String = Identifiable.randomUID("nnClassifierModel")
   )(implicit ev: TensorNumeric[T]) extends NNModel[T](model) {
@@ -374,7 +374,7 @@ class XGBClassifier () {
  *
  * @param model trained XGBoostClassificationModel to use in prediction.
  */
-class XGBClassifierModel private[zoo](
+class XGBClassifierModel private[bigdl] (
    val model: XGBoostClassificationModel) {
   private var featuresCols: Array[String] = null
   private var predictionCol: String = null
@@ -624,7 +624,7 @@ class XGBRegressor () {
 /**
  * [[XGBRegressorModel]] xgboost wrapper of XGBRegressorModel.
  */
-class XGBRegressorModel private[zoo](val model: XGBoostRegressionModel) {
+class XGBRegressorModel private[bigdl] (val model: XGBoostRegressionModel) {
   var predictionCol: String = null
   var featuresCol: String = "features"
   var featurearray: Array[String] = Array("features")

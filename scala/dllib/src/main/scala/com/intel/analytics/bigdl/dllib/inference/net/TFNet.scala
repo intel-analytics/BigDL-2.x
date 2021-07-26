@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.pipeline.api.net
+package com.intel.analytics.bigdl.dllib.inference.net
 
 import java.io.{File, FileInputStream, InputStream}
 import java.nio._
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.dataset.MiniBatch
+import com.intel.analytics.bigdl.dllib.feature.dataset.MiniBatch
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.optim.{ValidationMethod, ValidationResult}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.common.Utils
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.optim.{ValidationMethod, ValidationResult}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.common.zooUtils
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.Predictable
-import com.intel.analytics.zoo.pipeline.api.net.TFNet.TFGraphHolder
+import com.intel.analytics.bigdl.dllib.inference.net.TFNet.TFGraphHolder
 import com.intel.analytics.zoo.tfpark.{TFResourceManager, TFUtils}
 import org.apache.spark.rdd.RDD
 import org.tensorflow.framework.GraphDef
@@ -68,7 +68,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   @transient
   private lazy val tensorManager = new TFResourceManager()
 
-  private[zoo] def graph = graphDef.tfGraph.graph
+  private[bigdl]  def graph = graphDef.tfGraph.graph
 
   val inputNames: Array[String] = graphMeta.inputNames
   private val inputTypes = inputNames.map(name2type)
@@ -162,7 +162,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   }
 
   @transient
-  private[zoo] lazy val sess = {
+  private[bigdl]  lazy val sess = {
     val sess = new Session(this.graph, config.map(_.toByte))
     sess
   }
@@ -596,7 +596,7 @@ object TFNet {
    * @param graphDef the tensorflow GraphDef object
    * @return
    */
-  private[zoo] def apply(graphDef: GraphDef, graphId: String,
+  private[bigdl]  def apply(graphDef: GraphDef, graphId: String,
                          graphMeta: Meta,
                          config: Array[Byte]): TFNet = {
     val graph = new Graph()
@@ -704,7 +704,7 @@ object TFNet {
       defaultSessionConfig.toByteArray())
   }
 
-  private[zoo] def parseGraph(graphProtoTxt: String): GraphDef = {
+  private[bigdl]  def parseGraph(graphProtoTxt: String): GraphDef = {
     var fr: File = null
     var in: InputStream = null
     try {

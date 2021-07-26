@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
+package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 
-import com.intel.analytics.bigdl.nn.CMulTable
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.nn.CMulTable
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.{T, Table}
 
 import scala.reflect.ClassTag
 
-private[zoo] class InternalCMulTable[T: ClassTag]()
+private[bigdl]  class InternalCMulTable[T: ClassTag]()
   (implicit ev: TensorNumeric[T]) extends CMulTable[T] {
   private var expandLayer: AbstractModule[Tensor[T], Tensor[T], T] = null
 
@@ -93,7 +93,7 @@ private[zoo] class InternalCMulTable[T: ClassTag]()
   override def canEqual(other: Any): Boolean = other.isInstanceOf[InternalCMulTable[T]]
 }
 
-private[zoo] object InternalCMulTable {
+private[bigdl]  object InternalCMulTable {
   def apply[@specialized(Float, Double) T: ClassTag]()
     (implicit ev: TensorNumeric[T]) : InternalCMulTable[T] = {
     new InternalCMulTable[T]()

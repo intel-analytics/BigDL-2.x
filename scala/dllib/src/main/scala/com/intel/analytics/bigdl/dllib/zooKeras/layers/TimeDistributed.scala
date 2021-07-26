@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers
+package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.utils.SingleShape
-import com.intel.analytics.bigdl.nn.keras.{KerasLayer}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.common.utils.SingleShape
+import com.intel.analytics.bigdl.dllib.keras.{KerasLayer}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.Shape
 import com.intel.analytics.zoo.models.common.ZooModel
-import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalTimeDistributed
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
+import com.intel.analytics.bigdl.dllib.inference.Net
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.internal.InternalTimeDistributed
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
+import com.intel.analytics.bigdl.dllib.zooKeras.models.KerasNet
 
 import scala.reflect.ClassTag
 

@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers.utils
+package com.intel.analytics.bigdl.dllib.zooKeras.layers.utils
 
 import com.intel.analytics.bigdl.Criterion
-import com.intel.analytics.bigdl.nn.Graph.ModuleNode
-import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.nn.keras.{KerasIdentityWrapper, KerasLayer, KerasLayerWrapper, Sequential => KSequential, SoftMax => KSoftMax}
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, DataFormat, TensorModule}
-import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{MultiShape, Shape, SingleShape}
-import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.keras.metrics.{AUC, Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy, Top5Accuracy => ZooTop5Accuracy}
-import com.intel.analytics.zoo.pipeline.api.keras.models.KerasNet
-import com.intel.analytics.zoo.pipeline.api.keras.objectives._
+import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
+import com.intel.analytics.bigdl.dllib.nn._
+import com.intel.analytics.bigdl.dllib.keras.{KerasIdentityWrapper, KerasLayer, KerasLayerWrapper, Sequential => KSequential, SoftMax => KSoftMax}
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity, DataFormat, TensorModule}
+import com.intel.analytics.bigdl.dllib.optim._
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.{MultiShape, Shape, SingleShape}
+import com.intel.analytics.bigdl.dllib.inference.Net
+import com.intel.analytics.bigdl.dllib.zooKeras.metrics.{AUC, Accuracy, BinaryAccuracy, CategoricalAccuracy, SparseCategoricalAccuracy, Top5Accuracy => ZooTop5Accuracy}
+import com.intel.analytics.bigdl.dllib.zooKeras.models.KerasNet
+import com.intel.analytics.bigdl.dllib.zooKeras.objectives._
 import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable.ArrayBuffer
@@ -76,7 +76,7 @@ object KerasUtils {
     (implicit ev: TensorNumeric[T]): KerasLayer[Tensor[T], Tensor[T], T] = {
     if (activation == null) { return null }
     if (activation.toLowerCase() == "softmax") {
-      com.intel.analytics.zoo.pipeline.api.keras.layers.SoftMax[T]()
+      com.intel.analytics.bigdl.dllib.zooKeras.layers.SoftMax[T]()
     } else {
       val torchActivation = getTorchActivation(activation)
       new KerasIdentityWrapper[T](torchActivation)
@@ -102,7 +102,7 @@ object KerasUtils {
         case _: LogSigmoid[T] => "log_sigmoid"
         case _: LogSoftMax[T] => "log_softmax"
         case _: Identity[T] => "linear"
-        case _: com.intel.analytics.zoo.pipeline.api.keras.layers.SoftMax[T] => "softmax"
+        case _: com.intel.analytics.bigdl.dllib.zooKeras.layers.SoftMax[T] => "softmax"
         case _ => throw new IllegalArgumentException("unkown activation"
           + activation.getClass.getName)
       }
@@ -182,7 +182,7 @@ object KerasUtils {
     loss.toLowerCase() match {
       case "binary_crossentropy" => BinaryCrossEntropy[T]()
       case "categorical_crossentropy" =>
-        com.intel.analytics.zoo.pipeline.api.keras.objectives.CategoricalCrossEntropy[T]()
+        com.intel.analytics.bigdl.dllib.zooKeras.objectives.CategoricalCrossEntropy[T]()
       case "mse" => MeanSquaredError[T]()
       case "mean_squared_error" => MeanSquaredError[T]()
       case "mae" => MeanAbsoluteError[T]()
@@ -287,7 +287,7 @@ object KerasUtils {
     }
   }
 
-  private[zoo] def invokeMethod(obj: Object, methodName: String, args: Object*): Object = {
+  private[bigdl]  def invokeMethod(obj: Object, methodName: String, args: Object*): Object = {
     val clazz = obj.getClass()
     val method =
       try {
@@ -302,7 +302,7 @@ object KerasUtils {
     method.invoke(obj, args: _*)
   }
 
-  private[zoo] def invokeMethodWithEv[T: ClassTag](
+  private[bigdl]  def invokeMethodWithEv[T: ClassTag](
         obj: String,
         methodName: String,
         args: Object*)(implicit ev: TensorNumeric[T]): Object = {
@@ -321,7 +321,7 @@ object KerasUtils {
     method.invoke(obj, argsWithTag: _*)
   }
 
-  private[zoo] def invokeMethodWithEv[T: ClassTag](
+  private[bigdl]  def invokeMethodWithEv[T: ClassTag](
         obj: Object,
         methodName: String,
         args: Object*)(implicit ev: TensorNumeric[T]): Object = {
