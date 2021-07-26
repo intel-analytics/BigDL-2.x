@@ -1404,7 +1404,7 @@
                     <protoPaths>
                         <protoPath>src/main/scala/com/intel/analytics/zoo/serving/grpc/proto</protoPath>
                     </protoPaths>
-                    <outputDirectory>src/main/scala/com/intel/analytics/zoo/serving/grpc/generated-sources</outputDirectory>
+                    <outputDirectory>src/main/scala</outputDirectory>
                 </configuration>
             </plugin>
         </plugins>

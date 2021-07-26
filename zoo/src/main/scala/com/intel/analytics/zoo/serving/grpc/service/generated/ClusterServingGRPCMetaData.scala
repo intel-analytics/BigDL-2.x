@@ -3,7 +3,7 @@
 //
 // Protofile syntax: PROTO3
 
-package com.intel.analytics.zoo.serving.grpc
+package com.intel.analytics.zoo.serving.grpc.service.generated
 
 @SerialVersionUID(0L)
 final case class ClusterServingGRPCMetaData(
@@ -279,13 +279,13 @@ final case class ClusterServingGRPCMetaData(
       }
     }
     def toProtoString: _root_.scala.Predef.String = _root_.scalapb.TextFormat.printToUnicodeString(this)
-    def companion = com.intel.analytics.zoo.serving.grpc.ClusterServingGRPCMetaData
-    // @@protoc_insertion_point(GeneratedMessage[grpc.ClusterServingGRPCMetaData])
+    def companion = com.intel.analytics.zoo.serving.grpc.service.generated.ClusterServingGRPCMetaData
+    // @@protoc_insertion_point(GeneratedMessage[grpc.protos.ClusterServingGRPCMetaData])
 }
 
-object ClusterServingGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.ClusterServingGRPCMetaData] {
-  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.ClusterServingGRPCMetaData] = this
-  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.ClusterServingGRPCMetaData = {
+object ClusterServingGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.ClusterServingGRPCMetaData] {
+  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.ClusterServingGRPCMetaData] = this
+  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.service.generated.ClusterServingGRPCMetaData = {
     var __modelName: _root_.scala.Predef.String = ""
     var __modelVersion: _root_.scala.Predef.String = ""
     var __redisHost: _root_.scala.Predef.String = ""
@@ -335,7 +335,7 @@ object ClusterServingGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.
           _unknownFields__.parseField(tag, _input__)
       }
     }
-    com.intel.analytics.zoo.serving.grpc.ClusterServingGRPCMetaData(
+    com.intel.analytics.zoo.serving.grpc.service.generated.ClusterServingGRPCMetaData(
         modelName = __modelName,
         modelVersion = __modelVersion,
         redisHost = __redisHost,
@@ -351,10 +351,10 @@ object ClusterServingGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.
         unknownFields = if (_unknownFields__ == null) _root_.scalapb.UnknownFieldSet.empty else _unknownFields__.result()
     )
   }
-  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.ClusterServingGRPCMetaData] = _root_.scalapb.descriptors.Reads{
+  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.service.generated.ClusterServingGRPCMetaData] = _root_.scalapb.descriptors.Reads{
     case _root_.scalapb.descriptors.PMessage(__fieldsMap) =>
       _root_.scala.Predef.require(__fieldsMap.keys.forall(_.containingMessage eq scalaDescriptor), "FieldDescriptor does not match message type.")
-      com.intel.analytics.zoo.serving.grpc.ClusterServingGRPCMetaData(
+      com.intel.analytics.zoo.serving.grpc.service.generated.ClusterServingGRPCMetaData(
         modelName = __fieldsMap.get(scalaDescriptor.findFieldByNumber(1).get).map(_.as[_root_.scala.Predef.String]).getOrElse(""),
         modelVersion = __fieldsMap.get(scalaDescriptor.findFieldByNumber(2).get).map(_.as[_root_.scala.Predef.String]).getOrElse(""),
         redisHost = __fieldsMap.get(scalaDescriptor.findFieldByNumber(3).get).map(_.as[_root_.scala.Predef.String]).getOrElse(""),
@@ -375,7 +375,7 @@ object ClusterServingGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.
   def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[_] = throw new MatchError(__number)
   lazy val nestedMessagesCompanions: Seq[_root_.scalapb.GeneratedMessageCompanion[_ <: _root_.scalapb.GeneratedMessage]] = Seq.empty
   def enumCompanionForFieldNumber(__fieldNumber: _root_.scala.Int): _root_.scalapb.GeneratedEnumCompanion[_] = throw new MatchError(__fieldNumber)
-  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.ClusterServingGRPCMetaData(
+  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.service.generated.ClusterServingGRPCMetaData(
     modelName = "",
     modelVersion = "",
     redisHost = "",
@@ -389,7 +389,7 @@ object ClusterServingGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.
     redisTrustStoreToken = "",
     features = ""
   )
-  implicit class ClusterServingGRPCMetaDataLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.ClusterServingGRPCMetaData]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.ClusterServingGRPCMetaData](_l) {
+  implicit class ClusterServingGRPCMetaDataLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.ClusterServingGRPCMetaData]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.ClusterServingGRPCMetaData](_l) {
     def modelName: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.modelName)((c_, f_) => c_.copy(modelName = f_))
     def modelVersion: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.modelVersion)((c_, f_) => c_.copy(modelVersion = f_))
     def redisHost: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.redisHost)((c_, f_) => c_.copy(redisHost = f_))
@@ -428,7 +428,7 @@ object ClusterServingGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.
     redisTrustStorePath: _root_.scala.Predef.String,
     redisTrustStoreToken: _root_.scala.Predef.String,
     features: _root_.scala.Predef.String
-  ): _root_.com.intel.analytics.zoo.serving.grpc.ClusterServingGRPCMetaData = _root_.com.intel.analytics.zoo.serving.grpc.ClusterServingGRPCMetaData(
+  ): _root_.com.intel.analytics.zoo.serving.grpc.service.generated.ClusterServingGRPCMetaData = _root_.com.intel.analytics.zoo.serving.grpc.service.generated.ClusterServingGRPCMetaData(
     modelName,
     modelVersion,
     redisHost,
@@ -442,5 +442,5 @@ object ClusterServingGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.
     redisTrustStoreToken,
     features
   )
-  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.ClusterServingGRPCMetaData])
+  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.protos.ClusterServingGRPCMetaData])
 }

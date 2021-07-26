@@ -3,7 +3,7 @@
 //
 // Protofile syntax: PROTO3
 
-package com.intel.analytics.zoo.serving.grpc
+package com.intel.analytics.zoo.serving.grpc.service.generated
 
 @SerialVersionUID(0L)
 final case class GetModelsWithNameAndVersionReq(
@@ -79,13 +79,13 @@ final case class GetModelsWithNameAndVersionReq(
       }
     }
     def toProtoString: _root_.scala.Predef.String = _root_.scalapb.TextFormat.printToUnicodeString(this)
-    def companion = com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq
-    // @@protoc_insertion_point(GeneratedMessage[grpc.GetModelsWithNameAndVersionReq])
+    def companion = com.intel.analytics.zoo.serving.grpc.service.generated.GetModelsWithNameAndVersionReq
+    // @@protoc_insertion_point(GeneratedMessage[grpc.protos.GetModelsWithNameAndVersionReq])
 }
 
-object GetModelsWithNameAndVersionReq extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq] {
-  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq] = this
-  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq = {
+object GetModelsWithNameAndVersionReq extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.GetModelsWithNameAndVersionReq] {
+  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.GetModelsWithNameAndVersionReq] = this
+  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.service.generated.GetModelsWithNameAndVersionReq = {
     var __modelName: _root_.scala.Predef.String = ""
     var __modelVersion: _root_.scala.Predef.String = ""
     var `_unknownFields__`: _root_.scalapb.UnknownFieldSet.Builder = null
@@ -105,16 +105,16 @@ object GetModelsWithNameAndVersionReq extends scalapb.GeneratedMessageCompanion[
           _unknownFields__.parseField(tag, _input__)
       }
     }
-    com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq(
+    com.intel.analytics.zoo.serving.grpc.service.generated.GetModelsWithNameAndVersionReq(
         modelName = __modelName,
         modelVersion = __modelVersion,
         unknownFields = if (_unknownFields__ == null) _root_.scalapb.UnknownFieldSet.empty else _unknownFields__.result()
     )
   }
-  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq] = _root_.scalapb.descriptors.Reads{
+  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.service.generated.GetModelsWithNameAndVersionReq] = _root_.scalapb.descriptors.Reads{
     case _root_.scalapb.descriptors.PMessage(__fieldsMap) =>
       _root_.scala.Predef.require(__fieldsMap.keys.forall(_.containingMessage eq scalaDescriptor), "FieldDescriptor does not match message type.")
-      com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq(
+      com.intel.analytics.zoo.serving.grpc.service.generated.GetModelsWithNameAndVersionReq(
         modelName = __fieldsMap.get(scalaDescriptor.findFieldByNumber(1).get).map(_.as[_root_.scala.Predef.String]).getOrElse(""),
         modelVersion = __fieldsMap.get(scalaDescriptor.findFieldByNumber(2).get).map(_.as[_root_.scala.Predef.String]).getOrElse("")
       )
@@ -125,11 +125,11 @@ object GetModelsWithNameAndVersionReq extends scalapb.GeneratedMessageCompanion[
   def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[_] = throw new MatchError(__number)
   lazy val nestedMessagesCompanions: Seq[_root_.scalapb.GeneratedMessageCompanion[_ <: _root_.scalapb.GeneratedMessage]] = Seq.empty
   def enumCompanionForFieldNumber(__fieldNumber: _root_.scala.Int): _root_.scalapb.GeneratedEnumCompanion[_] = throw new MatchError(__fieldNumber)
-  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq(
+  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.service.generated.GetModelsWithNameAndVersionReq(
     modelName = "",
     modelVersion = ""
   )
-  implicit class GetModelsWithNameAndVersionReqLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq](_l) {
+  implicit class GetModelsWithNameAndVersionReqLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.GetModelsWithNameAndVersionReq]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.GetModelsWithNameAndVersionReq](_l) {
     def modelName: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.modelName)((c_, f_) => c_.copy(modelName = f_))
     def modelVersion: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.modelVersion)((c_, f_) => c_.copy(modelVersion = f_))
   }
@@ -138,9 +138,9 @@ object GetModelsWithNameAndVersionReq extends scalapb.GeneratedMessageCompanion[
   def of(
     modelName: _root_.scala.Predef.String,
     modelVersion: _root_.scala.Predef.String
-  ): _root_.com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq = _root_.com.intel.analytics.zoo.serving.grpc.GetModelsWithNameAndVersionReq(
+  ): _root_.com.intel.analytics.zoo.serving.grpc.service.generated.GetModelsWithNameAndVersionReq = _root_.com.intel.analytics.zoo.serving.grpc.service.generated.GetModelsWithNameAndVersionReq(
     modelName,
     modelVersion
   )
-  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.GetModelsWithNameAndVersionReq])
+  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.protos.GetModelsWithNameAndVersionReq])
 }

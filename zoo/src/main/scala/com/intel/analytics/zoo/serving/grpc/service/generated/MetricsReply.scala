@@ -3,13 +3,13 @@
 //
 // Protofile syntax: PROTO3
 
-package com.intel.analytics.zoo.serving.grpc
+package com.intel.analytics.zoo.serving.grpc.service.generated
 
 /** The response message containing the greetings
   */
 @SerialVersionUID(0L)
 final case class MetricsReply(
-    metrics: _root_.scala.Seq[com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric] = _root_.scala.Seq.empty,
+    metrics: _root_.scala.Seq[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric] = _root_.scala.Seq.empty,
     unknownFields: _root_.scalapb.UnknownFieldSet = _root_.scalapb.UnknownFieldSet.empty
     ) extends scalapb.GeneratedMessage with scalapb.lenses.Updatable[MetricsReply] {
     @transient
@@ -41,9 +41,9 @@ final case class MetricsReply(
       unknownFields.writeTo(_output__)
     }
     def clearMetrics = copy(metrics = _root_.scala.Seq.empty)
-    def addMetrics(__vs: com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric*): MetricsReply = addAllMetrics(__vs)
-    def addAllMetrics(__vs: Iterable[com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric]): MetricsReply = copy(metrics = metrics ++ __vs)
-    def withMetrics(__v: _root_.scala.Seq[com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric]): MetricsReply = copy(metrics = __v)
+    def addMetrics(__vs: com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric*): MetricsReply = addAllMetrics(__vs)
+    def addAllMetrics(__vs: Iterable[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric]): MetricsReply = copy(metrics = metrics ++ __vs)
+    def withMetrics(__v: _root_.scala.Seq[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric]): MetricsReply = copy(metrics = __v)
     def withUnknownFields(__v: _root_.scalapb.UnknownFieldSet) = copy(unknownFields = __v)
     def discardUnknownFields = copy(unknownFields = _root_.scalapb.UnknownFieldSet.empty)
     def getFieldByNumber(__fieldNumber: _root_.scala.Int): _root_.scala.Any = {
@@ -58,14 +58,14 @@ final case class MetricsReply(
       }
     }
     def toProtoString: _root_.scala.Predef.String = _root_.scalapb.TextFormat.printToUnicodeString(this)
-    def companion = com.intel.analytics.zoo.serving.grpc.MetricsReply
-    // @@protoc_insertion_point(GeneratedMessage[grpc.MetricsReply])
+    def companion = com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply
+    // @@protoc_insertion_point(GeneratedMessage[grpc.protos.MetricsReply])
 }
 
-object MetricsReply extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.MetricsReply] {
-  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.MetricsReply] = this
-  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.MetricsReply = {
-    val __metrics: _root_.scala.collection.immutable.VectorBuilder[com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric] = new _root_.scala.collection.immutable.VectorBuilder[com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric]
+object MetricsReply extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply] {
+  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply] = this
+  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply = {
+    val __metrics: _root_.scala.collection.immutable.VectorBuilder[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric] = new _root_.scala.collection.immutable.VectorBuilder[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric]
     var `_unknownFields__`: _root_.scalapb.UnknownFieldSet.Builder = null
     var _done__ = false
     while (!_done__) {
@@ -73,7 +73,7 @@ object MetricsReply extends scalapb.GeneratedMessageCompanion[com.intel.analytic
       _tag__ match {
         case 0 => _done__ = true
         case 10 =>
-          __metrics += _root_.scalapb.LiteParser.readMessage[com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric](_input__)
+          __metrics += _root_.scalapb.LiteParser.readMessage[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric](_input__)
         case tag =>
           if (_unknownFields__ == null) {
             _unknownFields__ = new _root_.scalapb.UnknownFieldSet.Builder()
@@ -81,16 +81,16 @@ object MetricsReply extends scalapb.GeneratedMessageCompanion[com.intel.analytic
           _unknownFields__.parseField(tag, _input__)
       }
     }
-    com.intel.analytics.zoo.serving.grpc.MetricsReply(
+    com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply(
         metrics = __metrics.result(),
         unknownFields = if (_unknownFields__ == null) _root_.scalapb.UnknownFieldSet.empty else _unknownFields__.result()
     )
   }
-  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.MetricsReply] = _root_.scalapb.descriptors.Reads{
+  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply] = _root_.scalapb.descriptors.Reads{
     case _root_.scalapb.descriptors.PMessage(__fieldsMap) =>
       _root_.scala.Predef.require(__fieldsMap.keys.forall(_.containingMessage eq scalaDescriptor), "FieldDescriptor does not match message type.")
-      com.intel.analytics.zoo.serving.grpc.MetricsReply(
-        metrics = __fieldsMap.get(scalaDescriptor.findFieldByNumber(1).get).map(_.as[_root_.scala.Seq[com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric]]).getOrElse(_root_.scala.Seq.empty)
+      com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply(
+        metrics = __fieldsMap.get(scalaDescriptor.findFieldByNumber(1).get).map(_.as[_root_.scala.Seq[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric]]).getOrElse(_root_.scala.Seq.empty)
       )
     case _ => throw new RuntimeException("Expected PMessage")
   }
@@ -99,16 +99,16 @@ object MetricsReply extends scalapb.GeneratedMessageCompanion[com.intel.analytic
   def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[_] = {
     var __out: _root_.scalapb.GeneratedMessageCompanion[_] = null
     (__number: @_root_.scala.unchecked) match {
-      case 1 => __out = com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric
+      case 1 => __out = com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric
     }
     __out
   }
   lazy val nestedMessagesCompanions: Seq[_root_.scalapb.GeneratedMessageCompanion[_ <: _root_.scalapb.GeneratedMessage]] =
     Seq[_root_.scalapb.GeneratedMessageCompanion[_ <: _root_.scalapb.GeneratedMessage]](
-      _root_.com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric
+      _root_.com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric
     )
   def enumCompanionForFieldNumber(__fieldNumber: _root_.scala.Int): _root_.scalapb.GeneratedEnumCompanion[_] = throw new MatchError(__fieldNumber)
-  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.MetricsReply(
+  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply(
     metrics = _root_.scala.Seq.empty
   )
   @SerialVersionUID(0L)
@@ -405,13 +405,13 @@ object MetricsReply extends scalapb.GeneratedMessageCompanion[com.intel.analytic
         }
       }
       def toProtoString: _root_.scala.Predef.String = _root_.scalapb.TextFormat.printToUnicodeString(this)
-      def companion = com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric
-      // @@protoc_insertion_point(GeneratedMessage[grpc.MetricsReply.Metric])
+      def companion = com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric
+      // @@protoc_insertion_point(GeneratedMessage[grpc.protos.MetricsReply.Metric])
   }
   
-  object Metric extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric] {
-    implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric] = this
-    def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric = {
+  object Metric extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric] {
+    implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric] = this
+    def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric = {
       var __name: _root_.scala.Predef.String = ""
       var __count: _root_.scala.Long = 0L
       var __meanRate: _root_.scala.Double = 0.0
@@ -464,7 +464,7 @@ object MetricsReply extends scalapb.GeneratedMessageCompanion[com.intel.analytic
             _unknownFields__.parseField(tag, _input__)
         }
       }
-      com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric(
+      com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric(
           name = __name,
           count = __count,
           meanRate = __meanRate,
@@ -481,10 +481,10 @@ object MetricsReply extends scalapb.GeneratedMessageCompanion[com.intel.analytic
           unknownFields = if (_unknownFields__ == null) _root_.scalapb.UnknownFieldSet.empty else _unknownFields__.result()
       )
     }
-    implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric] = _root_.scalapb.descriptors.Reads{
+    implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric] = _root_.scalapb.descriptors.Reads{
       case _root_.scalapb.descriptors.PMessage(__fieldsMap) =>
         _root_.scala.Predef.require(__fieldsMap.keys.forall(_.containingMessage eq scalaDescriptor), "FieldDescriptor does not match message type.")
-        com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric(
+        com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric(
           name = __fieldsMap.get(scalaDescriptor.findFieldByNumber(1).get).map(_.as[_root_.scala.Predef.String]).getOrElse(""),
           count = __fieldsMap.get(scalaDescriptor.findFieldByNumber(2).get).map(_.as[_root_.scala.Long]).getOrElse(0L),
           meanRate = __fieldsMap.get(scalaDescriptor.findFieldByNumber(3).get).map(_.as[_root_.scala.Double]).getOrElse(0.0),
@@ -501,12 +501,12 @@ object MetricsReply extends scalapb.GeneratedMessageCompanion[com.intel.analytic
         )
       case _ => throw new RuntimeException("Expected PMessage")
     }
-    def javaDescriptor: _root_.com.google.protobuf.Descriptors.Descriptor = com.intel.analytics.zoo.serving.grpc.MetricsReply.javaDescriptor.getNestedTypes().get(0)
-    def scalaDescriptor: _root_.scalapb.descriptors.Descriptor = com.intel.analytics.zoo.serving.grpc.MetricsReply.scalaDescriptor.nestedMessages(0)
+    def javaDescriptor: _root_.com.google.protobuf.Descriptors.Descriptor = com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.javaDescriptor.getNestedTypes().get(0)
+    def scalaDescriptor: _root_.scalapb.descriptors.Descriptor = com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.scalaDescriptor.nestedMessages(0)
     def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[_] = throw new MatchError(__number)
     lazy val nestedMessagesCompanions: Seq[_root_.scalapb.GeneratedMessageCompanion[_ <: _root_.scalapb.GeneratedMessage]] = Seq.empty
     def enumCompanionForFieldNumber(__fieldNumber: _root_.scala.Int): _root_.scalapb.GeneratedEnumCompanion[_] = throw new MatchError(__fieldNumber)
-    lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric(
+    lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric(
       name = "",
       count = 0L,
       meanRate = 0.0,
@@ -521,7 +521,7 @@ object MetricsReply extends scalapb.GeneratedMessageCompanion[com.intel.analytic
       `99ThPercentile` = 0.0,
       `999ThPercentile` = 0.0
     )
-    implicit class MetricLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric](_l) {
+    implicit class MetricLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric](_l) {
       def name: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.name)((c_, f_) => c_.copy(name = f_))
       def count: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Long] = field(_.count)((c_, f_) => c_.copy(count = f_))
       def meanRate: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Double] = field(_.meanRate)((c_, f_) => c_.copy(meanRate = f_))
@@ -563,7 +563,7 @@ object MetricsReply extends scalapb.GeneratedMessageCompanion[com.intel.analytic
       `98ThPercentile`: _root_.scala.Double,
       `99ThPercentile`: _root_.scala.Double,
       `999ThPercentile`: _root_.scala.Double
-    ): _root_.com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric = _root_.com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric(
+    ): _root_.com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric = _root_.com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric(
       name,
       count,
       meanRate,
@@ -578,17 +578,17 @@ object MetricsReply extends scalapb.GeneratedMessageCompanion[com.intel.analytic
       `99ThPercentile`,
       `999ThPercentile`
     )
-    // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.MetricsReply.Metric])
+    // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.protos.MetricsReply.Metric])
   }
   
-  implicit class MetricsReplyLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.MetricsReply]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.MetricsReply](_l) {
-    def metrics: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Seq[com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric]] = field(_.metrics)((c_, f_) => c_.copy(metrics = f_))
+  implicit class MetricsReplyLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply](_l) {
+    def metrics: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Seq[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric]] = field(_.metrics)((c_, f_) => c_.copy(metrics = f_))
   }
   final val METRICS_FIELD_NUMBER = 1
   def of(
-    metrics: _root_.scala.Seq[com.intel.analytics.zoo.serving.grpc.MetricsReply.Metric]
-  ): _root_.com.intel.analytics.zoo.serving.grpc.MetricsReply = _root_.com.intel.analytics.zoo.serving.grpc.MetricsReply(
+    metrics: _root_.scala.Seq[com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply.Metric]
+  ): _root_.com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply = _root_.com.intel.analytics.zoo.serving.grpc.service.generated.MetricsReply(
     metrics
   )
-  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.MetricsReply])
+  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.protos.MetricsReply])
 }

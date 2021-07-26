@@ -23,7 +23,7 @@ import com.intel.analytics.zoo.serving.utils.Conventions
 import com.typesafe.config.ConfigFactory
 import com.codahale.metrics.{MetricRegistry, Timer}
 import com.intel.analytics.zoo.serving.http.{ClusterServingMetaData, ClusterServingServable, InferenceModelMetaData, InferenceModelServable, Instances, JsonUtil, Predictions, ServableLoadException, ServableManager, Supportive}
-
+import com.intel.analytics.zoo.serving.grpc.service.generated._
 import scala.collection.mutable
 import org.slf4j.LoggerFactory
 

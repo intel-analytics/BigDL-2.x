@@ -3,7 +3,7 @@
 //
 // Protofile syntax: PROTO3
 
-package com.intel.analytics.zoo.serving.grpc
+package com.intel.analytics.zoo.serving.grpc.service.generated
 
 @SerialVersionUID(0L)
 final case class Empty(
@@ -32,13 +32,13 @@ final case class Empty(
     def getFieldByNumber(__fieldNumber: _root_.scala.Int): _root_.scala.Any = throw new MatchError(__fieldNumber)
     def getField(__field: _root_.scalapb.descriptors.FieldDescriptor): _root_.scalapb.descriptors.PValue = throw new MatchError(__field)
     def toProtoString: _root_.scala.Predef.String = _root_.scalapb.TextFormat.printToUnicodeString(this)
-    def companion = com.intel.analytics.zoo.serving.grpc.Empty
-    // @@protoc_insertion_point(GeneratedMessage[grpc.Empty])
+    def companion = com.intel.analytics.zoo.serving.grpc.service.generated.Empty
+    // @@protoc_insertion_point(GeneratedMessage[grpc.protos.Empty])
 }
 
-object Empty extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.Empty] {
-  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.Empty] = this
-  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.Empty = {
+object Empty extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.Empty] {
+  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.Empty] = this
+  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.service.generated.Empty = {
     var `_unknownFields__`: _root_.scalapb.UnknownFieldSet.Builder = null
     var _done__ = false
     while (!_done__) {
@@ -52,14 +52,14 @@ object Empty extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.s
           _unknownFields__.parseField(tag, _input__)
       }
     }
-    com.intel.analytics.zoo.serving.grpc.Empty(
+    com.intel.analytics.zoo.serving.grpc.service.generated.Empty(
         unknownFields = if (_unknownFields__ == null) _root_.scalapb.UnknownFieldSet.empty else _unknownFields__.result()
     )
   }
-  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.Empty] = _root_.scalapb.descriptors.Reads{
+  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.service.generated.Empty] = _root_.scalapb.descriptors.Reads{
     case _root_.scalapb.descriptors.PMessage(__fieldsMap) =>
       _root_.scala.Predef.require(__fieldsMap.keys.forall(_.containingMessage eq scalaDescriptor), "FieldDescriptor does not match message type.")
-      com.intel.analytics.zoo.serving.grpc.Empty(
+      com.intel.analytics.zoo.serving.grpc.service.generated.Empty(
       )
     case _ => throw new RuntimeException("Expected PMessage")
   }
@@ -68,12 +68,12 @@ object Empty extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.s
   def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[_] = throw new MatchError(__number)
   lazy val nestedMessagesCompanions: Seq[_root_.scalapb.GeneratedMessageCompanion[_ <: _root_.scalapb.GeneratedMessage]] = Seq.empty
   def enumCompanionForFieldNumber(__fieldNumber: _root_.scala.Int): _root_.scalapb.GeneratedEnumCompanion[_] = throw new MatchError(__fieldNumber)
-  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.Empty(
+  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.service.generated.Empty(
   )
-  implicit class EmptyLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.Empty]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.Empty](_l) {
+  implicit class EmptyLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.Empty]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.Empty](_l) {
   }
   def of(
-  ): _root_.com.intel.analytics.zoo.serving.grpc.Empty = _root_.com.intel.analytics.zoo.serving.grpc.Empty(
+  ): _root_.com.intel.analytics.zoo.serving.grpc.service.generated.Empty = _root_.com.intel.analytics.zoo.serving.grpc.service.generated.Empty(
   )
-  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.Empty])
+  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.protos.Empty])
 }

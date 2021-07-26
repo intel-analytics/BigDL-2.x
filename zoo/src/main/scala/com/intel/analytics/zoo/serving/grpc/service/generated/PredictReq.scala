@@ -3,7 +3,7 @@
 //
 // Protofile syntax: PROTO3
 
-package com.intel.analytics.zoo.serving.grpc
+package com.intel.analytics.zoo.serving.grpc.service.generated
 
 @SerialVersionUID(0L)
 final case class PredictReq(
@@ -99,13 +99,13 @@ final case class PredictReq(
       }
     }
     def toProtoString: _root_.scala.Predef.String = _root_.scalapb.TextFormat.printToUnicodeString(this)
-    def companion = com.intel.analytics.zoo.serving.grpc.PredictReq
-    // @@protoc_insertion_point(GeneratedMessage[grpc.PredictReq])
+    def companion = com.intel.analytics.zoo.serving.grpc.service.generated.PredictReq
+    // @@protoc_insertion_point(GeneratedMessage[grpc.protos.PredictReq])
 }
 
-object PredictReq extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.PredictReq] {
-  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.PredictReq] = this
-  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.PredictReq = {
+object PredictReq extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.PredictReq] {
+  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.PredictReq] = this
+  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.service.generated.PredictReq = {
     var __modelName: _root_.scala.Predef.String = ""
     var __modelVersion: _root_.scala.Predef.String = ""
     var __input: _root_.scala.Predef.String = ""
@@ -128,17 +128,17 @@ object PredictReq extends scalapb.GeneratedMessageCompanion[com.intel.analytics.
           _unknownFields__.parseField(tag, _input__)
       }
     }
-    com.intel.analytics.zoo.serving.grpc.PredictReq(
+    com.intel.analytics.zoo.serving.grpc.service.generated.PredictReq(
         modelName = __modelName,
         modelVersion = __modelVersion,
         input = __input,
         unknownFields = if (_unknownFields__ == null) _root_.scalapb.UnknownFieldSet.empty else _unknownFields__.result()
     )
   }
-  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.PredictReq] = _root_.scalapb.descriptors.Reads{
+  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.service.generated.PredictReq] = _root_.scalapb.descriptors.Reads{
     case _root_.scalapb.descriptors.PMessage(__fieldsMap) =>
       _root_.scala.Predef.require(__fieldsMap.keys.forall(_.containingMessage eq scalaDescriptor), "FieldDescriptor does not match message type.")
-      com.intel.analytics.zoo.serving.grpc.PredictReq(
+      com.intel.analytics.zoo.serving.grpc.service.generated.PredictReq(
         modelName = __fieldsMap.get(scalaDescriptor.findFieldByNumber(1).get).map(_.as[_root_.scala.Predef.String]).getOrElse(""),
         modelVersion = __fieldsMap.get(scalaDescriptor.findFieldByNumber(2).get).map(_.as[_root_.scala.Predef.String]).getOrElse(""),
         input = __fieldsMap.get(scalaDescriptor.findFieldByNumber(3).get).map(_.as[_root_.scala.Predef.String]).getOrElse("")
@@ -150,12 +150,12 @@ object PredictReq extends scalapb.GeneratedMessageCompanion[com.intel.analytics.
   def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[_] = throw new MatchError(__number)
   lazy val nestedMessagesCompanions: Seq[_root_.scalapb.GeneratedMessageCompanion[_ <: _root_.scalapb.GeneratedMessage]] = Seq.empty
   def enumCompanionForFieldNumber(__fieldNumber: _root_.scala.Int): _root_.scalapb.GeneratedEnumCompanion[_] = throw new MatchError(__fieldNumber)
-  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.PredictReq(
+  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.service.generated.PredictReq(
     modelName = "",
     modelVersion = "",
     input = ""
   )
-  implicit class PredictReqLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.PredictReq]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.PredictReq](_l) {
+  implicit class PredictReqLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.PredictReq]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.PredictReq](_l) {
     def modelName: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.modelName)((c_, f_) => c_.copy(modelName = f_))
     def modelVersion: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.modelVersion)((c_, f_) => c_.copy(modelVersion = f_))
     def input: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.input)((c_, f_) => c_.copy(input = f_))
@@ -167,10 +167,10 @@ object PredictReq extends scalapb.GeneratedMessageCompanion[com.intel.analytics.
     modelName: _root_.scala.Predef.String,
     modelVersion: _root_.scala.Predef.String,
     input: _root_.scala.Predef.String
-  ): _root_.com.intel.analytics.zoo.serving.grpc.PredictReq = _root_.com.intel.analytics.zoo.serving.grpc.PredictReq(
+  ): _root_.com.intel.analytics.zoo.serving.grpc.service.generated.PredictReq = _root_.com.intel.analytics.zoo.serving.grpc.service.generated.PredictReq(
     modelName,
     modelVersion,
     input
   )
-  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.PredictReq])
+  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.protos.PredictReq])
 }

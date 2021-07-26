@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option java_package = "com.intel.analytics.zoo.serving.grpc";
+option java_package = "com.intel.analytics.zoo.serving.grpc.service.generated";
 
-package grpc;
+package grpc.protos;
 
 
 service FrontEndGRPCService {

@@ -3,7 +3,7 @@
 //
 // Protofile syntax: PROTO3
 
-package com.intel.analytics.zoo.serving.grpc
+package com.intel.analytics.zoo.serving.grpc.service.generated
 
 /** @param inputCompileType
   *  direct or instance
@@ -202,13 +202,13 @@ final case class InferenceModelGRPCMetaData(
       }
     }
     def toProtoString: _root_.scala.Predef.String = _root_.scalapb.TextFormat.printToUnicodeString(this)
-    def companion = com.intel.analytics.zoo.serving.grpc.InferenceModelGRPCMetaData
-    // @@protoc_insertion_point(GeneratedMessage[grpc.InferenceModelGRPCMetaData])
+    def companion = com.intel.analytics.zoo.serving.grpc.service.generated.InferenceModelGRPCMetaData
+    // @@protoc_insertion_point(GeneratedMessage[grpc.protos.InferenceModelGRPCMetaData])
 }
 
-object InferenceModelGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.InferenceModelGRPCMetaData] {
-  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.InferenceModelGRPCMetaData] = this
-  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.InferenceModelGRPCMetaData = {
+object InferenceModelGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.InferenceModelGRPCMetaData] {
+  implicit def messageCompanion: scalapb.GeneratedMessageCompanion[com.intel.analytics.zoo.serving.grpc.service.generated.InferenceModelGRPCMetaData] = this
+  def parseFrom(`_input__`: _root_.com.google.protobuf.CodedInputStream): com.intel.analytics.zoo.serving.grpc.service.generated.InferenceModelGRPCMetaData = {
     var __modelName: _root_.scala.Predef.String = ""
     var __modelVersion: _root_.scala.Predef.String = ""
     var __modelPath: _root_.scala.Predef.String = ""
@@ -246,7 +246,7 @@ object InferenceModelGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.
           _unknownFields__.parseField(tag, _input__)
       }
     }
-    com.intel.analytics.zoo.serving.grpc.InferenceModelGRPCMetaData(
+    com.intel.analytics.zoo.serving.grpc.service.generated.InferenceModelGRPCMetaData(
         modelName = __modelName,
         modelVersion = __modelVersion,
         modelPath = __modelPath,
@@ -258,10 +258,10 @@ object InferenceModelGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.
         unknownFields = if (_unknownFields__ == null) _root_.scalapb.UnknownFieldSet.empty else _unknownFields__.result()
     )
   }
-  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.InferenceModelGRPCMetaData] = _root_.scalapb.descriptors.Reads{
+  implicit def messageReads: _root_.scalapb.descriptors.Reads[com.intel.analytics.zoo.serving.grpc.service.generated.InferenceModelGRPCMetaData] = _root_.scalapb.descriptors.Reads{
     case _root_.scalapb.descriptors.PMessage(__fieldsMap) =>
       _root_.scala.Predef.require(__fieldsMap.keys.forall(_.containingMessage eq scalaDescriptor), "FieldDescriptor does not match message type.")
-      com.intel.analytics.zoo.serving.grpc.InferenceModelGRPCMetaData(
+      com.intel.analytics.zoo.serving.grpc.service.generated.InferenceModelGRPCMetaData(
         modelName = __fieldsMap.get(scalaDescriptor.findFieldByNumber(1).get).map(_.as[_root_.scala.Predef.String]).getOrElse(""),
         modelVersion = __fieldsMap.get(scalaDescriptor.findFieldByNumber(2).get).map(_.as[_root_.scala.Predef.String]).getOrElse(""),
         modelPath = __fieldsMap.get(scalaDescriptor.findFieldByNumber(3).get).map(_.as[_root_.scala.Predef.String]).getOrElse(""),
@@ -278,7 +278,7 @@ object InferenceModelGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.
   def messageCompanionForFieldNumber(__number: _root_.scala.Int): _root_.scalapb.GeneratedMessageCompanion[_] = throw new MatchError(__number)
   lazy val nestedMessagesCompanions: Seq[_root_.scalapb.GeneratedMessageCompanion[_ <: _root_.scalapb.GeneratedMessage]] = Seq.empty
   def enumCompanionForFieldNumber(__fieldNumber: _root_.scala.Int): _root_.scalapb.GeneratedEnumCompanion[_] = throw new MatchError(__fieldNumber)
-  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.InferenceModelGRPCMetaData(
+  lazy val defaultInstance = com.intel.analytics.zoo.serving.grpc.service.generated.InferenceModelGRPCMetaData(
     modelName = "",
     modelVersion = "",
     modelPath = "",
@@ -288,7 +288,7 @@ object InferenceModelGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.
     inputCompileType = "",
     features = ""
   )
-  implicit class InferenceModelGRPCMetaDataLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.InferenceModelGRPCMetaData]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.InferenceModelGRPCMetaData](_l) {
+  implicit class InferenceModelGRPCMetaDataLens[UpperPB](_l: _root_.scalapb.lenses.Lens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.InferenceModelGRPCMetaData]) extends _root_.scalapb.lenses.ObjectLens[UpperPB, com.intel.analytics.zoo.serving.grpc.service.generated.InferenceModelGRPCMetaData](_l) {
     def modelName: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.modelName)((c_, f_) => c_.copy(modelName = f_))
     def modelVersion: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.modelVersion)((c_, f_) => c_.copy(modelVersion = f_))
     def modelPath: _root_.scalapb.lenses.Lens[UpperPB, _root_.scala.Predef.String] = field(_.modelPath)((c_, f_) => c_.copy(modelPath = f_))
@@ -315,7 +315,7 @@ object InferenceModelGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.
     modelConCurrentNum: _root_.scala.Int,
     inputCompileType: _root_.scala.Predef.String,
     features: _root_.scala.Predef.String
-  ): _root_.com.intel.analytics.zoo.serving.grpc.InferenceModelGRPCMetaData = _root_.com.intel.analytics.zoo.serving.grpc.InferenceModelGRPCMetaData(
+  ): _root_.com.intel.analytics.zoo.serving.grpc.service.generated.InferenceModelGRPCMetaData = _root_.com.intel.analytics.zoo.serving.grpc.service.generated.InferenceModelGRPCMetaData(
     modelName,
     modelVersion,
     modelPath,
@@ -325,5 +325,5 @@ object InferenceModelGRPCMetaData extends scalapb.GeneratedMessageCompanion[com.
     inputCompileType,
     features
   )
-  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.InferenceModelGRPCMetaData])
+  // @@protoc_insertion_point(GeneratedMessageCompanion[grpc.protos.InferenceModelGRPCMetaData])
 }
