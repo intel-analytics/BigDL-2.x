@@ -66,9 +66,9 @@ class PublicDataset:
         return self
 
     def preprocess_network_traffic(self):
-        """ 
+        """
         preprocess_network_traffic will match the Starttime and endtime(avgrate, total)
-        of data accordingto the regularity, and generate a csv file, the file name 
+        of data accordingto the regularity, and generate a csv file, the file name
         is network_traffic_data.csv.
         """
         _is_first_columns = True
@@ -112,7 +112,7 @@ def download(url, path, chunk_size):
     """
     req = requests.get(url, stream=True)
     file_size, content_size = 0, int(req.headers['content-length'])
-    assert req.status_code==200, "download failure, please check the network."
+    assert req.status_code == 200, "download failure, please check the network."
     file_name = url.split('/')[-1].partition('.')[0]
     with open(os.path.join(path, file_name), 'wb') as f:
         for chunk in req.iter_content(1024 * chunk_size):
