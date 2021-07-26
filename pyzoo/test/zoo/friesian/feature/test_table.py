@@ -868,7 +868,7 @@ class TestTable(TestCase):
         with self.assertRaises(Exception) as context:
             feature_tbl.target_encode("col_4", "target", kfold=2, fold_col="col_3")
         self.assertTrue("fold_col should be integer type" in str(context.exception))
-        
+
         target_tbl1, target_list1 = feature_tbl.target_encode("col_4", "target", kfold=1, smooth=0)
         assert len(target_list1) == 1, "len(target_list1) = len(cat_cols) of target_encode"
         target_code1 = target_list1[0]
@@ -908,7 +908,7 @@ class TestTable(TestCase):
                     "target_mean"
 
         target_tbl3, target_list3 = feature_tbl.target_encode([["col_4", "col_5"]], "target",
-            kfold=2, drop_cat=False)
+                                                              kfold=2, drop_cat=False)
         assert len(target_tbl3.columns) == len(feature_tbl.columns) + 1, \
             "target_tbl3 should have one more column col_4_col_5_te_target"
 
@@ -942,8 +942,10 @@ class TestTable(TestCase):
             "the row with col_3 = 8.0 and col_4 = 'd' has col_5 = 'cc', " \
             "so it should be encoded with col_5_te_col_1 = 3 in target_tbl1"
 
-        target_tbl2, target_list2 = feature_tbl.target_encode(["col_4", "col_5"], ["col_3", "target"],
-                                                           kfold=2)
+        target_tbl2, target_list2 = feature_tbl.target_encode(
+            ["col_4", "col_5"],
+            ["col_3", "target"],
+            kfold=2)
         target_tbl3 = feature_tbl.encode_target(target_list2, target_cols="target", drop_cat=False)
         assert "col_4" in target_tbl3.df.columns, \
             "col_4 should exist in target_tbl2 since drop_cat is False"

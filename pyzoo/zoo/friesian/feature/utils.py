@@ -177,7 +177,7 @@ def encode_target_(df, targets, target_cols=None, drop_cat=True, drop_fold=True,
                 result_df = result_df.drop(target_code.cat_col)
             else:
                 result_df = result_df.drop(*target_code.cat_col)
-    
+
     if drop_fold:
         if fold_col is not None:
             result_df = result_df.drop(fold_col)

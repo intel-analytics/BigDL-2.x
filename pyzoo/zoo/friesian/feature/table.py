@@ -1308,14 +1308,14 @@ class FeatureTable(Table):
                 for target_col, out_col in zip(target_cols, out_col_list)
             }
             return TargetCode(fold_df, cat_col, out_target_mean_dict), \
-                    TargetCode(all_df, cat_col, out_target_mean_dict)
+                   TargetCode(all_df, cat_col, out_target_mean_dict)
 
         targets = list(map(gen_target_code, zip(cat_cols, out_cols)))
         fold_targets = [t[0] for t in targets]
         all_targets = [t[1] for t in targets]
 
         result_df = encode_target_(result_df, fold_targets, drop_cat=drop_cat,
-                drop_fold=drop_fold, fold_col=fold_col)
+                                   drop_fold=drop_fold, fold_col=fold_col)
 
         return FeatureTable(result_df), all_targets
 
