@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers.utils
+package com.intel.analytics.bigdl.dllib.zooKeras.layers.utils
 
-import com.intel.analytics.bigdl.nn.{Graph, MklInt8Convertible}
-import com.intel.analytics.bigdl.nn.Graph.ModuleNode
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
-import com.intel.analytics.bigdl.optim.SGD
-import com.intel.analytics.bigdl.utils._
-import com.intel.analytics.zoo.pipeline.api.keras.optimizers.{Adam, AdamWeightDecay}
+import com.intel.analytics.bigdl.dllib.nn.{Graph, MklInt8Convertible}
+import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.keras.KerasLayer
+import com.intel.analytics.bigdl.dllib.optim.SGD
+import com.intel.analytics.bigdl.common.utils._
+import com.intel.analytics.bigdl.dllib.zooKeras.optimizers.{Adam, AdamWeightDecay}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

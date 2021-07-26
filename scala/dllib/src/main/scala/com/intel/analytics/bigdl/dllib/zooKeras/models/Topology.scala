@@ -14,42 +14,43 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.models
+package com.intel.analytics.bigdl.dllib.zooKeras.models
 
 import java.io.{File, FilenameFilter}
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
 import com.intel.analytics.bigdl.mkl.MKL
-import com.intel.analytics.bigdl.dataset.{MiniBatch, _}
+import com.intel.analytics.bigdl.dllib.feature.dataset.{MiniBatch, _}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
-import com.intel.analytics.bigdl.{DataSet, optim, _}
-import com.intel.analytics.bigdl.nn.Graph._
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.{KerasLayer, KerasLayerSerializable}
-import com.intel.analytics.bigdl.nn.mkldnn.MklDnnModule
-import com.intel.analytics.bigdl.nn.{Container, Graph, Module, StaticGraph, Sequential => TSequential}
-import com.intel.analytics.bigdl.optim.DistriOptimizer.{Cache, CacheV1}
-import com.intel.analytics.bigdl.optim.DistriOptimizerV2.{Cache => CacheV2}
-import com.intel.analytics.bigdl.optim._
-import com.intel.analytics.bigdl.parameters.AllReduceParameter
+import com.intel.analytics.bigdl.DataSet
+import com.intel.analytics.bigdl.dllib.{optim, _}
+import com.intel.analytics.bigdl.dllib.nn.Graph._
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.keras.{KerasLayer, KerasLayerSerializable}
+import com.intel.analytics.bigdl.dllib.nn.mkldnn.MklDnnModule
+import com.intel.analytics.bigdl.dllib.nn.{Container, Graph, Module, StaticGraph, Sequential => TSequential}
+import com.intel.analytics.bigdl.dllib.optim.DistriOptimizer.{Cache, CacheV1}
+import com.intel.analytics.bigdl.dllib.optim.DistriOptimizerV2.{Cache => CacheV2}
+import com.intel.analytics.bigdl.dllib.optim._
+import com.intel.analytics.bigdl.dllib.optim.parameters.AllReduceParameter
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils._
-import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
-import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.common.ZooTrigger
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils._
+import com.intel.analytics.bigdl.common.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
+import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.common.ZooTrigger
 import com.intel.analytics.zoo.feature.{DiskFeatureSet, DistributedFeatureSet, FeatureSet}
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.feature.text._
-import com.intel.analytics.zoo.pipeline.api.{Net, Predictable}
-import com.intel.analytics.zoo.pipeline.api.autograd.{Lambda, Variable}
-import com.intel.analytics.zoo.pipeline.api.autograd._
-import com.intel.analytics.zoo.pipeline.api.keras.layers.Input
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils._
-import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, TorchModel}
-import com.intel.analytics.zoo.pipeline.estimator.{AbstractEstimator, ConstantClipping, GradientClipping, L2NormClipping}
+import com.intel.analytics.bigdl.dllib.inference.{Net, Predictable}
+import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{Lambda, Variable}
+import com.intel.analytics.bigdl.dllib.zooKeras.autograd._
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.Input
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils._
+import com.intel.analytics.bigdl.dllib.inference.net.{NetUtils, TorchModel}
+import com.intel.analytics.bigdl.dllib.estimator.{AbstractEstimator, ConstantClipping, GradientClipping, L2NormClipping}
 import com.intel.analytics.zoo.tfpark.{TFTrainingHelper, TFTrainingHelperV2}
 import org.apache.commons.lang.exception.ExceptionUtils
 import org.apache.commons.lang3.SerializationUtils
@@ -639,9 +640,9 @@ class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
 
   KerasLayerRef(this).setOutShape(Shape(_outputs.map{_.element.getOutputShape()}.toList))
 
-  private[zoo] def getInputs(): Seq[ModuleNode[T]] = _inputs
+  private[bigdl]  def getInputs(): Seq[ModuleNode[T]] = _inputs
 
-  private[zoo] def getOutputs(): Seq[ModuleNode[T]] = _outputs
+  private[bigdl]  def getOutputs(): Seq[ModuleNode[T]] = _outputs
 
   override def isKerasStyle(): Boolean = true
 
@@ -698,7 +699,7 @@ class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
 
   override def toKeras(): Model[T] = this
 
-  override private[zoo] def getKerasWeights(): Array[Tensor[Float]] = {
+  override private[bigdl]  def getKerasWeights(): Array[Tensor[Float]] = {
     val weights = new ArrayBuffer[Tensor[Float]]()
     modules(0).asInstanceOf[StaticGraph[T]].modules.foreach(m => {
       val params = m.asInstanceOf[Net].getKerasWeights()
@@ -734,7 +735,7 @@ class Model[T: ClassTag] private (private val _inputs : Seq[ModuleNode[T]],
 
 object Model extends KerasLayerSerializable {
   ModuleSerializer.registerModule(
-    "com.intel.analytics.zoo.pipeline.api.keras.models.Model",
+    "com.intel.analytics.bigdl.dllib.zooKeras.models.Model",
     Model)
 
   /**
@@ -854,7 +855,7 @@ object Model extends KerasLayerSerializable {
 class Sequential[T: ClassTag] private ()
   (implicit ev: TensorNumeric[T]) extends KerasNet[T] {
 
-  private[zoo] var frozen: Boolean = false
+  private[bigdl]  var frozen: Boolean = false
 
   this.labor = doBuild(null)
 
@@ -962,7 +963,7 @@ class Sequential[T: ClassTag] private ()
     graph.summary(lineLength, positions)
   }
 
-  override private[zoo] def getKerasWeights(): Array[Tensor[Float]] = {
+  override private[bigdl]  def getKerasWeights(): Array[Tensor[Float]] = {
     val weights = new ArrayBuffer[Tensor[Float]]()
     modules(0).asInstanceOf[TSequential[T]].modules.foreach(m => {
       val params = m.asInstanceOf[Net].getKerasWeights()
@@ -978,7 +979,7 @@ class Sequential[T: ClassTag] private ()
 
 object Sequential extends KerasLayerSerializable {
   ModuleSerializer.registerModule(
-    "com.intel.analytics.zoo.pipeline.api.keras.models.Sequential",
+    "com.intel.analytics.bigdl.dllib.zooKeras.models.Sequential",
     Sequential)
 
   def apply[@specialized(Float, Double) T: ClassTag]()
@@ -987,7 +988,7 @@ object Sequential extends KerasLayerSerializable {
   }
 }
 
-private[zoo] object InternalOptimizerUtil {
+private[bigdl] object InternalOptimizerUtil {
 
   def setExecutorMklThread(cachedModels: RDD[_]): Unit = {
     cachedModels.mapPartitions{_ =>
@@ -1122,7 +1123,7 @@ private[zoo] object InternalOptimizerUtil {
 
 }
 
-private[zoo] class InternalLocalOptimizer[T: ClassTag] (
+private[bigdl] class InternalLocalOptimizer[T: ClassTag] (
     model: Module[T],
     ds: LocalDataSet[MiniBatch[T]],
     criterion: Criterion[T])
@@ -1142,7 +1143,7 @@ private[zoo] class InternalLocalOptimizer[T: ClassTag] (
   }
 }
 
-private[zoo] class InternalDistriOptimizer[T: ClassTag] (
+private[bigdl] class InternalDistriOptimizer[T: ClassTag] (
     _model: Module[T],
     _dataset: DistributedDataSet[MiniBatch[T]],
     _criterion: Criterion[T])
@@ -1441,7 +1442,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
           }
         } else {
           throw new IllegalArgumentException(
-            s"Excepted com.intel.analytics.zoo.common.ZooTrigger." +
+            s"Excepted com.intel.analytics.bigdl.common.ZooTrigger." +
             s" Please change your trigger to an instance of ZooTrigger.")
         }
       }
@@ -1549,7 +1550,7 @@ private[zoo] class InternalDistriOptimizer[T: ClassTag] (
   }
 }
 
-private[zoo] class InternalDistriOptimizerV2[T: ClassTag] (
+private[bigdl] class InternalDistriOptimizerV2[T: ClassTag] (
     _model: Module[T],
     _dataset: DistributedDataSet[MiniBatch[T]],
     _criterion: Criterion[T])
@@ -1644,7 +1645,7 @@ private[zoo] class InternalDistriOptimizerV2[T: ClassTag] (
           checkPointTrigger.get.asInstanceOf[ZooTrigger].setZooState(state)
         } else {
           throw new IllegalArgumentException(
-            s"Excepted com.intel.analytics.zoo.common.ZooTrigger." +
+            s"Excepted com.intel.analytics.bigdl.common.ZooTrigger." +
             s" Please change your trigger to an instance of ZooTrigger.")
         }
       }

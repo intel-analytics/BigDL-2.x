@@ -32,7 +32,7 @@ import org.apache.spark.rdd.RDD
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-private[zoo] object Utils {
+private[bigdl] object zooUtils {
 
   private val logger = Logger.getLogger(getClass)
 

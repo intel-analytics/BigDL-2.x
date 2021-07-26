@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.objectives
+package com.intel.analytics.bigdl.dllib.zooKeras.objectives
 
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractCriterion
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractCriterion
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag
 
@@ -30,7 +30,7 @@ class CategoricalCrossEntropy[@specialized(Float, Double) T: ClassTag]()
   (implicit ev: TensorNumeric[T]) extends TensorLossFunction[T] {
 
   override val loss: AbstractCriterion[Tensor[T], Tensor[T], T] =
-    com.intel.analytics.bigdl.nn.CategoricalCrossEntropy[T]()
+    com.intel.analytics.bigdl.dllib.nn.CategoricalCrossEntropy[T]()
 
   override def updateOutput(input: Tensor[T], target: Tensor[T]): T = {
     val eps = ev.fromType(1e-8)

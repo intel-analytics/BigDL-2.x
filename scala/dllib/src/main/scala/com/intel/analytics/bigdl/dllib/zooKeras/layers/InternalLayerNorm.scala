@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
+package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 
-import com.intel.analytics.bigdl.nn.abstractnn.TensorModule
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.zoo.common.TensorOperation
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.TensorModule
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.TensorOperation
 
 import scala.reflect.ClassTag
 
-private[zoo] class InternalLayerNorm[T: ClassTag](
+private[bigdl]  class InternalLayerNorm[T: ClassTag](
   val nOutput: Int = 768, val eps: Double = 1e-5)
   (implicit ev: TensorNumeric[T]) extends TensorModule[T]{
   val weight = Tensor.ones[T](nOutput).view(1, nOutput)

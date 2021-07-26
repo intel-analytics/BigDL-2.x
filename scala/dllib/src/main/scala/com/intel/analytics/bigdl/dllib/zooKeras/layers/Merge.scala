@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers
+package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
-import com.intel.analytics.bigdl.nn.Graph.ModuleNode
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
-import com.intel.analytics.bigdl.nn.{CAddTable, CAveTable, CDivTable, CMaxTable, CMinTable, CMulTable, CSubTable, CosineDistance, DotProduct, JoinTable, ParallelTable, Sequential => TSequential}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
-import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{KerasLayerRef, KerasUtils}
+import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.keras.KerasLayer
+import com.intel.analytics.bigdl.dllib.nn.{CAddTable, CAveTable, CDivTable, CMaxTable, CMinTable, CMulTable, CSubTable, CosineDistance, DotProduct, JoinTable, ParallelTable, Sequential => TSequential}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.{MultiShape, Shape}
+import com.intel.analytics.bigdl.dllib.inference.Net
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.{KerasLayerRef, KerasUtils}
 
 import scala.reflect.ClassTag
 
@@ -53,7 +53,7 @@ class Merge[T: ClassTag](
   extends KerasLayer[Tensor[T], Tensor[T], T](Merge.calcBatchInputShape(inputShape, layers))
   with Net {
 
-  override private[zoo] def toKeras2(): String = {
+  override private[bigdl]  def toKeras2(): String = {
     var params = Net.inputShapeToString(inputShape) ++
       Net.param(getName())
     val kerasLayerName = mode match {

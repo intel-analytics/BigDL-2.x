@@ -18,7 +18,7 @@
 //import com.intel.analytics.bigdl.dllib.optim.SGD
 //import com.intel.analytics.bigdl.dllib.optim.SGD.LearningRateSchedule
 //import com.intel.analytics.bigdl.common.utils.Table
-//import com.intel.analytics.zoo.pipeline.api.keras.models.{InternalOptimizerUtil}
+//import com.intel.analytics.bigdl.dllib.zooKeras.models.{InternalOptimizerUtil}
 //
 //object Optim {
 //

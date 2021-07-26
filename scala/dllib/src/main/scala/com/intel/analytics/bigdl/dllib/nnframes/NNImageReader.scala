@@ -16,7 +16,7 @@
 
 package com.intel.analytics.zoo.pipeline.nnframes
 
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.zoo.feature.image.ImageSet
@@ -60,7 +60,7 @@ object NNImageSchema {
       // floats in OpenCV-compatible order: row-wise BGR in most cases
       StructField("data", new ArrayType(FloatType, false), false) :: Nil)
 
-  private[zoo] def imf2Row(imf: ImageFeature): Row = {
+  private[bigdl]  def imf2Row(imf: ImageFeature): Row = {
     val (mode, data) = if (imf.contains(ImageFeature.imageTensor)) {
       val floatData = imf(ImageFeature.imageTensor).asInstanceOf[Tensor[Float]].storage().array()
       val cvType = imf.getChannel() match {
@@ -90,7 +90,7 @@ object NNImageSchema {
     )
   }
 
-  private[zoo] def row2IMF(row: Row): ImageFeature = {
+  private[bigdl]  def row2IMF(row: Row): ImageFeature = {
     val (origin, h, w, c) = (row.getString(0), row.getInt(1), row.getInt(2), row.getInt(3))
     val imf = ImageFeature()
     imf.update(ImageFeature.uri, origin)

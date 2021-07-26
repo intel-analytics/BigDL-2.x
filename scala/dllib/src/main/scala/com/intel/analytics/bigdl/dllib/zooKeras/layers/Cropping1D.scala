@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers
+package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
-import com.intel.analytics.bigdl.nn.keras.{Cropping1D => BigDLCropping1D}
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.zoo.pipeline.api.Net
+import com.intel.analytics.bigdl.dllib.keras.{Cropping1D => BigDLCropping1D}
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.Shape
+import com.intel.analytics.bigdl.dllib.inference.Net
 
 import scala.reflect.ClassTag
 

@@ -31,8 +31,8 @@
 //import com.intel.analytics.bigdl.common.utils.Table
 //import com.intel.analytics.zoo.feature.image.ImageSet
 //import com.intel.analytics.zoo.feature.text.TextSet
-//import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
-//import com.intel.analytics.zoo.pipeline.api.net.TFNet
+//import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.EngineRef
+//import com.intel.analytics.bigdl.dllib.inference.net.TFNet
 //
 //import scala.collection.JavaConverters._
 //import scala.reflect.ClassTag

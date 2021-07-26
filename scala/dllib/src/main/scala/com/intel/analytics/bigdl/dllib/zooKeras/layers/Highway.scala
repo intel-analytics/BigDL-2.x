@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers
+package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
-import com.intel.analytics.bigdl.nn.keras.{KerasLayer, Highway => BigDLHighway}
-import com.intel.analytics.bigdl.optim.Regularizer
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import com.intel.analytics.bigdl.dllib.keras.{KerasLayer, Highway => BigDLHighway}
+import com.intel.analytics.bigdl.dllib.optim.Regularizer
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.Shape
+import com.intel.analytics.bigdl.dllib.inference.Net
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag
 

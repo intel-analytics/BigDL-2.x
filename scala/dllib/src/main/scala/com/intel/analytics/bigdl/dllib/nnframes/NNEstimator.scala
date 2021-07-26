@@ -20,20 +20,20 @@ import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.dataset.{SampleToMiniBatch, _}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
-import com.intel.analytics.bigdl.optim._
+import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.python.api.EvaluatedResult
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.tensor.{Tensor, DoubleType => TensorDouble, FloatType => TensorFloat}
-import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
-import com.intel.analytics.bigdl.utils.{File, T}
-import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.dllib.tensor.{Tensor, DoubleType => TensorDouble, FloatType => TensorFloat}
+import com.intel.analytics.bigdl.common.utils.serializer.ModuleLoader
+import com.intel.analytics.bigdl.common.utils.{File, T}
+import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
 import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.feature.common.{Preprocessing, _}
 import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType}
-import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
-import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
+import com.intel.analytics.bigdl.dllib.inference.Net
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.EngineRef
+import com.intel.analytics.bigdl.dllib.zooKeras.models.InternalDistriOptimizer
 import org.apache.hadoop.fs.Path
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
@@ -199,7 +199,7 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
  * @param criterion BigDL criterion
  * @tparam T data type of BigDL Model
  */
-class NNEstimator[T: ClassTag] private[zoo](
+class NNEstimator[T: ClassTag] private[bigdl] (
     @transient val model: Module[T],
     val criterion: Criterion[T],
     override val uid: String = Identifiable.randomUID("nnestimator")
@@ -676,7 +676,7 @@ object NNEstimator {
  *
  * @param model trained BigDL models to use in prediction.
  */
-class NNModel[T: ClassTag] private[zoo](
+class NNModel[T: ClassTag] private[bigdl] (
     @transient val model: Module[T],
     override val uid: String = "DLModel")(implicit ev: TensorNumeric[T])
   extends DLTransformerBase[NNModel[T]] with NNParams[T]

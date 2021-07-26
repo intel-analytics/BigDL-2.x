@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.nn.tf
+package com.intel.analytics.bigdl.dllib.zooKeras.autograd
+import com.intel.analytics.bigdl.dllib.nn.tf.WithoutInput
 
 trait InternalWithoutInput extends WithoutInput

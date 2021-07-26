@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
+package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity, TensorModule}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleSerializable}
-import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity, TensorModule}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.common.utils.{T, Table}
+import com.intel.analytics.bigdl.common.utils.serializer.{DeserializeContext, ModuleSerializable}
+import com.intel.analytics.bigdl.common.utils.serializer.converters.DataConverter
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -46,7 +46,7 @@ import scala.reflect.ClassTag
  * @tparam T data type, which can be [[Double]] or [[Float]]
  */
 
-private[zoo] class InternalTimeDistributed[T: ClassTag](
+private[bigdl]  class InternalTimeDistributed[T: ClassTag](
     val layer: AbstractModule[Activity, Tensor[T], T],
     maskZero: Boolean = false)
   (implicit ev: TensorNumeric[T]) extends AbstractModule[Activity, Tensor[T], T] {
