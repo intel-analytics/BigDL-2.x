@@ -168,7 +168,6 @@ object FrontEndGRPC extends Supportive{
 
 
   class FrontEndGRPCServiceImpl(args: FrontEndAppArguments) extends FrontEndGRPCService {
-    val logger = LoggerFactory.getLogger(getClass)
 
     override def ping(in: Empty): Future[StringReply] = {
       timing("ping")(overallRequestTimer) {
