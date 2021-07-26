@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import tempfile
 import os.path
 import pytest
 from unittest import TestCase
@@ -23,6 +24,7 @@ import zoo.orca.data
 import zoo.orca.data.pandas
 from zoo.orca import OrcaContext
 from zoo.common.nncontext import *
+from zoo.orca.data.image.imagenet_dataset import write_imagenet, read_imagenet
 
 
 class TestSparkBackend(TestCase):
@@ -200,6 +202,18 @@ class TestSparkBackend(TestCase):
         assert str(df['sale_price'].dtype) == 'int64'
 
         shutil.rmtree(temp)
+
+    def test_write_read_imagenet(self):
+        raw_data = os.path.join(self.resource_path, "")
+        temp_dir = tempfile.mkdtemp()
+        try:
+            write_imagenet(raw_data, temp_dir)
+            data_dir = os.path.join(temp_dir, "train")
+            train_dataset = read_imagenet(data_dir, True)
+            for dt in train_dataset.take(1):
+                print(dt)
+        finally:
+            shutil.rmtree(temp_dir)
 
 
 if __name__ == "__main__":

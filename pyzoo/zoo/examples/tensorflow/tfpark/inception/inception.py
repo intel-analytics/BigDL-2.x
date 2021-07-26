@@ -14,34 +14,246 @@
 # limitations under the License.
 #
 
-from math import ceil
+import os
+import argparse
 from optparse import OptionParser
-from bigdl.optim.optimizer import *
 from zoo.common.nncontext import *
 from zoo.feature.image import *
 from zoo.pipeline.api.keras.metrics import *
 from zoo.pipeline.nnframes import *
 from zoo.tfpark import TFDataset, TFOptimizer
+from zoo.orca import init_orca_context, stop_orca_context
+from zoo.orca.learn.tf.estimator import Estimator
+from zoo.orca.learn.trigger import EveryEpoch, SeveralIteration
+from zoo.orca.data.image.imagenet_dataset import write_imagenet, read_imagenet
 from nets import inception_v1
 import tensorflow as tf
+from math import ceil
 
 slim = tf.contrib.slim
 
+_DEFAULT_IMAGE_SIZE = 224
+_NUM_CHANNELS = 3
+_NUM_CLASSES = 1001
 
-def get_inception_data(url, sc=None, data_type="train"):
-    path = os.path.join(url, data_type)
-    return SeqFileFolder.files_to_image_frame(url=path, sc=sc, class_num=1000)
+_NUM_IMAGES = {
+    'train': 1281167,
+    'validation': 50000,
+}
+
+_NUM_TRAIN_FILES = 1024
+_NUM_VAL_FILES = 128
+_SHUFFLE_BUFFER = 1500
+
+_NUM_EXAMPLES_NAME = "num_examples"
+
+_R_MEAN = 123.68
+_G_MEAN = 116.78
+_B_MEAN = 103.94
+_CHANNEL_MEANS = [_R_MEAN, _G_MEAN, _B_MEAN]
+_RESIZE_MIN = 256
+
+
+def _decode_crop_and_flip(image_buffer, num_channels):
+    min_object_covered = 0.1
+    aspect_ratio_range = [0.75, 1.33]
+    area_range = [0.05, 1.0]
+    max_attempts = 100
+
+    bbox = tf.constant([0.0, 0.0, 1.0, 1.0],
+                       dtype=tf.float32, shape=[1, 1, 4])  # From the entire image
+    sample_distorted_bounding_box = tf.image.sample_distorted_bounding_box(
+        image_size=tf.image.extract_jpeg_shape(image_buffer),
+        bounding_boxes=bbox,
+        min_object_covered=min_object_covered,
+        aspect_ratio_range=aspect_ratio_range,
+        area_range=area_range,
+        max_attempts=max_attempts,
+        use_image_if_no_bounding_boxes=True)
+    bbox_begin, bbox_size, _ = sample_distorted_bounding_box
+
+    # Reassemble the bounding box in the format the crop op requires.
+    offset_y, offset_x, _ = tf.unstack(bbox_begin)
+    target_height, target_width, _ = tf.unstack(bbox_size)
+    crop_window = tf.stack([offset_y, offset_x, target_height, target_width])
+
+    # Use the fused decode and crop op here, which is faster than each in series.
+    cropped = tf.image.decode_and_crop_jpeg(
+        image_buffer, crop_window, channels=num_channels)
+
+    # Flip to add a little more random distortion in.
+    cropped = tf.image.random_flip_left_right(cropped)
+    return cropped
+
+
+def _central_crop(image, crop_height, crop_width):
+    shape = tf.shape(input=image)
+    height, width = shape[0], shape[1]
+
+    amount_to_be_cropped_h = (height - crop_height)
+    crop_top = amount_to_be_cropped_h // 2
+    amount_to_be_cropped_w = (width - crop_width)
+    crop_left = amount_to_be_cropped_w // 2
+    return tf.slice(
+        image, [crop_top, crop_left, 0], [crop_height, crop_width, -1])
+
+
+def _mean_image_subtraction(image, means, num_channels):
+    if image.get_shape().ndims != 3:
+        raise ValueError('Input must be of size [height, width, C>0]')
+
+    if len(means) != num_channels:
+        raise ValueError('len(means) must match the number of channels')
+
+    # We have a 1-D tensor of means; convert to 3-D.
+    # means = tf.expand_dims(tf.expand_dims(means, 0), 0)
+
+    means = tf.broadcast_to(means, tf.shape(image))
+
+    return image - means
+
+
+def _smallest_size_at_least(height, width, resize_min):
+    resize_min = tf.cast(resize_min, tf.float32)
+
+    # Convert to floats to make subsequent calculations go smoothly.
+    height, width = tf.cast(height, tf.float32), tf.cast(width, tf.float32)
+
+    smaller_dim = tf.minimum(height, width)
+    scale_ratio = resize_min / smaller_dim
+
+    # Convert back to ints to make heights and widths that TF ops will accept.
+    new_height = tf.cast(height * scale_ratio, tf.int32)
+    new_width = tf.cast(width * scale_ratio, tf.int32)
+
+    return new_height, new_width
+
+
+def _aspect_preserving_resize(image, resize_min):
+    shape = tf.shape(input=image)
+    height, width = shape[0], shape[1]
+
+    new_height, new_width = _smallest_size_at_least(height, width, resize_min)
+
+    return _resize_image(image, new_height, new_width)
+
+
+def _resize_image(image, height, width):
+    return tf.image.resize(
+        image, [height, width], method=tf.image.ResizeMethod.BILINEAR)
+
+
+def preprocess_image(image_buffer, output_height, output_width,
+                     num_channels, is_training=False):
+    if is_training:
+        # For training, we want to randomize some of the distortions.
+        image = _decode_crop_and_flip(image_buffer, num_channels)
+
+        image = _resize_image(image, output_height, output_width)
+    else:
+        # For validation, we want to decode, resize, then just crop the middle.
+        image = tf.image.decode_jpeg(image_buffer, channels=num_channels)
+        image = _aspect_preserving_resize(image, _RESIZE_MIN)
+        image = _central_crop(image, output_height, output_width)
+
+    image.set_shape([output_height, output_width, num_channels])
+
+    return _mean_image_subtraction(image, _CHANNEL_MEANS, num_channels)
+
+
+def _parse_example_proto(example_serialized):
+    # Dense features in Example proto.
+    feature_map = {
+        'image/encoded': tf.io.FixedLenFeature([], dtype=tf.string,
+                                               default_value=''),
+        'image/class/label': tf.io.FixedLenFeature([], dtype=tf.int64,
+                                                   default_value=-1),
+        'image/class/text': tf.io.FixedLenFeature([], dtype=tf.string,
+                                                  default_value=''),
+    }
+    sparse_float32 = tf.io.VarLenFeature(dtype=tf.float32)
+    # Sparse features in Example proto.
+    feature_map.update(
+        {k: sparse_float32 for k in ['image/object/bbox/xmin',
+                                     'image/object/bbox/ymin',
+                                     'image/object/bbox/xmax',
+                                     'image/object/bbox/ymax']})
+
+    features = tf.io.parse_single_example(serialized=example_serialized, features=feature_map)
+    label = tf.cast(features['image/class/label'], dtype=tf.int32)
+
+    return features['image/encoded'], label
+
+
+def parse_record(raw_record, is_training, dtype):
+    image_buffer, label = _parse_example_proto(raw_record)
+
+    image = preprocess_image(
+        image_buffer=image_buffer,
+        output_height=_DEFAULT_IMAGE_SIZE,
+        output_width=_DEFAULT_IMAGE_SIZE,
+        num_channels=_NUM_CHANNELS,
+        is_training=is_training)
+    image = tf.cast(image, dtype)
+
+    label = tf.cast(tf.reshape(label, shape=[1]), dtype=tf.int32) - 1
+
+    return image, label
+
+
+def process_record_dataset(dataset, is_training, shuffle_buffer,
+                           parse_record_fn, dtype=None):
+    if dtype is None:
+        dtype = tf.float32
+
+    if is_training:
+        dataset = dataset.shuffle(buffer_size=shuffle_buffer)
+
+    dataset = dataset.map(lambda value: parse_record_fn(value, is_training, dtype))
+
+    dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
+    return dataset
+
+
+def input_fn(is_training, data_dir):
+    dataset = read_imagenet(data_dir, is_training)
+
+    return process_record_dataset(
+        dataset=dataset,
+        is_training=is_training,
+        shuffle_buffer=_SHUFFLE_BUFFER,
+        parse_record_fn=parse_record,
+    )
+
+
+def train_data_creator(config):
+    train_dataset = input_fn(is_training=True,
+                             data_dir=config["data_dir"])
+
+    return train_dataset
+
+
+def val_data_creator(config):
+    val_dataset = input_fn(is_training=False,
+                           data_dir=config["data_dir"])
+
+    return val_dataset
 
 
 def config_option_parser():
     parser = OptionParser()
     parser.add_option("-f", "--folder", type=str, dest="folder", default="",
-                      help="url of hdf+s folder store the hadoop sequence files")
+                      help="raw ImageNet data, it includes train and val folder with format of"
+                           "train/n03062245/n03062245_4620.JPEG,"
+                           "validation/ILSVRC2012_val_00000001.JPEG")
+    parser.add_option("--imagenet", type=str, dest="model", default="/tmp/imagenet",
+                      help="generated imagenet TFRecord path")
     parser.add_option("--model", type=str, dest="model", default="",
                       help="model snapshot location")
     parser.add_option("--checkpoint", type=str, dest="checkpoint", default="",
                       help="where to cache the model")
-    parser.add_option("-e", "--maxEpoch", type=int, dest="maxEpoch", default=0,
+    parser.add_option("-e", "--maxEpoch", type=int, dest="maxEpoch", default=1,
                       help="epoch numbers")
     parser.add_option("-i", "--maxIteration", type=int, dest="maxIteration", default=3100,
                       help="iteration numbers")
@@ -65,56 +277,38 @@ def config_option_parser():
                       default=None,
                       help="the version of checkpoint file, should be the $iter_num"
                            + " in model.$iter_num")
+    parser.add_option('--cluster_mode', type=str, default="local",
+                      help='The mode for the Spark cluster.')
+    parser.add_option("--worker_num", type=int, default=2,
+                      help="The number of slave nodes to be used in the cluster."
+                           "You can change it depending on your own cluster setting.")
+    parser.add_option("--cores", type=int, default=4,
+                      help="The number of cpu cores you want to use on each node. "
+                           "You can change it depending on your own cluster setting.")
+    parser.add_option("--memory", type=str, default="10g",
+                      help="The memory you want to use on each node. "
+                           "You can change it depending on your own cluster setting.")
+
     return parser
 
+
 if __name__ == "__main__":
-    # parse options
     parser = config_option_parser()
     (options, args) = parser.parse_args(sys.argv)
 
-    if not options.learningRate:
-        parser.error("-l --learningRate is a mandatory opt")
-    if not options.batchSize:
-        parser.error("-b --batchSize is a mandatory opt")
+    write_imagenet(raw_data=options.folder, output_path=options.imagenet)
 
-    sc = init_nncontext("inception v1")
+    train_data = train_data_creator(
+        config={"data_dir": os.path.join(options.imagenet, "train")})
+    val_data = val_data_creator(
+        config={"data_dir": os.path.join(options.imagenet, "validation")})
 
-    image_size = 224  # create dataset
-    train_transformer = ChainedPreprocessing([ImagePixelBytesToMat(),
-                                              ImageResize(256, 256),
-                                              ImageRandomCrop(image_size, image_size),
-                                              ImageRandomPreprocessing(ImageHFlip(), 0.5),
-                                              ImageChannelNormalize(123.0, 117.0, 104.0),
-                                              ImageMatToTensor(format="NHWC", to_RGB=False),
-                                              ImageSetToSample(input_keys=["imageTensor"],
-                                                               target_keys=["label"])])
-    raw_train_data = get_inception_data(options.folder, sc, "train")
-    train_data = FeatureSet.image_frame(raw_train_data).transform(train_transformer)
+    num_nodes = 1 if options.cluster_mode == "local" else options.worker_num
+    init_orca_context(cluster_mode=options.cluster_mode, cores=options.cores, num_nodes=num_nodes,
+                      memory=options.memory)
 
-    val_transformer = ChainedPreprocessing([ImagePixelBytesToMat(),
-                                            ImageResize(256, 256),
-                                            ImageCenterCrop(image_size, image_size),
-                                            ImageChannelNormalize(123.0, 117.0, 104.0),
-                                            ImageMatToTensor(format="NHWC", to_RGB=False),
-                                            ImageSetToSample(input_keys=["imageTensor"],
-                                                             target_keys=["label"])])
-    raw_val_data = get_inception_data(options.folder, sc, "val")
-    val_data = FeatureSet.image_frame(raw_val_data).transform(val_transformer)
-    val_data = val_data.transform(ImageFeatureToSample())
-
-    train_data = train_data.transform(ImageFeatureToSample())
-
-    dataset = TFDataset.from_feature_set(train_data,
-                                         features=(tf.float32, [224, 224, 3]),
-                                         labels=(tf.int32, [1]),
-                                         batch_size=options.batchSize,
-                                         validation_dataset=val_data)
-
-    images, labels = dataset.tensors
-
-    # As sequence file's label is one-based, so labels need to subtract 1.
-    zero_based_label = labels - 1
-
+    images = tf.placeholder(dtype=tf.float32, shape=(None, 224, 224, 3))
+    labels = tf.placeholder(dtype=tf.int32, shape=(None))
     is_training = tf.placeholder(dtype=tf.bool, shape=())
 
     with slim.arg_scope(inception_v1.inception_v1_arg_scope(weight_decay=0.0,
@@ -125,56 +319,29 @@ if __name__ == "__main__":
                                                        is_training=is_training)
 
     loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(logits=logits,
-                                                                 labels=zero_based_label))
+                                                                 labels=labels))
 
-    iterationPerEpoch = int(ceil(float(1281167) / options.batchSize))
-    if options.maxEpoch:
-        maxIteration = iterationPerEpoch * options.maxEpoch
-    else:
-        maxIteration = options.maxIteration
-    warmup_iteration = options.warmupEpoch * iterationPerEpoch
 
-    if warmup_iteration == 0:
-        warmupDelta = 0.0
-    else:
-        if options.maxLr:
-            maxlr = options.maxLr
-        else:
-            maxlr = options.learningRate
-        warmupDelta = (maxlr - options.learningRate) / warmup_iteration
-    polyIteration = maxIteration - warmup_iteration
-    lrSchedule = SequentialSchedule(iterationPerEpoch)
-    lrSchedule.add(Warmup(warmupDelta), warmup_iteration)
-    lrSchedule.add(Poly(0.5, maxIteration), polyIteration)
-    optim = SGD(learningrate=options.learningRate, learningrate_decay=0.0,
-                weightdecay=options.weightDecay, momentum=0.9, dampening=0.0,
-                nesterov=False,
-                leaningrate_schedule=lrSchedule)
+    def accuracy(logits, labels):
+        predictions = tf.argmax(logits, output_type=labels.dtype)
+        is_correct = tf.cast(tf.equal(predictions, labels), dtype=tf.float32)
+        return tf.reduce_mean(is_correct)
 
-    if options.maxEpoch:
-        checkpoint_trigger = EveryEpoch()
-        end_trigger = MaxEpoch(options.maxEpoch)
-    else:
-        checkpoint_trigger = SeveralIteration(options.checkpointIteration)
-        end_trigger = MaxIteration(options.maxIteration)
+    acc = accuracy(logits, labels)
 
-    optimizer = TFOptimizer.from_loss(loss, optim,
-                                      val_outputs=[logits],
-                                      val_labels=[zero_based_label],
-                                      val_method=[Accuracy(), Top5Accuracy(), Loss()],
-                                      tensor_with_value={is_training: [True, False]},
-                                      model_dir="/tmp/logs")
+    est = Estimator.from_graph(inputs=images,
+                               outputs=logits,
+                               labels=labels,
+                               loss=loss,
+                               optimizer=tf.train.AdamOptimizer(),
+                               metrics={"acc": acc},
+                               model_dir="/tmp/logs")
 
-    if options.resumeTrainingCheckpoint is not None:
-        assert options.resumeTrainingVersion is not None,\
-            "--resumeTrainingVersion must be specified when --resumeTrainingCheckpoint is."
-        optimizer.load_checkpoint(options.resumeTrainingCheckpoint,
-                                  options.resumeTrainingVersion)
+    est.fit(data=train_data,
+            batch_size=options.batchSize,
+            epochs=options.maxEpoch,
+            validation_data=val_data,
+            feed_dict={is_training: [True, False]},
+            checkpoint_trigger=SeveralIteration(620))
 
-    optimizer.optimize(end_trigger=end_trigger, checkpoint_trigger=checkpoint_trigger)
-
-    if options.checkpoint:
-        saver = tf.train.Saver()
-        saver.save(optimizer.sess, options.checkpoint)
-
-    sc.stop()
+    stop_orca_context()

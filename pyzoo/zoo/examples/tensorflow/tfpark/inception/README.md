@@ -1,77 +1,46 @@
 # Inception Model on Imagenet
 This example demonstrates how to use Analytics-zoo to train a TensorFlow [Inception v1](https://arxiv.org/abs/1409.4842) model on the [ImageNet](http://image-net.org/index) data.
-## Get the JAR
-You can build one by refer to the
-[Build Page](https://analytics-zoo.github.io/master/#ScalaUserGuide/install/#download-analytics-zoo-source) from the source code. We
-will release a pre-build package soon.
 
-## Prepare the data
-You can download imagenet-2012 data from <http://image-net.org/download-images> and put them in the directory containing this readme.
- 
-After you download the files(**ILSVRC2012_img_train.tar** and **ILSVRC2012_img_val.tar**), 
-run the following commands to prepare the data.
+## Environment
 
-The first arguments of `prepare_data.sh` is the output partition number of the sequence files, which is recommended to be the number of cores of the machine executing this script.
-
-Please prepare at least 1 TB of space for this part.
+We recommend conda to set up your environment. You can install a conda distribution from [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/)
+if you haven't already.
 
 ```bash
-bash prepare_data.sh $parition_num
+conda create -n analytics-zoo python==3.7
+conda activate analytics-zoo
+pip install tensorflow==1.15.0
 ```
 
-This command will generate the hadoop sequence files in the `sequence` folder.
-
-Then you can put the sequence files to hdfs. E.g.
+Then download and install latest nightly-build Analytics Zoo.
 
 ```bash
-hadoop fs -mkdir -p /user/root
-hadoop fs -copyFromLocal sequence/ /user/root/
+pip install --pre --upgrade analytics-zoo
+```
+
+## Prepare the data
+
+Download raw ImageNet data from http://image-net.org/download-images, extract and provide in this format:
+```bash
+mkdir train
+mv ILSVRC2012_img_train.tar train/
+cd train
+echo "Extracting training images"
+tar -xvf ILSVRC2012_img_train.tar
+rm ILSVRC2012_img_train.tar
+
+mkdir val
+mv  ILSVRC2012_img_val.tar val/
+cd val
+echo "Extracting validation images"
+tar -xvf ILSVRC2012_img_val.tar
+rm ILSVRC2012_img_val.tar
 ```
 
 ## Train the Model
-* Spark standalone, example command
-```bash
-export SPARK_HOME=the root directory of Spark
-export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project
-# You can uncomment the following line if hyper-threading is disabled in your cluster
-# export KMP_AFFINITY=granularity=fine,verbose,compact
-DATA_PATH=hdfs://[IP:port]/path/to/sequence/files
-mkdir -p /tmp/models/
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
---master spark://xxx.xxx.xxx.xxx:xxxx \  
---executor-cores 54 \  
---total-executor-cores 224 \  
---executor-memory 175G \ 
---driver-memory 20G \ 
---conf spark.network.timeout=10000000  inception.py \ 
---batchSize 1792 \
---learningRate 0.0896 \
--f $DATA_PATH \
---checkpoint /tmp/models/inception \ 
---maxIteration 62000
-```
 
-* Spark yarn client mode, example command
 ```bash
-export SPARK_HOME=the root directory of Spark
-export ANALYTICS_ZOO_HOME=the dist directory under the Analytics Zoo project
-# You can uncomment the following line if hyper-threading is disabled in your cluster
-# export KMP_AFFINITY=granularity=fine,verbose,compact
-DATA_PATH=hdfs://[IP:port]/path/to/sequence/files
-mkdir -p /tmp/models/
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
---master yarn \
---deploy-mode client \
---executor-cores 54 \
---num-executors 4 \ 
---executor-memory 175G \ 
---driver-memory 20G \ 
---conf spark.network.timeout=10000000  inception.py \ 
---batchSize 1792 \
---learningRate 0.0896 \
--f $DATA_PATH \
---checkpoint /tmp/models/inception \
---maxIteration 62000
+python inception.py --data_dir ${data_dir} --weights ${weights} --class_num ${class_num} --names ${names}
 ```
 
 In the above commands
