@@ -33,8 +33,6 @@ import scala.concurrent.{ExecutionContext, Future}
 object FrontEndGRPC extends Supportive{
   var servableManager : ServableManager = _
   def main(args: Array[String]): Unit = {
-    // Important: enable HTTP/2 in ActorSystem's config
-    // We do it here programmatically, but you can also set it in the application.conf
     val arguments = timing("parse arguments")() {
       argumentsParser.parse(args, FrontEndAppArguments()) match {
         case Some(arguments) => logger.info(s"starting with $arguments"); arguments
@@ -207,9 +205,18 @@ object FrontEndGRPC extends Supportive{
           servables.foreach(e =>
             e.getMetaData match {
               case (metaData: InferenceModelMetaData) =>
-                inferenceModelList += metaData.getInferenceModelGRPCMetaData
+                val inferenceModelGRPCMetaData = InferenceModelGRPCMetaData(metaData.modelName,
+                  metaData.modelVersion, metaData.modelPath, metaData.modelType,
+                  metaData.weightPath, metaData.modelConCurrentNum, metaData.inputCompileType,
+                  metaData.features.mkString(","))
+                inferenceModelList += inferenceModelGRPCMetaData
               case (metaData: ClusterServingMetaData) =>
-                clusterServingList += metaData.getClusterServingGRPCMetaData
+                val clusterServingGRPCMetaData = ClusterServingGRPCMetaData(metaData.modelName,
+                  metaData.modelVersion, metaData.redisHost, metaData.redisPort,
+                  metaData.redisInputQueue, metaData.redisOutputQueue, metaData.timeWindow,
+                  metaData.countWindow, metaData.redisSecureEnabled, metaData.redisTrustStorePath,
+                  metaData.redisTrustStoreToken, metaData.features.mkString(","))
+                clusterServingList += clusterServingGRPCMetaData
             })
           Future.successful(ModelsReply(inferenceModelList, clusterServingList))
         }
@@ -229,9 +236,18 @@ object FrontEndGRPC extends Supportive{
           servables.foreach(e =>
             e.getMetaData match {
               case (metaData: InferenceModelMetaData) =>
-                inferenceModelList += metaData.getInferenceModelGRPCMetaData
+                val inferenceModelGRPCMetaData = InferenceModelGRPCMetaData(metaData.modelName,
+                  metaData.modelVersion, metaData.modelPath, metaData.modelType,
+                  metaData.weightPath, metaData.modelConCurrentNum, metaData.inputCompileType,
+                  metaData.features.mkString(","))
+                inferenceModelList += inferenceModelGRPCMetaData
               case (metaData: ClusterServingMetaData) =>
-                clusterServingList += metaData.getClusterServingGRPCMetaData
+                val clusterServingGRPCMetaData = ClusterServingGRPCMetaData(metaData.modelName,
+                  metaData.modelVersion, metaData.redisHost, metaData.redisPort,
+                  metaData.redisInputQueue, metaData.redisOutputQueue, metaData.timeWindow,
+                  metaData.countWindow, metaData.redisSecureEnabled, metaData.redisTrustStorePath,
+                  metaData.redisTrustStoreToken, metaData.features.mkString(","))
+                clusterServingList += clusterServingGRPCMetaData
             })
           Future.successful(ModelsReply(inferenceModelList, clusterServingList))
         }
@@ -250,13 +266,20 @@ object FrontEndGRPC extends Supportive{
           servable.getMetaData match {
             case (metaData: InferenceModelMetaData) =>
               val inferenceModelList =
-                List[InferenceModelGRPCMetaData](metaData.getInferenceModelGRPCMetaData)
+                List[InferenceModelGRPCMetaData](InferenceModelGRPCMetaData(metaData.modelName,
+                  metaData.modelVersion, metaData.modelPath, metaData.modelType,
+                  metaData.weightPath, metaData.modelConCurrentNum, metaData.inputCompileType,
+                  metaData.features.mkString(",")))
               val clusterServingList = List[ClusterServingGRPCMetaData]()
               Future.successful(ModelsReply(inferenceModelList, clusterServingList))
             case (metaData: ClusterServingMetaData) =>
               val inferenceModelList = List[InferenceModelGRPCMetaData]()
               val clusterServingList =
-                List[ClusterServingGRPCMetaData](metaData.getClusterServingGRPCMetaData)
+                List[ClusterServingGRPCMetaData](ClusterServingGRPCMetaData(metaData.modelName,
+                  metaData.modelVersion, metaData.redisHost, metaData.redisPort,
+                  metaData.redisInputQueue, metaData.redisOutputQueue, metaData.timeWindow,
+                  metaData.countWindow, metaData.redisSecureEnabled, metaData.redisTrustStorePath,
+                  metaData.redisTrustStoreToken, metaData.features.mkString(",")))
               Future.successful(ModelsReply(inferenceModelList, clusterServingList))
           }
         }

@@ -55,7 +55,6 @@ import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.zoo.serving.grpc.{ClusterServingGRPCMetaData, InferenceModelGRPCMetaData}
 import redis.clients.jedis.JedisPoolConfig
 // import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.serialization.StreamSerializer
@@ -1140,14 +1139,7 @@ case class InferenceModelMetaData(modelName: String,
                                   modelConCurrentNum: Int = 1,
                                   inputCompileType: String = "direct", // direct or instance
                                   features: Array[String])
-  extends ModelMetaData(modelName, modelVersion, features) {
-  def getInferenceModelGRPCMetaData: InferenceModelGRPCMetaData = {
-
-    InferenceModelGRPCMetaData(modelName, modelVersion, modelPath, modelType, weightPath,
-      modelConCurrentNum, inputCompileType, features.mkString(","))
-  }
-
-}
+  extends ModelMetaData(modelName, modelVersion, features)
 
 case class ClusterServingMetaData(modelName: String,
                                   modelVersion: String,
@@ -1164,13 +1156,7 @@ case class ClusterServingMetaData(modelName: String,
                                   redisTrustStoreToken: String = "1234qwer",
                                   inputCompileType: String = "direct",
                                   features: Array[String])
-  extends ModelMetaData(modelName, modelVersion, features) {
-  def getClusterServingGRPCMetaData: ClusterServingGRPCMetaData = {
-    ClusterServingGRPCMetaData(modelName, modelVersion, redisHost, redisPort, redisInputQueue,
-      redisOutputQueue, timeWindow, countWindow, redisSecureEnabled, redisTrustStorePath,
-      redisTrustStoreToken, features.mkString(","))
-  }
-}
+  extends ModelMetaData(modelName, modelVersion, features)
 
 
 case class ServableManagerConf(modelMetaDataList: List[ModelMetaData])

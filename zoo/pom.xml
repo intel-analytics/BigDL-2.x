@@ -82,7 +82,7 @@
                                 <exclude>**/com/intel/analytics/zoo/friesian/python/PythonFriesian.scala</exclude>
                                 <exclude>**/com/intel/analytics/zoo/friesian/feature/Utils.scala</exclude>
                                 <exclude>**/com/intel/analytics/zoo/friesian/FriesianSpec.scala</exclude>
-                                <exclude>**/com/intel/analytics/zoo/serving/grpc</exclude>
+                                <exclude>**/com/intel/analytics/zoo/serving/grpc/**</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
@@ -112,7 +112,7 @@
                         <artifactId>scala-maven-plugin</artifactId>
                         <configuration>
                             <excludes>
-                                <exclude>**/com/intel/analytics/zoo/serving/grpc</exclude>
+                                <exclude>**/com/intel/analytics/zoo/serving/grpc/**</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
@@ -172,7 +172,7 @@
                         <version>3.2.1</version>
                         <configuration>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
@@ -1131,37 +1131,6 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>grpc</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>grpc</shadedClassifierName>
-                            <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-                                    <resource>reference.conf</resource>
-                                </transformer>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <manifestEntries>
-                                        <Main-Class>com.intel.analytics.zoo.serving.grpc.FrontEndGRPC</Main-Class>
-                                    </manifestEntries>
-                                </transformer>
-                            </transformers>
-                            <artifactSet>
-                                <excludes>
-                                    <exclude>ml.dmlc:xgboost4j</exclude>
-                                    <exclude>black.ninia:jep</exclude>
-                                    <exclude>org.tensorflow:tensorflow-hadoop</exclude>
-                                    <exclude>it.unimi.dsi:fastutil</exclude>
-                                </excludes>
-                            </artifactSet>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>flink-udf</id>
                         <phase>package</phase>
                         <goals>
@@ -1393,9 +1362,6 @@
                             <version>${scala.macros.version}</version>
                         </compilerPlugin>
                     </compilerPlugins>
-                    <excludes>
-                        <exclude>**/com/intel/analytics/zoo/serving/grpc</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
