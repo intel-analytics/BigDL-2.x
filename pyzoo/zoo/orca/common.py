@@ -196,6 +196,8 @@ def init_orca_context(cluster_mode=None, cores=2, memory="2g", num_nodes=1,
     for key in ["conf", "spark_log_level", "redirect_spark_log"]:
         if key in kwargs:
             spark_args[key] = kwargs[key]
+    if cluster_mode is not None:
+        cluster_mode = cluster_mode.lower()
     activate_sc = SparkContext._active_spark_context is not None
     if activate_sc:
         if cluster_mode is not None:
