@@ -99,7 +99,7 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
 
   /**
    * optimization method to be used. BigDL supports many optimization methods like Adam,
-   * SGD and LBFGS. Refer to package com.intel.analytics.bigdl.optim for all the options.
+   * SGD and LBFGS. Refer to package com.intel.analytics.bigdl.dllib.optim for all the options.
    * Default: SGD
    */
   final val optimMethod = new Param[OptimMethod[T]](this, "optimMethod", "optimMethod")

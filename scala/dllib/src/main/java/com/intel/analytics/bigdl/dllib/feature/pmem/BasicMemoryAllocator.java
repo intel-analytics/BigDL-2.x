@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.dllib.feature.pmem;
+package com.intel.analytics.bigdl.pmem;
 
 public interface BasicMemoryAllocator {
     long allocate(long size);

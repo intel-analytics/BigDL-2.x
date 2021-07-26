@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.common.utils.T
 import com.intel.analytics.bigdl.common.zooUtils
 import com.intel.analytics.bigdl.dllib.inference.Predictable
-import com.intel.analytics.zoo.tfpark.{GraphRunner, TFUtils}
+import com.intel.analytics.bigdl.orca.tfpark.{GraphRunner, TFUtils}
 import org.slf4j.LoggerFactory
 import org.tensorflow.framework.{GraphDef, MetaGraphDef}
 import org.tensorflow.op.Ops
@@ -50,7 +50,7 @@ private[bigdl]  class TFNetForInference(graphRunner: GraphRunner,
   implicit val tag: ClassTag[Float] = ClassTag.Float
 
   System.setProperty("bigdl.ModelBroadcastFactory",
-    "com.intel.analytics.zoo.tfpark.TFModelBroadcastFactory")
+    "com.intel.analytics.bigdl.orca.tfpark.TFModelBroadcastFactory")
 
   override def parameters(): (Array[Tensor[Float]], Array[Tensor[Float]]) = {
     (weights, gradWeights)
@@ -143,12 +143,12 @@ private[bigdl]  class TFNetForInference(graphRunner: GraphRunner,
   }
 
   override def updateOutput(input: Activity): Activity = {
-    Utils.timeIt("updateOutput") {
+    zooUtils.timeIt("updateOutput") {
 
       assert(variableInited)
       assert(tableInited)
 
-      val feeds = Utils.activity2VectorBuilder(input)
+      val feeds = zooUtils.activity2VectorBuilder(input)
 
       val types = inputTypes.toVector.map(TFUtils.tfenum2datatype)
 

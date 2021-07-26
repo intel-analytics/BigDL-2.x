@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.dllib.keras.{KerasLayer}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.common.utils.Shape
-import com.intel.analytics.bigdl.models.common.ZooModel
+//import com.intel.analytics.bigdl.models.common.ZooModel
 import com.intel.analytics.bigdl.dllib.inference.Net
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.internal.InternalTimeDistributed
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
@@ -97,14 +97,14 @@ object TimeDistributed {
     new TimeDistributed[T](layer, inputShape)
   }
 
-  def apply[@specialized(Float, Double) T: ClassTag](
-      layer: ZooModel[Activity, Activity, T],
-      inputShape: Shape)(implicit ev: TensorNumeric[T]): TimeDistributed[T] = {
-    layer.model match {
-      case keras: KerasNet[T] =>
-        new TimeDistributed[T](keras.asInstanceOf[KerasLayer[Activity, Tensor[T], T]], inputShape)
-      case _ => throw new Exception(s"$layer is not defined in Keras style")
-    }
-  }
+//  def apply[@specialized(Float, Double) T: ClassTag](
+//      layer: ZooModel[Activity, Activity, T],
+//      inputShape: Shape)(implicit ev: TensorNumeric[T]): TimeDistributed[T] = {
+//    layer.model match {
+//      case keras: KerasNet[T] =>
+//        new TimeDistributed[T](keras.asInstanceOf[KerasLayer[Activity, Tensor[T], T]], inputShape)
+//      case _ => throw new Exception(s"$layer is not defined in Keras style")
+//    }
+//  }
 }
 

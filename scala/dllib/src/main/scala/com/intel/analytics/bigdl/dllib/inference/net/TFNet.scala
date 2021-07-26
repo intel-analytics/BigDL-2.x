@@ -30,7 +30,7 @@ import com.intel.analytics.bigdl.common.zooUtils
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.bigdl.dllib.inference.Predictable
 import com.intel.analytics.bigdl.dllib.inference.net.TFNet.TFGraphHolder
-import com.intel.analytics.zoo.tfpark.{TFResourceManager, TFUtils}
+import com.intel.analytics.bigdl.orca.tfpark.{TFResourceManager, TFUtils}
 import org.apache.spark.rdd.RDD
 import org.tensorflow.framework.GraphDef
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}
@@ -63,7 +63,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   implicit val tag: ClassTag[Float] = ClassTag.Float
 
   System.setProperty("bigdl.ModelBroadcastFactory",
-    "com.intel.analytics.zoo.tfpark.TFModelBroadcastFactory")
+    "com.intel.analytics.bigdl.orca.tfpark.TFModelBroadcastFactory")
 
   @transient
   private lazy val tensorManager = new TFResourceManager()
@@ -179,7 +179,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   override def updateOutput(input: Activity): Activity = {
     try {
 
-      Utils.timeIt("TFNet.updateOutput") {
+      zooUtils.timeIt("TFNet.updateOutput") {
         val runner = sess.runner()
 
         require(activityLength(input) == inputTypes.length,
