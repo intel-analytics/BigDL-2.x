@@ -41,7 +41,7 @@ class PublicDataset:
     def get_public_data(self, chunk_size=1024):
         """
         Complete path stitching and download files.
-        param chunk_size: Byte size of a single read, preferably an integer multiple of 2.
+        param chunk_size: Byte file_size of a single read, preferably an integer multiple of 2.
         """
         assert isinstance(chunk_size, int), "chunk_size must be int."
         if not os.path.exists(self.abspath):
@@ -111,19 +111,16 @@ def download(url, path, chunk_size):
     param path: File save path.default path/name/name_data.csv.
     """
     req = requests.get(url, stream=True)
-    size, content_size = 0, int(req.headers['content-length'])
-    try:
-        req.status_code != 200
-    except Exception:
-        raise RuntimeError('download failure, please check the network.')
+    file_size, content_size = 0, int(req.headers['content-length'])
+    assert req.status_code==200, "download failure, please check the network."
     file_name = url.split('/')[-1].partition('.')[0]
     with open(os.path.join(path, file_name), 'wb') as f:
         for chunk in req.iter_content(1024 * chunk_size):
             if chunk:
                 f.write(chunk)
-                size += len(chunk)
+                file_size += len(chunk)
                 print('\r'+'file %s:%s%.2f%%' %
-                      (file_name, '>'*int(size * 50 / content_size),
-                       float(size / content_size * 100)), end='')
+                      (file_name, '>' * int(file_size * 50 / content_size),
+                       float(file_size / content_size * 100)), end='')
                 f.flush()
         print('')

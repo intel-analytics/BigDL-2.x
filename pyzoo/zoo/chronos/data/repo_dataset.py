@@ -16,7 +16,7 @@
 from zoo.chronos.data.utils.public_dataset import PublicDataset
 
 
-def get_public_dataset(name, path='~/.chronos/dataset', redownload=False):
+def get_public_dataset(name="network_traffic", path='~/.chronos/dataset', redownload=False):
     """
     Get public dataset.
 
