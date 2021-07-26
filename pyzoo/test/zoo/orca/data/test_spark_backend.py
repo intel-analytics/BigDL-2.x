@@ -204,7 +204,7 @@ class TestSparkBackend(TestCase):
         shutil.rmtree(temp)
 
     def test_write_read_imagenet(self):
-        raw_data = os.path.join(self.resource_path, "")
+        raw_data = os.path.join(self.resource_path, "imagenet_to_tfrecord")
         temp_dir = tempfile.mkdtemp()
         try:
             write_imagenet(raw_data, temp_dir)
