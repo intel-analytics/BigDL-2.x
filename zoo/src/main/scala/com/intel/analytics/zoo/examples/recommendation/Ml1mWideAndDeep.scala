@@ -171,11 +171,14 @@ object Ml1mWideAndDeep {
       .withColumn("genderind", genderUDF(col("gender")))
       .withColumn("ageind", ageUDF(col("age")))
       .withColumn("gender-age", bucket2UDF(col("gender"), col("age")))
-      .withColumn("gender-age-occupation", bucket3UDF(col("gender"), col("age"), col("occupation")))
-      .withColumn("gender-genres", bucket2UDF(col("gender"), col("genres")))
+      // .withColumn("gender-age-occupation", bucket3UDF(col("gender"), col("age"), col("occupation")))
+      // .withColumn("gender-genres", bucket2UDF(col("gender"), col("genres")))
       .withColumn("genres1st", genresUDF(col("genres")))
       .withColumn("genresfull", bucket1UDF(col("genres")))
-
+    unioned.show()
+    itemDF.show()
+    userDF.show()
+    dataUse.show()
     val rddOfSample = dataUse.rdd.map(r => {
       val uid = r.getAs[Int]("userId")
       val iid = r.getAs[Int]("itemId")
@@ -183,29 +186,4 @@ object Ml1mWideAndDeep {
     })
     rddOfSample
   }
-
-  // def assemblyFeature(isImplicit: Boolean = false,
-  //                     indexed: DataFrame,
-  //                     userCount: Int,
-  //                     itemCount: Int): RDD[UserItemFeature[Float]] = {
-
-  //   val unioned = if (isImplicit) {
-  //     val negativeDF = Utils.getNegativeSamples(indexed)
-  //     negativeDF.unionAll(indexed.withColumn("label", lit(2)))
-  //   }
-  //   else indexed
-
-  //   val rddOfSample: RDD[UserItemFeature[Float]] = unioned
-  //     .select("userId", "itemId", "label")
-  //     .rdd.map(row => {
-  //     val uid = row.getAs[Int](0)
-  //     val iid = row.getAs[Int](1)
-
-  //     val label = row.getAs[Int](2)
-  //     val feature: Tensor[Float] = Tensor[Float](T(uid.toFloat, iid.toFloat))
-
-  //     UserItemFeature(uid, iid, Sample(feature, Tensor[Float](T(label))))
-  //   })
-  //   rddOfSample
-  // }
 }

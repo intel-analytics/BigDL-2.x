@@ -31,12 +31,14 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.bigdl.dataset.Sample
 
 case class MyUser(userId: Int, avgVote: Int)
-case class MyItem(itemId: Int, category: String, price: float)
+case class MyItem(itemId: Int, category: String, price: Int)
 
 object AmazonWideAndDeep {
 
   def run(params: WNDParams): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
+    @transient lazy val logger = org.apache.log4j.LogManager.getLogger(
+      "hscornelia")
+      logger.info("AMAZOOOOOOOOON")
     val conf = new SparkConf().setAppName("AmazonWideAndDeepExample")
     val sc = NNContext.initNNContext(conf)
     val sqlContext = SQLContext.getOrCreate(sc)
@@ -80,8 +82,6 @@ object AmazonWideAndDeep {
       assemblyFeature(isImplicit, ratingsDF, userDF, itemDF, localColumnInfo, params.modelType)
 
     println("Feature RDD")
-    featureRdds.foreach(println)
-    featureRdds.collect().foreach(println)
     println("Blablabla Features")
 
 
@@ -127,7 +127,7 @@ object AmazonWideAndDeep {
     val itemDF = sqlContext.read.text(dataPath + "/amazon_item_short.dat").as[String]
       .map(x => {
         val line = x.split(":")
-        MyItem(line(0).toInt, line(1), line(2).toFloat)
+        MyItem(line(0).toInt, line(1), line(2).toInt)
       }).toDF()
 
     val minMaxRow = ratings.agg(max("userId"), max("itemId")).collect()(0)

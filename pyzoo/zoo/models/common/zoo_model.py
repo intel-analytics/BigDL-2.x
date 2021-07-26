@@ -101,6 +101,7 @@ class KerasZooModel(ZooModel):
 
     # For the following method, please see documentation of KerasNet for details
     def compile(self, optimizer, loss, metrics=None):
+        print('YO')
         self.model.compile(optimizer, loss, metrics)
 
     def fit(self, x, y=None, batch_size=32, nb_epoch=10,

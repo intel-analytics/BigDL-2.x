@@ -45,6 +45,7 @@ class NeuralCF(Recommender):
     def __init__(self, user_count, item_count, class_num, user_embed=20,
                  item_embed=20, hidden_layers=[40, 20, 10], include_mf=True,
                  mf_embed=20, bigdl_type="float"):
+        print('HELLOOOO')
         self.user_count = int(user_count)
         self.item_count = int(item_count)
         self.class_num = int(class_num)
