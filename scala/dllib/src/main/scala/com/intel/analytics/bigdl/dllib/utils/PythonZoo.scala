@@ -165,7 +165,7 @@
 //  def zooRDDSampleToMiniBatch(rdd: JavaRDD[Sample],
 //                              batchSizePerPartition: Int,
 //                              dropRemainder: Boolean): RDDWrapper[MiniBatch[T]] = {
-//    import com.intel.analytics.zoo.tfpark.SampleToMiniBatch
+//    import com.intel.analytics.bigdl.orca.tfpark.SampleToMiniBatch
 //    val partitionNum = rdd.rdd.getNumPartitions
 //    val totalBatchSize = batchSizePerPartition * partitionNum
 //    val transBroad = rdd.sparkContext.broadcast(new SampleToMiniBatch(

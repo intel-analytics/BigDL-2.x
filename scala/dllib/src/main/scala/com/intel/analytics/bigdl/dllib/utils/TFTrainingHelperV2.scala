@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.tfpark
+package com.intel.analytics.bigdl.orca.tfpark
 
-import com.intel.analytics.zoo.common.Utils
+import com.intel.analytics.bigdl.common.zooUtils
 import org.tensorflow.DataType
 
 class TFTrainingHelperV2(graphRunner: GraphRunner,
@@ -59,7 +59,7 @@ class TFTrainingHelperV2(graphRunner: GraphRunner,
   override def beforeRunGradient(): Unit = {
 
     if (!weightsRestored) {
-      Utils.timeIt("setTrainingVariableIntoTF") {
+      zooUtils.timeIt("setTrainingVariableIntoTF") {
         setVariableIntoTF(weights, variableAssignPlaceholders,
           variableTypes.map(TFUtils.tfenum2datatype), assignVariableOp)
       }
@@ -98,7 +98,7 @@ class TFTrainingHelperV2(graphRunner: GraphRunner,
     }
     getVariableFromTF(weights, variableNames = variables)
     if (extraParameters.length > 0) {
-      Utils.timeIt("getExtraVariableFromTF") {
+      zooUtils.timeIt("getExtraVariableFromTF") {
         getVariableFromTF(extraParameters, variableNames = extraVariables)
       }
     }

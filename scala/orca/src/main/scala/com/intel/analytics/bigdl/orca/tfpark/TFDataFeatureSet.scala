@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.tfpark
+package com.intel.analytics.bigdl.orca.tfpark
 
-import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.feature.{DistributedDataSetWrapper, DistributedFeatureSet}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
+import com.intel.analytics.bigdl.dllib.feature.dataset.{DistributedDataSet, MiniBatch}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.feature.{DistributedDataSetWrapper, DistributedFeatureSet}
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.EngineRef
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.tensorflow.DataType
 
-import com.intel.analytics.zoo.tfpark.TFTensorNumeric.NumericByteArray
+import com.intel.analytics.bigdl.orca.tfpark.TFTensorNumeric.NumericByteArray
 
 
 class TFDataFeatureSet(private val graphRDD: RDD[Array[Byte]],
@@ -132,7 +132,7 @@ object TFDataFeatureSet {
         interOpParallelismThreads = interOpParallelismThreads))
   }
 
-  private[zoo] def createGraphRDD(graph: Array[Byte]): RDD[Array[Byte]] = {
+  private[bigdl] def createGraphRDD(graph: Array[Byte]): RDD[Array[Byte]] = {
     val sc = SparkContext.getOrCreate()
     val nodeNumber = EngineRef.getNodeNumber()
     val coreNumber = EngineRef.getCoreNumber()
@@ -151,7 +151,7 @@ object TFDataFeatureSet {
     }.setName("GraphRDD")
   }
 
-  private[zoo] def generateOutputTensors(types: Vector[DataType]) = {
+  private[bigdl] def generateOutputTensors(types: Vector[DataType]) = {
     val outputs = Array.tabulate[Tensor[_]](types.length) { i =>
       if (types(i) == DataType.STRING) {
         Tensor[Array[Byte]]()
@@ -162,7 +162,7 @@ object TFDataFeatureSet {
     outputs
   }
 
-  private[zoo] def makeIterators(graphRunner: GraphRunner,
+  private[bigdl] def makeIterators(graphRunner: GraphRunner,
                                  train: Boolean,
                                  initOp: String,
                                  initTableOp: String,
