@@ -52,7 +52,7 @@ import com.intel.analytics.bigdl.dllib.zooKeras.layers.Input
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils._
 import com.intel.analytics.bigdl.dllib.inference.net.{NetUtils, TorchModel}
 import com.intel.analytics.bigdl.dllib.estimator.{AbstractEstimator, ConstantClipping, GradientClipping, L2NormClipping}
-import com.intel.analytics.bigdl.orca.tfpark.{TFTrainingHelper, TFTrainingHelperV2}
+import com.intel.analytics.bigdl.common.{TFTrainingHelper, TFTrainingHelperV2}
 import org.apache.commons.lang.exception.ExceptionUtils
 import org.apache.commons.lang3.SerializationUtils
 import org.apache.hadoop.conf.Configuration
