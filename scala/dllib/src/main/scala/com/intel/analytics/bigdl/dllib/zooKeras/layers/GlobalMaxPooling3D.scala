@@ -57,9 +57,9 @@ class GlobalMaxPooling3D[T: ClassTag](
       dW = 1,
       dH = 1)
     model.add(layer)
-    model.add(com.intel.analytics.bigdl.nn.Squeeze(5))
-    model.add(com.intel.analytics.bigdl.nn.Squeeze(4))
-    model.add(com.intel.analytics.bigdl.nn.Squeeze(3))
+    model.add(com.intel.analytics.bigdl.dllib.nn.Squeeze(5))
+    model.add(com.intel.analytics.bigdl.dllib.nn.Squeeze(4))
+    model.add(com.intel.analytics.bigdl.dllib.nn.Squeeze(3))
     model.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }

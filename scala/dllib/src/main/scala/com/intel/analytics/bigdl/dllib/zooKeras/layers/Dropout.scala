@@ -15,6 +15,7 @@
  */
 package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
+import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.common.utils.Shape
 import com.intel.analytics.bigdl.dllib.inference.Net
@@ -36,13 +37,13 @@ class Dropout[T: ClassTag](
   override val p: Double,
   override val inputShape: Shape = null)
   (implicit ev: TensorNumeric[T])
-  extends com.intel.analytics.bigdl.nn.keras.Dropout[T](p, inputShape) with Net {
+  extends com.intel.analytics.bigdl.dllib.keras.Dropout[T](p, inputShape) with Net {
 
-  override private[bigdl]  def toKeras2(): String = {
+  override private[bigdl] def toKeras2(): String = {
     val params = Net.inputShapeToString(inputShape) ++
       Net.param(getName()) ++
       Net.param(p, "rate")
-    Net.kerasDef(this, params)
+    Net.kerasDef(this.asInstanceOf[Module[_]], params)
   }
 
 }

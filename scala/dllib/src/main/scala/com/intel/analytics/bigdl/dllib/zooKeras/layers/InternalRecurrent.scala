@@ -16,7 +16,8 @@
 
 package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 
-import com.intel.analytics.bigdl.dllib.nn.{BatchNormParams, BigDLWrapperUtils, Cell, Recurrent}
+import com.intel.analytics.bigdl.dllib.nn.{BatchNormParams, Cell, Recurrent}
+import com.intel.analytics.bigdl.common.BigDLWrapperUtils
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor

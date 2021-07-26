@@ -19,7 +19,7 @@
 //import java.util.{List => JList, Map => JMap}
 //
 //import com.intel.analytics.bigdl.{Criterion, Module}
-//import com.intel.analytics.bigdl.dataset.{DataSet, LocalDataSet, MiniBatch}
+//import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, LocalDataSet, MiniBatch}
 //
 //import scala.collection.JavaConverters._
 //import com.intel.analytics.bigdl.dllib.optim._
@@ -32,7 +32,7 @@
 //import com.intel.analytics.bigdl.dllib.keras.{KerasLayer, KerasModel}
 //import com.intel.analytics.bigdl.dllib.nn.{BatchNormalization => BNBatchNormalization}
 //import com.intel.analytics.bigdl.common.utils.{Shape, Table}
-//import com.intel.analytics.zoo.feature.image.ImageSet
+//import com.intel.analytics.bigdl.dllib.feature.image.ImageSet
 //import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{Constant, _}
 //import com.intel.analytics.bigdl.dllib.zooKeras.layers.{KerasLayerWrapper, _}
 //import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
@@ -41,7 +41,7 @@
 //import com.intel.analytics.bigdl.dllib.zooKeras.optimizers.{Adam, AdamWeightDecay, PolyEpochDecay}
 //import org.apache.spark.api.java.JavaRDD
 //import com.intel.analytics.bigdl.common.PythonZoo
-//import com.intel.analytics.zoo.feature.text.TextSet
+//import com.intel.analytics.bigdl.dllib.feature.text.TextSet
 //import com.intel.analytics.zoo.models.common.ZooModel
 //import com.intel.analytics.zoo.models.seq2seq.{Bridge, RNNDecoder, RNNEncoder}
 //import com.intel.analytics.bigdl.dllib.inference.Net
@@ -858,7 +858,7 @@
 //  }
 //
 //  def createZooKerasBidirectional(
-//      layer: com.intel.analytics.bigdl.nn.keras.Recurrent[T],
+//      layer: com.intel.analytics.bigdl.dllib.keras.Recurrent[T],
 //      mergeMode: String = "concat",
 //      inputShape: JList[Int] = null): Bidirectional[T] = {
 //    Bidirectional(layer, mergeMode, toScalaShape(inputShape))

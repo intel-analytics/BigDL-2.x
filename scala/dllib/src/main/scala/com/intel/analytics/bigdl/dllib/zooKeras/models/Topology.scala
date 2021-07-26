@@ -24,6 +24,7 @@ import com.intel.analytics.bigdl.mkl.MKL
 import com.intel.analytics.bigdl.dllib.feature.dataset.{MiniBatch, _}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.DataSet
+import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.{optim, _}
 import com.intel.analytics.bigdl.dllib.nn.Graph._
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
@@ -41,9 +42,9 @@ import com.intel.analytics.bigdl.common.utils._
 import com.intel.analytics.bigdl.common.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.common.ZooTrigger
-import com.intel.analytics.zoo.feature.{DiskFeatureSet, DistributedFeatureSet, FeatureSet}
-import com.intel.analytics.zoo.feature.image.ImageSet
-import com.intel.analytics.zoo.feature.text._
+import com.intel.analytics.bigdl.dllib.feature.{DiskFeatureSet, DistributedFeatureSet, FeatureSet}
+import com.intel.analytics.bigdl.dllib.feature.image.ImageSet
+import com.intel.analytics.bigdl.dllib.feature.text._
 import com.intel.analytics.bigdl.dllib.inference.{Net, Predictable}
 import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{Lambda, Variable}
 import com.intel.analytics.bigdl.dllib.zooKeras.autograd._
@@ -1173,7 +1174,7 @@ private[bigdl] class InternalDistriOptimizer[T: ClassTag] (
     state("warmupIterationNum") = warmupIterationNum
     state("computeThresholdbatchSize") = computeThresholdbatchSize
     state("maxDropPercentage") = maxDropPercentage
-    state("isLayerwiseScaled") = com.intel.analytics.bigdl.nn.Utils.isLayerwiseScaled(_model)
+    state("isLayerwiseScaled") = com.intel.analytics.bigdl.dllib.nn.Utils.isLayerwiseScaled(_model)
 
     val nodeNumber = EngineRef.getNodeNumber()
 

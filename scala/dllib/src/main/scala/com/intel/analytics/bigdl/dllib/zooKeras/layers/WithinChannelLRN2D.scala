@@ -57,7 +57,7 @@ class WithinChannelLRN2D[T: ClassTag](
   }
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
-    val layer = com.intel.analytics.bigdl.nn.SpatialWithinChannelLRN(size, alpha, beta)
+    val layer = com.intel.analytics.bigdl.dllib.nn.SpatialWithinChannelLRN(size, alpha, beta)
     layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }

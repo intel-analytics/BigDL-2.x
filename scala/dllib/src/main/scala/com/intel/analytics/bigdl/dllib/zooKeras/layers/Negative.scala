@@ -43,7 +43,7 @@ class Negative[T: ClassTag](
     with IdentityOutputShape with Net {
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
-    val layer = com.intel.analytics.bigdl.nn.Negative()
+    val layer = com.intel.analytics.bigdl.dllib.nn.Negative()
     layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.nnframes
+package com.intel.analytics.bigdl.dllib.nnframes
 
 import java.util.{List => JList, Map => JMap}
 
-import com.intel.analytics.bigdl.dataset.{SampleToMiniBatch, _}
+import com.intel.analytics.bigdl.dllib.feature.dataset.{SampleToMiniBatch, _}
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.python.api.EvaluatedResult
@@ -28,9 +28,9 @@ import com.intel.analytics.bigdl.common.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.common.utils.{File, T}
 import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
-import com.intel.analytics.zoo.feature.FeatureSet
-import com.intel.analytics.zoo.feature.common.{Preprocessing, _}
-import com.intel.analytics.zoo.feature.pmem.{DRAM, MemoryType}
+import com.intel.analytics.bigdl.dllib.feature.FeatureSet
+import com.intel.analytics.bigdl.dllib.feature.common.{Preprocessing, _}
+import com.intel.analytics.bigdl.dllib.feature.pmem.{DRAM, MemoryType}
 import com.intel.analytics.bigdl.dllib.inference.Net
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.EngineRef
 import com.intel.analytics.bigdl.dllib.zooKeras.models.InternalDistriOptimizer
@@ -143,7 +143,7 @@ private[nnframes] trait TrainingParams[@specialized(Float, Double) T] extends Pa
   def getCheckpointPath: String = $(checkpointPath)
 
   /**
-   * How to cache the training data, options are defined in com.intel.analytics.zoo.feature.pmem.
+   * How to cache the training data, options are defined in com.intel.analytics.bigdl.dllib.feature.pmem.
    * If it's DRAM, will cache dataset into dynamic random-access memory
    * If it's PMEM, will cache dataset into Intel Optane DC Persistent Memory
    * If it's DISK_AND_DRAM(numSlice: Int), will cache dataset into disk, and only hold 1/n
@@ -188,7 +188,7 @@ private[nnframes] trait NNParams[@specialized(Float, Double) T] extends HasFeatu
  *
  * [[NNEstimator]] supports different feature and label data type through [[Preprocessing]]. We
  * provide pre-defined [[Preprocessing]] for popular data types like Array or Vector in package
- * [[com.intel.analytics.zoo.feature]], while user can also develop customized [[Preprocessing]].
+ * [[com.intel.analytics.bigdl.dllib.feature]], while user can also develop customized [[Preprocessing]].
  * During fit, NNEstimator will extract feature and label data from input DataFrame and use
  * the [[Preprocessing]] to prepare data for the model. Using the [[Preprocessing]] allows
  * [[NNEstimator]] to cache only the raw data and decrease the memory consumption during feature
@@ -666,7 +666,7 @@ object NNEstimator {
  *
  * [[NNModel]] supports different feature data type through [[Preprocessing]]. We
  * provide pre-defined [[Preprocessing]] for popular data types like Array or Vector in package
- * [[com.intel.analytics.zoo.feature]], while user can also develop
+ * [[com.intel.analytics.bigdl.dllib.feature]], while user can also develop
  * customized [[Preprocessing]].
  * During transform, [[NNModel]] will extract feature data from input DataFrame and use
  * the [[Preprocessing]] to prepare data for the model.

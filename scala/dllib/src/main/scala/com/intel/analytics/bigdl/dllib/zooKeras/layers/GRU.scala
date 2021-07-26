@@ -69,7 +69,7 @@ class GRU[T: ClassTag](
     outputDimension, returnSeq, goBackward, mInputShape) with Net {
 
   override def buildCell(input: Array[Int]): Cell[T] = {
-    com.intel.analytics.bigdl.nn.GRU[T](
+    com.intel.analytics.bigdl.dllib.nn.GRU[T](
       inputSize = input(2),
       outputSize = outputDim,
       activation = activation.doBuild(inputShape).asInstanceOf[TensorModule[T]],

@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.feature.common
+package com.intel.analytics.bigdl.dllib.feature.common
 
-import com.intel.analytics.bigdl.dataset.Transformer
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.image.ImageSet
-import com.intel.analytics.zoo.feature.text.{TextFeature, TextSet}
+import com.intel.analytics.bigdl.dllib.feature.dataset.Transformer
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.dllib.feature.image.ImageSet
+import com.intel.analytics.bigdl.dllib.feature.text.{TextFeature, TextSet}
 import org.apache.commons.lang3.SerializationUtils
 
 /**

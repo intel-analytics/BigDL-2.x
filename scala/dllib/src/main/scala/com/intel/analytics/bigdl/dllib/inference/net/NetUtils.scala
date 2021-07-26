@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.common.utils.serializer._
-import com.intel.analytics.zoo.pipeline.api.Predictable
+import com.intel.analytics.bigdl.dllib.inference.Predictable
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.KerasLayerWrapper
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
 import org.apache.spark.utils.SparkUtils

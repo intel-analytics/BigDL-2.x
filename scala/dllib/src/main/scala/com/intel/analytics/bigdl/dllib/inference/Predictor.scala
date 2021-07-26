@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api
+package com.intel.analytics.bigdl.dllib.inference
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.feature.dataset.{LocalDataSet, MiniBatch, PaddingParam, Sample, SampleToMiniBatch, Transformer}
@@ -25,8 +25,8 @@ import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{DistributedImageFrame, ImageFeature, ImageFrame, LocalImageFrame}
 import com.intel.analytics.bigdl.common.utils.{T, Table}
-import com.intel.analytics.zoo.feature.image.ImageSet
-import com.intel.analytics.zoo.feature.text._
+import com.intel.analytics.bigdl.dllib.feature.image.ImageSet
+import com.intel.analytics.bigdl.dllib.feature.text._
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
 import org.apache.spark.rdd.RDD
 
@@ -228,7 +228,7 @@ trait Predictable[T]  {
   protected val module: Module[T]
 
   implicit val tag: ClassTag[T]
-  implicit val ev: com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric[T]
+  implicit val ev: com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric[T]
 
 
   /**

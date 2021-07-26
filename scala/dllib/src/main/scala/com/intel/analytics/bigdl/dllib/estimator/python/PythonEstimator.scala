@@ -19,15 +19,15 @@
 //import java.util.{List => JList, Map => JMap}
 //
 //import com.intel.analytics.bigdl.{Criterion, Module}
-//import com.intel.analytics.bigdl.dataset.{MiniBatch, Sample, SampleToMiniBatch}
+//import com.intel.analytics.bigdl.dllib.feature.dataset.{MiniBatch, Sample, SampleToMiniBatch}
 //import com.intel.analytics.bigdl.dllib.optim.{OptimMethod, Trigger, ValidationMethod, ValidationResult}
 //import com.intel.analytics.bigdl.python.api.EvaluatedResult
 //import com.intel.analytics.bigdl.dllib.tensor.Tensor
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-//import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature, ImageFeatureToMiniBatch}
+//import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{ImageFeature, ImageFeatureToMiniBatch}
 //import com.intel.analytics.bigdl.common.utils.Table
 //import com.intel.analytics.bigdl.common.PythonZoo
-//import com.intel.analytics.zoo.feature.FeatureSet
+//import com.intel.analytics.bigdl.dllib.feature.FeatureSet
 //import com.intel.analytics.bigdl.dllib.estimator.Estimator
 //
 //import scala.reflect.ClassTag

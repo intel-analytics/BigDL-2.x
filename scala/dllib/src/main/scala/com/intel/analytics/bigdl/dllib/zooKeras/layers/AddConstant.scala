@@ -45,7 +45,7 @@ class AddConstant[T: ClassTag](
     with IdentityOutputShape with Net {
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
-    val layer = com.intel.analytics.bigdl.nn.AddConstant(constant)
+    val layer = com.intel.analytics.bigdl.dllib.nn.AddConstant(constant)
     layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }

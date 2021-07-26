@@ -32,7 +32,7 @@ import com.intel.analytics.bigdl.common.utils.{File, Shape}
 import com.intel.analytics.bigdl.common.utils.caffe.CaffeLoader
 import com.intel.analytics.bigdl.common.utils.serializer.ModuleLoader
 import com.intel.analytics.bigdl.common.utils.tf.{Session, TensorflowLoader}
-import com.intel.analytics.bigdl.common.Utils
+import com.intel.analytics.bigdl.common.zooUtils
 import com.intel.analytics.bigdl.dllib.zooKeras.autograd.Variable
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.{KerasLayerWrapper, Merge, WordEmbedding}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
@@ -304,7 +304,7 @@ object Net {
           python: String,
           saveCommand: String)
           (implicit ev: TensorNumeric[T]): Unit = {
-      val tmpDir = Utils.createTmpDir("ZooKeras")
+      val tmpDir = zooUtils.createTmpDir("ZooKeras")
       logger.info(s"Write model's temp file to ${tmpDir}")
       val modelFile = tmpDir.toString + s"/${module.getName()}.py"
       val bw = new BufferedWriter(new FileWriter(modelFile))

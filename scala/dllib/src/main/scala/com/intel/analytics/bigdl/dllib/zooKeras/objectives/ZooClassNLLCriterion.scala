@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.dllib.zooKeras.objectives
+package com.intel.analytics.bigdl.dllib.nn
 
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{SizeAverageStatus, TensorCriterion}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
