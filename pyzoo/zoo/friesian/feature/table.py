@@ -1308,7 +1308,7 @@ class FeatureTable(Table):
                 for target_col, out_col in zip(target_cols, out_col_list)
             }
             return TargetCode(fold_df, cat_col, out_target_mean_dict), \
-                   TargetCode(all_df, cat_col, out_target_mean_dict)
+                TargetCode(all_df, cat_col, out_target_mean_dict)
 
         targets = list(map(gen_target_code, zip(cat_cols, out_cols)))
         fold_targets = [t[0] for t in targets]
