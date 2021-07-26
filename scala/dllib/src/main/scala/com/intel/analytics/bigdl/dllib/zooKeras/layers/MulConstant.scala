@@ -45,7 +45,7 @@ class MulConstant[T: ClassTag](
   with IdentityOutputShape with Net {
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
-    val layer = com.intel.analytics.bigdl.nn.MulConstant(constant)
+    val layer = com.intel.analytics.bigdl.dllib.nn.MulConstant(constant)
     layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }

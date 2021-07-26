@@ -43,7 +43,7 @@ class Square[T: ClassTag](
     with IdentityOutputShape with Net {
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
-    val layer = com.intel.analytics.bigdl.nn.Square()
+    val layer = com.intel.analytics.bigdl.dllib.nn.Square()
     layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }

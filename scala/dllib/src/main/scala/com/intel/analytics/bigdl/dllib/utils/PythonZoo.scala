@@ -20,7 +20,7 @@
 //import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, PythonBigDLKeras, Sample}
 //import com.intel.analytics.bigdl.dllib.tensor.{DenseType, SparseType, Tensor}
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-//import com.intel.analytics.zoo.pipeline.api.Predictable
+//import com.intel.analytics.bigdl.dllib.inference.Predictable
 //import org.apache.spark.api.java.JavaRDD
 //import java.util.{List => JList}
 //
@@ -29,8 +29,8 @@
 //import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 //import com.intel.analytics.bigdl.dllib.optim.{LocalPredictor, ValidationMethod}
 //import com.intel.analytics.bigdl.common.utils.Table
-//import com.intel.analytics.zoo.feature.image.ImageSet
-//import com.intel.analytics.zoo.feature.text.TextSet
+//import com.intel.analytics.bigdl.dllib.feature.image.ImageSet
+//import com.intel.analytics.bigdl.dllib.feature.text.TextSet
 //import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.EngineRef
 //import com.intel.analytics.bigdl.dllib.inference.net.TFNet
 //
@@ -254,7 +254,7 @@
 //  }
 //
 //  def listPaths(path: String, recursive: Boolean = false): JList[String] = {
-//    com.intel.analytics.bigdl.common.Utils.listPaths(path, recursive).toList.asJava
+//    com.intel.analytics.bigdl.common.zooUtils.listPaths(path, recursive).toList.asJava
 //  }
 //
 //  def exists(path: String): Boolean = {

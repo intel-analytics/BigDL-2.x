@@ -28,7 +28,7 @@ import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.common.utils.T
 import com.intel.analytics.bigdl.common.zooUtils
 import com.intel.analytics.zoo.core.TFNetNative
-import com.intel.analytics.zoo.pipeline.api.Predictable
+import com.intel.analytics.bigdl.dllib.inference.Predictable
 import com.intel.analytics.bigdl.dllib.inference.net.TFNet.TFGraphHolder
 import com.intel.analytics.zoo.tfpark.{TFResourceManager, TFUtils}
 import org.apache.spark.rdd.RDD

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.nnframes
+package com.intel.analytics.bigdl.dllib.nnframes
 
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.zoo.feature.image.ImageSet
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.OpenCVMat
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.dllib.feature.image.ImageSet
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
@@ -60,7 +60,7 @@ object NNImageSchema {
       // floats in OpenCV-compatible order: row-wise BGR in most cases
       StructField("data", new ArrayType(FloatType, false), false) :: Nil)
 
-  private[bigdl]  def imf2Row(imf: ImageFeature): Row = {
+  def imf2Row(imf: ImageFeature): Row = {
     val (mode, data) = if (imf.contains(ImageFeature.imageTensor)) {
       val floatData = imf(ImageFeature.imageTensor).asInstanceOf[Tensor[Float]].storage().array()
       val cvType = imf.getChannel() match {
@@ -90,7 +90,7 @@ object NNImageSchema {
     )
   }
 
-  private[bigdl]  def row2IMF(row: Row): ImageFeature = {
+  def row2IMF(row: Row): ImageFeature = {
     val (origin, h, w, c) = (row.getString(0), row.getInt(1), row.getInt(2), row.getInt(3))
     val imf = ImageFeature()
     imf.update(ImageFeature.uri, origin)

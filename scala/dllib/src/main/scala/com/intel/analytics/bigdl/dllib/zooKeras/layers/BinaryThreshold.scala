@@ -47,7 +47,7 @@ class BinaryThreshold[T: ClassTag](
     with IdentityOutputShape with Net {
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
-    val layer = com.intel.analytics.bigdl.nn.BinaryThreshold(value)
+    val layer = com.intel.analytics.bigdl.dllib.nn.BinaryThreshold(value)
     layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 }

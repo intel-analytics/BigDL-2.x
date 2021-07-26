@@ -75,7 +75,7 @@ class Select[T: ClassTag](
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     val (positiveDim, positiveIndex) = getPositiveDimAndIndex(inputShape)
-    val layer = com.intel.analytics.bigdl.nn.Select(positiveDim + 1, positiveIndex + 1)
+    val layer = com.intel.analytics.bigdl.dllib.nn.Select(positiveDim + 1, positiveIndex + 1)
     layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }
 

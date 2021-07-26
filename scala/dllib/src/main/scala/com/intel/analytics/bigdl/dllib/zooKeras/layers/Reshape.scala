@@ -94,7 +94,7 @@ class Reshape[T: ClassTag](
       InferReshape(targetShape, batchMode = true)
     }
     else {
-      com.intel.analytics.bigdl.nn.Reshape(targetShape, batchMode = Some(true))
+      com.intel.analytics.bigdl.dllib.nn.Reshape(targetShape, batchMode = Some(true))
     }
     layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }

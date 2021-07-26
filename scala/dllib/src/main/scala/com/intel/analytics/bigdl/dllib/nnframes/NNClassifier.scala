@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.nnframes
+package com.intel.analytics.bigdl.dllib.nnframes
 
-import com.intel.analytics.bigdl.dataset.{Sample, Transformer}
+import com.intel.analytics.bigdl.dllib.feature.dataset.{Sample, Transformer}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.{Criterion, Module}
-import com.intel.analytics.zoo.feature.common._
+import com.intel.analytics.bigdl.dllib.feature.common._
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.EngineRef
-import com.intel.analytics.zoo.pipeline.nnframes.NNModel.NNModelWriter
+import com.intel.analytics.bigdl.dllib.nnframes.NNModel.NNModelWriter
 import ml.dmlc.xgboost4j.scala.spark.{XGBoostClassificationModel, XGBoostHelper,
 XGBoostRegressionModel, XGBoostRegressor, XGBoostClassifier}
 import org.apache.spark.ml.DefaultParamsWriterWrapper

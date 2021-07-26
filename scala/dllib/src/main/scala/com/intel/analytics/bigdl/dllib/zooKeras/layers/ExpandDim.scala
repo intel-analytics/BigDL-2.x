@@ -45,7 +45,7 @@ class ExpandDim[T: ClassTag](
 
   override def doBuild(inputShape: Shape): AbstractModule[Tensor[T], Tensor[T], T] = {
     val layer = {
-      com.intel.analytics.bigdl.nn.Unsqueeze(dim + 1) // one-based index in Bigdl
+      com.intel.analytics.bigdl.dllib.nn.Unsqueeze(dim + 1) // one-based index in Bigdl
     }
     layer.asInstanceOf[AbstractModule[Tensor[T], Tensor[T], T]]
   }

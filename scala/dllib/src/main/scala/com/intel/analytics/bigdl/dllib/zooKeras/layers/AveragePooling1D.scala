@@ -55,7 +55,7 @@ class AveragePooling1D[T: ClassTag](
     val input = inputShape.toSingle().toArray
     val pads = KerasUtils.getPadsFromBorderMode(borderMode)
     val model = TSequential[T]()
-    model.add(com.intel.analytics.bigdl.nn.Reshape(Array(input(1), 1, input(2)), Some(true)))
+    model.add(com.intel.analytics.bigdl.dllib.nn.Reshape(Array(input(1), 1, input(2)), Some(true)))
     val layer = SpatialAveragePooling(
       kW = 1,
       kH = poolLength,
@@ -66,7 +66,7 @@ class AveragePooling1D[T: ClassTag](
       countIncludePad = false,
       format = DataFormat.NHWC)
     model.add(layer)
-    model.add(com.intel.analytics.bigdl.nn.Squeeze(3))
+    model.add(com.intel.analytics.bigdl.dllib.nn.Squeeze(3))
     model.asInstanceOf[AbstractModule[Activity, Activity, T]]
   }
 }

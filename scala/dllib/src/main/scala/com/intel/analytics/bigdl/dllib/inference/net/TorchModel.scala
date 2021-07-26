@@ -25,11 +25,11 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.tensor.{QuantizedTensor, QuantizedType, Storage, Tensor}
 import com.intel.analytics.bigdl.common.utils.T
 import com.intel.analytics.bigdl.common.PythonInterpreter
-import com.intel.analytics.zoo.feature.PythonFeatureSet
+import com.intel.analytics.bigdl.dllib.feature.PythonFeatureSet
 import com.intel.analytics.bigdl.dllib.inference.net.TorchModel.TorchModel2Holder
 import jep.{Jep, NDArray}
 import org.apache.spark.TaskContext
-import com.intel.analytics.bigdl.common.zooUtils._
+import com.intel.analytics.bigdl.dllib.nn.Utils._
 
 class TorchModel private(
     private[bigdl]  val modelHolder: TorchModel2Holder,

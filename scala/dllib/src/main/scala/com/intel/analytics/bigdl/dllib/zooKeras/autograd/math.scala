@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.dllib.keras.KerasLayer
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.common.utils._
-import com.intel.analytics.bigdl.{nn => bnn}
+import com.intel.analytics.bigdl.dllib.{nn => bnn}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers._
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.internal._
 import com.intel.analytics.bigdl.dllib.zooKeras.models._
@@ -491,9 +491,9 @@ class Variable[T: ClassTag] private[bigdl]  (private[bigdl]  var node: ModuleNod
 
   def squeeze(dims: Array[Int]): Variable[T] = {
     val blayer = if (dims == null){
-       com.intel.analytics.bigdl.nn.Squeeze[T](null, batchMode = false)
+       com.intel.analytics.bigdl.dllib.nn.Squeeze[T](null, batchMode = false)
     } else {
-      com.intel.analytics.bigdl.nn.Squeeze[T](dims.map(x => x + 1), batchMode = false)
+      com.intel.analytics.bigdl.dllib.nn.Squeeze[T](dims.map(x => x + 1), batchMode = false)
     }
     val klayer = new KerasLayerWrapper[T](blayer)
     Variable(klayer.inputs(this.node))

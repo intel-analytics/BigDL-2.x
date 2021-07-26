@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.inference;
+package com.intel.analytics.bigdl.dllib.inference;
 
 public class InferenceRuntimeException extends RuntimeException {
 	public InferenceRuntimeException(String msg) {
