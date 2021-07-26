@@ -28,7 +28,7 @@ from zoo.automl.common.metrics import Evaluator
 
 
 def get_data(args):
-    df = pd.read_csv(args.datadir)
+    df = pd.read_csv(args.datadir, engine='python')
     return df
 
 
