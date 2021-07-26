@@ -1151,11 +1151,13 @@ class FeatureTable(Table):
         tbl_list = [FeatureTable(df) for df in df_list]
         return tuple(tbl_list)
 
-    def gen_target(self, cat_cols, target_cols, target_mean=None, smooth=20, kfold=2,
-                   fold_seed=None, fold_col="__fold__", out_cols=None, name_sep="_"):
+    def target_encode(self, cat_cols, target_cols, target_mean=None, smooth=20, kfold=2,
+                      fold_seed=None, fold_col="__fold__", drop_cat=True,
+                      drop_fold=True, out_cols=None, name_sep="_"):
         """
         For each categorical column / column group in cat_cols, calculate the mean of target
-        columns in target_cols.
+        columns in target_cols and encode the Table with mean.
+
         :param cat_cols: str, or list of (str or list of str). Categorical columns / column groups
                to target encode. If an element in the list is a str, then it is a categorical
                column; otherwise if it is a list of str, then it is a categorical column group.
@@ -1173,14 +1175,17 @@ class FeatureTable(Table):
         :param fold_col: str. Name of integer column used for splitting folds. If fold_col exists
                in the Table, then this column is used; otherwise, it is randomly generated with
                range [0, kfold). Default is "__fold__".
+        :param drop_cat: Boolean. Drop the categorical columns if it is true. Default is True.
+        :param drop_folds: Boolean. Drop the fold column if it is true. Default is True.
         :param out_cols: list of list of str. Each inner list corresponds to the categorical column
                in the same position of cat_cols. Each element in the inner list corresponds to the
                target column in the same position of target_cols. If it is None, the output
                column will be cat_col + "_te_" + target_col. Default is None.
         :param name_sep: str. When out_cols is None, for group of categorical columns, concatenate
                them with name_sep to generate output columns. Default is "_".
-        :return: A new FeatureTable which may contain a new fold_col, a list of TargetCode which
-                 contains mean statistics.
+
+        :return: A new target encoded FeatureTable, a list of TargetCodes which contains mean
+                 statistics of the whole Table.
         """
         assert isinstance(kfold, int) and kfold > 0, "kfold should be an integer larger than 0"
         if isinstance(cat_cols, str):
@@ -1240,6 +1245,8 @@ class FeatureTable(Table):
                 assert list(filter(lambda x: x[0] == fold_col and x[1] == "int",
                                    self.df.dtypes)), \
                     "fold_col should be integer type but get " + fold_col
+        else:
+            fold_col = None
 
         def gen_target_code(cat_out):
             cat_col = cat_out[0]
@@ -1294,19 +1301,28 @@ class FeatureTable(Table):
                     fold_df = fold_df.drop(cat_col_name + "_sum_" + target_col,
                                            cat_col_name + "_all_sum_" + target_col)
                 fold_df = fold_df.drop(cat_col_name + "_count", cat_col_name + "_all_count")
+                fold_df = fold_df.withColumnRenamed(fold_col, fold_col)
 
             out_target_mean_dict = {
                 out_col: (target_col, target_mean_dict[target_col])
                 for target_col, out_col in zip(target_cols, out_col_list)
             }
-            return TargetCode(fold_df, all_df, cat_col, out_target_mean_dict, kfold, fold_col)
+            return TargetCode(fold_df, cat_col, out_target_mean_dict), \
+                    TargetCode(all_df, cat_col, out_target_mean_dict)
 
-        return FeatureTable(result_df), list(map(gen_target_code, zip(cat_cols, out_cols)))
+        targets = list(map(gen_target_code, zip(cat_cols, out_cols)))
+        fold_targets = [t[0] for t in targets]
+        all_targets = [t[1] for t in targets]
 
-    def encode_target(self, targets, target_cols=None, drop_cat=True, drop_folds=True,
-                      is_train=True):
+        result_df = encode_target_(result_df, fold_targets, drop_cat=drop_cat,
+                drop_fold=drop_fold, fold_col=fold_col)
+
+        return FeatureTable(result_df), all_targets
+
+    def encode_target(self, targets, target_cols=None, drop_cat=True):
         """
         Encode columns with provided list of TargetCode.
+
         :param cat_cols: str, or list of (str or list of str). Categorical columns / column groups
                to target encode. If an element in the list is a str, then it is a categorical
                column; otherwise if it is a list of str, then it is a categorical column group.
@@ -1315,9 +1331,7 @@ class FeatureTable(Table):
                be applied. If it is None, the mean statistics of all target columns contained
                in targets are applied. Default is None.
         :param drop_cat: Boolean. Drop the categorical columns if it is true. Default is True.
-        :param drop_folds: Boolean. Drop the fold column if it is true. Default is True.
-        :param is_train: Boolean. If is_train is True, encode the Table with TargetCode.df;
-               otherwise, encode it with TargetCode.all_df. Default is True.
+
         :return: A new FeatureTable which transforms each categorical column into group-specific
                  mean of target columns with provided TargetCodes.
         """
@@ -1336,51 +1350,7 @@ class FeatureTable(Table):
                 target_cols = [target_cols]
             assert isinstance(target_cols, list), "target_cols should be str or list"
 
-        result_df = self.df
-        for target_code in targets:
-            cat_col = target_code.cat_col
-            out_target_mean = target_code.out_target_mean
-
-            join_df = target_code.df if is_train else target_code.all_df
-
-            # select target_cols to join
-            if target_cols is not None:
-                new_out_target_mean = {}
-                for out_col, target_mean in out_target_mean.items():
-                    if target_mean[0] not in target_cols:
-                        join_df = join_df.drop(out_col)
-                    else:
-                        new_out_target_mean[out_col] = target_mean
-                out_target_mean = new_out_target_mean
-
-            if not is_train or target_code.kfold == 1:
-                result_df = result_df.join(join_df, cat_col, how="left")
-            else:
-                assert target_code.fold_col in self.df.columns, \
-                    "fold_col {} in TargetCode corresponding to categorical columns {} should " \
-                    "exist in Table".format(target_code.fold_col, str(cat_col))
-                if isinstance(cat_col, str):
-                    result_df = result_df.join(join_df, [cat_col, target_code.fold_col],
-                                               how="left")
-                else:
-                    result_df = result_df.join(join_df, cat_col + [target_code.fold_col],
-                                               how="left")
-
-            # for new columns, fill na with mean
-            for out_col, target_mean in out_target_mean.items():
-                result_df = result_df.fillna(target_mean[1], out_col)
-
-        if drop_cat:
-            for target_code in targets:
-                if isinstance(target_code.cat_col, str):
-                    result_df = result_df.drop(target_code.cat_col)
-                else:
-                    result_df = result_df.drop(*target_code.cat_col)
-
-        if drop_folds:
-            for target_code in targets:
-                if target_code.kfold > 1:
-                    result_df = result_df.drop(target_code.fold_col)
+        result_df = encode_target_(self.df, targets, target_cols=target_cols, drop_cat=drop_cat)
 
         return FeatureTable(result_df)
 
@@ -1474,73 +1444,38 @@ class StringIndex(Table):
 
 
 class TargetCode(Table):
-    def __init__(self, df, all_df, cat_col, out_target_mean, kfold, fold_col):
+    def __init__(self, df, cat_col, out_target_mean):
         """
-        Consists of categorical columns, output columns (mean statistics of categorical columns)
-        and fold column.
-        :param df: DataFrame to encode train set.
-        :param all_df: DataFrame to encode test set.
+        Consists of categorical columns, output columns (mean statistics of categorical columns).
+
+        :param df: DataFrame.
         :param cat_col: str or list of str. Categorical column/column group to be encoded in the
                original Table.
         :param out_target_mean: dictionary. out_col:(target_col, global_mean), i.e.
                (target column's name in TargetCode):
                (target column's name in original Table,
                target column's global mean in original Table)
-        :param kfold: int. If kfold = 1, global mean is used; otherwise, fold_col exists in df
-               and cross validation is used.
-        :param fold_col: str. Specifies the name of fold column for kfold > 1.
         """
         super().__init__(df)
-        self.all_df = all_df
         self.cat_col = cat_col
         self.out_target_mean = out_target_mean
-        self.kfold = kfold
-        self.fold_col = fold_col
 
         check_col_str_list_exists(df, cat_col, "cat_col")
-        assert isinstance(kfold, int) and kfold > 0, "kfold should be an integer larger than 0"
-        if kfold > 1:
-            assert isinstance(fold_col, str) and fold_col in df.columns, \
-                "For kfold > 1, fold_col should be one of the columns in {} in TargetCode but " \
-                "get {}".format(df.columns, str(fold_col))
-            self.df = self.df.withColumnRenamed(fold_col, fold_col)
 
-        # (keys of out_target_mean) should include (output columns)
-        # let (keys of out_target_mean) = (output columns)
         assert isinstance(out_target_mean, dict), "out_target_mean should be dict"
-        output_columns = list(filter(lambda x:
-                                     ((isinstance(cat_col, str) and x != cat_col) or
-                                      (isinstance(cat_col, list) and x not in cat_col)) and
-                                     (kfold == 1 or (kfold > 1 and x != fold_col)), df.columns))
-        for out_col in out_target_mean:
-            if out_col not in output_columns:
-                out_target_mean.pop(out_col)
-        for column in output_columns:
-            assert column in out_target_mean, column + " should be in out_target_mean"
-            column_mean = out_target_mean[column][1]
-            assert isinstance(column_mean, int) or isinstance(column_mean, float), \
-                "mean in target_mean should be numeric but get {} of type {}" \
-                " in {}".format(column_mean, type(column_mean), out_target_mean)
 
     def _clone(self, df):
-        return TargetCode(df, self.all_df, self.cat_col, self.out_target_mean, self.kfold,
-                          self.fold_col)
+        return TargetCode(df, self.cat_col, self.out_target_mean)
 
     def rename(self, columns):
         assert isinstance(columns, dict), "columns should be a dictionary of {'old_name1': " \
                                           "'new_name1', 'old_name2': 'new_name2'}"
         new_df = self.df
-        new_all_df = self.all_df
         new_cat_col = self.cat_col
         new_out_target_mean = self.out_target_mean
-        new_kfold = self.kfold
-        new_fold_col = self.fold_col
         for old_name, new_name in columns.items():
             new_df = new_df.withColumnRenamed(old_name, new_name)
-            new_all_df = new_all_df.withColumnRenamed(old_name, new_name)
-            if old_name == self.fold_col:
-                new_fold_col = new_name
-            elif isinstance(self.cat_col, str) and old_name == self.cat_col:
+            if isinstance(self.cat_col, str) and old_name == self.cat_col:
                 new_cat_col = new_name
             elif isinstance(self.cat_col, list):
                 for i in range(len(self.cat_col)):
@@ -1548,5 +1483,4 @@ class TargetCode(Table):
                         new_cat_col[i] = new_name
             elif old_name in self.out_target_mean:
                 new_out_target_mean[new_name] = new_out_target_mean.pop(old_name)
-        return TargetCode(new_df, new_all_df, new_cat_col, new_out_target_mean, new_kfold,
-                          new_fold_col)
+        return TargetCode(new_df, new_cat_col, new_out_target_mean)
