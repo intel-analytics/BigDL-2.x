@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
-
 import torch
 import pandas as pd
 import numpy as np
@@ -29,14 +27,13 @@ from zoo.orca import init_orca_context, stop_orca_context
 from zoo.automl.common.metrics import Evaluator
 
 
-def get_data():
-    url = 'https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv'
-    df = pd.read_csv(url)
+def get_data(args):
+    df = pd.read_csv(args.datadir)
     return df
 
 
-def get_nyc_taxi_tsdataset():
-    df = get_data()
+def get_nyc_taxi_tsdataset(args):
+    df = get_data(args)
     tsdata_train, tsdata_valid, tsdata_test = TSDataset.from_pandas(df,
                                                                     dt_col="timestamp",
                                                                     target_col=[
@@ -81,14 +78,16 @@ if __name__ == '__main__':
                         help="Int. Number of cpus for each trial")
     parser.add_argument('--n_sampling', type=int, default=1,
                         help="Number of times to sample from the search_space.")
-
+    parser.add_argument('--datadir', type=str, default="https://raw.githubusercontent.com/numenta/"
+                        "NAB/v1.0/data/realKnownCause/nyc_taxi.csv",
+                        help="Download link of dataset.")
     args = parser.parse_args()
 
     num_nodes = 1 if args.cluster_mode == "local" else args.num_workers
     init_orca_context(cluster_mode=args.cluster_mode, cores=args.cores,
                       memory=args.memory, num_nodes=num_nodes, init_ray_on_spark=True)
 
-    tsdata_train, tsdata_valid, tsdata_test = get_nyc_taxi_tsdataset()
+    tsdata_train, tsdata_valid, tsdata_test = get_nyc_taxi_tsdataset(args)
 
     auto_lstm = AutoLSTM(input_feature_num=1,
                          output_target_num=1,

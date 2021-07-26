@@ -156,7 +156,16 @@ time11=$((now-start))
 echo "#12 start example for chronos autolstm_nyc_taxi"
 start=$(date "+%s")
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/autolstm_nyc_taxi.py
+if [ -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/nyc_taxi.csv]
+then
+    echo "nyc_taxi.csv already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/nyc_taxi.csv
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/autolstm_nyc_taxi.py \
+    --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/nyc_taxi.csv
 
 now=$(date "+%s")
 time12=$((now-start))
@@ -165,10 +174,20 @@ time12=$((now-start))
 echo "#13 start example for chronos autots_nyc_taxi"
 start=$(date "+%s")
 
-python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/autots_nyc_taxi.py
+if [ -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/nyc_taxi.csv]
+then
+    echo "nyc_taxi.csv already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/nyc_taxi.csv
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/autots_nyc_taxi.py \
+    --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/nyc_taxi.csv
 
 now=$(date "+%s")
 time13=$((now-start))
+
 
 echo "Ray example tests finished"
 echo "#1 orca rl_pong time used:$time1 seconds"
