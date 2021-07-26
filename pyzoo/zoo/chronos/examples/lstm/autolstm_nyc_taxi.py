@@ -28,7 +28,8 @@ from zoo.automl.common.metrics import Evaluator
 
 
 def get_data(args):
-    df = pd.read_csv(args.datadir, engine='python')
+    dataset = args.datadir if args.datadir else args.url
+    df = pd.read_csv(dataset)
     return df
 
 
@@ -78,8 +79,10 @@ if __name__ == '__main__':
                         help="Int. Number of cpus for each trial")
     parser.add_argument('--n_sampling', type=int, default=1,
                         help="Number of times to sample from the search_space.")
-    parser.add_argument('--datadir', type=str, default="https://raw.githubusercontent.com/numenta/"
-                        "NAB/v1.0/data/realKnownCause/nyc_taxi.csv",
+    parser.add_argument('--datadir', type=str,
+                        help="Use local csv file by default.")
+    parser.add_argument('--url', type=str, default="https://raw.githubusercontent.com/numenta/NAB"
+                        "/v1.0/data/realKnownCause/nyc_taxi.csv",
                         help="Download link of dataset.")
     args = parser.parse_args()
 
@@ -97,7 +100,7 @@ if __name__ == '__main__':
                          metric="mse",
                          hidden_dim=hp.grid_search([32, 64]),
                          layer_num=hp.randint(1, 3),
-                         lr=hp.choice([0.001, 0.003, 0.01]),
+                         lr=hp.choice([0.01, 0.03, 0.1]),
                          dropout=hp.uniform(0.1, 0.2),
                          logs_dir="/tmp/auto_lstm",
                          cpus_per_trial=args.cpus_per_trial,
