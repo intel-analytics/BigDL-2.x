@@ -69,15 +69,17 @@ class TSDataset:
         self._id_list = list(np.unique(self.df[self.id_col]))
         self._freq_certainty = False
         self._freq = None
-        self._is_pd_datetime = pd.api.types.is_datetime64_any_dtype(self.df[self.dt_col].dtypes)
+        self._is_pd_datetime = pd.api.types.is_datetime64_any_dtype(
+            self.df[self.dt_col].dtypes)
         if self._is_pd_datetime:
             if len(self.df[self.dt_col]) < 2:
                 self._freq = None
             else:
-                self._freq = self.df[self.dt_col].iloc[1] - self.df[self.dt_col].iloc[0]
-        self._is_aligned = hash(str(self.df[self.df[self.id_col] == self._id_list[0]]
-                                    [self.dt_col].tolist()*len(self._id_list))) == hash(
-                                        str(self.df[self.dt_col].to_list()))
+                self._freq = self.df[self.dt_col].iloc[1] - \
+                    self.df[self.dt_col].iloc[0]
+        self._is_aligned = sorted(self.df[self.df[self.id_col] == \
+            self._id_list[0]][self.dt_col].tolist()*len(self._id_list)) == \
+                sorted(self.df[self.dt_col].to_list()) if self._id_list else False
 
     @staticmethod
     def from_pandas(df,
@@ -271,7 +273,8 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
-        self.df = deduplicate_timeseries_dataframe(df=self.df, dt_col=self.dt_col)
+        self.df = deduplicate_timeseries_dataframe(
+            df=self.df, dt_col=self.dt_col)
         return self
 
     def resample(self, interval, start_time=None, end_time=None, merge_mode="mean"):
@@ -529,11 +532,19 @@ class TSDataset:
             else self.feature_col
         target_col = _to_list(target_col, "target_col") if target_col is not None \
             else self.target_col
+<<<<<<< HEAD
         if self.roll_additional_feature:
             additional_feature_col =\
                 list(set(feature_col).intersection(set(self.roll_additional_feature)))
             feature_col =\
                 list(set(feature_col) - set(self.roll_additional_feature))
+=======
+        if self.roll_addional_feature:
+            additional_feature_col =\
+                list(set(feature_col).intersection(set(self.roll_addional_feature)))
+            feature_col =\
+                list(set(feature_col) - set(self.roll_addional_feature))
+>>>>>>> change self._is_aligned
             self.roll_feature = feature_col + additional_feature_col
         else:
             additional_feature_col = None
@@ -575,7 +586,7 @@ class TSDataset:
                             list(range(feature_start_idx + i * num_feature_col,
                                        feature_start_idx + (i + 1) * num_feature_col))
                             for i in range(num_id)]
-            reindex_list = functools.reduce(lambda a, b: a + b, reindex_list)
+            reindex_list = functools.reduce(lambda a, b: a+b, reindex_list)
             sorted_index = sorted(range(len(reindex_list)), key=reindex_list.__getitem__)
             self.numpy_x = self.numpy_x[:, :, sorted_index]
 
@@ -754,7 +765,8 @@ class TSDataset:
                 if feature not in self.roll_additional_feature:
                     feature_col.append(feature)
         self.df[self.target_col + feature_col] = \
-            self.scaler.inverse_transform(self.df[self.target_col + feature_col])
+            self.scaler.inverse_transform(
+                self.df[self.target_col + feature_col])
         return self
 
     def unscale_numpy(self, data):
