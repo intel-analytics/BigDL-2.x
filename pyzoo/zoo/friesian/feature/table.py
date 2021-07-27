@@ -1314,7 +1314,7 @@ class FeatureTable(Table):
 
         result_tbl = FeatureTable(result_df)
         result_tbl = encode_target_(result_tbl, fold_targets, drop_cat=drop_cat,
-                                   drop_fold=drop_fold, fold_col=fold_col)
+                                    drop_fold=drop_fold, fold_col=fold_col)
 
         return result_tbl, all_targets
 
