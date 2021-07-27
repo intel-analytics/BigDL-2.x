@@ -98,8 +98,11 @@ class TensorboardXLogger():
         for key in config.keys():
             new_config[key] = {}
             for k, value in config[key].items():
-                if value is not None:
+                if type(value) in VALID_SUMMARY_TYPES and not np.isnan(value):
                     new_config[key][f'{self.name}/' + k] = value
+        for key in new_config.keys():
+            if new_config[key] == {}:
+                del new_config[key]
 
         new_metric = {}
         for key in metric.keys():
@@ -109,6 +112,9 @@ class TensorboardXLogger():
                     value = [value]
                 if type(value[-1]) in VALID_SUMMARY_TYPES and not np.isnan(value[-1]):
                     new_metric[key][f'{self.name}/' + k] = value
+        for key in new_metric.keys():
+            if new_metric[key] == {}:
+                del new_metric[key]
 
         # hparams log write
         for key in new_metric.keys():
