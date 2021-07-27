@@ -83,7 +83,7 @@ class XShardTSDataset:
         >>> # 01        2019-01-02    2.6     0                   2
         >>> from zoo.orca.data.pandas import read_csv
         >>> shard = read_csv(csv_path)
-        >>> tsdataset = TSDataset.from_pandas(shard, dt_col="datetime",
+        >>> tsdataset = TSDataset.from_xshard(shard, dt_col="datetime",
         >>>                                   target_col="value", id_col="id",
         >>>                                   extra_feature_col=["extra feature 1",
         >>>                                                      "extra feature 2"])
