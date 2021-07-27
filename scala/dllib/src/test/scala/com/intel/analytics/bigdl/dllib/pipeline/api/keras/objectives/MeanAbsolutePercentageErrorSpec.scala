@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.objectives
+package com.intel.analytics.bigdl.dllib.zooKeras.objectives
 
-import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.KerasBaseSpec
 
 class MeanAbsolutePercentageErrorSpec extends KerasBaseSpec{
 

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers.internal
+package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 
-import com.intel.analytics.bigdl.nn.{Input, Log}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Shape, T}
-import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Variable}
-import com.intel.analytics.zoo.pipeline.api.keras.models.Model
-import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.dllib.nn.{Input, Log}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.utils.{Shape, T}
+import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{AutoGrad, Variable}
+import com.intel.analytics.bigdl.dllib.zooKeras.models.Model
+import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 
 
@@ -60,7 +60,7 @@ class InternalMMSpec extends FlatSpec with Matchers {
     val m3 = new InternalMM[Double](true, true)
     val m4 = new InternalMM[Double]()
     val log = new Log[Double]()
-    com.intel.analytics.bigdl.tensor.Tensor
+    com.intel.analytics.bigdl.dllib.tensor.Tensor
     val input1 = Tensor[Double](3, 3).randn()
     val input2 = Tensor[Double](3, 3).randn()
     val input = T(1 -> input1, 2 -> input2)

@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.pipeline.api.net
+package com.intel.analytics.bigdl.dllib.inference.net
 
 
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{LayerException, T}
-import com.intel.analytics.zoo.tfpark.TFUtils
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.utils.{LayerException, T}
+import com.intel.analytics.bigdl.common.TFUtils
 import org.apache.commons.lang.StringUtils
 import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.SparkConf
@@ -30,7 +30,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "TFNet " should "work with different data types" in {
 
-    val resource = getClass().getClassLoader().getResource("tf")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/tf")
     val path = resource.getPath + "/" + "multi_type_inputs_outputs.pb"
 
     val inputs = Array("float_input:0", "double_input:0",
@@ -57,7 +57,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "TFNet " should "be able to load from a folder" in {
-    val resource = getClass().getClassLoader().getResource("tfnet")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/tfnet")
     val net = TFNet(resource.getPath)
     val result = net.forward(Tensor[Float](2, 4).rand())
 
@@ -66,7 +66,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "TFNet" should "should be serializable by java" in {
 
-    val resource = getClass().getClassLoader().getResource("tfnet")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/tfnet")
     val net = TFNet(resource.getPath)
     val input = Tensor[Float](2, 4).rand()
     val result = net.forward(input).toTensor[Float].clone()
@@ -77,7 +77,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "TFNet" should "should be able to work on shrunk tensor " in {
 
-    val resource = getClass().getClassLoader().getResource("tfnet")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/tfnet")
     val net = TFNet(resource.getPath)
     val input = Tensor[Float](4, 4).rand()
     input.resize(2, 4)
@@ -87,7 +87,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "TFNet " should "work for kryo serializer" in {
 
-    val resource = getClass().getClassLoader().getResource("tfnet")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/tfnet")
     val net = TFNet(resource.getPath)
     val input = Tensor[Float](2, 4).rand()
     val result = net.forward(input).toTensor[Float].clone()
@@ -101,7 +101,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "TFNet " should "check input number" in {
-    val resource = getClass().getClassLoader().getResource("tf")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/tf")
     val path = resource.getPath + "/" + "multi_type_inputs_outputs.pb"
 
     val inputs = Array("float_input:0", "double_input:0",
@@ -126,7 +126,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "TFNet " should "work with backward" in {
-    val resource = getClass().getClassLoader().getResource("tfnet_training")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/tfnet_training")
     val net = TFNet(resource.getPath)
     val input = Tensor[Float](2, 4).rand()
     val output = net.forward(input).toTensor[Float].clone()
@@ -136,7 +136,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "TFNet" should "work with saved_model with resource variable"  in {
-    val resource = getClass().getClassLoader().getResource("saved-model-resource")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/saved-model-resource")
     val tfnet = TFNet.fromSavedModel(resource.getPath,
       inputs = Array("flatten_input:0"), outputs = Array("dense_2/Softmax:0"))
     val inputData = Tensor.ones[Float](4, 28, 28, 1)
@@ -144,7 +144,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "TFNet" should "work with saved_model with non-resource variable"  in {
-    val resource = getClass().getClassLoader().getResource("saved-model-not-resource")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/saved-model-not-resource")
     val tfnet = TFNet.fromSavedModel(resource.getPath,
       inputs = Array("Placeholder:0"), outputs = Array("LeNet/fc4/BiasAdd:0"))
 
@@ -152,14 +152,14 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "TFNet" should "work with saved_model with signature"  in {
-    val resource = getClass().getClassLoader().getResource("saved-model-signature")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/saved-model-signature")
     val tfnet = TFNet.fromSavedModel(resource.getPath)
     val output = tfnet.forward(Tensor.ones[Float](4, 4)).toTensor[Float].clone()
     output.size() should be (Array(4, 10))
   }
 
   "TFNet" should "work with saved_model with signature and inputs"  in {
-    val resource = getClass().getClassLoader().getResource("saved-model-signature")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/saved-model-signature")
     val tfnet = TFNet.fromSavedModel(resource.getPath,
       inputs = Array("Placeholder:0"), outputs = null)
     val output = tfnet.forward(Tensor.ones[Float](4, 4)).toTensor[Float].clone()
@@ -167,7 +167,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "TFNet" should "work with saved_model with signature and outputs"  in {
-    val resource = getClass().getClassLoader().getResource("saved-model-signature")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/saved-model-signature")
     val tfnet = TFNet.fromSavedModel(resource.getPath,
       inputs = null,
       outputs = Array("dense/BiasAdd:0"))
@@ -178,7 +178,7 @@ class TFNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "TFNet" should "output TFTensor of String" in {
     TFNet
 
-    import com.intel.analytics.zoo.tfpark.TFTensorNumeric.NumericByteArray
+    import com.intel.analytics.bigdl.orca.tfpark.TFTensorNumeric.NumericByteArray
     val inputs = Array.tabulate(20) { i =>
       val strLen = (1 << i) + 2
       StringUtils.repeat("1", strLen)

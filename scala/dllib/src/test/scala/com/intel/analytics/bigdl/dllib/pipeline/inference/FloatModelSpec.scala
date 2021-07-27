@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.inference
+package com.intel.analytics.bigdl.dllib.inference
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectOutputStream}
 import java.util
 
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.common.CheckedObjectInputStream
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.CheckedObjectInputStream
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class FloatModelSpec extends FlatSpec with Matchers with BeforeAndAfter
@@ -43,7 +43,7 @@ class FloatModelSpec extends FlatSpec with Matchers with BeforeAndAfter
   val inputTableList2 = util.Arrays.asList(inputJTensor3, inputJTensor2, inputJTensor1)
   val inputTableList = util.Arrays.asList(inputTableList1, inputTableList2)
 
-  val resource = getClass().getClassLoader().getResource("models")
+  val resource = getClass().getClassLoader().getResource("zoo/resources/models")
   val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
   val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
 

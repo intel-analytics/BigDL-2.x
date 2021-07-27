@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.feature
+package com.intel.analytics.bigdl.dllib.feature
 
-import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.feature.common.{Relation, RelationPair, Relations}
+import com.intel.analytics.bigdl.common.NNContext
+import com.intel.analytics.bigdl.dllib.feature.common.{Relation, RelationPair, Relations}
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class RelationsSpec extends FlatSpec with Matchers with BeforeAndAfter {
-  val path: String = getClass.getClassLoader.getResource("qa").getPath
+  val path: String = getClass.getClassLoader.getResource("zoo/resources/qa").getPath
   val txtRelations: String = path + "/relations.txt"
   val csvRelations: String = path + "/relations.csv"
   val parquetRelations: String = path + "/relations.parquet"

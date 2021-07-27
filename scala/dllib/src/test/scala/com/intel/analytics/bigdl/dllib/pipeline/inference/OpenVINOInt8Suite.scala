@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.inference
+package com.intel.analytics.bigdl.dllib.inference
 
 import java.io.{File, FileInputStream}
 import java.util
 import java.util.{Arrays, Properties}
 
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import org.scalatest._
 import org.slf4j.LoggerFactory
-import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
-import com.intel.analytics.zoo.common.Utils
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.OpenCVMat
+import com.intel.analytics.bigdl.common.zooUtils
+import com.intel.analytics.bigdl.pipeline.inference.OpenVinoTest
 
 import scala.io.Source
 import scala.language.postfixOps
@@ -67,7 +68,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     System.clearProperty("bigdl.localMode")
     System.clearProperty("bigdl.coreNumber")
 
-    tmpDir = Utils.createTmpDir("ZooVino").toFile()
+    tmpDir = zooUtils.createTmpDir("ZooVino").toFile()
     val dir = new File(s"${tmpDir.getAbsolutePath}/OpenVinoInt8Spec").getCanonicalPath
 
     s"wget -nv -P $dir ${resnet_v1_50_url}.xml" !;

@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers
+package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
-import com.intel.analytics.bigdl.nn.Module
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
-import com.intel.analytics.zoo.pipeline.api.keras.layers.{Identity => ZIdentity}
-import com.intel.analytics.bigdl.nn.{Module, Identity => BIdentity}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape, T, Table}
-import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.dllib.nn.Module
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.{Identity => ZIdentity}
+import com.intel.analytics.bigdl.dllib.nn.{Module, Identity => BIdentity}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.utils.{RandomGenerator, Shape, T, Table}
+import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
+import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 
 class IdentitySpec extends KerasBaseSpec {

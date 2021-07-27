@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.net
+package com.intel.analytics.bigdl.dllib.inference.net
 
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.pipeline.api.Net
-import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.inference.Net
+import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
+import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 
 class GraphNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "GraphNet " should "return correct parameters" in {
-    val resource = getClass().getClassLoader().getResource("models")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/models")
     val path = resource.getPath + "/" + "bigdl"
     val model = Net.loadBigDL[Float](s"$path/bigdl_lenet.model")
 
@@ -35,7 +35,7 @@ class GraphNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "GraphNet" should "return correct submodules" in {
-    val resource = getClass().getClassLoader().getResource("models")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/models")
     val path = resource.getPath + "/" + "bigdl"
     val model = Net.loadBigDL[Float](s"$path/bigdl_lenet.model")
 
@@ -46,7 +46,7 @@ class GraphNetSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
 class GraphNetSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {
-    val resource = getClass().getClassLoader().getResource("models")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/models")
     val path = resource.getPath + "/" + "bigdl"
     val model = Net.loadBigDL[Float](s"$path/bigdl_lenet.model")
 

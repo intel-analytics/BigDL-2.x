@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.nnframes
+package com.intel.analytics.bigdl.dllib.nnframes
 
 import java.io.File
 
 import com.intel.analytics.bigdl.models.inception.Inception_v1
 import com.intel.analytics.bigdl.models.lenet.LeNet5
-import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.optim.{Adam, LBFGS, Loss, Trigger}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
-import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.zoo.feature.common._
-import com.intel.analytics.zoo.feature.image._
-import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.bigdl.dllib.nn._
+import com.intel.analytics.bigdl.dllib.optim.{Adam, LBFGS, Loss, Trigger}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.NumericFloat
+import com.intel.analytics.bigdl.common.utils.Engine
+import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
+import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.dllib.feature.common._
+import com.intel.analytics.bigdl.dllib.feature.image._
+import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.feature.{MinMaxScaler, VectorAssembler}
@@ -257,7 +257,7 @@ class NNClassifierSpec extends ZooSpecHelper {
   }
 
   "NNClasifier" should "support image FEATURE types" in {
-    val pascalResource = getClass.getClassLoader.getResource("pascal/")
+    val pascalResource = getClass.getClassLoader.getResource("zoo/resources/pascal/")
     val imageDF = NNImageReader.readImages(pascalResource.getFile, sc)
       .withColumn("label", lit(2.0f))
     assert(imageDF.count() == 1)
@@ -411,7 +411,7 @@ class NNClassifierSpec extends ZooSpecHelper {
 
   "XGBClassifierModel" should "work with sparse features" in {
     if (!(scala.util.Properties.isMac || scala.util.Properties.isWin)) {
-      val path = getClass.getClassLoader.getResource("XGBClassifier").getPath
+      val path = getClass.getClassLoader.getResource("zoo/resources/XGBClassifier").getPath
       val filePath = path + "/test.csv"
       val modelPath = path + "/XGBClassifer.bin"
       val spark = SparkSession.builder().getOrCreate()
@@ -428,7 +428,7 @@ class NNClassifierSpec extends ZooSpecHelper {
 
   "XGBClassifierModel" should "work with dense features" in {
     if (!(scala.util.Properties.isMac || scala.util.Properties.isWin)) {
-      val path = getClass.getClassLoader.getResource("XGBClassifier").getPath
+      val path = getClass.getClassLoader.getResource("zoo/resources/XGBClassifier").getPath
       val filePath = path + "/iris.data"
       val modelPath = path + "/XGBClassifer.bin"
 
@@ -449,7 +449,7 @@ class NNClassifierSpec extends ZooSpecHelper {
 
   "XGBRegressorModel" should "work" in {
     if (!(scala.util.Properties.isMac || scala.util.Properties.isWin)) {
-      val path = getClass.getClassLoader.getResource("XGBClassifier").getPath
+      val path = getClass.getClassLoader.getResource("zoo/resources/XGBClassifier").getPath
       val filePath = path + "/regressor.csv"
       val modelPath = path + "/xgbregressor0.model"
 
