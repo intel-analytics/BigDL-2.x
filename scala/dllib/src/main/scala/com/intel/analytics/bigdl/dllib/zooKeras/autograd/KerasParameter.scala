@@ -19,7 +19,6 @@ package com.intel.analytics.bigdl.dllib.zooKeras.autograd
 
 import com.intel.analytics.bigdl.dllib.nn.abstractnn._
 import com.intel.analytics.bigdl.dllib.keras.KerasLayer
-import com.intel.analytics.bigdl.dllib.zooKeras.autograd.InternalWithoutInput
 import com.intel.analytics.bigdl.dllib.nn.{InitializationMethod, RandomUniform, VariableFormat}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
