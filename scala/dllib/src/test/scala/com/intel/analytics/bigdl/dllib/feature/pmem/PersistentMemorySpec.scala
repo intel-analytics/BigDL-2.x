@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.feature.pmem
+package com.intel.analytics.bigdl.dllib.feature.pmem
 
-import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch, Sample}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.zoo.common.NNContext
-import com.intel.analytics.zoo.examples.inception.ImageNet2012
-import com.intel.analytics.zoo.feature.FeatureSet
-import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.bigdl.dllib.feature.dataset.{DistributedDataSet, MiniBatch, Sample}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.ImageFeature
+import com.intel.analytics.bigdl.common.utils.Engine
+import com.intel.analytics.bigdl.common.NNContext
+//import com.intel.analytics.zoo.examples.inception.ImageNet2012
+import com.intel.analytics.bigdl.dllib.feature.FeatureSet
+import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import org.apache.spark.SparkContext
 import org.scalatest.Ignore
 
@@ -113,22 +113,22 @@ class PersistentMemorySpec extends ZooSpecHelper {
     nativeArray.free()
   }
 
-  "cached imageset optanedc" should "be ok" in {
-
-    val dataPath = getClass.getClassLoader.getResource("pmem/mini_imagenet_seq").getPath
-
-    val imageNet = ImageNet2012(path = dataPath,
-      sc = sc,
-      imageSize = 224,
-      batchSize = 2,
-      nodeNumber = 1,
-      coresPerNode = 4,
-      classNumber = 1000,
-      memoryType = PMEM).asInstanceOf[DistributedDataSet[MiniBatch[Float]]]
-    val data = imageNet.data(train = false)
-    assert(data.count() == 3)
-    data.collect()
-  }
+//  "cached imageset optanedc" should "be ok" in {
+//
+//    val dataPath = getClass.getClassLoader.getResource("pmem/mini_imagenet_seq").getPath
+//
+//    val imageNet = ImageNet2012(path = dataPath,
+//      sc = sc,
+//      imageSize = 224,
+//      batchSize = 2,
+//      nodeNumber = 1,
+//      coresPerNode = 4,
+//      classNumber = 1000,
+//      memoryType = PMEM).asInstanceOf[DistributedDataSet[MiniBatch[Float]]]
+//    val data = imageNet.data(train = false)
+//    assert(data.count() == 3)
+//    data.collect()
+//  }
 
   "getting data in FeatureSet" should "be right" in {
     val samples = sc.range(1, 10).map(v =>

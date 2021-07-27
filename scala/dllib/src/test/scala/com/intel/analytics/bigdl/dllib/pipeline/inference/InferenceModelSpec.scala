@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.inference
+package com.intel.analytics.bigdl.dllib.inference
 
 import java.io._
 import java.util
 
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.common.CheckedObjectInputStream
-import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.CheckedObjectInputStream
+import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.reflect.io.Directory
@@ -40,7 +40,7 @@ class TestAutoScalingAbstractInferenceModel2(autoScalingEnabled: Boolean = true,
 
 class InferenceModelSpec extends FlatSpec with Matchers with BeforeAndAfter
   with InferenceSupportive {
-  val resource = getClass().getClassLoader().getResource("models")
+  val resource = getClass().getClassLoader().getResource("zoo/resources/models")
   val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
   val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
 

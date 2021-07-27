@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.nnframes
+package com.intel.analytics.bigdl.dllib.nnframes
 
-import com.intel.analytics.bigdl.utils.Engine
-import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
+import com.intel.analytics.bigdl.common.utils.Engine
+import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{Row, SQLContext}
 import org.opencv.core.CvType
@@ -28,8 +28,8 @@ class NNImageReaderSpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   var sc : SparkContext = _
   var sQLContext: SQLContext = _
-  val pascalResource = getClass.getClassLoader.getResource("pascal/")
-  private val imageNetResource = getClass.getClassLoader.getResource("imagenet/")
+  val pascalResource = getClass.getClassLoader.getResource("zoo/resources/pascal/")
+  private val imageNetResource = getClass.getClassLoader.getResource("zoo/resources/imagenet/")
 
   before {
     val conf = Engine.createSparkConf().setAppName("Test NNImageReader").setMaster("local[1]")
@@ -102,7 +102,7 @@ class NNImageReaderSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "read png image" should "work with image_codec" in {
-    val resource = getClass.getClassLoader.getResource("png/zoo.png")
+    val resource = getClass.getClassLoader.getResource("zoo/resources/png/zoo.png")
     val df = NNImageReader.readImages(resource.getFile, sc, imageCodec = 1)
     assert(df.count() == 1)
     val r = df.head().getAs[Row](0)
@@ -113,7 +113,7 @@ class NNImageReaderSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "read gray scale image" should "work" in {
-    val resource = getClass.getClassLoader.getResource("gray/gray.bmp")
+    val resource = getClass.getClassLoader.getResource("zoo/resources/gray/gray.bmp")
     val df = NNImageReader.readImages(resource.getFile, sc)
     assert(df.count() == 1)
     val r = df.head().getAs[Row](0)
@@ -125,7 +125,7 @@ class NNImageReaderSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "read gray scale image with resize" should "work" in {
-    val resource = getClass.getClassLoader.getResource("gray/gray.bmp")
+    val resource = getClass.getClassLoader.getResource("zoo/resources/gray/gray.bmp")
     val df = NNImageReader.readImages(resource.getFile, sc, -1, 300, 300)
     assert(df.count() == 1)
     val r = df.head().getAs[Row](0)
@@ -137,7 +137,7 @@ class NNImageReaderSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "read gray scale image with image_codec" should "work" in {
-    val resource = getClass.getClassLoader.getResource("gray/gray.bmp")
+    val resource = getClass.getClassLoader.getResource("zoo/resources/gray/gray.bmp")
     val df = NNImageReader.readImages(resource.getFile, sc, imageCodec = 1)
     assert(df.count() == 1)
     val r = df.head().getAs[Row](0)

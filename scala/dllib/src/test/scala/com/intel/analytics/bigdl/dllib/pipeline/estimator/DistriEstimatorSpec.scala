@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.pipeline.estimator
+package com.intel.analytics.bigdl.dllib.estimator
 
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.dataset.{DistributedDataSet, MiniBatch, Sample, SampleToMiniBatch}
-import com.intel.analytics.bigdl.nn._
-import com.intel.analytics.bigdl.optim.{LBFGS, Loss, SGD, Trigger}
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, RandomGenerator}
-import com.intel.analytics.zoo.common._
-import com.intel.analytics.zoo.feature.pmem.DISK_AND_DRAM
-import com.intel.analytics.zoo.feature.{DistributedDataSetWrapper, DistributedFeatureSet, FeatureSet}
-import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil
+import com.intel.analytics.bigdl.dllib.feature.dataset.{DistributedDataSet, MiniBatch, Sample, SampleToMiniBatch}
+import com.intel.analytics.bigdl.dllib.nn._
+import com.intel.analytics.bigdl.dllib.optim.{LBFGS, Loss, SGD, Trigger}
+import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.common.utils.{Engine, LoggerFilter, RandomGenerator}
+import com.intel.analytics.bigdl.common._
+import com.intel.analytics.bigdl.dllib.feature.pmem.DISK_AND_DRAM
+import com.intel.analytics.bigdl.dllib.feature.{DistributedDataSetWrapper, DistributedFeatureSet, FeatureSet}
+import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
+import com.intel.analytics.bigdl.dllib.zooKeras.models.InternalOptimizerUtil
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD

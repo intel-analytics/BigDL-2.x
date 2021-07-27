@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.feature
+package com.intel.analytics.bigdl.dllib.feature
 
-import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.transform.vision.image
-import com.intel.analytics.bigdl.transform.vision.image.MatToFloats._
-import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
-import com.intel.analytics.bigdl.transform.vision.image._
-import com.intel.analytics.zoo.common.{NNContext, Utils}
-import com.intel.analytics.zoo.feature.common.{BigDLAdapter, Preprocessing}
-import com.intel.analytics.zoo.feature.image._
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.DataFormat
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.MatToFloats._
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.OpenCVMat
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
+import com.intel.analytics.bigdl.common.{NNContext, zooUtils}
+import com.intel.analytics.bigdl.dllib.feature.common.{BigDLAdapter, Preprocessing}
+import com.intel.analytics.bigdl.dllib.feature.image._
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.spark.{SparkConf, SparkContext}
@@ -35,9 +35,9 @@ import scala.reflect.ClassTag
 
 
 class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
-  val resource = getClass.getClassLoader.getResource("imagenet/n04370456/")
-  val imagenet = getClass.getClassLoader.getResource("imagenet")
-  val gray = getClass.getClassLoader.getResource("gray")
+  val resource = getClass.getClassLoader.getResource("zoo/resources/imagenet/n04370456/")
+  val imagenet = getClass.getClassLoader.getResource("zoo/resources/imagenet")
+  val gray = getClass.getClassLoader.getResource("zoo/resources/gray")
   var sc : SparkContext = _
 
   before {
@@ -85,7 +85,7 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "Local ImageSet" should "work with bytes" in {
-    val files = Utils.listLocalFiles(resource.getFile)
+    val files = zooUtils.listLocalFiles(resource.getFile)
     val bytes = files.map { p =>
       FileUtils.readFileToByteArray(p)
     }
@@ -119,7 +119,7 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "ImageBytesToMat" should "work with png and jpg" in {
-    val path = getClass.getClassLoader.getResource("png").getFile
+    val path = getClass.getClassLoader.getResource("zoo/resources/png").getFile
     val image = ImageSet.read(path, sc)
     val image2 = ImageSet.read(path, sc)
     val jpg = image -> ImageBytesToMat(imageCodec = Imgcodecs.CV_LOAD_IMAGE_COLOR)
@@ -141,7 +141,7 @@ class FeatureSpec extends FlatSpec with Matchers with BeforeAndAfter {
   }
 
   "ImageMatToTensor" should "work with both NCHW and NHWC" in {
-    val resource = getClass.getClassLoader.getResource("pascal/")
+    val resource = getClass.getClassLoader.getResource("zoo/resources/pascal/")
     val data = ImageSet.read(resource.getFile)
     val nhwc = (data -> ImageMatToTensor[Float](format = DataFormat.NHWC)).toLocal()
       .array.head.apply[Tensor[Float]](ImageFeature.imageTensor)

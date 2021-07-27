@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.zoo.pipeline.api.keras.layers
+package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.zoo.pipeline.api.keras.models.Sequential
-import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.utils.Shape
+import com.intel.analytics.bigdl.dllib.zooKeras.models.Sequential
+import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
 
 
 class Convolution2DSpec extends KerasBaseSpec {

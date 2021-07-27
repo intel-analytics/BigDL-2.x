@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.serializer
+package com.intel.analytics.bigdl.dllib.zooKeras.serializer
 
 import java.io.File
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.utils.serializer.{ModuleLoader, ModulePersister}
-import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.common.utils.RandomGenerator._
+import com.intel.analytics.bigdl.common.utils.serializer.{ModuleLoader, ModulePersister}
+import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
 
@@ -29,7 +29,7 @@ class SerializerSpec extends SerializerSpecHelper {
   runTests(getExpectedTests())
 }
 
-private[zoo] abstract class ModuleSerializationTest
+private[bigdl] abstract class ModuleSerializationTest
   extends FlatSpec with Matchers with BeforeAndAfterAll{
 
   val postFix = "analytics-zoo"

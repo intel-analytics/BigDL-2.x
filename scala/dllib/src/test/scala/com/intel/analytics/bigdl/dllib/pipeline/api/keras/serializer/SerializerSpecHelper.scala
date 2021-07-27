@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.serializer
+package com.intel.analytics.bigdl.dllib.zooKeras.serializer
 
 import java.lang.reflect.Modifier
 
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
-import com.intel.analytics.zoo.pipeline.api.keras.layers.NoKeras2
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.NoKeras2
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.{ClasspathHelper, ConfigurationBuilder, FilterBuilder}
@@ -32,21 +32,21 @@ import scala.collection.mutable
 abstract class SerializerSpecHelper extends FlatSpec with Matchers with BeforeAndAfterAll{
 
   private val excluded = Set[String](
-    "com.intel.analytics.zoo.pipeline.api.autograd.LambdaTorch",
-    "com.intel.analytics.zoo.pipeline.api.net.TFNet",
-    "com.intel.analytics.zoo.pipeline.api.net.TorchModel",
-    "com.intel.analytics.zoo.pipeline.api.keras.layers.internal.Recurrent",
-    "com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalRecurrent",
-    "com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalCAddTable",
-    "com.intel.analytics.zoo.pipeline.api.autograd.InternalParameter",
-    "com.intel.analytics.zoo.pipeline.api.autograd.KerasParameter",
-    "com.intel.analytics.zoo.pipeline.api.autograd.KerasConstant",
-    "com.intel.analytics.zoo.pipeline.api.autograd.InternalConstant",
-    "com.intel.analytics.zoo.pipeline.api.keras.layers.internal.InternalRecurrent",
-    "com.intel.analytics.zoo.pipeline.api.keras.layers.InternalGetShape",
+    "com.intel.analytics.bigdl.dllib.zooKeras.autograd.LambdaTorch",
+    "com.intel.analytics.bigdl.dllib.inference.net.TFNet",
+    "com.intel.analytics.bigdl.dllib.inference.net.TorchModel",
+    "com.intel.analytics.bigdl.dllib.zooKeras.layers.internal.Recurrent",
+    "com.intel.analytics.bigdl.dllib.zooKeras.layers.internal.InternalRecurrent",
+    "com.intel.analytics.bigdl.dllib.zooKeras.layers.internal.InternalCAddTable",
+    "com.intel.analytics.bigdl.dllib.zooKeras.autograd.InternalParameter",
+    "com.intel.analytics.bigdl.dllib.zooKeras.autograd.KerasParameter",
+    "com.intel.analytics.bigdl.dllib.zooKeras.autograd.KerasConstant",
+    "com.intel.analytics.bigdl.dllib.zooKeras.autograd.InternalConstant",
+    "com.intel.analytics.bigdl.dllib.zooKeras.layers.internal.InternalRecurrent",
+    "com.intel.analytics.bigdl.dllib.zooKeras.layers.InternalGetShape",
     "com.intel.analytics.zoo.tfpark.TFTrainingHelper",
     "com.intel.analytics.zoo.tfpark.TFTrainingHelperV2",
-    "com.intel.analytics.zoo.pipeline.api.net.TFNetForInference",
+    "com.intel.analytics.bigdl.dllib.inference.net.TFNetForInference",
     "com.intel.analytics.zoo.tfpark.TFSubGraph")
 
   private val unRegularNameMapping = Map[String, String]()
@@ -65,7 +65,7 @@ abstract class SerializerSpecHelper extends FlatSpec with Matchers with BeforeAn
           val ins = Class.forName(clsWholeName)
           val testClass = ins.getConstructors()(0).newInstance()
           require(testClass.isInstanceOf[ModuleSerializationTest], s"$clsWholeName should be a " +
-            s"subclass of com.intel.analytics.zoo.pipeline.api.keras.layers.serializer." +
+            s"subclass of com.intel.analytics.bigdl.dllib.zooKeras.layers.serializer." +
             s"ModuleSerializationTest")
           testClass.asInstanceOf[ModuleSerializationTest].test()
         } catch {
@@ -80,7 +80,7 @@ abstract class SerializerSpecHelper extends FlatSpec with Matchers with BeforeAn
     val filterBuilder = new FilterBuilder()
     val reflectionsBuilder = new ConfigurationBuilder()
       .filterInputsBy(filterBuilder)
-    reflectionsBuilder.addUrls(ClasspathHelper.forPackage("com.intel.analytics.bigdl.nn"))
+    reflectionsBuilder.addUrls(ClasspathHelper.forPackage("com.intel.analytics.bigdl.dllib.nn"))
     getPackagesForTest().foreach {p =>
       reflectionsBuilder.addUrls(ClasspathHelper.forPackage(p))
     }

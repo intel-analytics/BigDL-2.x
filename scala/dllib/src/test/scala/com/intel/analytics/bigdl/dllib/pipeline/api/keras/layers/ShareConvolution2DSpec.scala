@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers
+package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
-import com.intel.analytics.bigdl.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.nn.{ReLU, SpatialShareConvolution, Sequential => BSequential}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
+import com.intel.analytics.bigdl.dllib.nn.{ReLU, SpatialShareConvolution, Sequential => BSequential}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.utils.Shape
+import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
+import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
 
 
 class ShareConvolution2DSpec extends ZooSpecHelper {

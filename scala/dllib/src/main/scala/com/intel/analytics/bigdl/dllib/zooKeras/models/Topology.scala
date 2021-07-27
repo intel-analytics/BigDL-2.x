@@ -1043,7 +1043,7 @@ private[bigdl] object InternalOptimizerUtil {
       args: Object*)(
       implicit ev: TensorNumeric[T]): (RDD[DistriOptimizer.CacheV1[T]], ModelBroadcast[T]) = {
     KerasUtils.invokeMethodWithEv(DistriOptimizer,
-      "com$intel$analytics$bigdl$optim$DistriOptimizer$$initThreadModels",
+      "com$intel$analytics$bigdl$dllib$optim$DistriOptimizer$$initThreadModels",
       args: _*).asInstanceOf[(RDD[DistriOptimizer.CacheV1[T]], ModelBroadcast[T])]
   }
 

@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api
+package com.intel.analytics.bigdl.dllib.inference
 
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.{CAddTable, SpatialCrossMapLRN}
-import com.intel.analytics.bigdl.optim.L2Regularizer
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape, T}
-import com.intel.analytics.bigdl.utils.caffe.{CaffeLoader => BigDLCaffeLoader}
-import com.intel.analytics.zoo.models.recommendation.NeuralCF
-import com.intel.analytics.zoo.pipeline.api.autograd.Variable
-import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.layers._
-import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Sequential, Model => ZModel}
-import com.intel.analytics.zoo.pipeline.api.net.TFNet
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.nn.{CAddTable, SpatialCrossMapLRN}
+import com.intel.analytics.bigdl.dllib.optim.L2Regularizer
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.utils.{RandomGenerator, Shape, T}
+import com.intel.analytics.bigdl.common.utils.caffe.{CaffeLoader => BigDLCaffeLoader}
+import com.intel.analytics.bigdl.dllib.zooKeras.autograd.Variable
+import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
+import com.intel.analytics.bigdl.dllib.zooKeras.layers._
+import com.intel.analytics.bigdl.dllib.zooKeras.models.{KerasNet, Sequential, Model => ZModel}
+import com.intel.analytics.bigdl.dllib.inference.net.TFNet
 
 
 class NetSpec extends ZooSpecHelper{
@@ -39,7 +38,7 @@ class NetSpec extends ZooSpecHelper{
 
   "Zoo CaffeLoader and BigDL CaffeLoader" should "have the same result" in {
 
-    val resource = getClass().getClassLoader().getResource("models")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/models")
     val path = resource.getPath + "/" + "caffe"
     val ww = s"$path/test_persist.caffemodel"
     val dd = s"$path/test_persist.prototxt"
@@ -57,7 +56,7 @@ class NetSpec extends ZooSpecHelper{
   }
 
   "Load Caffe model" should "work properly" in {
-    val resource = getClass().getClassLoader().getResource("models")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/models")
     val path = resource.getPath + "/" + "caffe"
     val model = Net.loadCaffe[Float](
       s"$path/test_persist.prototxt", s"$path/test_persist.caffemodel")
@@ -89,7 +88,7 @@ class NetSpec extends ZooSpecHelper{
   }
 
   "Load BigDL model" should "work properly" in {
-    val resource = getClass().getClassLoader().getResource("models")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/models")
     val path = resource.getPath + "/" + "bigdl"
     val model = Net.loadBigDL[Float](s"$path/bigdl_lenet.model")
     val newModel = model.newGraph("reshape2")
@@ -112,7 +111,7 @@ class NetSpec extends ZooSpecHelper{
   }
 
   "net load model" should "work properly" in {
-    val resource = getClass().getClassLoader().getResource("models")
+    val resource = getClass().getClassLoader().getResource("zoo/resources/models")
     val path = resource.getPath + "/" + "zoo_keras"
 
     val seq = Net.load[Float](s"$path/small_seq.model")

@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.keras.layers
+package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
-import com.intel.analytics.bigdl.nn.Sum
-import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.nn.keras.KerasLayer
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.utils.{Shape, T}
-import com.intel.analytics.zoo.pipeline.api.autograd.Variable
-import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
-import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
-import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.dllib.nn.Sum
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+import com.intel.analytics.bigdl.dllib.keras.KerasLayer
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.common.utils.RandomGenerator._
+import com.intel.analytics.bigdl.common.utils.{Shape, T}
+import com.intel.analytics.bigdl.dllib.zooKeras.autograd.Variable
+import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
+import com.intel.analytics.bigdl.dllib.zooKeras.models.{Model, Sequential}
+import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
 
 class TransformerLayerSpec extends ZooSpecHelper {
   "TransformerLayer" should "be able to work" in {

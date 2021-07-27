@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.api.autograd
+package com.intel.analytics.bigdl.dllib.zooKeras.autograd
 
-import com.intel.analytics.bigdl.utils.{Shape, T}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad => A}
-import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasBaseSpec
-import com.intel.analytics.zoo.pipeline.api.keras.models.Model
+import com.intel.analytics.bigdl.common.utils.{Shape, T}
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{AutoGrad => A}
+import com.intel.analytics.bigdl.dllib.zooKeras.layers.KerasBaseSpec
+import com.intel.analytics.bigdl.dllib.zooKeras.models.Model
 
 class VariableSpec extends KerasBaseSpec {
 
