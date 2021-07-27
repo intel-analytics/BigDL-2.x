@@ -19,6 +19,7 @@ import java.nio._
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.common.zooUtils
+import com.intel.analytics.bigdl.common.TFUtils
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.bigdl.dllib.inference.net.TFNet
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}

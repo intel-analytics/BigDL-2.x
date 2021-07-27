@@ -23,7 +23,8 @@ import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.common.utils.T
 import com.intel.analytics.bigdl.common.zooUtils
 import com.intel.analytics.bigdl.dllib.inference.Predictable
-import com.intel.analytics.bigdl.orca.tfpark.{GraphRunner, TFUtils}
+import com.intel.analytics.bigdl.orca.tfpark.{GraphRunner}
+import com.intel.analytics.bigdl.common.TFUtils
 import org.slf4j.LoggerFactory
 import org.tensorflow.framework.{GraphDef, MetaGraphDef}
 import org.tensorflow.op.Ops

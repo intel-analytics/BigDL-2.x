@@ -16,6 +16,7 @@
 
 package com.intel.analytics.bigdl.orca.tfpark
 
+import com.intel.analytics.bigdl.common.TFUtils
 import com.intel.analytics.bigdl.dllib.feature.dataset.{DistributedDataSet, MiniBatch}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.{DistributedDataSetWrapper, DistributedFeatureSet}
@@ -27,6 +28,40 @@ import org.tensorflow.DataType
 
 import com.intel.analytics.bigdl.orca.tfpark.TFTensorNumeric.NumericByteArray
 
+
+case class SessionConfig(intraOpParallelismThreads: Int = 1,
+                         interOpParallelismThreads: Int = 1,
+                         usePerSessionThreads: Boolean = true) {
+
+  // Ideally we should use the following code, however, importing tensorflow proto
+  // will conflict with bigdl.
+
+  //  val defaultSessionConfig = ConfigProto.newBuilder()
+  //    .setInterOpParallelismThreads(1)
+  //    .setIntraOpParallelismThreads(1)
+  //    .setUsePerSessionThreads(true)
+  //    .build().toByteArray
+
+  def toByteArray(): Array[Byte] = {
+    val intraSeq = if (intraOpParallelismThreads > 0) {
+      Seq(16, intraOpParallelismThreads)
+    } else {
+      Seq[Int]()
+    }
+    val interSeq = if (interOpParallelismThreads > 0) {
+      Seq(40, interOpParallelismThreads)
+    } else {
+      Seq[Int]()
+    }
+    val perSessSeq = if (usePerSessionThreads) {
+      Seq(72, 1)
+    } else {
+      Seq[Int]()
+    }
+
+    (intraSeq ++ interSeq ++ perSessSeq).map(_.toByte).toArray
+  }
+}
 
 class TFDataFeatureSet(private val graphRDD: RDD[Array[Byte]],
                        private val initIteratorOp: String,

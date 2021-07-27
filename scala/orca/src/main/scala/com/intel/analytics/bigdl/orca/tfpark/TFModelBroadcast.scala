@@ -19,6 +19,7 @@ package com.intel.analytics.bigdl.orca.tfpark
 import java.io._
 
 import com.intel.analytics.bigdl.Module
+import com.intel.analytics.bigdl.common.TFUtils
 import com.intel.analytics.bigdl.models.utils.{CachedModels, ModelBroadcast, ModelInfo}
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.{MklDnnLayer, TensorMMap}

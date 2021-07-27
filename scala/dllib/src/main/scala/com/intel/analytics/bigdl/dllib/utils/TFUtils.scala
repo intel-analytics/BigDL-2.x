@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.orca.tfpark
+package com.intel.analytics.bigdl.common
 
 import java.io.{File, FileInputStream, InputStream}
 import java.nio._
