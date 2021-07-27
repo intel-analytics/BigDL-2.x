@@ -203,10 +203,9 @@ def init_orca_context(cluster_mode=None, cores=2, memory="2g", num_nodes=1,
     if activate_sc:
         if cluster_mode is not None:
             warnings.warn("cluster_mode is determined by the existing SparkContext", Warning)
-        conf = SparkContext().getConf().getAll()
-        spark_conf = SparkConf().setAll(conf)
+        conf = SparkConf()
         from zoo import init_nncontext
-        sc = init_nncontext(conf=spark_conf, spark_log_level="WARN", redirect_spark_log=True)
+        sc = init_nncontext(conf=conf, spark_log_level="WARN", redirect_spark_log=True)
     else:
         cluster_mode = "local" if cluster_mode is None else cluster_mode
         if cluster_mode == "spark-submit":
