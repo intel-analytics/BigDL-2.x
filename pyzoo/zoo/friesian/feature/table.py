@@ -1152,8 +1152,8 @@ class FeatureTable(Table):
         return tuple(tbl_list)
 
     def target_encode(self, cat_cols, target_cols, target_mean=None, smooth=20, kfold=2,
-                      fold_seed=None, fold_col="__fold__", drop_cat=True,
-                      drop_fold=True, out_cols=None, name_sep="_"):
+                      fold_seed=None, fold_col="__fold__", drop_cat=True, drop_fold=True,
+                      out_cols=None):
         """
         For each categorical column / column group in cat_cols, calculate the mean of target
         columns in target_cols and encode the Table with mean.
@@ -1181,8 +1181,6 @@ class FeatureTable(Table):
                in the same position of cat_cols. Each element in the inner list corresponds to the
                target column in the same position of target_cols. If it is None, the output
                column will be cat_col + "_te_" + target_col. Default is None.
-        :param name_sep: str. When out_cols is None, for group of categorical columns, concatenate
-               them with name_sep to generate output columns. Default is "_".
 
         :return: A new target encoded FeatureTable, a list of TargetCodes which contains mean
                  statistics of the whole Table.
@@ -1202,7 +1200,7 @@ class FeatureTable(Table):
             list(map(lambda x: x[0] + " of type " + x[1], nonnumeric_target_col_type)))
 
         if out_cols is None:
-            out_cols = [[gen_cols_name(cat_col, name_sep) + "_te_" + target_col
+            out_cols = [[gen_cols_name(cat_col, "_") + "_te_" + target_col
                          for target_col in target_cols] for cat_col in cat_cols]
         else:
             assert isinstance(out_cols, list), "out_cols should be a list of list of str"
@@ -1251,7 +1249,7 @@ class FeatureTable(Table):
         def gen_target_code(cat_out):
             cat_col = cat_out[0]
             out_col_list = cat_out[1]
-            cat_col_name = gen_cols_name(cat_col, name_sep)
+            cat_col_name = gen_cols_name(cat_col, "_")
 
             sum_list = [F.sum(target_col).alias(cat_col_name + "_all_sum_" + target_col)
                         for target_col in target_cols]

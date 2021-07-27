@@ -892,8 +892,7 @@ class TestTable(TestCase):
             fold_col=fold_col,
             drop_cat=False,
             drop_fold=False,
-            out_cols=out_cols,
-            name_sep=".")
+            out_cols=out_cols)
         assert fold_col in target_tbl2.df.columns, "fold_col should be in target_tbl2"
         assert len(target_list2) == len(cat_cols), "len(target_list2) = len(cat_cols)"
         for i in range(len(cat_cols)):
