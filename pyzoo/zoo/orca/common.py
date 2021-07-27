@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+from multiprocessing import Value
 import os
 from zoo import ZooContext
 
@@ -201,26 +202,25 @@ def init_orca_context(cluster_mode=None, cores=2, memory="2g", num_nodes=1,
     activate_sc = SparkContext._active_spark_context is not None
     if activate_sc:
         if cluster_mode is not None:
-            warnings.warn("Using an Existing SparkContext, cluster_mode is useless now", Warning)
+            warnings.warn("cluster_mode is determined by the existing SparkContext", Warning)
         conf = SparkContext().getConf().getAll()
         from zoo import init_nncontext
         sc = init_nncontext(conf=conf, spark_log_level="WARN", redirect_spark_log=True)
     else:
         cluster_mode = "local" if cluster_mode is None else cluster_mode
-        if cluster_mode == "local":
+        if cluster_mode == "spark-submit":
+            raise ValueError("spark-submit has been deprecated")
+        elif cluster_mode == "local":
             assert num_nodes == 1, "For Spark local mode, num_nodes should be 1"
             os.environ["SPARK_DRIVER_MEMORY"] = memory
             if "python_location" in kwargs:
                 spark_args["python_location"] = kwargs["python_location"]
             from zoo import init_spark_on_local
             sc = init_spark_on_local(cores, **spark_args) 
-        elif cluster_mode == "spark-submit":
-            from zoo import init_nncontext
-            sc = init_nncontext(**spark_args)
         elif cluster_mode.startswith("yarn"):  # yarn or yarn-client
             if cluster_mode == "yarn-cluster":
-                raise ValueError('For yarn-cluster mode, please set cluster_mode to "spark-submit" '
-                                'and submit the application via spark-submit instead')
+                raise ValueError('For yarn-cluster mode, '
+                                'please submit the application via spark-submit instead')
             hadoop_conf = os.environ.get("HADOOP_CONF_DIR")
             if not hadoop_conf:
                 assert "hadoop_conf" in kwargs,\
@@ -241,8 +241,8 @@ def init_orca_context(cluster_mode=None, cores=2, memory="2g", num_nodes=1,
                                     executor_memory=memory, **spark_args)
         elif cluster_mode.startswith("k8s"):  # k8s or k8s-client
             if cluster_mode == "k8s-cluster":
-                raise ValueError('For k8s-cluster mode, please set cluster_mode to "spark-submit" '
-                                'and submit the application via spark-submit instead')
+                raise ValueError('For k8s-cluster mode, '
+                                'please submit the application via spark-submit instead')
             assert "master" in kwargs, "Please specify master for k8s-client mode"
             assert "container_image" in kwargs, "Please specify container_image for k8s-client mode"
             for key in ["driver_cores", "driver_memory", "extra_executor_memory_for_ray",
@@ -251,9 +251,9 @@ def init_orca_context(cluster_mode=None, cores=2, memory="2g", num_nodes=1,
                     spark_args[key] = kwargs[key]
             from zoo import init_spark_on_k8s
             sc = init_spark_on_k8s(master=kwargs["master"],
-                                container_image=kwargs["container_image"],
-                                num_executors=num_nodes, executor_cores=cores,
-                                executor_memory=memory, **spark_args)
+                                   container_image=kwargs["container_image"],
+                                   num_executors=num_nodes, executor_cores=cores,
+                                   executor_memory=memory, **spark_args)
         elif cluster_mode == "standalone":
             for key in ["driver_cores", "driver_memory", "extra_executor_memory_for_ray",
                         "extra_python_lib", "jars", "master", "python_location", "enable_numa_binding"]:
@@ -261,9 +261,9 @@ def init_orca_context(cluster_mode=None, cores=2, memory="2g", num_nodes=1,
                     spark_args[key] = kwargs[key]
             from zoo import init_spark_standalone
             sc = init_spark_standalone(num_executors=num_nodes, executor_cores=cores,
-                                    executor_memory=memory, **spark_args)
+                                       executor_memory=memory, **spark_args)
         else:
-            raise ValueError("cluster_mode can only be local, yarn-client, standalone or spark-submit, "
+            raise ValueError("cluster_mode can only be local, yarn-client or standalone, "
                             "but got: %s".format(cluster_mode))
     ray_args = {}
     for key in ["redis_port", "password", "object_store_memory", "verbose", "env",
