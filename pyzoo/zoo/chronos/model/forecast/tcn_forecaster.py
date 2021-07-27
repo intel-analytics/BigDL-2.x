@@ -59,11 +59,11 @@ class TCNForecaster(Forecaster):
                  optimizer="Adam",
                  loss="mse",
                  lr=0.001,
+                 metrics=["mse"],
                  seed=None,
                  distributed=False,
                  workers_per_node=1,
-                 distributed_backend="torch_distributed",
-                 distributed_matrics=["mse"]):
+                 distributed_backend="torch_distributed"):
         """
         Build a TCN Forecast Model.
 
@@ -90,6 +90,11 @@ class TCNForecaster(Forecaster):
                defaults to "mse". You can choose from "mse", "mae" and
                "huber_loss".
         :param lr: Specify the learning rate. This value defaults to 0.001.
+        :param metrics: A list contains metrics for evaluating the quality of
+               forecasting. You may only choose from "mse" and "mae" for a
+               distributed forecaster. You may choose from "mse", "me", "mae",
+               "mse","rmse","msle","r2", "mpe", "mape", "mspe", "smape", "mdape"
+               and "smdape" for a non-distributed forecaster.
         :param seed: int, random seed for training. This value defaults to None.
         :param distributed: bool, if init the forecaster in a distributed
                fashion. If True, the internal model will use an Orca Estimator.
@@ -100,9 +105,6 @@ class TCNForecaster(Forecaster):
                distributed is set to True.
         :param distributed_backend: str, select from "torch_distributed" or
                "horovod". The value defaults to "torch_distributed".
-        :param distributed_matrics: list, distributed metrics for evaluation
-               and training. The matrics is only effective when distributed
-               is set to True. Only "mse" and "mae" is supported currently.
         """
         # random seed setting
         set_pytorch_seed(seed)
@@ -123,6 +125,7 @@ class TCNForecaster(Forecaster):
             "optim": optimizer,
             "dropout": dropout
         }
+        self.metrics = metrics
 
         # create internal implementation
         self.internal = None
@@ -137,7 +140,7 @@ class TCNForecaster(Forecaster):
                                                  optimizer=optimizer_creator,
                                                  loss=loss_creator,
                                                  metrics=[ORCA_METRICS[name]()
-                                                          for name in distributed_matrics],
+                                                          for name in self.metrics],
                                                  backend=distributed_backend,
                                                  use_tqdm=True,
                                                  config={"lr": lr},
@@ -145,7 +148,7 @@ class TCNForecaster(Forecaster):
         else:
             self.internal = TCNPytorch(check_optional_config=False)
 
-    def fit(self, x, y, validation_data=None, epochs=1, metric="mse", batch_size=32):
+    def fit(self, x, y, epochs=1, batch_size=32):
         # TODO: give an option to close validation during fit to save time.
         """
         Fit(Train) the forecaster.
@@ -154,20 +157,13 @@ class TCNForecaster(Forecaster):
                lookback and feature_dim should be the same as past_seq_len and input_feature_num.
         :param y: A numpy array with shape (num_samples, horizon, target_dim).
                horizon and target_dim should be the same as future_seq_len and output_feature_num.
-        :param validation_data: A tuple (x_valid, y_valid) as validation data. Default to None. The
-               value is only effective if the forecaster is in a non-distributed mode. If the
-               forecaster is distributed or validation_data is set to None, forecaster will
-               evaluate on the training data.
         :param epochs: Number of epochs you want to train. The value defaults to 1.
-        :param metric: The metric for validation on validation_data. The value is only effective
-               if the forecaster is in a non-distributed mode. The value defaults to "mse".
         :param batch_size: Number of batch size you want to train. The value defaults to 32.
 
         :return: Evaluation results on validation data.
         """
         # input check
-        if validation_data is None:
-            validation_data = (x, y)
+        validation_data = (x, y)
         self.config["batch_size"] = batch_size
         self._check_data(x, y)
 
@@ -178,10 +174,10 @@ class TCNForecaster(Forecaster):
                                      batch_size=batch_size)
         else:
             return self.internal.fit_eval(data=(x, y),
-                                        validation_data=validation_data,
-                                        epochs=epochs,
-                                        metric=metric,
-                                        **self.config)
+                                          validation_data=validation_data,
+                                          epochs=epochs,
+                                          metric=self.metrics[0],  # only use the first metric
+                                          **self.config)
 
     def _check_data(self, x, y):
         assert self.data_config["past_seq_len"] == x.shape[-2], \
@@ -214,8 +210,10 @@ class TCNForecaster(Forecaster):
         if self.distributed:
             # map input to a xshard
             x = XShards.partition(x)
+
             def transform_to_dict(train_data):
                 return {"x": train_data}
+
             x = x.transform_shard(transform_to_dict)
             # predict with distributed fashion
             yhat = self.internal.predict(x, batch_size=batch_size)
@@ -251,7 +249,7 @@ class TCNForecaster(Forecaster):
             raise RuntimeError("You must call fit or restore first before calling predict!")
         return self.internal.predict_with_onnx(x, batch_size=batch_size, dirname=dirname)
 
-    def evaluate(self, x, y, batch_size=32, metrics=['mse'], multioutput="raw_values"):
+    def evaluate(self, x, y, batch_size=32, multioutput="raw_values"):
         """
         Evaluate using a trained forecaster.
 
@@ -269,8 +267,6 @@ class TCNForecaster(Forecaster):
         :param y: A numpy array with shape (num_samples, horizon, target_dim).
         :param batch_size: evaluate batch size. The value will not affect evaluate
                result but will affect resources cost(e.g. memory and time).
-        :param metrics: A list contains metrics for test/valid data. The param is only effective
-               when the forecaster is a non-distributed version.
         :param multioutput: Defines aggregating of multiple output values.
                String in ['raw_values', 'uniform_average']. The value defaults to
                'raw_values'.The param is only effective when the forecaster is a
@@ -284,12 +280,11 @@ class TCNForecaster(Forecaster):
         else:
             if not self.internal.model_built:
                 raise RuntimeError("You must call fit or restore first before calling evaluate!")
-            return self.internal.evaluate(x, y, metrics=metrics,
+            return self.internal.evaluate(x, y, metrics=self.metrics,
                                           multioutput=multioutput, batch_size=batch_size)
 
     def evaluate_with_onnx(self, x, y,
                            batch_size=32,
-                           metrics=['mse'],
                            dirname=None,
                            multioutput="raw_values"):
         """
@@ -310,7 +305,6 @@ class TCNForecaster(Forecaster):
         :param y: A numpy array with shape (num_samples, horizon, target_dim).
         :param batch_size: evaluate batch size. The value will not affect evaluate
                result but will affect resources cost(e.g. memory and time).
-        :param metrics: A list contains metrics for test/valid data.
         :param dirname: The directory to save onnx model file. This value defaults
                to None for no saving file.
         :param multioutput: Defines aggregating of multiple output values.
@@ -326,7 +320,7 @@ class TCNForecaster(Forecaster):
         if not self.internal.model_built:
             raise RuntimeError("You must call fit or restore first before calling evaluate!")
         return self.internal.evaluate_with_onnx(x, y,
-                                                metrics=metrics,
+                                                metrics=self.metrics,
                                                 dirname=dirname,
                                                 multioutput=multioutput,
                                                 batch_size=batch_size)
@@ -354,7 +348,7 @@ class TCNForecaster(Forecaster):
             self.internal.load(checkpoint_file)
         else:
             self.internal.restore(checkpoint_file)
-    
+
     def to_local(self):
         """
         Transform a distributed model to a local (non-distributed) one.

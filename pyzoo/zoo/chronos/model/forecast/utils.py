@@ -24,8 +24,8 @@ def np_to_creator(data):
     def data_creator(config, batch_size):
             return DataLoader(TensorDataset(torch.from_numpy(data[0]).float(),
                                             torch.from_numpy(data[1]).float()),
-                                batch_size=batch_size,
-                                shuffle=True)
+                              batch_size=batch_size,
+                              shuffle=True)
     return data_creator
 
 
