@@ -16,8 +16,6 @@
 
 package com.intel.analytics.bigdl.common
 
-import com.intel.analytics.bigdl.common.zooUtils
-import com.intel.analytics.bigdl.common.TFUtils
 import com.intel.analytics.bigdl.orca.tfpark.GraphRunner
 import org.tensorflow.DataType
 
