@@ -125,20 +125,19 @@ def gen_cols_name(columns, name_sep="_"):
         raise ValueError("item should be either str or list of str")
 
 
-def encode_target_(df, targets, target_cols=None, drop_cat=True, drop_fold=True, fold_col=None):
-    result_df = df
+def encode_target_(tbl, targets, target_cols=None, drop_cat=True, drop_fold=True, fold_col=None):
     for target_code in targets:
         cat_col = target_code.cat_col
         out_target_mean = target_code.out_target_mean
 
-        join_df = target_code.df
+        join_tbl = tbl._clone(target_code.df)
 
         # (keys of out_target_mean) should include (output columns)
         output_columns = list(filter(lambda x:
                                      ((isinstance(cat_col, str) and x != cat_col) or
                                       (isinstance(cat_col, list) and x not in cat_col)) and
                                      (fold_col is not None and x != fold_col),
-                                     join_df.columns))
+                                     join_tbl.df.columns))
         for column in output_columns:
             assert column in out_target_mean, column + " should be in out_target_mean"
             column_mean = out_target_mean[column][1]
@@ -151,35 +150,33 @@ def encode_target_(df, targets, target_cols=None, drop_cat=True, drop_fold=True,
             new_out_target_mean = {}
             for out_col, target_mean in out_target_mean.items():
                 if target_mean[0] not in target_cols:
-                    join_df = join_df.drop(out_col)
+                    join_tbl = join_tbl.drop(out_col)
                 else:
                     new_out_target_mean[out_col] = target_mean
             out_target_mean = new_out_target_mean
 
         if fold_col is None:
-            result_df = result_df.join(join_df, cat_col, how="left")
+            tbl = tbl.join(join_tbl, on=cat_col, how="left")
         else:
             if isinstance(cat_col, str):
-                result_df = result_df.join(join_df, [cat_col, fold_col],
-                                           how="left")
+                tbl = tbl.join(join_tbl, on=[cat_col, fold_col], how="left")
             else:
-                result_df = result_df.join(join_df, cat_col + [fold_col],
-                                           how="left")
+                tbl = tbl.join(join_tbl, on=cat_col + [fold_col], how="left")
 
         # for new columns, fill na with mean
         for out_col, target_mean in out_target_mean.items():
-            if out_col in result_df.columns:
-                result_df = result_df.fillna(target_mean[1], out_col)
+            if out_col in tbl.df.columns:
+                tbl = tbl.fillna(target_mean[1], out_col)
 
     if drop_cat:
         for target_code in targets:
             if isinstance(target_code.cat_col, str):
-                result_df = result_df.drop(target_code.cat_col)
+                tbl = tbl.drop(target_code.cat_col)
             else:
-                result_df = result_df.drop(*target_code.cat_col)
+                tbl = tbl.drop(*target_code.cat_col)
 
     if drop_fold:
         if fold_col is not None:
-            result_df = result_df.drop(fold_col)
+            tbl = tbl.drop(fold_col)
 
-    return result_df
+    return tbl

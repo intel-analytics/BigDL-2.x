@@ -1314,10 +1314,11 @@ class FeatureTable(Table):
         fold_targets = [t[0] for t in targets]
         all_targets = [t[1] for t in targets]
 
-        result_df = encode_target_(result_df, fold_targets, drop_cat=drop_cat,
+        result_tbl = FeatureTable(result_df)
+        result_tbl = encode_target_(result_tbl, fold_targets, drop_cat=drop_cat,
                                    drop_fold=drop_fold, fold_col=fold_col)
 
-        return FeatureTable(result_df), all_targets
+        return result_tbl, all_targets
 
     def encode_target(self, targets, target_cols=None, drop_cat=True):
         """
@@ -1350,9 +1351,11 @@ class FeatureTable(Table):
                 target_cols = [target_cols]
             assert isinstance(target_cols, list), "target_cols should be str or list"
 
-        result_df = encode_target_(self.df, targets, target_cols=target_cols, drop_cat=drop_cat)
+        result_tbl = FeatureTable(self.df)
+        result_tbl = encode_target_(result_tbl, targets, target_cols=target_cols,
+                                    drop_cat=drop_cat)
 
-        return FeatureTable(result_df)
+        return result_tbl
 
 
 class StringIndex(Table):
