@@ -51,6 +51,7 @@
         <data-store-url>http://download.tensorflow.org</data-store-url>
         <inner-ftp-uri>http://10.239.45.10:8081/repository/raw</inner-ftp-uri>
         <tf-shade>bushade</tf-shade>
+        <grpc.scope>compile</grpc.scope>
         <grpc.version>1.37.0</grpc.version>
     </properties>
 
@@ -204,6 +205,7 @@
             <properties>
                 <bigdl-scope>provided</bigdl-scope>
                 <tf-shade>org.tensorflow</tf-shade>
+                <grpc.scope>provided</grpc.scope>
             </properties>
         </profile>
 
@@ -634,16 +636,19 @@
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
             <version>${grpc.version}</version>
+            <scope>${grpc.scope}</scope>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-protobuf</artifactId>
             <version>${grpc.version}</version>
+            <scope>${grpc.scope}</scope>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
             <version>${grpc.version}</version>
+            <scope>${grpc.scope}</scope>
         </dependency>
         <dependency> <!-- necessary for Java 9+ -->
             <groupId>org.apache.tomcat</groupId>
