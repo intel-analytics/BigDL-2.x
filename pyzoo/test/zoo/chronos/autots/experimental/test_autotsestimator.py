@@ -250,8 +250,8 @@ class TestAutoTrainer(TestCase):
             import onnxruntime
             eval_result_new_onnx = new_ts_pipeline.evaluate_with_onnx(tsdata_valid)
             y_pred_new_onnx = new_ts_pipeline.predict_with_onnx(tsdata_valid)
-            np.testing.assert_almost_equal(eval_result[0], eval_result_new_onnx[0])
-            np.testing.assert_almost_equal(y_pred, y_pred_new_onnx)
+            np.testing.assert_almost_equal(eval_result[0], eval_result_new_onnx[0], decimal=5)
+            np.testing.assert_almost_equal(y_pred, y_pred_new_onnx, decimal=5)
         except ImportError:
             pass
 
@@ -317,8 +317,8 @@ class TestAutoTrainer(TestCase):
             import onnxruntime
             eval_result_new_onnx = new_ts_pipeline.evaluate_with_onnx(tsdata_valid)
             y_pred_new_onnx = new_ts_pipeline.predict_with_onnx(tsdata_valid)
-            np.testing.assert_almost_equal(eval_result[0], eval_result_new_onnx[0])
-            np.testing.assert_almost_equal(y_pred, y_pred_new_onnx)
+            np.testing.assert_almost_equal(eval_result[0], eval_result_new_onnx[0], decimal=5)
+            np.testing.assert_almost_equal(y_pred, y_pred_new_onnx, decimal=5)
         except ImportError:
             pass
 
@@ -384,8 +384,8 @@ class TestAutoTrainer(TestCase):
             import onnxruntime
             eval_result_new_onnx = new_ts_pipeline.evaluate_with_onnx(tsdata_valid)
             y_pred_new_onnx = new_ts_pipeline.predict_with_onnx(tsdata_valid)
-            np.testing.assert_almost_equal(eval_result[0], eval_result_new_onnx[0])
-            np.testing.assert_almost_equal(y_pred, y_pred_new_onnx)
+            np.testing.assert_almost_equal(eval_result[0], eval_result_new_onnx[0], decimal=5)
+            np.testing.assert_almost_equal(y_pred, y_pred_new_onnx, decimal=5)
         except ImportError:
             pass
 
