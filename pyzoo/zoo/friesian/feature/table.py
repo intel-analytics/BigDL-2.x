@@ -1364,9 +1364,13 @@ class FeatureTable(Table):
         :param sort_cols: str or a list of str. Columns by which the table is sorted.
         :param shifts: int or a list of int. Intervals between two rows.
         :param partition_cols: Columns by which the table is partitioned.
-        :param out_cols: list of list of str. Each inner list corresponds to a column in columns.
-               Each element in the inner list corresponds to a shift in shifts. If it is None, the
-               output column will be sort_cols + "_dl_" + column + "_" + shift. Default is None.
+        :param out_cols: str, a list of str, or a list of list of str. When both columns and shifts
+               has only one element, out_cols can be a str. When columns or shifts has only one
+               element, out_cols can be a list of str, and each element in out_cols corresponds to
+               an element in shifts or columns. When it is a list of list of str, each inner list
+               corresponds to a column in columns. Each element in the inner list corresponds to a
+               shift in shifts. If it is None, the output column will be sort_cols + "_diff_lag_"
+               + column + "_" + shift. Default is None.
         :return: a new Table with difference columns.
         """
         columns = str_to_list(columns, "columns")
