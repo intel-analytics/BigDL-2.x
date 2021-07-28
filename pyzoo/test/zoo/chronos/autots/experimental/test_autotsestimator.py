@@ -309,15 +309,8 @@ class TestAutoTrainer(TestCase):
         tsdata_train = get_tsdataset().gen_dt_feature().scale(scaler, fit=True)
         tsdata_valid = get_tsdataset().gen_dt_feature().scale(scaler, fit=False)
 
-        search_space = {
-            'lstm_hidden_dim': hp.grid_search([32, 64, 128]),
-            'lstm_layer_num': hp.randint(1, 4),
-            'dropout': hp.uniform(0.1, 0.3),
-            'teacher_forcing': hp.choice([True, False]),
-            'lr': hp.loguniform(0.001, 0.01)
-        }
         auto_estimator = AutoTSEstimator(model='seq2seq',
-                                         search_space=search_space,
+                                         search_space="minimal",
                                          past_seq_len=hp.randint(4, 6),
                                          future_seq_len=1,
                                          selected_features="auto",
