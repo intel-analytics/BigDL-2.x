@@ -52,6 +52,7 @@
         <inner-ftp-uri>http://10.239.45.10:8081/repository/raw</inner-ftp-uri>
         <tf-shade>bushade</tf-shade>
         <grpc.version>1.37.0</grpc.version>
+        <grpc.scope>compile</grpc.scope>
     </properties>
 
     <distributionManagement>
@@ -73,6 +74,7 @@
                             <excludes>
                                 <exclude>**/com/intel/analytics/zoo/examples/serving/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/serving/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/pipeline/nnframes/XgboostTrainSpec.scala</exclude>
                                 <exclude>**/com/intel/analytics/zoo/friesian/python/PythonFriesian.scala</exclude>
                                 <exclude>**/com/intel/analytics/zoo/friesian/feature/Utils.scala</exclude>
@@ -204,6 +206,7 @@
             <properties>
                 <bigdl-scope>provided</bigdl-scope>
                 <tf-shade>org.tensorflow</tf-shade>
+                <grpc.scope>provided</grpc.scope>
             </properties>
         </profile>
 
