@@ -80,17 +80,17 @@ def _standardize_input(y_true, y_pred, multioutput):
 
 def sMAPE(y_true, y_pred, multioutput='raw_values'):
     """
-    calculate Symmetric mean absolute percentage error (sMAPE).
+    Calculate Symmetric mean absolute percentage error (sMAPE).
 
     .. math::
 
         \text{SMAPE} = \\frac{100\%}{n} \\sum_{t=1}^n \\frac{|F_t-A_t|}{|A_t|+|F_t|}
 
-    :param y_true: array-like of shape = (n_samples, \*).
+    :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples, \*).
+    :param y_pred: Array-like of shape = (n_samples, \*).
            Estimated target values.
-    :param multioutput: string in ['raw_values', 'uniform_average']
+    :param multioutput: String in ['raw_values', 'uniform_average']
 
     :return: Float or ndarray of floats.
              A non-negative floating point value (the best value is 0.0), or an
@@ -106,17 +106,17 @@ def sMAPE(y_true, y_pred, multioutput='raw_values'):
 
 def MPE(y_true, y_pred, multioutput='raw_values'):
     """
-    calculate mean percentage error (MPE).
+    Calculate mean percentage error (MPE).
 
     .. math::
 
         \text{MPE} = \\frac{100\%}{n}\\sum_{t=1}^n \\frac{a_t-f_t}{a_t}
 
-    :param y_true: array-like of shape = (n_samples, \*).
+    :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples, \*).
+    :param y_pred: Array-like of shape = (n_samples, \*).
            Estimated target values.
-    :param multioutput: string in ['raw_values', 'uniform_average']
+    :param multioutput: String in ['raw_values', 'uniform_average']
 
     :return: Float or ndarray of floats.
              A non-negative floating point value (the best value is 0.0), or an
@@ -131,17 +131,17 @@ def MPE(y_true, y_pred, multioutput='raw_values'):
 
 def MAPE(y_true, y_pred, multioutput='raw_values'):
     """
-    calculate mean absolute percentage error (MAPE).
+    Calculate mean absolute percentage error (MAPE).
 
     .. math::
 
         \mbox{M} = \\frac{100\%}{n}\\sum_{t=1}^n  \\left|\\frac{A_t-F_t}{A_t}\\right|
 
-    :param y_true: array-like of shape = (n_samples, \*).
+    :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples, \*).
+    :param y_pred: Array-like of shape = (n_samples, \*).
            Estimated target values.
-    :param multioutput: string in ['raw_values', 'uniform_average']
+    :param multioutput: String in ['raw_values', 'uniform_average']
 
     :return: Float or ndarray of floats.
              A non-negative floating point value (the best value is 0.0), or an
@@ -156,13 +156,13 @@ def MAPE(y_true, y_pred, multioutput='raw_values'):
 
 def MDAPE(y_true, y_pred, multioutput='raw_values'):
     """
-    calculate Median Absolute Percentage Error (MDAPE).
+    Calculate Median Absolute Percentage Error (MDAPE).
 
-    :param y_true: array-like of shape = (n_samples, \*).
+    :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples, \*).
+    :param y_pred: Array-like of shape = (n_samples, \*).
            Estimated target values.
-    :param multioutput: string in ['raw_values', 'uniform_average']
+    :param multioutput: String in ['raw_values', 'uniform_average']
 
     :return: Float or ndarray of floats.
              A non-negative floating point value (the best value is 0.0), or an
@@ -177,13 +177,13 @@ def MDAPE(y_true, y_pred, multioutput='raw_values'):
 
 def sMDAPE(y_true, y_pred, multioutput='raw_values'):
     """
-    calculate Symmetric Median Absolute Percentage Error (sMDAPE).
+    Calculate Symmetric Median Absolute Percentage Error (sMDAPE).
 
-    :param y_true: array-like of shape = (n_samples, \*).
+    :param y_true: Array-like of shape = (n_samples, \*).
         Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples, \*).
+    :param y_pred: Array-like of shape = (n_samples, \*).
         Estimated target values.
-    :param multioutput: string in ['raw_values', 'uniform_average']
+    :param multioutput: String in ['raw_values', 'uniform_average']
 
     :return: Float or ndarray of floats.
              A non-negative floating point value (the best value is 0.0), or an
@@ -199,13 +199,13 @@ def sMDAPE(y_true, y_pred, multioutput='raw_values'):
 
 def ME(y_true, y_pred, multioutput='raw_values'):
     """
-    calculate Mean Error (ME).
+    Calculate Mean Error (ME).
 
-    :param y_true: array-like of shape = (n_samples, \*).
+    :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples, \*).
+    :param y_pred: Array-like of shape = (n_samples, \*).
            Estimated target values.
-    :param multioutput: string in ['raw_values', 'uniform_average']
+    :param multioutput: String in ['raw_values', 'uniform_average']
 
     :return: Float or ndarray of floats.
              A non-negative floating point value (the best value is 0.0), or an
@@ -220,18 +220,18 @@ def ME(y_true, y_pred, multioutput='raw_values'):
 
 def MSPE(y_true, y_pred, multioutput='raw_values'):
     """
-    calculate mean squared percentage error (MSPE).
+    Calculate mean squared percentage error (MSPE).
 
     .. math::
 
         \operatorname{MSPE}(L)=\operatorname{E}
         \\left[\\left( g(x_i)-\\widehat{g}(x_i)\\right)^2\\right].
 
-    :param y_true: array-like of shape = (n_samples, \*).
+    :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples, \*).
+    :param y_pred: Array-like of shape = (n_samples, \*).
            Estimated target values.
-    :param multioutput: string in ['raw_values', 'uniform_average']
+    :param multioutput: String in ['raw_values', 'uniform_average']
 
     :return: Float or ndarray of floats.
              A non-negative floating point value (the best value is 0.0), or an
@@ -246,13 +246,13 @@ def MSPE(y_true, y_pred, multioutput='raw_values'):
 
 def MSLE(y_true, y_pred, multioutput='raw_values'):
     """
-    calculate the mean squared log error(MSLE).
+    Calculate the mean squared log error(MSLE).
 
-    :param y_true: array-like of shape = (n_samples, \*).
+    :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples, \*).
+    :param y_pred: Array-like of shape = (n_samples, \*).
            Estimated target values.
-    :param multioutput: string in ['raw_values', 'uniform_average']
+    :param multioutput: String in ['raw_values', 'uniform_average']
 
     :return: Float or ndarray of floats.
              A non-negative floating point value (the best value is 0.0), or an
@@ -267,13 +267,13 @@ def MSLE(y_true, y_pred, multioutput='raw_values'):
 
 def R2(y_true, y_pred, multioutput='raw_values'):
     """
-    calculate the r2 score.
+    Calculate the r2 score.
 
-    :param y_true: array-like of shape = (n_samples, \*).
+    :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples, \*).
+    :param y_pred: Array-like of shape = (n_samples, \*).
            Estimated target values.
-    :param multioutput: string in ['raw_values', 'uniform_average']
+    :param multioutput: String in ['raw_values', 'uniform_average']
 
     :return: Float or ndarray of floats.
              A non-negative floating point value (the best value is 1.0), or an
@@ -288,13 +288,13 @@ def R2(y_true, y_pred, multioutput='raw_values'):
 
 def MAE(y_true, y_pred, multioutput='raw_values'):
     """
-    calculate the mean absolute error (MAE).
+    Calculate the mean absolute error (MAE).
 
-    :param y_true: array-like of shape = (n_samples, \*).
+    :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples, \*).
+    :param y_pred: Array-like of shape = (n_samples, \*).
            Estimated target values.
-    :param multioutput: string in ['raw_values', 'uniform_average']
+    :param multioutput: String in ['raw_values', 'uniform_average']
 
     :return: Float or ndarray of floats.
              A non-negative floating point value (the best value is 0.0), or an
@@ -309,13 +309,13 @@ def MAE(y_true, y_pred, multioutput='raw_values'):
 
 def RMSE(y_true, y_pred, multioutput='raw_values'):
     """
-    calculate square root of the mean squared error (RMSE).
+    Calculate square root of the mean squared error (RMSE).
 
-    :param y_true: array-like of shape = (n_samples, \*).
+    :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples, \*).
+    :param y_pred: Array-like of shape = (n_samples, \*).
            Estimated target values.
-    :param multioutput: string in ['raw_values', 'uniform_average']
+    :param multioutput: String in ['raw_values', 'uniform_average']
 
     :return: Float or ndarray of floats.
              A non-negative floating point value (the best value is 0.0), or an
@@ -326,13 +326,13 @@ def RMSE(y_true, y_pred, multioutput='raw_values'):
 
 def MSE(y_true, y_pred, multioutput='uniform_average'):
     """
-    calculate the mean squared error (MSE).
+    Calculate the mean squared error (MSE).
 
-    :param y_true: array-like of shape = (n_samples, \*).
+    :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
-    :param y_pred: array-like of shape = (n_samples, \*).
+    :param y_pred: Array-like of shape = (n_samples, \*).
            Estimated target values.
-    :param multioutput: string in ['raw_values', 'uniform_average']
+    :param multioutput: String in ['raw_values', 'uniform_average']
 
     :return: Float or ndarray of floats.
              A non-negative floating point value (the best value is 0.0), or an
