@@ -1,4 +1,5 @@
-PVC_NAME="persistent-volume-claim"
+source orca-env.sh
+
 kubectl delete -f deploy-nfs/deployment.yaml
 kubectl delete -f deploy-nfs/class.yaml
 kubectl describe pvc $PVC_NAME | grep Finalizers
