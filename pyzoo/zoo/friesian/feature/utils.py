@@ -181,8 +181,9 @@ def encode_target_(tbl, targets, target_cols=None, drop_cat=True, drop_fold=True
 
     return tbl
 
+
 def str_to_list(arg, arg_name):
     if isinstance(arg, str):
         return [arg]
-    assert isinstance(arg, list), arg_name + " should be str or list"
+    assert isinstance(arg, list), arg_name + " should be str or a list of str"
     return arg
