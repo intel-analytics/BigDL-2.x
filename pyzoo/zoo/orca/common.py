@@ -202,7 +202,8 @@ def init_orca_context(cluster_mode=None, cores=2, memory="2g", num_nodes=1,
     activate_sc = SparkContext._active_spark_context is not None
     if activate_sc:
         if cluster_mode is not None:
-            warnings.warn("cluster_mode is determined by the existing SparkContext", Warning)
+            warnings.warn("Use an existing SparkContext, " +
+                          "cluster_mode is determined by the existing SparkContext", Warning)
         conf = SparkConf()
         from zoo import init_nncontext
         sc = init_nncontext(conf=conf, spark_log_level="WARN", redirect_spark_log=True)
