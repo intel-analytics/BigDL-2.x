@@ -1,8 +1,5 @@
-Evaluator/metrics
+Evaluator/Metrics
 =====================
-
-Evaluator
-----------------------------------------
 
 .. automodule:: zoo.automl.common.metrics
     :members:
