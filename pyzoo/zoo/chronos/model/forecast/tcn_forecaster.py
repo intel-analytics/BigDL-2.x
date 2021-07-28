@@ -34,16 +34,14 @@ class TCNForecaster(Forecaster):
         Example:
             >>> #The dataset is split into x_train, x_val, x_test, y_train, y_val, y_test
             >>> forecaster = TCNForecaster(past_seq_len=24,
-                                   future_seq_len=5,
-                                   input_feature_num=1,
-                                   output_feature_num=1,
-                                   kernel_size=4,
-                                   num_channels=[16, 16],
-                                   loss="mae",
-                                   lr=0.01)
-            >>> train_loss = forecaster.fit(x_train, x_val, epochs=3)
+                                           future_seq_len=5,
+                                           input_feature_num=1,
+                                           output_feature_num=1,
+                                           ...)
+            >>> forecaster.fit(x_train, y_train)
+            >>> forecaster.to_local()  # if you set distributed=True
             >>> test_pred = forecaster.predict(x_test)
-            >>> test_mse = forecaster.evaluate(x_test, y_test)
+            >>> test_eval = forecaster.evaluate(x_test, y_test)
             >>> forecaster.save({ckpt_name})
             >>> forecaster.restore({ckpt_name})
     """
@@ -201,6 +199,9 @@ class TCNForecaster(Forecaster):
         """
         Predict using a trained forecaster.
 
+        if you want to predict on a single node(which is common practice), please call
+        .to_local().predict(x, ...)
+
         :param x: A numpy array with shape (num_samples, lookback, feature_dim).
         :param batch_size: predict batch size. The value will not affect predict
                result but will affect resources cost(e.g. memory and time).
@@ -256,6 +257,9 @@ class TCNForecaster(Forecaster):
         Please note that evaluate result is calculated by scaled y and yhat. If you scaled
         your data (e.g. use .scale() on the TSDataset) please follow the following code
         snap to evaluate your result if you need to evaluate on unscaled data.
+
+        if you want to evaluate on a single node(which is common practice), please call
+        .to_local().evaluate(x, y, ...)
 
         >>> from zoo.automl.common.metrics import Evaluator
         >>> y_hat = forecaster.predict(x)
