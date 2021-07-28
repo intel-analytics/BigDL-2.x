@@ -355,7 +355,12 @@ class TCNForecaster(Forecaster):
 
     def to_local(self):
         """
-        Transform a distributed model to a local (non-distributed) one.
+        Transform a distributed forecaster to a local (non-distributed) one.
+
+        Common practice is to use distributed training (fit) and predict/
+        evaluate with onnx or other frameworks on a single node. To do so,
+        you need to call .to_local() and transform the forecaster to a non-
+        distributed one.
 
         The optimizer is refreshed, incremental training after to_local
         might have some problem.
