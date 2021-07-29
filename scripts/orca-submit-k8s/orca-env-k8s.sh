@@ -23,13 +23,14 @@ DRIVER_HOST="172.16.0.200"
 DRIVER_PORT="54321"
 AZ_CLIENT_NAME="azclient"
 K8S_CONFIG="/root/mydata/kuberconfig"
-SPARK_K8S_IMAGE="10.239.45.10/arda/hyper-zoo:e2c"
+SPARK_K8S_IMAGE="10.239.45.10/arda/intelanalytics/hyper-zoo:0.11.0"
+#DEPLOY_MODE="cluster"
+DEPLOY_MODE="client"
 
-#USER_COMMEND="cd /zoo/data/e2c-analytics-stack/ref_algos/inspection/train && python train_az_k8s_client.py"
-USER_COMMEND="/opt/analytics-zoo-0.10.0-SNAPSHOT/bin/spark-submit-python-with-zoo.sh \
+USER_COMMEND="/opt/analytics-zoo-0.11.0/bin/spark-submit-python-with-zoo.sh \
 --master $SPARK_K8S_MASTER \
---deploy-mode cluster \
---name e2c \
+--deploy-mode $DEPLOY_MODE \
+--name hyperzoo \
 --conf spark.kubernetes.container.image="$SPARK_K8S_IMAGE" \
 --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.nfsvolumeclaim.options.claimName="$PVC_NAME" \
 --conf spark.kubernetes.executor.volumes.persistentVolumeClaim.nfsvolumeclaim.mount.path="$MOUNT_PATH" \
@@ -39,9 +40,9 @@ USER_COMMEND="/opt/analytics-zoo-0.10.0-SNAPSHOT/bin/spark-submit-python-with-zo
 --conf spark.kubernetes.authenticate.driver.serviceAccountName=$RUNTIME_K8S_SERVICE_ACCOUNT \
 --executor-memory 50g \
 --driver-memory 50g \
---py-files "/zoo/data/e2c-analytics-stack/ref_algos/inspection/train/model.py" \
 --executor-cores 8 \
 --num-executors 4 \
 --total-executor-cores 32 \
-file:///zoo/data/e2c-analytics-stack/ref_algos/inspection/train/train_az_k8s_cluster.py"
+file:///opt/analytics-zoo-examples/python/orca/learn/horovod/pytorch_estimator.py"
+
 
