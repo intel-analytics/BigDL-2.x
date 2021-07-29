@@ -84,7 +84,7 @@ def sMAPE(y_true, y_pred, multioutput='raw_values'):
 
     .. math::
 
-        \\text{SMAPE} = \\frac{100\%}{n} \\sum_{t=1}^n \\frac{|F_t-A_t|}{|A_t|+|F_t|}
+        \\text{sMAPE} = \\frac{100\%}{n} \\sum_{t=1}^n \\frac{|F_t-A_t|}{|A_t|+|F_t|}
 
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
@@ -135,7 +135,7 @@ def MAPE(y_true, y_pred, multioutput='raw_values'):
 
     .. math::
 
-        \mbox{M} = \\frac{100\%}{n}\\sum_{t=1}^n  \\left|\\frac{A_t-F_t}{A_t}\\right|
+        \\mbox{MAPE} = \\frac{100\%}{n}\\sum_{t=1}^n  \\left|\\frac{A_t-F_t}{A_t}\\right|
 
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
