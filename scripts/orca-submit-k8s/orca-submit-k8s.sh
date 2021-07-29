@@ -13,11 +13,11 @@ else
 fi
 
 #deploy pvc
-sed "s/TMP_NFS_SERVER_VALUE/$NFS_SERVER/g" deploy-nfs/deployment.yaml.template | tee deploy-nfs/deployment.yaml
-sed -i "s#TMP_NFS_SHARE_DATA_PATH#$NFS_SHARE_DATA_PATH#g" deploy-nfs/deployment.yaml
-sed -i "s#TMP_NFS_CLIENT_PROVISIONER_IMAGE#$NFS_CLIENT_PROVISIONER_IMAGE#g" deploy-nfs/deployment.yaml
-sed "s/TMP_PVC_NAME/$PVC_NAME/g" deploy-nfs/persistent-volume-claim.yaml.template | tee deploy-nfs/persistent-volume-claim.yaml
-sed -i "s/TMP_PVC_STORAGE/$PVC_STORAGE/g" deploy-nfs/persistent-volume-claim.yaml
+sed "s/TMP_NFS_SERVER_VALUE/$NFS_SERVER/g" $NFS_DEPLOY_PATH/deployment.yaml.template | tee $NFS_DEPLOY_PATH/deployment.yaml
+sed -i "s#TMP_NFS_SHARE_DATA_PATH#$NFS_SHARE_DATA_PATH#g" $NFS_DEPLOY_PATH/deployment.yaml
+sed -i "s#TMP_NFS_CLIENT_PROVISIONER_IMAGE#$NFS_CLIENT_PROVISIONER_IMAGE#g" $NFS_DEPLOY_PATH/deployment.yaml
+sed "s/TMP_PVC_NAME/$PVC_NAME/g" $NFS_DEPLOY_PATH/persistent-volume-claim.yaml.template | tee $NFS_DEPLOY_PATH/persistent-volume-claim.yaml
+sed -i "s/TMP_PVC_STORAGE/$PVC_STORAGE/g" $NFS_DEPLOY_PATH/persistent-volume-claim.yaml
 
 kubectl create -f deploy-nfs/deployment.yaml
 kubectl create -f deploy-nfs/class.yaml
