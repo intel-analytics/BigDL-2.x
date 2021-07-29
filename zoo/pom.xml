@@ -1224,6 +1224,7 @@
                         <id>scala-compile-first</id>
                         <phase>process-resources</phase>
                         <goals>
+                            <goal>add-source</goal>
                             <goal>compile</goal>
                         </goals>
                     </execution>
