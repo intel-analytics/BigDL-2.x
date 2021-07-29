@@ -24,6 +24,7 @@ import warnings
 import tempfile
 import filelock
 import multiprocessing
+from packaging import version
 
 from zoo.ray.process import session_execute, ProcessMonitor
 from zoo.ray.utils import is_local
@@ -527,12 +528,21 @@ class RayContext(object):
                     for k, v in self.extra_params.items():
                         kw = k.replace("-", "_")
                         kwargs[kw] = v
-                self._address_info = ray.init(num_cpus=self.ray_node_cpu_cores,
-                                              _redis_password=self.redis_password,
-                                              object_store_memory=self.object_store_memory,
-                                              include_dashboard=self.include_webui,
-                                              dashboard_host="0.0.0.0",
-                                              *kwargs)
+                if version.parse(ray.__version__) >= version.parse("1.4.0"):
+                    self._address_info = ray.init(num_cpus=self.ray_node_cpu_cores,
+                                                  namespace="az",
+                                                  _redis_password=self.redis_password,
+                                                  object_store_memory=self.object_store_memory,
+                                                  include_dashboard=self.include_webui,
+                                                  dashboard_host="0.0.0.0",
+                                                  *kwargs)
+                else:
+                    self._address_info = ray.init(num_cpus=self.ray_node_cpu_cores,
+                                                  _redis_password=self.redis_password,
+                                                  object_store_memory=self.object_store_memory,
+                                                  include_dashboard=self.include_webui,
+                                                  dashboard_host="0.0.0.0",
+                                                  *kwargs)
             else:
                 self.cluster_ips = self._gather_cluster_ips()
                 from bigdl.util.common import init_executor_gateway
@@ -614,6 +624,12 @@ class RayContext(object):
                                       node_ip_address=node_ip,
                                       redis_address=redis_address)
         ray.shutdown()
-        return ray.init(address=redis_address,
-                        _redis_password=self.ray_service.password,
-                        _node_ip_address=node_ip)
+        if version.parse(ray.__version__) >= version.parse("1.4.0"):
+            return ray.init(address=redis_address,
+                            namespace="az",
+                            _redis_password=self.ray_service.password,
+                            _node_ip_address=node_ip)
+        else:
+            return ray.init(address=redis_address,
+                            _redis_password=self.ray_service.password,
+                            _node_ip_address=node_ip)
