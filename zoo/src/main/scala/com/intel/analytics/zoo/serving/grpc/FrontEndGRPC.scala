@@ -17,17 +17,16 @@
 package com.intel.analytics.zoo.serving.grpc
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.http.scaladsl.Http
 import com.intel.analytics.zoo.serving.utils.Conventions
 import com.typesafe.config.ConfigFactory
 import com.codahale.metrics.{MetricRegistry, Timer}
+import com.intel.analytics.zoo.grpc.ZooGrpcServer
+import com.intel.analytics.zoo.serving.grpc.service.generated.FrontEndGRPCServiceGrpc.FrontEndGRPCServiceImplBase
 import com.intel.analytics.zoo.serving.http.{ClusterServingMetaData, ClusterServingServable, InferenceModelMetaData, InferenceModelServable, Instances, JsonUtil, Predictions, ServableLoadException, ServableManager, Supportive}
 import com.intel.analytics.zoo.serving.grpc.service.generated._
-import scala.collection.mutable
-import org.slf4j.LoggerFactory
+import io.grpc.stub.StreamObserver
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object FrontEndGRPC extends Supportive{
@@ -83,18 +82,20 @@ object FrontEndGRPC extends Supportive{
 
 
     // WARN: Firstly, only single connection is supported
-
+    val server = new ZooGrpcServer(new FrontEndGRPCServiceImpl(arguments))
+    server.start
+    server.blockUntilShutdown
     // Create service handlers
-    val service: HttpRequest => Future[HttpResponse] =
-      FrontEndGRPCServiceHandler(new FrontEndGRPCServiceImpl(arguments))
-
-    // Bind service handler servers to localhost:8080/8081
-    val binding = Http().newServerAt(arguments.interface, arguments.port).bind(service)
-
-    // report successful binding
-    binding.foreach { binding => println(s"gRPC server bound to: ${binding.localAddress}") }
-
-    binding
+//    val service: HttpRequest => Future[HttpResponse] =
+//      FrontEndGRPCServiceHandler(new FrontEndGRPCServiceImpl(arguments))
+//
+//    // Bind service handler servers to localhost:8080/8081
+//    val binding = Http().newServerAt(arguments.interface, arguments.port).bind(service)
+//
+//    // report successful binding
+//    binding.foreach { binding => println(s"gRPC server bound to: ${binding.localAddress}") }
+//
+//    binding
     // ActorSystem threads will keep the app alive until `system.terminate()` is called
   }
 
@@ -167,160 +168,207 @@ object FrontEndGRPC extends Supportive{
   }
 
 
-  class FrontEndGRPCServiceImpl(args: FrontEndAppArguments) extends FrontEndGRPCService {
+  class FrontEndGRPCServiceImpl(args: FrontEndAppArguments) extends FrontEndGRPCServiceImplBase {
 
-    override def ping(in: Empty): Future[StringReply] = {
+    override def ping(in: Empty, responseObserver: StreamObserver[StringReply]):
+    Unit = {
       timing("ping")(overallRequestTimer) {
         println(s"welcome to analytics zoo grpc serving frontend")
-        Future.successful(StringReply("welcome to analytics zoo grpc serving frontend"))
+        val reply = StringReply.newBuilder.setMessage("welcome to analytics zoo " +
+          "grpc serving frontend").build
+        responseObserver.onNext(reply)
+        responseObserver.onCompleted()
       }
     }
 
-    override def getMetrics(in: Empty): Future[MetricsReply] = {
+    override def getMetrics(in: Empty, responseObserver: StreamObserver[MetricsReply]):
+    Unit = {
       println(s"welcome to analytics zoo grpc serving frontend")
       timing("metrics")(overallRequestTimer, metricsRequestTimer) {
         val keys = metrics.getTimers().keySet()
-        val servingMetrics = keys.toArray.map(key => {
+        val reply = MetricsReply.newBuilder()
+        val servingMetrics = keys.toArray.foreach(key => {
           val timer = metrics.getTimers().get(key)
-          MetricsReply.Metric(key.toString, timer.getCount, timer.getMeanRate,
-            timer.getSnapshot.getMin / 1000000, timer.getSnapshot.getMax / 1000000,
-            timer.getSnapshot.getMean / 1000000, timer.getSnapshot.getMedian / 1000000,
-            timer.getSnapshot.getStdDev / 1000000, timer.getSnapshot.get75thPercentile() / 1000000,
-            timer.getSnapshot.get95thPercentile() / 1000000,
-            timer.getSnapshot.get98thPercentile() / 1000000,
-            timer.getSnapshot.get99thPercentile() / 1000000,
-            timer.getSnapshot.get999thPercentile() / 1000000)
-        }).toList
-        Future.successful(MetricsReply(servingMetrics))
+          val metric = MetricsReply.Metric.newBuilder
+          metric.setName(key.toString)
+          metric.setCount(timer.getCount)
+          metric.setMeanRate(timer.getMeanRate)
+          metric.setMin(timer.getSnapshot.getMin / 1000000)
+          metric.setMax(timer.getSnapshot.getMax / 1000000)
+          metric.setMean(timer.getSnapshot.getMean / 1000000)
+          metric.setMedian(timer.getSnapshot.getMedian / 1000000)
+          metric.setStdDev(timer.getSnapshot.getStdDev / 1000000)
+          metric.setPercentile75Th(timer.getSnapshot.get75thPercentile() / 1000000)
+          metric.setPercentile95Th(timer.getSnapshot.get95thPercentile() / 1000000)
+          metric.setPercentile98Th(timer.getSnapshot.get98thPercentile() / 1000000)
+          metric.setPercentile99Th(timer.getSnapshot.get99thPercentile() / 1000000)
+          metric.setPercentile999Th(timer.getSnapshot.get999thPercentile() / 1000000)
+          metric.build()
+          reply.addMetrics(metric)
+        })
+        responseObserver.onNext(reply.build())
+        responseObserver.onCompleted()
       }
     }
 
-    override def getAllModels(in: Empty): Future[ModelsReply] = {
+    override def getAllModels(in: Empty, responseObserver: StreamObserver[ModelsReply]):
+      Unit = {
       timing("get All Models")(overallRequestTimer, servablesRetriveTimer) {
         try {
           val servables = servableManager.retriveAllServables
-          var inferenceModelList = ListBuffer[InferenceModelGRPCMetaData]()
-          var clusterServingList = ListBuffer[ClusterServingGRPCMetaData]()
+          val reply = ModelsReply.newBuilder()
           servables.foreach(e =>
             e.getMetaData match {
               case (metaData: InferenceModelMetaData) =>
-                val inferenceModelGRPCMetaData = InferenceModelGRPCMetaData(metaData.modelName,
-                  metaData.modelVersion, metaData.modelPath, metaData.modelType,
-                  metaData.weightPath, metaData.modelConCurrentNum, metaData.inputCompileType,
-                  metaData.features.mkString(","))
-                inferenceModelList += inferenceModelGRPCMetaData
+                val inferenceModelGRPCMetaData = InferenceModelGRPCMetaData.newBuilder
+                inferenceModelGRPCMetaData.setModelName(metaData.modelName)
+                inferenceModelGRPCMetaData.setModelVersion(metaData.modelVersion)
+                inferenceModelGRPCMetaData.setModelPath(metaData.modelPath)
+                inferenceModelGRPCMetaData.setModelType(metaData.modelType)
+                inferenceModelGRPCMetaData.setWeightPath(metaData.weightPath)
+                inferenceModelGRPCMetaData.setModelConCurrentNum(metaData.modelConCurrentNum)
+                inferenceModelGRPCMetaData.setInputCompileType(metaData.inputCompileType)
+                inferenceModelGRPCMetaData.setFeatures(metaData.features.mkString(","))
+                reply.addInferenceModelMetaDatas(inferenceModelGRPCMetaData)
               case (metaData: ClusterServingMetaData) =>
-                val clusterServingGRPCMetaData = ClusterServingGRPCMetaData(metaData.modelName,
-                  metaData.modelVersion, metaData.redisHost, metaData.redisPort,
-                  metaData.redisInputQueue, metaData.redisOutputQueue, metaData.timeWindow,
-                  metaData.countWindow, metaData.redisSecureEnabled, metaData.redisTrustStorePath,
-                  metaData.redisTrustStoreToken, metaData.features.mkString(","))
-                clusterServingList += clusterServingGRPCMetaData
+                val clusterServingGRPCMetaData = ClusterServingGRPCMetaData.newBuilder
+                clusterServingGRPCMetaData.setModelName(metaData.modelName)
+                clusterServingGRPCMetaData.setModelVersion(metaData.modelVersion)
+                clusterServingGRPCMetaData.setRedisHost(metaData.redisHost)
+                clusterServingGRPCMetaData.setRedisPort(metaData.redisPort)
+                clusterServingGRPCMetaData.setRedisInputQueue(metaData.redisInputQueue)
+                clusterServingGRPCMetaData.setRedisOutputQueue(metaData.redisOutputQueue)
+                clusterServingGRPCMetaData.setTimeWindow(metaData.timeWindow)
+                clusterServingGRPCMetaData.setCountWindow(metaData.countWindow)
+                clusterServingGRPCMetaData.setRedisSecureEnabled(metaData.redisSecureEnabled)
+                clusterServingGRPCMetaData.setRedisTrustStorePath(metaData.redisTrustStorePath)
+                clusterServingGRPCMetaData.setRedisTrustStoreToken(metaData.redisTrustStoreToken)
+                clusterServingGRPCMetaData.setFeatures(metaData.features.mkString(","))
+                reply.addClusterServingMetaDatas(clusterServingGRPCMetaData)
             })
-          Future.successful(ModelsReply(inferenceModelList, clusterServingList))
+          responseObserver.onNext(reply.build())
+          responseObserver.onCompleted()
         }
         catch {
           case e =>
-            Future.failed(e)
+            responseObserver.onError(e)
         }
       }
     }
 
-    override def getModelsWithName(in: GetModelsWithNameReq): Future[ModelsReply] = {
+    override def getModelsWithName(in: GetModelsWithNameReq,
+                                   responseObserver: StreamObserver[ModelsReply]):
+    Unit = {
       timing("get Models With Name")(overallRequestTimer, servablesRetriveTimer) {
         try {
-          val servables = servableManager.retriveServables(in.modelName)
-          var inferenceModelList = ListBuffer[InferenceModelGRPCMetaData]()
-          var clusterServingList = ListBuffer[ClusterServingGRPCMetaData]()
+          val servables = servableManager.retriveServables(in.getModelName)
+          val reply = ModelsReply.newBuilder()
           servables.foreach(e =>
             e.getMetaData match {
               case (metaData: InferenceModelMetaData) =>
-                val inferenceModelGRPCMetaData = InferenceModelGRPCMetaData(metaData.modelName,
-                  metaData.modelVersion, metaData.modelPath, metaData.modelType,
-                  metaData.weightPath, metaData.modelConCurrentNum, metaData.inputCompileType,
-                  metaData.features.mkString(","))
-                inferenceModelList += inferenceModelGRPCMetaData
+                val inferenceModelGRPCMetaData = InferenceModelGRPCMetaData.newBuilder
+                inferenceModelGRPCMetaData.setModelName(metaData.modelName)
+                inferenceModelGRPCMetaData.setModelVersion(metaData.modelVersion)
+                inferenceModelGRPCMetaData.setModelPath(metaData.modelPath)
+                inferenceModelGRPCMetaData.setModelType(metaData.modelType)
+                inferenceModelGRPCMetaData.setWeightPath(metaData.weightPath)
+                inferenceModelGRPCMetaData.setModelConCurrentNum(metaData.modelConCurrentNum)
+                inferenceModelGRPCMetaData.setInputCompileType(metaData.inputCompileType)
+                inferenceModelGRPCMetaData.setFeatures(metaData.features.mkString(","))
+                reply.addInferenceModelMetaDatas(inferenceModelGRPCMetaData)
               case (metaData: ClusterServingMetaData) =>
-                val clusterServingGRPCMetaData = ClusterServingGRPCMetaData(metaData.modelName,
-                  metaData.modelVersion, metaData.redisHost, metaData.redisPort,
-                  metaData.redisInputQueue, metaData.redisOutputQueue, metaData.timeWindow,
-                  metaData.countWindow, metaData.redisSecureEnabled, metaData.redisTrustStorePath,
-                  metaData.redisTrustStoreToken, metaData.features.mkString(","))
-                clusterServingList += clusterServingGRPCMetaData
+                val clusterServingGRPCMetaData = ClusterServingGRPCMetaData.newBuilder
+                clusterServingGRPCMetaData.setModelName(metaData.modelName)
+                clusterServingGRPCMetaData.setModelVersion(metaData.modelVersion)
+                clusterServingGRPCMetaData.setRedisHost(metaData.redisHost)
+                clusterServingGRPCMetaData.setRedisPort(metaData.redisPort)
+                clusterServingGRPCMetaData.setRedisInputQueue(metaData.redisInputQueue)
+                clusterServingGRPCMetaData.setRedisOutputQueue(metaData.redisOutputQueue)
+                clusterServingGRPCMetaData.setTimeWindow(metaData.timeWindow)
+                clusterServingGRPCMetaData.setCountWindow(metaData.countWindow)
+                clusterServingGRPCMetaData.setRedisSecureEnabled(metaData.redisSecureEnabled)
+                clusterServingGRPCMetaData.setRedisTrustStorePath(metaData.redisTrustStorePath)
+                clusterServingGRPCMetaData.setRedisTrustStoreToken(metaData.redisTrustStoreToken)
+                clusterServingGRPCMetaData.setFeatures(metaData.features.mkString(","))
+                reply.addClusterServingMetaDatas(clusterServingGRPCMetaData)
             })
-          Future.successful(ModelsReply(inferenceModelList, clusterServingList))
+          responseObserver.onNext(reply.build())
+          responseObserver.onCompleted()
         }
         catch {
           case e =>
-            Future.failed(e)
+            responseObserver.onError(e)
         }
       }
     }
 
-    override def getModelsWithNameAndVersion(in: GetModelsWithNameAndVersionReq):
-       Future[ModelsReply] = {
+    override def getModelsWithNameAndVersion(in: GetModelsWithNameAndVersionReq,
+                                             responseObserver: StreamObserver[ModelsReply]):
+    Unit = {
       timing("get Model With Name And Version")(overallRequestTimer, servableRetriveTimer) {
         try {
-          val servable = servableManager.retriveServable(in.modelName, in.modelVersion)
+          val servable = servableManager.retriveServable(in.getModelName, in.getModelVersion)
+          val reply = ModelsReply.newBuilder()
           servable.getMetaData match {
             case (metaData: InferenceModelMetaData) =>
-              val inferenceModelList =
-                List[InferenceModelGRPCMetaData](InferenceModelGRPCMetaData(metaData.modelName,
-                  metaData.modelVersion, metaData.modelPath, metaData.modelType,
-                  metaData.weightPath, metaData.modelConCurrentNum, metaData.inputCompileType,
-                  metaData.features.mkString(",")))
-              val clusterServingList = List[ClusterServingGRPCMetaData]()
-              Future.successful(ModelsReply(inferenceModelList, clusterServingList))
+              val inferenceModelGRPCMetaData = InferenceModelGRPCMetaData.newBuilder
+              inferenceModelGRPCMetaData.setModelName(metaData.modelName)
+              inferenceModelGRPCMetaData.setModelVersion(metaData.modelVersion)
+              inferenceModelGRPCMetaData.setModelPath(metaData.modelPath)
+              inferenceModelGRPCMetaData.setModelType(metaData.modelType)
+              inferenceModelGRPCMetaData.setWeightPath(metaData.weightPath)
+              inferenceModelGRPCMetaData.setModelConCurrentNum(metaData.modelConCurrentNum)
+              inferenceModelGRPCMetaData.setInputCompileType(metaData.inputCompileType)
+              inferenceModelGRPCMetaData.setFeatures(metaData.features.mkString(","))
+              reply.addInferenceModelMetaDatas(inferenceModelGRPCMetaData)
             case (metaData: ClusterServingMetaData) =>
-              val inferenceModelList = List[InferenceModelGRPCMetaData]()
-              val clusterServingList =
-                List[ClusterServingGRPCMetaData](ClusterServingGRPCMetaData(metaData.modelName,
-                  metaData.modelVersion, metaData.redisHost, metaData.redisPort,
-                  metaData.redisInputQueue, metaData.redisOutputQueue, metaData.timeWindow,
-                  metaData.countWindow, metaData.redisSecureEnabled, metaData.redisTrustStorePath,
-                  metaData.redisTrustStoreToken, metaData.features.mkString(",")))
-              Future.successful(ModelsReply(inferenceModelList, clusterServingList))
+              val clusterServingGRPCMetaData = ClusterServingGRPCMetaData.newBuilder
+              clusterServingGRPCMetaData.setModelName(metaData.modelName)
+              clusterServingGRPCMetaData.setModelVersion(metaData.modelVersion)
+              clusterServingGRPCMetaData.setRedisHost(metaData.redisHost)
+              clusterServingGRPCMetaData.setRedisPort(metaData.redisPort)
+              clusterServingGRPCMetaData.setRedisInputQueue(metaData.redisInputQueue)
+              clusterServingGRPCMetaData.setRedisOutputQueue(metaData.redisOutputQueue)
+              clusterServingGRPCMetaData.setTimeWindow(metaData.timeWindow)
+              clusterServingGRPCMetaData.setCountWindow(metaData.countWindow)
+              clusterServingGRPCMetaData.setRedisSecureEnabled(metaData.redisSecureEnabled)
+              clusterServingGRPCMetaData.setRedisTrustStorePath(metaData.redisTrustStorePath)
+              clusterServingGRPCMetaData.setRedisTrustStoreToken(metaData.redisTrustStoreToken)
+              clusterServingGRPCMetaData.setFeatures(metaData.features.mkString(","))
+              reply.addClusterServingMetaDatas(clusterServingGRPCMetaData)
           }
+          responseObserver.onNext(reply.build())
+          responseObserver.onCompleted()
         }
         catch {
           case e =>
-            Future.failed(e)
+            responseObserver.onError(e)
         }
       }
     }
 
-    override def predict(in: PredictReq): Future[PredictReply] = {
+    override def predict(in: PredictReq,
+                         responseObserver: StreamObserver[PredictReply]):
+    Unit = {
       timing("backend inference")(overallRequestTimer, backendInferenceTimer) {
           try {
-            logger.info("model name: " + in.modelName + ", model version: " + in.modelVersion)
+            logger.info("model name: " + in.getModelName + ", model version: " + in.getModelVersion)
             val servable = timing("servable retrive")(servableRetriveTimer) {
-              servableManager.retriveServable(in.modelName, in.modelVersion)
+              servableManager.retriveServable(in.getModelName, in.getModelVersion)
             }
-            val modelInferenceTimer = modelInferenceTimersMap(in.modelName)(in.modelVersion)
-            servable match {
+            val modelInferenceTimer = modelInferenceTimersMap(in.getModelName)(in.getModelVersion)
+            val reply = servable match {
               case _: ClusterServingServable =>
                 val result = timing("cluster serving inference")(predictRequestTimer) {
-                  val instances = timing("json deserialization")() {
-                    JsonUtil.fromJson(classOf[Instances], in.input)
-                  }
-                  val outputs = timing("model inference")(modelInferenceTimer) {
-                    servable.predict(instances)
-                  }
-                  Predictions(outputs)
-                }
-                timing("cluster serving response complete")() {
-                  Future.successful(PredictReply(result.toString))
-                }
-              case _: InferenceModelServable =>
-                val result = timing("inference model inference")(predictRequestTimer) {
                   val outputs = servable.getMetaData.
-                    asInstanceOf[InferenceModelMetaData].inputCompileType match {
-                    case "direct" => timing("model inference")(modelInferenceTimer) {
-                      servable.predict(in.input)
-                    }
+                    asInstanceOf[ClusterServingMetaData].inputCompileType match {
+                    case "direct" =>
+                      timing("model inference direct")(modelInferenceTimer) {
+                        servable.predict(in.getInput)
+                      }
                     case "instance" =>
                       val instances = timing("json deserialization")() {
-                        JsonUtil.fromJson(classOf[Instances], in.input)
+                        JsonUtil.fromJson(classOf[Instances], in.getInput)
                       }
                       timing("model inference")(modelInferenceTimer) {
                         servable.predict(instances)
@@ -328,10 +376,30 @@ object FrontEndGRPC extends Supportive{
                   }
                   JsonUtil.toJson(outputs.map(_.result))
                 }
-                timing("inference model response complete")() {
-                  Future.successful(PredictReply(result.toString))
+                timing("cluster serving response complete")() {
+                  PredictReply.newBuilder().setResponse(result.toString).build()
                 }
+              case _: InferenceModelServable =>
+                val result = timing("inference model inference")(predictRequestTimer) {
+                  val outputs = servable.getMetaData.
+                    asInstanceOf[InferenceModelMetaData].inputCompileType match {
+                    case "direct" => timing("model inference")(modelInferenceTimer) {
+                      servable.predict(in.getInput)
+                    }
+                    case "instance" =>
+                      val instances = timing("json deserialization")() {
+                        JsonUtil.fromJson(classOf[Instances], in.getInput)
+                      }
+                      timing("model inference")(modelInferenceTimer) {
+                        servable.predict(instances)
+                      }
+                  }
+                  JsonUtil.toJson(outputs.map(_.result))
+                }
+                PredictReply.newBuilder().setResponse(result.toString).build()
             }
+            responseObserver.onNext(reply)
+            responseObserver.onCompleted()
           }
           catch {
             case e =>
