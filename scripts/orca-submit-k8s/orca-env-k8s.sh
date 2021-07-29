@@ -1,6 +1,7 @@
 #env
 NFS_SERVER="172.16.0.200"
 NFS_SHARE_DATA_PATH="/disk1/nfsdata"
+NFS_DEPLOY_PATH="deploy-nfs"
 PVC_NAME="persistent-volume-claim"
 PVC_STORAGE="100Mi"
 #put the user data and program here, they will be upload to shared storage to each spark driver and executors.
