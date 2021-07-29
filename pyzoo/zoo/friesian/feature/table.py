@@ -1155,8 +1155,9 @@ class FeatureTable(Table):
                       fold_seed=None, fold_col="__fold__", drop_cat=True, drop_fold=True,
                       out_cols=None):
         """
-        For each categorical column / column group in cat_cols, calculate the mean of target
-        columns in target_cols and encode the Table with mean.
+        For each categorical column or column group in cat_cols, calculate the mean of target
+        columns in target_cols and encode the FeatureTable with the target mean(s) to generate
+        new features.
 
         :param cat_cols: str, a list of str or a nested list of str. Categorical columns / column
                groups to target encode. If an element in the list is a str, then it is a categorical
