@@ -19,9 +19,9 @@ sed -i "s#TMP_NFS_CLIENT_PROVISIONER_IMAGE#$NFS_CLIENT_PROVISIONER_IMAGE#g" $NFS
 sed "s/TMP_PVC_NAME/$PVC_NAME/g" $NFS_DEPLOY_PATH/persistent-volume-claim.yaml.template | tee $NFS_DEPLOY_PATH/persistent-volume-claim.yaml
 sed -i "s/TMP_PVC_STORAGE/$PVC_STORAGE/g" $NFS_DEPLOY_PATH/persistent-volume-claim.yaml
 
-kubectl create -f deploy-nfs/deployment.yaml
-kubectl create -f deploy-nfs/class.yaml
-kubectl create -f deploy-nfs/persistent-volume-claim.yaml
+kubectl create -f $NFS_DEPLOY_PATH/deployment.yaml
+kubectl create -f $NFS_DEPLOY_PATH/class.yaml
+kubectl create -f $NFS_DEPLOY_PATH/persistent-volume-claim.yaml
 
 #copy to nfsdata
 var1=`ls $NFS_SHARE_DATA_PATH | grep "$PVC_NAME" | grep -v "archived"`
