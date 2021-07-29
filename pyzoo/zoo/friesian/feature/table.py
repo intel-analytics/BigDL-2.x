@@ -1158,7 +1158,7 @@ class FeatureTable(Table):
         For each categorical column / column group in cat_cols, calculate the mean of target
         columns in target_cols and encode the Table with mean.
 
-        :param cat_cols: str, or a list of (str or list of str). Categorical columns / column
+        :param cat_cols: str, a list of str or a nested list of str. Categorical columns / column
                groups to target encode. If an element in the list is a str, then it is a categorical
                column; otherwise if it is a list of str, then it is a categorical column group.
         :param target_cols: str, or a list of str. Numeric target column to calculate the mean.
@@ -1177,7 +1177,7 @@ class FeatureTable(Table):
                range [0, kfold). Default is "__fold__".
         :param drop_cat: Boolean. Drop the categorical columns if it is true. Default is True.
         :param drop_folds: Boolean. Drop the fold column if it is true. Default is True.
-        :param out_cols: a list of list of str. Each inner list corresponds to the categorical
+        :param out_cols: a nested list of str. Each inner list corresponds to the categorical
                column in the same position of cat_cols. Each element in the inner list corresponds
                to the target column in the same position of target_cols. If it is None, the output
                column will be cat_col + "_te_" + target_col. Default is None.
@@ -1322,9 +1322,6 @@ class FeatureTable(Table):
         """
         Encode columns with provided list of TargetCode.
 
-        :param cat_cols: str, or a list of (str or list of str). Categorical columns / column
-               groups to target encode. If an element in the list is a str, then it is a categorical
-               column; otherwise if it is a list of str, then it is a categorical column group.
         :param targets: TargetCode or a list of TargetCode.
         :param target_cols: str or a list of str. Selects part of target columns of which mean will
                be applied. If it is None, the mean statistics of all target columns contained
@@ -1360,18 +1357,20 @@ class FeatureTable(Table):
         Calculates the difference between two consecutive rows, or two rows with certain interval
         of the specified continuous columns. The table is first partitioned by partition_cols if it
         is not None, and then sorted by sort_cols before the calculation.
+
         :param columns: str or a list of str. Continuous columns to calculate the difference.
         :param sort_cols: str or a list of str. Columns by which the table is sorted.
         :param shifts: int or a list of int. Intervals between two rows.
         :param partition_cols: Columns by which the table is partitioned.
-        :param out_cols: str, a list of str, or a list of list of str. When both columns and shifts
-               has only one element, out_cols can be a str. When columns or shifts has only one
-               element, out_cols can be a list of str, and each element in out_cols corresponds to
-               an element in shifts or columns. When it is a list of list of str, each inner list
+        :param out_cols: str, a list of str, or a nested list of str. When both columns and shifts
+               has only one element, out_cols can be a single str. When columns or shifts has only
+               one element, out_cols can be a list of str, and each element in out_cols corresponds
+               to an element in shifts or columns. When it is a list of list of str, each inner list
                corresponds to a column in columns. Each element in the inner list corresponds to a
                shift in shifts. If it is None, the output column will be sort_cols + "_diff_lag_"
                + column + "_" + shift. Default is None.
-        :return: a new Table with difference columns.
+
+        :return: a new FeatureTable with difference columns.
         """
         columns = str_to_list(columns, "columns")
         sort_cols = str_to_list(sort_cols, "sort_cols")
@@ -1404,8 +1403,8 @@ class FeatureTable(Table):
                     elif len(shifts) == 1:
                         out_cols = [[out_col] for out_col in out_cols]
                     else:
-                        raise TypeError("out_cols should be a list of list of str when both columns"
-                            + " and shifts have more than one elements")
+                        raise TypeError("out_cols should be a list of list of str when both " +
+                                        "columns shifts have more than one elements")
                 else:
                     for outs in out_cols:
                         assert isinstance(outs, list), "out_cols should be str, a list of str, " \
