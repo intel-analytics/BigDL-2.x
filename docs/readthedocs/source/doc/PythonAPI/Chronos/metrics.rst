@@ -1,7 +1,7 @@
 Evaluator
 =====================
 
-Evaluate unscaled metrics for y_true and y_pred.
+Evaluate unscaled metrics between y true value and y predicted value.
 
 .. automodule:: zoo.automl.common.metrics
     :members:

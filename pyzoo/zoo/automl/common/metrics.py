@@ -225,7 +225,7 @@ def MSPE(y_true, y_pred, multioutput='raw_values'):
     .. math::
 
         \operatorname{MSPE}(L)=\operatorname{E}
-        \\left[\\left( g(x_i)-\\widehat{g}(x_i)\\right)^2\\right].
+        \\left[\\left( g(x_i)-\\widehat{g}(x_i)\\right)^2\\right]
 
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
