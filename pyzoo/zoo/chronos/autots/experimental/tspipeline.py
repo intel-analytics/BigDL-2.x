@@ -61,6 +61,7 @@ class TSPipeline:
         _, y = self._tsdataset_to_numpy(data, is_predict=False)
         yhat = self.predict(data, batch_size=batch_size)
         y = self._tsdataset_unscale(y)
+        # y is already rolled, need to ensure y_pred and y_true have the same length
         eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat[:y.shape[0]],
                                           multioutput=multioutput)
                        for m in metrics]
@@ -85,6 +86,7 @@ class TSPipeline:
         _, y = self._tsdataset_to_numpy(data, is_predict=False)
         yhat = self.predict_with_onnx(data, batch_size=batch_size)
         y = self._tsdataset_unscale(y)
+        # y is already rolled, need to ensure y_pred and y_true have the same length
         eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat[:y.shape[0]],
                                           multioutput=multioutput)
                        for m in metrics]
