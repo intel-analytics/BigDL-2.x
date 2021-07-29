@@ -1246,6 +1246,8 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                     <scalaVersion>${scala.version}</scalaVersion>
                     <recompileMode>incremental</recompileMode>
                     <useZincServer>false</useZincServer>
