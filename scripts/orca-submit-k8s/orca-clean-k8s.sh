@@ -1,7 +1,7 @@
 source orca-env.sh
 
-kubectl delete -f deploy-nfs/deployment.yaml
-kubectl delete -f deploy-nfs/class.yaml
+kubectl delete -f $NFS_DEPLOY_PATH/deployment.yaml
+kubectl delete -f $NFS_DEPLOY_PATH/class.yaml
 kubectl describe pvc $PVC_NAME | grep Finalizers
 kubectl patch pvc $PVC_NAME -p '{"metadata":{"finalizers": []}}' --type=merge
-kubectl delete -f deploy-nfs/persistent-volume-claim.yaml
+kubectl delete -f $NFS_DEPLOY_PATH/persistent-volume-claim.yaml
