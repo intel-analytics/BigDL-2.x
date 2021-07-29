@@ -25,13 +25,13 @@ from zoo.chronos.data.utils.roll import roll_timeseries_dataframe
 from zoo.chronos.data.utils.scale import unscale_timeseries_numpy
 from zoo.chronos.data.utils.resample import resample_timeseries_dataframe
 from zoo.chronos.data.utils.split import split_timeseries_dataframe
-from zoo.chronos.data.utils.file import parquet2pd
 
 from tsfresh.utilities.dataframe_functions import roll_time_series
 from tsfresh.utilities.dataframe_functions import impute as impute_tsfresh
 from tsfresh import extract_features
-from tsfresh.feature_extraction import ComprehensiveFCParameters,\
+from tsfresh.feature_extraction import ComprehensiveFCParameters, \
     MinimalFCParameters, EfficientFCParameters
+
 DEFAULT_PARAMS = {"comprehensive": ComprehensiveFCParameters(),
                   "minimal": MinimalFCParameters(),
                   "efficient": EfficientFCParameters()}
@@ -215,13 +215,13 @@ class TSDataset:
         >>>                                   extra_feature_col=["extra feature 1",
         >>>                                                      "extra feature 2"])
         """
-        target_col = _to_list(target_col, name="target_col")
-        feature_col = _to_list(extra_feature_col, name="extra_feature_col")
-        dt_col = _to_list(dt_col, name="dt_col")
-        id_col = _to_list(id_col, name="id_col")
-        columns = target_col + feature_col + dt_col + id_col
-        pd = parquet2pd(path, columns=columns, **kwargs)
-        return TSDataset.from_pandas(pd,
+        from zoo.chronos.data.utils.file import parquet2pd
+        columns = _to_list(dt_col, name="dt_col") + \
+            _to_list(target_col, name="target_col") + \
+            _to_list(id_col, name="id_col") + \
+            _to_list(extra_feature_col, name="extra_feature_col")
+        df = parquet2pd(path, columns=columns, **kwargs)
+        return TSDataset.from_pandas(df,
                                      dt_col=dt_col,
                                      target_col=target_col,
                                      id_col=id_col,
@@ -251,11 +251,11 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
-        self.df = self.df.groupby([self.id_col])\
-                         .apply(lambda df: impute_timeseries_dataframe(df=df,
-                                                                       dt_col=self.dt_col,
-                                                                       mode=mode,
-                                                                       const_num=const_num))
+        self.df = self.df.groupby([self.id_col]) \
+            .apply(lambda df: impute_timeseries_dataframe(df=df,
+                                                          dt_col=self.dt_col,
+                                                          mode=mode,
+                                                          const_num=const_num))
         self.df.reset_index(drop=True, inplace=True)
         return self
 
@@ -285,13 +285,13 @@ class TSDataset:
         '''
 
         self.df = self.df.groupby([self.id_col]) \
-                         .apply(lambda df: resample_timeseries_dataframe(df=df,
-                                                                         dt_col=self.dt_col,
-                                                                         interval=interval,
-                                                                         start_time=start_time,
-                                                                         end_time=end_time,
-                                                                         id_col=self.id_col,
-                                                                         merge_mode=merge_mode))
+            .apply(lambda df: resample_timeseries_dataframe(df=df,
+                                                            dt_col=self.dt_col,
+                                                            interval=interval,
+                                                            start_time=start_time,
+                                                            end_time=end_time,
+                                                            id_col=self.id_col,
+                                                            merge_mode=merge_mode))
         self._freq = pd.Timedelta(interval)
         self._freq_certainty = True
         self.df.reset_index(drop=True, inplace=True)
@@ -413,8 +413,8 @@ class TSDataset:
         df_rolled = roll_time_series(self.df,
                                      column_id=self.id_col,
                                      column_sort=self.dt_col,
-                                     max_timeshift=window_size-1,
-                                     min_timeshift=window_size-1)
+                                     max_timeshift=window_size - 1,
+                                     min_timeshift=window_size - 1)
         if not full_settings:
             self.roll_feature_df = extract_features(df_rolled,
                                                     column_id=self.id_col,
@@ -500,9 +500,9 @@ class TSDataset:
         target_col = _to_list(target_col, "target_col") if target_col is not None \
             else self.target_col
         if self.roll_addional_feature:
-            additional_feature_col =\
+            additional_feature_col = \
                 list(set(feature_col).intersection(set(self.roll_addional_feature)))
-            feature_col =\
+            feature_col = \
                 list(set(feature_col) - set(self.roll_addional_feature))
             self.roll_feature = feature_col + additional_feature_col
         else:
@@ -517,14 +517,14 @@ class TSDataset:
         roll_feature_df = None if self.roll_feature_df is None \
             else self.roll_feature_df[additional_feature_col]
 
-        rolling_result =\
-            self.df.groupby([self.id_col])\
-                   .apply(lambda df: roll_timeseries_dataframe(df=df,
-                                                               roll_feature_df=roll_feature_df,
-                                                               lookback=lookback,
-                                                               horizon=horizon,
-                                                               feature_col=feature_col,
-                                                               target_col=target_col))
+        rolling_result = \
+            self.df.groupby([self.id_col]) \
+                .apply(lambda df: roll_timeseries_dataframe(df=df,
+                                                            roll_feature_df=roll_feature_df,
+                                                            lookback=lookback,
+                                                            horizon=horizon,
+                                                            feature_col=feature_col,
+                                                            target_col=target_col))
 
         # concat the result on required axis
         concat_axis = 2 if id_sensitive else 0
@@ -540,12 +540,12 @@ class TSDataset:
 
         # target first
         if self.id_sensitive:
-            feature_start_idx = num_target_col*num_id
-            reindex_list = [list(range(i*num_target_col, (i+1)*num_target_col)) +
-                            list(range(feature_start_idx+i*num_feature_col,
-                                       feature_start_idx+(i+1)*num_feature_col))
+            feature_start_idx = num_target_col * num_id
+            reindex_list = [list(range(i * num_target_col, (i + 1) * num_target_col)) +
+                            list(range(feature_start_idx + i * num_feature_col,
+                                       feature_start_idx + (i + 1) * num_feature_col))
                             for i in range(num_id)]
-            reindex_list = functools.reduce(lambda a, b: a+b, reindex_list)
+            reindex_list = functools.reduce(lambda a, b: a + b, reindex_list)
             sorted_index = sorted(range(len(reindex_list)), key=reindex_list.__getitem__)
             self.numpy_x = self.numpy_x[:, :, sorted_index]
 
@@ -680,16 +680,16 @@ def _to_list(item, name, expect_type=str):
 
 
 def _check_type(item, name, expect_type):
-    assert isinstance(item, expect_type),\
+    assert isinstance(item, expect_type), \
         f"a {str(expect_type)} is expected for {name} but found {type(item)}"
 
 
 def _check_col_within(df, col_name):
-    assert col_name in df.columns,\
+    assert col_name in df.columns, \
         f"{col_name} is expected in dataframe while not found"
 
 
 def _check_col_no_na(df, col_name):
     _check_col_within(df, col_name)
-    assert df[col_name].isna().sum() == 0,\
+    assert df[col_name].isna().sum() == 0, \
         f"{col_name} column should not have N/A."
