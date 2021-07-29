@@ -155,9 +155,9 @@ class gRPCHelper extends Serializable {
     /**
      * Initialize all relevant parameters at first
      */
-    var modelType:String = null
-    var weightPath:String = null
-    var defPath:String = null
+    var modelType: String = null
+    var weightPath: String = null
+    var defPath: String = null
 
     var variablesPathExist = false
 
