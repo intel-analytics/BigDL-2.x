@@ -528,6 +528,7 @@ class RayContext(object):
                         kw = k.replace("-", "_")
                         kwargs[kw] = v
                 self._address_info = ray.init(num_cpus=self.ray_node_cpu_cores,
+                                              namespace="az",
                                               _redis_password=self.redis_password,
                                               object_store_memory=self.object_store_memory,
                                               include_dashboard=self.include_webui,
@@ -615,5 +616,6 @@ class RayContext(object):
                                       redis_address=redis_address)
         ray.shutdown()
         return ray.init(address=redis_address,
+                        namespace="az",
                         _redis_password=self.ray_service.password,
                         _node_ip_address=node_ip)
