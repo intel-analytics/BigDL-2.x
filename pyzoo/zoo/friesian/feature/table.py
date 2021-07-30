@@ -1209,13 +1209,31 @@ class FeatureTable(Table):
             out_cols = [[gen_cols_name(cat_col, "_") + "_te_" + target_col
                          for target_col in target_cols] for cat_col in cat_cols]
         else:
-            assert isinstance(out_cols, list), "out_cols should be a list of list of str"
-            assert len(out_cols) == len(cat_cols), "out_cols should have the same length" \
-                                                   " with cat_cols"
-            for cat_col, out_col in zip(cat_cols, out_cols):
-                assert isinstance(out_col, list), "elements in out_cols should be list"
-                assert len(out_col) == len(target_cols), "the inner list of out_cols should " \
-                                                         "have the same length with target_cols"
+            if isinstance(out_cols, str):
+                assert len(cat_cols) == 1 and len(target_cols) == 1, \
+                    "out_cols can be string only if both cat_cols and target_cols has only one" + \
+                    " element"
+                out_cols = [[out_cols]]
+            elif isinstance(out_cols, list):
+                if all(isinstance(out_col, str) for out_col in out_cols):
+                    if len(cat_cols) == 1:
+                        out_cols = [out_cols]
+                    elif len(target_cols) == 1:
+                        out_cols = [[out_col] for out_col in out_cols]
+                    else:
+                        raise TypeError("out_cols should be a nested list of str when both " +
+                                        "cat_cols and target_cols have more than one elements")
+                else:
+                    for outs in out_cols:
+                        assert isinstance(outs, list), "out_cols should be str, a list of str, " \
+                                                       "or a nested list of str"
+            else:
+                raise TypeError("out_cols should be str, a list of str, or a nested list of str")
+            assert len(out_cols) == len(cat_cols), "length of out_cols should be equal to " \
+                                                   "length of cat_cols"
+            for outs in out_cols:
+                assert len(outs) == len(target_cols), "length of element in out_cols should be " \
+                                                      "equal to length of target_cols"
 
         # calculate global mean for each target column
         target_mean_dict = {}
