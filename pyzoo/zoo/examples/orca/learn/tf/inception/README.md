@@ -28,6 +28,8 @@ cd train
 echo "Extracting training images"
 tar -xvf ILSVRC2012_img_train.tar
 rm ILSVRC2012_img_train.tar
+find . -name "*.tar" | while read CLASS_NAME ; do mkdir -p "${CLASS_NAME%.tar}"; tar -xvf "${CLASS_NAME}" -C "${CLASS_NAME%.tar}"; done
+rm *.tar
 
 mkdir val
 mv  ILSVRC2012_img_val.tar val/
@@ -44,7 +46,9 @@ python inception.py --data_dir ${data_dir} --weights ${weights} --class_num ${cl
 ```
 
 In the above commands
-* -f: where you put your ImageNet data, it should be a hdfs folder
+* -f: raw ImageNet data path
+* --imagenet: ImageNet TFRecords data path. When using HDFS path, you need set environment variables JAVA_HOME,
+HADOOP_HDFS_HOME(the location of your HDFS installation), and LD_LIBRARY_PATH(include path to libhdfs.so).
 * --checkpoint: Where you cache the model/train_state snapshot. You should input a folder and
 make sure the folder is created when you run this example. The model snapshot will be named as
 model.#iteration_number, and train state will be named as optimMethod.#iteration_number. Note that if

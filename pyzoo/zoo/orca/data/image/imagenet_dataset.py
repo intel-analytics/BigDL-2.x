@@ -41,78 +41,16 @@ import threading
 import numpy as np
 import tensorflow as tf
 
-LABELS_FILE = "../../../../test/zoo/resources/imagenet_to_tfrecord/imagenet_lsvrc_2012_synsets.txt"
-
 TRAINING_SHARDS = 1024
 VALIDATION_SHARDS = 128
 
 TRAINING_DIRECTORY = 'train'
 VALIDATION_DIRECTORY = 'validation'
 
-_NUM_TRAIN_FILES = 1024
-_NUM_VAL_FILES = 128
-
-
-def write_imagenet(imagenet_path: str,
-                   output_path: str, **kwargs):
-    """
-    Write ImageNet data to TFRecords file format
-
-    Args:
-    imagenet_path: ImageNet train or val data path. Download raw ImageNet data from
-                   http://image-net.org/download-images, extract and provide in this format:
-                   - Training images: train/n03062245/n03062245_4620.JPEG
-                   - Validation Images: validation/ILSVRC2012_val_00000001.JPEG
-    output_path: Output data directory
-
-    """
-    if not imagenet_path:
-        raise AssertionError('ImageNet data path should not be empty. Please download '
-                             'from http://image-net.org/download-images and extract .tar '
-                             'and provide raw data directory path')
-    return convert_to_tf_records(imagenet_path, output_path, **kwargs)
-
-
-def read_imagenet(data_dir: str,
-                  is_training: bool):
-    """
-    Convert ImageNet TFRecords files to tf.data.Dataset
-
-    Args:
-    data_dir: ImageNet TFRecords data path.
-            - Training images: train/train-00000-of-01024
-            - Validation Images: validation/validation-00000-of-00128
-    is_training: True or False
-
-    """
-    filenames = get_filenames(is_training, data_dir)
-    dataset = tf.data.Dataset.from_tensor_slices(filenames)
-
-    # Convert to individual records
-    dataset = dataset.interleave(tf.data.TFRecordDataset,
-                                 num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    return dataset
-
-
-def get_filenames(is_training, data_dir):
-    """Return filenames for dataset."""
-    if is_training:
-        return [
-            os.path.join(data_dir, 'train-%05d-of-01024' % i)
-            for i in range(_NUM_TRAIN_FILES)]
-    else:
-        return [
-            os.path.join(data_dir, 'validation-%05d-of-00128' % i)
-            for i in range(_NUM_VAL_FILES)]
-
-
-def convert_to_tf_records(
+def convert_imagenet_to_tf_records(
         raw_data_dir: str,
-        output_dir: str,
-        synsets_labels) -> Tuple[List[str], List[str]]:
+        output_dir: str) -> Tuple[List[str], List[str]]:
     """Converts the Imagenet dataset into TF-Record dumps."""
-
-    labels_file = synsets_labels if synsets_labels else LABELS_FILE
 
     # Shuffle training records to ensure we are distributing classes
     # across the batches.
@@ -142,7 +80,7 @@ def convert_to_tf_records(
 
     # Get validation file synset labels from labels.txt
     validation_synsets = tf.gfile.FastGFile(
-        labels_file, 'rb').read().splitlines()
+        os.path.join(raw_data_dir, '.txt'), 'rb').read().splitlines()
 
     # Create unique ids for all synsets
     labels = {v: k + 1 for k, v in enumerate(

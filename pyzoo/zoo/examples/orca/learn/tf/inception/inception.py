@@ -25,7 +25,7 @@ from zoo.tfpark import TFDataset, TFOptimizer
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.orca.learn.trigger import EveryEpoch, SeveralIteration
-from zoo.orca.data.image.imagenet_dataset import write_imagenet, read_imagenet
+from zoo.orca.data.image.tfrecord_dataset import write_tfrecord, read_tfrecord
 from nets import inception_v1
 import tensorflow as tf
 from math import ceil
@@ -173,11 +173,6 @@ def _parse_example_proto(example_serialized):
     }
     sparse_float32 = tf.io.VarLenFeature(dtype=tf.float32)
     # Sparse features in Example proto.
-    feature_map.update(
-        {k: sparse_float32 for k in ['image/object/bbox/xmin',
-                                     'image/object/bbox/ymin',
-                                     'image/object/bbox/xmax',
-                                     'image/object/bbox/ymax']})
 
     features = tf.io.parse_single_example(serialized=example_serialized, features=feature_map)
     label = tf.cast(features['image/class/label'], dtype=tf.int32)
@@ -217,7 +212,7 @@ def process_record_dataset(dataset, is_training, shuffle_buffer,
 
 
 def input_fn(is_training, data_dir):
-    dataset = read_imagenet(data_dir, is_training)
+    dataset = read_tfrecord(format="imagenet", path=data_dir, is_training=is_training)
 
     return process_record_dataset(
         dataset=dataset,
@@ -296,7 +291,7 @@ if __name__ == "__main__":
     parser = config_option_parser()
     (options, args) = parser.parse_args(sys.argv)
 
-    write_imagenet(raw_data=options.folder, output_path=options.imagenet)
+    write_tfrecord(format="imagenet", imagenet_path=options.folder, output_path=options.imagenet)
 
     train_data = train_data_creator(
         config={"data_dir": os.path.join(options.imagenet, "train")})
