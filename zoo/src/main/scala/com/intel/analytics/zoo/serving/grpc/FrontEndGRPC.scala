@@ -38,12 +38,6 @@ object FrontEndGRPC extends Supportive{
         case None => argumentsParser.failure("miss args, please see the usage info"); null
       }
     }
-    val conf = ConfigFactory
-      .parseString("akka.http.server.preview.enable-http2 = on")
-      .withFallback(ConfigFactory.defaultApplication())
-    val system = ActorSystem("FrontEndGRPC", conf)
-    implicit val sys: ActorSystem = system
-    implicit val ec: ExecutionContext = sys.dispatcher
 
     servableManager = new ServableManager
     logger.info("Multi Serving Mode")
@@ -83,20 +77,8 @@ object FrontEndGRPC extends Supportive{
 
     // WARN: Firstly, only single connection is supported
     val server = new ZooGrpcServer(new FrontEndGRPCServiceImpl(arguments))
-    server.start
-    server.blockUntilShutdown
-    // Create service handlers
-//    val service: HttpRequest => Future[HttpResponse] =
-//      FrontEndGRPCServiceHandler(new FrontEndGRPCServiceImpl(arguments))
-//
-//    // Bind service handler servers to localhost:8080/8081
-//    val binding = Http().newServerAt(arguments.interface, arguments.port).bind(service)
-//
-//    // report successful binding
-//    binding.foreach { binding => println(s"gRPC server bound to: ${binding.localAddress}") }
-//
-//    binding
-    // ActorSystem threads will keep the app alive until `system.terminate()` is called
+    server.start()
+    server.blockUntilShutdown()
   }
 
 

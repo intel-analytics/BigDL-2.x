@@ -55,7 +55,6 @@
         <data-store-url>http://download.tensorflow.org</data-store-url>
         <inner-ftp-uri>http://10.239.45.10:8081/repository/raw</inner-ftp-uri>
         <tf-shade>bushade</tf-shade>
-        <akka.grpc.version>2.0.0</akka.grpc.version>
         <grpc.version>1.37.0</grpc.version>
     </properties>
 
@@ -275,11 +274,6 @@
                     <groupId>org.apache.logging.log4j</groupId>
                     <artifactId>log4j-core</artifactId>
                     <version>2.14.1</version>
-                </dependency>
-                <dependency>
-                    <groupId>com.lightbend.akka.grpc</groupId>
-                    <artifactId>akka-grpc-runtime_${scala.major.version}</artifactId>
-                    <version>${akka.grpc.version}</version>
                 </dependency>
                 <dependency>
                     <groupId>io.grpc</groupId>
@@ -802,7 +796,6 @@
         </extensions>
         <pluginManagement>
             <plugins>
-
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
@@ -1392,20 +1385,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>com.lightbend.akka.grpc</groupId>
-                <artifactId>akka-grpc-maven-plugin</artifactId>
-                <version>${akka.grpc.version}</version>
-                <configuration>
-                    <language>Scala</language>
-                    <generateClient>false</generateClient>
-                    <generateServer>true</generateServer>
-                    <protoPaths>
-                        <protoPath>src/main/scala/com/intel/analytics/zoo/serving/grpc/proto</protoPath>
-                    </protoPaths>
-                    <outputDirectory>src/main/scala</outputDirectory>
-                </configuration>
             </plugin>
         </plugins>
     </build>
