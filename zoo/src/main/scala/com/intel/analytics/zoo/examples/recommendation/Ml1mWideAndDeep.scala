@@ -24,7 +24,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCr
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 import org.apache.spark.rdd.RDD
 
 case class User(userId: Int, gender: String, age: Int, occupation: Int)
@@ -34,6 +34,7 @@ case class Item(itemId: Int, title: String, genres: String)
 object Ml1mWideAndDeep {
 
   def run(params: WNDParams): Unit = {
+    println("RUN!")
     Logger.getLogger("org").setLevel(Level.ERROR)
     val conf = new SparkConf().setAppName("WideAndDeepExample")
     val sc = NNContext.initNNContext(conf)
@@ -43,6 +44,8 @@ object Ml1mWideAndDeep {
       loadPublicData(sqlContext, params.inputDir)
 
     ratingsDF.groupBy("label").count().show()
+    println("Data loaded")
+
     val localColumnInfo = ColumnFeatureInfo(
       wideBaseCols = Array("genderind", "ageind", "occupation", "genresfull", "genres1st"),
       wideBaseDims = Array(3, 8, 21, 500, 19),
@@ -117,6 +120,7 @@ object Ml1mWideAndDeep {
         val line = x.split("::")
         Item(line(0).toInt, line(1), line(2))
       }).toDF()
+    ratings.show()
 
     val minMaxRow = ratings.agg(max("userId"), max("itemId")).collect()(0)
     val (userCount, itemCount) = (minMaxRow.getInt(0), minMaxRow.getInt(1))

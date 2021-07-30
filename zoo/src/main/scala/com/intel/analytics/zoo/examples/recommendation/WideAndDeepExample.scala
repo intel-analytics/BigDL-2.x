@@ -28,10 +28,13 @@ case class WNDParams(dataset: String = "ml-1m",
 
 object WideAndDeepExample {
   def main(args: Array[String]): Unit = {
+    val logger = org.apache.log4j.Logger.getLogger(
+      "hscornelia")
+      logger.info("********************")
     val defaultParams = WNDParams()
     val parser = new OptionParser[WNDParams]("WideAndDeep Example") {
       opt[String]("dataset")
-        .text(s"dataset name, ml-1m or census")
+        .text(s"dataset name, ml-1m or census or amazon")
         .required()
         .action((x, c) => c.copy(dataset = x))
       opt[String]("modelType")
@@ -55,9 +58,11 @@ object WideAndDeepExample {
     }
     parser.parse(args, defaultParams).map {
       params =>
+        logger.info(params.dataset)
         params.dataset match {
           case "ml-1m" => Ml1mWideAndDeep.run(params)
           case "census" => CensusWideAndDeep.run(params)
+          case "amazon" => AmazonWideAndDeep.run(params)
           case _ => throw new IllegalArgumentException(s"Unkown dataset name: ${params.dataset}." +
             s" Excepted ml-1m or census.")
         }
