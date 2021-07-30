@@ -116,7 +116,7 @@ if [ ! -f {ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/nyc_taxi.cs
   wget -nv $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/
 fi
 
-execute_ray_test autots_nyc_taxi "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/autots_nyc_taxi.py --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples6/quickstart/nyc_taxi.csv"
+execute_ray_test autots_nyc_taxi "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/autots_nyc_taxi.py --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/nyc_taxi.csv"
 time13=$?
 
 echo "#1 rl_pong time used:$time1 seconds"
