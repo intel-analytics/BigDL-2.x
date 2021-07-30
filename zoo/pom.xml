@@ -51,6 +51,7 @@
         <data-store-url>http://download.tensorflow.org</data-store-url>
         <inner-ftp-uri>http://10.239.45.10:8081/repository/raw</inner-ftp-uri>
         <tf-shade>bushade</tf-shade>
+        <grpc.scope>compile</grpc.scope>
         <grpc.version>1.37.0</grpc.version>
         <grpc.scope>compile</grpc.scope>
     </properties>
@@ -67,6 +68,17 @@
             <id>spark_2.x</id>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <source>1.8</source>
+                            <target>1.8</target>
+                            <excludes>
+                                <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
                     <plugin>
                         <groupId>net.alchim31.maven</groupId>
                         <artifactId>scala-maven-plugin</artifactId>
@@ -757,6 +769,13 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
             <!-- grpc plugin -->
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
