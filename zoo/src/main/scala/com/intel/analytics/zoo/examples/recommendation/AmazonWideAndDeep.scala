@@ -105,8 +105,8 @@ object AmazonWideAndDeep {
       loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
       metrics = List(new Top1Accuracy[Float]())
     )
-    wideAndDeep.fit(trainRdds, batchSize = 8,
-      nbEpoch = 5, validationData = validationRdds)
+    wideAndDeep.fit(trainRdds, batchSize = params.batchSize,
+      nbEpoch = params.maxEpoch, validationData = validationRdds)
 
     println("finished...")
     sc.stop()
@@ -181,7 +181,7 @@ object AmazonWideAndDeep {
   }
 }
 
-  /*
+  /* Sample
 +------+------+-----+--------+-----+-------+--------+-----------+--------------+----------+------------+
 |userId|itemId|label|category|price|avgVote|priceind|categoryind|category-price|avgVoteind|categoryfull|
 +------+------+-----+--------+-----+-------+--------+-----------+--------------+----------+------------+

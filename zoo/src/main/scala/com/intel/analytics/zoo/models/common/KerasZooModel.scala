@@ -116,6 +116,7 @@ abstract class KerasZooModel[A <: Activity : ClassTag, B <: Activity : ClassTag,
       validationData: RDD[Sample[T]] = null,
       featurePaddingParam: PaddingParam[T] = null,
       labelPaddingParam: PaddingParam[T] = null)(implicit ev: TensorNumeric[T]): Unit = {
+        println("rdd FIT")
     model.asInstanceOf[KerasNet[T]]
       .fit(x, batchSize, nbEpoch, validationData, featurePaddingParam, labelPaddingParam)
   }

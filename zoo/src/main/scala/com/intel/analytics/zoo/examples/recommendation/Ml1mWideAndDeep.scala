@@ -23,9 +23,14 @@ import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
+import com.intel.analytics.bigdl.tensor.Tensor
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 import org.apache.spark.rdd.RDD
+import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dataset.Sample
+
+
 
 case class User(userId: Int, gender: String, age: Int, occupation: Int)
 
@@ -67,10 +72,22 @@ object Ml1mWideAndDeep {
     val featureRdds =
       assemblyFeature(isImplicit, ratingsDF, userDF, itemDF, localColumnInfo, params.modelType)
 
+    println("Feature RDD")
+    featureRdds.foreach(println)
+    featureRdds.collect().foreach(println)
+    println("Blablabla Features")
+
+
     val Array(trainpairFeatureRdds, validationpairFeatureRdds) =
       featureRdds.randomSplit(Array(0.8, 0.2))
     val trainRdds = trainpairFeatureRdds.map(x => x.sample)
     val validationRdds = validationpairFeatureRdds.map(x => x.sample)
+
+    println("Train RDD")
+    trainRdds.collect().foreach(println)
+
+    println("Validation RDD")
+    validationRdds.collect().foreach(println)
 
     val optimMethod = new Adam[Float](
       learningRate = 1e-3,
@@ -158,11 +175,14 @@ object Ml1mWideAndDeep {
       .withColumn("genderind", genderUDF(col("gender")))
       .withColumn("ageind", ageUDF(col("age")))
       .withColumn("gender-age", bucket2UDF(col("gender"), col("age")))
-      .withColumn("gender-age-occupation", bucket3UDF(col("gender"), col("age"), col("occupation")))
-      .withColumn("gender-genres", bucket2UDF(col("gender"), col("genres")))
+      // .withColumn("gender-age-occupation", bucket3UDF(col("gender"), col("age"), col("occupation")))
+      // .withColumn("gender-genres", bucket2UDF(col("gender"), col("genres")))
       .withColumn("genres1st", genresUDF(col("genres")))
       .withColumn("genresfull", bucket1UDF(col("genres")))
-
+    unioned.show()
+    itemDF.show()
+    userDF.show()
+    dataUse.show()
     val rddOfSample = dataUse.rdd.map(r => {
       val uid = r.getAs[Int]("userId")
       val iid = r.getAs[Int]("itemId")

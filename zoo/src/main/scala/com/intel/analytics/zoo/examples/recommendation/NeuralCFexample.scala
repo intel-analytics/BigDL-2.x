@@ -35,10 +35,13 @@ case class NeuralCFParams(val inputDir: String = "./data/ml-1m",
                           val batchSize: Int = 2800,
                           val nEpochs: Int = 10,
                           val learningRate: Double = 1e-3,
-                          val learningRateDecay: Double = 1e-6
-                    )
-
+                          val learningRateDecay: Double = 1e-6,
+                          val numClasses: Int = 5,
+                          val fileName: String = "/ratings.dat",
+                          val delimiter: String = "::"
+                         )
 case class Rating(userId: Int, itemId: Int, label: Int)
+case class RatingFloat(userId: Int, itemId: Int, label: Float)
 
 object NeuralCFexample {
 
@@ -59,6 +62,15 @@ object NeuralCFexample {
       opt[Double]('l', "lRate")
         .text("learning rate")
         .action((x, c) => c.copy(learningRate = x.toDouble))
+      opt[Int]('c', "numClasses")
+        .text("range of label")
+        .action((x, c) => c.copy(numClasses = x))
+      opt[String]("fileName")
+        .text(s"fileName")
+        .action((x, c) => c.copy(fileName = x))
+      opt[String]("delimiter")
+        .text(s"delimiter")
+        .action((x, c) => c.copy(delimiter = x))
     }
 
     parser.parse(args, defaultParams).map {
@@ -76,25 +88,30 @@ object NeuralCFexample {
     val sc = NNContext.initNNContext(conf)
     val sqlContext = SQLContext.getOrCreate(sc)
 
-    val (ratings, userCount, itemCount) = loadPublicData(sqlContext, param.inputDir)
+    println(param)
 
+    val (ratings, userCount, itemCount) = loadPublicData(sqlContext, param.inputDir, param.fileName, param.delimiter)
+    println("Loadpublicdata END")
+    ratings.show()
     val isImplicit = false
     val ncf = NeuralCF[Float](
       userCount = userCount,
       itemCount = itemCount,
-      numClasses = 5,
+      numClasses = param.numClasses,
       userEmbed = 20,
       itemEmbed = 20,
       hiddenLayers = Array(20, 10))
 
     val pairFeatureRdds: RDD[UserItemFeature[Float]] =
       assemblyFeature(isImplicit, ratings, userCount, itemCount)
-
+    println("after assembly")
     val Array(trainpairFeatureRdds, validationpairFeatureRdds) =
       pairFeatureRdds.randomSplit(Array(0.8, 0.2))
+    println("after randomsplit")
     val trainRdds = trainpairFeatureRdds.map(x => x.sample)
+    println("after training")
     val validationRdds = validationpairFeatureRdds.map(x => x.sample)
-
+    println("after validation")
     val optimMethod = new Adam[Float](
       learningRate = param.learningRate,
       learningRateDecay = param.learningRateDecay)
@@ -102,15 +119,15 @@ object NeuralCFexample {
     ncf.compile(optimizer = optimMethod,
       loss = SparseCategoricalCrossEntropy[Float](zeroBasedLabel = false),
       metrics = List(new Top1Accuracy[Float]()))
-
+    println("after compiling")
     ncf.fit(trainRdds, batchSize = param.batchSize,
       nbEpoch = param.nEpochs, validationData = validationRdds)
-
+    println("after training")
     val results = ncf.predict(validationRdds)
     results.take(5).foreach(println)
     val resultsClass = ncf.predictClass(validationRdds)
     resultsClass.take(5).foreach(println)
-
+    println("after validation")
     val userItemPairPrediction = ncf.predictUserItemPair(validationpairFeatureRdds)
 
     userItemPairPrediction.take(5).foreach(println)
@@ -126,18 +143,112 @@ object NeuralCFexample {
     sc.stop()
   }
 
-  def loadPublicData(sqlContext: SQLContext, dataPath: String): (DataFrame, Int, Int) = {
+  def readTextAndParse( sqlContext: SQLContext,
+                        dataPath: String,
+                        dataFileName: String,
+                        delimiter: String,
+                        userIdx:  Int,
+                        itemIdx: Int,
+                        labelIdx: Int
+                      ): (DataFrame, Int, Int) = {
     import sqlContext.implicits._
-    val ratings = sqlContext.read.text(dataPath + "/ratings.dat").as[String]
-      .map(x => {
-        val line = x.split("::").map(n => n.toInt)
-        Rating(line(0), line(1), line(2))
-      }).toDF()
+    println(dataFileName)
+    dataFileName match {
+      case "/netflix_short.dat" =>
+        val ratings = sqlContext.read.format("csv").option("delimiter", ",").load(dataPath + dataFileName).as[String]
+          .map(x => {
+            val line = x.split(delimiter).map(n => n.toInt)
+            Rating(line(userIdx), line(itemIdx), line(labelIdx))
+          }).toDF()
+        val minMaxRow = ratings.agg(max("userId"), max("itemId")).collect()(0)
+        val (userCount, itemCount) = (minMaxRow.getInt(0), minMaxRow.getInt(1))
+        (ratings, userCount, itemCount)
 
-    val minMaxRow = ratings.agg(max("userId"), max("itemId")).collect()(0)
-    val (userCount, itemCount) = (minMaxRow.getInt(0), minMaxRow.getInt(1))
+      case "/ratings.dat" =>
+      val ratings = sqlContext.read.text(dataPath + dataFileName).as[String]
+        .map(x => {
+          val line = x.split(delimiter).map(n => n.toInt)
+          Rating(line(userIdx), line(itemIdx), line(labelIdx))
+        }).toDF()
+      val minMaxRow = ratings.agg(max("userId"), max("itemId")).collect()(0)
+      val (userCount, itemCount) = (minMaxRow.getInt(0), minMaxRow.getInt(1))
+      (ratings, userCount, itemCount)
 
-    (ratings, userCount, itemCount)
+      case "/amazon_short.dat" =>
+      val ratings = sqlContext.read.text(dataPath + dataFileName).as[String]
+        .map(x => {
+          val line = x.split(delimiter).map(n => n.toInt)
+          Rating(line(userIdx), line(itemIdx), line(labelIdx))
+        }).toDF()
+      val minMaxRow = ratings.agg(max("userId"), max("itemId")).collect()(0)
+      val (userCount, itemCount) = (minMaxRow.getInt(0), minMaxRow.getInt(1))
+      (ratings, userCount, itemCount)
+
+      case "/book_short_orig.dat" =>
+      val ratings = sqlContext.read.text(dataPath + dataFileName).as[String]
+        .map(x => {
+          val line = x.split(delimiter).map(n => n.toInt)
+          Rating(line(userIdx), line(itemIdx), line(labelIdx))
+        })
+        .filter(x => x.label > 0)
+        .toDF()
+      val minMaxRow = ratings.agg(max("userId"), max("itemId")).collect()(0)
+      val (userCount, itemCount) = (minMaxRow.getInt(0), minMaxRow.getInt(1))
+      (ratings, userCount, itemCount)
+
+      case _ =>
+      val ratings = sqlContext.read.text(dataPath + dataFileName).as[String]
+        .map(x => {
+          val line = x.split(delimiter).map(n => n.toInt)
+          Rating(line(userIdx), line(itemIdx), line(labelIdx))
+        })
+        .filter(x => x.label > 0)
+        .toDF()
+      val minMaxRow = ratings.agg(max("userId"), max("itemId")).collect()(0)
+      val (userCount, itemCount) = (minMaxRow.getInt(0), minMaxRow.getInt(1))
+      (ratings, userCount, itemCount)
+
+    }
+
+  }
+
+  // def loadPublicData(sqlContext: SQLContext, dataPath: String, dataFileName: String): (DataFrame, Int, Int) = {
+  def loadPublicData(sqlContext: SQLContext, dataPath: String, fileName: String, delimiter: String): (DataFrame, Int, Int) = {
+    import sqlContext.implicits._
+    println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+
+    /*
+      change according to use:
+      Data should be: int(userID), int(itemID), int
+    */
+    // val fileName = "/netflix_short.dat"
+    println(s"fileName: $fileName. Delimiter: $delimiter")
+    fileName match {
+      case "/ratings.dat" =>
+        readTextAndParse(sqlContext, dataPath, fileName, delimiter, 0, 1, 2) // T
+      case "/netflix_short.dat" =>
+        readTextAndParse(sqlContext, dataPath, fileName, delimiter, 1, 0, 2)
+      case "/amazon_short.dat" =>
+        readTextAndParse(sqlContext, dataPath, fileName, delimiter, 0, 1, 2) // T
+      case "/lastfm_short.dat" =>
+        readTextAndParse(sqlContext, dataPath, fileName, delimiter, 0, 1, 2)
+      case "/book_short_orig.dat" =>
+        readTextAndParse(sqlContext, dataPath, fileName, delimiter, 0, 1, 2)
+      case _ =>
+        readTextAndParse(sqlContext, dataPath, fileName, delimiter, 0, 1, 2)
+    }
+
+    // val ratings = sqlContext.read.text(dataPath + "/ratings.dat").as[String]
+    //   .map(x => {
+    //     val line = x.split("::").map(n => n.toInt)
+    //     Rating(line(0), line(1), line(2))
+    //   }).toDF()
+
+    // val minMaxRow = ratings.agg(max("userId"), max("itemId")).collect()(0)
+    // val (userCount, itemCount) = (minMaxRow.getInt(0), minMaxRow.getInt(1))
+
+    // (ratings, userCount, itemCount)
   }
 
   def assemblyFeature(isImplicit: Boolean = false,

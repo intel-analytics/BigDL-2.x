@@ -167,6 +167,8 @@ object Utils {
     val wideLength = wideColumns.length
     var acc = 0
     val indices: Array[Int] = (0 to wideLength - 1).map(i => {
+      println(r)
+      println(wideColumns(i))
       val index = r.getAs[Int](wideColumns(i))
       if (i == 0) {index}
       else {
