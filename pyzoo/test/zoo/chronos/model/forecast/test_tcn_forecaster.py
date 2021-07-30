@@ -62,10 +62,10 @@ class TestChronosModelTCNForecaster(TestCase):
                                    num_channels=[16, 16],
                                    loss="mae",
                                    lr=0.01)
-        train_loss = forecaster.fit(train_data[0], train_data[1], epochs=2)
+        train_loss = forecaster.fit(train_data, epochs=2)
         test_pred = forecaster.predict(test_data[0])
         assert test_pred.shape == test_data[1].shape
-        test_mse = forecaster.evaluate(test_data[0], test_data[1])
+        test_mse = forecaster.evaluate(test_data)
 
     def test_tcn_forecaster_onnx_methods(self):
         train_data, val_data, test_data = create_data()
@@ -76,24 +76,24 @@ class TestChronosModelTCNForecaster(TestCase):
                                    kernel_size=4,
                                    num_channels=[16, 16],
                                    lr=0.01)
-        forecaster.fit(train_data[0], train_data[1], epochs=2)
+        forecaster.fit(train_data, epochs=2)
         try:
             import onnx
             import onnxruntime
             pred = forecaster.predict(test_data[0])
             pred_onnx = forecaster.predict_with_onnx(test_data[0])
             np.testing.assert_almost_equal(pred, pred_onnx, decimal=5)
-            mse = forecaster.evaluate(test_data[0], test_data[1], multioutput="raw_values")
-            mse_onnx = forecaster.evaluate_with_onnx(test_data[0], test_data[1],
+            mse = forecaster.evaluate(test_data, multioutput="raw_values")
+            mse_onnx = forecaster.evaluate_with_onnx(test_data,
                                                      multioutput="raw_values")
             np.testing.assert_almost_equal(mse, mse_onnx, decimal=5)
-            mse = forecaster.evaluate(test_data[0], test_data[1])
-            mse_onnx = forecaster.evaluate_with_onnx(test_data[0], test_data[1])
+            mse = forecaster.evaluate(test_data)
+            mse_onnx = forecaster.evaluate_with_onnx(test_data)
             np.testing.assert_almost_equal(mse, mse_onnx, decimal=5)
         except ImportError:
             pass
 
-    def test_tcn_forecaster_save_restore(self):
+    def test_tcn_forecaster_save_load(self):
         train_data, val_data, test_data = create_data()
         forecaster = TCNForecaster(past_seq_len=24,
                                    future_seq_len=5,
@@ -102,14 +102,14 @@ class TestChronosModelTCNForecaster(TestCase):
                                    kernel_size=4,
                                    num_channels=[16, 16],
                                    lr=0.01)
-        train_mse = forecaster.fit(train_data[0], train_data[1], epochs=2)
+        train_mse = forecaster.fit(train_data, epochs=2)
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             ckpt_name = os.path.join(tmp_dir_name, "ckpt")
             test_pred_save = forecaster.predict(test_data[0])
             forecaster.save(ckpt_name)
-            forecaster.restore(ckpt_name)
-            test_pred_restore = forecaster.predict(test_data[0])
-        np.testing.assert_almost_equal(test_pred_save, test_pred_restore)
+            forecaster.load(ckpt_name)
+            test_pred_load = forecaster.predict(test_data[0])
+        np.testing.assert_almost_equal(test_pred_save, test_pred_load)
 
     def test_tcn_forecaster_runtime_error(self):
         train_data, val_data, test_data = create_data()
@@ -126,7 +126,7 @@ class TestChronosModelTCNForecaster(TestCase):
         with pytest.raises(RuntimeError):
             forecaster.predict(test_data[0])
         with pytest.raises(RuntimeError):
-            forecaster.evaluate(test_data[0], test_data[1])
+            forecaster.evaluate(test_data)
 
     def test_tcn_forecaster_shape_error(self):
         train_data, val_data, test_data = create_data()
@@ -137,7 +137,7 @@ class TestChronosModelTCNForecaster(TestCase):
                                    kernel_size=3,
                                    lr=0.01)
         with pytest.raises(AssertionError):
-            forecaster.fit(train_data[0], train_data[1], epochs=2)
+            forecaster.fit(train_data, epochs=2)
 
     def test_tcn_forecaster_distributed(self):
         train_data, val_data, test_data = create_data()
@@ -152,13 +152,13 @@ class TestChronosModelTCNForecaster(TestCase):
                                    lr=0.01,
                                    distributed=True)
 
-        forecaster.fit(train_data[0], train_data[1], epochs=2)
+        forecaster.fit(train_data, epochs=2)
         distributed_pred = forecaster.predict(test_data[0])
-        distributed_eval = forecaster.evaluate(val_data[0], val_data[1])
+        distributed_eval = forecaster.evaluate(val_data)
 
         forecaster.to_local()
         local_pred = forecaster.predict(test_data[0])
-        local_eval = forecaster.evaluate(val_data[0], val_data[1])
+        local_eval = forecaster.evaluate(val_data)
 
         np.testing.assert_almost_equal(distributed_pred, local_pred, decimal=5)
 
@@ -166,7 +166,7 @@ class TestChronosModelTCNForecaster(TestCase):
             import onnx
             import onnxruntime
             local_pred_onnx = forecaster.predict_with_onnx(test_data[0])
-            local_eval_onnx = forecaster.evaluate_with_onnx(val_data[0], val_data[1])
+            local_eval_onnx = forecaster.evaluate_with_onnx(val_data)
             np.testing.assert_almost_equal(distributed_pred, local_pred_onnx, decimal=5)
         except ImportError:
             pass
