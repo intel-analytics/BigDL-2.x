@@ -200,8 +200,12 @@ class BasePytorchForecaster(Forecaster):
         if not is_local_data and not self.distributed:
             data = xshard_to_np(data, mode="fit")
         if self.distributed:
-            return self.internal.evaluate(data=np_to_creator(data),
-                                          batch_size=batch_size)
+            if is_local_data:
+                return self.internal.evaluate(data=np_to_creator(data),
+                                              batch_size=batch_size)
+            else:
+                return self.internal.evaluate(data=data,
+                                              batch_size=batch_size)
         else:
             if not self.internal.model_built:
                 raise RuntimeError("You must call fit or restore first before calling evaluate!")

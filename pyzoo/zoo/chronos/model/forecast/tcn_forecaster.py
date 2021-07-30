@@ -28,10 +28,10 @@ class TCNForecaster(BasePytorchForecaster):
                                            input_feature_num=1,
                                            output_feature_num=1,
                                            ...)
-            >>> forecaster.fit(x_train, y_train)
+            >>> forecaster.fit((x_train, y_train))
             >>> forecaster.to_local()  # if you set distributed=True
             >>> test_pred = forecaster.predict(x_test)
-            >>> test_eval = forecaster.evaluate(x_test, y_test)
+            >>> test_eval = forecaster.evaluate((x_test, y_test))
             >>> forecaster.save({ckpt_name})
             >>> forecaster.restore({ckpt_name})
     """

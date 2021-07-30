@@ -38,7 +38,6 @@ class LSTMModel(nn.Module):
                 nn.init.orthogonal_(param)
 
     def forward(self, input_seq):
-        input_seq = input_seq.float()
         lstm_out, hidden = self.lstm(input_seq)
         # reshaping the outputs to feed in fully connected layer
         # out = lstm_out[-1].contiguous().view(-1, self.hidden_dim)

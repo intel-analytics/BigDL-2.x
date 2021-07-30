@@ -33,9 +33,9 @@ def create_data():
     output_feature_dim = 1
 
     def get_x_y(num_samples):
-        x = np.random.rand(num_samples, input_time_steps, input_feature_dim)
+        x = np.random.rand(num_samples, input_time_steps, input_feature_dim).astype(np.float32)
         y = x[:, -output_time_steps:, :]*2 + \
-            np.random.rand(num_samples, output_time_steps, output_feature_dim)
+            np.random.rand(num_samples, output_time_steps, output_feature_dim).astype(np.float32)
         return x, y
 
     train_data = get_x_y(num_train_samples)
