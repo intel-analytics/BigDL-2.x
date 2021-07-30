@@ -611,16 +611,19 @@ class Table:
 
         :return: a new table with duplicate rows removed.
         """
-        if subset is None:
-            return self._clone(self.df.dropDuplicates())
-        if not isinstance(subset, list):
-            subset = [subset]
-        check_col_exists(self.df, subset)
+        if subset is not None:
+            if not isinstance(subset, list):
+                subset = [subset]
+            check_col_exists(self.df, subset)
+        else:
+            subset = self.columns
+        if order is None:
+            return self._clone(self.df.dropDuplicates(subset=subset))
         check_col_exists(self.df, [order])
         if keep_min:
             window = Window.partitionBy(subset).orderBy(order, 'tiebreak')
         else:
-            window = Window.partitionBy(subset).orderBy(col(order).desc(), 'tiebreak')
+            window = Window.partitionBy(subset).orderBy(self.df[order].desc(), 'tiebreak')
         df = self.df.withColumn('tiebreak', monotonically_increasing_id())\
             .withColumn('rank', rank().over(window))
         df = df.filter(col('rank') == 1).drop('rank', 'tiebreak')

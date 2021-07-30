@@ -650,6 +650,13 @@ class TestTable(TestCase):
             .select("id").collect()[0]["id"] == 2
         assert tbl3.df.filter((tbl2.df.name == 'amy') & (tbl2.df.grade == 'a'))\
             .select("id").collect()[0]["id"] == 5
+        tbl4 = tbl.drop_duplicates(subset=None, order='id', keep_min=False)
+        tbl4.df.show()
+        assert tbl4.size() == 6
+        tbl5 = tbl.drop_duplicates(subset=['name', 'grade'], order=None, keep_min=False)
+        tbl5.df.show()
+        assert tbl5.size() == 3
+        
 
     def test_join(self):
         spark = OrcaContext.get_spark_session()
