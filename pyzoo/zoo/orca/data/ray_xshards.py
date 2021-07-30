@@ -67,12 +67,14 @@ class LocalStore:
 
 def init_ray_if_not(redis_address, redis_password):
     if not ray.is_initialized():
+        init_params = dict(
+            address=redis_address,
+            _redis_password=redis_password,
+            ignore_reinit_error=True
+        )
         if version.parse(ray.__version__) >= version.parse("1.4.0"):
-            ray.init(address=redis_address, namespace="az", _redis_password=redis_password,
-                     ignore_reinit_error=True)
-        else:
-            ray.init(address=redis_address, _redis_password=redis_password,
-                     ignore_reinit_error=True)
+            init_params["namespace"] = "az"
+        ray.init(**init_params)
 
 
 def write_to_ray(idx, partition, redis_address, redis_password, partition_store_names):
