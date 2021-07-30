@@ -94,9 +94,6 @@ class TCNForecaster(BasePytorchForecaster):
         :param distributed_backend: str, select from "torch_distributed" or
                "horovod". The value defaults to "torch_distributed".
         """
-        # random seed setting
-        set_pytorch_seed(seed)
-
         # config setting
         self.data_config = {
             "past_seq_len": past_seq_len,
@@ -114,18 +111,20 @@ class TCNForecaster(BasePytorchForecaster):
             "dropout": dropout
         }
 
-        # create internal implementation        
+        # model creator settings       
         self.local_model = TCNPytorch
         self.model_creator = model_creator
         self.optimizer_creator = optimizer_creator
         self.loss_creator = loss_creator
 
+        # distributed settings
         self.distributed = distributed
         self.distributed_backend = distributed_backend
+        self.workers_per_node = workers_per_node
 
+        # other settings
         self.lr = lr
         self.metrics = metrics
-        self.workers_per_node = workers_per_node
         self.seed = seed
 
         super().__init__()

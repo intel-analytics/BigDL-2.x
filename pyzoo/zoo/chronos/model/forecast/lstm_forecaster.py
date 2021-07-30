@@ -24,9 +24,9 @@ class LSTMForecaster(BasePytorchForecaster):
     Example:
         >>> #The dataset is split into x_train, x_val, x_test, y_train, y_val, y_test
         >>> forecaster = LSTMForecaster(past_seq_len=24,
-                                        future_seq_len=5,
-                                        input_feature_num=1,
-                                        output_feature_num=1,
+                                        future_seq_len=1,
+                                        input_feature_num=2,
+                                        output_feature_num=2,
                                         ...)
             >>> forecaster.fit(x_train, y_train)
             >>> forecaster.to_local()  # if you set distributed=True
@@ -85,13 +85,10 @@ class LSTMForecaster(BasePytorchForecaster):
         :param distributed_backend: str, select from "torch_distributed" or
                "horovod". The value defaults to "torch_distributed".
         """
-        # random seed setting
-        set_pytorch_seed(seed)
-
         # config setting
         self.data_config = {
             "past_seq_len": past_seq_len,
-            "future_seq_len": 1,
+            "future_seq_len": 1,  # lstm model only supports 1 step prediction
             "input_feature_num": input_feature_num,
             "output_feature_num": output_feature_num
         }
@@ -104,18 +101,20 @@ class LSTMForecaster(BasePytorchForecaster):
             "dropout": dropout
         }
 
-        # create internal implementation        
+        # model creator settings       
         self.local_model = VanillaLSTMPytorch
         self.model_creator = model_creator
         self.optimizer_creator = optimizer_creator
         self.loss_creator = loss_creator
-
+        
+        # distributed settings
         self.distributed = distributed
         self.distributed_backend = distributed_backend
+        self.workers_per_node = workers_per_node
 
+        # other settings
         self.lr = lr
         self.metrics = metrics
-        self.workers_per_node = workers_per_node
         self.seed = seed
 
         super().__init__()

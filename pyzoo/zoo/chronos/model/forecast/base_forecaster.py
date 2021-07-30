@@ -45,6 +45,7 @@ class BasePytorchForecaster(Forecaster):
                                                  config={"lr": self.lr},
                                                  workers_per_node=self.workers_per_node)
         else:
+            set_pytorch_seed(self.seed)
             self.internal = self.local_model(check_optional_config=False)
 
     def fit(self, data, epochs=1, batch_size=32):
