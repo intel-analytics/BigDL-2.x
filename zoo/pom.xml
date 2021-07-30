@@ -53,6 +53,7 @@
         <tf-shade>bushade</tf-shade>
         <grpc.scope>compile</grpc.scope>
         <grpc.version>1.37.0</grpc.version>
+        <grpc.scope>compile</grpc.scope>
     </properties>
 
     <distributionManagement>
