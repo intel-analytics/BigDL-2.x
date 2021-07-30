@@ -77,7 +77,7 @@ class TestChronosModelSeq2SeqForecaster(TestCase):
             test_pred_restore = forecaster.predict(test_data[0])
         np.testing.assert_almost_equal(test_pred_save, test_pred_restore)
 
-    def test_tcn_forecaster_onnx_methods(self):
+    def test_s2s_forecaster_onnx_methods(self):
         train_data, val_data, test_data = create_data()
         forecaster = Seq2SeqForecaster(future_seq_len=5,
                                        input_feature_num=3,
@@ -96,7 +96,7 @@ class TestChronosModelSeq2SeqForecaster(TestCase):
         except ImportError:
             pass
 
-    def test_tcn_forecaster_runtime_error(self):
+    def test_s2s_forecaster_runtime_error(self):
         train_data, val_data, test_data = create_data()
         forecaster = Seq2SeqForecaster(future_seq_len=5,
                                        input_feature_num=3,
@@ -110,10 +110,42 @@ class TestChronosModelSeq2SeqForecaster(TestCase):
         with pytest.raises(RuntimeError):
             forecaster.evaluate(test_data[0], test_data[1])
 
-    def test_tcn_forecaster_shape_error(self):
+    def test_s2s_forecaster_shape_error(self):
         train_data, val_data, test_data = create_data()
         forecaster = Seq2SeqForecaster(future_seq_len=5,
                                        input_feature_num=2,
                                        output_feature_num=4)
         with pytest.raises(AssertionError):
             forecaster.fit(train_data[0], train_data[1], epochs=2)
+
+    def test_s2s_forecaster_distributed(self):
+        train_data, val_data, test_data = create_data()
+        from zoo.orca import init_orca_context, stop_orca_context
+        init_orca_context(cores=4, memory="2g")
+
+        forecaster = Seq2SeqForecaster(future_seq_len=5,
+                                       input_feature_num=3,
+                                       output_feature_num=2,
+                                       teacher_forcing=True,
+                                       distributed=True)
+
+        forecaster.fit(train_data[0], train_data[1], epochs=2)
+        distributed_pred = forecaster.predict(test_data[0])
+        distributed_eval = forecaster.evaluate(val_data[0], val_data[1])
+
+        forecaster.to_local()
+        local_pred = forecaster.predict(test_data[0])
+        local_eval = forecaster.evaluate(val_data[0], val_data[1])
+
+        np.testing.assert_almost_equal(distributed_pred, local_pred, decimal=5)
+
+        try:
+            import onnx
+            import onnxruntime
+            local_pred_onnx = forecaster.predict_with_onnx(test_data[0])
+            local_eval_onnx = forecaster.evaluate_with_onnx(val_data[0], val_data[1])
+            np.testing.assert_almost_equal(distributed_pred, local_pred_onnx, decimal=5)
+        except ImportError:
+            pass
+
+        stop_orca_context()

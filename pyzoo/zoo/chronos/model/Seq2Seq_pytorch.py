@@ -48,6 +48,8 @@ class LSTMSeq2Seq(nn.Module):
         self.teacher_forcing = teacher_forcing
 
     def forward(self, input_seq, target_seq=None):
+        input_seq = input_seq.float()
+        # for orca distributed training since orca transform data to double
         x, (hidden, cell) = self.lstm_encoder(input_seq)
         # input feature order should have target dimensions in the first
         decoder_input = input_seq[:, -1, :self.output_feature_num]
