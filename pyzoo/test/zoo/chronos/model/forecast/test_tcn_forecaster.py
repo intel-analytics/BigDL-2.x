@@ -19,6 +19,7 @@ import tempfile
 import os
 
 from zoo.chronos.model.forecast.tcn_forecaster import TCNForecaster
+from zoo.orca import init_orca_context, stop_orca_context
 from unittest import TestCase
 import pytest
 
@@ -139,9 +140,34 @@ class TestChronosModelTCNForecaster(TestCase):
         with pytest.raises(AssertionError):
             forecaster.fit(train_data, epochs=2)
 
+    def test_tcn_forecaster_xshard_input(self):
+        train_data, val_data, test_data = create_data()
+        print("original", train_data[0].dtype)
+        init_orca_context(cores=4, memory="2g")
+        from zoo.orca.data import XShards
+        def transform_to_dict(data):
+            return {'x': data[0], 'y': data[1]}
+        def transform_to_dict_x(data):
+            return {'x': data[0]}
+        train_data = XShards.partition(train_data).transform_shard(transform_to_dict)
+        val_data = XShards.partition(val_data).transform_shard(transform_to_dict)
+        test_data = XShards.partition(test_data).transform_shard(transform_to_dict_x)
+        for distributed in [True, False]:
+            forecaster = TCNForecaster(past_seq_len=24,
+                                       future_seq_len=5,
+                                       input_feature_num=1,
+                                       output_feature_num=1,
+                                       kernel_size=3,
+                                       lr=0.01,
+                                       distributed=distributed)
+            forecaster.fit(train_data, epochs=2)
+            distributed_pred = forecaster.predict(test_data)
+            distributed_eval = forecaster.evaluate(val_data)
+        stop_orca_context()
+
     def test_tcn_forecaster_distributed(self):
         train_data, val_data, test_data = create_data()
-        from zoo.orca import init_orca_context, stop_orca_context
+        
         init_orca_context(cores=4, memory="2g")
 
         forecaster = TCNForecaster(past_seq_len=24,
