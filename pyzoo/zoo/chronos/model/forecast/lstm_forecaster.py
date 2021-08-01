@@ -24,7 +24,6 @@ class LSTMForecaster(BasePytorchForecaster):
     Example:
         >>> #The dataset is split into x_train, x_val, x_test, y_train, y_val, y_test
         >>> forecaster = LSTMForecaster(past_seq_len=24,
-                                        future_seq_len=1,
                                         input_feature_num=2,
                                         output_feature_num=2,
                                         ...)
