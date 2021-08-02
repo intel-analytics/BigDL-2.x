@@ -29,6 +29,7 @@ from zoo.orca.common import init_orca_context, stop_orca_context
 from pandas.testing import assert_frame_equal
 from numpy.testing import assert_array_almost_equal
 
+
 class TestXShardsTSDataset(ZooTestCase):
 
     def setup_method(self, method):
@@ -47,7 +48,8 @@ class TestXShardsTSDataset(ZooTestCase):
         assert tsdata.dt_col == "datetime"
         assert tsdata.shards.num_partitions() == 1
 
-        tsdata = XShardsTSDataset.from_xshards(shards_single, dt_col="datetime", target_col=["value"],
+        tsdata = XShardsTSDataset.from_xshards(shards_single, dt_col="datetime",
+                                               target_col=["value"],
                                                extra_feature_col="extra feature", id_col="id")
         assert tsdata._id_list == [0]
         assert tsdata.feature_col == ["extra feature"]
@@ -56,17 +58,19 @@ class TestXShardsTSDataset(ZooTestCase):
         assert tsdata.shards.num_partitions() == 1
 
         tsdata = XShardsTSDataset.from_xshards(shards_single, dt_col="datetime",
-                                              target_col=["value"], extra_feature_col="extra feature")
+                                               target_col=["value"],
+                                               extra_feature_col="extra feature")
         assert tsdata._id_list == ["0"]
         assert tsdata.feature_col == ["extra feature"]
         assert tsdata.target_col == ["value"]
         assert tsdata.dt_col == "datetime"
         assert tsdata.shards.num_partitions() == 1
-    
+
     def test_xshardstsdataset_initialization_multiple(self):
         shards_multiple = read_csv("../../../resources/chronos/multiple.csv")
         # legal input
-        tsdata = XShardsTSDataset.from_xshards(shards_multiple, dt_col="datetime", target_col="value",
+        tsdata = XShardsTSDataset.from_xshards(shards_multiple, dt_col="datetime",
+                                               target_col="value",
                                                extra_feature_col=["extra feature"], id_col="id")
         assert tsdata._id_list == [0, 1]
         assert tsdata.feature_col == ["extra feature"]
@@ -74,7 +78,8 @@ class TestXShardsTSDataset(ZooTestCase):
         assert tsdata.dt_col == "datetime"
         assert tsdata.shards.num_partitions() == 2
 
-        tsdata = XShardsTSDataset.from_xshards(shards_multiple, dt_col="datetime", target_col=["value"],
+        tsdata = XShardsTSDataset.from_xshards(shards_multiple, dt_col="datetime",
+                                               target_col=["value"],
                                                extra_feature_col="extra feature", id_col="id")
         assert tsdata._id_list == [0, 1]
         assert tsdata.feature_col == ["extra feature"]
@@ -83,13 +88,14 @@ class TestXShardsTSDataset(ZooTestCase):
         assert tsdata.shards.num_partitions() == 2
 
         tsdata = XShardsTSDataset.from_xshards(shards_multiple, dt_col="datetime",
-                                               target_col=["value"], extra_feature_col="extra feature")
+                                               target_col=["value"],
+                                               extra_feature_col="extra feature")
         assert tsdata._id_list == ['0']
         assert tsdata.feature_col == ["extra feature"]
         assert tsdata.target_col == ["value"]
         assert tsdata.dt_col == "datetime"
         assert tsdata.shards.num_partitions() == 1
-    
+
     def test_xshardstsdataset_split(self):
         shards_multiple = read_csv("../../../resources/chronos/multiple.csv")
         # only train and test
@@ -119,7 +125,8 @@ class TestXShardsTSDataset(ZooTestCase):
         horizon = random.randint(1, 10)
         lookback = random.randint(1, 20)
 
-        tsdata = XShardsTSDataset.from_xshards(shards_multiple, dt_col="datetime", target_col="value",
+        tsdata = XShardsTSDataset.from_xshards(shards_multiple, dt_col="datetime",
+                                               target_col="value",
                                                extra_feature_col=["extra feature"], id_col="id")
 
         with pytest.raises(RuntimeError):

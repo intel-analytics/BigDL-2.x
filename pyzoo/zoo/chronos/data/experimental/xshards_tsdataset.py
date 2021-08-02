@@ -23,6 +23,7 @@ from zoo.chronos.data.experimental.utils import add_row, transform_to_dict
 _DEFAULT_ID_COL_NAME = "id"
 _DEFAULT_ID_PLACEHOLDER = "0"
 
+
 class XShardsTSDataset:
 
     def __init__(self, shards, **schema):
@@ -103,13 +104,13 @@ class XShardsTSDataset:
 
         if id_col is None:
             shards = shards.transform_shard(add_row,
-                                          _DEFAULT_ID_COL_NAME,
-                                          _DEFAULT_ID_PLACEHOLDER)
+                                            _DEFAULT_ID_COL_NAME,
+                                            _DEFAULT_ID_PLACEHOLDER)
             id_col = _DEFAULT_ID_COL_NAME
 
         # repartition to id
         shards = shards.partition_by(cols=id_col,
-                                   num_partitions=len(shards[id_col].unique()))
+                                     num_partitions=len(shards[id_col].unique()))
 
         if with_split:
             tsdataset_shards\
@@ -167,7 +168,8 @@ class XShardsTSDataset:
         target_col = _to_list(target_col, "target_col") if target_col is not None \
             else self.target_col
         self.numpy_shards = self.shards.transform_shard(roll_timeseries_dataframe,
-                                                None, lookback, horizon, feature_col, target_col)
+                                                        None, lookback, horizon,
+                                                        feature_col, target_col)
         return self
 
     def to_xshards(self):

@@ -17,9 +17,11 @@
 
 import numpy as np
 
+
 def add_row(df, name, const_num):
     df[name] = const_num
     return df
+
 
 def transform_to_dict(data):
     if data[1] is None:
