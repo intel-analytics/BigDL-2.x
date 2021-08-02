@@ -75,10 +75,9 @@ class TSDataset:
                 self._freq = None
             else:
                 self._freq = self.df[self.dt_col].iloc[1] - self.df[self.dt_col].iloc[0]
-        self._is_aligned = sorted(
-            self.df[self.df[self.id_col] == self._id_list[0]][
-                self.dt_col].tolist() * len(self._id_list)) == sorted(
-                    self.df[self.dt_col].to_list()) if self._id_list else False
+        self._is_aligned = len(set(
+            [hash(str(self.df.groupby(self.id_col).get_group(x)[self.dt_col].values))
+                for x in self._id_list])) == 1
 
     @staticmethod
     def from_pandas(df,
