@@ -865,7 +865,8 @@ class FeatureTable(Table):
         :param min: Lower bound after transformation, shared by all columns. 0.0 by default.
         :param max: Upper bound after transformation, shared by all columns. 1.0 by default.
 
-        :return: FeatureTable and mapping = {c: (originalMin, originalMax) for c in columns}
+        :return: new FeatureTable with scaled columns
+        and mapping = {c: (originalMin, originalMax) for c in columns}
         """
         df = self.df
         types = [x[1] for x in self.df.select(*columns).dtypes]
@@ -931,11 +932,12 @@ class FeatureTable(Table):
 
     def transform_min_max_scale(self, columns, min_max_dic):
         """
-        Rescale each column individually with [min, max] range.
+        Rescale each column individually with given [min, max] range of each column.
 
-        :param columns: a column name or a list of column names
-        :param min_max_dic: mapping of (min, max) for each column
-        :return: Rescaled FeatureTable
+        :param columns: a str or a list of str. The column(s) to be rescaled.
+        :param min_max_dic: a dictionary of min, max values of each column.
+         The key is the column name, and the value is (min, max) of this column.
+        :return: A new FeatureTable with rescaled column(s).
         """
         if not isinstance(columns, list):
             columns = [columns]
