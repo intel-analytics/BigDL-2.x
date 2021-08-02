@@ -238,7 +238,7 @@ def MSPE(y_true, y_pred, multioutput='raw_values'):
 
     .. math::
 
-        \\text{MSPE} = \\frac{1}{n}\\sum_{t=1}^n  (y_t-\\hat{y_t})^2
+        \\text{MSPE} = \\frac{100\%}{n}\\sum_{t=1}^n  (\\frac{y_n-\\hat{y_n}}{y_n})^2
 
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
@@ -251,7 +251,7 @@ def MSPE(y_true, y_pred, multioutput='raw_values'):
              array of floating point values, one for each individual target.
     """
     y_true, y_pred, original_shape = _standardize_input(y_true, y_pred, multioutput)
-    output_errors = np.mean(np.square(y_true - y_pred), axis=0,)
+    output_errors = 100 * np.mean(np.square((y_true - y_pred) / (y_true + EPSILON)), axis=0, )
     if multioutput == 'raw_values':
         return output_errors.reshape(original_shape)
     return np.mean(output_errors)
@@ -392,7 +392,7 @@ def Accuracy(y_true, y_pred, multioutput=None):
            Estimated target values.
 
     :return: Float or ndarray of floats.
-             A non-negative floating point value (the best value is 0.0), or an
+             A non-negative floating point value (the best value is 1.0), or an
              array of floating point values, one for each individual target.
     """
     from sklearn.metrics._classification import accuracy_score
@@ -435,6 +435,21 @@ class Evaluator(object):
 
     @staticmethod
     def evaluate(metric, y_true, y_pred, multioutput='raw_values'):
+        """
+        Evaluate a specific metric for y_true and y_pred.
+
+        :param metric: String in ['me', 'mae', 'mse', 'rmse', 'msle', 'r2'
+               , 'mpe', 'mape', 'mspe', 'smape', 'mdape', 'smdape', 'accuracy']
+        :param y_true: Array-like of shape = (n_samples, \*).
+               Ground truth (correct) target values.
+        :param y_pred: Array-like of shape = (n_samples, \*).
+               Estimated target values.
+        :param multioutput: String in ['raw_values', 'uniform_average']
+
+        :return: Float or ndarray of floats.
+                 A non-negative floating point value, or an
+                 array of floating point values, one for each individual target.
+        """
         Evaluator.check_metric(metric)
         result = Evaluator.metrics_func[metric](y_true, y_pred, multioutput=multioutput)
         if result.shape == (1,):
