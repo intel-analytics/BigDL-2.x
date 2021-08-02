@@ -84,7 +84,7 @@ def sMAPE(y_true, y_pred, multioutput='raw_values'):
 
     .. math::
 
-        \\text{sMAPE} = \\frac{100\%}{n} \\sum_{t=1}^n \\frac{|F_t-A_t|}{|A_t|+|F_t|}
+        \\text{sMAPE} = \\frac{100\%}{n} \\sum_{t=1}^n \\frac{|y_t-\\hat{y_t}|}{|y_t|+|\\hat{y_t}|}
 
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
@@ -110,7 +110,7 @@ def MPE(y_true, y_pred, multioutput='raw_values'):
 
     .. math::
 
-        \\text{MPE} = \\frac{100\%}{n}\\sum_{t=1}^n \\frac{a_t-f_t}{a_t}
+        \\text{MPE} = \\frac{100\%}{n}\\sum_{t=1}^n \\frac{y_t-\\hat{y_t}}{y_t}
 
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
@@ -135,7 +135,7 @@ def MAPE(y_true, y_pred, multioutput='raw_values'):
 
     .. math::
 
-        \\mbox{MAPE} = \\frac{100\%}{n}\\sum_{t=1}^n  \\left|\\frac{A_t-F_t}{A_t}\\right|
+        \\text{MAPE} = \\frac{100\%}{n}\\sum_{t=1}^n  |\\frac{y_t-\\hat{y_t}}{y_t}|
 
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
@@ -158,6 +158,11 @@ def MDAPE(y_true, y_pred, multioutput='raw_values'):
     """
     Calculate Median Absolute Percentage Error (MDAPE).
 
+    .. math::
+
+        \\text{MDAPE} = 100\%\ median(|\\frac{y_1-\\hat{y_1}}{y_1}|,
+        \\ldots, |\\frac{y_n-\\hat{y_n}}{y_n}|)
+
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
     :param y_pred: Array-like of shape = (n_samples, \*).
@@ -178,6 +183,11 @@ def MDAPE(y_true, y_pred, multioutput='raw_values'):
 def sMDAPE(y_true, y_pred, multioutput='raw_values'):
     """
     Calculate Symmetric Median Absolute Percentage Error (sMDAPE).
+
+    .. math::
+
+        \\text{sMDAPE} = 100\%\ median(\\frac{|y_1-\\hat{y_1}|}{|y_1|+|\\hat{y_1}|},
+        \\ldots, \\frac{|y_n-\\hat{y_n}|}{|y_n|+|\\hat{y_n}|})
 
     :param y_true: Array-like of shape = (n_samples, \*).
         Ground truth (correct) target values.
@@ -200,6 +210,10 @@ def sMDAPE(y_true, y_pred, multioutput='raw_values'):
 def ME(y_true, y_pred, multioutput='raw_values'):
     """
     Calculate Mean Error (ME).
+
+    .. math::
+
+        \\text{ME} = \\frac{1}{n}\\sum_{t=1}^n  y_t-\\hat{y_t}
 
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
@@ -224,8 +238,7 @@ def MSPE(y_true, y_pred, multioutput='raw_values'):
 
     .. math::
 
-        \operatorname{MSPE}(L)=\operatorname{E}
-        \\left[\\left( g(x_i)-\\widehat{g}(x_i)\\right)^2\\right]
+        \\text{MSPE} = \\frac{1}{n}\\sum_{t=1}^n  (y_t-\\hat{y_t})^2
 
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
@@ -248,6 +261,10 @@ def MSLE(y_true, y_pred, multioutput='raw_values'):
     """
     Calculate the mean squared log error(MSLE).
 
+    .. math::
+
+        \\text{MSLE} = \\frac{1}{n}\\sum_{t=1}^n (log_e(1+y_t)-log_e(1+\\hat{y_t}))^2
+
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
     :param y_pred: Array-like of shape = (n_samples, \*).
@@ -268,6 +285,10 @@ def MSLE(y_true, y_pred, multioutput='raw_values'):
 def R2(y_true, y_pred, multioutput='raw_values'):
     """
     Calculate the r2 score.
+
+    .. math::
+
+        R^2 = 1-\\frac{\\sum_{t=1}^n (y_t-\\hat{y_t})^2}{\\sum_{t=1}^n (y_t-\\bar{y})^2}
 
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
@@ -290,6 +311,10 @@ def MAE(y_true, y_pred, multioutput='raw_values'):
     """
     Calculate the mean absolute error (MAE).
 
+    .. math::
+
+        \\text{MAE} = \\frac{1}{n}\\sum_{t=1}^n |y_t-\\hat{y_t}|
+
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
     :param y_pred: Array-like of shape = (n_samples, \*).
@@ -311,6 +336,10 @@ def RMSE(y_true, y_pred, multioutput='raw_values'):
     """
     Calculate square root of the mean squared error (RMSE).
 
+    .. math::
+
+        \\text{RMSE} = \\sqrt{(\\frac{1}{n}\\sum_{t=1}^n (y_t-\\hat{y_t})^2)}
+
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
     :param y_pred: Array-like of shape = (n_samples, \*).
@@ -327,6 +356,10 @@ def RMSE(y_true, y_pred, multioutput='raw_values'):
 def MSE(y_true, y_pred, multioutput='uniform_average'):
     """
     Calculate the mean squared error (MSE).
+
+    .. math::
+
+        \\text{MSE} = \\frac{1}{n}\\sum_{t=1}^n (y_t-\\hat{y_t})^2
 
     :param y_true: Array-like of shape = (n_samples, \*).
            Ground truth (correct) target values.
@@ -346,6 +379,22 @@ def MSE(y_true, y_pred, multioutput='uniform_average'):
 
 
 def Accuracy(y_true, y_pred, multioutput=None):
+    """
+    Calculate the accuracy score (Accuracy).
+
+    .. math::
+
+        \\text{Accuracy} = \\frac{1}{n}\\sum_{t=1}^n 1(y_t=\\hat{y_t})
+
+    :param y_true: Array-like of shape = (n_samples, \*).
+           Ground truth (correct) target values.
+    :param y_pred: Array-like of shape = (n_samples, \*).
+           Estimated target values.
+
+    :return: Float or ndarray of floats.
+             A non-negative floating point value (the best value is 0.0), or an
+             array of floating point values, one for each individual target.
+    """
     from sklearn.metrics._classification import accuracy_score
     y_true = np.squeeze(y_true)
     y_pred = np.squeeze(y_pred)
