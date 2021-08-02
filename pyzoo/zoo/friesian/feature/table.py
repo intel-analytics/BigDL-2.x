@@ -1192,8 +1192,8 @@ class FeatureTable(Table):
                column in the same position of target_cols. Default to be None and in this case the
                output column will be cat_col + "_te_" + target_col.
 
-        :return: A new target encoded FeatureTable, a list of TargetCodes which contains the target
-                 encode values of the whole FeatureTable.
+        :return: A tuple of a new FeatureTable with target encoded columns and a list of TargetCodes
+                 which contains the target encode values of the whole FeatureTable.
         """
         assert isinstance(kfold, int) and kfold > 0, "kfold should be an integer larger than 0"
         if isinstance(cat_cols, str):
@@ -1398,7 +1398,7 @@ class FeatureTable(Table):
                shift in shifts. If it is None, the output column will be sort_cols + "_diff_lag_"
                + column + "_" + shift. Default is None.
 
-        :return: a new FeatureTable with difference columns.
+        :return: A new FeatureTable with difference columns.
         """
         columns = str_to_list(columns, "columns")
         sort_cols = str_to_list(sort_cols, "sort_cols")
