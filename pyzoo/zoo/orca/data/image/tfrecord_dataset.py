@@ -28,13 +28,13 @@ def write_imagenet(imagenet_path: str,
     imagenet_path: ImageNet raw data path. Download raw ImageNet data from
                    http://image-net.org/download-images
                    e.g, if you use ImageNet 2012, please extract ILSVRC2012_img_train.tar and
-                   ILSVRC2012_img_val.tar. And download the validation image labels file
+                   ILSVRC2012_img_val.tar. Download the validation image labels file
                    https://github.com/tensorflow/models/blob/master/research/slim/datasets/
-                   imagenet_2012_validation_synset_labels.txt,
+                   imagenet_2012_validation_synset_labels.txt and rename as synset_labels.txt
                    provide imagenet path in this format:
                    - Training images: train/n03062245/n03062245_4620.JPEG
                    - Validation Images: validation/ILSVRC2012_val_00000001.JPEG
-                   - Validation Labels: imagenet_2012_validation_synset_labels.txt
+                   - Validation Labels: synset_labels.txt
     output_path: Output data directory
 
     """
@@ -45,7 +45,7 @@ def write_imagenet(imagenet_path: str,
     return convert_imagenet_to_tf_records(imagenet_path, output_path, **kwargs)
 
 
-def read_imagenet(data_dir: str,
+def read_imagenet(path: str,
                   is_training: bool):
     """
     Convert ImageNet TFRecords files to tf.data.Dataset
@@ -58,7 +58,7 @@ def read_imagenet(data_dir: str,
     is_training: True or False. train dataset or val dataset
 
     """
-    filenames = get_filenames(is_training, data_dir)
+    filenames = get_filenames(is_training, path)
     dataset = tf.data.Dataset.from_tensor_slices(filenames)
 
     # Convert to individual records
@@ -83,9 +83,17 @@ def get_filenames(is_training, data_dir):
 
 
 def write_tfrecord(format, output_path, *args, **kwargs):
+    """
+    Convert input dataset to TFRecords
+
+    Args:
+    format: String. Support "imagenet" format.
+    output_path: String. output path.
+
+    """
     supported_format = {"imagenet"}
     if format not in supported_format:
-        raise ValueError(format + " is not supported ")
+        raise ValueError(format + " is not supported, should be 'imagenet'. ")
 
     format_to_function = {"imagenet": (write_imagenet, ["imagenet_path"])}
     func, required_args = format_to_function[format]
@@ -94,9 +102,17 @@ def write_tfrecord(format, output_path, *args, **kwargs):
 
 
 def read_tfrecord(format, path, *args, **kwargs):
+    """
+    Read TFRecords files
+
+    Args:
+    format: String. Support "imagenet" format.
+    path: String. TFRecords files path.
+
+    """
     supported_format = {"imagenet"}
     if format not in supported_format:
-        raise ValueError(format + " is not supported")
+        raise ValueError(format + " is not supported, should be 'imagenet'. ")
 
     format_to_function = {"imagenet": (read_imagenet, ["is_training"])}
     func, required_args = format_to_function[format]

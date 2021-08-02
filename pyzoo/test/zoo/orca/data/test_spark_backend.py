@@ -24,7 +24,7 @@ import zoo.orca.data
 import zoo.orca.data.pandas
 from zoo.orca import OrcaContext
 from zoo.common.nncontext import *
-from zoo.orca.data.image.imagenet_dataset import write_imagenet, read_imagenet
+from zoo.orca.data.image import write_tfrecord, read_tfrecord
 
 
 class TestSparkBackend(TestCase):
@@ -207,11 +207,10 @@ class TestSparkBackend(TestCase):
         raw_data = os.path.join(self.resource_path, "imagenet_to_tfrecord")
         temp_dir = tempfile.mkdtemp()
         try:
-            write_imagenet(raw_data, temp_dir)
+            write_tfrecord(format="imagenet", imagenet_path=raw_data, output_path=temp_dir)
             data_dir = os.path.join(temp_dir, "train")
-            train_dataset = read_imagenet(data_dir, True)
-            for dt in train_dataset.take(1):
-                print(dt)
+            train_dataset = read_tfrecord(format="imagenet", path=data_dir, is_training=True)
+            train_dataset.take(1)
         finally:
             shutil.rmtree(temp_dir)
 

@@ -25,7 +25,7 @@ from zoo.tfpark import TFDataset, TFOptimizer
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.orca.learn.trigger import EveryEpoch, SeveralIteration
-from zoo.orca.data.image.tfrecord_dataset import write_tfrecord, read_tfrecord
+from zoo.orca.data.image import write_tfrecord, read_tfrecord
 from nets import inception_v1
 import tensorflow as tf
 from math import ceil
@@ -191,7 +191,7 @@ def parse_record(raw_record, is_training, dtype):
         is_training=is_training)
     image = tf.cast(image, dtype)
 
-    label = tf.cast(tf.reshape(label, shape=[1]), dtype=tf.int32) - 1
+    label = tf.cast(tf.reshape(label, shape=[1]), dtype=tf.int32) + 1
 
     return image, label
 
@@ -242,7 +242,7 @@ def config_option_parser():
                       help="raw ImageNet data, it includes train and val folder with format of"
                            "train/n03062245/n03062245_4620.JPEG,"
                            "validation/ILSVRC2012_val_00000001.JPEG")
-    parser.add_option("--imagenet", type=str, dest="model", default="/tmp/imagenet",
+    parser.add_option("--imagenet", type=str, dest="imagenet", default="/tmp/imagenet",
                       help="generated imagenet TFRecord path")
     parser.add_option("--model", type=str, dest="model", default="",
                       help="model snapshot location")
@@ -323,6 +323,7 @@ if __name__ == "__main__":
         return tf.reduce_mean(is_correct)
 
     acc = accuracy(logits, labels)
+    optim = tf.keras.optimizers.SGD(learning_rate=0.01, momentum=0.9, nesterov=False, name='SGD')
 
     est = Estimator.from_graph(inputs=images,
                                outputs=logits,

@@ -47,6 +47,8 @@ VALIDATION_SHARDS = 128
 TRAINING_DIRECTORY = 'train'
 VALIDATION_DIRECTORY = 'validation'
 
+VALIDATION_LABELS = 'synset_labels.txt'
+
 def convert_imagenet_to_tf_records(
         raw_data_dir: str,
         output_dir: str) -> Tuple[List[str], List[str]]:
@@ -76,11 +78,11 @@ def convert_imagenet_to_tf_records(
 
     # Glob all the validation files
     validation_files = sorted(tf.gfile.Glob(
-        os.path.join(raw_data_dir, VALIDATION_DIRECTORY, '*', '.JPEG')))
+        os.path.join(raw_data_dir, VALIDATION_DIRECTORY, '*.JPEG')))
 
     # Get validation file synset labels from labels.txt
     validation_synsets = tf.gfile.FastGFile(
-        os.path.join(raw_data_dir, '.txt'), 'rb').read().splitlines()
+        os.path.join(raw_data_dir, VALIDATION_LABELS), 'rb').read().splitlines()
 
     # Create unique ids for all synsets
     labels = {v: k + 1 for k, v in enumerate(
