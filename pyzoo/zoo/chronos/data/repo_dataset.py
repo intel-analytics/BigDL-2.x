@@ -21,7 +21,7 @@ def get_public_dataset(name="network_traffic", path='~/.chronos/dataset', redown
     Get public dataset.
 
     >>> from zoo.chronos.data.repo_dataset import get_public_dataset
-    >>> tsdata_network_traffic = get_public_dataset
+    >>> tsdata_network_traffic = get_public_dataset(name="network_traffic")
 
     :param name: str, public dataset name, e.g. "network traffic".
     :param path: str, download path, the value defatults to "~/.chronos/dataset/".
