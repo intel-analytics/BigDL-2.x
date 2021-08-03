@@ -255,10 +255,11 @@ class PytorchBaseModel(BaseModel):
             self.model.eval()
         test_loader = DataLoader(TensorDataset(x),
                                  batch_size=int(batch_size))
-        yhat_list = []
-        for x_test_batch in test_loader:
-            yhat_list.append(self.model(x_test_batch[0]).detach().numpy())
-        yhat = np.concatenate(yhat_list, axis=0)
+        y_list = []
+        with torch.no_grad():
+            for x_test_batch in test_loader:
+                y_list.append(self.model(x_test_batch[0]).numpy())
+        yhat = np.concatenate(y_list, axis=0)
         return yhat
 
     def predict_with_uncertainty(self, x, n_iter=100):
