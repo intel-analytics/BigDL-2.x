@@ -953,6 +953,7 @@ class FeatureTable(Table):
         tbl = self
         import numpy as np
         def normalize_array(c_min, c_max):
+            
             def normalize(x):
                 np_x = np.array(x)
                 np_min = np.array(c_min)
@@ -979,7 +980,8 @@ class FeatureTable(Table):
         for column in vector_cols:
             if column in min_max_dic:
                 col_min, col_max = min_max_dic[column]
-                tbl = tbl.apply(column, column, normalize_scalar_vector(col_min, col_max), "vector")
+                tbl = tbl.apply(column, column,
+                                normalize_scalar_vector(col_min, col_max), "vector")
 
         return tbl
 
