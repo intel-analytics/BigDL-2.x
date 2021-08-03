@@ -75,7 +75,7 @@ class TSDataset:
                 self._freq = None
             else:
                 self._freq = self.df[self.dt_col].iloc[1] - self.df[self.dt_col].iloc[0]
-        self._is_aligned = _check_is_aligned(self.df,self.id_col,self.dt_col,self._id_list)
+        self._is_aligned = _check_is_aligned(self.df, self.id_col, self.dt_col, self._id_list)
 
     @staticmethod
     def from_pandas(df,
@@ -304,7 +304,7 @@ class TSDataset:
         self._freq = pd.Timedelta(interval)
         self._freq_certainty = True
         self.df.reset_index(drop=True, inplace=True)
-        self._is_aligned = _check_is_aligned(self.df,self.id_col,self.dt_col,self._id_list)
+        self._is_aligned = _check_is_aligned(self.df, self.id_col, self.dt_col, self._id_list)
         return self
 
     def gen_dt_feature(self, features="auto", one_hot_features=None):
