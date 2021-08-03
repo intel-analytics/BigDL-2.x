@@ -222,7 +222,7 @@ def ME(y_true, y_pred, multioutput='raw_values'):
     :param multioutput: String in ['raw_values', 'uniform_average']
 
     :return: Float or ndarray of floats.
-             A non-negative floating point value (the best value is 0.0), or an
+             A floating point value (the best value is 0.0), or an
              array of floating point values, one for each individual target.
     """
     y_true, y_pred, original_shape = _standardize_input(y_true, y_pred, multioutput)
@@ -447,7 +447,7 @@ class Evaluator(object):
         :param multioutput: String in ['raw_values', 'uniform_average']
 
         :return: Float or ndarray of floats.
-                 A non-negative floating point value, or an
+                 A floating point value, or an
                  array of floating point values, one for each individual target.
         """
         Evaluator.check_metric(metric)
