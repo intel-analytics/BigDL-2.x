@@ -988,7 +988,7 @@ class FeatureTable(Table):
         Pad and mask columns of the FeatureTable.
 
         :param cols: list of str, columns need to be padded with 0s.
-        :param seq_len: int, the length of masked column. Default to be 100.
+        :param seq_len: int, the length of masked column. Default is 100.
         :param mask_cols: list of string, columns need to be masked with 1s and 0s.
 
         :return: A new FeatureTable with padded columns.
@@ -1003,7 +1003,7 @@ class FeatureTable(Table):
         :param in_col: str, the name of column to be transformed.
         :param out_col: str, the name of output column.
         :param func: The Python function to convert in_col to out_col.
-        :param dtype: str, the data type of out_col. Default to be string type.
+        :param dtype: str, the data type of out_col. Default is string type.
 
         :return: A new FeatureTable after column transformation.
         """
