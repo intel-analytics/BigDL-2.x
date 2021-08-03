@@ -69,14 +69,12 @@ class TSDataset:
         self._id_list = list(np.unique(self.df[self.id_col]))
         self._freq_certainty = False
         self._freq = None
-        self._is_pd_datetime = pd.api.types.is_datetime64_any_dtype(
-            self.df[self.dt_col].dtypes)
+        self._is_pd_datetime = pd.api.types.is_datetime64_any_dtype(self.df[self.dt_col].dtypes)
         if self._is_pd_datetime:
             if len(self.df[self.dt_col]) < 2:
                 self._freq = None
             else:
-                self._freq = self.df[self.dt_col].iloc[1] - \
-                    self.df[self.dt_col].iloc[0]
+                self._freq = self.df[self.dt_col].iloc[1] - self.df[self.dt_col].iloc[0]
         self._is_aligned = _check_is_aligned(self.df, self.id_col, self.dt_col, self._id_list)
 
     @staticmethod
@@ -271,8 +269,7 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
-        self.df = deduplicate_timeseries_dataframe(
-            df=self.df, dt_col=self.dt_col)
+        self.df = deduplicate_timeseries_dataframe(df=self.df, dt_col=self.dt_col)
         return self
 
     def resample(self, interval, start_time=None, end_time=None, merge_mode="mean"):
@@ -577,7 +574,7 @@ class TSDataset:
                             list(range(feature_start_idx + i * num_feature_col,
                                        feature_start_idx + (i + 1) * num_feature_col))
                             for i in range(num_id)]
-            reindex_list = functools.reduce(lambda a, b: a+b, reindex_list)
+            reindex_list = functools.reduce(lambda a, b: a + b, reindex_list)
             sorted_index = sorted(range(len(reindex_list)), key=reindex_list.__getitem__)
             self.numpy_x = self.numpy_x[:, :, sorted_index]
 
@@ -756,8 +753,7 @@ class TSDataset:
                 if feature not in self.roll_additional_feature:
                     feature_col.append(feature)
         self.df[self.target_col + feature_col] = \
-            self.scaler.inverse_transform(
-                self.df[self.target_col + feature_col])
+            self.scaler.inverse_transform(self.df[self.target_col + feature_col])
         return self
 
     def unscale_numpy(self, data):
