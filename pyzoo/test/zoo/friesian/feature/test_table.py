@@ -569,7 +569,7 @@ class TestTable(TestCase):
         assert tbl.df.where(tbl.df.height == 10).select("num").collect()[0]["num"] == 2, \
             "the third row of num should be 2"
 
-    def test_write_to_csv(self):
+    def test_write_csv(self):
         spark = OrcaContext.get_spark_session()
         data = [("jack", 14, 8),
                 ("alice", 25, 9),
@@ -581,7 +581,7 @@ class TestTable(TestCase):
         directory = "write.csv"
         if os.path.exists("write.csv"):
             shutil.rmtree("write.csv")
-        tbl.write_to_csv(directory, partition=1, header=True)
+        tbl.write_csv(directory, mode="overwrite", header=True, num_partitions=1)
         assert os.path.exists("write.csv"), "files not write"
         result = FeatureTable(spark.read.csv(directory, header=True))
         assert isinstance(result, FeatureTable)
@@ -628,35 +628,41 @@ class TestTable(TestCase):
         spark = OrcaContext.get_spark_session()
         schema = StructType([StructField("name", StringType(), True),
                              StructField("grade", StringType(), True),
-                             StructField("id", IntegerType(), True)])
+                             StructField("number", IntegerType(), True)])
         data = [("jack", "a", 1), ("jack", "a", 3), ("jack", "b", 2), ("amy", "a", 2),
                 ("amy", "a", 5), ("amy", "a", 4)]
         tbl = FeatureTable(spark.createDataFrame(data, schema))
-        tbl2 = tbl.drop_duplicates(subset=['name', 'grade'], order='id', keep_min=True)
+        tbl2 = tbl.drop_duplicates(subset=['name', 'grade'], sort_cols='number', keep_min=True)
         tbl2.df.show()
         assert tbl2.size() == 3
         assert tbl2.df.filter((tbl2.df.name == 'jack') & (tbl2.df.grade == 'a'))\
-            .select("id").collect()[0]["id"] == 1
+            .select("number").collect()[0]["number"] == 1
         assert tbl2.df.filter((tbl2.df.name == 'jack') & (tbl2.df.grade == 'b'))\
-            .select("id").collect()[0]["id"] == 2
+            .select("number").collect()[0]["number"] == 2
         assert tbl2.df.filter((tbl2.df.name == 'amy') & (tbl2.df.grade == 'a'))\
-            .select("id").collect()[0]["id"] == 2
-        tbl3 = tbl.drop_duplicates(subset=['name', 'grade'], order='id', keep_min=False)
+            .select("number").collect()[0]["number"] == 2
+        tbl3 = tbl.drop_duplicates(subset=['name', 'grade'], sort_cols='number', keep_min=False)
         tbl3.df.show()
         assert tbl3.size() == 3
         assert tbl3.df.filter((tbl2.df.name == 'jack') & (tbl2.df.grade == 'a'))\
-            .select("id").collect()[0]["id"] == 3
+            .select("number").collect()[0]["number"] == 3
         assert tbl3.df.filter((tbl2.df.name == 'jack') & (tbl2.df.grade == 'b'))\
-            .select("id").collect()[0]["id"] == 2
+            .select("number").collect()[0]["number"] == 2
         assert tbl3.df.filter((tbl2.df.name == 'amy') & (tbl2.df.grade == 'a'))\
-            .select("id").collect()[0]["id"] == 5
-        tbl4 = tbl.drop_duplicates(subset=None, order='id', keep_min=False)
+            .select("number").collect()[0]["number"] == 5
+        tbl4 = tbl.drop_duplicates(subset=None, sort_cols='number', keep_min=False)
         tbl4.df.show()
         assert tbl4.size() == 6
-        tbl5 = tbl.drop_duplicates(subset=['name', 'grade'], order=None, keep_min=False)
+        tbl5 = tbl.drop_duplicates(subset=['name', 'grade'], sort_cols=None, keep_min=False)
         tbl5.df.show()
         assert tbl5.size() == 3
-        
+        tbl6 = tbl.drop_duplicates(subset=['name'], sort_cols=["grade", "number"], keep_min=False)
+        assert tbl6.size() == 2
+        tbl6.df.show()
+        assert tbl6.df.filter((tbl6.df.name == 'jack') & (tbl6.df.grade == 'b') & (tbl6.df.number == 2))\
+            .select("number").collect()[0]["number"] == 2
+        assert tbl6.df.filter((tbl6.df.name == 'amy') & (tbl6.df.grade == 'a') & (tbl6.df.number == 5))\
+            .select("number").collect()[0]["number"] == 5
 
     def test_join(self):
         spark = OrcaContext.get_spark_session()
@@ -679,32 +685,32 @@ class TestTable(TestCase):
         labels = ["infant", "minor", "adult", "senior"]
         # test drop false, name defiend
         new_tbl = tbl.cut_bins(bins=splits, column="ages", labels=labels,
-                               name="age_bucket", drop=False)
+                               out_col="age_bucket", drop=False)
         assert "age_bucket" in new_tbl.df.schema.names
         assert "ages" in new_tbl.df.schema.names
         assert new_tbl.df.select("age_bucket").rdd.flatMap(lambda x: x).collect() ==\
             ["adult", "adult", "minor", "senior", "adult", "infant", "adult", "adult", "adult"]
         # test drop true, name defined
         new_tbl = tbl.cut_bins(bins=splits, column="ages", labels=labels,
-                               name="age_bucket", drop=True)
+                               out_col="age_bucket", drop=True)
         assert "age_bucket" in new_tbl.df.schema.names
         assert "ages" not in new_tbl.df.schema.names
         assert new_tbl.df.select("age_bucket").rdd.flatMap(lambda x: x).collect() == \
             ["adult", "adult", "minor", "senior", "adult", "infant", "adult", "adult", "adult"]
         # test name not defined
         new_tbl = tbl.cut_bins(bins=splits, column="ages", labels=labels, drop=True)
-        assert "bucket" in new_tbl.df.schema.names
-        assert new_tbl.df.select("bucket").rdd.flatMap(lambda x: x).collect() == \
+        assert "bucketized_col" in new_tbl.df.schema.names
+        assert new_tbl.df.select("bucketized_col").rdd.flatMap(lambda x: x).collect() == \
             ["adult", "adult", "minor", "senior", "adult", "infant", "adult", "adult", "adult"]
         # test integer bins
         new_tbl = tbl.cut_bins(bins=4, column="ages", labels=labels, drop=True)
-        assert "bucket" in new_tbl.df.schema.names
-        assert new_tbl.df.select("bucket").rdd.flatMap(lambda x: x).collect() \
+        assert "bucketized_col" in new_tbl.df.schema.names
+        assert new_tbl.df.select("bucketized_col").rdd.flatMap(lambda x: x).collect() \
             == ["minor", "adult", "infant", "senior", "senior", "infant", "minor", "adult", "adult"]
         # test label is None
         new_tbl = tbl.cut_bins(bins=4, column="ages", drop=True)
-        assert "bucket" in new_tbl.df.schema.names
-        assert new_tbl.df.select("bucket").rdd.flatMap(lambda x: x).collect() \
+        assert "bucketized_col" in new_tbl.df.schema.names
+        assert new_tbl.df.select("bucketized_col").rdd.flatMap(lambda x: x).collect() \
             == [1, 2, 0, 3, 3, 0, 1, 2, 2]
 
     def test_columns(self):

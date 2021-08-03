@@ -16,13 +16,6 @@
 import os
 import hashlib
 
-from pandas.core.algorithms import isin
-
-from pyspark.sql.types import DoubleType, ArrayType, DataType, StringType
-from pyspark.ml import Pipeline
-from pyspark.ml.feature import MinMaxScaler
-from pyspark.ml.feature import VectorAssembler
-
 from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, DecimalType, \
     DoubleType, ArrayType, DataType, StructType, StringType, StructField
 from pyspark.ml import Pipeline
@@ -30,7 +23,7 @@ from pyspark.ml.feature import MinMaxScaler
 from pyspark.ml.feature import VectorAssembler
 
 from pyspark.sql.functions import col as pyspark_col, concat, udf, array, broadcast, \
-    lit, rank, col, monotonically_increasing_id
+    lit, rank, monotonically_increasing_id
 from pyspark.sql import Row, Window
 import pyspark.sql.functions as F
 
@@ -544,16 +537,23 @@ class Table:
             df_cast.df = df_cast.df.withColumn(i, pyspark_col(i).cast(dtype))
         return df_cast
 
-    def write_to_csv(self, path, partition=1, mode="overwrite", header=False):
+    def write_csv(self, path, mode="overwrite", header=True, num_partitions=None):
         """
-        Write the table to csv file.
+        Write the Table to csv file.
 
-        :param path: string, the path where csv file is written into.
-        :param partition: positive int, specifies the number of files to write.
-        :param mode: string, specify the writing mode.
-        :param header: bool, indicates whether to include the schema at first line in csv file.
+        :param path: str. The path to the csv file.
+        :param mode: str. One of "append", "overwrite", "ignore" or "error".
+        append: Append contents to the existing data.
+        overwrite: Overwrite the existing data.
+        ignore: Silently ignore this operation if data already exists.
+        error or errorifexists (default case): Throw an exception if data already exists.
+        :param header: boolean. Whether to include the schema at the first line of the csv file. Default is False.
+        :param num_partitions: positive int. The number of files to write.
         """
-        self.df.repartition(partition).write.csv(path=path, mode=mode, header=header)
+        if num_partitions:
+            self.df.repartition(num_partitions).write.csv(path=path, mode=mode, header=header)
+        else:
+            self.df.write.csv(path=path, mode=mode, header=header)
 
     def _concat(self, join="outer"):
         def concat_inner(self, df2):
@@ -580,18 +580,18 @@ class Table:
 
     def concat(self, tables, mode="inner", distinct=False):
         """
-        Concatenate a list of tables into one table in the dimension of row.
+        Concatenate a list of Tables into one Table in the dimension of row.
 
-        :param tables: str or a list, a list of table(s).
-        :param mode: str, can only be outer/inner. If mode equals to "inner", then the
-        new table only contains columns that are shared by all tables. If mode equals to "outer",
-        the the new table contains all columns appered in the list of tables.
-        :param distinct: bool, If distinct is True, the result table only contains distinct rows.
+        :param tables: a Table or a list of Tables.
+        :param mode: str, either inner or outer. For inner mode, the new Table would only contain columns
+        that are shared by all Tables. For outer mode, the resulting Table would contain all the columns that
+        appear in all Tables.
+        :param distinct: boolean. If True, the result Table would only contain distinct rows. Default is False.
 
-        :return: a single table with rows combined from input tables.
+        :return: A single concatenated Table.
         """
         if mode not in ["outer", "inner"]:
-            raise ValueError("join should take either outer or inner, but got {}.".format(mode))
+            raise ValueError("concat mode should be either outer or inner, but got {}.".format(mode))
         if not isinstance(tables, list):
             tables = [tables]
         dfs = [table.df for table in tables] + [self.df]
@@ -600,16 +600,18 @@ class Table:
             df = df.distinct()
         return self._clone(df)
 
-    def drop_duplicates(self, subset=None, order=None, keep_min=True):
+    def drop_duplicates(self, subset=None, sort_cols=None, keep_min=True):
         """
-        Return a new table with duplicate rows removed.
+        Return a new Table with duplicate rows removed.
+
         :param subset: str or a list of str, specifies which column(s) to be considered when
-        referring to duplication.
-        :param order: str, specifies the column to determine which item to keep when duplicated
-        items are found.
+        referring to duplication. If subset is None, all columns will be considered.
+        :param sort_cols: str or a list of str, specifies the column(s) to determine which item
+        to keep when duplicated.
+        items are found. If sort_cols is None, rows will be dropped randomly.
         :param keep_min: bool, specifies keep the smallest one or largest one.
 
-        :return: a new table with duplicate rows removed.
+        :return: A new Table with duplicate rows removed.
         """
         if subset is not None:
             if not isinstance(subset, list):
@@ -617,46 +619,51 @@ class Table:
             check_col_exists(self.df, subset)
         else:
             subset = self.columns
-        if order is None:
+        if sort_cols is None:
             return self._clone(self.df.dropDuplicates(subset=subset))
-        check_col_exists(self.df, [order])
+        if not isinstance(sort_cols, list):
+                sort_cols = [sort_cols]
+        check_col_exists(self.df, sort_cols)
         if keep_min:
-            window = Window.partitionBy(subset).orderBy(order, 'tiebreak')
+            window = Window.partitionBy(subset).orderBy(*sort_cols, 'id')
         else:
-            window = Window.partitionBy(subset).orderBy(self.df[order].desc(), 'tiebreak')
-        df = self.df.withColumn('tiebreak', monotonically_increasing_id())\
+            window = Window.partitionBy(subset).orderBy(*[self.df[sort_col].desc() for sort_col in sort_cols], 'id')
+        df = self.df.withColumn('id', monotonically_increasing_id())\
             .withColumn('rank', rank().over(window))
-        df = df.filter(col('rank') == 1).drop('rank', 'tiebreak')
+        df = df.filter(pyspark_col('rank') == 1).drop('rank', 'id')
         return self._clone(df)
 
-    def cut_bins(self, bins, column, labels=None, name="bucket", drop=True):
+    def cut_bins(self, bins, column, labels=None, out_col=None, drop=True):
         """
         Segment values of the target column into bins.
 
-        :param bins: list or an int. If bins is a list, it defines bins to be used. With n+1 splits,
+        :param bins: int or a list of int. If bins is a list, it defines bins to be used. With n+1 splits,
         there are n buckets. A bucket defined by splits x,y holds values in the range [x,y) except
         the last bucket, which also includes y. Bins should be of length >= 3 and strictly
         increasing.If bins is an int, it defines the number of equal-width bins in the range of
         all column values.
         :param column: str, specifies the name of the target column.
-        :labels: list, specifies the labels for the returned bins. If lable is None, then the
+        :labels: a list of str, specifies the labels for the returned bins. If lables is None, then the
         new bin column would use integer to encode categories.
-        :name: str, specifies the name of output categorical column, default name is "bucket".
-        :drop: bool, specifies whether to drop the original target column.
+        :out_col: str, specifies the name of output categorical column. If out_col is None, the name of
+        output column is "bucketized_col".
+        :drop: boolean. Whether to drop the original column.
 
         :return: a new Table with the updated bin column.
         """
         check_col_exists(self.df, [column])
+        if out_col is None:
+            out_col = "bucketized_col"
         if isinstance(bins, int):
-            maxValue = self.df.agg({column: "max"}).collect()[0][0]
-            minValue = self.df.agg({column: "min"}).collect()[0][0]
+            maxValue = self.get_stats(column, "max")[column]
+            minValue = self.get_stats(column, "min")[column]
             bins = np.linspace(minValue, maxValue, bins+1, endpoint=True).tolist()
-        bucketizer = Bucketizer(splits=bins, inputCol=column, outputCol=name)
+        bucketizer = Bucketizer(splits=bins, inputCol=column, outputCol=out_col)
         df_buck = bucketizer.setHandleInvalid("keep").transform(self.df)
         if labels is not None:
             to_label = {i: label for (i, label) in enumerate(labels)}
             udf_label = udf(lambda i: to_label[i], StringType())
-            df_buck = df_buck.withColumn(name, udf_label(name))
+            df_buck = df_buck.withColumn(out_col, udf_label(out_col))
         if drop:
             df_buck = df_buck.drop(column)
         return self._clone(df_buck)
@@ -1151,13 +1158,15 @@ class FeatureTable(Table):
         """
         Join a FeatureTable with another FeatureTable, it is wrapper of spark dataframe join
 
-        :param table: FeatureTable
-        :param on: string or list of string, join on this column
-        :param how: string
-        :param lsuffix: suffix to use for left table's overlapping columns.
-        :param rsuffix: suffix to use for right table's overlapping columns.
+        :param table: A FeatureTable.
+        :param on: str or a list of str, name(s) of column(s) to join.
+        :param how: str, default inner. Must be one of: inner, cross, outer, full, fullouter,
+        full_outer, left, leftouter, left_outer, right, rightouter, right_outer, semi, leftsemi,
+        left_semi, anti, leftanti and left_anti.
+        :param lsuffix: The suffix to use for left table's overlapping columns.
+        :param rsuffix: The suffix to use for right table's overlapping columns.
 
-        :return: FeatureTable
+        :return: A joined FeatureTable.
         """
         assert isinstance(table, Table), "the joined table should be a Table"
         if not isinstance(on, list):
