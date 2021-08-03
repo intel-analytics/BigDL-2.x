@@ -16,6 +16,7 @@
 
 
 from zoo.orca.data.shard import SparkXShards
+from zoo.chronos.data.utils.utils import _to_list, _check_type
 from zoo.chronos.data.utils.roll import roll_timeseries_dataframe
 from zoo.chronos.data.utils.split import split_timeseries_dataframe
 from zoo.chronos.data.experimental.utils import add_row, transform_to_dict
@@ -183,17 +184,3 @@ class XShardsTSDataset:
             raise RuntimeError("Please call \"roll\" method\
                     before transform a XshardsTSDataset to numpy ndarray!")
         return self.numpy_shards.transform_shard(transform_to_dict)
-
-
-def _to_list(item, name, expect_type=str):
-    if isinstance(item, list):
-        return item
-    if item is None:
-        return []
-    _check_type(item, name, expect_type)
-    return [item]
-
-
-def _check_type(item, name, expect_type):
-    assert isinstance(item, expect_type),\
-        f"a {str(expect_type)} is expected for {name} but found {type(item)}"
