@@ -833,7 +833,6 @@ class TestTSDataset(ZooTestCase):
 
         tsdata._check_basic_invariants()
 
-
     def test_check_scale_sequence(self):
         df = get_multi_id_ts_df()
         # with split is True.
@@ -856,7 +855,6 @@ class TestTSDataset(ZooTestCase):
         # with pytest.raises(AssertionError):
         #     tsdata.gen_global_feature(settings="minimal")\
         #           .gen_rolling_feature(settings="minimal", window_size=5)
-
 
     def test_non_pd_datetime(self):
         df = get_non_dt()
