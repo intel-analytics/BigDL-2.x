@@ -21,7 +21,7 @@ Sampling specs to be used in search space configuration.
     :show-inheritance:
 
 automl.common.metrics
-=====================
+----------------------------
 
 Evaluate unscaled metrics between y true value and y predicted value.
 
