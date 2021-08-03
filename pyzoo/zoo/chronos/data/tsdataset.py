@@ -564,6 +564,34 @@ class TSDataset:
 
         return self
 
+    def to_torch_loader(self, batch_size=32, roll=True, lookback=None, horizon=None):
+        """
+        to be added
+        """
+        from torch.utils.data import TensorDataset, DataLoader
+        import torch
+        if roll:
+            if lookback is None:
+                raise ValueError("You must input lookback if roll is True")
+            if horizon is None:
+                raise ValueError("You must input horizon if roll is True")
+            from zoo.chronos.data.utils.roll_dataset import RollDataset
+            torch_dataset = RollDataset(self.df,
+                                        lookback=lookback,
+                                        horizon=horizon,
+                                        feature_col=self.feature_col,
+                                        target_col=self.target_col,
+                                        id_col=self.id_col)
+            return DataLoader(torch_dataset,
+                              batch_size=batch_size,
+                              shuffle=True)
+        else:
+            x, y = self.to_numpy()
+            return DataLoader(TensorDataset(torch.from_numpy(x).float(),
+                                            torch.from_numpy(y).float()),
+                              batch_size=batch_size,
+                              shuffle=True)
+
     def to_numpy(self):
         '''
         Export rolling result in form of a tuple of numpy ndarray (x, y).
