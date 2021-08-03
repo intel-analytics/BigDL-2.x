@@ -28,7 +28,6 @@ from pyspark.sql.window import Window
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
-from zoo.common.utils import callZooFunc
 
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
@@ -488,8 +487,7 @@ class Table:
         """
         Write the Table to Parquet file.
 
-        :param path: str. The path to the Parquet file. Note that the col_name
-               will be used as basename of the Parquet file.
+        :param path: str. The path to the Parquet file.
         :param mode: str. One of "append", "overwrite", "error" or "ignore".
                append: Append contents to the existing data.
                overwrite: Overwrite the existing data.
