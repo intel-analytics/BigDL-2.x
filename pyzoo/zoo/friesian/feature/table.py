@@ -600,16 +600,17 @@ class Table:
             df = df.distinct()
         return self._clone(df)
 
-    def drop_duplicates(self, subset=None, sort_cols=None, keep_min=True):
+    def drop_duplicates(self, subset=None, sort_cols=None, keep="min"):
         """
         Return a new Table with duplicate rows removed.
 
         :param subset: str or a list of str, specifies which column(s) to be considered when
         referring to duplication. If subset is None, all columns will be considered.
         :param sort_cols: str or a list of str, specifies the column(s) to determine which item
-        to keep when duplicated.
-        items are found. If sort_cols is None, rows will be dropped randomly.
-        :param keep_min: bool, specifies keep the smallest one or largest one.
+        to keep when duplicated. If sort_cols is None, rows will be dropped randomly.
+        :param keep: str, default "min". 
+        -min: rows which have smallest values in sor_cols will be kept.
+        -max: rows which have largest values in sort_cols will be kept.
 
         :return: A new Table with duplicate rows removed.
         """
@@ -624,10 +625,12 @@ class Table:
         if not isinstance(sort_cols, list):
                 sort_cols = [sort_cols]
         check_col_exists(self.df, sort_cols)
-        if keep_min:
+        if keep == "min":
             window = Window.partitionBy(subset).orderBy(*sort_cols, 'id')
-        else:
+        elif keep == "max":
             window = Window.partitionBy(subset).orderBy(*[self.df[sort_col].desc() for sort_col in sort_cols], 'id')
+        else:
+            raise ValueError("keep should be either min or max, but got {}.".format(keep))
         df = self.df.withColumn('id', monotonically_increasing_id())\
             .withColumn('rank', rank().over(window))
         df = df.filter(pyspark_col('rank') == 1).drop('rank', 'id')

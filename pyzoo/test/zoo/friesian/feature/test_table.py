@@ -632,7 +632,7 @@ class TestTable(TestCase):
         data = [("jack", "a", 1), ("jack", "a", 3), ("jack", "b", 2), ("amy", "a", 2),
                 ("amy", "a", 5), ("amy", "a", 4)]
         tbl = FeatureTable(spark.createDataFrame(data, schema))
-        tbl2 = tbl.drop_duplicates(subset=['name', 'grade'], sort_cols='number', keep_min=True)
+        tbl2 = tbl.drop_duplicates(subset=['name', 'grade'], sort_cols='number', keep='min')
         tbl2.df.show()
         assert tbl2.size() == 3
         assert tbl2.df.filter((tbl2.df.name == 'jack') & (tbl2.df.grade == 'a'))\
@@ -641,7 +641,7 @@ class TestTable(TestCase):
             .select("number").collect()[0]["number"] == 2
         assert tbl2.df.filter((tbl2.df.name == 'amy') & (tbl2.df.grade == 'a'))\
             .select("number").collect()[0]["number"] == 2
-        tbl3 = tbl.drop_duplicates(subset=['name', 'grade'], sort_cols='number', keep_min=False)
+        tbl3 = tbl.drop_duplicates(subset=['name', 'grade'], sort_cols='number', keep='max')
         tbl3.df.show()
         assert tbl3.size() == 3
         assert tbl3.df.filter((tbl2.df.name == 'jack') & (tbl2.df.grade == 'a'))\
@@ -650,13 +650,13 @@ class TestTable(TestCase):
             .select("number").collect()[0]["number"] == 2
         assert tbl3.df.filter((tbl2.df.name == 'amy') & (tbl2.df.grade == 'a'))\
             .select("number").collect()[0]["number"] == 5
-        tbl4 = tbl.drop_duplicates(subset=None, sort_cols='number', keep_min=False)
+        tbl4 = tbl.drop_duplicates(subset=None, sort_cols='number', keep='max')
         tbl4.df.show()
         assert tbl4.size() == 6
-        tbl5 = tbl.drop_duplicates(subset=['name', 'grade'], sort_cols=None, keep_min=False)
+        tbl5 = tbl.drop_duplicates(subset=['name', 'grade'], sort_cols=None, keep='max')
         tbl5.df.show()
         assert tbl5.size() == 3
-        tbl6 = tbl.drop_duplicates(subset=['name'], sort_cols=["grade", "number"], keep_min=False)
+        tbl6 = tbl.drop_duplicates(subset=['name'], sort_cols=["grade", "number"], keep='max')
         assert tbl6.size() == 2
         tbl6.df.show()
         assert tbl6.df.filter((tbl6.df.name == 'jack') & (tbl6.df.grade == 'b') & (tbl6.df.number == 2))\
