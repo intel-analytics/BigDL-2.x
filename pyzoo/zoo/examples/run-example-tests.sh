@@ -307,15 +307,6 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
   --executor-memory 20g \
   ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/gan/gan_train_tmp.py
 
-echo "start example test for TFPark inceptionv1 training 8"
-${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
-  --master local[4] \
-  --driver-memory 10g \
-  ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/inception/inception.py \
-  --maxIteration 20 \
-  -b 8 \
-  -f ${HDFS_URI}/imagenet-mini
-
 if [ -f analytics-zoo-models/resnet_50_saved_model.zip ]; then
   echo "analytics-zoo-models/resnet_50_saved_model.zip already exists."
 else
@@ -324,7 +315,7 @@ else
   unzip analytics-zoo-models/resnet_50_saved_model.zip -d analytics-zoo-models/resnet_50_saved_model
 fi
 
-echo "start example test for TFPark freeze saved model 9"
+echo "start example test for TFPark freeze saved model 8"
 ${ANALYTICS_ZOO_HOME}/bin/spark-submit-python-with-zoo.sh \
   --master local[4] \
   --driver-memory 10g \

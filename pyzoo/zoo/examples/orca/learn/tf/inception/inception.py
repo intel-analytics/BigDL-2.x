@@ -21,7 +21,6 @@ from zoo.common.nncontext import *
 from zoo.feature.image import *
 from zoo.pipeline.api.keras.metrics import *
 from zoo.pipeline.nnframes import *
-from zoo.tfpark import TFDataset, TFOptimizer
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.orca.learn.tf.estimator import Estimator
 from zoo.orca.learn.trigger import EveryEpoch, SeveralIteration
@@ -191,7 +190,7 @@ def parse_record(raw_record, is_training, dtype):
         is_training=is_training)
     image = tf.cast(image, dtype)
 
-    label = tf.cast(tf.reshape(label, shape=[1]), dtype=tf.int32) + 1
+    label = tf.cast(tf.reshape(label, shape=[1]), dtype=tf.int32) - 1
 
     return image, label
 
@@ -323,21 +322,61 @@ if __name__ == "__main__":
         return tf.reduce_mean(is_correct)
 
     acc = accuracy(logits, labels)
-    optim = tf.keras.optimizers.SGD(learning_rate=0.01, momentum=0.9, nesterov=False, name='SGD')
+
+    from zoo.orca.learn.optimizers.schedule import SequentialSchedule, Warmup, Poly
+    from zoo.orca.learn.optimizers import SGD
+
+    iterationPerEpoch = int(ceil(float(1281167) / options.batchSize))
+    if options.maxEpoch:
+        maxIteration = iterationPerEpoch * options.maxEpoch
+    else:
+        maxIteration = options.maxIteration
+    warmup_iteration = options.warmupEpoch * iterationPerEpoch
+
+    if warmup_iteration == 0:
+        warmupDelta = 0.0
+    else:
+        if options.maxLr:
+            maxlr = options.maxLr
+        else:
+            maxlr = options.learningRate
+        warmupDelta = (maxlr - options.learningRate) / warmup_iteration
+    polyIteration = maxIteration - warmup_iteration
+    lrSchedule = SequentialSchedule(iterationPerEpoch)
+    lrSchedule.add(Warmup(warmupDelta), warmup_iteration)
+    lrSchedule.add(Poly(0.5, maxIteration), polyIteration)
+    optim = SGD(learningrate=0.01, learningrate_decay=0.0,
+                weightdecay=0.0001, momentum=0.9, dampening=0.0,
+                nesterov=False, learningrate_schedule=lrSchedule)
+
+    if options.maxEpoch:
+        checkpoint_trigger = EveryEpoch()
+    else:
+        checkpoint_trigger = SeveralIteration(options.checkpointIteration)
 
     est = Estimator.from_graph(inputs=images,
                                outputs=logits,
                                labels=labels,
                                loss=loss,
-                               optimizer=tf.train.AdamOptimizer(),
+                               optimizer=optim,
                                metrics={"acc": acc},
                                model_dir="/tmp/logs")
+
+    if options.resumeTrainingCheckpoint is not None:
+        assert options.resumeTrainingVersion is not None, \
+            "--resumeTrainingVersion must be specified when --resumeTrainingCheckpoint is."
+        est.load_orca_checkpoint(options.resumeTrainingCheckpoint,
+                                 options.resumeTrainingVersion)
 
     est.fit(data=train_data,
             batch_size=options.batchSize,
             epochs=options.maxEpoch,
             validation_data=val_data,
             feed_dict={is_training: [True, False]},
-            checkpoint_trigger=SeveralIteration(620))
+            checkpoint_trigger=checkpoint_trigger)
+
+    if options.checkpoint:
+        saver = tf.train.Saver()
+        saver.save(est.sess, options.checkpoint)
 
     stop_orca_context()

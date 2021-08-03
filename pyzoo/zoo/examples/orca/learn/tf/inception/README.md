@@ -42,7 +42,7 @@ rm ILSVRC2012_img_val.tar
 ## Train the Model
 
 ```bash
-python inception.py --data_dir ${data_dir} --weights ${weights} --class_num ${class_num} --names ${names}
+python inception.py --folder $(raw_imagenet} --imagenet ${imagenet_tfrecords} --cluster_mode yarn --worker_num 4 --cores 54 --memory 175G --batchSize 1792 --imagenet ./ --maxIteration 62000 --maxEpoch 100 --learningRate 0.0896 --checkpoint /tmp/models/inception
 ```
 
 In the above commands
