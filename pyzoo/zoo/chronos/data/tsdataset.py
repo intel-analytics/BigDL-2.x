@@ -75,9 +75,7 @@ class TSDataset:
                 self._freq = None
             else:
                 self._freq = self.df[self.dt_col].iloc[1] - self.df[self.dt_col].iloc[0]
-        self._is_aligned = len(set(
-            [hash(str(self.df.groupby(self.id_col).get_group(x)[self.dt_col].values))
-                for x in self._id_list])) == 1
+        self._is_aligned = _check_is_aligned(self.df,self.id_col,self.dt_col,self._id_list)
 
     @staticmethod
     def from_pandas(df,
@@ -306,6 +304,7 @@ class TSDataset:
         self._freq = pd.Timedelta(interval)
         self._freq_certainty = True
         self.df.reset_index(drop=True, inplace=True)
+        self._is_aligned = _check_is_aligned(self.df,self.id_col,self.dt_col,self._id_list)
         return self
 
     def gen_dt_feature(self, features="auto", one_hot_features=None):
@@ -529,19 +528,11 @@ class TSDataset:
             else self.feature_col
         target_col = _to_list(target_col, "target_col") if target_col is not None \
             else self.target_col
-<<<<<<< HEAD
         if self.roll_additional_feature:
             additional_feature_col =\
                 list(set(feature_col).intersection(set(self.roll_additional_feature)))
             feature_col =\
                 list(set(feature_col) - set(self.roll_additional_feature))
-=======
-        if self.roll_addional_feature:
-            additional_feature_col =\
-                list(set(feature_col).intersection(set(self.roll_addional_feature)))
-            feature_col =\
-                list(set(feature_col) - set(self.roll_addional_feature))
->>>>>>> change self._is_aligned
             self.roll_feature = feature_col + additional_feature_col
         else:
             additional_feature_col = None
@@ -803,3 +794,7 @@ class TSDataset:
         # check no n/a in critical col
         _check_col_no_na(self.df, self.dt_col)
         _check_col_no_na(self.df, self.id_col)
+
+def _check_is_aligned(df, id_col, dt_col, _id_list):
+    res = [hash(str(df.groupby(id_col).get_group(x)[dt_col].values)) for x in _id_list]
+    return len(set(res)) == 1
