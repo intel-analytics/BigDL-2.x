@@ -47,10 +47,7 @@ Time Series Forecasting uses the history to predict the future. There're two way
 - Use Standalone Forecaster pipeline
 
 #### **4.1 Time Series Forecasting Concepts**
-.. image:: ../Image/forecast.png
-   :scale: 100 %
-   :alt: Two styles of time series forecasting
-   :align: center
+![forecast_image](../Image/forecast.png)
 
 #### **4.2 Use AutoTS Pipeline (with AutoML)**
 
