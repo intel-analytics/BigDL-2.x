@@ -54,14 +54,16 @@ class BasePytorchForecaster(Forecaster):
         Fit(Train) the forecaster.
 
         :param data: The data support following formats:
-               |1. a numpy ndarray tuple (x, y):
-               |x's shape is (num_samples, lookback, feature_dim) where lookback and feature_dim
-               |should be the same as past_seq_len and input_feature_num.
-               |y's shape is (num_samples, horizon, target_dim), where horizon and target_dim
-               |should be the same as future_seq_len and output_feature_num.
-               |2. a xshard item:
-               |each partition can be a dictionary of {'x': x, 'y': y}, where x and y's shape
-               |should follow the shape stated before.
+
+               | 1. a numpy ndarray tuple (x, y):
+               | x's shape is (num_samples, lookback, feature_dim) where lookback and feature_dim
+               | should be the same as past_seq_len and input_feature_num.
+               | y's shape is (num_samples, horizon, target_dim), where horizon and target_dim
+               | should be the same as future_seq_len and output_feature_num.
+               | 2. a xshard item:
+               | each partition can be a dictionary of {'x': x, 'y': y}, where x and y's shape
+               | should follow the shape stated before.
+
         :param epochs: Number of epochs you want to train. The value defaults to 1.
         :param batch_size: Number of batch size you want to train. The value defaults to 32.
 
@@ -97,12 +99,14 @@ class BasePytorchForecaster(Forecaster):
         .to_local().predict(x, ...)
 
         :param data: The data support following formats:
-               |1. a numpy ndarray x:
-               |x's shape is (num_samples, lookback, feature_dim) where lookback and feature_dim
-               |should be the same as past_seq_len and input_feature_num.
-               |2. a xshard item:
-               |each partition can be a dictionary of {'x': x}, where x's shape
-               |should follow the shape stated before.
+
+               | 1. a numpy ndarray x:
+               | x's shape is (num_samples, lookback, feature_dim) where lookback and feature_dim
+               | should be the same as past_seq_len and input_feature_num.
+               | 2. a xshard item:
+               | each partition can be a dictionary of {'x': x}, where x's shape
+               | should follow the shape stated before.
+
         :param batch_size: predict batch size. The value will not affect predict
                result but will affect resources cost(e.g. memory and time).
 
@@ -142,9 +146,11 @@ class BasePytorchForecaster(Forecaster):
         used when forecaster is a non-distributed version.
 
         :param data: The data support following formats:
-               |1. a numpy ndarray x:
-               |x's shape is (num_samples, lookback, feature_dim) where lookback and feature_dim
-               |should be the same as past_seq_len and input_feature_num.
+
+               | 1. a numpy ndarray x:
+               | x's shape is (num_samples, lookback, feature_dim) where lookback and feature_dim
+               | should be the same as past_seq_len and input_feature_num.
+
         :param batch_size: predict batch size. The value will not affect predict
                result but will affect resources cost(e.g. memory and time).
         :param dirname: The directory to save onnx model file. This value defaults
@@ -178,14 +184,16 @@ class BasePytorchForecaster(Forecaster):
         >>> Evaluator.evaluate(metric=..., y_unscaled, y_hat_unscaled, multioutput=...)
 
         :param data: The data support following formats:
-               |1. a numpy ndarray tuple (x, y):
-               |x's shape is (num_samples, lookback, feature_dim) where lookback and feature_dim
-               |should be the same as past_seq_len and input_feature_num.
-               |y's shape is (num_samples, horizon, target_dim), where horizon and target_dim
-               |should be the same as future_seq_len and output_feature_num.
-               |2. a xshard item:
-               |each partition can be a dictionary of {'x': x, 'y': y}, where x and y's shape
-               |should follow the shape stated before.
+
+               | 1. a numpy ndarray tuple (x, y):
+               | x's shape is (num_samples, lookback, feature_dim) where lookback and feature_dim
+               | should be the same as past_seq_len and input_feature_num.
+               | y's shape is (num_samples, horizon, target_dim), where horizon and target_dim
+               | should be the same as future_seq_len and output_feature_num.
+               | 2. a xshard item:
+               | each partition can be a dictionary of {'x': x, 'y': y}, where x and y's shape
+               | should follow the shape stated before.
+
         :param batch_size: evaluate batch size. The value will not affect evaluate
                result but will affect resources cost(e.g. memory and time).
         :param multioutput: Defines aggregating of multiple output values.
@@ -231,11 +239,13 @@ class BasePytorchForecaster(Forecaster):
         >>> Evaluator.evaluate(metric=..., y_unscaled, y_hat_unscaled, multioutput=...)
 
         :param data: The data support following formats:
-               |1. a numpy ndarray tuple (x, y):
-               |x's shape is (num_samples, lookback, feature_dim) where lookback and feature_dim
-               |should be the same as past_seq_len and input_feature_num.
-               |y's shape is (num_samples, horizon, target_dim), where horizon and target_dim
-               |should be the same as future_seq_len and output_feature_num.
+
+               | 1. a numpy ndarray tuple (x, y):
+               | x's shape is (num_samples, lookback, feature_dim) where lookback and feature_dim
+               | should be the same as past_seq_len and input_feature_num.
+               | y's shape is (num_samples, horizon, target_dim), where horizon and target_dim
+               | should be the same as future_seq_len and output_feature_num.
+
         :param batch_size: evaluate batch size. The value will not affect evaluate
                result but will affect resources cost(e.g. memory and time).
         :param dirname: The directory to save onnx model file. This value defaults
