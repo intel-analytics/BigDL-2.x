@@ -34,7 +34,6 @@ class TestXShardsTSDataset(ZooTestCase):
 
     def setup_method(self, method):
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources/")
-        init_orca_context(cores=4, memory='2g')
 
     def teardown_method(self, method):
         pass
