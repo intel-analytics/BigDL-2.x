@@ -17,6 +17,7 @@
 import numpy as np
 import tempfile
 import os
+import torch
 
 from zoo.chronos.model.forecast.lstm_forecaster import LSTMForecaster
 from zoo.orca import init_orca_context, stop_orca_context
@@ -170,6 +171,9 @@ class TestChronosModelLSTMForecaster(TestCase):
         distributed_pred = forecaster.predict(test_data[0])
         distributed_eval = forecaster.evaluate(val_data)
 
+        model = forecaster.get_model()
+        assert isinstance(model, torch.nn.Module)
+
         forecaster.to_local()
         local_pred = forecaster.predict(test_data[0])
         local_eval = forecaster.evaluate(val_data)
@@ -184,5 +188,8 @@ class TestChronosModelLSTMForecaster(TestCase):
             np.testing.assert_almost_equal(distributed_pred, local_pred_onnx, decimal=5)
         except ImportError:
             pass
+
+        model = forecaster.get_model()
+        assert isinstance(model, torch.nn.Module)
 
         stop_orca_context()
