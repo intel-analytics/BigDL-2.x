@@ -275,7 +275,7 @@ def write_parquet(format, output_path, *args, **kwargs):
     func(output_path=output_path, *args, **kwargs)
 
 
-def read_as_tfdataset(path, output_types, output_shapes=None, *args, **kwargs):
+def read_as_tfdataset(path, output_types, config=None, output_shapes=None, *args, **kwargs):
     """
     return a orca.data.tf.data.Dataset
     :param path:
@@ -288,20 +288,80 @@ def read_as_tfdataset(path, output_types, output_shapes=None, *args, **kwargs):
     j_str = open_text(schema_path)[0]
     schema = decode_schema(j_str)
 
-    def generator():
-        for root, dirs, files in os.walk(path):
-            for name in dirs:
-                if name.startswith("chunk="):
-                    chunk_path = os.path.join(path, name)
-                    pq_table = pq.read_table(chunk_path)
-                    df = decode_feature_type_ndarray(
-                        pq_table.to_pandas(), schema)
-                    for record in df.to_dict("records"):
-                        yield record
+    row_group = []
 
-    dataset = tf.data.Dataset.from_generator(generator, output_types=output_types,
+    for root, dirs, files in os.walk(path):
+        for name in dirs:
+            if name.startswith("chunk="):
+                chunk_path = os.path.join(path, name)
+                row_group.append(chunk_path)
+
+    class ParquetIterableDataset(tf.data.Iterator):
+        """
+        Creates a `Dataset` that includes only 1/`num_shards` of this dataset.
+        The Dataset will contain all elements of total dataset whose index % num_shards = rank.
+        e.g. the total dataset has length of 6, num_shard 3, the rank 0(worker 0) will contains
+        index [0,3] of the dataset.
+        """
+        def __init__(self, row_group, num_shards=None,
+                     rank=None):
+            super(ParquetDataset).__init__()
+            self.row_group = row_group
+
+            # To get the indices we expect
+            self.row_group.sort()
+
+            self.num_shards = num_shards
+            self.rank = rank
+            self.datapiece = None
+
+            filter_row_group_indexed = []
+
+            if not self.num_shards or not self.rank:
+                filter_row_group_indexed = list(range(len(self.row_group)))
+            else:
+                assert self.num_shards <= len(
+                    self.row_group), "num_shards should be not larger than partitions." \
+                                     "but got num_shards {} with partitions {}." \
+                    .format(self.num_shards, len(self.row_group))
+                assert self.rank < self.num_shards, \
+                    "shard index should be included in [0,num_shard)," \
+                    "but got rank {} with num_shard {}.".format(
+                        self.rank, self.num_shards)
+                filter_row_group_indexed = [index for index in list(range(len(self.row_group)))
+                                            if index % self.num_shards == self.rank]
+
+            data_record = []
+            for select_chunk_path in [self.row_group[i] for i in filter_row_group_indexed]:
+                pq_table = pq.read_table(select_chunk_path)
+                df = decode_feature_type_ndarray(pq_table.to_pandas(), schema)
+                data_record.extend(df.to_dict("records"))
+
+            self.datapiece = data_record
+            self.cur = 0
+            self.cur_tail = len(self.datapiece)
+
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            if self.cur < self.cur_tail:
+                elem = self.datapiece[self.cur]
+                self.cur += 1
+                return elem
+            else:
+                raise StopIteration
+
+        def __call__(self):
+            self.cur = 0
+            return self
+
+    dataset = ParquetIterableDataset(
+        row_group=row_group, num_shards=config.get("num_shards"),
+        rank=config.get("rank"))
+
+    return tf.data.Dataset.from_generator(dataset, output_types=output_types,
                                              output_shapes=output_shapes)
-    return dataset
 
 
 def read_as_dataloader(path, config=None, transforms=None, batch_size=1, *args, **kwargs):
