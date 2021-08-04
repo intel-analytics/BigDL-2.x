@@ -953,7 +953,7 @@ class FeatureTable(Table):
         tbl = self
         import numpy as np
         def normalize_array(c_min, c_max):
-            
+
             def normalize(x):
                 np_x = np.array(x)
                 np_min = np.array(c_min)
