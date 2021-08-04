@@ -142,6 +142,16 @@ View [TSPipeline API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots
 
 _Chronos_ provides a set of standalone time series forecasters without AutoML support, including deep learning models as well as traditional statistical models.
 
+```eval_rst
++------------+------------+-----------+ 
+| Header 1   | Header 2   | Header 3  | 
++============+============+===========+ 
+| body row 1 | column 2   | column 3  | 
++------------+------------+-----------+ 
+| body row 2 | Cells may span columns.| 
++------------+------------+-----------+ 
+```
+
 | Forecaster        | Style | Multi-variate | Multi-step | Distributed |
 | ----------------- | ----- | ------------- | ---------- | ----------- |
 | LSTMForecaster    | RR    | ✅             | ❌          | ✅           |
