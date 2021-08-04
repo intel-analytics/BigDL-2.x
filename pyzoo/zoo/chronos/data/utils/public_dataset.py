@@ -16,16 +16,32 @@
 import os
 import re
 import requests
+import tarfile
+import zipfile
+import warnings
 
+import tqdm
 import pandas as pd
 from zoo.chronos.data.tsdataset import TSDataset
 
-NETWORK_TRAFFIC_DATA = ['2018%02d' % i for i in range(1, 13)]\
-    + ['2019%02d' % i for i in range(1, 13)]
-BASE_URL = {'network_traffic': [f'http://mawi.wide.ad.jp/~agurim/dataset/{val}/{val}.agr'
-                                for val in NETWORK_TRAFFIC_DATA],
-            'AIOps': 'http://clusterdata2018pubcn.oss-cn-beijing.aliyuncs.com/machine_usage.tar.gz'
-            }
+warnings.filterwarnings('ignore', category=FutureWarning)
+
+DATASET_NAME = {'network_traffic': ['2018%02d' % i for i in range(1, 13)]
+                + ['2019%02d' % i for i in range(1, 13)],
+                'AIOps': ['machine_usage.tar.gz'],
+                'fsi': ['individual_stocks_5yr.zip'],
+                'nyc_taxi': ['nyc_taxi.csv'],
+                }
+BASE_URL = \
+    {'network_traffic':
+     [f'http://mawi.wide.ad.jp/~agurim/dataset/{val}/{val}.agr'
+      for val in DATASET_NAME['network_traffic']],
+     'AIOps':
+     'http://clusterdata2018pubcn.oss-cn-beijing.aliyuncs.com/machine_usage.tar.gz',
+     'fsi':
+     'https://github.com/CNuge/kaggle-code/raw/master/stock_data/individual_stocks_5yr.zip',
+     'nyc_taxi':
+     'https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv'}
 
 
 class PublicDataset:
@@ -35,56 +51,56 @@ class PublicDataset:
         self.redownload = redownload
 
         self.url = BASE_URL[self.name]
-        self.abspath = os.path.join(os.path.expanduser(path), self.name)
-        self.data_path = os.path.join(self.abspath, self.name + '_data.csv')
+        self.dir_path = os.path.join(os.path.expanduser(path), self.name)
+        self.save_path = os.path.join(self.dir_path, self.name + '_data.csv')
 
     def get_public_data(self, chunk_size=1024):
-        """
+        '''
         Complete path stitching and download files.
         param chunk_size: Byte size of a single read, preferably an integer multiple of 2.
-        """
+        '''
         assert isinstance(chunk_size, int), "chunk_size must be int."
-        if not os.path.exists(self.abspath):
-            os.makedirs(self.abspath)
+        if not os.path.exists(self.dir_path):
+            os.makedirs(self.dir_path)
 
         if self.redownload:
             try:
-                exists_file = os.listdir(self.abspath)
-                _ = [os.remove(os.path.join(self.abspath, x))
-                     for x in exists_file if x in NETWORK_TRAFFIC_DATA]
-                os.remove(os.path.join(self.abspath, self.name + '_data.csv'))
+                exists_file = os.listdir(self.dir_path)
+                _ = [os.remove(os.path.join(self.dir_path, x))
+                     for x in exists_file if x in DATASET_NAME[self.name]]
+                os.remove(os.path.join(self.dir_path, self.name + '_data.csv'))
             except Exception:
                 raise OSError(
                     'File download is not completed, you should set redownload=False.')
 
-        if not set(NETWORK_TRAFFIC_DATA).issubset(set(os.listdir(self.abspath))):
+        local_file_list = DATASET_NAME[self.name] if self.name != 'network_traffic' \
+            else [x + '.agr' for x in DATASET_NAME[self.name]]
+        if not set(local_file_list).issubset(set(os.listdir(self.dir_path))):
             if isinstance(BASE_URL[self.name], list):
                 for val in self.url:
-                    download(val, self.abspath, chunk_size)
+                    download(val, self.dir_path, chunk_size)
             else:
-                download(self.url, self.abspath, chunk_size)
+                download(self.url, self.dir_path, chunk_size)
         return self
 
     def preprocess_network_traffic(self):
-        """ 
-        preprocess_network_traffic will match the Starttime and endtime(avgrate, total)
-        of data accordingto the regularity, and generate a csv file, the file name 
-        is network_traffic_data.csv.
-        """
+        '''
+        return data that meets the minimum requirements of tsdata.
+        '''
         _is_first_columns = True
         pattern = r"%Start.*?\((.*?)\)\n%%End.*?\((.*?)\)\n%Avg.*?\s(\d+\.\w+).*?\n%total:\s(\d+)"
 
-        if not os.path.exists(self.data_path):
-            for val in NETWORK_TRAFFIC_DATA:
-                with open(os.path.join(self.abspath, val), 'r') as f:
+        if not os.path.exists(self.save_path):
+            for val in DATASET_NAME[self.name]:
+                with open(os.path.join(self.dir_path, val + '.agr'), 'r') as f:
                     content = f.read()
                     result = re.findall(pattern, content, re.DOTALL)
                     columns_name = ['StartTime', 'EndTime', 'AvgRate', 'total']
                 raw_df_val = pd.DataFrame(columns=columns_name, data=result)
-                raw_df_val.to_csv(self.data_path, mode='a',
-                                  header=_is_first_columns, index=False, chunksize=256)
+                raw_df_val.to_csv(self.save_path, mode='a',
+                                  header=_is_first_columns, index=False, chunksize=1024)
                 _is_first_columns = False
-        raw_df = pd.read_csv(self.data_path)
+        raw_df = pd.read_csv(self.save_path)
         self.df = pd.DataFrame(pd.to_datetime(raw_df.StartTime))
         raw_df.AvgRate.str[-4:].unique()
         self.df['AvgRate'] = raw_df.AvgRate.apply(lambda x: float(x[:-4]) if
@@ -92,19 +108,81 @@ class PublicDataset:
         self.df["total"] = raw_df["total"]
         return self
 
+    def preprocess_AIOps(self):
+        '''
+        return data that meets the minimum requirements of tsdata.
+        '''
+        _is_first_columns = True
+        file_path = os.path.join(os.path.expanduser(self.dir_path), DATASET_NAME[self.name][0])
+        csv_name = DATASET_NAME[self.name][0].split('.')[0] + '.csv'
+        try:
+            if not os.path.exists(os.path.join(self.dir_path, csv_name)):
+                tar = tarfile.open(file_path, 'r:gz')
+                tar.extractall(os.path.expanduser(self.dir_path))
+        except Exception:
+            raise FileExistsError('file extractall failure,set redownload=True.')
 
-    def proprecess_AIOps(self):
-        """
-        
-        """
-        self.df = pd.read_csv(self.data_path, header=None, nrows=61570, names=[
-                              'time_step', 'cpu_useage', 'mem_usage'], usecols=[1, 2, 3])
-        self.df['time_step'] = pd.to_datetime(
-            self.df["time_step"], unit='s', origin=pd.Timestamp('2018-01-01'))
+        raw_df = pd.read_csv(
+            os.path.join(self.dir_path, csv_name),
+            header=None, usecols=[0, 1, 2, 3],
+            names=["id", "time_step", "cpu_usage", "mem_usage"],
+            na_filter=False, chunksize=4096, low_memory=False)
+
+        if not os.path.exists(self.save_path):
+            for val in raw_df:
+                val.loc[val.id.eq('m_1932')].\
+                    to_csv(self.save_path,
+                           mode='a',
+                           header=["id", "time_step", "cpu_usage", "mem_usage"]
+                           if _is_first_columns else None,
+                           index=False)
+                _is_first_columns = False
+        self.df = pd.read_csv(self.save_path, usecols=[1, 2, 3])
+        self.df.sort_values(by="time_step", inplace=True)
+        self.df.reset_index(inplace=True, drop=True)
+        self.df["time_step"] = \
+            pd.to_datetime(self.df["time_step"], unit='s', origin=pd.Timestamp('2018-01-01'))
         return self
 
+    def preprocess_fsi(self):
+        """
+        return data that meets the minimum requirements of tsdata.
+        """
+        _is_first_columns = True
+        if not os.path.exists(self.save_path):
+            zip_file = zipfile.ZipFile(os.path.join(
+                os.path.expanduser(self.dir_path), DATASET_NAME[self.name][0]))
+            zip_file.extractall(os.path.join(os.path.expanduser(self.dir_path)))
+            csv_dir = os.path.join(self.dir_path, DATASET_NAME[self.name][0].split('.')[0])
+            local_file_list = os.listdir(csv_dir)
+            for val in local_file_list:
+                raw_df = pd.read_csv(os.path.join(csv_dir, val),
+                                     names=['date', 'open', 'high',
+                                            'low', 'close', 'volume', 'Name'])
+                temp_df = raw_df.loc[raw_df.Name.eq('MMM')]
+                temp_df.to_csv(self.save_path,
+                               header=['ds', 'open', 'high',
+                                       'low', 'close', 'y', 'Name'] if _is_first_columns else None,
+                               index=False, mode='a')
+                _is_first_columns = False
+        self.df = pd.read_csv(self.save_path, usecols=[0, 5])
+        return self
 
-    def get_tsdata(self, dt_col, target_col, extra_feature=None, id_col=None):
+    def preprocess_nyc_taxi(self):
+        '''
+        Return data that meets the minimum requirements of tsdata.
+        '''
+        if not os.path.exists(self.save_path):
+            os.rename(os.path.join(self.dir_path, DATASET_NAME[self.name][0]), self.save_path)
+        self.df = pd.read_csv(self.save_path)
+        return self
+
+    def get_tsdata(self, dt_col,
+                   target_col,
+                   extra_feature=None,
+                   id_col=None,
+                   val_ratio=0.1,
+                   test_ratio=0.1):
         """
         param dt_col: same as tsdata.from_pandas.
         param target_col: same as tsdata.from_pandas.
@@ -114,7 +192,8 @@ class PublicDataset:
         """
         return TSDataset.from_pandas(self.df, dt_col=dt_col, target_col=target_col,
                                      extra_feature_col=extra_feature, id_col=id_col,
-                                     with_split=True, val_ratio=0.1, test_ratio=0.1)
+                                     with_split=True, val_ratio=val_ratio,
+                                     test_ratio=test_ratio)
 
 
 def download(url, path, chunk_size):
@@ -123,16 +202,14 @@ def download(url, path, chunk_size):
     param path: File save path.default path/name/name_data.csv.
     """
     req = requests.get(url, stream=True)
-    file_size, content_size = 0, int(req.headers['content-length'])
+    file_size = int(req.headers['content-length'])
     assert req.status_code == 200, "download failure, please check the network."
-    file_name = url.split('/')[-1].partition('.')[0]
+    file_name = url.split('/')[-1]
+    pbar = tqdm.tqdm(total=file_size, unit='B', unit_scale=True, desc=file_name)
     with open(os.path.join(path, file_name), 'wb') as f:
-        for chunk in req.iter_content(1024 * chunk_size):
+        for chunk in req.iter_content(chunk_size):
             if chunk:
                 f.write(chunk)
-                file_size += len(chunk)
-                print('\r'+'file %s:%s%.2f%%' %
-                      (file_name, '>' * int(file_size * 50 / content_size),
-                       float(file_size / content_size * 100)), end='')
+                pbar.update(chunk_size)
                 f.flush()
-        print('')
+    pbar.close()
