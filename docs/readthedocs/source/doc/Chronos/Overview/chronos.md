@@ -41,13 +41,27 @@ View [Quick Start](../QuickStart/chronos-autots-quickstart.md) for a more detail
 ---
 ### **4 Forecasting** 
 
-Time Series Forecasting uses the history to predict the future. There're two ways to do forecasting:
+#### **4.1 Time Series Forecasting Concepts**
+Time series forecasting is one of the most popular tasks on time series data. **In short, forecasing aims at predicting the future by using the knowledge you can learn from the history.**
+
+Traditionally, Time series forecasting problem was formulated with rich mathematical fundamentals and statistical models. Typically, one model can only handle one time series and fit on the whole time series before the last observed timestamp and predict the next few steps. Training(fit) is needed every time you change the last observed timestamp.
+
+![forecast-TS_image](../Image/forecast-TS.png)
+
+Recent years, common deep learning architectures (e.g. RNN, CNN, Transformer, etc.) are being successfully applied to forecasting problem. Forecasting is transformed to a supervised learning regression problem in this style. A model can predict several time series. Typically, a sampling process based on sliding-window is needed, some terminology is explained as following:
+
+- `lookback` / `past_seq_len`: the length of historical data along time. This number is tunable.
+- `horizon` / `future_seq_len`: the length of predicted data along time. This number is depended on the task definition.
+- `input_feature_num`: The number of variables the model can observe. This number is tunable since we can select a subset of extra feature to use.
+- `output_feature_num`: The number of variables the model to predict. This number is depended on the task definition.
+
+![forecast-RR_image](../Image/forecast-RR.png)
+
+
+There're two ways to do forecasting:
 
 - Use AutoTS pipeline
 - Use Standalone Forecaster pipeline
-
-#### **4.1 Time Series Forecasting Concepts**
-![forecast_image](../Image/forecast.png)
 
 #### **4.2 Use AutoTS Pipeline (with AutoML)**
 
@@ -128,11 +142,21 @@ View [TSPipeline API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots
 
 _Chronos_ provides a set of standalone time series forecasters without AutoML support, including deep learning models as well as traditional statistical models.
 
+| Forecaster        | Style | Multi-variate | Multi-step | Distributed |
+| ----------------- | ----- | ------------- | ---------- | ----------- |
+| LSTMForecaster    | RR    | ✅             | ❌          | ✅           |
+| TCNForecaster     | RR    | ✅             | ✅          | ✅           |
+| Seq2SeqForecaster | RR    | ✅             | ✅          | ✅           |
+| MTNetForecaster   | RR    | ✅             | ✳️          | ✅           |
+| TCMFForecaster    | TS    | ✅             | ✅          | ✳️           |
+| ProphetForecaster | TS    | ❌             | ✅          | ❌           |
+| ARIMAForecaster   | TS    | ❌             | ✅          | ❌           |
+
 View some examples notebooks for [Network Traffic Prediction](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/) 
 
 The common process of using a Forecaster looks like below. 
 ```python
-f = Forecaster()
+f = Forecaster(...)
 f.fit(...)
 f.predict(...)
 ```
