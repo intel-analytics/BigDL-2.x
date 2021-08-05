@@ -17,6 +17,7 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 
 import types
+import os
 
 from zoo.automl.model.abstract import BaseModel, ModelBuilder
 from zoo.automl.common.util import *
@@ -93,7 +94,7 @@ class PytorchBaseModel(BaseModel):
         return data_creator
 
     def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric=None,
-                 metric_func=None,
+                 metric_func=None, resources_per_trial=None,
                  **config):
         """
         :param data: data could be a tuple with numpy ndarray with form (x, y) or a
@@ -114,6 +115,11 @@ class PytorchBaseModel(BaseModel):
 
         if not metric:
             raise ValueError("You must input a valid metric value for fit_eval.")
+
+        # resources_per_trial
+        if resources_per_trial is not None:
+            torch.set_num_threads(resources_per_trial["cpu"])
+            os.environ["OMP_NUM_THREADS"] = str(resources_per_trial["cpu"])
 
         # update config settings
         def update_config():
