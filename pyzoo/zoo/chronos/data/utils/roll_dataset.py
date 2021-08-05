@@ -21,7 +21,7 @@ import torch
 
 def get_roll_start_idx(df, id_col, window_size):
     import itertools
-    id_start_idxes = df.index[df[id_col] != df[id_col].shift(1)].tolist()
+    id_start_idxes = df.index[df[id_col] != df[id_col].shift(1)].tolist() + [len(df)]
     roll_start_idx_iter = ((range(id_start_idxes[i], id_start_idxes[i+1] - window_size + 1))
                            for i in range(len(id_start_idxes) - 1))
     roll_start_idxes = list(itertools.chain.from_iterable(roll_start_idx_iter))
@@ -51,13 +51,17 @@ class RollDataset(Dataset):
     def __getitem__(self, idx):
         start_idx = self.roll_start_idxes[idx]
         x = self.arr[start_idx: start_idx + self.lookback]
+        x = torch.from_numpy(x).float()
+
         arr_target_only = self.arr[:, :self.target_num]
+        if self.horizon == 0:
+            y = None
+            return x, y
         if isinstance(self.horizon, int):
             y = arr_target_only[start_idx + self.lookback: start_idx + self.lookback + self.horizon]
         else:
             horizons = np.array(self.horizon)
-            y = np.take(arr_target_only, horizons + start_idx + self.lookback - 1)
-        x = torch.from_numpy(x).float()
+            y = np.take(arr_target_only, horizons + start_idx + self.lookback - 1, axis=0)
         y = torch.from_numpy(y).float()
         return x, y
 
