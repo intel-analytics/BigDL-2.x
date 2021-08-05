@@ -75,8 +75,7 @@ class TestRollDataset:
             else:
                 # for test, y is None.
                 xi = x[i]
-                roll_dataset_xi, roll_dataset_yi = roll_dataset[i]
-                assert roll_dataset_yi is None
+                roll_dataset_xi = roll_dataset[i]
                 np.testing.assert_array_almost_equal(xi, roll_dataset_xi.detach().numpy())
 
     @staticmethod

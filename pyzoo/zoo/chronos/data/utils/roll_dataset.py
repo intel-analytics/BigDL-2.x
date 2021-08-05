@@ -52,14 +52,15 @@ class RollDataset(Dataset):
         start_idx = self.roll_start_idxes[idx]
         x = self.arr[start_idx: start_idx + self.lookback]
         x = torch.from_numpy(x).float()
-
-        arr_target_only = self.arr[:, :self.target_num]
         if self.horizon == 0:
-            y = None
-            return x, y
+            return x
+
+        # cal y
+        arr_target_only = self.arr[:, :self.target_num]
         if isinstance(self.horizon, int):
             y = arr_target_only[start_idx + self.lookback: start_idx + self.lookback + self.horizon]
         else:
+            # horizon is a list of int
             horizons = np.array(self.horizon)
             y = np.take(arr_target_only, horizons + start_idx + self.lookback - 1, axis=0)
         y = torch.from_numpy(y).float()
