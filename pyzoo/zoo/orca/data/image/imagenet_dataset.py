@@ -49,6 +49,7 @@ VALIDATION_DIRECTORY = 'validation'
 
 VALIDATION_LABELS = 'synset_labels.txt'
 
+
 def convert_imagenet_to_tf_records(
         raw_data_dir: str,
         output_dir: str) -> Tuple[List[str], List[str]]:
