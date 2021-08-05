@@ -86,7 +86,6 @@ class TestRollTimeSeries(ZooTestCase):
                                          lookback=2,
                                          horizon=2,
                                          feature_col=["A"],
-                                         target_col=["B","C"])
+                                         target_col=["B", "C"])
         assert x.shape == (6, 2, 3)
         assert y.shape == (6, 2, 2)
-        
