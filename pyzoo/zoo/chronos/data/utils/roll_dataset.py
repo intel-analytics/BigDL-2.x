@@ -23,7 +23,10 @@ from zoo.chronos.data.utils.utils import _check_cols_no_na, _to_list
 
 def get_roll_start_idx(df, id_col, window_size):
     import itertools
-    id_start_idxes = df.index[df[id_col] != df[id_col].shift(1)].tolist() + [len(df)]
+    if not id_col:
+        id_start_idxes = [0, len(df)]
+    else:
+        id_start_idxes = df.index[df[id_col] != df[id_col].shift(1)].tolist() + [len(df)]
     roll_start_idx_iter = ((range(id_start_idxes[i], id_start_idxes[i+1] - window_size + 1))
                            for i in range(len(id_start_idxes) - 1))
     roll_start_idxes = list(itertools.chain.from_iterable(roll_start_idx_iter))
@@ -31,13 +34,25 @@ def get_roll_start_idx(df, id_col, window_size):
 
 
 class RollDataset(Dataset):
-    def __init__(self, df, lookback, horizon, feature_col, target_col, id_col):
+    def __init__(self, df, lookback, horizon, feature_col, target_col, id_col=None):
         """
-        todo: add check for df pre-requests 2, 3.
-        pre-request for df:
-        1. all the values in target_col and feature_col are not nan
-        2. if contains multiple ids, rows of same id should be consecutive
-        3. dataframe has been ordered by timestamp for each id.
+        A customized TorchDataset for rolling dataframe for time series applications.
+
+        :param df: The dataframe to roll on. The dataframe could contain single id value or
+            multiple id values. If the dataframe contains multiple ids, the rows of same id
+            should be consecutive. And dataframe should have been ordered by timestamp for each id.
+        :param lookback: the length of the past sequence
+        :param horizon: int or list,
+           if `horizon` is an int, we will sample `horizon` step
+           continuously after the forecasting point.
+           if `horizon` is an list, we will sample discretely according
+           to the input list. 1 means the timestampe just after the observed data.
+        :param feature_col: list, indicate the feature col name.
+        :param target_col: list, indicate the target col name.
+        :param id_col: (optional) a str indicates the col name of dataframe id
+
+        :return:
+
         """
         feature_col = _to_list(feature_col, "feature_col")
         target_col = _to_list(target_col, "target_col")
