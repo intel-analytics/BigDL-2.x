@@ -85,4 +85,3 @@ class RollDataset(Dataset):
             y = np.take(arr_target_only, horizons + start_idx + self.lookback - 1, axis=0)
         y = torch.from_numpy(y).float()
         return x, y
-
