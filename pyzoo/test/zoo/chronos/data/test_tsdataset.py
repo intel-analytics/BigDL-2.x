@@ -295,30 +295,30 @@ class TestTSDataset(ZooTestCase):
                                            extra_feature_col=["extra feature"], id_col="id")
 
             # train
-            torch_loader = tsdata.to_torch_loader(batch_size=32,
-                                                  roll=True,
-                                                  lookback=lookback,
-                                                  horizon=horizon)
+            torch_loader = tsdata.to_torch_data_loader(batch_size=32,
+                                                       roll=True,
+                                                       lookback=lookback,
+                                                       horizon=horizon)
             for x_batch, y_batch in torch_loader:
                 assert tuple(x_batch.size()) == (batch_size, lookback, 2)
                 assert tuple(y_batch.size()) == (batch_size, horizon, 1)
                 break
 
             # test
-            torch_loader = tsdata.to_torch_loader(batch_size=32,
-                                                  roll=True,
-                                                  lookback=lookback,
-                                                  horizon=0)
+            torch_loader = tsdata.to_torch_data_loader(batch_size=32,
+                                                       roll=True,
+                                                       lookback=lookback,
+                                                       horizon=0)
             for x_batch in torch_loader:
                 assert tuple(x_batch.size()) == (batch_size, lookback, 2)
                 break
 
             # specify feature_col
-            torch_loader = tsdata.to_torch_loader(batch_size=32,
-                                                  roll=True,
-                                                  lookback=lookback,
-                                                  horizon=horizon,
-                                                  feature_col=[])
+            torch_loader = tsdata.to_torch_data_loader(batch_size=32,
+                                                       roll=True,
+                                                       lookback=lookback,
+                                                       horizon=horizon,
+                                                       feature_col=[])
             for x_batch, y_batch in torch_loader:
                 assert tuple(x_batch.size()) == (batch_size, lookback, 1)
                 assert tuple(y_batch.size()) == (batch_size, horizon, 1)
@@ -334,12 +334,12 @@ class TestTSDataset(ZooTestCase):
                                        extra_feature_col=["extra feature"], id_col="id")
 
         with pytest.raises(RuntimeError):
-            tsdata.to_torch_loader()
+            tsdata.to_torch_data_loader()
 
         tsdata.roll(lookback=lookback, horizon=horizon)
-        loader = tsdata.to_torch_loader(batch_size=32,
-                                        lookback=lookback,
-                                        horizon=horizon)
+        loader = tsdata.to_torch_data_loader(batch_size=32,
+                                             lookback=lookback,
+                                             horizon=horizon)
         for x_batch, y_batch in loader:
             assert tuple(x_batch.size()) == (batch_size, lookback, 2)
             assert tuple(y_batch.size()) == (batch_size, horizon, 1)
