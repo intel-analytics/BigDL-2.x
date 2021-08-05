@@ -22,9 +22,9 @@ pip install --pre --upgrade analytics-zoo[automl]
 ### **3 Initialization**
 
 _Chronos_ uses [Orca](../../Orca/Overview/orca.md) to enable distributed training and AutoML capabilities. Init orca as below when you want to:
-1. Use distributed model to pre/post-process your time series data.
-2. Use the distributed mode of a standalone forecaster.
-3. Use automl to distributedly tuning your model.
+
+1. Use the distributed mode of a standalone forecaster.
+2. Use automl to distributedly tuning your model.
 
 View [Orca Context](../../Orca/Overview/orca-context.md) for more details. Note that argument `init_ray_on_spark` must be `True` for _Chronos_. 
 
@@ -44,10 +44,12 @@ View [Quick Start](../QuickStart/chronos-autots-quickstart.md) for a more detail
 #### **4.1 Time Series Forecasting Concepts**
 Time series forecasting is one of the most popular tasks on time series data. **In short, forecasing aims at predicting the future by using the knowledge you can learn from the history.**
 
+##### **4.1.1 Traditional Statistical(TS) Style**
 Traditionally, Time series forecasting problem was formulated with rich mathematical fundamentals and statistical models. Typically, one model can only handle one time series and fit on the whole time series before the last observed timestamp and predict the next few steps. Training(fit) is needed every time you change the last observed timestamp.
 
 ![](../Image/forecast-TS.png)
 
+##### **4.1.2 Regular Regression(RR) Style**
 Recent years, common deep learning architectures (e.g. RNN, CNN, Transformer, etc.) are being successfully applied to forecasting problem. Forecasting is transformed to a supervised learning regression problem in this style. A model can predict several time series. Typically, a sampling process based on sliding-window is needed, some terminology is explained as following:
 
 - `lookback` / `past_seq_len`: the length of historical data along time. This number is tunable.
@@ -138,20 +140,21 @@ View [TSPipeline API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots
 **Note**:  `init_orca_context` is not needed if you just use the trained TSPipeline for inference, evaluation or incremental fitting.
 
 ---
+<span id="supported_forecasting_model"></span>
 #### **4.3 Use Standalone Forecaster Pipeline**
 
 _Chronos_ provides a set of standalone time series forecasters without AutoML support, including deep learning models as well as traditional statistical models.
-<span id="supported_forecasting_model"></span>
+
 
 | Forecaster        | Style | Multi-Variate | Multi-Step | Distributed |
 | ----------------- | ----- | ------------- | ---------- | ----------- |
 | [LSTMForecaster](#LSTMForecaster)    | RR    | ✅             | ❌          | ✅           |
-| TCNForecaster     | RR    | ✅             | ✅          | ✅           |
-| Seq2SeqForecaster | RR    | ✅             | ✅          | ✅           |
-| MTNetForecaster   | RR    | ✅             | ✳️          | ✅           |
-| TCMFForecaster    | TS    | ✅             | ✅          | ✳️           |
-| ProphetForecaster | TS    | ❌             | ✅          | ❌           |
-| ARIMAForecaster   | TS    | ❌             | ✅          | ❌           |
+| [Seq2SeqForecaster](#Seq2SeqForecaster)     | RR    | ✅             | ✅          | ✅           |
+| [TCNForecaster](#TCNForecaster) | RR    | ✅             | ✅          | ✅           |
+| [MTNetForecaster](#MTNetForecaster)   | RR    | ✅             | ✳️          | ✅           |
+| [TCMFForecaster](#TCMFForecaster)    | TS    | ✅             | ✅          | ✳️           |
+| [ProphetForecaster](#ProphetForecaster) | TS    | ❌             | ✅          | ❌           |
+| [ARIMAForecaster](#ARIMAForecaster)   | TS    | ❌             | ✅          | ❌           |
 
 View some examples notebooks for [Network Traffic Prediction](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/) 
 
@@ -161,7 +164,7 @@ f = Forecaster(...)
 f.fit(...)
 f.predict(...)
 ```
-Refer to API docs of each Forecaster for detailed usage instructions and examples.
+View [Quick Start](../QuickStart/chronos-tsdataset-forecaster-quickstart.md) for a more detailed example. Refer to [API docs](../../PythonAPI/Chronos/forecasters.html) of each Forecaster for detailed usage instructions and examples.
 
 <span id="LSTMForecaster"></span>
 ###### **4.3.1 LSTMForecaster**
@@ -170,36 +173,42 @@ LSTMForecaster wraps a vanilla LSTM model, and is suitable for univariate time s
 
 View Network Traffic Prediction [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [LSTMForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-lstm-forecaster) for more details.
 
+<span id="Seq2SeqForecaster"></span>
 ###### **4.3.2 Seq2SeqForecaster**
 
 Seq2SeqForecaster wraps a sequence to sequence model based on LSTM, and is suitable for multivariant & multistep time series forecasting.
 
 View [Seq2SeqForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-seq2seq-forecaster) for more details.
 
+<span id="TCNForecaster"></span>
 ###### **4.3.3 TCNForecaster**
 
 Temporal Convolutional Networks (TCN) is a neural network that use convolutional architecture rather than recurrent networks. It supports multi-step and multi-variant cases. Causal Convolutions enables large scale parallel computing which makes TCN has less inference time than RNN based model such as LSTM.
 
 View Network Traffic multivariate multistep Prediction [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster.ipynb) and [TCNForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-tcn-forecaster) for more details.
 
+<span id="MTNetForecaster"></span>
 ###### **4.3.4 MTNetForecaster**
 
 MTNetForecaster wraps a MTNet model. The model architecture mostly follows the [MTNet paper](https://arxiv.org/abs/1809.02105) with slight modifications, and is suitable for multivariate time series forecasting.
 
 View Network Traffic Prediction [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.ipynb) and [MTNetForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-mtnet-forecaster) for more details.
 
+<span id="TCMFForecaster"></span>
 ###### **4.3.5 TCMFForecaster**
 
 TCMFForecaster wraps a model architecture that follows implementation of the paper [DeepGLO paper](https://arxiv.org/abs/1905.03806) with slight modifications. It is especially suitable for extremely high dimensional (up-to millions) multivariate time series forecasting.
 
 View High-dimensional Electricity Data Forecasting [example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/tcmf/run_electricity.py) and [TCMFForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-tcmf-forecaster) for more details.
 
+<span id="ARIMAForecaster"></span>
 ###### **4.3.6 ARIMAForecaster**
 
 ARIMAForecaster wraps a ARIMA model and is suitable for univariate time series forecasting. It works best with data that show evidence of non-stationarity in the sense of mean (and an initial differencing step (corresponding to the "I, integrated" part of the model) can be applied one or more times to eliminate the non-stationarity of the mean function.
 
 View [ARIMAForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-arima-forecaster) for more details.
 
+<span id="ProphetForecaster"></span>
 ###### **4.3.7 ProphetForecaster**
 
 ProphetForecaster wraps the Prophet model ([site](https://github.com/facebook/prophet)) which is an additive model where non-linear trends are fit with yearly, weekly, and daily seasonality, plus holiday effects and is suitable for univariate time series forecasting. It works best with time series that have strong seasonal effects and several seasons of historical data and is robust to missing data and shifts in the trend, and typically handles outliers well.
