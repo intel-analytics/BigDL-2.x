@@ -37,7 +37,7 @@ class RollDataset(Dataset):
         2. if contains multiple ids, rows of same id should be consecutive
         3. dataframe has been ordered by timestamp for each id.
         """
-        self.arr = df.loc[:, target_col + feature_col].to_numpy()
+        self.arr = df.loc[:, target_col + feature_col].to_numpy(copy=False)
         max_horizon = horizon if isinstance(horizon, int) else max(horizon)
         window_size = lookback + max_horizon
         self.roll_start_idxes = get_roll_start_idx(df, id_col, window_size=window_size)

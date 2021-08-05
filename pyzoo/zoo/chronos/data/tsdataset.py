@@ -564,7 +564,7 @@ class TSDataset:
 
         return self
 
-    def to_torch_loader(self, batch_size=32, roll=True, lookback=None, horizon=None):
+    def to_torch_loader(self, batch_size=32, roll=False, lookback=None, horizon=None):
         """
         to be added
         """
@@ -586,6 +586,9 @@ class TSDataset:
                               batch_size=batch_size,
                               shuffle=True)
         else:
+            if self.numpy_x is None:
+                raise RuntimeError("Please call \"roll\" method before transforming a TSDataset to "
+                                   "torch DataLoader without rolling (default roll=False)!")
             x, y = self.to_numpy()
             return DataLoader(TensorDataset(torch.from_numpy(x).float(),
                                             torch.from_numpy(y).float()),

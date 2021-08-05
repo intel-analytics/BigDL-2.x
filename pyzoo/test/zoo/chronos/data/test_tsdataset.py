@@ -284,7 +284,36 @@ class TestTSDataset(ZooTestCase):
         assert np.array_equal(y, np.array([[[2.4, 2.6]]]))
 
     def test_tsdataset_to_torch_loader_roll(self):
-        import torch
+        df_single_id = get_ts_df()
+        df_multi_id = get_multi_id_ts_df()
+        for df in [df_single_id, df_multi_id]:
+            horizon = random.randint(1, 10)
+            lookback = random.randint(1, 20)
+            batch_size = 32
+
+            tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                           extra_feature_col=["extra feature"], id_col="id")
+
+            # train
+            torch_loader = tsdata.to_torch_loader(batch_size=32,
+                                                  roll=True,
+                                                  lookback=lookback,
+                                                  horizon=horizon)
+            for x_batch, y_batch in torch_loader:
+                assert tuple(x_batch.size()) == (batch_size, lookback, 2)
+                assert tuple(y_batch.size()) == (batch_size, horizon, 1)
+                break
+
+            # test
+            torch_loader = tsdata.to_torch_loader(batch_size=32,
+                                                  roll=True,
+                                                  lookback=lookback,
+                                                  horizon=0)
+            for x_batch in torch_loader:
+                assert tuple(x_batch.size()) == (batch_size, lookback, 2)
+                break
+
+    def test_tsdataset_to_torch_loader(self):
         df = get_ts_df()
         horizon = random.randint(1, 10)
         lookback = random.randint(1, 20)
@@ -293,23 +322,16 @@ class TestTSDataset(ZooTestCase):
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
 
-        # train
-        torch_loader = tsdata.to_torch_loader(batch_size=32,
-                                              roll=True,
-                                              lookback=lookback,
-                                              horizon=horizon)
-        for x_batch, y_batch in torch_loader:
+        with pytest.raises(RuntimeError):
+            tsdata.to_torch_loader()
+
+        tsdata.roll(lookback=lookback, horizon=horizon)
+        loader = tsdata.to_torch_loader(batch_size=32,
+                                        lookback=lookback,
+                                        horizon=horizon)
+        for x_batch, y_batch in loader:
             assert tuple(x_batch.size()) == (batch_size, lookback, 2)
             assert tuple(y_batch.size()) == (batch_size, horizon, 1)
-            break
-
-        # test
-        torch_loader = tsdata.to_torch_loader(batch_size=32,
-                                              roll=True,
-                                              lookback=lookback,
-                                              horizon=0)
-        for x_batch in torch_loader:
-            assert tuple(x_batch.size()) == (batch_size, lookback, 2)
             break
 
     def test_tsdataset_imputation(self):
