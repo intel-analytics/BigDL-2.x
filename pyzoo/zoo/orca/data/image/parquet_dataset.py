@@ -265,7 +265,7 @@ def write_parquet(format, output_path, *args, **kwargs):
     supported_format = {"mnist", "image_folder", "voc"}
     if format not in supported_format:
         raise ValueError(format + " is not supported, should be one of 'mnist',"
-                         "'image_folder' and 'voc'.")
+                                  "'image_folder' and 'voc'.")
 
     format_to_function = {"mnist": (write_mnist, ["image_file", "label_file"]),
                           "image_folder": (write_from_directory, ["directory", "label_map"]),
@@ -303,6 +303,7 @@ def read_as_tfdataset(path, output_types, config=None, output_shapes=None, *args
         e.g. the total dataset has 6 chunks, num_shard is 3, the rank 0(worker 0) will contain
         index 0, 3 of the dataset.
         """
+
         def __init__(self, row_group, num_shards=None,
                      rank=None):
             super(ParquetDataset).__init__()
@@ -361,7 +362,7 @@ def read_as_tfdataset(path, output_types, config=None, output_shapes=None, *args
         rank=config.get("rank"))
 
     return tf.data.Dataset.from_generator(dataset, output_types=output_types,
-                                             output_shapes=output_shapes)
+                                          output_shapes=output_shapes)
 
 
 def read_as_dataloader(path, config=None, transforms=None, batch_size=1, *args, **kwargs):
