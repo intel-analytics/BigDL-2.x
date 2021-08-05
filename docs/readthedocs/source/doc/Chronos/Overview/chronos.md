@@ -46,20 +46,20 @@ Time series forecasting is one of the most popular tasks on time series data. **
 
 Traditionally, Time series forecasting problem was formulated with rich mathematical fundamentals and statistical models. Typically, one model can only handle one time series and fit on the whole time series before the last observed timestamp and predict the next few steps. Training(fit) is needed every time you change the last observed timestamp.
 
-![forecast-TS_image](../Image/forecast-TS.png)
+![](../Image/forecast-TS.png)
 
 Recent years, common deep learning architectures (e.g. RNN, CNN, Transformer, etc.) are being successfully applied to forecasting problem. Forecasting is transformed to a supervised learning regression problem in this style. A model can predict several time series. Typically, a sampling process based on sliding-window is needed, some terminology is explained as following:
 
 - `lookback` / `past_seq_len`: the length of historical data along time. This number is tunable.
-- `horizon` / `future_seq_len`: the length of predicted data along time. This number is depended on the task definition.
+- `horizon` / `future_seq_len`: the length of predicted data along time. This number is depended on the task definition. If this value larger than 1, then the forecasting task is *Multi-Step*.
 - `input_feature_num`: The number of variables the model can observe. This number is tunable since we can select a subset of extra feature to use.
-- `output_feature_num`: The number of variables the model to predict. This number is depended on the task definition.
+- `output_feature_num`: The number of variables the model to predict. This number is depended on the task definition. If this value larger than 1, then the forecasting task is *Multi-Variate*.
 
-![forecast-RR_image](../Image/forecast-RR.png)
+![](../Image/forecast-RR.png)
 
+_Chronos_ provides both deep learning/machine learning models and traditional statistical models for forecasting. For details, please refer to [here](#supported_forecasting_model).
 
 There're two ways to do forecasting:
-
 - Use AutoTS pipeline
 - Use Standalone Forecaster pipeline
 
@@ -141,10 +141,11 @@ View [TSPipeline API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots
 #### **4.3 Use Standalone Forecaster Pipeline**
 
 _Chronos_ provides a set of standalone time series forecasters without AutoML support, including deep learning models as well as traditional statistical models.
+<span id="supported_forecasting_model"></span>
 
-| Forecaster        | Style | Multi-variate | Multi-step | Distributed |
+| Forecaster        | Style | Multi-Variate | Multi-Step | Distributed |
 | ----------------- | ----- | ------------- | ---------- | ----------- |
-| LSTMForecaster    | RR    | ✅             | ❌          | ✅           |
+| [LSTMForecaster](#LSTMForecaster)    | RR    | ✅             | ❌          | ✅           |
 | TCNForecaster     | RR    | ✅             | ✅          | ✅           |
 | Seq2SeqForecaster | RR    | ✅             | ✅          | ✅           |
 | MTNetForecaster   | RR    | ✅             | ✳️          | ✅           |
@@ -162,6 +163,7 @@ f.predict(...)
 ```
 Refer to API docs of each Forecaster for detailed usage instructions and examples.
 
+<span id="LSTMForecaster"></span>
 ###### **4.3.1 LSTMForecaster**
 
 LSTMForecaster wraps a vanilla LSTM model, and is suitable for univariate time series forecasting.
