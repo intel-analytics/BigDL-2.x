@@ -313,6 +313,17 @@ class TestTSDataset(ZooTestCase):
                 assert tuple(x_batch.size()) == (batch_size, lookback, 2)
                 break
 
+            # specify feature_col
+            torch_loader = tsdata.to_torch_loader(batch_size=32,
+                                                  roll=True,
+                                                  lookback=lookback,
+                                                  horizon=horizon,
+                                                  feature_col=[])
+            for x_batch, y_batch in torch_loader:
+                assert tuple(x_batch.size()) == (batch_size, lookback, 1)
+                assert tuple(y_batch.size()) == (batch_size, horizon, 1)
+                break
+
     def test_tsdataset_to_torch_loader(self):
         df = get_ts_df()
         horizon = random.randint(1, 10)

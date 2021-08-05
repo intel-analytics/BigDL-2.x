@@ -564,7 +564,13 @@ class TSDataset:
 
         return self
 
-    def to_torch_loader(self, batch_size=32, roll=False, lookback=None, horizon=None):
+    def to_torch_loader(self,
+                        batch_size=32,
+                        roll=False,
+                        lookback=None,
+                        horizon=None,
+                        feature_col=None,
+                        target_col=None,):
         """
         to be added
         """
@@ -576,11 +582,15 @@ class TSDataset:
             if horizon is None:
                 raise ValueError("You must input horizon if roll is True")
             from zoo.chronos.data.utils.roll_dataset import RollDataset
+            feature_col = _to_list(feature_col, "feature_col") if feature_col is not None \
+                else self.feature_col
+            target_col = _to_list(target_col, "target_col") if target_col is not None \
+                else self.target_col
             torch_dataset = RollDataset(self.df,
                                         lookback=lookback,
                                         horizon=horizon,
-                                        feature_col=self.feature_col,
-                                        target_col=self.target_col,
+                                        feature_col=feature_col,
+                                        target_col=target_col,
                                         id_col=self.id_col)
             return DataLoader(torch_dataset,
                               batch_size=batch_size,

@@ -39,6 +39,8 @@ class RollDataset(Dataset):
         2. if contains multiple ids, rows of same id should be consecutive
         3. dataframe has been ordered by timestamp for each id.
         """
+        feature_col = _to_list(feature_col, "feature_col")
+        target_col = _to_list(target_col, "target_col")
         _check_cols_no_na(df, col_names=target_col + feature_col)
         self.arr = df.loc[:, target_col + feature_col].to_numpy(copy=False)
         max_horizon = horizon if isinstance(horizon, int) else max(horizon)
