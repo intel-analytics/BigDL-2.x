@@ -18,6 +18,8 @@ import numpy as np
 from torch.utils.data import Dataset
 import torch
 
+from zoo.chronos.data.utils.utils import _check_cols_no_na, _to_list
+
 
 def get_roll_start_idx(df, id_col, window_size):
     import itertools
@@ -31,12 +33,13 @@ def get_roll_start_idx(df, id_col, window_size):
 class RollDataset(Dataset):
     def __init__(self, df, lookback, horizon, feature_col, target_col, id_col):
         """
-        todo: add check for df
+        todo: add check for df pre-requests 2, 3.
         pre-request for df:
-        1. all the values are not nan
+        1. all the values in target_col and feature_col are not nan
         2. if contains multiple ids, rows of same id should be consecutive
         3. dataframe has been ordered by timestamp for each id.
         """
+        _check_cols_no_na(df, col_names=target_col + feature_col)
         self.arr = df.loc[:, target_col + feature_col].to_numpy(copy=False)
         max_horizon = horizon if isinstance(horizon, int) else max(horizon)
         window_size = lookback + max_horizon

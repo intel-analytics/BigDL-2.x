@@ -104,3 +104,14 @@ class TestRollDataset:
     def test_multi_id(self):
         df = get_multi_id_ts_df()
         TestRollDataset.combination_tests_for_df(df)
+
+    def test_df_nan(self):
+        df = get_ts_df()
+        df["value"][0] = np.nan
+        with pytest.raises(AssertionError):
+            RollDataset(df=df,
+                        lookback=2,
+                        horizon=1,
+                        feature_col=["extra feature"],
+                        target_col=["value"],
+                        id_col="id")
