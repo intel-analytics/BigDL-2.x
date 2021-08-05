@@ -296,7 +296,7 @@ def read_as_tfdataset(path, output_types, config=None, output_shapes=None, *args
                 chunk_path = os.path.join(path, name)
                 row_group.append(chunk_path)
 
-    class ParquetIterableDataset(tf.data.Iterator):
+    class ParquetIterableDataset:
         """
         Creates a `Dataset` that includes only 1/`num_shards` of this dataset.
         The Dataset will contain all elements of total dataset whose index % num_shards = rank.
