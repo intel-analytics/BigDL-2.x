@@ -918,7 +918,7 @@ class FeatureTable(Table):
             model = scaler.fit(df)
             df = model.transform(df).drop(c).withColumn(c, tolist("scaled")).drop("scaled")
             min_max_dict[c] = (model.originalMin.toArray().tolist(),
-                              model.originalMax.toArray().tolist())
+                               model.originalMax.toArray().tolist())
 
         for c in vector_cols:
             scaler = MinMaxScaler(min=min, max=max, inputCol=c, outputCol="scaled")
@@ -951,7 +951,9 @@ class FeatureTable(Table):
         vector_cols = [columns[i] for i in range(len(columns)) if types[i] == "vector"]
 
         tbl = self
+        
         import numpy as np
+
         def normalize_array(c_min, c_max):
 
             def normalize(x):
