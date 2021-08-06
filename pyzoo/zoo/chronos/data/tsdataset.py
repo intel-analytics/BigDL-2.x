@@ -424,7 +424,8 @@ class TSDataset:
                                      column_id=self.id_col,
                                      column_sort=self.dt_col,
                                      max_timeshift=window_size - 1,
-                                     min_timeshift=window_size - 1)
+                                     min_timeshift=window_size - 1,
+                                     n_jobs=n_jobs)
         if not full_settings:
             self.roll_feature_df = extract_features(df_rolled,
                                                     column_id=self.id_col,
