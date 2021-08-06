@@ -30,7 +30,6 @@ from zoo.friesian.feature import FeatureTable, StringIndex
 from zoo.common.nncontext import *
 
 import shutil
-import pandas as pd
 
 
 class TestTable(TestCase):
@@ -681,36 +680,36 @@ class TestTable(TestCase):
         values = [("a", 23), ("b", 45), ("c", 10), ("d", 60), ("e", 56), ("f", 2),
                   ("g", 25), ("h", 40), ("j", 33)]
         tbl = FeatureTable(spark.createDataFrame(values, ["name", "ages"]))
-        splits = [0, 6, 18, 60, float('Inf')]
+        splits = [6, 18, 60]
         labels = ["infant", "minor", "adult", "senior"]
         # test drop false, name defiend
-        new_tbl = tbl.cut_bins(bins=splits, column="ages", labels=labels,
+        new_tbl = tbl.cut_bins(bins=splits, columns="ages", labels=labels,
                                out_col="age_bucket", drop=False)
         assert "age_bucket" in new_tbl.df.schema.names
         assert "ages" in new_tbl.df.schema.names
         assert new_tbl.df.select("age_bucket").rdd.flatMap(lambda x: x).collect() ==\
             ["adult", "adult", "minor", "senior", "adult", "infant", "adult", "adult", "adult"]
         # test drop true, name defined
-        new_tbl = tbl.cut_bins(bins=splits, column="ages", labels=labels,
+        new_tbl = tbl.cut_bins(bins=splits, columns="ages", labels=labels,
                                out_col="age_bucket", drop=True)
         assert "age_bucket" in new_tbl.df.schema.names
         assert "ages" not in new_tbl.df.schema.names
         assert new_tbl.df.select("age_bucket").rdd.flatMap(lambda x: x).collect() == \
             ["adult", "adult", "minor", "senior", "adult", "infant", "adult", "adult", "adult"]
         # test name not defined
-        new_tbl = tbl.cut_bins(bins=splits, column="ages", labels=labels, drop=True)
-        assert "bucketized_col" in new_tbl.df.schema.names
-        assert new_tbl.df.select("bucketized_col").rdd.flatMap(lambda x: x).collect() == \
+        new_tbl = tbl.cut_bins(bins=splits, columns="ages", labels=labels, drop=True)
+        assert "ages_bin" in new_tbl.df.schema.names
+        assert new_tbl.df.select("ages_bin").rdd.flatMap(lambda x: x).collect() == \
             ["adult", "adult", "minor", "senior", "adult", "infant", "adult", "adult", "adult"]
         # test integer bins
-        new_tbl = tbl.cut_bins(bins=4, column="ages", labels=labels, drop=True)
-        assert "bucketized_col" in new_tbl.df.schema.names
-        assert new_tbl.df.select("bucketized_col").rdd.flatMap(lambda x: x).collect() \
+        new_tbl = tbl.cut_bins(bins=4, columns="ages", labels=labels, drop=True)
+        assert "ages_bin" in new_tbl.df.schema.names
+        assert new_tbl.df.select("ages_bin").rdd.flatMap(lambda x: x).collect() \
             == ["minor", "adult", "infant", "senior", "senior", "infant", "minor", "adult", "adult"]
         # test label is None
-        new_tbl = tbl.cut_bins(bins=4, column="ages", drop=True)
-        assert "bucketized_col" in new_tbl.df.schema.names
-        assert new_tbl.df.select("bucketized_col").rdd.flatMap(lambda x: x).collect() \
+        new_tbl = tbl.cut_bins(bins=4, columns="ages", drop=True)
+        assert "ages_bin" in new_tbl.df.schema.names
+        assert new_tbl.df.select("ages_bin").rdd.flatMap(lambda x: x).collect() \
             == [1, 2, 0, 3, 3, 0, 1, 2, 2]
 
     def test_columns(self):
