@@ -345,7 +345,8 @@ class Table:
         :param aggr: str or a list of str or dict to specify aggregate functions,
                min/max/avg/sum/count are supported.
                If aggr is a str or a list of str, it contains the name(s) of aggregate function(s).
-               If aggr is a dict, the key is the column name, and the value is the aggregate function(s).
+               If aggr is a dict, the key is the column name, and the value is the aggregate
+               function(s).
 
         :return: dict, the key is the column name, and the value is aggregate result(s).
         """
@@ -546,7 +547,8 @@ class Table:
                overwrite: Overwrite the existing data.
                error: Throw an exception if the data already exists.
                ignore: Silently ignore this operation if the data already exists.
-        :param header: boolean. Whether to include the schema at the first line of the csv file. Default is False.
+        :param header: boolean. Whether to include the schema at the first line of the csv file.
+               Default is False.
         :param num_partitions: positive int. The number of files to write.
         """
         if num_partitions:
@@ -582,15 +584,17 @@ class Table:
         Concatenate a list of Tables into one Table in the dimension of row.
 
         :param tables: a Table or a list of Tables.
-        :param mode: str, either inner or outer. For inner mode, the new Table would only contain columns
-               that are shared by all Tables. For outer mode, the resulting Table would contain all the 
-               columns that appear in all Tables.
-        :param distinct: boolean. If True, the result Table would only contain distinct rows. Default is False.
+        :param mode: str, either inner or outer. For inner mode, the new Table would only
+               contain columns that are shared by all Tables. For outer mode, the resulting
+               Table would contain all the columns that appear in all Tables.
+        :param distinct: boolean. If True, the result Table would only contain distinct rows.
+               Default is False.
 
         :return: A single concatenated Table.
         """
         if mode not in ["outer", "inner"]:
-            raise ValueError("concat mode should be either outer or inner, but got {}.".format(mode))
+            raise ValueError("concat mode should be either outer or inner,\
+                                     but got {}.".format(mode))
         if not isinstance(tables, list):
             tables = [tables]
         dfs = [table.df for table in tables] + [self.df]
@@ -605,9 +609,10 @@ class Table:
 
         :param subset: str or a list of str, specifies which column(s) to be considered when
                referring to duplication. If subset is None, all columns will be considered.
-        :param sort_cols: str or a list of str, specifies the column(s) to determine which item
-               to keep when duplicated. If sort_cols is None, duplicate rows will be dropped randomly.
-        :param keep: str, either min and max. Default is min. 
+        :param sort_cols: str or a list of str, specifies the column(s) to determine which
+               item to keep when duplicated. If sort_cols is None, duplicate rows will be
+               dropped randomly.
+        :param keep: str, either min and max. Default is min.
                -min: rows which have smallest values in sort_cols will be kept.
                -max: rows which have largest values in sort_cols will be kept.
 
@@ -627,7 +632,8 @@ class Table:
         if keep == "min":
             window = Window.partitionBy(subset).orderBy(*sort_cols, 'id')
         elif keep == "max":
-            window = Window.partitionBy(subset).orderBy(*[self.df[sort_col].desc() for sort_col in sort_cols], 'id')
+            window = Window.partitionBy(subset).orderBy(*[self.df[sort_col].desc()
+                                                        for sort_col in sort_cols], 'id')
         else:
             raise ValueError("keep should be either min or max, but got {}.".format(keep))
         df = self.df.withColumn('id', monotonically_increasing_id())\
@@ -635,22 +641,24 @@ class Table:
         df = df.filter(pyspark_col('rank') == 1).drop('rank', 'id')
         return self._clone(df)
 
-    def cut_bins(self, bins, columns, labels=None, out_col=None, drop=True):
+    def cut_bins(self, bins, columns, labels=None, out_cols=None, drop=True):
         """
         Segment values of the target column into bins.
 
-        :param bins: int, a list of int or dict. If bins is a list, it defines the bins to be used. With n splits,
-               there are n+1 buckets. For example, if bins is [0, 6, 18, 60], splits are[-inf,0) [0, 6), [6, 18),
-               [18, 60), [60, inf].
-               If bins is an int, it defines the number of equal-width bins in the range of all column values.
+        :param bins: int, a list of int or dict. If bins is a list, it defines the bins to be used.
+               With n splits, there are n+1 buckets. For example, if bins is [0, 6, 18, 60], splits
+               are[-inf,0) [0, 6), [6, 18), [18, 60), [60, inf].
+               If bins is an int, it defines the number of equal-width bins in the range of all
+               column values.
                If bins is a dict, key(s) should be the input column name(s).
         :param columns: str, a list of str or dict, specifies the name(s) of the input column(s).
                If bins is a dict, key(s) should be the input column name(s).
-        :param labels: a list of str or dict, specifies the labels for the returned bins. If lables is None, then the
-               new bin column would use integer to encode categories. If bins is a dict, key(s) should be the input
-               column name(s).
-        :param out_col: str or dict, specifies the name of output categorical column. If out_col is None, the name of
-               output column is "bucketized_col". If bins is a dict, key(s) should be the input column name(s).
+        :param labels: a list of str or dict, specifies the labels for the returned bins.
+               If lables is None, then the new bin column would use integer to encode categories.
+               If bins is a dict, key(s) should be the input column name(s).
+        :param out_cols: str or dict, specifies the name of output categorical column.
+               If out_col is None, the name of output column is "column_bin".
+               If bins is a dict, key(s) should be the input column name(s).
         :param drop: boolean. Whether to drop the original column. Default is True.
 
         :return: a new Table with the updated bin column.
@@ -660,23 +668,23 @@ class Table:
         check_col_exists(self.df, columns)
         df_buck = self.df
         for column in columns:
-            out_col = out_col[column] if isinstance(out_col, dict) else out_col
-            bins = bins[column] if isinstance(bins, dict) else bins
-            labels = labels[column] if isinstance(labels, dict) else labels
+            out_col = out_cols[column] if isinstance(out_cols, dict) else out_cols
+            bin = bins[column] if isinstance(bins, dict) else bins
+            label = labels[column] if isinstance(labels, dict) else labels
             if not check_column_numeric(self.df, column):
                 raise ValueError("Column should be numeric.")
             if out_col is None:
                 out_col = column+"_bin"
-            if isinstance(bins, int):
+            if isinstance(bin, int):
                 max = self.get_stats(column, "max")[column]
                 min = self.get_stats(column, "min")[column]
-                bins = np.linspace(min, max, bins+1, endpoint=True).tolist()
-            elif isinstance(bins, list):
-                bins = [float("-inf")] + bins + [float("inf")]
-            bucketizer = Bucketizer(splits=bins, inputCol=column, outputCol=out_col)
+                bin = np.linspace(min, max, bin+1, endpoint=True).tolist()
+            elif isinstance(bin, list):
+                bin = [float("-inf")] + bin + [float("inf")]
+            bucketizer = Bucketizer(splits=bin, inputCol=column, outputCol=out_col)
             df_buck = bucketizer.setHandleInvalid("keep").transform(df_buck)
-            if labels is not None:
-                to_label = {i: label for (i, label) in enumerate(labels)}
+            if label is not None:
+                to_label = {i: l for (i, l) in enumerate(label)}
                 udf_label = udf(lambda i: to_label[i], StringType())
                 df_buck = df_buck.withColumn(out_col, udf_label(out_col))
             if drop:
@@ -1175,9 +1183,9 @@ class FeatureTable(Table):
 
         :param table: A FeatureTable.
         :param on: str or a list of str, name(s) of column(s) to join.
-        :param how: str, default is inner. Must be one of: inner, cross, outer, full, fullouter, full_outer,
-               left, leftouter, left_outer, right, rightouter, right_outer, semi, leftsemi, left_semi,
-               anti, leftanti and left_anti.
+        :param how: str, default is inner. Must be one of: inner, cross, outer, full,
+               fullouter, full_outer, left, leftouter, left_outer, right, rightouter,
+               right_outer, semi, leftsemi, left_semi, anti, leftanti and left_anti.
         :param lsuffix: The suffix to use for the original Table's overlapping columns.
         :param rsuffix: The suffix to use for the input Table's overlapping columns.
 

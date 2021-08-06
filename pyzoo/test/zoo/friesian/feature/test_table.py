@@ -658,9 +658,11 @@ class TestTable(TestCase):
         tbl6 = tbl.drop_duplicates(subset=['name'], sort_cols=["grade", "number"], keep='max')
         assert tbl6.size() == 2
         tbl6.df.show()
-        assert tbl6.df.filter((tbl6.df.name == 'jack') & (tbl6.df.grade == 'b') & (tbl6.df.number == 2))\
+        assert tbl6.df.filter((tbl6.df.name == 'jack') & (tbl6.df.grade == 'b')
+                              & (tbl6.df.number == 2))\
             .select("number").collect()[0]["number"] == 2
-        assert tbl6.df.filter((tbl6.df.name == 'amy') & (tbl6.df.grade == 'a') & (tbl6.df.number == 5))\
+        assert tbl6.df.filter((tbl6.df.name == 'amy') & (tbl6.df.grade == 'a')
+                              & (tbl6.df.number == 5))\
             .select("number").collect()[0]["number"] == 5
 
     def test_join(self):
@@ -684,14 +686,14 @@ class TestTable(TestCase):
         labels = ["infant", "minor", "adult", "senior"]
         # test drop false, name defiend
         new_tbl = tbl.cut_bins(bins=splits, columns="ages", labels=labels,
-                               out_col="age_bucket", drop=False)
+                               out_cols="age_bucket", drop=False)
         assert "age_bucket" in new_tbl.df.schema.names
         assert "ages" in new_tbl.df.schema.names
         assert new_tbl.df.select("age_bucket").rdd.flatMap(lambda x: x).collect() ==\
             ["adult", "adult", "minor", "senior", "adult", "infant", "adult", "adult", "adult"]
         # test drop true, name defined
         new_tbl = tbl.cut_bins(bins=splits, columns="ages", labels=labels,
-                               out_col="age_bucket", drop=True)
+                               out_cols="age_bucket", drop=True)
         assert "age_bucket" in new_tbl.df.schema.names
         assert "ages" not in new_tbl.df.schema.names
         assert new_tbl.df.select("age_bucket").rdd.flatMap(lambda x: x).collect() == \
@@ -711,6 +713,20 @@ class TestTable(TestCase):
         assert "ages_bin" in new_tbl.df.schema.names
         assert new_tbl.df.select("ages_bin").rdd.flatMap(lambda x: x).collect() \
             == [1, 2, 0, 3, 3, 0, 1, 2, 2]
+        # test multiple columns
+        values = [("a", 23, 23), ("b", 45, 45), ("c", 10, 10), ("d", 60, 60), ("e", 56, 56),
+                  ("f", 2, 2), ("g", 25, 25), ("h", 40, 40), ("j", 33, 33)]
+        tbl = FeatureTable(spark.createDataFrame(values, ["name", "ages", "number"]))
+        splits = [6, 18, 60]
+        splits2 = [6, 18, 60]
+        labels = ["infant", "minor", "adult", "senior"]
+        new_tbl = tbl.cut_bins(bins={'ages': splits, 'number': splits2}, columns=["ages", 'number'],
+                               labels={'ages': labels, 'number': labels}, out_cols=None, drop=False)
+        assert "ages_bin" in new_tbl.df.schema.names
+        assert "ages" in new_tbl.df.schema.names
+        assert "number_bin" in new_tbl.df.schema.names
+        assert new_tbl.df.select("ages_bin").rdd.flatMap(lambda x: x).collect() ==\
+            ["adult", "adult", "minor", "senior", "adult", "infant", "adult", "adult", "adult"]
 
     def test_columns(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
