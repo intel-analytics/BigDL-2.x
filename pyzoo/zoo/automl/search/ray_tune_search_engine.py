@@ -115,7 +115,8 @@ class RayTuneSearchEngine(SearchEngine):
                                                    metric_func=metric_func,
                                                    mode=self.mode,
                                                    mc=mc,
-                                                   remote_dir=self.remote_dir
+                                                   remote_dir=self.remote_dir,
+                                                   resources_per_trial=self.resources_per_trial
                                                    )
 
     @staticmethod
@@ -255,6 +256,7 @@ class RayTuneSearchEngine(SearchEngine):
                             mode=None,
                             mc=False,
                             remote_dir=None,
+                            resources_per_trial=None,
                             ):
         """
         Prepare the train function for ray tune
@@ -290,6 +292,7 @@ class RayTuneSearchEngine(SearchEngine):
                                               mc=mc,
                                               metric=metric_name,
                                               metric_func=metric_func,
+                                              resources_per_trial=resources_per_trial,
                                               **config)
                 reward = result[metric_name]
                 checkpoint_filename = "best.ckpt"
