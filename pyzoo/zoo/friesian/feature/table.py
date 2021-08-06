@@ -859,14 +859,14 @@ class FeatureTable(Table):
     def min_max_scale(self, columns, min=0.0, max=1.0):
         """
         Rescale each column individually to a common range [min, max] linearly using
-         column summary statistics, which is also known as min-max normalization or Rescaling.
+        column summary statistics, which is also known as min-max normalization or Rescaling.
 
         :param columns: list of column names
         :param min: Lower bound after transformation, shared by all columns. 0.0 by default.
         :param max: Upper bound after transformation, shared by all columns. 1.0 by default.
 
-        :return: new FeatureTable with scaled columns
-        and mapping = {c: (originalMin, originalMax) for c in columns}
+        :return: new FeatureTable with scaled columns,
+        and a dictionary of original min, original max values of each columns
         """
         df = self.df
         types = [x[1] for x in self.df.select(*columns).dtypes]
@@ -934,7 +934,7 @@ class FeatureTable(Table):
         """
         Rescale each column individually with given [min, max] range of each column.
 
-        :param columns: a str or a list of str. The column(s) to be rescaled.
+        :param columns: str or a list of str. The column(s) to be rescaled.
         :param min_max_dic: a dictionary of min, max values of each column.
          The key is the column name, and the value is (min, max) of this column.
         :return: A new FeatureTable with rescaled column(s).
