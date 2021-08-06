@@ -632,6 +632,10 @@ class TSDataset:
                 else self.feature_col
             target_col = _to_list(target_col, "target_col") if target_col is not None \
                 else self.target_col
+
+            # set scaler index for unscale_numpy
+            self.scaler_index = [self.target_col.index(t) for t in target_col]
+
             torch_dataset = RollDataset(self.df,
                                         lookback=lookback,
                                         horizon=horizon,
