@@ -25,6 +25,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 
 object FileUtils {
+
   /**
    * Use hadoop utils to copy file from remote to local
    * @param src remote path, could be hdfs, s3

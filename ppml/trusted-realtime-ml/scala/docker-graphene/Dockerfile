@@ -46,9 +46,9 @@ ARG HTTP_PROXY_HOST
 ARG HTTP_PROXY_PORT
 ARG HTTPS_PROXY_HOST
 ARG HTTPS_PROXY_PORT
-ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.2
-ARG SPARK_VERSION=2.4.3
+ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
+ARG BIGDL_VERSION=0.13.0
+ARG SPARK_VERSION=2.4.6
 ARG SPARK_MAJOR_VERSION=2.4
 ENV ANALYTICS_ZOO_VERSION	${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION		${SPARK_VERSION}
@@ -60,7 +60,7 @@ COPY --from=flink /opt/jdk  /opt/jdk8
 
 RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils curl wget unzip git maven
-RUN git clone https://github.com/intel-analytics/analytics-zoo.git && \
+RUN git clone --single-branch --branch master https://github.com/intel-analytics/analytics-zoo.git && \
     cd analytics-zoo/zoo && \
     export MAVEN_OPTS="-XX:ReservedCodeCacheSize=512m -XX:MaxPermSize=3G \
         -Dhttp.proxyHost=$HTTP_PROXY_HOST \
@@ -77,9 +77,9 @@ RUN cd /opt && \
 
 # stage.4 az ppml
 FROM ubuntu:18.04
-ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.2
-ARG SPARK_VERSION=2.4.3
+ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
+ARG BIGDL_VERSION=0.13.0
+ARG SPARK_VERSION=2.4.6
 ARG FLINK_VERSION=1.10.1
 ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION			${SPARK_VERSION}
@@ -152,6 +152,7 @@ ADD ./start-flink-jobmanager.sh /ppml/trusted-realtime-ml/java/start-flink-jobma
 ADD ./start-flink-taskmanager.sh /ppml/trusted-realtime-ml/java/start-flink-taskmanager.sh
 ADD ./start-http-frontend.sh /ppml/trusted-realtime-ml/java/start-http-frontend.sh
 ADD ./cluster-serving-config.yaml /ppml/trusted-realtime-ml/java/config.yaml
+ADD ./servables.yaml /ppml/trusted-realtime-ml/java/work/servables.yaml
 ADD ./init-cluster-serving.sh /ppml/trusted-realtime-ml/java/init-cluster-serving.sh
 ADD ./start-cluster-serving-job.sh /ppml/trusted-realtime-ml/java/start-cluster-serving-job.sh
 ADD ./check-status.sh /ppml/trusted-realtime-ml/check-status.sh

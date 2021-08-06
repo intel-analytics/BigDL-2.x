@@ -15,13 +15,13 @@
 # limitations under the License.
 #
 
-from zoo.automl.search.ray_tune_search_engine import RayTuneSearchEngine
 from zoo.automl.common.metrics import Evaluator
-from zoo.zouwu.pipeline.time_sequence import TimeSequencePipeline
+from zoo.chronos.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
-from zoo.zouwu.config.recipe import *
+from zoo.chronos.config.recipe import *
 from zoo.ray import RayContext
 import pandas as pd
+from zoo.orca.automl.auto_estimator import AutoEstimator
 
 
 ALLOWED_FIT_METRICS = ("mse", "mae", "r2")
@@ -46,11 +46,7 @@ class BasePredictor(object):
         self.scheduler_params = scheduler_params
 
     @abstractmethod
-    def create_feature_transformer(self):
-        raise NotImplementedError
-
-    @abstractmethod
-    def make_model_fn(self, resource_per_trail):
+    def get_model_builder(self):
         raise NotImplementedError
 
     def _check_df(self, df):
@@ -111,7 +107,6 @@ class BasePredictor(object):
         else:
             upload_dir = None
 
-        self.metric = metric
         self.pipeline = self._hp_search(
             input_df,
             validation_df=validation_df,
@@ -176,74 +171,30 @@ class BasePredictor(object):
                    mc,
                    resources_per_trial,
                    remote_dir):
-        ft = self.create_feature_transformer()
 
-        model_fn = self.make_model_fn(resources_per_trial)
+        model_builder = self.get_model_builder()
 
+        self.metric = metric
         self._detach_recipe(recipe)
 
         # prepare parameters for search engine
+        auto_est = AutoEstimator(model_builder,
+                                 logs_dir=self.logs_dir,
+                                 resources_per_trial=resources_per_trial,
+                                 name=self.name,
+                                 remote_dir=remote_dir)
+        auto_est.fit(data=input_df,
+                     validation_data=validation_df,
+                     search_space=self.search_space,
+                     n_sampling=self.num_samples,
+                     epochs=self.epochs,
+                     metric_threshold=self.metric_threshold,
+                     search_alg=self.search_alg,
+                     search_alg_params=self.search_alg_params,
+                     scheduler=self.scheduler,
+                     scheduler_params=self.scheduler_params,
+                     metric=metric)
 
-        searcher = RayTuneSearchEngine(logs_dir=self.logs_dir,
-                                       resources_per_trial=resources_per_trial,
-                                       name=self.name,
-                                       remote_dir=remote_dir,
-                                       )
-        searcher.compile(data=input_df,
-                         model_create_func=model_fn,
-                         validation_data=validation_df,
-                         search_space=self.search_space,
-                         n_sampling=self.num_samples,
-                         epochs=self.epochs,
-                         metric_threshold=self.metric_threshold,
-                         search_alg=self.search_alg,
-                         search_alg_params=self.search_alg_params,
-                         scheduler=self.scheduler,
-                         scheduler_params=self.scheduler_params,
-                         feature_transformers=ft,
-                         metric=metric,
-                         mc=mc,
-                         )
-        # searcher.test_run()
-        analysis = searcher.run()
-
-        pipeline = self._make_pipeline(analysis,
-                                       feature_transformers=ft,
-                                       model=model_fn(),
-                                       remote_dir=remote_dir)
+        best_model = auto_est._get_best_automl_model()
+        pipeline = TimeSequencePipeline(name=self.name, model=best_model)
         return pipeline
-
-    def _print_config(self, best_config):
-        print("The best configurations are:")
-        for name, value in best_config.items():
-            print(name, ":", value)
-
-    def _make_pipeline(self, analysis, feature_transformers, model,
-                       remote_dir):
-        metric = self.metric
-        mode = Evaluator.get_metric_mode(metric)
-        best_config = analysis.get_best_config(metric=metric, mode=mode)
-        best_logdir = analysis.get_best_logdir(metric=metric, mode=mode)
-        print("best log dir is ", best_logdir)
-        dataframe = analysis.dataframe(metric=metric, mode=mode)
-        # print(dataframe)
-        model_path = os.path.join(best_logdir, dataframe["checkpoint"].iloc[0])
-        config = convert_bayes_configs(best_config).copy()
-        self._print_config(config)
-        if remote_dir is not None:
-            all_config = restore_hdfs(model_path,
-                                      remote_dir,
-                                      feature_transformers,
-                                      model,
-                                      # config)
-                                      )
-        else:
-            all_config = restore_zip(model_path,
-                                     feature_transformers,
-                                     model,
-                                     # config)
-                                     )
-        return TimeSequencePipeline(name=self.name,
-                                    feature_transformers=feature_transformers,
-                                    model=model,
-                                    config=all_config)

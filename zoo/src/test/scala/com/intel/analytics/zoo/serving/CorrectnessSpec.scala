@@ -90,7 +90,8 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     ("wget -O /tmp/serving_val.tar http://10.239.45.10:8081" +
      "/repository/raw/analytics-zoo-data/imagenet_1k.tar").!
     "tar -xvf /tmp/serving_val.tar -C /tmp/".!
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+    val helper = ClusterServing.helper
     helper.configPath = configPath
     DeprecatedUtils.loadConfig(helper)
 //    helper.dataShape = Array(Array(3, 224, 224))
@@ -105,8 +106,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     val fileList = f.listFiles
     logger.info(s"${fileList.size} images about to enqueue...")
 
-    val pre = new PreProcessing(helper.chwFlag)
-    val clusterServingInference = new ClusterServingInference(pre, helper)
+    val clusterServingInference = new ClusterServingInference()
     var predictMap = Map[String, String]()
 
     for (file <- fileList) {
@@ -123,7 +123,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
       val instances = JsonUtil.fromJson(classOf[Instances], instancesJson)
       val inputBase64 = new String(java.util.Base64.getEncoder
        .encode(instances.toArrow()))
-      val input = pre.decodeArrowBase64("", inputBase64)
+      val input = clusterServingInference.preProcessing.decodeArrowBase64("", inputBase64)
       val bInput = clusterServingInference.batchInput(Seq(("", input)), 1, true, false)
       val result = model.doPredict(bInput)
       val value = PostProcessing(result.toTensor[Float]
@@ -163,7 +163,8 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     ("wget -O /tmp/serving_val.tar http://10.239.45.10:8081" +
       "/repository/raw/analytics-zoo-data/imagenet_1k.tar").!
     "tar -xvf /tmp/serving_val.tar -C /tmp/".!
-    val helper = new ClusterServingHelper()
+    ClusterServing.helper = new ClusterServingHelper()
+val helper = ClusterServing.helper
     helper.configPath = configPath
     DeprecatedUtils.loadConfig(helper)
     //    helper.dataShape = Array(Array(3, 224, 224))
@@ -178,8 +179,8 @@ class CorrectnessSpec extends FlatSpec with Matchers {
     val fileList = f.listFiles
     logger.info(s"${fileList.size} images about to enqueue...")
 
-    val pre = new PreProcessing(helper.chwFlag)
-    val clusterServingInference = new ClusterServingInference(pre, helper)
+
+    val clusterServingInference = new ClusterServingInference()
     var predictMap = Map[String, String]()
 
     var batchInputs = Seq[(String, Activity)]()
@@ -198,7 +199,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
       val instances = JsonUtil.fromJson(classOf[Instances], instancesJson)
       val inputBase64 = new String(java.util.Base64.getEncoder
         .encode(instances.toArrow()))
-      val input = pre.decodeArrowBase64("", inputBase64)
+      val input = clusterServingInference.preProcessing.decodeArrowBase64("", inputBase64)
 
       if (batchInputs.length < 4) {
         batchInputs = batchInputs :+ (file.getName(), input)

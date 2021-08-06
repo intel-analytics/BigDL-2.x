@@ -263,14 +263,15 @@ def process_xshards_of_pandas_dataframe(data, feature_cols, label_cols=None, val
         return data
 
 
-def _dataframe_to_xshards(data, feature_cols, label_cols=None):
+def _dataframe_to_xshards(data, feature_cols, label_cols=None, accept_str_col=False):
     from zoo.orca import OrcaContext
     schema = data.schema
     shard_size = OrcaContext._shard_size
     numpy_rdd = data.rdd.map(lambda row: convert_row_to_numpy(row,
                                                               schema,
                                                               feature_cols,
-                                                              label_cols))
+                                                              label_cols,
+                                                              accept_str_col))
     shard_rdd = numpy_rdd.mapPartitions(lambda x: arrays2dict(x,
                                                               feature_cols,
                                                               label_cols,
@@ -278,7 +279,8 @@ def _dataframe_to_xshards(data, feature_cols, label_cols=None):
     return SparkXShards(shard_rdd)
 
 
-def dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit"):
+def dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit",
+                         num_workers=None, accept_str_col=False):
     from pyspark.sql import DataFrame
     valid_mode = {"fit", "evaluate", "predict"}
     assert mode in valid_mode, f"invalid mode {mode} " \
@@ -291,21 +293,31 @@ def dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="
     if mode != "predict":
         assert label_cols is not None, \
             "label_cols must be provided if data is a spark dataframe"
+        # avoid empty partition for worker
+        if data.rdd.getNumPartitions() < num_workers:
+            data = data.repartition(num_workers)
+        if validation_data is not None:
+            num_data_part = data.rdd.getNumPartitions()
+            validation_data = validation_data.repartition(num_data_part)
 
-    data = _dataframe_to_xshards(data, feature_cols, label_cols)
+    data = _dataframe_to_xshards(data, feature_cols, label_cols, accept_str_col)
     if validation_data is not None:
-        validation_data = _dataframe_to_xshards(validation_data, feature_cols, label_cols)
+        validation_data = _dataframe_to_xshards(validation_data, feature_cols, label_cols,
+                                                accept_str_col)
 
     return data, validation_data
 
 
-def maybe_dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit"):
+def maybe_dataframe_to_xshards(data, validation_data, feature_cols, label_cols, mode="fit",
+                               num_workers=None, accept_str_col=False):
     from pyspark.sql import DataFrame
     if isinstance(data, DataFrame):
         data, validation_data = dataframe_to_xshards(data, validation_data,
                                                      feature_cols=feature_cols,
                                                      label_cols=label_cols,
-                                                     mode=mode)
+                                                     mode=mode,
+                                                     num_workers=num_workers,
+                                                     accept_str_col=accept_str_col)
     return data, validation_data
 
 

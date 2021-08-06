@@ -20,7 +20,7 @@ import java.util.AbstractMap.SimpleEntry
 import java.util.UUID
 
 import com.intel.analytics.zoo.serving.ClusterServing
-import com.intel.analytics.zoo.serving.pipeline.{RedisIO, RedisUtils}
+import com.intel.analytics.zoo.serving.pipeline.RedisUtils
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions, FileUtils}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, RichSourceFunction, SourceFunction}
@@ -29,54 +29,25 @@ import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 import scala.collection.JavaConverters._
 
-class FlinkRedisSource(params: ClusterServingHelper)
-  extends RichParallelSourceFunction[List[(String, String)]] {
+class FlinkRedisSource()
+  extends RichParallelSourceFunction[List[(String, String, String)]] {
   @volatile var isRunning = true
   var jedis: Jedis = null
   var logger: Logger = null
-
+  var helper: ClusterServingHelper = null
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
-
-    if (params.redisSecureEnabled) {
-      System.setProperty("javax.net.ssl.trustStore", params.redisSecureTrustStorePath)
-      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStoreToken)
-      System.setProperty("javax.net.ssl.keyStoreType", "JKS")
-      System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
-      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStoreToken)
-    }
-    if (ClusterServing.jedisPool == null) {
-      ClusterServing.synchronized {
-        if (ClusterServing.jedisPool == null) {
-          ClusterServing.jedisPool = new JedisPool(ClusterServing.jedisPoolConfig,
-            params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
-        }
-      }
-    }
-
-    logger.info(
-      s"FlinkRedisSource connect to Redis: redis://${params.redisHost}:${params.redisPort} " +
-      s"with timeout: ${params.redisTimeout} and redisSecureEnabled: ${params.redisSecureEnabled}")
-    params.redisSecureEnabled match {
-      case true => logger.info(s"FlinkRedisSource connect to secured Redis successfully.")
-      case false => logger.info(s"FlinkRedisSource connect to plain Redis successfully.")
-    }
-    jedis = RedisIO.getRedisClient(ClusterServing.jedisPool)
-    try {
-      jedis.xgroupCreate(params.jobName,
-        "serving", new StreamEntryID(0, 0), true)
-    } catch {
-      case e: Exception =>
-        logger.info(s"xgroupCreate raise [$e], " +
-          s"will not create new group.")
-    }
+    helper = ClusterServing.helper
+    RedisUtils.initializeRedis(helper)
+    jedis = RedisUtils.getRedisClient(RedisUtils.jedisPool)
+    RedisUtils.createRedisGroupIfNotExist(jedis, helper.jobName)
   }
 
   override def run(sourceContext: SourceFunction
-    .SourceContext[List[(String, String)]]): Unit = while (isRunning) {
+    .SourceContext[List[(String, String, String)]]): Unit = while (isRunning) {
     val groupName = "serving"
     val consumerName = "consumer-" + UUID.randomUUID().toString
-    val readNumPerTime = if (params.modelType == "openvino") params.threadPerModel else 1
+    val readNumPerTime = if (helper.modelType == "openvino") helper.threadPerModel else 1
 
     val response = jedis.xreadGroup(
       groupName,
@@ -84,13 +55,13 @@ class FlinkRedisSource(params: ClusterServingHelper)
       readNumPerTime,
       1,
       false,
-      new SimpleEntry(params.jobName, StreamEntryID.UNRECEIVED_ENTRY))
+      new SimpleEntry(helper.jobName, StreamEntryID.UNRECEIVED_ENTRY))
     if (response != null) {
       for (streamMessages <- response.asScala) {
         val key = streamMessages.getKey
         val entries = streamMessages.getValue.asScala
         val it = entries.map(e => {
-          (e.getFields.get("uri"), e.getFields.get("data"))
+          (e.getFields.get("uri"), e.getFields.get("data"), e.getFields.get("serde"))
         }).toList
         sourceContext.collect(it)
       }

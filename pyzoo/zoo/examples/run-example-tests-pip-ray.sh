@@ -89,14 +89,35 @@ else
     wget -nv $FTP_URI/analytics-zoo-data/airline_14col.data -P ${ANALYTICS_ZOO_ROOT}/data/
 fi
 
-execute_ray_test auto-xgboost-classifier ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostClassifier.py
+execute_ray_test auto-xgboost-classifier "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostClassifier.py -p ${ANALYTICS_ZOO_ROOT}/data/airline_14col.data"
 time9=$?
+
+if [ -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/incd.csv ]
+then
+    echo "incd.csv already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/incd.csv -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/
+fi
 
 execute_ray_test auto-xgboost-regressor "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/AutoXGBoostRegressor.py -p ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoxgboost/incd.csv"
 time10=$?
 
 execute_ray_test autoecastimator-pytorch "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoestimator/autoestimator_pytorch.py --trials 5 --epochs 2"
 time11=$?
+
+if [ ! -f {ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/nyc_taxi.csv ]; then
+  wget -nv $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/
+fi
+
+execute_ray_test autolstm_nyc_taxi "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/autolstm_nyc_taxi.py --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/nyc_taxi.csv"
+time12=$?
+
+if [ ! -f {ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/nyc_taxi.csv ]; then
+  wget -nv $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/
+fi
+
+execute_ray_test autots_nyc_taxi "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/autots_nyc_taxi.py --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/nyc_taxi.csv"
+time13=$?
 
 echo "#1 rl_pong time used:$time1 seconds"
 echo "#2 sync_parameter_server time used:$time2 seconds"
@@ -109,5 +130,7 @@ echo "#8 cifar10 time used:$time8 seconds"
 echo "#9 auto-xgboost-classifier time used:$time9 seconds"
 echo "#10 auto-xgboost-regressor time used:$time10 seconds"
 echo "#11 autoecastimator-pytorch time used:$time11 seconds"
+echo "#12 autolstm_nyc_taxi time used:$time12 seconds"
+echo "#13 autots_nyc_taxi time used:$time13 seconds"
 
 clear_up

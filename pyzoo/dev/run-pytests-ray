@@ -37,6 +37,16 @@ fi
 
 ray stop -f
 
+echo "Running orca auto estimator tests"
+python -m pytest -v ../test/zoo/orca/automl/autoestimator
+exit_status_6=$?
+if [ $exit_status_6 -ne 0 ];
+then
+    exit $exit_status_6
+fi
+
+ray stop -f
+
 echo "Running automl tests"
 python -m pytest -v ../test/zoo/automl
 exit_status_3=$?
@@ -47,8 +57,8 @@ fi
 
 ray stop -f
 
-echo "Running zouwu tests"
-python -m pytest -v ../test/zoo/zouwu \
+echo "Running chronos tests"
+python -m pytest -v ../test/zoo/chronos \
        -k "not test_forecast_tcmf_distributed"
 exit_status_4=$?
 if [ $exit_status_4 -ne 0 ];
@@ -59,7 +69,8 @@ fi
 ray stop -f
 
 echo "Running orca data tests"
-python -m pytest -v ../test/zoo/orca/data
+python -m pytest -v ../test/zoo/orca/data \
+       --ignore=../test/zoo/orca/data/test_read_parquet_images.py
 exit_status_5=$?
 if [ $exit_status_5 -ne 0 ];
 then
@@ -76,16 +87,6 @@ exit_status_1=$?
 if [ $exit_status_1 -ne 0 ];
 then
     exit $exit_status_1
-fi
-
-ray stop -f
-
-echo "Running orca auto estimator tests"
-python -m pytest -v ../test/zoo/orca/automl/autoestimator
-exit_status_6=$?
-if [ $exit_status_6 -ne 0 ];
-then
-    exit $exit_status_6
 fi
 
 ray stop -f

@@ -21,7 +21,6 @@ package com.intel.analytics.zoo.serving
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Conventions, DeprecatedUtils}
-import org.apache.flink.core.execution.JobClient
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
 import redis.clients.jedis.{JedisPool, JedisPoolConfig}
@@ -58,8 +57,8 @@ object ClusterServing {
     // Uncomment this line if you need to check predict time in debug
     // Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
     streamingEnv.setParallelism(helper.modelParallelism)
-    streamingEnv.addSource(new FlinkRedisSource(helper))
-      .map(new FlinkInference(helper))
+    streamingEnv.addSource(new FlinkRedisSource())
+      .map(new FlinkInference())
       .addSink(new FlinkRedisSink(helper))
 
     logger.info(s"Cluster Serving Flink job graph details \n${streamingEnv.getExecutionPlan}")
@@ -70,6 +69,7 @@ object ClusterServing {
     argv = parser.parse(args, ServingParams()).head
     val configParser = new ConfigParser(argv.configPath)
     helper = configParser.loadConfig()
+    helper.configPath = argv.configPath
     uploadModel()
     executeJob()
   }

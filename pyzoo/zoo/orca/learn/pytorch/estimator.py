@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from zoo.common.utils import enable_multi_fs_load, enable_multi_fs_save
 from zoo.orca.data.utils import row_to_sample, xshard_to_sample
 from zoo.orca.learn.utils import convert_predict_rdd_to_dataframe, bigdl_metric_results_to_dict, \
     process_xshards_of_pandas_dataframe
@@ -142,9 +143,9 @@ class PyTorchRayEstimator(OrcaRayEstimator):
             feature_cols=None, label_cols=None):
         """
         Trains a PyTorch model given training data for several epochs.
-
         Calls `TrainingOperator.train_epoch()` on N parallel workers simultaneously
         underneath the hood.
+
         :param data: An instance of SparkXShards, a Spark DataFrame or a function that
                takes config and batch_size as argument and returns a PyTorch DataLoader for
                training.
@@ -165,7 +166,7 @@ class PyTorchRayEstimator(OrcaRayEstimator):
         :param feature_cols: feature column names if data is Spark DataFrame.
         :param label_cols: label column names if data is Spark DataFrame.
 
-        :return A list of dictionary of metrics for every training epoch. If reduce_results is
+        :return: A list of dictionary of metrics for every training epoch. If reduce_results is
                 False, this will return a nested list of metric dictionaries whose length will be
                 equal to the total number of workers.
                 You can also provide custom metrics by passing in a custom training_operator_cls
@@ -185,7 +186,7 @@ class PyTorchRayEstimator(OrcaRayEstimator):
         :param profile: Boolean. Whether to return time stats for the training procedure.
                Default is False.
         :param feature_cols: feature column names if data is a Spark DataFrame.
-        :return A SparkXShards that contains the predictions with key "prediction" in each shard
+        :return: A SparkXShards that contains the predictions with key "prediction" in each shard
         """
         return self.estimator.predict(data, batch_size=batch_size,
                                       feature_cols=feature_cols,
@@ -197,9 +198,9 @@ class PyTorchRayEstimator(OrcaRayEstimator):
         Evaluates a PyTorch model given validation data.
         Note that only accuracy for classification with zero-based label is supported by
         default. You can override validate_batch in TrainingOperator for other metrics.
-
         Calls `TrainingOperator.validate()` on N parallel workers simultaneously
         underneath the hood.
+
         :param data: An instance of SparkXShards, a Spark DataFrame or a function that
                takes config and batch_size as argument and returns a PyTorch DataLoader for
                validation.
@@ -216,7 +217,7 @@ class PyTorchRayEstimator(OrcaRayEstimator):
         :param feature_cols: feature column names if train data is Spark DataFrame.
         :param label_cols: label column names if train data is Spark DataFrame.
 
-        :return A dictionary of metrics for the given data, including validation accuracy and loss.
+        :return: A dictionary of metrics for the given data, including validation accuracy and loss.
                 You can also provide custom metrics by passing in a custom training_operator_cls
                 when creating the Estimator.
         """
@@ -232,6 +233,7 @@ class PyTorchRayEstimator(OrcaRayEstimator):
         """
         return self.estimator.get_model()
 
+    @enable_multi_fs_save
     def save(self, model_path):
         """
         Saves the Estimator state (including model and optimizer) to the provided model_path.
@@ -241,6 +243,7 @@ class PyTorchRayEstimator(OrcaRayEstimator):
         """
         return self.estimator.save(model_path)
 
+    @enable_multi_fs_load
     def load(self, model_path):
         """
         Loads the Estimator state (including model and optimizer) from the provided model_path.
@@ -263,7 +266,6 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
                  bigdl_type="float"):
         from zoo.pipeline.api.torch import TorchModel, TorchLoss, TorchOptim
         self.loss = loss
-        self.model = model
         self.optimizer = optimizer
         self.config = {} if config is None else config
 
@@ -271,10 +273,10 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
             self.loss = TorchLoss()
         else:
             self.loss = TorchLoss.from_pytorch(loss)
-        if isinstance(self.model, types.FunctionType):
-            self.model = self.model(self.config)
-        if isinstance(self.optimizer, types.FunctionType):
-            self.optimizer = self.optimizer(self.model, self.config)
+        if isinstance(model, types.FunctionType):
+            def model_creator(self):
+                return model(self.config)
+            model = model_creator(self)
         if self.optimizer is None:
             from zoo.orca.learn.optimizers.schedule import Default
             self.optimizer = SGD(learningrate_schedule=Default()).get_optimizer()
@@ -289,7 +291,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         self.log_dir = None
         self.app_name = None
         self.model_dir = model_dir
-        self.model = TorchModel.from_pytorch(self.model)
+        self.model = TorchModel.from_pytorch(model)
         self.estimator = SparkEstimator(self.model, self.optimizer, model_dir,
                                         bigdl_type=bigdl_type)
 
@@ -505,6 +507,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
         else:
             return model_path + "_optim"
 
+    @enable_multi_fs_save
     def save(self, model_path):
         """
         Saves the Estimator state (including model and optimizer) to the provided model_path.
@@ -520,6 +523,7 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
 
         return model_path
 
+    @enable_multi_fs_load
     def load(self, model_path):
         """
         Load the Estimator state (model and possibly with optimizer) from provided model_path.
@@ -584,9 +588,9 @@ class PyTorchSparkEstimator(OrcaSparkEstimator):
             loaded_model = Model.load(os.path.join(path, "model.{}".format(version)))
             self.model = TorchModel.from_value(loaded_model.value)
             self.optimizer = OptimMethod.load(os.path.join(path, "{}.{}".format(prefix, version)))
-        except Exception:
+        except Exception as e:
             raise ValueError("Cannot load PyTorch checkpoint, please check your checkpoint path "
-                             "and checkpoint type.")
+                             "and checkpoint type." + str(e))
         self.estimator = SparkEstimator(self.model, self.optimizer, self.model_dir)
 
     def get_train_summary(self, tag=None):

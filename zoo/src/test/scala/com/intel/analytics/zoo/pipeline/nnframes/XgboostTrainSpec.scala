@@ -37,29 +37,54 @@ class XgboostTrainSpec extends ZooSpecHelper {
       sc.stop()
     }
   }
+  "XGBClassifer train" should "work" in {
+    if (!(scala.util.Properties.isMac || scala.util.Properties.isWin)) {
+      val spark = SparkSession.builder().getOrCreate()
+      import spark.implicits._
+      Engine.init
+      val df = Seq(
+        (1.0, 2.0, 3.0, 4.0, 1),
+        (1.0, 3.0, 8.0, 2.0, 0)
+      ).toDF("f1", "f2", "f3", "f4", "label")
+      val vectorAssembler = new VectorAssembler()
+        .setInputCols(Array("f1", "f2", "f3", "f4"))
+        .setOutputCol("features")
+      val assembledDf = vectorAssembler.transform(df).select("features", "label").cache()
+      assembledDf.show()
+      val xgbCf0 = new XGBClassifier()
+      xgbCf0.setNumRound(10)
+      xgbCf0.setNthread(1)
+      val model = xgbCf0.fit(assembledDf)
+
+      model.setFeaturesCol(Array("f1", "f2", "f3", "f4"))
+      //      testdf = df.cache()
+      println("the df is: ")
+      df.show()
+      val res = model.transform(df)
+      print(res)
+      res.show()
+    }
+  }
 
   "XGBRegressor train" should "work" in {
     if (!(scala.util.Properties.isMac || scala.util.Properties.isWin)) {
       val spark = SparkSession.builder().getOrCreate()
       import spark.implicits._
-
+      Engine.init
       val df = Seq(
         (1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 1.0f, 2.0f, 4.0f, 8.0f, 3.0f, 116.3668f),
         (1.0f, 3.0f, 8.0f, 6.0f, 5.0f, 9.0f, 5.0f, 6.0f, 7.0f, 4.0f, 116.367f),
         (2.0f, 1.0f, 5.0f, 7.0f, 6.0f, 7.0f, 4.0f, 1.0f, 2.0f, 3.0f, 116.367f),
         (2.0f, 1.0f, 4.0f, 3.0f, 6.0f, 1.0f, 3.0f, 2.0f, 1.0f, 3.0f, 116.3668f)
       ).toDF("f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "label")
-
       val vectorAssembler = new VectorAssembler()
         .setInputCols(Array("f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10"))
         .setOutputCol("features")
       val assembledDf = vectorAssembler.transform(df).select("features", "label").cache()
-
       val xgbRf0 = new XGBRegressor()
       xgbRf0.setNthread(1)
       val xgbRegressorModel0 = xgbRf0.fit(assembledDf)
       val y0 = xgbRegressorModel0.transform(assembledDf)
-
       xgbRegressorModel0.save("/tmp/test")
       val model = XGBRegressorModel.load("/tmp/test")
       val y0_0 = model.transform(assembledDf)
@@ -67,3 +92,4 @@ class XgboostTrainSpec extends ZooSpecHelper {
     }
   }
 }
+

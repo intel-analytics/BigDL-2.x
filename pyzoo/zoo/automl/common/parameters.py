@@ -20,3 +20,5 @@ DEFAULT_CONFIG_DIR = "./saved_configs"
 
 # logger default name
 DEFAULT_LOGGER_NAME = "AutoML"
+
+DEFAULT_METRIC_NAME = "reward_metric"

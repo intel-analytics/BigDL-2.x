@@ -24,7 +24,7 @@ trait Supportive {
     val result = f
     val end = System.nanoTime()
     val cost = (end - begin)
-    Logger.getLogger(getClass).info(s"$name time elapsed [ ${cost / 1e6} ms ].")
+    Logger.getLogger(getClass).info(s"$name time elapsed [${cost / 1e6} ms].")
     result
   }
 }

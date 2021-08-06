@@ -34,4 +34,4 @@ fi
 
 version=$1
 
-bash ${RUN_SCRIPT_DIR}/release.sh mac ${version} false true -Dspark.version=2.4.3 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.4+
+bash ${RUN_SCRIPT_DIR}/release.sh mac ${version} false true -Dspark.version=2.4.6 -Dbigdl.artifactId=bigdl-SPARK_2.4 -P spark_2.4+

@@ -18,10 +18,10 @@ import numpy as np
 from bigdl.optim.optimizer import MaxEpoch
 
 from zoo.tfpark.utils import evaluate_string_metrics
-from zoo.common import load_from_file
-from zoo.common import save_file
+from zoo.common import enable_multi_fs_save, enable_multi_fs_load
 from zoo.common.nncontext import getOrCreateSparkContext
-from zoo.tfpark.tf_dataset import TFNdarrayDataset, TFDataset, _standarize_feature_label_dataset
+from zoo.tfpark.tf_dataset import TFNdarrayDataset, TFDataset, _standarize_feature_label_dataset, \
+    check_data_compatible
 
 from zoo.tfpark.tf_optimizer import TFOptimizer
 from zoo.tfpark.tf_predictor import TFPredictor
@@ -53,20 +53,15 @@ class KerasModel(object):
     def set_weights(self, weights):
         self.model.set_weights(weights)
 
+    @enable_multi_fs_save
     def save_weights(self, filepath, overwrite=True, save_format=None):
+        self.model.save_weights(filepath, overwrite=overwrite, save_format=save_format)
 
-        def save_func(file_path, overwrite=True, save_format=None):
-            self.model.save_weights(file_path, overwrite=overwrite, save_format=save_format)
-
-        save_file(save_func, filepath, overwrite=overwrite, save_format=save_format)
-
+    @enable_multi_fs_load
     def load_weights(self, filepath, by_name=False):
+        self.model.load_weights(filepath, by_name=by_name)
 
-        def load_func(file_path):
-            self.model.load_weights(file_path, by_name)
-
-        load_from_file(load_func, filepath)
-
+    @enable_multi_fs_save
     def save_model(self, path, overwrite=True):
         """
         Save the model to a single HDF5 file.
@@ -76,10 +71,7 @@ class KerasModel(object):
                 location
         """
 
-        def save_func(file_path, overwrite=True):
-            self.model.save(file_path, overwrite=overwrite)
-
-        save_file(save_func, path, overwrite=overwrite)
+        self.model.save(path, overwrite=overwrite)
 
     @staticmethod
     def load_model(path):
@@ -90,11 +82,7 @@ class KerasModel(object):
         :return: KerasModel.
         """
         from tensorflow.python.keras import models
-
-        def load_func(file_path):
-            return models.load_model(file_path)
-
-        keras_model = load_from_file(load_func, path)
+        keras_model = models.load_model(path)
         return KerasModel(keras_model)
 
     def fit(self,
@@ -200,6 +188,8 @@ class KerasModel(object):
             if isinstance(x, TFNdarrayDataset):
                 x = _standarize_feature_label_dataset(x, self.model)
             # todo check arguments
+            check_data_compatible(x, self.model, mode="evaluate")
+
             return self._evaluate_distributed(x)
         else:
             if distributed:

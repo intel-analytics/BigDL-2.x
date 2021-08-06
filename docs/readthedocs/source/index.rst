@@ -8,7 +8,7 @@ Analytics Zoo Documentation
 * `Orca <doc/Orca/Overview/orca.html>`_: seamlessly scale out TensorFlow and PyTorch for Big Data (using Spark & Ray)
 * `RayOnSpark <doc/Ray/Overview/ray.html>`_: run Ray programs directly on Big Data clusters
 * **BigDL Extensions**: high-level `Spark ML pipeline <doc/UseCase/nnframes.html>`_ and `Keras-like <doc/UseCase/keras-api.html>`_ APIs for BigDL 
-* `Zouwu <doc/Zouwu/Overview/zouwu.html>`_: scalable time series analysis using AutoML
+* `Chronos <doc/Chronos/Overview/chronos.html>`_: scalable time series analysis using AutoML
 * `PPML <doc/PPML/Overview/ppml.html>`_: privacy preserving big data analysis and machine learning (*experimental*)
 
  
@@ -40,7 +40,7 @@ Analytics Zoo Documentation
    doc/UserGuide/k8s.md
    doc/UserGuide/databricks.md
    doc/Ray/Overview/ray.md
-   doc/Zouwu/Overview/zouwu.md
+   doc/Chronos/Overview/chronos.md
    doc/PPML/Overview/ppml.md
    doc/UserGuide/develop.md
    
@@ -51,9 +51,13 @@ Analytics Zoo Documentation
    doc/Orca/QuickStart/orca-pytorch-distributed-quickstart.md
    doc/UseCase/spark-dataframe.md
    doc/UseCase/xshards-pandas.md
-   doc/Zouwu/QuickStart/zouwu-autots-quickstart.md
+   doc/Chronos/QuickStart/chronos-autots-quickstart.md
+   doc/Chronos/QuickStart/chronos-tsdataset-forecaster-quickstart.md
+   doc/Chronos/QuickStart/chronos-anomaly-detector.md
    doc/UseCase/keras-api.md
    doc/UseCase/nnframes.md
+   doc/Orca/QuickStart/orca-autoestimator-pytorch-quickstart.md
+   doc/Orca/QuickStart/orca-autoxgboost-quickstart.md
    
 .. toctree::
    :maxdepth: 1
@@ -63,13 +67,16 @@ Analytics Zoo Documentation
    doc/Orca/Overview/orca-context.md
    doc/Orca/Overview/data-parallel-processing.md
    doc/Orca/Overview/distributed-training-inference.md
+   doc/Orca/Overview/distributed-tuning.md
 
 .. toctree::
    :maxdepth: 1
    :caption: Python API
    
    doc/PythonAPI/Orca/orca.rst
+   doc/PythonAPI/AutoML/automl.rst
    doc/PythonAPI/Friesian/feature.rst
+   doc/PythonAPI/Chronos/index.rst
    
 .. toctree::
    :maxdepth: 1

@@ -23,11 +23,14 @@ import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer,
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.zoo.serving.http.Instances
+import com.intel.analytics.zoo.serving.preprocessing.PreProcessing
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-class JsonInputDeserializer extends JsonDeserializer[Activity]{
+class JsonInputDeserializer(preProcessing: PreProcessing = null)
+  extends JsonDeserializer[Activity]{
   var intBuffer: ArrayBuffer[Int] = null
   var floatBuffer: ArrayBuffer[Float] = null
   var stringBuffer: ArrayBuffer[String] = null
@@ -45,7 +48,14 @@ class JsonInputDeserializer extends JsonDeserializer[Activity]{
       if (shapeBuffer.isEmpty) shapeBuffer.append(1)
       if (!floatBuffer.isEmpty) {
         tensorBuffer.append(Tensor[Float](floatBuffer.toArray, shapeBuffer.toArray))
-      } else {
+      }
+      else if (!stringBuffer.isEmpty) {
+        if (preProcessing == null) {
+          throw new Error("No PreProcessing provided!")
+        }
+        tensorBuffer.append(preProcessing.decodeImage(stringBuffer.head))
+      }
+      else {
         // add string, string tensor, sparse tensor in the future
         throw new Error("???")
       }
@@ -83,10 +93,11 @@ class JsonInputDeserializer extends JsonDeserializer[Activity]{
 
 }
 object JsonInputDeserializer {
-  def deserialize(str: String): Activity = {
+  def deserialize(str: String, preProcessing: PreProcessing = null): Activity = {
     val mapper = new ObjectMapper()
     val module = new SimpleModule()
-    module.addDeserializer(classOf[Activity], new JsonInputDeserializer())
+    module.addDeserializer(
+      classOf[Activity], new JsonInputDeserializer(preProcessing))
     mapper.registerModule(module)
     mapper.readValue(str, classOf[Activity])
   }

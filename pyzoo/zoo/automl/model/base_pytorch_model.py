@@ -16,13 +16,14 @@
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
-from zoo.automl.model.abstract import BaseModel
+import types
+
+from zoo.automl.model.abstract import BaseModel, ModelBuilder
 from zoo.automl.common.util import *
 from zoo.automl.common.metrics import Evaluator
 import pandas as pd
 
 from zoo.orca.automl.pytorch_utils import LR_NAME, DEFAULT_LR
-
 
 PYTORCH_REGRESSION_LOSS_MAP = {"mse": "MSELoss",
                                "mae": "L1Loss",
@@ -66,6 +67,9 @@ class PytorchBaseModel(BaseModel):
         self._check_config(**config)
         self.config = config
         # build model
+        if "selected_features" in config:
+            config["input_feature_num"] = len(config['selected_features'])\
+                + config['output_feature_num']
         self.model = self.model_creator(config)
         if not isinstance(self.model, torch.nn.Module):
             raise ValueError("You must create a torch model in model_creator")
@@ -78,26 +82,48 @@ class PytorchBaseModel(BaseModel):
             x = x.reshape(-1, 1)
         return x
 
-    def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric="mse",
+    def _np_to_creator(self, data):
+        def data_creator(config):
+                x, y = PytorchBaseModel.covert_input(data)
+                x = self._reshape_input(x)
+                y = self._reshape_input(y)
+                return DataLoader(TensorDataset(x, y),
+                                  batch_size=int(config["batch_size"]),
+                                  shuffle=True)
+        return data_creator
+
+    def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric=None,
+                 metric_func=None,
                  **config):
         """
-        :param data: could be a tuple with numpy ndarray with form (x, y)
-        :param validation_data: could be a tuple with numpy ndarray with form (x, y)
+        :param data: data could be a tuple with numpy ndarray with form (x, y) or a
+               data creator which takes a config dict and returns a
+               torch.utils.data.DataLoader. torch.Tensor should be generated from the
+               dataloader.
+        :param validation_data: validation data could be a tuple with numpy ndarray
+               with form (x, y) or a data creator which takes a config dict and returns a
+               torch.utils.data.DataLoader. torch.Tensor should be generated from the
+               dataloader.
         fit_eval will build a model at the first time it is built
         config will be updated for the second or later times with only non-model-arch
         params be functional
         TODO: check the updated params and decide if the model is needed to be rebuilt
         """
-        # reshape 1dim input
-        x = self._reshape_input(data[0])
-        y = self._reshape_input(data[1])
+        # todo: support input validation data None
+        assert validation_data is not None, "You must input validation data!"
+
+        if not metric:
+            raise ValueError("You must input a valid metric value for fit_eval.")
 
         # update config settings
         def update_config():
-            config.setdefault("past_seq_len", x.shape[-2])
-            config.setdefault("future_seq_len", y.shape[-2])
-            config.setdefault("input_feature_num", x.shape[-1])
-            config.setdefault("output_feature_num", y.shape[-1])
+            if not isinstance(data, types.FunctionType):
+                x = self._reshape_input(data[0])
+                y = self._reshape_input(data[1])
+                config.setdefault("past_seq_len", x.shape[-2])
+                config.setdefault("future_seq_len", y.shape[-2])
+                config.setdefault("input_feature_num", x.shape[-1])
+                config.setdefault("output_feature_num", y.shape[-1])
 
         if not self.model_built:
             update_config()
@@ -108,17 +134,31 @@ class PytorchBaseModel(BaseModel):
             self._check_config(**tmp_config)
             self.config.update(config)
 
+        # get train_loader and validation_loader
+        if isinstance(data, types.FunctionType):
+            train_loader = data(self.config)
+            validation_loader = validation_data(self.config)
+        else:
+            assert isinstance(data, tuple) and isinstance(validation_data, tuple),\
+                f"data/validation_data should be a tuple or\
+                 data creator function but found {type(data)}"
+            assert isinstance(data[0], np.ndarray) and isinstance(validation_data[0], np.ndarray),\
+                f"x should be a np.ndarray but found {type(x)}"
+            assert isinstance(data[1], np.ndarray) and isinstance(validation_data[1], np.ndarray),\
+                f"y should be a np.ndarray but found {type(y)}"
+            train_data_creator = self._np_to_creator(data)
+            valid_data_creator = self._np_to_creator(validation_data)
+            train_loader = train_data_creator(self.config)
+            validation_loader = valid_data_creator(self.config)
+
         epoch_losses = []
-        x, y, validation_data = PytorchBaseModel.covert_input(x, y, validation_data)
         for i in range(epochs):
-            train_loss = self._train_epoch(x, y)
+            train_loss = self._train_epoch(train_loader)
             epoch_losses.append(train_loss)
         train_stats = {"loss": np.mean(epoch_losses), "last_loss": epoch_losses[-1]}
-        # todo: support input validation data None
-        assert validation_data is not None, "You must input validation data!"
-        val_stats = self._validate(validation_data[0], validation_data[1], metric=metric)
+        val_stats = self._validate(validation_loader, metric_name=metric, metric_func=metric_func)
         self.onnx_model_built = False
-        return val_stats[metric]
+        return val_stats
 
     @staticmethod
     def to_torch(inp):
@@ -129,21 +169,14 @@ class PytorchBaseModel(BaseModel):
         return inp
 
     @staticmethod
-    def covert_input(x, y, validation_data):
-        x = PytorchBaseModel.to_torch(x).float()
-        y = PytorchBaseModel.to_torch(y).float()
-        if validation_data is not None:
-            validation_data = (PytorchBaseModel.to_torch(validation_data[0]).float(),
-                               PytorchBaseModel.to_torch(validation_data[1]).float())
-        return x, y, validation_data
+    def covert_input(data):
+        x = PytorchBaseModel.to_torch(data[0]).float()
+        y = PytorchBaseModel.to_torch(data[1]).float()
+        return x, y
 
-    def _train_epoch(self, x, y):
-        batch_size = self.config["batch_size"]
+    def _train_epoch(self, train_loader):
         self.model.train()
         total_loss = 0
-        train_loader = DataLoader(TensorDataset(x, y),
-                                  batch_size=int(batch_size),
-                                  shuffle=True)
         batch_idx = 0
         tqdm = None
         try:
@@ -170,18 +203,27 @@ class PytorchBaseModel(BaseModel):
     def _forward(self, x, y):
         return self.model(x)
 
-    def _validate(self, x, y, metric):
-        x = self._reshape_input(x)
-        y = self._reshape_input(y)
+    def _validate(self, validation_loader, metric_name, metric_func=None):
+        if not metric_name:
+            assert metric_func, "You must input valid metric_func or metric_name"
+            metric_name = metric_func.__name__
         self.model.eval()
         with torch.no_grad():
-            yhat = self.model(x)
-            val_loss = self.criterion(yhat, y)
-            eval_result = Evaluator.evaluate(metric=metric,
-                                             y_true=y.numpy(), y_pred=yhat.numpy(),
+            yhat_list = []
+            y_list = []
+            for x_valid_batch, y_valid_batch in validation_loader:
+                yhat_list.append(self.model(x_valid_batch).numpy())
+                y_list.append(y_valid_batch.numpy())
+            yhat = np.concatenate(yhat_list, axis=0)
+            y = np.concatenate(y_list, axis=0)
+        # val_loss = self.criterion(yhat, y)
+        if metric_func:
+            eval_result = metric_func(y, yhat)
+        else:
+            eval_result = Evaluator.evaluate(metric=metric_name,
+                                             y_true=y, y_pred=yhat,
                                              multioutput='uniform_average')
-        return {"val_loss": val_loss.item(),
-                metric: eval_result}
+        return {metric_name: eval_result}
 
     def _print_model(self):
         # print model and parameters
@@ -190,12 +232,12 @@ class PytorchBaseModel(BaseModel):
         for i in range(len(list(self.model.parameters()))):
             print(list(self.model.parameters())[i].size())
 
-    def evaluate(self, x, y, metrics=['mse'], multioutput="raw_values"):
+    def evaluate(self, x, y, metrics=['mse'], multioutput="raw_values", batch_size=32):
         # reshape 1dim input
         x = self._reshape_input(x)
         y = self._reshape_input(y)
 
-        yhat = self.predict(x)
+        yhat = self.predict(x, batch_size=batch_size)
         eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput=multioutput)
                        for m in metrics]
         return eval_result
@@ -213,14 +255,15 @@ class PytorchBaseModel(BaseModel):
             self.model.eval()
         test_loader = DataLoader(TensorDataset(x),
                                  batch_size=int(batch_size))
-        yhat_list = []
-        for x_test_batch in test_loader:
-            yhat_list.append(self.model(x_test_batch[0]).detach().numpy())
-        yhat = np.concatenate(yhat_list, axis=0)
+        y_list = []
+        with torch.no_grad():
+            for x_test_batch in test_loader:
+                y_list.append(self.model(x_test_batch[0]).numpy())
+        yhat = np.concatenate(y_list, axis=0)
         return yhat
 
     def predict_with_uncertainty(self, x, n_iter=100):
-        result = np.zeros((n_iter,) + (x.shape[0], self.config["output_size"]))
+        result = np.zeros((n_iter,) + (x.shape[0], self.config["output_feature_num"]))
         for i in range(n_iter):
             result[i, :, :] = self.predict(x, mc=True)
 
@@ -245,22 +288,23 @@ class PytorchBaseModel(BaseModel):
         self.optimizer.load_state_dict(state["optimizer"])
         self._create_loss()
 
-    def save(self, checkpoint_file, config_path=None):
+    def save(self, checkpoint):
         if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore first before calling save!")
         state_dict = self.state_dict()
-        torch.save(state_dict, checkpoint_file)
+        torch.save(state_dict, checkpoint)
 
-    def restore(self, checkpoint_file):
-        state_dict = torch.load(checkpoint_file)
+    def restore(self, checkpoint):
+        state_dict = torch.load(checkpoint)
         self.load_state_dict(state_dict)
 
-    def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None, multioutput="raw_values"):
+    def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None,
+                           multioutput="raw_values", batch_size=32):
         # reshape 1dim input
         x = self._reshape_input(x)
         y = self._reshape_input(y)
 
-        yhat = self.predict_with_onnx(x, dirname=dirname)
+        yhat = self.predict_with_onnx(x, dirname=dirname, batch_size=batch_size)
         eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput=multioutput)
                        for m in metrics]
         return eval_result
@@ -293,7 +337,7 @@ class PytorchBaseModel(BaseModel):
         self.ort_session = onnxruntime.InferenceSession(os.path.join(dirname, "cache.onnx"))
         self.onnx_model_built = True
 
-    def predict_with_onnx(self, x, mc=False, dirname=None):
+    def predict_with_onnx(self, x, mc=False, dirname=None, batch_size=32):
         # reshape 1dim input
         x = self._reshape_input(x)
 
@@ -301,12 +345,20 @@ class PytorchBaseModel(BaseModel):
         if not self.onnx_model_built:
             self._build_onnx(x[0:1], dirname=dirname)
 
+        test_loader = DataLoader(TensorDataset(x),
+                                 batch_size=int(batch_size))
+        yhat_list = []
+
         def to_numpy(tensor):
             return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
 
-        ort_inputs = {self.ort_session.get_inputs()[0].name: to_numpy(x)}
-        ort_outs = self.ort_session.run(None, ort_inputs)
-        return ort_outs[0]
+        for x_test_batch in test_loader:
+            ort_inputs = {self.ort_session.get_inputs()[0].name: to_numpy(x_test_batch[0])}
+            ort_outs = self.ort_session.run(None, ort_inputs)
+            yhat_list.append(ort_outs[0])
+        yhat = np.concatenate(yhat_list, axis=0)
+
+        return yhat
 
     def _get_required_parameters(self):
         return {}
@@ -318,3 +370,23 @@ class PytorchBaseModel(BaseModel):
                 "optim",
                 "loss"
                 }
+
+
+class PytorchModelBuilder(ModelBuilder):
+
+    def __init__(self, model_creator,
+                 optimizer_creator,
+                 loss_creator):
+        from zoo.orca.automl.pytorch_utils import validate_pytorch_loss, validate_pytorch_optim
+        self.model_creator = model_creator
+        optimizer = validate_pytorch_optim(optimizer_creator)
+        self.optimizer_creator = optimizer
+        loss = validate_pytorch_loss(loss_creator)
+        self.loss_creator = loss
+
+    def build(self, config):
+        model = PytorchBaseModel(self.model_creator,
+                                 self.optimizer_creator,
+                                 self.loss_creator)
+        model.build(config)
+        return model

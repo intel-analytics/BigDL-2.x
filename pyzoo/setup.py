@@ -23,25 +23,27 @@ import fnmatch
 from setuptools import setup
 
 long_description = '''
-Analytics Zoo: A unified Data Analytics and AI platform for distributed TensorFlow,
- Keras, PyTorch, Apache Spark/Flink and Ray.
+[**Analytics Zoo**](https://github.com/intel-analytics/analytics-zoo/)
+is an open source _**Big Data AI**_ platform, and includes the following
+features for scaling end-to-end AI to distributed Big Data:
 
-You may want to develop your AI solutions using Analytics Zoo if:
+- [Orca](https://github.com/intel-analytics/analytics-zoo#getting-started-with-orca):
+seamlessly scale out TensorFlow and PyTorch for Big Data (using Spark & Ray)
 
-- You want to easily prototype the entire end-to-end pipeline that applies AI models
- (e.g., TensorFlow, Keras, PyTorch, BigDL, OpenVINO, etc.) to production big data.
-- You want to transparently scale your AI applications from a laptop to large clusters with "zero"
- code changes.
-- You want to deploy your AI pipelines to existing YARN or K8S clusters *WITHOUT* any modifications
- to the clusters.
-- You want to automate the process of applying machine learning (such as feature engineering,
- hyperparameter tuning, model selection and distributed inference).
+- [RayOnSpark](https://github.com/intel-analytics/analytics-zoo#getting-started-with-rayonspark):
+run Ray programs directly on Big Data clusters
 
-Find instructions to install analytics-zoo via pip, please visit our documentation page:
- https://analytics-zoo.github.io/master/#PythonUserGuide/install/
+- [BigDL
+Extensions](https://github.com/intel-analytics/analytics-zoo#getting-started-with-bigdl-extensions):
+high-level Spark ML pipeline and Keras-like APIs for BigDL
 
-For source code and more information, please visit our GitHub page:
- https://github.com/intel-analytics/analytics-zoo
+- [Chronos](https://github.com/intel-analytics/analytics-zoo#getting-started-with-chronos):
+scalable time series analysis using AutoML
+
+- [PPML](https://github.com/intel-analytics/analytics-zoo#ppml-privacy-preserving-machine-learning):
+privacy preserving big data analysis and machine learning (*experimental*)
+
+For more information, you may [read the docs](https://analytics-zoo.readthedocs.io/).
 '''
 
 
@@ -49,7 +51,7 @@ TEMP_PATH = "zoo/share"
 analytics_zoo_home = os.path.abspath(__file__ + "/../../")
 SCRIPTS_TARGET = os.path.join(TEMP_PATH, "bin/cluster-serving")
 
-exclude_patterns = ["*__pycache__*", "*ipynb_checkpoints*", "*zouwu.use-case*"]
+exclude_patterns = ["*__pycache__*", "*ipynb_checkpoints*", "*chronos.use-case*"]
 
 
 def get_analytics_zoo_packages():
@@ -136,12 +138,15 @@ def setup_package():
         license='Apache License, Version 2.0',
         url='https://github.com/intel-analytics/analytics-zoo',
         packages=packages,
-        install_requires=['pyspark==2.4.3', 'bigdl==0.12.2', 'conda-pack==0.3.1'],
-        extras_require={'ray': ['ray==1.2.0', 'psutil', 'aiohttp==3.7.0',
-                                'setproctitle', 'pyarrow==0.17.0', 'hiredis==1.1.0'],
-                        'automl': ['tensorflow>=1.15.0,<2.0.0', 'h5py==2.10.0', 'hiredis==1.1.0',
-                                   'ray[tune]==1.2.0', 'psutil', 'aiohttp', 'setproctitle',
-                                   'pandas', 'scikit-learn>=0.20.0,<=0.22.0', 'requests']},
+        install_requires=['pyspark==2.4.6', 'bigdl==0.13.0', 'conda-pack==0.3.1'],
+        extras_require={'ray': ['ray==1.2.0', 'psutil', 'aiohttp==3.7.0', 'aioredis==1.1.0',
+                                'setproctitle', 'hiredis==1.1.0', 'async-timeout==3.0.1'],
+                        'automl': ['tensorflow>=1.15.0,<2.0.0', 'h5py==2.10.0',
+                                   'ray[tune]==1.2.0', 'psutil', 'aiohttp==3.7.0',
+                                   'aioredis==1.1.0', 'setproctitle', 'hiredis==1.1.0',
+                                   'pandas==1.0.3', 'scikit-learn>=0.20.0,<=0.22.0', 'requests',
+                                   'scipy==1.5', 'protobuf==3.12.0', 'torch==1.8.1',
+                                   'tsfresh==0.17.0']},
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,
         package_data={"zoo.share": ['lib/analytics-zoo*with-dependencies.jar', 'conf/*', 'bin/*',

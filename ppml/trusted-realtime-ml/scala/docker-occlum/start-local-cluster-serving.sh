@@ -8,11 +8,12 @@ sudo docker run -itd \
     --cpuset-cpus="0-30" \
     --oom-kill-disable \
     --device=/dev/sgx \
+    -v /var/run/aesmd/aesm.socket:/var/run/aesmd/aesm.socket \
     -v $KEYS_PATH:/opt/keys \
     -v $PWD/conf:/opt/conf \
     -v $SECURE_PASSWORD_PATH:/opt/password \
-    --name=trusted-realtime-mllocal \
+    --name=trusted-cluster-serving-local \
     -e LOCAL_IP=$LOCAL_IP \
     -e CORE_NUM=30 \
-    intelanalytics/analytics-zoo-ppml-trusted-realtime-ml-scala-occlum:0.10-SNAPSHOT \
+    intelanalytics/analytics-zoo-ppml-trusted-realtime-ml-scala-occlum:0.12.0-SNAPSHOT \
     bash  -c "cd /opt/ && ./start-all.sh && tail -f /dev/null"

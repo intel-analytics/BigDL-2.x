@@ -30,7 +30,7 @@ python -m pytest -v --doctest-modules ../zoo \
     --ignore=../zoo/examples \
     --ignore=../zoo/ray/ \
     --ignore=../zoo/automl/ \
-    --ignore=../zoo/zouwu/ \
+    --ignore=../zoo/chronos/ \
     --ignore=../test/zoo/pipeline/api/torch/ \
     --ignore=../zoo/orca/ \
     --ignore=../zoo/models/recommendation/txt.py
@@ -69,7 +69,7 @@ if [[ $py_version == *"Python 2.7"* ]]; then
        --ignore=../test/zoo/pipeline/inference/ \
        --ignore=../test/zoo/tfpark/test_text_models.py \
        --ignore=../test/zoo/ray/ \
-       --ignore=../test/zoo/zouwu/ \
+       --ignore=../test/zoo/chronos/ \
        --ignore=../test/zoo/pipeline/api/torch/ \
        --ignore=../test/zoo/orca/ \
        --ignore=../zoo/models/recommendation/txt.py \
@@ -107,7 +107,7 @@ else
        --ignore=../test/zoo/pipeline/autograd/ \
        --ignore=../test/zoo/ray/integration/ \
        --ignore=../test/zoo/ray/ \
-       --ignore=../test/zoo/zouwu/ \
+       --ignore=../test/zoo/chronos/ \
        --ignore=../test/zoo/pipeline/api/torch/ \
        --ignore=../test/zoo/orca/automl/autoestimator/ \
        --ignore=../test/zoo/orca/data \
