@@ -878,7 +878,7 @@ class FeatureTable(Table):
                       or types[i] == "array<float>" or types[i] == "array<double>"]
         vector_cols = [columns[i] for i in range(len(columns)) if types[i] == "vector"]
 
-        min_max_dic = {}
+        min_max_dict = {}
         tolist = udf(lambda x: x.toArray().tolist(), ArrayType(DoubleType()))
 
         if scalar_cols:
@@ -908,7 +908,7 @@ class FeatureTable(Table):
             max_list = model.stages[1].originalMax.toArray().tolist()
 
             for i, min_max in enumerate(zip(min_list, max_list)):
-                min_max_dic[scalar_cols[i]] = min_max
+                min_max_dict[scalar_cols[i]] = min_max
 
         from pyspark.ml.linalg import Vectors, VectorUDT
         for c in array_cols:
@@ -917,7 +917,7 @@ class FeatureTable(Table):
             scaler = MinMaxScaler(min=min, max=max, inputCol=c, outputCol="scaled")
             model = scaler.fit(df)
             df = model.transform(df).drop(c).withColumn(c, tolist("scaled")).drop("scaled")
-            min_max_dic[c] = (model.originalMin.toArray().tolist(),
+            min_max_dict[c] = (model.originalMin.toArray().tolist(),
                               model.originalMax.toArray().tolist())
 
         for c in vector_cols:
@@ -926,16 +926,16 @@ class FeatureTable(Table):
             df = model.transform(df).withColumnRenamed("scaled", c)
             min = model.originalMin
             max = model.originalMax
-            min_max_dic[c] = (min, max)
+            min_max_dict[c] = (min, max)
 
-        return FeatureTable(df), min_max_dic
+        return FeatureTable(df), min_max_dict
 
-    def transform_min_max_scale(self, columns, min_max_dic):
+    def transform_min_max_scale(self, columns, min_max_dict):
         """
         Rescale each column individually with given [min, max] range of each column.
 
         :param columns: str or a list of str. The column(s) to be rescaled.
-        :param min_max_dic: a dictionary of min, max values of each column.
+        :param min_max_dict: a dictionary of min, max values of each column.
          The key is the column name, and the value is (min, max) of this column.
         :return: A new FeatureTable with rescaled column(s).
         """
@@ -968,18 +968,18 @@ class FeatureTable(Table):
             return normalize
 
         for column in scalar_cols:
-            if column in min_max_dic:
-                col_min, col_max = min_max_dic[column]
+            if column in min_max_dict:
+                col_min, col_max = min_max_dict[column]
                 tbl = tbl.apply(column, column, normalize_scalar_vector(col_min, col_max), "float")
 
         for column in array_cols:
-            if column in min_max_dic:
-                col_min, col_max = min_max_dic[column]
+            if column in min_max_dict:
+                col_min, col_max = min_max_dict[column]
                 tbl = tbl.apply(column, column, normalize_array(col_min, col_max), "array<float>")
 
         for column in vector_cols:
-            if column in min_max_dic:
-                col_min, col_max = min_max_dic[column]
+            if column in min_max_dict:
+                col_min, col_max = min_max_dict[column]
                 tbl = tbl.apply(column, column,
                                 normalize_scalar_vector(col_min, col_max), "vector")
 
