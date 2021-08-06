@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.dllib.nn.{Module => _, _}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.util.BboxUtil
-import com.intel.analytics.bigdl.common.utils.{Shape, Table}
+import com.intel.analytics.bigdl.utils.{Shape, Table}
 import org.apache.log4j.Logger
 import DetectionOutputSSD.logger
 

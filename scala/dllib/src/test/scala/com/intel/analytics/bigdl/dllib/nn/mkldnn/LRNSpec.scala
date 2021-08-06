@@ -19,8 +19,8 @@ import com.intel.analytics.bigdl.mkl.{DataType, Memory}
 import com.intel.analytics.bigdl.dllib.nn.SpatialCrossMapLRN
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.{InferencePhase, TrainingPhase}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.BigDLSpecHelper
-import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
+import com.intel.analytics.bigdl.utils.BigDLSpecHelper
+import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import org.apache.commons.lang3.SerializationUtils
 
 import scala.util.Random

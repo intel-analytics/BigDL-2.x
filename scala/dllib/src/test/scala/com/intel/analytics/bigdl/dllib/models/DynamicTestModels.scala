@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.models.inception.Inception_Layer_v1
 import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.common.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.{T, Table}
 
 object DynamicTestModels {
 

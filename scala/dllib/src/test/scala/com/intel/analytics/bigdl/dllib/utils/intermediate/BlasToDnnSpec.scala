@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common.utils.intermediate
+package com.intel.analytics.bigdl.utils.intermediate
 
 import breeze.numerics._
 import com.intel.analytics.bigdl.example.loadmodel.AlexNet
@@ -29,8 +29,8 @@ import com.intel.analytics.bigdl.dllib.nn
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.{DnnGraph, Equivalent}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.common.utils.RandomGenerator._
-import com.intel.analytics.bigdl.common.utils._
+import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.utils._
 
 import scala.util.Random
 

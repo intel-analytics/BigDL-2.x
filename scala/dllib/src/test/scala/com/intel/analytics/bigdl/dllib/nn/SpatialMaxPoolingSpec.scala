@@ -16,13 +16,13 @@
 
 package com.intel.analytics.bigdl.dllib.nn
 
-import com.intel.analytics.bigdl.common.utils.RandomGenerator
+import com.intel.analytics.bigdl.utils.RandomGenerator
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.tensor
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.DataFormat
 import org.scalatest.{FlatSpec, Matchers}
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.utils.serializer.ModuleSerializationTest
 
 import scala.math.abs
 import scala.util.Random

@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.models.inception
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.nn.{Graph, _}
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.common.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.Module
 

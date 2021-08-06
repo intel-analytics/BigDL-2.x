@@ -26,8 +26,8 @@ import com.intel.analytics.bigdl.dllib.nn.mkldnn.{DnnGraph, MklDnnContainer}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{DistributedImageFrame, ImageFeature, ImageFrame}
-import com.intel.analytics.bigdl.common.utils._
-import com.intel.analytics.bigdl.common.utils.intermediate.{ConversionUtils, IRGraph}
+import com.intel.analytics.bigdl.utils._
+import com.intel.analytics.bigdl.utils.intermediate.{ConversionUtils, IRGraph}
 import org.apache.spark.rdd.RDD
 
 import scala.reflect.ClassTag

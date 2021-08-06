@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.models
 import com.intel.analytics.bigdl.example.loadmodel.{AlexNet, AlexNet_OWT}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.RandomGenerator._
+import com.intel.analytics.bigdl.utils.RandomGenerator._
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util.Random

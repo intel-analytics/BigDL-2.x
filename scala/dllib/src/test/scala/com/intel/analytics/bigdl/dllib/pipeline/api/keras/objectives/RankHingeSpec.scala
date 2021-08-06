@@ -17,7 +17,7 @@
 package com.intel.analytics.bigdl.dllib.zooKeras.objectives
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.RandomGenerator
+import com.intel.analytics.bigdl.utils.RandomGenerator
 import org.scalatest.{FlatSpec, Matchers}
 
 class RankHingeSpec extends FlatSpec with Matchers {

@@ -18,8 +18,8 @@ package com.intel.analytics.bigdl.dllib.inference.net
 import java.nio.file.{Files, Paths}
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.Table
-import com.intel.analytics.bigdl.common.{PythonInterpreter, PythonInterpreterTest}
+import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.utils.{PythonInterpreter, PythonInterpreterTest}
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import com.intel.analytics.bigdl.dllib.zooKeras.models.InternalOptimizerUtil.getStateFromOptiMethod

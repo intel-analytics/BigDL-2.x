@@ -26,12 +26,12 @@ import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.{InferencePhase, Training
 import com.intel.analytics.bigdl.dllib.nn
 import com.intel.analytics.bigdl.dllib.nn.{Graph, Module => _, _}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.RandomGenerator._
-import com.intel.analytics.bigdl.common.utils._
+import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.utils._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import com.intel.analytics.bigdl.models.resnet
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
-import com.intel.analytics.bigdl.common.utils.intermediate._
+import com.intel.analytics.bigdl.utils.intermediate._
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import org.apache.spark.SparkContext
 

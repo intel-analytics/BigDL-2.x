@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common
+package com.intel.analytics.bigdl.utils
 
 import com.intel.analytics.bigdl.dllib.nn.Module
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.bigdl.orca.tfpark.GraphRunner
 import com.intel.analytics.zoo.core.TFNetNative
 import org.slf4j.LoggerFactory

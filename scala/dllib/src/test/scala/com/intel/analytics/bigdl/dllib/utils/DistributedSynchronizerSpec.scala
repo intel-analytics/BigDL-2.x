@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common.utils
+package com.intel.analytics.bigdl.utils
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import org.apache.spark.{SparkContext, TaskContext}

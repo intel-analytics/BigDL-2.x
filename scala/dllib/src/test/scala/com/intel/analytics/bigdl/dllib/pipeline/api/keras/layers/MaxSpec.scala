@@ -17,7 +17,7 @@
 package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{MultiShape, Shape, T}
+import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T}
 import com.intel.analytics.bigdl.dllib.zooKeras.models._
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.Merge.merge
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest

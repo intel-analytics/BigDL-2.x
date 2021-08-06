@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.models
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.numeric.NumericDouble
-import com.intel.analytics.bigdl.common.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.{T, Table}
 
 /**
  * models in this file is only for gradient check

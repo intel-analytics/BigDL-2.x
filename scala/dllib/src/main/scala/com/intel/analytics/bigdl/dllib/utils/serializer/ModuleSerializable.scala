@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils.serializer
+package com.intel.analytics.bigdl.utils.serializer
 
 import java.lang.reflect.Field
 
@@ -24,9 +24,9 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.serialization.Bigdl.AttrValue.ArrayValue
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.{ReflectionUtils, Table, Shape => BigDLShape}
-import com.intel.analytics.bigdl.common.utils.serializer.converters.{DataConverter, ShapeConverter, TensorConverter}
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializer._
+import com.intel.analytics.bigdl.utils.{ReflectionUtils, Table, Shape => BigDLShape}
+import com.intel.analytics.bigdl.utils.serializer.converters.{DataConverter, ShapeConverter, TensorConverter}
+import com.intel.analytics.bigdl.utils.serializer.ModuleSerializer._
 import com.intel.analytics.bigdl.serialization.Bigdl._
 
 import scala.collection.mutable.ArrayBuffer

@@ -25,9 +25,9 @@ import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLTensor, Da
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.{NumericBoolean, NumericChar, NumericDouble, NumericFloat, NumericInt, NumericLong, NumericString}
-import com.intel.analytics.bigdl.common.utils._
-import com.intel.analytics.bigdl.common.utils.serializer.converters.DataConverter
-import com.intel.analytics.bigdl.common.utils.serializer.{DeserializeContext, ModuleSerializer, ProtoStorageType, SerializeContext}
+import com.intel.analytics.bigdl.utils._
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleSerializer, ProtoStorageType, SerializeContext}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable

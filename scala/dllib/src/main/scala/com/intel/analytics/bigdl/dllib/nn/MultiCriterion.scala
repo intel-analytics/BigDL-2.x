@@ -17,7 +17,7 @@ package com.intel.analytics.bigdl.dllib.nn
 
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{Activity, AbstractCriterion}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.utils.T
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag

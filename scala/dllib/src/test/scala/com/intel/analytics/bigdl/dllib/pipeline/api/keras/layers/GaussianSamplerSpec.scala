@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.nn.{Module, GaussianSampler => BGaussianSampler}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.{GaussianSampler => ZGaussianSampler}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{RandomGenerator, Shape, T, Table}
+import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape, T, Table}
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
 

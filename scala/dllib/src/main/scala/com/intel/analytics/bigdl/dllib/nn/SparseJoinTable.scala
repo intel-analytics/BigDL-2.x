@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.nn
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.tensor.{DenseTensor, SparseTensor, Tensor}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.{Engine, Table}
+import com.intel.analytics.bigdl.utils.{Engine, Table}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag

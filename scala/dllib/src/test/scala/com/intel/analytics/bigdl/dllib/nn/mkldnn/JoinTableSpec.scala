@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.nn.mkldnn
 import com.intel.analytics.bigdl.mkl.Memory
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.InferencePhase
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{BigDLSpecHelper, T}
+import com.intel.analytics.bigdl.utils.{BigDLSpecHelper, T}
 
 class JoinTableSpec extends BigDLSpecHelper {
   "Join table" should "work correctly" in {

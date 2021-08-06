@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.dllib.feature.dataset._
 import com.intel.analytics.bigdl.dllib.nn.{ClassNLLCriterion, _}
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{Engine, LoggerFilter, T}
+import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T}
 import com.intel.analytics.bigdl.example.utils.SimpleTokenizer._
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast

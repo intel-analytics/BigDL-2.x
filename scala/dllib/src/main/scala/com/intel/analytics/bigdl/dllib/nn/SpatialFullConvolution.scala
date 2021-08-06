@@ -21,9 +21,9 @@ import com.intel.analytics.bigdl.dllib.optim.Regularizer
 import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor._
-import com.intel.analytics.bigdl.common.utils.serializer._
-import com.intel.analytics.bigdl.common.utils.serializer.converters.DataConverter
-import com.intel.analytics.bigdl.common.utils.{Shape, T, Table}
+import com.intel.analytics.bigdl.utils.serializer._
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.utils.{Shape, T, Table}
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe

@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.zooKeras.layers
 import com.intel.analytics.bigdl.dllib.nn.{InitializationMethod, Ones, Xavier, Zeros}
 import com.intel.analytics.bigdl.dllib.keras.{SReLU => BigDLSReLU}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.Shape
+import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.dllib.inference.Net
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
 

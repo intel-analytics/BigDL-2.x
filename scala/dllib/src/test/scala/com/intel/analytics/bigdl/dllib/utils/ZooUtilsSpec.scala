@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common
+package com.intel.analytics.bigdl.utils
 
-import com.intel.analytics.bigdl.common.utils.RandomGenerator
+import com.intel.analytics.bigdl.utils.RandomGenerator
 import org.apache.hadoop.fs.Path
 import org.scalatest.{FlatSpec, Matchers}
 

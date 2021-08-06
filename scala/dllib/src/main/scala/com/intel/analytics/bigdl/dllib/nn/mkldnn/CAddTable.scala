@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.nn.mkldnn
 import com.intel.analytics.bigdl.mkl.{DataType, Memory, MklDnn}
 import com.intel.analytics.bigdl.dllib.nn.MklInt8Convertible
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.utils.T
 
 class CAddTable extends MklDnnLayer with MklInt8Convertible {
   override private[mkldnn] def initFwdPrimitives(inputs: Array[MemoryData], phase: Phase) = {

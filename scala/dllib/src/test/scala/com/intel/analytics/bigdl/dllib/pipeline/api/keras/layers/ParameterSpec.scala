@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractCriterion, Abstrac
 import com.intel.analytics.bigdl.dllib.keras.Sequential
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.{Shape, T, Table}
+import com.intel.analytics.bigdl.utils.{Shape, T, Table}
 import com.intel.analytics.bigdl.dllib.inference.Net
 import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{AutoGrad, Lambda, Parameter, Variable}
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper

@@ -23,9 +23,9 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.dllib.nn.quantized.QuantizedModule
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{ImageFeature, ImageFrame, LocalImageFrame}
-import com.intel.analytics.bigdl.common.utils.Util._
-import com.intel.analytics.bigdl.common.utils.intermediate.ConversionUtils
-import com.intel.analytics.bigdl.common.utils.{Engine, MklBlas, MklDnn, Util}
+import com.intel.analytics.bigdl.utils.Util._
+import com.intel.analytics.bigdl.utils.intermediate.ConversionUtils
+import com.intel.analytics.bigdl.utils.{Engine, MklBlas, MklDnn, Util}
 import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag

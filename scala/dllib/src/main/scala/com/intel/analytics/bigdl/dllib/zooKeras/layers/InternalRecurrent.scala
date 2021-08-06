@@ -17,14 +17,14 @@
 package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 
 import com.intel.analytics.bigdl.dllib.nn.{BatchNormParams, Cell, Recurrent}
-import com.intel.analytics.bigdl.common.BigDLWrapperUtils
+import com.intel.analytics.bigdl.utils.BigDLWrapperUtils
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.Table
-import com.intel.analytics.bigdl.common.utils.serializer.converters.DataConverter
-import com.intel.analytics.bigdl.common.utils.serializer.{ContainerSerializable, DeserializeContext, ModuleSerializer, SerializeContext}
+import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.utils.serializer.{ContainerSerializable, DeserializeContext, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.{InternalConvLSTM2D, InternalConvLSTM3D}
 
 import scala.reflect.ClassTag

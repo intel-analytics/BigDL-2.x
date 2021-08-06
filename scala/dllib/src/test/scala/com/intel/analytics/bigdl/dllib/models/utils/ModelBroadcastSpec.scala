@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.dllib.nn.tf.Const
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import org.apache.commons.lang3.SerializationUtils
-import com.intel.analytics.bigdl.common.utils.SparkContextLifeCycle
+import com.intel.analytics.bigdl.utils.SparkContextLifeCycle
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}

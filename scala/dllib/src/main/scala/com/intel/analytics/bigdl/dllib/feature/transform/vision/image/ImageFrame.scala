@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.feature.transform.vision.image
 import java.io.{File, FilenameFilter}
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.utils.T
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.log4j.Logger

@@ -17,8 +17,8 @@ package com.intel.analytics.bigdl.dllib.inference.net
 
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{LayerException, T}
-import com.intel.analytics.bigdl.common.TFUtils
+import com.intel.analytics.bigdl.utils.{LayerException, T}
+import com.intel.analytics.bigdl.utils.TFUtils
 import org.apache.commons.lang.StringUtils
 import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.SparkConf

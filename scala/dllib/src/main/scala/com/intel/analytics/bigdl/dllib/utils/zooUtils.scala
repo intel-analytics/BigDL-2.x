@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common
+package com.intel.analytics.bigdl.utils
 
 import java.io._
 import java.nio.file.attribute.PosixFilePermissions

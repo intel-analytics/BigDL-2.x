@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dllib.feature.dataset.DataSet.SeqFileFolder.readLabel
 import com.intel.analytics.bigdl.dllib.feature.dataset._
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
-import com.intel.analytics.bigdl.common.zooUtils
+import com.intel.analytics.bigdl.utils.zooUtils
 import com.intel.analytics.bigdl.dllib.feature.common.Preprocessing
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.io.Text
@@ -37,7 +37,7 @@ import scala.collection.JavaConverters._
 import java.nio.file.{Files, Paths}
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.utils.T
 import org.apache.hadoop.fs.Path
 
 /**

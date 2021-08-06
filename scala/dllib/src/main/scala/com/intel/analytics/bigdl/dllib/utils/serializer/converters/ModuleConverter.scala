@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common.utils.serializer.converters
+package com.intel.analytics.bigdl.utils.serializer.converters
 
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
+import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
 import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, DataType}
 
 import scala.reflect.ClassTag

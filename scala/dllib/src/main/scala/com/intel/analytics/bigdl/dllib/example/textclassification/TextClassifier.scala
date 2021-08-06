@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.example.textclassification
 
 import com.intel.analytics.bigdl.example.utils._
 import com.intel.analytics.bigdl.dllib.nn.{ClassNLLCriterion, _}
-import com.intel.analytics.bigdl.common.utils.{Engine, LoggerFilter, T}
+import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T}
 import org.apache.log4j.{Level => Levle4j, Logger => Logger4j}
 import org.slf4j.{Logger, LoggerFactory}
 import scopt.OptionParser

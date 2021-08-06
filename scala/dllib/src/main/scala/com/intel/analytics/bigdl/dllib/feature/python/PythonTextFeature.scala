@@ -22,7 +22,7 @@
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 //import com.intel.analytics.bigdl.dllib.feature.dataset.{Sample => JSample}
 //import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
-//import com.intel.analytics.bigdl.common.PythonZoo
+//import com.intel.analytics.bigdl.utils.PythonZoo
 //import com.intel.analytics.bigdl.dllib.feature.common.{Preprocessing, Relation, Relations}
 //import com.intel.analytics.bigdl.dllib.feature.text.TruncMode.TruncMode
 //import com.intel.analytics.bigdl.dllib.feature.text.{DistributedTextSet, _}

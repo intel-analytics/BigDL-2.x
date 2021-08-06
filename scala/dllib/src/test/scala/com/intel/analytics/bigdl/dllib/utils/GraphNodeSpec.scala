@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common.utils
+package com.intel.analytics.bigdl.utils
 
 
 import com.intel.analytics.bigdl.example.loadmodel.AlexNet_OWT
@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.models.Inception
 import com.intel.analytics.bigdl.models.resnet.ResNet
 import com.intel.analytics.bigdl.models.resnet.ResNet.{DatasetType, ShortcutType}
 import com.intel.analytics.bigdl.dllib.nn._
-import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
+import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import org.scalatest.{FlatSpec, Matchers}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.tensor.Tensor

@@ -21,8 +21,8 @@ import javax.print.attribute.standard.MediaSize.Other
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.{T, Table}
-import com.intel.analytics.bigdl.common.utils.serializer.{DeserializeContext, ModuleSerializable}
+import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleSerializable}
 import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec.VAR
 
 import scala.reflect._

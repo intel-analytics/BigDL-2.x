@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.nn
 
 import com.intel.analytics.bigdl.models.lenet.LeNet5
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.common.utils.{RandomGenerator, Table}
+import com.intel.analytics.bigdl.utils.{RandomGenerator, Table}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util.Random

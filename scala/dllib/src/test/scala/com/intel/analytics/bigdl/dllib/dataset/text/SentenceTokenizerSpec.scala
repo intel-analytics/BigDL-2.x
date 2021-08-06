@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.feature.dataset.text
 import java.io.PrintWriter
 
 import com.intel.analytics.bigdl.dllib.feature.dataset.DataSet
-import com.intel.analytics.bigdl.common.utils.{Engine, SparkContextLifeCycle}
+import com.intel.analytics.bigdl.utils.{Engine, SparkContextLifeCycle}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{FlatSpec, Matchers}
 

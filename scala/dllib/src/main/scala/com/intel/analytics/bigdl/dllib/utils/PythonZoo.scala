@@ -13,7 +13,7 @@
 // * See the License for the specific language governing permissions and
 // * limitations under the License.
 // */
-//package com.intel.analytics.bigdl.common
+//package com.intel.analytics.bigdl.utils
 //
 //import java.util
 //
@@ -28,7 +28,7 @@
 //import com.intel.analytics.bigdl.dllib.feature.dataset.{MiniBatch}
 //import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 //import com.intel.analytics.bigdl.dllib.optim.{LocalPredictor, ValidationMethod}
-//import com.intel.analytics.bigdl.common.utils.Table
+//import com.intel.analytics.bigdl.utils.Table
 //import com.intel.analytics.bigdl.dllib.feature.image.ImageSet
 //import com.intel.analytics.bigdl.dllib.feature.text.TextSet
 //import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.EngineRef
@@ -254,7 +254,7 @@
 //  }
 //
 //  def listPaths(path: String, recursive: Boolean = false): JList[String] = {
-//    com.intel.analytics.bigdl.common.zooUtils.listPaths(path, recursive).toList.asJava
+//    com.intel.analytics.bigdl.utils.zooUtils.listPaths(path, recursive).toList.asJava
 //  }
 //
 //  def exists(path: String): Boolean = {

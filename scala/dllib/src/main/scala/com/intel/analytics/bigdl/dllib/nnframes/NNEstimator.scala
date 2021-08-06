@@ -24,9 +24,9 @@ import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.python.api.EvaluatedResult
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.{Tensor, DoubleType => TensorDouble, FloatType => TensorFloat}
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleLoader
-import com.intel.analytics.bigdl.common.utils.{File, T}
-import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
+import com.intel.analytics.bigdl.utils.{File, T}
+import com.intel.analytics.bigdl.utils.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
 import com.intel.analytics.bigdl.dllib.feature.FeatureSet
 import com.intel.analytics.bigdl.dllib.feature.common.{Preprocessing, _}

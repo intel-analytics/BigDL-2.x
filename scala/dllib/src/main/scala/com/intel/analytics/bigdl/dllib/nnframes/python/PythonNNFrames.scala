@@ -23,9 +23,9 @@
 //import com.intel.analytics.bigdl.python.api.EvaluatedResult
 //import com.intel.analytics.bigdl.dllib.tensor.Tensor
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-//import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
+//import com.intel.analytics.bigdl.utils.visualization.{TrainSummary, ValidationSummary}
 //import com.intel.analytics.bigdl.{Criterion, Module}
-//import com.intel.analytics.bigdl.common.PythonZoo
+//import com.intel.analytics.bigdl.utils.PythonZoo
 //import com.intel.analytics.bigdl.dllib.feature.common._
 //import com.intel.analytics.bigdl.dllib.feature.image.RowToImageFeature
 //import com.intel.analytics.bigdl.dllib.feature.pmem._

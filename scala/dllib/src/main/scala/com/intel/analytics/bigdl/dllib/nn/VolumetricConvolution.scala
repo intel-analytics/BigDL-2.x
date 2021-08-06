@@ -20,8 +20,8 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.{Initializable, TensorModul
 import com.intel.analytics.bigdl.dllib.optim.Regularizer
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.{DoubleType, FloatType, Tensor}
-import com.intel.analytics.bigdl.common.utils.RandomGenerator._
-import com.intel.analytics.bigdl.common.utils.{Shape, T, Table}
+import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.utils.{Shape, T, Table}
 import org.apache.spark.sql.catalyst.optimizer.OptimizeIn
 
 import scala.reflect.ClassTag

@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.image.{CropCenter, CropRa
 import com.intel.analytics.bigdl.dllib.feature.dataset.{ByteRecord, DataSet, MiniBatch}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation.{ChannelScaledNormalizer, RandomCropper, RandomResize}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{MTImageFeatureToBatch, MatToTensor, PixelBytesToMat}
-import com.intel.analytics.bigdl.common.utils.File
+import com.intel.analytics.bigdl.utils.File
 import org.apache.spark.SparkContext
 import scopt.OptionParser
 

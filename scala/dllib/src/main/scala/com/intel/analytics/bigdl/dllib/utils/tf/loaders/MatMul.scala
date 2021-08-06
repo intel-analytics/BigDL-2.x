@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils.tf.loaders
+package com.intel.analytics.bigdl.utils.tf.loaders
 
 import java.nio.ByteOrder
 
@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.dllib.nn.MM
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import org.tensorflow.framework.NodeDef
 import Utils._
-import com.intel.analytics.bigdl.common.utils.tf.Context
+import com.intel.analytics.bigdl.utils.tf.Context
 
 import scala.reflect.ClassTag
 

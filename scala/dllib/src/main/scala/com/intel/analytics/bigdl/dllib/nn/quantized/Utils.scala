@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.dllib.nn.tf.WithoutInput
 import com.intel.analytics.bigdl.dllib.nn.{Cell, Container, Graph, Input, TimeDistributed, Linear => NNLinear, SpatialConvolution => NNConv, SpatialDilatedConvolution => NNDilatedConv}
 import com.intel.analytics.bigdl.dllib.tensor.{QuantizedTensor, Tensor}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.Node
+import com.intel.analytics.bigdl.utils.Node
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 

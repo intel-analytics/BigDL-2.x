@@ -19,7 +19,7 @@ import com.intel.analytics.bigdl.mkl.{DataType, Memory}
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.{InferencePhase, TrainingPhase}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.tensor.{DnnTensor, Tensor}
-import com.intel.analytics.bigdl.common.utils.{BigDLSpecHelper, T}
+import com.intel.analytics.bigdl.utils.{BigDLSpecHelper, T}
 import org.apache.commons.lang3.SerializationUtils
 
 class ConcatTableSpec extends BigDLSpecHelper {

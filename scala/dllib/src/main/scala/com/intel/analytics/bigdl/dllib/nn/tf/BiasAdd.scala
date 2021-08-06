@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.nn.tf
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor._
-import com.intel.analytics.bigdl.common.utils.Table
+import com.intel.analytics.bigdl.utils.Table
 
 import scala.reflect.ClassTag
 

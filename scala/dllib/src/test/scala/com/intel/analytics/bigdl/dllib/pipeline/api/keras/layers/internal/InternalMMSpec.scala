@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 
 import com.intel.analytics.bigdl.dllib.nn.{Input, Log}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{Shape, T}
+import com.intel.analytics.bigdl.utils.{Shape, T}
 import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{AutoGrad, Variable}
 import com.intel.analytics.bigdl.dllib.zooKeras.models.Model
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest

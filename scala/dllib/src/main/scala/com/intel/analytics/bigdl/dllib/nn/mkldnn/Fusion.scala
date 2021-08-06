@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.nn.{MklInt8Convertible, Scale => ScaleLayer}
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.Node
+import com.intel.analytics.bigdl.utils.Node
 
 /**
  * Add fusion operation for dnn graph node, there are three cases about fusion:

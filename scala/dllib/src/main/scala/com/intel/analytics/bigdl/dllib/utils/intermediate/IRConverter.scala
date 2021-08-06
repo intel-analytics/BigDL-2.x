@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common.utils.intermediate
+package com.intel.analytics.bigdl.utils.intermediate
 
 import com.intel.analytics.bigdl.dllib.nn.Graph
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
@@ -22,8 +22,8 @@ import com.intel.analytics.bigdl.dllib.nn.mkldnn._
 import com.intel.analytics.bigdl.dllib.tensor.{FloatType, Tensor}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.common.utils
-import com.intel.analytics.bigdl.common.utils.{Engine, MklBlas, MklDnn, Node}
+import com.intel.analytics.bigdl.utils
+import com.intel.analytics.bigdl.utils.{Engine, MklBlas, MklDnn, Node}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag

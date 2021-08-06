@@ -24,9 +24,9 @@ import com.intel.analytics.bigdl.dllib.nn.{Container, Graph, Module, Utils}
 import com.intel.analytics.bigdl.dllib.optim.parameters.{AllReduceParameter, ParameterProcessor}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils._
-import com.intel.analytics.bigdl.common.utils.intermediate.{ConversionUtils, IRGraph}
-import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.utils._
+import com.intel.analytics.bigdl.utils.intermediate.{ConversionUtils, IRGraph}
+import com.intel.analytics.bigdl.utils.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.{Module, _}
 import java.io.{File, FilenameFilter}
 import java.text.SimpleDateFormat

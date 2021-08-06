@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.dllib.feature.transform.vision.image
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.MatToFloats._
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
-import com.intel.analytics.bigdl.common.{NNContext, zooUtils}
+import com.intel.analytics.bigdl.utils.{NNContext, zooUtils}
 import com.intel.analytics.bigdl.dllib.feature.common.{BigDLAdapter, Preprocessing}
 import com.intel.analytics.bigdl.dllib.feature.image._
 import org.apache.commons.io.FileUtils

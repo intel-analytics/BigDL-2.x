@@ -23,8 +23,8 @@ import com.intel.analytics.bigdl.dllib.nn.Graph.{apply => _, _}
 import com.intel.analytics.bigdl.dllib.nn.{Graph, _}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
-import com.intel.analytics.bigdl.common.utils.{RandomGenerator, T}
+import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
+import com.intel.analytics.bigdl.utils.{RandomGenerator, T}
 import org.apache.log4j.Logger
 import org.scalatest.{FlatSpec, Matchers}
 

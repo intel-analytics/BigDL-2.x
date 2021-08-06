@@ -24,10 +24,10 @@ import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.common.utils.{Engine, RandomGenerator, Shape}
-import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
-import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.bigdl.common.NNContext
+import com.intel.analytics.bigdl.utils.{Engine, RandomGenerator, Shape}
+import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
+import com.intel.analytics.bigdl.utils.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.utils.NNContext
 import com.intel.analytics.bigdl.dllib.feature.common.{TensorToSample, _}
 import com.intel.analytics.bigdl.dllib.feature.image._
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.Merge.merge

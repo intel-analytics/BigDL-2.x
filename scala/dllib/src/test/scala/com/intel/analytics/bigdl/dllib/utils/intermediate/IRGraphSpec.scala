@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common.utils.intermediate
+package com.intel.analytics.bigdl.utils.intermediate
 
 import com.intel.analytics.bigdl.example.languagemodel.PTBModel
 import com.intel.analytics.bigdl.mkl.Memory
@@ -23,10 +23,10 @@ import com.intel.analytics.bigdl.dllib.nn
 import com.intel.analytics.bigdl.dllib.keras
 import com.intel.analytics.bigdl.dllib.nn.mkldnn._
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.common.utils
+import com.intel.analytics.bigdl.utils
 import com.intel.analytics.bigdl.dllib.nn.{Graph, Reshape, StaticGraph, TimeDistributed}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils._
+import com.intel.analytics.bigdl.utils._
 
 class IRGraphSpec extends BigDLSpecHelper {
   def modelIR(inputFormats: Int = Memory.Format.nchw,

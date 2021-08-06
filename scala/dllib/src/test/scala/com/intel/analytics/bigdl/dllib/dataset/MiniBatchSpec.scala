@@ -17,7 +17,7 @@
 package com.intel.analytics.bigdl.dllib.feature.dataset
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.utils.T
 import org.scalatest.{FlatSpec, Matchers}
 
 class MiniBatchSpec extends FlatSpec with Matchers {

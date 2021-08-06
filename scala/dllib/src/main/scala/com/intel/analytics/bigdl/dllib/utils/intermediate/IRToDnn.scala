@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common.utils.intermediate
+package com.intel.analytics.bigdl.utils.intermediate
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.mkl.{AlgKind, Direction}
@@ -25,7 +25,7 @@ import com.intel.analytics.bigdl.dllib.nn.mkldnn._
 import com.intel.analytics.bigdl.dllib.optim.DistriOptimizer._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.{DirectedGraph, Node, ReflectionUtils, T}
+import com.intel.analytics.bigdl.utils.{DirectedGraph, Node, ReflectionUtils, T}
 
 import scala.collection.mutable
 import scala.reflect.ClassTag

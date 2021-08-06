@@ -16,7 +16,7 @@
 package com.intel.analytics.bigdl.dllib.nn.ops
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.utils.serializer.ModuleSerializationTest
 
 class DigammaSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {

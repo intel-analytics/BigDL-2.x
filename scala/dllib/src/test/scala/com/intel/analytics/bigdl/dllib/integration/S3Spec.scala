@@ -21,9 +21,9 @@ import com.intel.analytics.bigdl.models.lenet.LeNet5
 import com.intel.analytics.bigdl.models.resnet.Convolution
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.caffe.{CaffeLoader, CaffePersister}
+import com.intel.analytics.bigdl.utils.caffe.{CaffeLoader, CaffePersister}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.NumericDouble
-import com.intel.analytics.bigdl.common.utils.tf.{TensorflowLoader, TensorflowSaver}
+import com.intel.analytics.bigdl.utils.tf.{TensorflowLoader, TensorflowSaver}
 import org.apache.commons.compress.utils.IOUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path

@@ -20,8 +20,8 @@ import com.intel.analytics.bigdl.dllib.nn
 import com.intel.analytics.bigdl.dllib.nn.{CrossEntropyCriterion, Module, SoftmaxWithCriterion}
 import com.intel.analytics.bigdl.dllib.optim.SGD.{Poly, SequentialSchedule, Warmup}
 import com.intel.analytics.bigdl.dllib.optim._
-import com.intel.analytics.bigdl.common.utils.{Engine, LoggerFilter, MklBlas, MklDnn, OptimizerV1, OptimizerV2}
-import com.intel.analytics.bigdl.common.visualization.TrainSummary
+import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, MklBlas, MklDnn, OptimizerV1, OptimizerV2}
+import com.intel.analytics.bigdl.utils.visualization.TrainSummary
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 

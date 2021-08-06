@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.dllib.nn.{TimeDistributedCriterion, _}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{Engine, LoggerFilter, OptimizerV1, OptimizerV2, T}
+import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, OptimizerV1, OptimizerV2, T}
 import org.apache.log4j.{Level => Levle4j, Logger => Logger4j}
 import org.apache.spark.SparkContext
 import org.slf4j.{Logger, LoggerFactory}

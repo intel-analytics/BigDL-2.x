@@ -19,8 +19,8 @@ package com.intel.analytics.bigdl.keras.nn
 import com.intel.analytics.bigdl.dllib.keras.Merge.merge
 import com.intel.analytics.bigdl.dllib.keras._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{BigDLSpecHelper, Shape}
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.utils.{BigDLSpecHelper, Shape}
+import com.intel.analytics.bigdl.utils.serializer.ModuleSerializationTest
 import com.intel.analytics.bigdl.numeric.NumericFloat
 
 import scala.util.Random

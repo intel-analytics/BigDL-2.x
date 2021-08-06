@@ -18,8 +18,8 @@ package com.intel.analytics.bigdl.dllib.inference.net
 import com.intel.analytics.bigdl.dllib.optim.OptimMethod
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.{EngineType, Table}
-import com.intel.analytics.bigdl.common.PythonInterpreter
+import com.intel.analytics.bigdl.utils.{EngineType, Table}
+import com.intel.analytics.bigdl.utils.PythonInterpreter
 import com.intel.analytics.bigdl.dllib.feature.PythonFeatureSet
 import jep.NDArray
 import org.apache.spark.TaskContext

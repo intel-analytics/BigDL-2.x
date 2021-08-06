@@ -21,7 +21,7 @@ import java.io.File
 import com.intel.analytics.bigdl.opencv.OpenCV
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.util.BoundingBox
-import com.intel.analytics.bigdl.common.utils.{Engine, T}
+import com.intel.analytics.bigdl.utils.{Engine, T}
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext

@@ -24,9 +24,9 @@ import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.ImageFeature
-import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
-import com.intel.analytics.bigdl.common.utils.{RandomGenerator, Shape}
-import com.intel.analytics.bigdl.common.NNContext
+import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
+import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape}
+import com.intel.analytics.bigdl.utils.NNContext
 import com.intel.analytics.bigdl.dllib.feature.image._
 import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{Variable, AutoGrad => A}
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper

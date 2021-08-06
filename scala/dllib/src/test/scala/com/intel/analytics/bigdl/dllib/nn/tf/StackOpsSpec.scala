@@ -17,7 +17,7 @@ package com.intel.analytics.bigdl.dllib.nn.tf
 
 import com.intel.analytics.bigdl.dllib.nn.Graph
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.utils.serializer.ModuleSerializationTest
 
 class StackOpsSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {

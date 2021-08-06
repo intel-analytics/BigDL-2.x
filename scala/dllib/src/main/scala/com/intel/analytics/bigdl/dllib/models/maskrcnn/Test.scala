@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.models.maskrcnn
 import com.intel.analytics.bigdl.models.resnet.Utils.{TestParams, _}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation._
-import com.intel.analytics.bigdl.common.utils.{Engine, T}
+import com.intel.analytics.bigdl.utils.{Engine, T}
 import scopt.OptionParser
 import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, MiniBatch, segmentation}
 import com.intel.analytics.bigdl.dllib.nn.Module

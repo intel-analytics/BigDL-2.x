@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.orca.tfpark
 import com.intel.analytics.bigdl.dllib.feature.dataset._
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.dllib.tensor.{Tensor, TensorNumericMath}
-import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.utils.T
 
 import scala.collection.Iterator
 

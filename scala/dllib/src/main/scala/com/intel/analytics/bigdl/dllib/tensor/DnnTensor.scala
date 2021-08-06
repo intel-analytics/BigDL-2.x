@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.mkl.Memory
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.{MemoryOwner, Releasable}
 import com.intel.analytics.bigdl.dllib.tensor.DnnTensor.DnnTensorUnsupportOperations
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.Table
+import com.intel.analytics.bigdl.utils.Table
 import org.apache.spark.mllib.linalg
 import org.apache.spark.mllib.linalg.Matrix
 import scala.reflect.ClassTag

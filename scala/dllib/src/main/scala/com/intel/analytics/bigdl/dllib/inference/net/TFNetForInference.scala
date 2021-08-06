@@ -20,11 +20,11 @@ import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.T
-import com.intel.analytics.bigdl.common.zooUtils
+import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.utils.zooUtils
 import com.intel.analytics.bigdl.dllib.inference.Predictable
 import com.intel.analytics.bigdl.orca.tfpark.{GraphRunner}
-import com.intel.analytics.bigdl.common.TFUtils
+import com.intel.analytics.bigdl.utils.TFUtils
 import org.slf4j.LoggerFactory
 import org.tensorflow.framework.{GraphDef, MetaGraphDef}
 import org.tensorflow.op.Ops

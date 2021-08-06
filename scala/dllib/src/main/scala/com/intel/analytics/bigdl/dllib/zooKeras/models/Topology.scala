@@ -38,10 +38,10 @@ import com.intel.analytics.bigdl.dllib.optim.parameters.AllReduceParameter
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils._
-import com.intel.analytics.bigdl.common.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
-import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.bigdl.common.ZooTrigger
+import com.intel.analytics.bigdl.utils._
+import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, ModuleData, ModuleSerializer, SerializeContext}
+import com.intel.analytics.bigdl.utils.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.utils.ZooTrigger
 import com.intel.analytics.bigdl.dllib.feature.{DiskFeatureSet, DistributedFeatureSet, FeatureSet}
 import com.intel.analytics.bigdl.dllib.feature.image.ImageSet
 import com.intel.analytics.bigdl.dllib.feature.text._
@@ -52,7 +52,7 @@ import com.intel.analytics.bigdl.dllib.zooKeras.layers.Input
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils._
 import com.intel.analytics.bigdl.dllib.inference.net.{NetUtils, TorchModel}
 import com.intel.analytics.bigdl.dllib.estimator.{AbstractEstimator, ConstantClipping, GradientClipping, L2NormClipping}
-import com.intel.analytics.bigdl.common.{TFTrainingHelper, TFTrainingHelperV2}
+import com.intel.analytics.bigdl.utils.{TFTrainingHelper, TFTrainingHelperV2}
 import org.apache.commons.lang.exception.ExceptionUtils
 import org.apache.commons.lang3.SerializationUtils
 import org.apache.hadoop.conf.Configuration
@@ -1443,7 +1443,7 @@ private[bigdl] class InternalDistriOptimizer[T: ClassTag] (
           }
         } else {
           throw new IllegalArgumentException(
-            s"Excepted com.intel.analytics.bigdl.common.ZooTrigger." +
+            s"Excepted com.intel.analytics.bigdl.utils.ZooTrigger." +
             s" Please change your trigger to an instance of ZooTrigger.")
         }
       }
@@ -1646,7 +1646,7 @@ private[bigdl] class InternalDistriOptimizerV2[T: ClassTag] (
           checkPointTrigger.get.asInstanceOf[ZooTrigger].setZooState(state)
         } else {
           throw new IllegalArgumentException(
-            s"Excepted com.intel.analytics.bigdl.common.ZooTrigger." +
+            s"Excepted com.intel.analytics.bigdl.utils.ZooTrigger." +
             s" Please change your trigger to an instance of ZooTrigger.")
         }
       }

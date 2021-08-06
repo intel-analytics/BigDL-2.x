@@ -17,7 +17,7 @@
 package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{RandomGenerator}
+import com.intel.analytics.bigdl.utils.{RandomGenerator}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.KerasBaseSpec
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
 

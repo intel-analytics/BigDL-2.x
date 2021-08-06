@@ -25,7 +25,7 @@
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 //import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
 //import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.OpenCVMat
-//import com.intel.analytics.bigdl.common.PythonZoo
+//import com.intel.analytics.bigdl.utils.PythonZoo
 //import com.intel.analytics.bigdl.dllib.feature.common.Preprocessing
 //import com.intel.analytics.bigdl.dllib.feature.image._
 //import com.intel.analytics.bigdl.dllib.feature.image3d._

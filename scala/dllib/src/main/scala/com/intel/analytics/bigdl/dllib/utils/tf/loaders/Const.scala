@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils.tf.loaders
+package com.intel.analytics.bigdl.utils.tf.loaders
 
 import java.nio.ByteOrder
 
@@ -23,8 +23,8 @@ import com.intel.analytics.bigdl.dllib.nn.tf.{Const => ConstOps}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.{NumericBoolean, NumericChar, NumericDouble, NumericFloat, NumericInt, NumericLong, NumericShort, NumericString}
-import com.intel.analytics.bigdl.common.utils.tf.TFTensorNumeric.NumericByteString
-import com.intel.analytics.bigdl.common.utils.tf.{Context, TFUtils}
+import com.intel.analytics.bigdl.utils.tf.TFTensorNumeric.NumericByteString
+import com.intel.analytics.bigdl.utils.tf.{Context, TFUtils}
 import org.tensorflow.framework.NodeDef
 
 import scala.reflect.ClassTag

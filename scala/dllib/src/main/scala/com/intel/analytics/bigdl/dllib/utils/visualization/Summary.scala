@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common.visualization
+package com.intel.analytics.bigdl.utils.visualization
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.visualization.tensorboard.{FileWriter}
+import com.intel.analytics.bigdl.utils.visualization.tensorboard.{FileWriter}
 import org.tensorflow
 
 import scala.reflect.ClassTag

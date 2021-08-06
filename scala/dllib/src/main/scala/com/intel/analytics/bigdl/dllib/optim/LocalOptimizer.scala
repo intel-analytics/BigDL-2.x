@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.dllib.nn.mkldnn.{HeapData, MemoryData, MklDnnCo
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.{InferencePhase, TrainingPhase}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils._
+import com.intel.analytics.bigdl.utils._
 import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag

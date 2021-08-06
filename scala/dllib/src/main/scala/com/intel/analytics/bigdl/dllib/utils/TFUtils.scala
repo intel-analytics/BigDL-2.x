@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common
+package com.intel.analytics.bigdl.utils
 
 import java.io.{File, FileInputStream, InputStream}
 import java.nio._
@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractCriterion, Abstrac
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.ImageFeature
-import com.intel.analytics.bigdl.common.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.bigdl.dllib.feature.common.Preprocessing
 import com.intel.analytics.bigdl.dllib.feature.image.ImageProcessing
 import com.intel.analytics.bigdl.dllib.zooKeras.{metrics => kmetrics}

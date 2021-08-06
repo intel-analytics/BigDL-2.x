@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.example.loadmodel.ModelValidator.{BigDlModel, M
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
-import com.intel.analytics.bigdl.common.utils.File
+import com.intel.analytics.bigdl.utils.File
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 

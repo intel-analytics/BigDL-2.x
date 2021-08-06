@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils.serializer
+package com.intel.analytics.bigdl.utils.serializer
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.models.maskrcnn.MaskRCNN
@@ -25,8 +25,8 @@ import com.intel.analytics.bigdl.dllib.nn.tf.{DecodeRawSerializer, ParseExample,
 import com.intel.analytics.bigdl.dllib.optim.Regularizer
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.ReflectionUtils
-import com.intel.analytics.bigdl.common.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.utils.ReflectionUtils
+import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
 
 import scala.collection.mutable
 import scala.language.existentials
@@ -192,7 +192,7 @@ object ModuleSerializer extends ModuleSerializable{
 
   private def initializeDeclaredTypes() : Unit = {
 
-    var wrapperCls = Class.forName("com.intel.analytics.bigdl.common.utils.serializer.GenericTypeWrapper")
+    var wrapperCls = Class.forName("com.intel.analytics.bigdl.utils.serializer.GenericTypeWrapper")
     val fullParams = ReflectionUtils.getPrimCtorMirror(wrapperCls).symbol.paramss
     fullParams.foreach(map => {
       map.foreach(param => {

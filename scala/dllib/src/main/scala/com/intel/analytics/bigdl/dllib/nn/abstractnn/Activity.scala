@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.nn.abstractnn
 import com.google.protobuf.ByteString
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.{T, Table}
 
 import scala.reflect._
 
@@ -102,7 +102,7 @@ object Activity {
         import com.intel.analytics.bigdl.numeric.NumericString
         Tensor[String]()
       } else if (classTag[ByteString] == classTag[T]) {
-        import com.intel.analytics.bigdl.common.utils.tf.TFTensorNumeric.NumericByteString
+        import com.intel.analytics.bigdl.utils.tf.TFTensorNumeric.NumericByteString
         Tensor[ByteString]()
       } else {
         throw new IllegalArgumentException("Type T activity is not supported")

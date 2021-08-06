@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.keras
 import com.intel.analytics.bigdl.dllib.nn.LocallyConnected2D
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{Shape, TestUtils}
+import com.intel.analytics.bigdl.utils.{Shape, TestUtils}
 
 
 class LocallyConnected2DSpec extends KerasBaseSpec {

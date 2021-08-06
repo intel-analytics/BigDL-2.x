@@ -23,8 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dllib.feature.dataset.{AbstractDataSet, DistributedDataSet, MiniBatch, Transformer}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.RandomGenerator
-import com.intel.analytics.bigdl.common.PythonInterpreter
+import com.intel.analytics.bigdl.utils.RandomGenerator
+import com.intel.analytics.bigdl.utils.PythonInterpreter
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.bigdl.dllib.feature.common.{ArrayLike, ArrayLikeWrapper}
 import com.intel.analytics.bigdl.dllib.feature.dataset.DistributedDataSet

@@ -31,7 +31,7 @@
 //import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 //import com.intel.analytics.bigdl.dllib.keras.{KerasLayer, KerasModel}
 //import com.intel.analytics.bigdl.dllib.nn.{BatchNormalization => BNBatchNormalization}
-//import com.intel.analytics.bigdl.common.utils.{Shape, Table}
+//import com.intel.analytics.bigdl.utils.{Shape, Table}
 //import com.intel.analytics.bigdl.dllib.feature.image.ImageSet
 //import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{Constant, _}
 //import com.intel.analytics.bigdl.dllib.zooKeras.layers.{KerasLayerWrapper, _}
@@ -40,7 +40,7 @@
 //import com.intel.analytics.bigdl.dllib.zooKeras.objectives._
 //import com.intel.analytics.bigdl.dllib.zooKeras.optimizers.{Adam, AdamWeightDecay, PolyEpochDecay}
 //import org.apache.spark.api.java.JavaRDD
-//import com.intel.analytics.bigdl.common.PythonZoo
+//import com.intel.analytics.bigdl.utils.PythonZoo
 //import com.intel.analytics.bigdl.dllib.feature.text.TextSet
 //import com.intel.analytics.zoo.models.common.ZooModel
 //import com.intel.analytics.zoo.models.seq2seq.{Bridge, RNNDecoder, RNNEncoder}

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils
+package com.intel.analytics.bigdl.utils
 
 import java.nio.ByteBuffer
 import java.util
@@ -66,7 +66,7 @@ trait DistriParameterSynchronizer[T] {
 class BlockManagerParameterSynchronizer[T: ClassTag](val partitionID: Int, val totalPartition: Int)
   (implicit ev: TensorNumeric[T]) extends DistriParameterSynchronizer[T]{
 
-  import com.intel.analytics.bigdl.common.utils.BlockManagerParameterSynchronizer.logger
+  import com.intel.analytics.bigdl.utils.BlockManagerParameterSynchronizer.logger
 
   @volatile private var shutdown = false
 

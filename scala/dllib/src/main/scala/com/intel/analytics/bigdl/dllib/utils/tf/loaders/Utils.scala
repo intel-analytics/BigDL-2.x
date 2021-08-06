@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils.tf.loaders
+package com.intel.analytics.bigdl.utils.tf.loaders
 
 import java.nio.ByteOrder
 import java.nio.charset.Charset
@@ -21,8 +21,8 @@ import java.util
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.tf.Context
-import com.intel.analytics.bigdl.common.utils.tf.TensorflowToBigDL.toTensor
+import com.intel.analytics.bigdl.utils.tf.Context
+import com.intel.analytics.bigdl.utils.tf.TensorflowToBigDL.toTensor
 import org.tensorflow.framework.{AttrValue, DataType, NodeDef}
 
 import scala.reflect.ClassTag

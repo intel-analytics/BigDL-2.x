@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.integration.torch
 
 import com.intel.analytics.bigdl.dllib.optim.Adagrad
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{RandomGenerator, T}
+import com.intel.analytics.bigdl.utils.{RandomGenerator, T}
 
 @com.intel.analytics.bigdl.tags.Serial
 class AdagradSpec extends TorchSpec {

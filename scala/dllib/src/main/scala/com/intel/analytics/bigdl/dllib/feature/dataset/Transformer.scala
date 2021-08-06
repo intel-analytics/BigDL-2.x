@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
 import org.apache.commons.lang3.SerializationUtils
 import java.util
 
-import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.utils.T
 import org.apache.spark.rdd.RDD
 
 import scala.collection.Iterator

@@ -20,7 +20,7 @@
 //
 //import com.intel.analytics.bigdl.dllib.optim.Regularizer
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-//import com.intel.analytics.bigdl.common.PythonZoo
+//import com.intel.analytics.bigdl.utils.PythonZoo
 //import com.intel.analytics.bigdl.dllib.zooKeras2.layers.{Average, AveragePooling1D, Conv1D, Dense, MaxPooling1D, Maximum, Minimum}
 //
 //import scala.collection.JavaConverters._

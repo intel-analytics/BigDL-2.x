@@ -18,8 +18,8 @@ package com.intel.analytics.bigdl.dllib.nn.tf
 import com.intel.analytics.bigdl.dllib.nn.ops.Less
 import com.intel.analytics.bigdl.dllib.nn.{AddConstant, Echo, Graph, Input}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.T
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.utils.serializer.ModuleSerializationTest
 
 class ControlOpsSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {

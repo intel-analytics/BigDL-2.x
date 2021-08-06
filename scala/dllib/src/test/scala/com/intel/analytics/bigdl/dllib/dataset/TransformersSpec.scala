@@ -23,8 +23,8 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.DataSet.SeqFileFolder
 import com.intel.analytics.bigdl.dllib.feature.dataset.image._
 import com.intel.analytics.bigdl.dllib.feature.dataset.text.{LabeledSentence, LabeledSentenceToSample}
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
-import com.intel.analytics.bigdl.common.utils.{Engine, RandomGenerator, TestUtils}
+import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
+import com.intel.analytics.bigdl.utils.{Engine, RandomGenerator, TestUtils}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.{SequenceFile, Text}
@@ -32,7 +32,7 @@ import org.apache.hadoop.io.SequenceFile.Reader
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class TransformersSpec extends FlatSpec with Matchers with BeforeAndAfter {
-  import com.intel.analytics.bigdl.common.utils.TestUtils._
+  import com.intel.analytics.bigdl.utils.TestUtils._
 
   before {
     Engine.setNodeAndCore(1, 1)

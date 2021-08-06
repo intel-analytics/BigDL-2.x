@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dllib.nn.{CrossEntropyCriterion, Module}
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.models.resnet.ResNet.{DatasetType, ShortcutType}
 import com.intel.analytics.bigdl.dllib.optim._
-import com.intel.analytics.bigdl.common.utils.{Engine, LoggerFilter, OptimizerV1, OptimizerV2, T, Table}
+import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, OptimizerV1, OptimizerV2, T, Table}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric._

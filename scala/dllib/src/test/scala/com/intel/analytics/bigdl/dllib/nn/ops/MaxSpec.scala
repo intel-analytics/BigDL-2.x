@@ -16,8 +16,8 @@
 package com.intel.analytics.bigdl.dllib.nn.ops
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
-import com.intel.analytics.bigdl.common.utils.{RandomGenerator, T}
+import com.intel.analytics.bigdl.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.utils.{RandomGenerator, T}
 import org.scalatest.{FlatSpec, Matchers}
 
 class MaxSpec extends FlatSpec with Matchers {

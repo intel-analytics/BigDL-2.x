@@ -17,7 +17,7 @@
 //package com.intel.analytics.bigdl.dllib.inference
 //
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-//import com.intel.analytics.bigdl.common.PythonZoo
+//import com.intel.analytics.bigdl.utils.PythonZoo
 //import java.util.{List => JList}
 //
 //import scala.reflect.ClassTag

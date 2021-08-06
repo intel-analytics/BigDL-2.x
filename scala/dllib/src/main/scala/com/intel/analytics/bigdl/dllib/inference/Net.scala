@@ -28,11 +28,11 @@ import com.intel.analytics.bigdl.dllib.nn.{Container, Graph, InitializationMetho
 import com.intel.analytics.bigdl.python.api.PythonBigDL
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.{File, Shape}
-import com.intel.analytics.bigdl.common.utils.caffe.CaffeLoader
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleLoader
-import com.intel.analytics.bigdl.common.utils.tf.{Session, TensorflowLoader}
-import com.intel.analytics.bigdl.common.zooUtils
+import com.intel.analytics.bigdl.utils.{File, Shape}
+import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
+import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
+import com.intel.analytics.bigdl.utils.tf.{Session, TensorflowLoader}
+import com.intel.analytics.bigdl.utils.zooUtils
 import com.intel.analytics.bigdl.dllib.zooKeras.autograd.Variable
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.{KerasLayerWrapper, Merge, WordEmbedding}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils

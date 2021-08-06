@@ -16,7 +16,7 @@
 package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{MultiShape, Shape, SingleShape, T}
+import com.intel.analytics.bigdl.utils.{MultiShape, Shape, SingleShape, T}
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
 
 class SelectTableSerialTest extends ModuleSerializationTest {

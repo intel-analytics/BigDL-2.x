@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common
+package com.intel.analytics.bigdl.utils
 
 import com.intel.analytics.bigdl.dllib.optim.Trigger
-import com.intel.analytics.bigdl.common.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.{T, Table}
 
 /**
  * A trigger specifies a timespot or several timespots during training,

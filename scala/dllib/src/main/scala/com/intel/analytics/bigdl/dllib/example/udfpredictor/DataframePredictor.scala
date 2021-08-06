@@ -16,7 +16,7 @@
 package com.intel.analytics.bigdl.example.udfpredictor
 
 import com.intel.analytics.bigdl.example.utils.WordMeta
-import com.intel.analytics.bigdl.common.utils.{Engine, LoggerFilter}
+import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions._
 import org.apache.log4j.{Level, Logger}

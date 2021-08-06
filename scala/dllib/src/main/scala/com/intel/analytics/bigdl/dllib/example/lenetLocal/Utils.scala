@@ -20,7 +20,7 @@ import java.nio.ByteBuffer
 import java.nio.file.{Files, Paths}
 
 import com.intel.analytics.bigdl.dllib.feature.dataset.ByteRecord
-import com.intel.analytics.bigdl.common.utils.File
+import com.intel.analytics.bigdl.utils.File
 import scopt.OptionParser
 
 object Utils {

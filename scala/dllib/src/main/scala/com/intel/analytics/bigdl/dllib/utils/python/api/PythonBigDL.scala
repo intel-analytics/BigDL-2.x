@@ -27,8 +27,8 @@ import com.intel.analytics.bigdl.numeric._
 import com.intel.analytics.bigdl.dllib.optim.{Optimizer, _}
 import com.intel.analytics.bigdl.dllib.tensor.{DenseType, SparseType, Storage, Tensor}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.{Table, _}
-import com.intel.analytics.bigdl.common.visualization.{Summary, TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.utils.{Table, _}
+import com.intel.analytics.bigdl.utils.visualization.{Summary, TrainSummary, ValidationSummary}
 import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
 import org.apache.spark.rdd.RDD
 import java.lang.{Boolean => JBoolean}
@@ -42,9 +42,9 @@ import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.label.roi._
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.OpenCVMat
-import com.intel.analytics.bigdl.common.utils.tf.TensorflowDataFormat
-import com.intel.analytics.bigdl.common.utils.tf.TensorflowLoader.parse
-import com.intel.analytics.bigdl.common.utils.tf._
+import com.intel.analytics.bigdl.utils.tf.TensorflowDataFormat
+import com.intel.analytics.bigdl.utils.tf.TensorflowLoader.parse
+import com.intel.analytics.bigdl.utils.tf._
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.log4j._
 import org.opencv.imgproc.Imgproc

@@ -16,7 +16,7 @@
 
 package com.intel.analytics.bigdl.dllib.optim
 
-import com.intel.analytics.bigdl.common.utils.{TestUtils, T}
+import com.intel.analytics.bigdl.utils.{TestUtils, T}
 import org.scalatest.{FlatSpec, Matchers}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 

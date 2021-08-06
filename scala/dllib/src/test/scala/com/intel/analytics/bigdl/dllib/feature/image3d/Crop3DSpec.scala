@@ -17,7 +17,7 @@ package com.intel.analytics.bigdl.dllib.feature.image3d
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.ImageFeature
-import com.intel.analytics.bigdl.common.utils.RandomGenerator._
+import com.intel.analytics.bigdl.utils.RandomGenerator._
 import org.scalatest.{FlatSpec, Matchers}
 
 class Crop3DSpec extends FlatSpec with Matchers{

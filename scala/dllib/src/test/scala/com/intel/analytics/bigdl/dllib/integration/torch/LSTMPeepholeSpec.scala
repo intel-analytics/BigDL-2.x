@@ -22,9 +22,9 @@ import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.dllib.optim.SGD
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.common.utils.RandomGenerator._
-import com.intel.analytics.bigdl.common.utils.TorchObject.TYPE_DOUBLE_TENSOR
-import com.intel.analytics.bigdl.common.utils.{T, Table, TorchFile}
+import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.utils.TorchObject.TYPE_DOUBLE_TENSOR
+import com.intel.analytics.bigdl.utils.{T, Table, TorchFile}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.math._

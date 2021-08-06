@@ -28,11 +28,11 @@ import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.NumericDouble
-import com.intel.analytics.bigdl.common.utils.caffe.{CaffeLoader, CaffePersister}
-import com.intel.analytics.bigdl.common.utils.tf._
-import com.intel.analytics.bigdl.common.utils.{Engine, File}
-import com.intel.analytics.bigdl.common.visualization.Summary
-import com.intel.analytics.bigdl.common.visualization.tensorboard.{FileReader, FileWriter}
+import com.intel.analytics.bigdl.utils.caffe.{CaffeLoader, CaffePersister}
+import com.intel.analytics.bigdl.utils.tf._
+import com.intel.analytics.bigdl.utils.{Engine, File}
+import com.intel.analytics.bigdl.utils.visualization.Summary
+import com.intel.analytics.bigdl.utils.visualization.tensorboard.{FileReader, FileWriter}
 import org.apache.commons.compress.utils.IOUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path

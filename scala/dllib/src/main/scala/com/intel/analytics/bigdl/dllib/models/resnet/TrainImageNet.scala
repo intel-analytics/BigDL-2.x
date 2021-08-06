@@ -24,8 +24,8 @@ import com.intel.analytics.bigdl.dllib.nn.mkldnn.ResNet.DatasetType.ImageNet
 import com.intel.analytics.bigdl.dllib.nn.{BatchNormalization, Container, CrossEntropyCriterion, Module}
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric._
-import com.intel.analytics.bigdl.common.utils._
-import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.utils._
+import com.intel.analytics.bigdl.utils.visualization.{TrainSummary, ValidationSummary}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 

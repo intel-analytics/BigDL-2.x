@@ -17,9 +17,9 @@ package com.intel.analytics.bigdl.dllib.nn.tf
 
 import com.google.protobuf.ByteString
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.T
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
-import com.intel.analytics.bigdl.common.utils.tf.TFTensorNumeric.NumericByteString
+import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.utils.tf.TFTensorNumeric.NumericByteString
 
 class AssertSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {

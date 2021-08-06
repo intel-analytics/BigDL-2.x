@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.image.{BGRImage, BGRImgTo
 import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, Sample}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation._
-import com.intel.analytics.bigdl.common.utils.{Engine, TestUtils}
+import com.intel.analytics.bigdl.utils.{Engine, TestUtils}
 import org.apache.commons.io.FileUtils
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext

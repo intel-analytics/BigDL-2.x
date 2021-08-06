@@ -25,9 +25,9 @@ import com.intel.analytics.bigdl.dllib.nn.quantized.{StorageInfo, StorageManager
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation.{CenterCrop, ChannelNormalize, Resize}
-import com.intel.analytics.bigdl.common.utils.{Engine, LoggerFilter, Table, T}
-import com.intel.analytics.bigdl.common.utils.RandomGenerator._
-import com.intel.analytics.bigdl.common.utils.SparkContextLifeCycle
+import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, Table, T}
+import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.utils.SparkContextLifeCycle
 import org.apache.commons.lang3.SerializationUtils
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}

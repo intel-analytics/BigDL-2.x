@@ -19,8 +19,8 @@ package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.optim.SGD
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
-import com.intel.analytics.bigdl.common.utils.{Engine, T, Table}
+import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
+import com.intel.analytics.bigdl.utils.{Engine, T, Table}
 import org.scalatest.{FlatSpec, Matchers}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
