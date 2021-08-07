@@ -21,7 +21,7 @@
 //import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 //import com.intel.analytics.bigdl.dllib.keras.KerasLayer
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-//import com.intel.analytics.bigdl.utils.Node
+//import com.intel.analytics.bigdl.utils.Nodeimport com.intel.analytics.bigdl.dllib.utils.Node
 //import com.intel.analytics.bigdl.dllib.zooKeras.autograd
 //import com.intel.analytics.bigdl.dllib.zooKeras.autograd._
 //import com.intel.analytics.bigdl.dllib.zooKeras.layers.Input

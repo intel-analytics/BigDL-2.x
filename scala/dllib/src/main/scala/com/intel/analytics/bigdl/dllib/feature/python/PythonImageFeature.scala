@@ -20,7 +20,7 @@
 //import java.util.{List => JList}
 //
 //import com.intel.analytics.bigdl.dllib.nn.abstractnn.DataFormat
-//import com.intel.analytics.bigdl.python.api.JTensor
+//import com.intel.analytics.bigdl.dllib.python.api.JTensor
 //import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 //import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._

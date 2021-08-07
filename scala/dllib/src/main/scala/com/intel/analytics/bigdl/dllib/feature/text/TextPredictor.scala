@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.feature.text
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.feature.dataset.{MiniBatch, Sample, SampleToMiniBatch, Transformer}
-import com.intel.analytics.bigdl.models.utils.ModelBroadcast
+import com.intel.analytics.bigdl.dllib.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.EngineRef

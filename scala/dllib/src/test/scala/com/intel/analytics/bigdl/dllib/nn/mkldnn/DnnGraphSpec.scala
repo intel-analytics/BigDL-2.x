@@ -31,7 +31,7 @@ import com.intel.analytics.bigdl.utils._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import com.intel.analytics.bigdl.models.resnet
 import com.intel.analytics.bigdl.models.utils.ModelBroadcast
-import com.intel.analytics.bigdl.utils.intermediate._
+import com.intel.analytics.bigdl.dllib.utils.intermediate._
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import org.apache.spark.SparkContext
 

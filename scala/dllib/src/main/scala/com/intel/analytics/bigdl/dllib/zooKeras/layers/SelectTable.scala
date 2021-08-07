@@ -18,8 +18,9 @@ package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{Shape, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
+import com.intel.analytics.bigdl.utils._
 
 import scala.reflect.ClassTag
 

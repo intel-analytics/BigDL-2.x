@@ -25,7 +25,7 @@ import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.{LoggerFilter, Shape}
-import com.intel.analytics.bigdl.utils.serializer._
+import com.intel.analytics.bigdl.dllib.utils.serializer._
 import org.apache.spark.rdd.RDD
 
 import scala.collection.JavaConverters._

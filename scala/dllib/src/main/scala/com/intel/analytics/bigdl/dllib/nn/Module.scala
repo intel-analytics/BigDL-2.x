@@ -22,10 +22,10 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.File
-import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
-import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
-import com.intel.analytics.bigdl.utils.tf.{Session, TensorflowDataFormat, TensorflowLoader}
+import com.intel.analytics.bigdl.dllib.utils.File
+import com.intel.analytics.bigdl.dllib.utils.caffe.CaffeLoader
+import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleLoader
+import com.intel.analytics.bigdl.dllib.utils.tf.{Session, TensorflowDataFormat, TensorflowLoader}
 
 import scala.reflect.ClassTag
 

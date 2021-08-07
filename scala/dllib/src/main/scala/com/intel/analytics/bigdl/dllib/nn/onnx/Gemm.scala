@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.dllib.nn.ops.{BatchMatMul, Operation}
 import com.intel.analytics.bigdl.dllib.nn.{CAddTable, Graph, Input, MulConstant, Sequential}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 
 import scala.reflect.ClassTag
 

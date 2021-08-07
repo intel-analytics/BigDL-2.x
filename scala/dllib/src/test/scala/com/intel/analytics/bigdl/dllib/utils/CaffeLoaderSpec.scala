@@ -25,7 +25,7 @@ import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.NumericDouble
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.utils.caffe.{CaffeLoader, Customizable}
+import com.intel.analytics.bigdl.dllib.utils.caffe.{CaffeLoader, Customizable}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.mutable

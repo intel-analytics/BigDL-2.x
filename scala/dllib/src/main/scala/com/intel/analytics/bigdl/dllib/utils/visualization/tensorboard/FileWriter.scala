@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.utils.visualization.tensorboard
+package com.intel.analytics.bigdl.dllib.utils.visualization.tensorboard
 
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.dllib.utils.Engine
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.tensorflow

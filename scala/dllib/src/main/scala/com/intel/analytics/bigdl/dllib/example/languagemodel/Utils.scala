@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.example.languagemodel
+package com.intel.analytics.bigdl.dllib.example.languagemodel
 
 import scopt.OptionParser
 import java.io._

@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.{InferencePhase, Training
 import com.intel.analytics.bigdl.dllib.tensor.{DnnTensor, Tensor}
 import com.intel.analytics.bigdl.utils.{BigDLSpecHelper, Engine, MklDnn}
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
-import com.intel.analytics.bigdl.utils.intermediate.{BlasToIR, IRToDnn}
+import com.intel.analytics.bigdl.dllib.utils.intermediate.{BlasToIR, IRToDnn}
 import org.apache.commons.lang3.SerializationUtils
 
 import scala.util.Random

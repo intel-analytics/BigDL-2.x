@@ -20,18 +20,18 @@ import java.nio._
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.feature.dataset.MiniBatch
-import com.intel.analytics.bigdl.models.utils.ModelBroadcast
+import com.intel.analytics.bigdl.dllib.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.optim.{ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.bigdl.utils.zooUtils
+import com.intel.analytics.bigdl.dllib.utils.T
+import com.intel.analytics.bigdl.dllib.utils.zooUtils
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.bigdl.dllib.inference.Predictable
 import com.intel.analytics.bigdl.dllib.inference.net.TFNet.TFGraphHolder
 import com.intel.analytics.bigdl.orca.tfpark.{TFResourceManager}
-import com.intel.analytics.bigdl.utils.TFUtils
+import com.intel.analytics.bigdl.dllib.utils.TFUtils
 import org.apache.spark.rdd.RDD
 import org.tensorflow.framework.GraphDef
 import org.tensorflow.{DataType, Graph, Session, Tensor => TTensor}

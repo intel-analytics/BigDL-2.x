@@ -20,9 +20,9 @@ import com.intel.analytics.bigdl.bigquant.BigQuant
 import com.intel.analytics.bigdl.dllib.nn.ErrorInfo
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor._
-import com.intel.analytics.bigdl.utils.serializer._
-import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.serializer._
+import com.intel.analytics.bigdl.dllib.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 
 import scala.reflect.ClassTag
 import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}

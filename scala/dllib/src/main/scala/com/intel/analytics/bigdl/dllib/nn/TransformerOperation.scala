@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.dllib.optim.Regularizer
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.utils.{EngineType, T}
+import com.intel.analytics.bigdl.dllib.utils.{EngineType, T}
 
 import scala.reflect.ClassTag
 

@@ -30,7 +30,7 @@ import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.TrainingPhase
 import com.intel.analytics.bigdl.dllib.optim.parameters.AllReduceParameter
 import com.intel.analytics.bigdl.dllib.tensor.{DenseTensor, DnnStorage, Storage, Tensor}
 import com.intel.analytics.bigdl.utils._
-import com.intel.analytics.bigdl.utils.visualization.TrainSummary
+import com.intel.analytics.bigdl.dllib.utils.visualization.TrainSummary
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD

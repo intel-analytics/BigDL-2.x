@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.utils.serializer
+package com.intel.analytics.bigdl.dllib.utils.serializer
 
 import com.google.protobuf.ByteString
 import com.intel.analytics.bigdl.dllib.nn._
@@ -30,7 +30,7 @@ import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLTensor, Da
 import scala.reflect.runtime.universe
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.SingleShape
-import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.dllib.utils.serializer.converters.DataConverter
 import com.intel.analytics.bigdl.serialization.Bigdl.AttrValue.ArrayValue
 
 import scala.collection.mutable

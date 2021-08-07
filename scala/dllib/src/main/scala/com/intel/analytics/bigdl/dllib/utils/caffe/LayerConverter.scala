@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.utils.caffe
+package com.intel.analytics.bigdl.dllib.utils.caffe
 
 import scala.collection.JavaConverters._
 import caffe.Caffe
@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.dllib.utils.Table
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag

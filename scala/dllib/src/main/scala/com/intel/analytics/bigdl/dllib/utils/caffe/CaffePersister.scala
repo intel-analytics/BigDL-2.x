@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.utils.caffe
+package com.intel.analytics.bigdl.dllib.utils.caffe
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, OutputStream}
 
@@ -21,7 +21,7 @@ import scala.collection.JavaConverters._
 import caffe.Caffe.{LayerParameter, NetParameter, V1LayerParameter}
 import com.intel.analytics.bigdl.dllib.nn.{Container, Graph, Sequential, View}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{File, FileWriter, Node}
+import com.intel.analytics.bigdl.dllib.utils.{File, FileWriter, Node}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

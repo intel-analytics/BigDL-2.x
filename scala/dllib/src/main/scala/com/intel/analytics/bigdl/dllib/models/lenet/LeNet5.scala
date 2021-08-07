@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.models.lenet
+package com.intel.analytics.bigdl.dllib.models.lenet
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.mkl.Memory

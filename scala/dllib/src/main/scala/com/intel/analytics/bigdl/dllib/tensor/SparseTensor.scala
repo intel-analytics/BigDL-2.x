@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.tensor
 
 import breeze.linalg.{DenseMatrix, DenseVector}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.dllib.utils.Table
 import org.apache.spark.mllib.linalg.{Matrix, Vector}
 
 import scala.reflect.ClassTag

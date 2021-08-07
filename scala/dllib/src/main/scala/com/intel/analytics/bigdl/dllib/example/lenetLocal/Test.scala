@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.example.lenetLocal
+package com.intel.analytics.bigdl.dllib.example.lenetLocal
 
 import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, SampleToBatch}
 import com.intel.analytics.bigdl.dllib.feature.dataset.image.{BytesToGreyImg, GreyImgNormalizer, GreyImgToSample}
 import com.intel.analytics.bigdl.dllib.nn.Module
 import com.intel.analytics.bigdl.dllib.optim.{Top1Accuracy, ValidationMethod}
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.dllib.utils.Engine
 import org.apache.log4j.{Level, Logger}
 
 object Test {

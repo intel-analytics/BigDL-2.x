@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 import com.intel.analytics.bigdl.dllib.nn.{CAddTable => BigDLCAddTable}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.dllib.utils.Table
 
 import scala.reflect.ClassTag
 

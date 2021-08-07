@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.example.tensorflow.transferlearning
+package com.intel.analytics.bigdl.dllib.example.tensorflow.transferlearning
 
 import java.nio.ByteOrder
 
@@ -22,8 +22,9 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.Sample
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter}
-import com.intel.analytics.bigdl.utils.tf.{BigDLSessionImpl, TensorflowLoader}
+import com.intel.analytics.bigdl.dllib.utils.Engine
+import com.intel.analytics.bigdl.utils.LoggerFilter
+import com.intel.analytics.bigdl.dllib.utils.tf.{BigDLSessionImpl, TensorflowLoader}
 import org.apache.spark.SparkContext
 import scopt.OptionParser
 

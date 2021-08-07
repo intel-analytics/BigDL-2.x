@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.models.vgg
+package com.intel.analytics.bigdl.dllib.models.vgg
 
 import java.nio.ByteBuffer
 import java.nio.file.{Files, Paths}
@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.image.{CropCenter, CropRa
 import com.intel.analytics.bigdl.dllib.feature.dataset.{ByteRecord, DataSet, MiniBatch}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation.{ChannelScaledNormalizer, RandomCropper, RandomResize}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{MTImageFeatureToBatch, MatToTensor, PixelBytesToMat}
-import com.intel.analytics.bigdl.utils.File
+import com.intel.analytics.bigdl.dllib.utils.File
 import org.apache.spark.SparkContext
 import scopt.OptionParser
 

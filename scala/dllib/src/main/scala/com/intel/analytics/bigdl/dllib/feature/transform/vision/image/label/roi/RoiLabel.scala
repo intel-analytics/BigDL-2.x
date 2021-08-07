@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.feature.transform.vision.image.label.roi
 import com.intel.analytics.bigdl.dllib.feature.dataset.segmentation.{MaskUtils, SegmentationMasks, RLEMasks}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.RoiImageInfo
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 
 /**
  * image target with classes and bounding boxes

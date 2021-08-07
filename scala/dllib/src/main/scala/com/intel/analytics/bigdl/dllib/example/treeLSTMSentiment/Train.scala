@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.example.treeLSTMSentiment
+package com.intel.analytics.bigdl.dllib.example.treeLSTMSentiment
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.feature.dataset.PaddingParam
-import com.intel.analytics.bigdl.example.treeLSTMSentiment.Utils._
+import com.intel.analytics.bigdl.dllib.example.treeLSTMSentiment.Utils._
 import com.intel.analytics.bigdl.dllib.nn.{TimeDistributedCriterion, _}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, OptimizerV1, OptimizerV2, T}
+import com.intel.analytics.bigdl.dllib.utils.{Engine, OptimizerV1, OptimizerV2, T}
+import com.intel.analytics.bigdl.utils.LoggerFilter
 import org.apache.log4j.{Level => Levle4j, Logger => Logger4j}
 import org.apache.spark.SparkContext
 import org.slf4j.{Logger, LoggerFactory}

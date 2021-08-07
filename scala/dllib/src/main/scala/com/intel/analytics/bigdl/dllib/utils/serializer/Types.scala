@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.utils.serializer
+package com.intel.analytics.bigdl.dllib.utils.serializer
 
 import com.google.protobuf.ByteString
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.{NumericBoolean, NumericChar, NumericDouble, NumericFloat, NumericInt, NumericLong, NumericString}
-import com.intel.analytics.bigdl.utils.tf.TFTensorNumeric.NumericByteString
+import com.intel.analytics.bigdl.dllib.utils.tf.TFTensorNumeric.NumericByteString
 import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
 
 import scala.collection.mutable

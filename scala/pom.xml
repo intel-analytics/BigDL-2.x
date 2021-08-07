@@ -181,7 +181,7 @@
 
     <modules>
         <module>spark-version</module>
-        <!--<module>dllib</module>-->
+        <module>dllib</module>
         <module>utils</module>
         <!--<module>orca</module>-->
     </modules>

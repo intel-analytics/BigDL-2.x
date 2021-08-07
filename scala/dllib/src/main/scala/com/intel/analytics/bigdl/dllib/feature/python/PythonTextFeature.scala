@@ -18,7 +18,7 @@
 //
 //import java.util.{List => JList, Map => JMap}
 //
-//import com.intel.analytics.bigdl.python.api.{JTensor, Sample}
+//import com.intel.analytics.bigdl.dllib.python.api.{JTensor, Sample}
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 //import com.intel.analytics.bigdl.dllib.feature.dataset.{Sample => JSample}
 //import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity

@@ -25,14 +25,15 @@ import com.intel.analytics.bigdl.dllib.nn.Graph._
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity, Initializable}
 import com.intel.analytics.bigdl.dllib.keras.{KerasIdentityWrapper, KerasLayer}
 import com.intel.analytics.bigdl.dllib.nn.{Container, Graph, InitializationMethod, StaticGraph, Identity => BIdentity, Sequential => TSequential}
-import com.intel.analytics.bigdl.python.api.PythonBigDL
+import com.intel.analytics.bigdl.dllib.python.api.PythonBigDL
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{File, Shape}
-import com.intel.analytics.bigdl.utils.caffe.CaffeLoader
-import com.intel.analytics.bigdl.utils.serializer.ModuleLoader
-import com.intel.analytics.bigdl.utils.tf.{Session, TensorflowLoader}
-import com.intel.analytics.bigdl.utils.zooUtils
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.dllib.utils.File
+import com.intel.analytics.bigdl.dllib.utils.caffe.CaffeLoader
+import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleLoader
+import com.intel.analytics.bigdl.dllib.utils.tf.{Session, TensorflowLoader}
+import com.intel.analytics.bigdl.dllib.utils.zooUtils
 import com.intel.analytics.bigdl.dllib.zooKeras.autograd.Variable
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.{KerasLayerWrapper, Merge, WordEmbedding}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils

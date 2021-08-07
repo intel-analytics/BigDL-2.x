@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.utils.intermediate
+package com.intel.analytics.bigdl.dllib.utils.intermediate
 
 import breeze.numerics._
 import com.intel.analytics.bigdl.example.loadmodel.AlexNet

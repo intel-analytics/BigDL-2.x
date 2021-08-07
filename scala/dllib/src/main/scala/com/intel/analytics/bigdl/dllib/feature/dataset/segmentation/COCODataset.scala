@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.DataSet.SeqFileFolder
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.label.roi.RoiLabel
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{ImageFeature, RoiImageInfo}
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 import java.io.{BufferedReader, FileReader}
 import java.lang.reflect.Type
 import java.nio.ByteBuffer

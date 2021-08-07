@@ -25,8 +25,8 @@ import com.intel.analytics.bigdl.serialization.Bigdl._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.bigdl.utils.serializer.{DeserializeContext, SerializeContext}
-import com.intel.analytics.bigdl.utils.serializer.converters.{DataConverter, TensorConverter}
+import com.intel.analytics.bigdl.dllib.utils.serializer.{DeserializeContext, SerializeContext}
+import com.intel.analytics.bigdl.dllib.utils.serializer.converters.{DataConverter, TensorConverter}
 import com.intel.analytics.bigdl.utils.CheckedObjectInputStream
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.WordEmbedding.EmbeddingMatrixHolder
 import com.intel.analytics.bigdl.dllib.inference.net.{NetUtils, RegistryMap, SerializationHolder}

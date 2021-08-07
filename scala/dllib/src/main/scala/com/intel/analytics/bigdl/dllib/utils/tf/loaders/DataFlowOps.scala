@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.utils.tf.loaders
+package com.intel.analytics.bigdl.dllib.utils.tf.loaders
 
 import java.nio.ByteOrder
 
@@ -21,8 +21,8 @@ import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.nn.tf.{StackCreator, TensorArrayConcat, TensorArrayCreator, TensorArrayGather, TensorArrayGrad, TensorArrayRead, TensorArrayScatter, TensorArraySize, TensorArraySplit, TensorArrayWrite, StackPop => StackPopOps, StackPush => StackPushOps}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath
-import com.intel.analytics.bigdl.utils.tf.Context
-import com.intel.analytics.bigdl.utils.tf.loaders.Utils._
+import com.intel.analytics.bigdl.dllib.utils.tf.Context
+import com.intel.analytics.bigdl.dllib.utils.tf.loaders.Utils._
 import org.tensorflow.framework.{DataType, NodeDef}
 
 import scala.reflect.ClassTag

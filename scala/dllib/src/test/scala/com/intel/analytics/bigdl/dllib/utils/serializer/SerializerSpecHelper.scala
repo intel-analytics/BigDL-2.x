@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.utils.serializer
+package com.intel.analytics.bigdl.dllib.utils.serializer
 
 import java.io.{File}
 import java.lang.reflect.Modifier
@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.nn.ops.{Exp => ExpOps, Pow => PowOps, Select => SelectOps, Sum => SumOps, Tile => TileOps}
 import com.intel.analytics.bigdl.dllib.nn.tf.{DecodeGif => DecodeGifOps, DecodeJpeg => DecodeJpegOps, DecodePng => DecodePngOps, DecodeRaw => DecodeRawOps}
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
-import com.intel.analytics.bigdl.utils.tf.loaders.{Pack => _}
+import com.intel.analytics.bigdl.dllib.utils.tf.loaders.{Pack => _}
 import com.intel.analytics.bigdl.utils.{Shape => KShape}
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner

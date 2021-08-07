@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.models.resnet
+package com.intel.analytics.bigdl.dllib.models.resnet
 
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.models.inception.{ImageNet2012, ImageNet2012Val}
-import com.intel.analytics.bigdl.models.resnet.ResNet.{DatasetType, ShortcutType}
+import com.intel.analytics.bigdl.dllib.models.inception.{ImageNet2012, ImageNet2012Val}
+import com.intel.analytics.bigdl.dllib.models.resnet.ResNet.{DatasetType, ShortcutType}
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.ResNet.DatasetType.ImageNet
 import com.intel.analytics.bigdl.dllib.nn.{BatchNormalization, Container, CrossEntropyCriterion, Module}
 import com.intel.analytics.bigdl.dllib.optim._
+import com.intel.analytics.bigdl.dllib.utils._
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric._
 import com.intel.analytics.bigdl.utils._
-import com.intel.analytics.bigdl.utils.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.dllib.utils.visualization.{TrainSummary, ValidationSummary}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 

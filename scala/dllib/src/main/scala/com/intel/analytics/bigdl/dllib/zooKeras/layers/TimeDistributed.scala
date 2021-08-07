@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.dllib.keras.{KerasLayer}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape
-//import com.intel.analytics.bigdl.models.common.ZooModel
+//import com.intel.analytics.bigdl.dllib.models.common.ZooModel
 import com.intel.analytics.bigdl.dllib.inference.Net
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.internal.InternalTimeDistributed
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils

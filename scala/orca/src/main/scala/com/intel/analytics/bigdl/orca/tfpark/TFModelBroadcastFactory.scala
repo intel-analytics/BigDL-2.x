@@ -16,7 +16,7 @@
 
 package com.intel.analytics.bigdl.orca.tfpark
 
-import com.intel.analytics.bigdl.models.utils.{ModelBroadcast, ModelBroadcastFactory}
+import com.intel.analytics.bigdl.dllib.models.utils.{ModelBroadcast, ModelBroadcastFactory}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 
 import scala.reflect.ClassTag

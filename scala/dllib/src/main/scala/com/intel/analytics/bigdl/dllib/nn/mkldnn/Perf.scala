@@ -28,7 +28,8 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.utils.{Engine, T, Table, ThreadPool}
+import com.intel.analytics.bigdl.utils.ThreadPool
+import com.intel.analytics.bigdl.dllib.utils.{Engine, T, Table}
 import org.apache.log4j.Logger
 import scopt.OptionParser
 

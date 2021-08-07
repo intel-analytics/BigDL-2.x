@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.models.utils
+package com.intel.analytics.bigdl.dllib.models.utils
 
 import com.intel.analytics.bigdl.dllib.feature.dataset.segmentation.{COCODataset, COCOSerializeContext}
 import java.io.File

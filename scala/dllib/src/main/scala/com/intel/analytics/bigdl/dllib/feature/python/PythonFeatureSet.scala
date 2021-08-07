@@ -19,11 +19,11 @@
 //import com.intel.analytics.bigdl.DataSet
 //import com.intel.analytics.bigdl.dllib.feature.dataset.{MiniBatch, Transformer, Sample => JSample}
 //import com.intel.analytics.bigdl.opencv.OpenCV
-//import com.intel.analytics.bigdl.python.api.Sample
+//import com.intel.analytics.bigdl.dllib.python.api.Sample
 //import com.intel.analytics.bigdl.dllib.tensor.Tensor
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 //import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
-//import com.intel.analytics.bigdl.utils.Table
+//import com.intel.analytics.bigdl.dllib.utils.Table
 //import com.intel.analytics.bigdl.utils.PythonZoo
 //import com.intel.analytics.bigdl.dllib.feature.FeatureSet
 //import com.intel.analytics.bigdl.dllib.feature.pmem.MemoryType

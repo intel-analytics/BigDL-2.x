@@ -21,8 +21,8 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.nn.tf.ControlDependency
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.intermediate.{BlasToIR, IRGraph}
-import com.intel.analytics.bigdl.utils.{Node, Util}
+import com.intel.analytics.bigdl.dllib.utils.intermediate.{BlasToIR, IRGraph}
+import com.intel.analytics.bigdl.dllib.utils.{Node, Util}
 import com.intel.analytics.bigdl.dllib.optim.DistriOptimizer._
 
 import scala.reflect.ClassTag

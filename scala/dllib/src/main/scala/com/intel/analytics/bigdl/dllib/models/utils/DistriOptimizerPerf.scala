@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.models.utils
+package com.intel.analytics.bigdl.dllib.models.utils
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.feature.dataset.{DistributedDataSet, MiniBatch}
-import com.intel.analytics.bigdl.models.inception.{Inception_v1, Inception_v2}
-import com.intel.analytics.bigdl.models.vgg.{Vgg_16, Vgg_19}
+import com.intel.analytics.bigdl.dllib.models.inception.{Inception_v1, Inception_v2}
+import com.intel.analytics.bigdl.dllib.models.vgg.{Vgg_16, Vgg_19}
 import com.intel.analytics.bigdl.dllib.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.optim.{Optimizer, Trigger}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.dllib.utils.Engine
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD

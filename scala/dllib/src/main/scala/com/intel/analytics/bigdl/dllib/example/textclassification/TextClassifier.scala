@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.example.textclassification
+package com.intel.analytics.bigdl.dllib.example.textclassification
 
-import com.intel.analytics.bigdl.example.utils._
+import com.intel.analytics.bigdl.dllib.example.utils._
 import com.intel.analytics.bigdl.dllib.nn.{ClassNLLCriterion, _}
-import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, T}
+import com.intel.analytics.bigdl.dllib.utils.{Engine, T}
+import com.intel.analytics.bigdl.utils.LoggerFilter
 import org.apache.log4j.{Level => Levle4j, Logger => Logger4j}
 import org.slf4j.{Logger, LoggerFactory}
 import scopt.OptionParser

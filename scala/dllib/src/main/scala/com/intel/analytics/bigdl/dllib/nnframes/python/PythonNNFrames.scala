@@ -20,10 +20,10 @@
 //
 //import com.intel.analytics.bigdl.dllib.feature.dataset.{Sample, Transformer}
 //import com.intel.analytics.bigdl.dllib.optim.{OptimMethod, Trigger, ValidationMethod, ValidationResult}
-//import com.intel.analytics.bigdl.python.api.EvaluatedResult
+//import com.intel.analytics.bigdl.dllib.python.api.EvaluatedResult
 //import com.intel.analytics.bigdl.dllib.tensor.Tensor
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-//import com.intel.analytics.bigdl.utils.visualization.{TrainSummary, ValidationSummary}
+//import com.intel.analytics.bigdl.dllib.utils.visualization.{TrainSummary, ValidationSummary}
 //import com.intel.analytics.bigdl.{Criterion, Module}
 //import com.intel.analytics.bigdl.utils.PythonZoo
 //import com.intel.analytics.bigdl.dllib.feature.common._

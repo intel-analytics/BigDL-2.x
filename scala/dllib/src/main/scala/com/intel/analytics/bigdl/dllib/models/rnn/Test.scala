@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.models.rnn
+package com.intel.analytics.bigdl.dllib.models.rnn
 
 
 import com.intel.analytics.bigdl.dllib.feature.dataset.text.utils.SentenceToken
@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.text.{Dictionary, Labeled
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.optim.{Loss, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, T}
+import com.intel.analytics.bigdl.dllib.utils.{Engine, T}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.python.api
+package com.intel.analytics.bigdl.dllib.python.api
 
 import java.util
 import java.util.{ArrayList => JArrayList, List => JList, Map => JMap}
@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.DataSet
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.utils.{Engine, T, Table, TestUtils}
-import com.intel.analytics.bigdl.utils.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.dllib.utils.visualization.{TrainSummary, ValidationSummary}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.api.java.JavaRDD

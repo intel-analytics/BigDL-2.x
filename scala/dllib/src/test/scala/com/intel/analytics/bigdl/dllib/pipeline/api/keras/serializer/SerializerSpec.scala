@@ -20,7 +20,7 @@ import java.io.File
 
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.utils.serializer.{ModuleLoader, ModulePersister}
+import com.intel.analytics.bigdl.dllib.utils.serializer.{ModuleLoader, ModulePersister}
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 

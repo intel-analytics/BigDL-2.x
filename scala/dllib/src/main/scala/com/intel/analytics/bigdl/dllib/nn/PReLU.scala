@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.nn
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{Initializable, TensorModule, IdentityOutputShape}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.{DenseTensorApply, Tensor, TensorFunc4, TensorFunc6}
-import com.intel.analytics.bigdl.utils.{Engine, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{Engine, T, Table}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag

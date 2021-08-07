@@ -15,7 +15,7 @@
  */
 
 
-package com.intel.analytics.bigdl.models.maskrcnn
+package com.intel.analytics.bigdl.dllib.models.maskrcnn
 
 import breeze.linalg.{*, dim, max}
 import com.intel.analytics.bigdl.dllib.nn.ResizeBilinear

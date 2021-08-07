@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.optim
 import com.intel.analytics.bigdl.dllib.optim.SGD.{Default, LearningRateSchedule}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag

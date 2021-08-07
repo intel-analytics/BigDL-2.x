@@ -24,11 +24,11 @@ import com.intel.analytics.bigdl.dllib.nn.tf._
 import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils._
-import com.intel.analytics.bigdl.utils.serializer._
-import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
-import com.intel.analytics.bigdl.utils.tf.Tensorflow
-import com.intel.analytics.bigdl.utils.visualization.tensorboard.{FileWriter => TFFileWriter}
+import com.intel.analytics.bigdl.dllib.utils._
+import com.intel.analytics.bigdl.dllib.utils.serializer._
+import com.intel.analytics.bigdl.dllib.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.dllib.utils.tf.Tensorflow
+import com.intel.analytics.bigdl.dllib.utils.visualization.tensorboard.{FileWriter => TFFileWriter}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

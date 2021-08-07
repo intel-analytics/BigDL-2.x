@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.Transformer
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.{NumericBoolean, NumericDouble, NumericFloat, NumericInt, NumericLong, NumericShort, NumericString}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.{NumericWildcard, TensorNumeric}
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 

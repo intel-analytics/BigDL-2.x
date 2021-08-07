@@ -23,7 +23,7 @@
 //
 //import scala.collection.JavaConverters._
 //import com.intel.analytics.bigdl.dllib.optim._
-//import com.intel.analytics.bigdl.python.api.{EvaluatedResult, JTensor, Sample}
+//import com.intel.analytics.bigdl.dllib.python.api.{EvaluatedResult, JTensor, Sample}
 //import com.intel.analytics.bigdl.dllib.tensor.Tensor
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 //import com.intel.analytics.bigdl.dllib.nn.InitializationMethod
@@ -31,7 +31,7 @@
 //import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 //import com.intel.analytics.bigdl.dllib.keras.{KerasLayer, KerasModel}
 //import com.intel.analytics.bigdl.dllib.nn.{BatchNormalization => BNBatchNormalization}
-//import com.intel.analytics.bigdl.utils.{Shape, Table}
+//import com.intel.analytics.bigdl.dllib.utils.{Table}
 //import com.intel.analytics.bigdl.dllib.feature.image.ImageSet
 //import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{Constant, _}
 //import com.intel.analytics.bigdl.dllib.zooKeras.layers.{KerasLayerWrapper, _}

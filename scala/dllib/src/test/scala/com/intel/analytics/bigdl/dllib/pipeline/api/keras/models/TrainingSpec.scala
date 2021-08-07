@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.zooKeras.models
 import com.intel.analytics.bigdl.dllib.feature.dataset.{LocalDataSet, MiniBatch, Sample}
 import com.intel.analytics.bigdl.dllib.nn.MSECriterion
 import com.intel.analytics.bigdl.dllib.optim.{SGD, Top1Accuracy}
-import com.intel.analytics.bigdl.python.api.PythonBigDL
+import com.intel.analytics.bigdl.dllib.python.api.PythonBigDL
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.OpenCVMat

@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.utils.serializer
+package com.intel.analytics.bigdl.dllib.utils.serializer
 
 import com.google.protobuf.ByteString
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.dllib.utils.serializer.converters.DataConverter
 import org.scalatest.{FlatSpec, Matchers}
 import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLTensor, TensorStorage}
 
@@ -31,7 +31,7 @@ class TensorConversionSpec extends FlatSpec with Matchers{
 
   "ByteString tensor conversion " should "work properly" in {
 
-    import com.intel.analytics.bigdl.utils.tf.TFTensorNumeric.NumericByteString
+    import com.intel.analytics.bigdl.dllib.utils.tf.TFTensorNumeric.NumericByteString
 
     val byteString = Tensor[ByteString](Array(ByteString.copyFromUtf8("a"),
       ByteString.copyFromUtf8("b")), Array(2))
