@@ -30,7 +30,7 @@ import com.intel.analytics.bigdl.dllib.utils.zooUtils
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.bigdl.dllib.inference.Predictable
 import com.intel.analytics.bigdl.dllib.inference.net.TFNet.TFGraphHolder
-import com.intel.analytics.bigdl.orca.tfpark.{TFResourceManager}
+import com.intel.analytics.bigdl.dllib.utils.TFResourceManager
 import com.intel.analytics.bigdl.dllib.utils.TFUtils
 import org.apache.spark.rdd.RDD
 import org.tensorflow.framework.GraphDef
