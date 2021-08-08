@@ -138,6 +138,74 @@ class ParquetDataset:
         raise NotImplementedError()
 
 
+class ParquetIterableDataset:
+    """
+    Creates a `Dataset` that includes only 1/`num_shards` of this dataset.
+    The Dataset will contain all elements of total dataset whose index % num_shards = rank.
+        e.g. the total dataset has 6 chunks, num_shard is 3, the rank 0(worker 0) will contain
+        index 0, 3 of the dataset.
+    """
+
+    def __init__(self, row_group, schema, num_shards=None,
+                 rank=None, transform=None):
+        super(ParquetDataset).__init__()
+        self.row_group = row_group
+
+        # To get the indices we expect
+        self.row_group.sort()
+
+        self.num_shards = num_shards
+        self.rank = rank
+        self.datapiece = None
+
+        self.transform = transform
+        
+        filter_row_group_indexed = []
+
+        if not self.num_shards or not self.rank:
+            filter_row_group_indexed = list(range(len(self.row_group)))
+        else:
+            assert self.num_shards <= len(
+                self.row_group), "num_shards should be not larger than partitions." \
+                                 "but got num_shards {} with partitions {}." \
+                .format(self.num_shards, len(self.row_group))
+            assert self.rank < self.num_shards, \
+                "shard index should be included in [0,num_shard)," \
+                "but got rank {} with num_shard {}.".format(
+                    self.rank, self.num_shards)
+            filter_row_group_indexed = [index for index in list(range(len(self.row_group)))
+                                        if index % self.num_shards == self.rank]
+
+        data_record = []
+        for select_chunk_path in [self.row_group[i] for i in filter_row_group_indexed]:
+            pq_table = pq.read_table(select_chunk_path)
+            df = decode_feature_type_ndarray(pq_table.to_pandas(), schema)
+            data_record.extend(df.to_dict("records"))
+
+        self.datapiece = data_record
+        self.cur = 0
+        self.cur_tail = len(self.datapiece)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        # move iter here so we can do transforms
+        if self.cur < self.cur_tail:
+            elem = self.datapiece[self.cur]
+            self.cur += 1
+            if self.transforms:
+                return self.transforms(elem)
+            else:
+                return elem
+        else:
+            raise StopIteration
+
+    def __call__(self):
+        self.cur = 0
+        return self
+
+
 def _read32(bytestream):
     dt = np.dtype(np.uint32).newbyteorder('>')
     return np.frombuffer(bytestream.read(4), dtype=dt)[0]
@@ -296,69 +364,8 @@ def read_as_tfdataset(path, output_types, config=None, output_shapes=None, *args
                 chunk_path = os.path.join(path, name)
                 row_group.append(chunk_path)
 
-    class ParquetIterableDataset:
-        """
-        Creates a `Dataset` that includes only 1/`num_shards` of this dataset.
-        The Dataset will contain all elements of total dataset whose index % num_shards = rank.
-        e.g. the total dataset has 6 chunks, num_shard is 3, the rank 0(worker 0) will contain
-        index 0, 3 of the dataset.
-        """
-
-        def __init__(self, row_group, num_shards=None,
-                     rank=None):
-            super(ParquetDataset).__init__()
-            self.row_group = row_group
-
-            # To get the indices we expect
-            self.row_group.sort()
-
-            self.num_shards = num_shards
-            self.rank = rank
-            self.datapiece = None
-
-            filter_row_group_indexed = []
-
-            if not self.num_shards or not self.rank:
-                filter_row_group_indexed = list(range(len(self.row_group)))
-            else:
-                assert self.num_shards <= len(
-                    self.row_group), "num_shards should be not larger than partitions." \
-                                     "but got num_shards {} with partitions {}." \
-                    .format(self.num_shards, len(self.row_group))
-                assert self.rank < self.num_shards, \
-                    "shard index should be included in [0,num_shard)," \
-                    "but got rank {} with num_shard {}.".format(
-                        self.rank, self.num_shards)
-                filter_row_group_indexed = [index for index in list(range(len(self.row_group)))
-                                            if index % self.num_shards == self.rank]
-
-            data_record = []
-            for select_chunk_path in [self.row_group[i] for i in filter_row_group_indexed]:
-                pq_table = pq.read_table(select_chunk_path)
-                df = decode_feature_type_ndarray(pq_table.to_pandas(), schema)
-                data_record.extend(df.to_dict("records"))
-
-            self.datapiece = data_record
-            self.cur = 0
-            self.cur_tail = len(self.datapiece)
-
-        def __iter__(self):
-            return self
-
-        def __next__(self):
-            if self.cur < self.cur_tail:
-                elem = self.datapiece[self.cur]
-                self.cur += 1
-                return elem
-            else:
-                raise StopIteration
-
-        def __call__(self):
-            self.cur = 0
-            return self
-
     dataset = ParquetIterableDataset(
-        row_group=row_group, num_shards=config.get("num_shards"),
+        row_group=row_group, schema=schema, num_shards=config.get("num_shards"),
         rank=config.get("rank"))
 
     return tf.data.Dataset.from_generator(dataset, output_types=output_types,
@@ -381,63 +388,6 @@ def read_as_dataloader(path, config=None, transforms=None, batch_size=1, *args, 
                 chunk_path = os.path.join(path, name)
                 row_group.append(chunk_path)
 
-    class ParquetIterableDataset(torch.utils.data.IterableDataset):
-        def __init__(self, row_group, num_shards=None,
-                     rank=None, transforms=None):
-            super(ParquetDataset).__init__()
-            self.row_group = row_group
-
-            # To get the indices we expect
-            self.row_group.sort()
-
-            self.num_shards = num_shards
-            self.rank = rank
-            self.datapiece = None
-
-            self.transforms = transforms
-
-            filter_row_group_indexed = []
-
-            if self.num_shards is None or self.rank is None:
-                filter_row_group_indexed = [
-                    index for index in list(range(len(self.row_group)))]
-            else:
-                assert self.num_shards <= len(
-                    self.row_group), "num_shards should be not larger than partitions." \
-                                     "but got num_shards {} with partitions {}." \
-                    .format(self.num_shards, len(self.row_group))
-                assert self.rank < self.num_shards, \
-                    "shard index should be included in [0,num_shard)," \
-                    "but got rank {} with num_shard {}.".format(
-                        self.rank, self.num_shards)
-                filter_row_group_indexed = [index for index in list(range(len(self.row_group)))
-                                            if index % self.num_shards == self.rank]
-
-            data_record = []
-            for select_chunk_path in [self.row_group[i] for i in filter_row_group_indexed]:
-                pq_table = pq.read_table(select_chunk_path)
-                df = decode_feature_type_ndarray(pq_table.to_pandas(), schema)
-                data_record.extend(df.to_dict("records"))
-
-            self.datapiece = data_record
-            self.cur = 0
-            self.cur_tail = len(self.datapiece)
-
-        def __iter__(self):
-            return self
-
-        def __next__(self):
-            # move iter here so we can do transforms
-            if self.cur < self.cur_tail:
-                elem = self.datapiece[self.cur]
-                self.cur += 1
-                if self.transforms:
-                    return self.transforms(elem)
-                else:
-                    return elem
-            else:
-                raise StopIteration
-
     def worker_init_fn(w_id):
         worker_info = torch.utils.data.get_worker_info()
         dataset = worker_info.dataset
@@ -450,7 +400,7 @@ def read_as_dataloader(path, config=None, transforms=None, batch_size=1, *args, 
         dataset.cur_tail = min(dataset.cur + per_worker, iter_end)
 
     dataset = ParquetIterableDataset(
-        row_group=row_group, num_shards=config.get("num_shards"),
+        row_group=row_group, schema=schema, num_shards=config.get("num_shards"),
         rank=config.get("rank"), transforms=transforms)
 
     return torch.utils.data.DataLoader(dataset, num_workers=config.get("num_workers", 0),
