@@ -126,8 +126,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
       val input = clusterServingInference.preProcessing.decodeArrowBase64("", inputBase64)
       val bInput = clusterServingInference.batchInput(Seq(("", input)), 1, true, false)
       val result = model.doPredict(bInput)
-      val value = PostProcessing(result.toTensor[Float]
-        .squeeze(1), "topN(1)", 1)
+      val value = PostProcessing(result.toTensor[Float], "topN(1)", 1)
       val clz = value.split(",")(0).stripPrefix("[[")
       predictMap = predictMap + (file.getName -> clz)
     }
@@ -209,8 +208,7 @@ val helper = ClusterServing.helper
         val result = model.doPredict(bInput)
         var i = 0
         for ( i <- 1 to 4) {
-          val value = PostProcessing(result.toTensor[Float]
-            .squeeze(1).apply(i), "topN(1)", 1)
+          val value = PostProcessing(result.toTensor[Float], "topN(1)", i)
           val clz = value.split(",")(0).stripPrefix("[[")
           predictMap = predictMap + (batchInputs(i-1)._1 -> clz)
         }
