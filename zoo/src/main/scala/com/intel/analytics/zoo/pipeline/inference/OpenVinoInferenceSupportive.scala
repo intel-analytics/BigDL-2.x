@@ -114,6 +114,25 @@ object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable
     }
   }
 
+  def loadOpenVinoNgIR(modelFilePath: String,
+                     weightFilePath: String,
+                     deviceType: DeviceTypeEnumVal,
+                     batchSize: Int = 0): OpenVINOModelNg = {
+    timing("load OpenVINO IR") {
+      val modelBytes = Files.readAllBytes(Paths.get(modelFilePath))
+      val weightBytes = Files.readAllBytes(Paths.get(weightFilePath))
+      val buffer = Source.fromBytes(modelBytes)
+      // For OpenVINO model version 9 or previous, check statistics keyword
+      // For OpenVINO model version 10 or later, check FakeQuantize keyword
+      val isInt8 = buffer
+        .getLines()
+        .count(_ matches ".*statistics.*|.*FakeQuantize.*") > 0
+      buffer.close()
+      new OpenVINOModelNg(new OpenVINOModelHolder(modelBytes, weightBytes),
+        isInt8, batchSize, deviceType)
+    }
+  }
+
   def loadOpenVinoIR(modelBytes: Array[Byte],
                      weightBytes: Array[Byte],
                      deviceType: DeviceTypeEnumVal,

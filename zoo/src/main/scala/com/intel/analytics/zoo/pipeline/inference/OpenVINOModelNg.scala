@@ -25,7 +25,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.common.Utils.createTmpDir
 import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, RegistryMap, SerializationHolder}
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
-import com.intel.analytics.zoo.pipeline.inference.OpenVINOModelNg.OpenVINOModelHolder
+import com.intel.analytics.zoo.pipeline.inference.OpenVINOModel.OpenVINOModelHolder
 import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 
@@ -84,10 +84,12 @@ class OpenVINOModelNg(var modelHolder: OpenVINOModelHolder,
   }
 
   override def predictNg(inputs: JList[JTensor]): JList[JTensor] = {
+    require(inputs.size() == 1, "Multiple inputs of OpenVINO model is not implemented yet")
     val output = if (isInt8) {
-      supportive.predictInt8(executableNetworkReference,inputs)
+      supportive.predictInt8(executableNetworkReference,
+        inputs.get(0).getData, inputs.get(0).getShape)
     } else {
-      supportive.predict(executableNetworkReference, inputs)
+      supportive.predict(executableNetworkReference, inputs.get(0).getData, inputs.get(0).getShape)
     }
     output
   }
@@ -143,7 +145,7 @@ object OpenVINOModelNg {
   @transient
   private lazy val inDriver = NetUtils.isDriver
 
-  class OpenVINOModelHolder(@transient var modelBytes: Array[Byte],
+  class OpenVINOModelNgHolder(@transient var modelBytes: Array[Byte],
                             @transient var weightBytes: Array[Byte],
                             private var id: String)
     extends SerializationHolder {

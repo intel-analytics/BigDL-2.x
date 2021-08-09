@@ -59,7 +59,15 @@ trait InferenceSupportiveNg {
   }
 
   def jTensorListToActivity(inputs: JList[JTensor]): Activity = {
-    T(inputs)
+    val tensorArray = inputs.asScala.map(jt => {
+      Tensor[Float](jt.getData, jt.getShape)
+    })
+    if (tensorArray.size == 1) {
+      tensorArray(0)
+    } else {
+      T.array(tensorArray.toArray)
+    }
+
   }
 
   def transferTensorsToTensorOfBatch(tensors: Array[JTensor]): Tensor[Float] = {
