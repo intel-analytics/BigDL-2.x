@@ -244,8 +244,8 @@ class Table:
         Calculates the log of continuous columns.
 
         :param columns: str or a list of str, the target columns to calculate log.
-        :param clipping: boolean, if clipping=True, the negative values in columns will be
-               clipped to 0 and `log(x+1)` will be calculated. If clipping=False, `log(x)` will be
+        :param clipping: boolean. Default is True, and in this case the negative values in columns
+               will be clipped to 0 and `log(x+1)` will be calculated. If False, `log(x)` will be
                calculated.
 
         :return: A new Table that replaced value in columns with logged value.
@@ -540,7 +540,7 @@ class Table:
                overwrite: Overwrite the existing data.
                error: Throw an exception if the data already exists.
                ignore: Silently ignore this operation if the data already exists.
-        :param header: boolean. Whether to include the schema at the first line of the csv file.
+        :param header: boolean, whether to include the schema at the first line of the csv file.
                Default is False.
         :param num_partitions: positive int. The number of files to write.
         """
@@ -636,25 +636,38 @@ class Table:
 
     def cut_bins(self, bins, columns, labels=None, out_cols=None, drop=True):
         """
-        Segment values of the target column into bins.
+        Segment values of the target column(s) into bins, which is also known as bucketization.
 
-        :param bins: int, a list of int or dict. If bins is a list, it defines the bins to be used.
-               With n splits, there are n+1 buckets. For example, if bins is [0, 6, 18, 60], splits
-               are[-inf,0) [0, 6), [6, 18), [18, 60), [60, inf].
+        :param bins: int, a list of int or dict.
+               If bins is a list, it defines the bins to be used. NOTE that for bins of length n,
+               there will be **n+1** buckets.
+               For example, if bins is [0, 6, 18, 60], the resulting buckets are
+               (-inf, 0), [0, 6), [6, 18), [18, 60), [60, inf).
                If bins is an int, it defines the number of equal-width bins in the range of all
-               column values.
-               If bins is a dict, key(s) should be the input column name(s).
-        :param columns: str, a list of str or dict, specifies the name(s) of the input column(s).
-               If bins is a dict, key(s) should be the input column name(s).
-        :param labels: a list of str or dict, specifies the labels for the returned bins.
-               If lables is None, then the new bin column would use integer to encode categories.
-               If bins is a dict, key(s) should be the input column name(s).
-        :param out_cols: str or dict, specifies the name of output categorical column.
-               If out_col is None, the name of output column is "column_bin".
-               If bins is a dict, key(s) should be the input column name(s).
-        :param drop: boolean. Whether to drop the original column. Default is True.
+               the column values, i.e. from column min to max. NOTE that there will be **bins+2**
+               resulting buckets in total to include the values below min and beyond max.
+               For examples, if bins is 2, the resulting buckets are
+               (-inf, col_min), [col_min, (col_min+col_max)/2), [(col_min+col_max)/2, col_max),
+               [col_max, inf).
+               If bins is a dict, the key should be the input column(s) and the value should be
+               int or a list of int to specify the bins described above.
+        :param columns: str or a list of str, the numeric column(s) to segment values into intervals.
+        :param labels: a list of str or dict, the labels for the returned bins.
+               Default is None, and in this case the new bin column would use the integer index to
+               encode the interval.
+               If labels is a list of str, then the corresponding label would be used to replace
+               the integer index at the same position. The number of elements in labels should be
+               the same as the number of bins.
+               If labels is a dict, the key should be the input column(s) and the value should be a
+               list of str described above.
+        :param out_cols: str, a list of str or dict, the name of output bucketized column(s).
+               Default is None, and in this case the name of each output column will be "column_bin"
+               for each input column.
+               If out_cols is a dict, the key should be the input column(s) and the value should be
+               the corresponding output column.
+        :param drop: boolean, whether to drop the original column(s). Default is True.
 
-        :return: a new Table with the updated bin column.
+        :return: A new FeatureTable with feature bucket column(s).
         """
         if not isinstance(columns, list):
             columns = [columns]
@@ -665,13 +678,13 @@ class Table:
             bin = bins[column] if isinstance(bins, dict) else bins
             label = labels[column] if isinstance(labels, dict) else labels
             if not check_column_numeric(self.df, column):
-                raise ValueError("Column should be numeric.")
+                raise ValueError("{} should be a numeric column".format(column))
             if out_col is None:
-                out_col = column+"_bin"
+                out_col = column + "_bin"
             if isinstance(bin, int):
-                max = self.get_stats(column, "max")[column]
-                min = self.get_stats(column, "min")[column]
-                bin = np.linspace(min, max, bin+1, endpoint=True).tolist()
+                col_max = self.get_stats(column, "max")[column]
+                col_min = self.get_stats(column, "min")[column]
+                bin = np.linspace(col_min, col_max, bin+1, endpoint=True).tolist()
             elif isinstance(bin, list):
                 bin = [float("-inf")] + bin + [float("inf")]
             bucketizer = Bucketizer(splits=bin, inputCol=column, outputCol=out_col)
@@ -1323,7 +1336,7 @@ class FeatureTable(Table):
                agg=["last", "stddev"]
                agg={"*":"count"}
                agg={"col_1":"sum", "col_2":["count", "mean"]}
-        :param join: boolean. If join is True, join the aggregation result with original Table.
+        :param join: boolean. If True, join the aggregation result with original Table.
 
         :return: A new Table with aggregated column fields.
         """
@@ -1409,9 +1422,9 @@ class FeatureTable(Table):
         :param fold_col: str. Name of integer column used for splitting folds. If fold_col exists
                in the FeatureTable, then this column is used; otherwise, it is randomly generated
                within the range [0, kfold). Default is "__fold__".
-        :param drop_cat: boolean. Whether to drop the original categorical columns.
+        :param drop_cat: boolean, whether to drop the original categorical columns.
                Default is False.
-        :param drop_fold: boolean. Drop the fold column if it is true. Default is True.
+        :param drop_fold: boolean, whether to drop the fold column. Default is True.
         :param out_cols: str, a list of str or a nested list of str. When both cat_cols and
                target_cols has only one element, out_cols can be a single str. When cat_cols or
                target_cols has only one element, out_cols can be a list of str, and each element
@@ -1583,7 +1596,7 @@ class FeatureTable(Table):
         :param target_cols: str or a list of str. Selects part of target columns of which target
                encoding will be applied. Default is None and in this case all target columns
                contained in targets will be encoded.
-        :param drop_cat: boolean. Whether to drop the categorical columns. Default is True.
+        :param drop_cat: boolean, whether to drop the categorical column(s). Default is True.
 
         :return: A new FeatureTable which encodes each categorical column into group-specific
                  mean of target columns with provided TargetCodes.
