@@ -1206,7 +1206,7 @@ class FeatureTable(Table):
 
         :param cols: a list of str, columns need to be padded with 0s.
         :param seq_len: int, the length of masked column. Default is 100.
-        :param mask_cols: a list of string, columns need to be masked with 1s and 0s.
+        :param mask_cols: a list of str, columns need to be masked with 1s and 0s.
 
         :return: A new FeatureTable with padded columns.
         """
