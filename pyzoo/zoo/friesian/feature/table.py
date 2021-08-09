@@ -1020,8 +1020,10 @@ class FeatureTable(Table):
         column summary statistics, which is also known as min-max normalization or rescaling.
 
         :param columns: str or a list of str, the column(s) to be rescaled.
-        :param min: Lower bound after transformation, shared by all columns. 0.0 by default.
-        :param max: Upper bound after transformation, shared by all columns. 1.0 by default.
+        :param min: int, the lower bound after transformation, shared by all columns.
+                    Default is 0.0.
+        :param max: int, the upper bound after transformation, shared by all columns.
+                    Default is 1.0.
 
         :return: A tuple of a new FeatureTable with rescaled column(s), and a dict of the
                  original min and max values of the input column(s).
@@ -1098,8 +1100,7 @@ class FeatureTable(Table):
 
         :return: A new FeatureTable with rescaled column(s).
         """
-        if not isinstance(columns, list):
-            columns = [columns]
+        columns = str_to_list(columns, "columns")
         types = [x[1] for x in self.df.select(*columns).dtypes]
         scalar_cols = [columns[i] for i in range(len(columns))
                        if types[i] == "int" or types[i] == "bigint"
@@ -1148,12 +1149,12 @@ class FeatureTable(Table):
         """
         Generate negative item visits for each positive item visit
 
-        :param item_size: integer, max of item.
-        :param item_col:  string, name of item column
-        :param label_col:  string, name of label column
-        :param neg_num:  integer, for each positive record, add neg_num of negative samples
+        :param item_size: int, max of item.
+        :param item_col: str, name of item column
+        :param label_col: str, name of label column
+        :param neg_num: int, for each positive record, add neg_num of negative samples
 
-        :return: FeatureTable
+        :return: A new FeatureTable with negative samples.
         """
         df = add_negative_samples(self.df, item_size, item_col, label_col, neg_num)
         return FeatureTable(df)
@@ -1162,11 +1163,11 @@ class FeatureTable(Table):
         """
         Generate a list of item visits in history
 
-        :param cols:  list of string, ctolumns need to be aggragated
-        :param user_col: string, user column.
-        :param sort_col:  string, sort by sort_col
-        :param min_len:  int, minimal length of a history list
-        :param max_len:  int, maximal length of a history list
+        :param cols: a list of str, columns need to be aggregated
+        :param user_col: str, user column.
+        :param sort_col: str, sort by sort_col
+        :param min_len: int, minimal length of a history list
+        :param max_len: int, maximal length of a history list
 
         :return: FeatureTable
         """
@@ -1178,9 +1179,9 @@ class FeatureTable(Table):
         Generate a list negative samples for each item in item_history_col
 
         :param item_size: int, max of item.
-        :param item2cat:  FeatureTable with a dataframe of item to catgory mapping
-        :param item_history_col:  string, this column should be a list of visits in history
-        :param neg_num:  int, for each positive record, add neg_num of negative samples
+        :param item2cat: FeatureTable with a dataframe of item to category mapping
+        :param item_history_col: str, this column should be a list of visits in history
+        :param neg_num: int, for each positive record, add neg_num of negative samples
 
         :return: FeatureTable
         """
@@ -1191,8 +1192,8 @@ class FeatureTable(Table):
         """
         Mask mask_cols columns
 
-        :param mask_cols: list of string, columns need to be masked with 1s and 0s.
-        :param seq_len:  int, length of masked column
+        :param mask_cols: a list of str, columns need to be masked with 1s and 0s.
+        :param seq_len: int, length of masked column
 
         :return: FeatureTable
         """
@@ -1203,9 +1204,9 @@ class FeatureTable(Table):
         """
         Pad and mask columns of the FeatureTable.
 
-        :param cols: list of str, columns need to be padded with 0s.
+        :param cols: a list of str, columns need to be padded with 0s.
         :param seq_len: int, the length of masked column. Default is 100.
-        :param mask_cols: list of string, columns need to be masked with 1s and 0s.
+        :param mask_cols: a list of string, columns need to be masked with 1s and 0s.
 
         :return: A new FeatureTable with padded columns.
         """
@@ -1260,10 +1261,10 @@ class FeatureTable(Table):
          Add features based on key_cols and another key value table,
          for each col in key_cols, it adds a value_col using key-value pairs from tbl
 
-         :param key_cols: list[string]
+         :param key_cols: a list of str
          :param tbl: Table with only two columns [key, value]
-         :param key: string, name of key column in tbl
-         :param value: string, name of value column in tbl
+         :param key: str, name of key column in tbl
+         :param value: str, name of value column in tbl
 
          :return: FeatureTable
          """
