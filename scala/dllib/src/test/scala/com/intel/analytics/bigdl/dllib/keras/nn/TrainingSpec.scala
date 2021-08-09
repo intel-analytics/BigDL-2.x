@@ -19,7 +19,7 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.Sample
 import com.intel.analytics.bigdl.dllib.nn.MSECriterion
 import com.intel.analytics.bigdl.dllib.keras._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.dllib.utils.{Engine}
+import com.intel.analytics.bigdl.utils.{Engine}
 import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.dllib.optim.{DummyDataSet, SGD, Top1Accuracy}
 import org.apache.spark.SparkContext

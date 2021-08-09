@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.image.{BGRImgToBatch, Lab
 import com.intel.analytics.bigdl.mkl.Memory
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.HeapData
 import com.intel.analytics.bigdl.dllib.tensor.{DnnStorage, Storage, Tensor}
-import com.intel.analytics.bigdl.dllib.utils.{Engine, T}
+import com.intel.analytics.bigdl.dllib.utils.{T}
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.dllib.utils.visualization.TrainSummary
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}

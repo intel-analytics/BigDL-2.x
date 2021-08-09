@@ -23,8 +23,9 @@ import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.feature.dataset.DataSet
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.optim._
-import com.intel.analytics.bigdl.dllib.utils.{Engine, T, Table, TestUtils}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table, TestUtils}
 import com.intel.analytics.bigdl.dllib.utils.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.utils._
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.api.java.JavaRDD

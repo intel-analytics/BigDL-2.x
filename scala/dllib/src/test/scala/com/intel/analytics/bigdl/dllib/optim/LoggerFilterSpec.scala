@@ -25,7 +25,7 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, Sample, SampleT
 import com.intel.analytics.bigdl.dllib.nn.{Linear, MSECriterion, Sequential}
 import com.intel.analytics.bigdl.numeric.NumericDouble
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.dllib.utils.{Engine, T, TestUtils}
+import com.intel.analytics.bigdl.dllib.utils.{T, TestUtils}
 import com.intel.analytics.bigdl.utils._
 import org.apache.log4j.{Level, Logger, PatternLayout, WriterAppender}
 import org.apache.spark.SparkContext

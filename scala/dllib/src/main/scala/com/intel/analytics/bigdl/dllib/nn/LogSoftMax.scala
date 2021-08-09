@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.mkl.MKL
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.TensorModule
 import com.intel.analytics.bigdl.dllib.tensor.{DoubleType, FloatType, Storage, Tensor}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.dllib.utils.Engine
+import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.Shape
 
 import scala.concurrent.Future

@@ -25,8 +25,9 @@ import com.intel.analytics.bigdl.dllib.models.utils.COCOSeqFileGenerator
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{ImageFeature, RoiImageInfo}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.label.roi.RoiLabel
-import com.intel.analytics.bigdl.dllib.utils.{Engine, SparkContextLifeCycle, TestUtils}
+import com.intel.analytics.bigdl.dllib.utils.{SparkContextLifeCycle, TestUtils}
 import com.intel.analytics.bigdl.utils.RandomGenerator
+import com.intel.analytics.bigdl.utils._
 import java.awt.image.DataBufferByte
 import javax.imageio.ImageIO
 import org.apache.hadoop.io.Text

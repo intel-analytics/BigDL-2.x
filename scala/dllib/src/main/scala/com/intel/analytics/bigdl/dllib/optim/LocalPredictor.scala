@@ -25,7 +25,8 @@ import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{ImageFeature, ImageFrame, LocalImageFrame}
 import com.intel.analytics.bigdl.dllib.utils.Util._
 import com.intel.analytics.bigdl.dllib.utils.intermediate.ConversionUtils
-import com.intel.analytics.bigdl.dllib.utils.{Engine, MklBlas, MklDnn, Util}
+import com.intel.analytics.bigdl.dllib.utils.{Util}
+import com.intel.analytics.bigdl.utils.{Engine, MklBlas, MklDnn}
 import org.apache.log4j.Logger
 
 import scala.reflect.ClassTag

@@ -22,8 +22,9 @@ import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.{FloatType, Tensor}
 import com.intel.analytics.bigdl.dllib.utils.serializer._
 import com.intel.analytics.bigdl.dllib.utils.serializer.converters.DataConverter
-import com.intel.analytics.bigdl.dllib.utils.{Engine, ParameterSynchronizer, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{ParameterSynchronizer, T, Table}
 import com.intel.analytics.bigdl.dllib.utils.serialization.Bigdl.{AttrValue, BigDLModule}
+import com.intel.analytics.bigdl.utils._
 
 import scala.reflect.ClassTag
 

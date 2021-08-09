@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.utils.visualization
 
 import com.intel.analytics.bigdl.dllib.example.loadmodel.AlexNet
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.dllib.utils.{Engine, TestUtils}
+import com.intel.analytics.bigdl.dllib.utils.{TestUtils}
 import Summary._
 import com.intel.analytics.bigdl.dllib.utils.visualization.tensorboard.{FileReader, FileWriter}
 import com.intel.analytics.bigdl.utils._
