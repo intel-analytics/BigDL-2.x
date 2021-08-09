@@ -43,9 +43,12 @@ BASE_URL = \
 
 class PublicDataset:
 
-    def __init__(self, name, path, redownload):
+    def __init__(self, name, path, redownload, **kwargs):
         self.name = name
         self.redownload = redownload
+        self.with_split = kwargs.get('with_split', False)
+        self.val_ratio = 0 if not self.with_split else kwargs['val_ratio']
+        self.test_ratio = 0 if not self.with_split else kwargs['test_ratio']
 
         self.url = BASE_URL[self.name]
         self.dir_path = os.path.join(os.path.expanduser(path), self.name)
@@ -71,7 +74,6 @@ class PublicDataset:
                 raise OSError('File download is not completed, you should set redownload=False.')
 
         # check local file exists.
-        
         if not set(DATASET_NAME[self.name]).issubset(set(os.listdir(self.dir_path))):
             if isinstance(BASE_URL[self.name], list):
                 for val in self.url:
@@ -187,7 +189,7 @@ class PublicDataset:
         '''
         Return data that meets the minimum requirements of tsdata.
         '''
-        raw_csv_name = os.path.join(self.dir_path,DATASET_NAME[self.name][0])
+        raw_csv_name = os.path.join(self.dir_path, DATASET_NAME[self.name][0])
         if not os.path.exists(self.final_file_path):
             with open(raw_csv_name, 'rb') as src, open(self.final_file_path, 'wb') as dst:
                 dst.write(src.read())
@@ -197,24 +199,29 @@ class PublicDataset:
     def get_tsdata(self, dt_col,
                    target_col,
                    extra_feature=None,
-                   id_col=None,
-                   val_ratio=0.1,
-                   test_ratio=0.1):
+                   id_col=None):
         """
         param dt_col: same as tsdata.from_pandas.
         param target_col: same as tsdata.from_pandas.
         param extra_feature: same as tsdata.from_pandas.
         param id_col: same as tsdata.from_pandas.
-        return tsdata_train,tsdata_valid,tsdata_test, The sample ratio is 0.8:0.1:0.1.
+        return tsdata.
         """
-        return TSDataset.from_pandas(self.df,
-                                     dt_col=dt_col,
-                                     target_col=target_col,
-                                     extra_feature_col=extra_feature,
-                                     id_col=id_col,
-                                     with_split=True,
-                                     val_ratio=val_ratio,
-                                     test_ratio=test_ratio)
+        if self.with_split:
+            return TSDataset.from_pandas(self.df,
+                                         dt_col=dt_col,
+                                         target_col=target_col,
+                                         extra_feature_col=extra_feature,
+                                         id_col=id_col,
+                                         with_split=self.with_split,
+                                         val_ratio=self.val_ratio,
+                                         test_ratio=self.test_ratio)
+        else:
+            return TSDataset.from_pandas(self.df,
+                                         dt_col=dt_col,
+                                         target_col=target_col,
+                                         extra_feature_col=extra_feature,
+                                         id_col=id_col)
 
 
 def download(url, path, chunk_size):
