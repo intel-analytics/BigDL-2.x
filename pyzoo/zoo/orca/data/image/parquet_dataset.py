@@ -159,7 +159,7 @@ class ParquetIterableDataset(torch.utils.data.IterableDataset):
         self.datapiece = None
 
         self.transforms = transforms
-        
+
         filter_row_group_indexed = []
 
         if not self.num_shards or not self.rank:
