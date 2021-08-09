@@ -16,16 +16,17 @@
 
 package com.intel.analytics.bigdl.dllib.utils.intermediate
 
-import com.intel.analytics.bigdl.example.languagemodel.PTBModel
+import com.intel.analytics.bigdl.dllib.example.languagemodel.PTBModel
 import com.intel.analytics.bigdl.mkl.Memory
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{Activity, DataFormat}
 import com.intel.analytics.bigdl.dllib.nn
 import com.intel.analytics.bigdl.dllib.keras
 import com.intel.analytics.bigdl.dllib.nn.mkldnn._
 import com.intel.analytics.bigdl.Module
-import com.intel.analytics.bigdl.utils
+import com.intel.analytics.bigdl.dllib.utils
 import com.intel.analytics.bigdl.dllib.nn.{Graph, Reshape, StaticGraph, TimeDistributed}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.utils._
 import com.intel.analytics.bigdl.utils._
 
 class IRGraphSpec extends BigDLSpecHelper {

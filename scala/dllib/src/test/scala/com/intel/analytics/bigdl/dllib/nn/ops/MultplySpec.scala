@@ -17,7 +17,7 @@ package com.intel.analytics.bigdl.dllib.nn.ops
 
 import com.intel.analytics.bigdl.dllib.nn.CMulTable
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import org.scalatest.{FlatSpec, Matchers}
 
 class MultiplySpec extends FlatSpec with Matchers {

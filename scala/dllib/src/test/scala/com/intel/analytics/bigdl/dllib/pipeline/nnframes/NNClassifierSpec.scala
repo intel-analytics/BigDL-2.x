@@ -18,13 +18,13 @@ package com.intel.analytics.bigdl.dllib.nnframes
 
 import java.io.File
 
-import com.intel.analytics.bigdl.models.inception.Inception_v1
-import com.intel.analytics.bigdl.models.lenet.LeNet5
+import com.intel.analytics.bigdl.dllib.models.inception.Inception_v1
+import com.intel.analytics.bigdl.dllib.models.lenet.LeNet5
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.optim.{Adam, LBFGS, Loss, Trigger}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.dllib.utils.Engine
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.dllib.utils.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.dllib.feature.common._

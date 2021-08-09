@@ -17,19 +17,20 @@
 package com.intel.analytics.bigdl.dllib.utils.intermediate
 
 import breeze.numerics._
-import com.intel.analytics.bigdl.example.loadmodel.AlexNet
+import com.intel.analytics.bigdl.dllib.example.loadmodel.AlexNet
 import com.intel.analytics.bigdl.mkl.Memory
-import com.intel.analytics.bigdl.models.inception.{Inception_Layer_v1, Inception_v1_NoAuxClassifier}
-import com.intel.analytics.bigdl.models.lenet.LeNet5
-import com.intel.analytics.bigdl.models.resnet.ResNet
-import com.intel.analytics.bigdl.models.resnet.ResNet.{DatasetType, ShortcutType}
-import com.intel.analytics.bigdl.models.vgg.Vgg_16
+import com.intel.analytics.bigdl.dllib.models.inception.{Inception_Layer_v1, Inception_v1_NoAuxClassifier}
+import com.intel.analytics.bigdl.dllib.models.lenet.LeNet5
+import com.intel.analytics.bigdl.dllib.models.resnet.ResNet
+import com.intel.analytics.bigdl.dllib.models.resnet.ResNet.{DatasetType, ShortcutType}
+import com.intel.analytics.bigdl.dllib.models.vgg.Vgg_16
 import com.intel.analytics.bigdl.dllib.nn.{Module, StaticGraph}
 import com.intel.analytics.bigdl.dllib.nn
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.{DnnGraph, Equivalent}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.dllib.utils._
 import com.intel.analytics.bigdl.utils._
 
 import scala.util.Random

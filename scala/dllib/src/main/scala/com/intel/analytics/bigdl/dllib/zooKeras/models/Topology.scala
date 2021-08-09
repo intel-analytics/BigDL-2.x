@@ -35,7 +35,7 @@ import com.intel.analytics.bigdl.dllib.optim.DistriOptimizer.{Cache, CacheV1}
 import com.intel.analytics.bigdl.dllib.optim.DistriOptimizerV2.{Cache => CacheV2}
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.optim.parameters.AllReduceParameter
-import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
+import com.intel.analytics.bigdl.dllib.utils.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils._

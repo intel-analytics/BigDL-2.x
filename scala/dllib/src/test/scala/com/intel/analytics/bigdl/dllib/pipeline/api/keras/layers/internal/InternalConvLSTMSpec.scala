@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.dllib.nn.{MSECriterion, Sequential, TimeDistrib
 import com.intel.analytics.bigdl.dllib.optim.{L2Regularizer, SGD}
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.InternalConvLSTM2D
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.internal.InternalRecurrent
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}

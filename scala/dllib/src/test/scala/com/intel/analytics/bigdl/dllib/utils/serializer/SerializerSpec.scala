@@ -21,10 +21,10 @@ import java.lang.reflect.Modifier
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.nn.Module
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
+import com.intel.analytics.bigdl.dllib.utils.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.{Tensor, TensorNumericMath}
-import com.intel.analytics.bigdl.utils.BigDLSpecHelper
+import com.intel.analytics.bigdl.dllib.utils.BigDLSpecHelper
 import com.intel.analytics.bigdl.dllib.utils.serializer.converters.DataConverter
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
@@ -42,8 +42,8 @@ class SerializerSpec extends BigDLSpecHelper {
     "com.intel.analytics.bigdl.dllib.nn.tf.ControlDependency",
     "com.intel.analytics.bigdl.dllib.utils.tf.AdapterForTest",
     "com.intel.analytics.bigdl.dllib.utils.serializer.TestModule",
-    "com.intel.analytics.bigdl.utils.TestModule",
-    "com.intel.analytics.bigdl.utils.ExceptionTest",
+    "com.intel.analytics.bigdl.dllib.utils.TestModule",
+    "com.intel.analytics.bigdl.dllib.utils.ExceptionTest",
     "com.intel.analytics.bigdl.dllib.utils.serializer.SubModuleOne",
     "com.intel.analytics.bigdl.dllib.utils.serializer.SubModuleTwo",
     "com.intel.analytics.bigdl.dllib.nn.mkldnn.AvgPooling",

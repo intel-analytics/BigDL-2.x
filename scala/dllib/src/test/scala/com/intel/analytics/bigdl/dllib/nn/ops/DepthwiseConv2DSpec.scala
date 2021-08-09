@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.nn.ops
 import com.intel.analytics.bigdl.dllib.nn.Module
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{BigDLSpecHelper, T}
+import com.intel.analytics.bigdl.dllib.utils.{BigDLSpecHelper, T}
 import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
 
 import scala.util.Random

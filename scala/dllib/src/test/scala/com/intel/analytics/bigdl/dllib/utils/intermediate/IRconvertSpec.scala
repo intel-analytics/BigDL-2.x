@@ -25,6 +25,7 @@ import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.TrainingPhase
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.{DnnGraph, Equivalent, Input, Output}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.utils._
 import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.Module
 

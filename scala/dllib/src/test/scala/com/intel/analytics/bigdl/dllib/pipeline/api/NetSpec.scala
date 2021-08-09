@@ -20,7 +20,8 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.nn.{CAddTable, SpatialCrossMapLRN}
 import com.intel.analytics.bigdl.dllib.optim.L2Regularizer
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape, T}
+import com.intel.analytics.bigdl.dllib.utils.{T}
+import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.dllib.utils.caffe.{CaffeLoader => BigDLCaffeLoader}
 import com.intel.analytics.bigdl.dllib.zooKeras.autograd.Variable
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper

@@ -17,7 +17,7 @@ package com.intel.analytics.bigdl.dllib.nn.ops
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 import org.scalatest.{FlatSpec, Matchers}
 
 class CategoricalColHashBucketSpec extends FlatSpec with Matchers {

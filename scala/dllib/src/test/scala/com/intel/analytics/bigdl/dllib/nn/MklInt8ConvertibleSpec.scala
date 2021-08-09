@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.dllib.nn.mkldnn.DnnGraph
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.InferencePhase
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 

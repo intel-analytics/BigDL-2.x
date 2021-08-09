@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.nn
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 

@@ -16,7 +16,7 @@
 package com.intel.analytics.bigdl.integration.torch
 import com.intel.analytics.bigdl.dllib.nn.MarginRankingCriterion
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.utils.Table
+import com.intel.analytics.bigdl.dllib.utils.Table
 
 import scala.collection.mutable.HashMap
 import scala.util.Random

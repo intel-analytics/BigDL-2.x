@@ -25,7 +25,8 @@ import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.{InferencePhase, Training
 import com.intel.analytics.bigdl.dllib.nn.{Graph, Squeeze, mkldnn}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{BigDLSpecHelper, Engine, RandomGenerator, T}
+import com.intel.analytics.bigdl.dllib.utils.{BigDLSpecHelper, Engine, T}
+import com.intel.analytics.bigdl.utils.RandomGenerator
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.numeric.NumericFloat
 

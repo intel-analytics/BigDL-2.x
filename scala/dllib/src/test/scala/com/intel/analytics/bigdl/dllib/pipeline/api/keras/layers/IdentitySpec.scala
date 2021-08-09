@@ -21,9 +21,10 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.{Identity => ZIdentity}
 import com.intel.analytics.bigdl.dllib.nn.{Module, Identity => BIdentity}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.utils._
 import org.scalatest.{FlatSpec, Matchers}
 
 class IdentitySpec extends KerasBaseSpec {

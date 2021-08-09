@@ -24,7 +24,8 @@ import scala.math._
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.optim.{L1Regularizer, L2Regularizer, SGD}
 import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
-import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape, T, TestUtils}
+import com.intel.analytics.bigdl.dllib.utils.{T, TestUtils}
+import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape}
 
 import scala.util.Random
 

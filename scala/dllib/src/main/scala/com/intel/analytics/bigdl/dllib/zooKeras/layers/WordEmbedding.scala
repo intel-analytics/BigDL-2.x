@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.intel.analytics.bigdl.dllib.nn.{Identity => BIdentity}
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.serialization.Bigdl._
+import com.intel.analytics.bigdl.dllib.utils.serialization.Bigdl._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Shape

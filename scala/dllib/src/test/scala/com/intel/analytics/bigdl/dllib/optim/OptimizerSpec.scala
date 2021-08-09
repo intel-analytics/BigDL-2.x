@@ -21,9 +21,9 @@ import java.nio.file.{Files, Paths}
 import com.intel.analytics.bigdl.dllib.feature.dataset.{DistributedDataSet, LocalDataSet, Sample}
 import com.intel.analytics.bigdl.dllib.nn.{ClassNLLCriterion, Linear, Sequential}
 import com.intel.analytics.bigdl._
-import com.intel.analytics.bigdl.example.loadmodel.AlexNet
+import com.intel.analytics.bigdl.dllib.example.loadmodel.AlexNet
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, File, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{Engine, File, T, Table}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}

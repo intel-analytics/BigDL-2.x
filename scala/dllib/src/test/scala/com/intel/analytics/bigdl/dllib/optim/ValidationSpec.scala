@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.RoiImageInfo
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.label.roi.RoiLabel
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import org.scalatest.{FlatSpec, Matchers}
 import scala.collection.mutable.ArrayBuffer
 

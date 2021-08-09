@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.models.maskrcnn
+package com.intel.analytics.bigdl.dllib.models.maskrcnn
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.feature.dataset.segmentation.RLEMasks
@@ -23,7 +23,8 @@ import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.RoiImageInfo
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.label.roi.RoiLabel
 import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
-import com.intel.analytics.bigdl.utils.{RandomGenerator, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.RandomGenerator
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.reflect.io.File

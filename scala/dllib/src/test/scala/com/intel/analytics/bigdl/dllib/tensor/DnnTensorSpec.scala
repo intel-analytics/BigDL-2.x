@@ -17,7 +17,7 @@ package com.intel.analytics.bigdl.dllib.tensor
 
 import com.intel.analytics.bigdl.mkl.MklDnn
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.MemoryOwner
-import com.intel.analytics.bigdl.utils.{BigDLSpecHelper, T}
+import com.intel.analytics.bigdl.dllib.utils.{BigDLSpecHelper, T}
 import org.apache.commons.lang3.SerializationUtils
 import org.scalatest.BeforeAndAfter
 

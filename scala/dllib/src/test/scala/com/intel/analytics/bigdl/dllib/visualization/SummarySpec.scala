@@ -16,11 +16,12 @@
 
 package com.intel.analytics.bigdl.dllib.utils.visualization
 
-import com.intel.analytics.bigdl.example.loadmodel.AlexNet
+import com.intel.analytics.bigdl.dllib.example.loadmodel.AlexNet
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, RandomGenerator, TestUtils}
+import com.intel.analytics.bigdl.dllib.utils.{Engine, TestUtils}
 import Summary._
 import com.intel.analytics.bigdl.dllib.utils.visualization.tensorboard.{FileReader, FileWriter}
+import com.intel.analytics.bigdl.utils._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import org.tensorflow.framework
 

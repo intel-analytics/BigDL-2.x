@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.numeric.NumericDouble
 import com.intel.analytics.bigdl.dllib.optim.{L2Regularizer, SGD}
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 
 import scala.sys.process._
 

@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, MiniBatch}
 import com.intel.analytics.bigdl.dllib.nn.{Linear, MSECriterion, ReLU, Sequential}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Engine, T, TestUtils}
+import com.intel.analytics.bigdl.dllib.utils.{Engine, T, TestUtils}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import com.intel.analytics.bigdl.dllib.optim._
 

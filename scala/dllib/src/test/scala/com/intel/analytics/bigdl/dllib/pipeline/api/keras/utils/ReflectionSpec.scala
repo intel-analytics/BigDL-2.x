@@ -19,11 +19,12 @@ package com.intel.analytics.bigdl.dllib.zooKeras.utils
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.dllib.keras.{Input, KerasLayer, Model}
 import com.intel.analytics.bigdl.dllib.nn.{Graph, Linear}
-import com.intel.analytics.bigdl.utils.{Engine, Shape}
-import com.intel.analytics.bigdl.utils.NNContext
+import com.intel.analytics.bigdl.dllib.utils.{Engine}
+import com.intel.analytics.bigdl.dllib.utils.NNContext
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.Dense
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.{AbstractModuleRef, EngineRef, GraphRef, KerasLayerRef}
+import com.intel.analytics.bigdl.utils._
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.mutable

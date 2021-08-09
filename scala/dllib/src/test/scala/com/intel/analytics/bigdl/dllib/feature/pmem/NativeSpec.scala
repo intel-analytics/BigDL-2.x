@@ -19,8 +19,8 @@
 //import com.intel.analytics.bigdl.dllib.feature.dataset.{DistributedDataSet, MiniBatch, Sample}
 //import com.intel.analytics.bigdl.dllib.tensor.Tensor
 //import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.ImageFeature
-//import com.intel.analytics.bigdl.utils.Engine
-//import com.intel.analytics.bigdl.utils.NNContext
+//import com.intel.analytics.bigdl.dllib.utils.Engine
+//import com.intel.analytics.bigdl.dllib.utils.NNContext
 ////import com.intel.analytics.zoo.examples.inception.ImageNet2012
 //import com.intel.analytics.bigdl.dllib.feature.FeatureSet
 //import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper

@@ -16,7 +16,7 @@
 package com.intel.analytics.bigdl.dllib.utils.tf.loaders
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
 import com.intel.analytics.bigdl.dllib.utils.tf.Tensorflow.typeAttr
 import com.intel.analytics.bigdl.dllib.utils.tf.TensorflowSpecHelper

@@ -17,8 +17,8 @@ package com.intel.analytics.bigdl.integration
 
 import java.nio.ByteOrder
 
-import com.intel.analytics.bigdl.models.lenet.LeNet5
-import com.intel.analytics.bigdl.models.resnet.Convolution
+import com.intel.analytics.bigdl.dllib.models.lenet.LeNet5
+import com.intel.analytics.bigdl.dllib.models.resnet.Convolution
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.utils.caffe.{CaffeLoader, CaffePersister}

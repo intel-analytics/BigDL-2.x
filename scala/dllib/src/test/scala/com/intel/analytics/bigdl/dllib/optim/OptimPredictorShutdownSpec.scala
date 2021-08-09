@@ -21,8 +21,8 @@ package com.intel.analytics.bigdl.dllib.optim
 
 import com.intel.analytics.bigdl.Criterion
 import com.intel.analytics.bigdl.dllib.feature.dataset.{DistributedDataSet, MiniBatch, Sample}
-import com.intel.analytics.bigdl.models.inception.Inception_v1_NoAuxClassifier
-import com.intel.analytics.bigdl.models.utils.CachedModels
+import com.intel.analytics.bigdl.dllib.models.inception.Inception_v1_NoAuxClassifier
+import com.intel.analytics.bigdl.dllib.models.utils.CachedModels
 import com.intel.analytics.bigdl.dllib.nn.CrossEntropyCriterion
 import com.intel.analytics.bigdl.dllib.nn.quantized.{StorageInfo, StorageManager}
 import com.intel.analytics.bigdl.numeric.NumericFloat
@@ -30,7 +30,8 @@ import com.intel.analytics.bigdl.dllib.tensor.{DnnStorage, Storage, Tensor}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation.{CenterCrop, ChannelNormalize, Resize}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{ImageFeature, ImageFrame, ImageFrameToSample, MatToTensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, RandomGenerator, SparkContextLifeCycle}
+import com.intel.analytics.bigdl.dllib.utils.{Engine, SparkContextLifeCycle}
+import com.intel.analytics.bigdl.utils._
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}

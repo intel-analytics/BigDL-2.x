@@ -17,7 +17,7 @@ package com.intel.analytics.bigdl.dllib.nn.mkldnn
 
 import com.intel.analytics.bigdl.mkl.Memory
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.BigDLSpecHelper
+import com.intel.analytics.bigdl.dllib.utils.BigDLSpecHelper
 
 class InputSpec extends BigDLSpecHelper {
   "Input" should "be correct" in {

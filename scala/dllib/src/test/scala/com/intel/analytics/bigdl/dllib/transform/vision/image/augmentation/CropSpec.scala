@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentat
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{BytesToMat, ImageFrame, LocalImageFrame}
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import org.opencv.imgcodecs.Imgcodecs
 import org.scalatest.{FlatSpec, Matchers}
 

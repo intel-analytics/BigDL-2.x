@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.torch
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.optim.{L2Regularizer, SGD}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.InternalConvLSTM3D
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.internal.InternalRecurrent
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}

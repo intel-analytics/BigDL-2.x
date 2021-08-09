@@ -20,12 +20,13 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.{DistributedDataSet, Mini
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.optim.{LBFGS, Loss, SGD, Trigger}
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.utils.{Engine, LoggerFilter, RandomGenerator}
-import com.intel.analytics.bigdl.utils._
+import com.intel.analytics.bigdl.dllib.utils.{Engine}
+import com.intel.analytics.bigdl.dllib.utils._
 import com.intel.analytics.bigdl.dllib.feature.pmem.DISK_AND_DRAM
 import com.intel.analytics.bigdl.dllib.feature.{DistributedDataSetWrapper, DistributedFeatureSet, FeatureSet}
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import com.intel.analytics.bigdl.dllib.zooKeras.models.InternalOptimizerUtil
+import com.intel.analytics.bigdl.utils._
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD

@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import org.scalatest._
 import org.slf4j.LoggerFactory
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.OpenCVMat
-import com.intel.analytics.bigdl.utils.zooUtils
+import com.intel.analytics.bigdl.dllib.utils.zooUtils
 import com.intel.analytics.bigdl.pipeline.inference.OpenVinoTest
 
 import scala.io.Source

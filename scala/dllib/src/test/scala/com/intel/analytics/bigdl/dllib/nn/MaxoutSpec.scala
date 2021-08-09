@@ -18,7 +18,8 @@ package com.intel.analytics.bigdl.dllib.nn
 
 import com.intel.analytics.bigdl.keras.KerasBaseSpec
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{Shape, TestUtils}
+import com.intel.analytics.bigdl.dllib.utils.{TestUtils}
+import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
 

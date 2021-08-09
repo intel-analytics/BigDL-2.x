@@ -19,21 +19,22 @@ package com.intel.analytics.bigdl.dllib.nnframes
 import java.io.File
 
 import com.intel.analytics.bigdl.dllib.feature.dataset.Sample
-import com.intel.analytics.bigdl.models.inception.Inception_v1
+import com.intel.analytics.bigdl.dllib.models.inception.Inception_v1
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.utils.{Engine, RandomGenerator, Shape}
+import com.intel.analytics.bigdl.dllib.utils.{Engine}
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.dllib.utils.visualization.{TrainSummary, ValidationSummary}
-import com.intel.analytics.bigdl.utils.NNContext
+import com.intel.analytics.bigdl.dllib.utils.NNContext
 import com.intel.analytics.bigdl.dllib.feature.common.{TensorToSample, _}
 import com.intel.analytics.bigdl.dllib.feature.image._
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.Merge.merge
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.{Dense, Input}
 import com.intel.analytics.bigdl.dllib.zooKeras.models.Model
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
+import com.intel.analytics.bigdl.utils._
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.MinMaxScaler

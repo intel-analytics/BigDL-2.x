@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.Ope
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape}
-import com.intel.analytics.bigdl.utils.NNContext
+import com.intel.analytics.bigdl.dllib.utils.NNContext
 import com.intel.analytics.bigdl.dllib.feature.image._
 import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{Variable, AutoGrad => A}
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper

@@ -21,13 +21,14 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractCriterion, Abstrac
 import com.intel.analytics.bigdl.dllib.keras.Sequential
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.utils.{Shape, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 import com.intel.analytics.bigdl.dllib.inference.Net
 import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{AutoGrad, Lambda, Parameter, Variable}
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
 import com.intel.analytics.bigdl.dllib.zooKeras.models.Model
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.utils._
 
 import scala.math.log
 import scala.reflect.ClassTag

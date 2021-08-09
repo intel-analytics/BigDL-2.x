@@ -16,7 +16,7 @@
 package com.intel.analytics.bigdl.dllib.nn.ops
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
 
 class Dilation2DSerialTest extends ModuleSerializationTest {

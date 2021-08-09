@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dllib.optim.SGD
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
-import com.intel.analytics.bigdl.utils.{Engine, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{Engine, T, Table}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.mutable.ArrayBuffer

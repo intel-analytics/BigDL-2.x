@@ -28,7 +28,8 @@ import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
 
 import scala.util.Random
-import com.intel.analytics.bigdl.utils.{Shape, T, TestUtils}
+import com.intel.analytics.bigdl.dllib.utils.{T, TestUtils}
+import com.intel.analytics.bigdl.utils.Shape
 
 @com.intel.analytics.bigdl.tags.Parallel
 class SpatialConvolutionSpec extends FlatSpec with Matchers {

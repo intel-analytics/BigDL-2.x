@@ -24,6 +24,7 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.{DistributedDataSet, Mini
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.optim.{DistriOptimizer, Trigger}
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.dllib.utils._
 import com.intel.analytics.bigdl.utils._
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext

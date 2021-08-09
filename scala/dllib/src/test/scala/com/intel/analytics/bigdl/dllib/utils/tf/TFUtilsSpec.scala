@@ -20,7 +20,7 @@ import java.nio.ByteOrder
 
 import com.google.protobuf.ByteString
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import org.tensorflow.framework.TensorProto
 

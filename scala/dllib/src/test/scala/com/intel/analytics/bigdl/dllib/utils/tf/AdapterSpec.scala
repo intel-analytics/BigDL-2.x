@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.utils.tf
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.nn.{Module, Reshape}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.{BigDLSpecHelper, T}
+import com.intel.analytics.bigdl.dllib.utils.{BigDLSpecHelper, T}
 import com.intel.analytics.bigdl.dllib.utils.tf.loaders.Adapter
 import org.scalatest.{FlatSpec, Matchers}
 

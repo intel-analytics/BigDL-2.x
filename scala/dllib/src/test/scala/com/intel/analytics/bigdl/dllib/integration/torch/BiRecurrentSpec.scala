@@ -25,7 +25,7 @@ import com.intel.analytics.bigdl.numeric.NumericDouble
 import com.intel.analytics.bigdl.dllib.optim.SGD
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.utils.RandomGenerator._
-import com.intel.analytics.bigdl.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 
 import scala.sys.process._
 import scala.util.Random

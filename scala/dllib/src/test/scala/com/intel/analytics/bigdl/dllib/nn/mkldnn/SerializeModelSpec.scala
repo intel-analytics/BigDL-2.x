@@ -21,7 +21,7 @@ import java.nio.file.{Files, Paths}
 
 import com.intel.analytics.bigdl.dllib.nn.Module
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.ResNet.DatasetType.ImageNet
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import org.scalatest.{FlatSpec, Matchers}
 
 class SerializeModelSpec extends FlatSpec with Matchers {

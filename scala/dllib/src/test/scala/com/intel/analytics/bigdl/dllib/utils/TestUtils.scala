@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.utils
+package com.intel.analytics.bigdl.dllib.utils
 
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -23,6 +23,7 @@ import com.intel.analytics.bigdl.dllib.keras.{InputLayer, KerasLayer, Sequential
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity, TensorModule}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+import com.intel.analytics.bigdl.utils.Shape
 import org.scalatest.exceptions.TestCanceledException
 
 import scala.reflect.ClassTag

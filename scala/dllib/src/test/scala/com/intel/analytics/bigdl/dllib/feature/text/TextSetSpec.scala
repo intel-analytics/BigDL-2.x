@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.feature.text
 import com.intel.analytics.bigdl.dllib.optim.{Adagrad, SGD}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.NumericFloat
 import com.intel.analytics.bigdl.utils.Shape
-import com.intel.analytics.bigdl.utils.NNContext
+import com.intel.analytics.bigdl.dllib.utils.NNContext
 import com.intel.analytics.bigdl.dllib.feature.common.Relation
 //import com.intel.analytics.zoo.models.textclassification.TextClassifier
 //import com.intel.analytics.zoo.models.textmatching.KNRM

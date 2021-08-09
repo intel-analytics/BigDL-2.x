@@ -20,8 +20,8 @@ import java.nio.file.{Files, Paths}
 import java.util.UUID
 
 import com.google.protobuf.GeneratedMessage
-import com.intel.analytics.bigdl.models.lenet.LeNet5
-import com.intel.analytics.bigdl.models.resnet.Convolution
+import com.intel.analytics.bigdl.dllib.models.lenet.LeNet5
+import com.intel.analytics.bigdl.dllib.models.resnet.Convolution
 import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.nn._
@@ -30,7 +30,7 @@ import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.NumericDouble
 import com.intel.analytics.bigdl.dllib.utils.caffe.{CaffeLoader, CaffePersister}
 import com.intel.analytics.bigdl.dllib.utils.tf._
-import com.intel.analytics.bigdl.utils.{Engine, File}
+import com.intel.analytics.bigdl.dllib.utils.{Engine, File}
 import com.intel.analytics.bigdl.dllib.utils.visualization.Summary
 import com.intel.analytics.bigdl.dllib.utils.visualization.tensorboard.{FileReader, FileWriter}
 import org.apache.commons.compress.utils.IOUtils

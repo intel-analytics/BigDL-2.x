@@ -17,7 +17,7 @@ package com.intel.analytics.bigdl.dllib.feature.image3d
 
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.dllib.utils.Engine
 import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.dllib.feature.image.ImageSet
 import org.apache.spark.SparkContext

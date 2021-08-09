@@ -17,7 +17,7 @@ package com.intel.analytics.bigdl.dllib.nn.tf
 
 import com.intel.analytics.bigdl.dllib.tensor.{FloatType, LongType, StringType, Tensor}
 import com.google.protobuf.{ByteString, CodedOutputStream}
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 import org.tensorflow.example._

@@ -21,7 +21,8 @@ import com.intel.analytics.bigdl.dllib.keras.{Dense, Input, InputLayer, Merge, M
 import com.intel.analytics.bigdl.dllib.keras.Merge.merge
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
-import com.intel.analytics.bigdl.utils.{MultiShape, Shape, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 
 import scala.util.Random
 

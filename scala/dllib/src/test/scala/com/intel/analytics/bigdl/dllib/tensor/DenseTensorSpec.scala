@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.tensor
 
 import breeze.linalg.{DenseMatrix => BrzDenseMatrix, DenseVector => BrzDenseVector}
 import com.intel.analytics.bigdl.dllib.nn.Linear
-import com.intel.analytics.bigdl.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import org.apache.spark.mllib.linalg.{DenseMatrix, DenseVector}
 import org.scalatest.{FlatSpec, Matchers}
 import spire.syntax.module

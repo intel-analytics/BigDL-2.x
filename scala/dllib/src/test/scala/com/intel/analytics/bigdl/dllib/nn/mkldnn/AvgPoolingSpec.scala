@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.dllib.nn.{SpatialAveragePooling, SpatialMaxPool
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.{InferencePhase, TrainingPhase}
 import com.intel.analytics.bigdl.dllib.tensor.{DnnTensor, Tensor}
-import com.intel.analytics.bigdl.utils.{BigDLSpecHelper, Engine, MklDnn}
+import com.intel.analytics.bigdl.dllib.utils.{BigDLSpecHelper, Engine, MklDnn}
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.bigdl.dllib.utils.intermediate.{BlasToIR, IRToDnn}
 import org.apache.commons.lang3.SerializationUtils

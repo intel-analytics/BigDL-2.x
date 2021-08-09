@@ -15,7 +15,7 @@
  */
 package com.intel.analytics.bigdl.dllib.nn
 
-import com.intel.analytics.bigdl.models.inception.Inception_v2
+import com.intel.analytics.bigdl.dllib.models.inception.Inception_v2
 import org.scalatest.{FlatSpec, Matchers}
 
 @com.intel.analytics.bigdl.tags.Parallel
