@@ -20,7 +20,8 @@ import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.optim.SGD
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
-import com.intel.analytics.bigdl.dllib.utils.{Engine, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.Engine
 import org.scalatest.{FlatSpec, Matchers}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
