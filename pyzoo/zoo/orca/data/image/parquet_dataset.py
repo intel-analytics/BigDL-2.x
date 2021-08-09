@@ -142,8 +142,6 @@ class ParquetIterableDataset(torch.utils.data.IterableDataset):
     """
     Creates a `Dataset` that includes only 1/`num_shards` of this dataset.
     The Dataset will contain all elements of total dataset whose index % num_shards = rank.
-        e.g. the total dataset has 6 chunks, num_shard is 3, the rank 0(worker 0) will contain
-        index 0, 3 of the dataset.
     """
 
     def __init__(self, row_group, schema, num_shards=None,
