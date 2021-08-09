@@ -13,30 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 import os
 import hashlib
+import numpy as np
+from functools import reduce
 
+import pyspark.sql.functions as F
+from pyspark.sql import Row, Window
 from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, DecimalType, \
     DoubleType, ArrayType, DataType, StructType, StringType, StructField
-from pyspark.ml import Pipeline
-from pyspark.ml.feature import MinMaxScaler
-from pyspark.ml.feature import VectorAssembler
-
 from pyspark.sql.functions import col as pyspark_col, concat, udf, array, broadcast, \
     lit, rank, monotonically_increasing_id
-from pyspark.sql import Row, Window
-import pyspark.sql.functions as F
-from pyspark.sql.window import Window
+
+from pyspark.ml import Pipeline
+from pyspark.ml.feature import MinMaxScaler, VectorAssembler, Bucketizer
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
-
-
-from functools import reduce
-from pyspark.ml.feature import Bucketizer
-
-import numpy as np
-import copy
 
 
 JAVA_INT_MIN = -2147483648
@@ -1115,8 +1109,6 @@ class FeatureTable(Table):
         vector_cols = [columns[i] for i in range(len(columns)) if types[i] == "vector"]
 
         tbl = self
-        
-        import numpy as np
 
         def normalize_array(c_min, c_max):
 
@@ -1483,7 +1475,7 @@ class FeatureTable(Table):
                     "target column " + target_col + " should be in target_mean " + str(target_mean)
                 target_mean_dict[target_col] = target_mean[target_col]
         else:
-            global_mean_list = [F.mean(F.col(target_col)).alias(target_col)
+            global_mean_list = [F.mean(pyspark_col(target_col)).alias(target_col)
                                 for target_col in target_cols]
             target_mean_dict = self.df.select(*global_mean_list).collect()[0].asDict()
         for target_col in target_mean_dict:
@@ -1497,7 +1489,7 @@ class FeatureTable(Table):
                 if fold_seed is None:
                     result_df = result_df.withColumn(
                         fold_col,
-                        F.monotonically_increasing_id() % F.lit(kfold)
+                        monotonically_increasing_id() % lit(kfold)
                     )
                 else:
                     result_df = result_df.withColumn(
