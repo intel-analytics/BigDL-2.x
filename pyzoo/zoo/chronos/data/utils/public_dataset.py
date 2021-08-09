@@ -19,9 +19,10 @@ import warnings
 
 import tqdm
 import pandas as pd
+import numpy as np
 from zoo.chronos.data.tsdataset import TSDataset
 
-warnings.filterwarnings('ignore', category=FutureWarning)
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 DATASET_NAME = {'network_traffic': ['2018%02d.agr' % i for i in range(1, 13)]
                 + ['2019%02d.agr' % i for i in range(1, 13)],
@@ -47,8 +48,8 @@ class PublicDataset:
         self.name = name
         self.redownload = redownload
         self.with_split = kwargs.get('with_split', False)
-        self.val_ratio = 0 if not self.with_split else kwargs['val_ratio']
-        self.test_ratio = 0 if not self.with_split else kwargs['test_ratio']
+        self.val_ratio = 0 if not self.with_split else kwargs.get('val_ratio', 0)
+        self.test_ratio = 0 if not self.with_split else kwargs.get('test_ratio', 0)
 
         self.url = BASE_URL[self.name]
         self.dir_path = os.path.join(os.path.expanduser(path), self.name)
@@ -153,6 +154,7 @@ class PublicDataset:
         self.df.reset_index(inplace=True, drop=True)
         self.df["time_step"] = \
             pd.to_datetime(self.df["time_step"], unit='s', origin=pd.Timestamp('2018-01-01'))
+        self.df.cpu_usage = self.df.cpu_usage.astype(np.float)
         return self
 
     def preprocess_fsi(self):
@@ -183,6 +185,7 @@ class PublicDataset:
                 _is_first_columns = False
 
         self.df = pd.read_csv(self.final_file_path, usecols=[0, 5])
+        self.df.y = self.df.y.astype(np.float)
         return self
 
     def preprocess_nyc_taxi(self):
@@ -194,9 +197,11 @@ class PublicDataset:
             with open(raw_csv_name, 'rb') as src, open(self.final_file_path, 'wb') as dst:
                 dst.write(src.read())
         self.df = pd.read_csv(self.final_file_path)
+        self.df.value = self.df.value.astype(np.float)
         return self
 
-    def get_tsdata(self, dt_col,
+    def get_tsdata(self,
+                   dt_col,
                    target_col,
                    extra_feature=None,
                    id_col=None):
