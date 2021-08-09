@@ -138,7 +138,7 @@ class ParquetDataset:
         raise NotImplementedError()
 
 
-class ParquetIterableDataset:
+class ParquetIterableDataset(torch.utils.data.IterableDataset):
     """
     Creates a `Dataset` that includes only 1/`num_shards` of this dataset.
     The Dataset will contain all elements of total dataset whose index % num_shards = rank.
@@ -147,8 +147,8 @@ class ParquetIterableDataset:
     """
 
     def __init__(self, row_group, schema, num_shards=None,
-                 rank=None, transform=None):
-        super(ParquetDataset).__init__()
+                 rank=None, transforms=None):
+        super(ParquetIterableDataset).__init__()
         self.row_group = row_group
 
         # To get the indices we expect
@@ -158,7 +158,7 @@ class ParquetIterableDataset:
         self.rank = rank
         self.datapiece = None
 
-        self.transform = transform
+        self.transforms = transforms
         
         filter_row_group_indexed = []
 
