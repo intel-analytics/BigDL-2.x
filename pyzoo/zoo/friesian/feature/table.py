@@ -1017,15 +1017,16 @@ class FeatureTable(Table):
     def min_max_scale(self, columns, min=0.0, max=1.0):
         """
         Rescale each column individually to a common range [min, max] linearly using
-        column summary statistics, which is also known as min-max normalization or Rescaling.
+        column summary statistics, which is also known as min-max normalization or rescaling.
 
-        :param columns: list of column names
+        :param columns: str or a list of str, the column(s) to be rescaled.
         :param min: Lower bound after transformation, shared by all columns. 0.0 by default.
         :param max: Upper bound after transformation, shared by all columns. 1.0 by default.
 
-        :return: new FeatureTable with scaled columns,
-        and a dictionary of original min, original max values of each columns
+        :return: A tuple of a new FeatureTable with rescaled column(s), and a dict of the
+                 original min and max values of the input column(s).
         """
+        columns = str_to_list(columns, "columns")
         df = self.df
         types = [x[1] for x in self.df.select(*columns).dtypes]
         scalar_cols = [columns[i] for i in range(len(columns))
@@ -1048,12 +1049,11 @@ class FeatureTable(Table):
             # Pipeline of VectorAssembler and MinMaxScaler
             pipeline = Pipeline(stages=[assembler, scaler])
 
-            # Fitting pipeline on dataframe
+            # Fitting pipeline on DataFrame
             model = pipeline.fit(df)
             df = model.transform(df) \
                 .withColumn("scaled_list", tolist(pyspark_col("scaled"))) \
                 .drop("vect").drop("scaled")
-            # TODO: Save model.stages[1].originalMax/originalMin as mapping for inference
             for i in range(len(scalar_cols)):
                 df = df.withColumn(scalar_cols[i], pyspark_col("scaled_list")[i])
             df = df.drop("scaled_list")
@@ -1090,11 +1090,12 @@ class FeatureTable(Table):
 
     def transform_min_max_scale(self, columns, min_max_dict):
         """
-        Rescale each column individually with given [min, max] range of each column.
+        Rescale each column individually with the given [min, max] range of each column.
 
-        :param columns: str or a list of str. The column(s) to be rescaled.
-        :param min_max_dict: a dictionary of min, max values of each column.
-         The key is the column name, and the value is (min, max) of this column.
+        :param columns: str or a list of str, the column(s) to be rescaled.
+        :param min_max_dict: dict, the key is the column name, and the value is the
+               tuple of min and max values of this column.
+
         :return: A new FeatureTable with rescaled column(s).
         """
         if not isinstance(columns, list):
@@ -1231,7 +1232,7 @@ class FeatureTable(Table):
         Join a FeatureTable with another FeatureTable.
 
         :param table: A FeatureTable.
-        :param on: str or a list of str, name(s) of column(s) to join.
+        :param on: str or a list of str, the column(s) to join.
         :param how: str, default is inner. Must be one of: inner, cross, outer, full,
                fullouter, full_outer, left, leftouter, left_outer, right, rightouter,
                right_outer, semi, leftsemi, left_semi, anti, leftanti and left_anti.
