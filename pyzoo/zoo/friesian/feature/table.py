@@ -635,76 +635,6 @@ class Table:
         df = df.filter(pyspark_col('rank') == 1).drop('rank', 'id')
         return self._clone(df)
 
-    def cut_bins(self, columns, bins, labels=None, out_cols=None, drop=True):
-        """
-        Segment values of the target column(s) into bins, which is also known as bucketization.
-
-        :param columns: str or a list of str, the numeric column(s) to segment into intervals.
-        :param bins: int, a list of int or dict.
-               If bins is a list, it defines the bins to be used. **NOTE** that for bins of
-               length n, there will be **n+1** buckets.
-               For example, if bins is [0, 6, 18, 60], the resulting buckets are
-               (-inf, 0), [0, 6), [6, 18), [18, 60), [60, inf).
-               If bins is an int, it defines the number of equal-width bins in the range of all
-               the column values, i.e. from column min to max. **NOTE** that there will be
-               **bins+2** resulting buckets in total to take the values below min and beyond max
-               into consideration.
-               For examples, if bins is 2, the resulting buckets are
-               (-inf, col_min), [col_min, (col_min+col_max)/2), [(col_min+col_max)/2, col_max),
-               [col_max, inf).
-               If bins is a dict, the key should be the input column(s) and the value should be
-               int or a list of int to specify the bins as described above.
-        :param labels: a list of str or dict, the labels for the returned bins.
-               Default is None, and in this case the new bin column would use the integer index to
-               encode the interval. Index would start from 0.
-               If labels is a list of str, then the corresponding label would be used to replace
-               the integer index at the same position. The number of elements in labels should be
-               the same as the number of bins.
-               If labels is a dict, the key should be the input column(s) and the value should be a
-               list of str as described above.
-        :param out_cols: str, a list of str or dict, the name of output bucketized column(s).
-               Default is None, and in this case the name of each output column will be "column_bin"
-               for each input column.
-               If out_cols is a dict, the key should be the input column(s) and the value should be
-               the corresponding output column.
-        :param drop: boolean, whether to drop the original column(s). Default is True.
-
-        :return: A new FeatureTable with feature bucket column(s).
-        """
-        columns = str_to_list(columns, "columns")
-        check_col_exists(self.df, columns)
-        df_buck = self.df
-        for column in columns:
-            out_col = out_cols[column] if isinstance(out_cols, dict) else out_cols
-            bin = bins[column] if isinstance(bins, dict) else bins
-            label = labels[column] if isinstance(labels, dict) else labels
-            if not check_column_numeric(self.df, column):
-                raise ValueError("{} should be a numeric column".format(column))
-            if out_col is None:
-                out_col = column + "_bin"
-            if isinstance(bin, int):
-                col_max = self.get_stats(column, "max")[column]
-                col_min = self.get_stats(column, "min")[column]
-                bin = np.linspace(col_min, col_max, bin+1, endpoint=True).tolist()
-            elif not isinstance(bin, list):
-                raise ValueError("bins should int, a list of int or dict with column name "
-                                 "as the key and int or a list of int as the value")
-            bin = [float("-inf")] + bin + [float("inf")]
-            bucketizer = Bucketizer(splits=bin, inputCol=column, outputCol=out_col)
-            df_buck = bucketizer.setHandleInvalid("keep").transform(df_buck)
-            if label is not None:
-                assert isinstance(label, list),\
-                    "labels should be a list of str or a dict with column name as the " \
-                    "key and a list of str as the value"
-                assert len(label) == len(bin) - 1, \
-                    "labels should be of length {} to match bins".format(len(bin) - 1)
-                to_label = {i: l for (i, l) in enumerate(label)}
-                udf_label = udf(lambda i: to_label[i], StringType())
-                df_buck = df_buck.withColumn(out_col, udf_label(out_col))
-            if drop:
-                df_buck = df_buck.drop(column)
-        return self._clone(df_buck)
-
     def append_column(self, name, value):
         """
         Append a column with a constant value to the Table.
@@ -1708,6 +1638,76 @@ class FeatureTable(Table):
                 result_df = result_df.withColumn(out, diff_func(column, out))
 
         return FeatureTable(result_df)
+
+    def cut_bins(self, columns, bins, labels=None, out_cols=None, drop=True):
+        """
+        Segment values of the target column(s) into bins, which is also known as bucketization.
+
+        :param columns: str or a list of str, the numeric column(s) to segment into intervals.
+        :param bins: int, a list of int or dict.
+               If bins is a list, it defines the bins to be used. **NOTE** that for bins of
+               length n, there will be **n+1** buckets.
+               For example, if bins is [0, 6, 18, 60], the resulting buckets are
+               (-inf, 0), [0, 6), [6, 18), [18, 60), [60, inf).
+               If bins is an int, it defines the number of equal-width bins in the range of all
+               the column values, i.e. from column min to max. **NOTE** that there will be
+               **bins+2** resulting buckets in total to take the values below min and beyond max
+               into consideration.
+               For examples, if bins is 2, the resulting buckets are
+               (-inf, col_min), [col_min, (col_min+col_max)/2), [(col_min+col_max)/2, col_max),
+               [col_max, inf).
+               If bins is a dict, the key should be the input column(s) and the value should be
+               int or a list of int to specify the bins as described above.
+        :param labels: a list of str or dict, the labels for the returned bins.
+               Default is None, and in this case the new bin column would use the integer index to
+               encode the interval. Index would start from 0.
+               If labels is a list of str, then the corresponding label would be used to replace
+               the integer index at the same position. The number of elements in labels should be
+               the same as the number of bins.
+               If labels is a dict, the key should be the input column(s) and the value should be a
+               list of str as described above.
+        :param out_cols: str, a list of str or dict, the name of output bucketized column(s).
+               Default is None, and in this case the name of each output column will be "column_bin"
+               for each input column.
+               If out_cols is a dict, the key should be the input column(s) and the value should be
+               the corresponding output column.
+        :param drop: boolean, whether to drop the original column(s). Default is True.
+
+        :return: A new FeatureTable with feature bucket column(s).
+        """
+        columns = str_to_list(columns, "columns")
+        check_col_exists(self.df, columns)
+        df_buck = self.df
+        for column in columns:
+            out_col = out_cols[column] if isinstance(out_cols, dict) else out_cols
+            bin = bins[column] if isinstance(bins, dict) else bins
+            label = labels[column] if isinstance(labels, dict) else labels
+            if not check_column_numeric(self.df, column):
+                raise ValueError("{} should be a numeric column".format(column))
+            if out_col is None:
+                out_col = column + "_bin"
+            if isinstance(bin, int):
+                col_max = self.get_stats(column, "max")[column]
+                col_min = self.get_stats(column, "min")[column]
+                bin = np.linspace(col_min, col_max, bin+1, endpoint=True).tolist()
+            elif not isinstance(bin, list):
+                raise ValueError("bins should int, a list of int or dict with column name "
+                                 "as the key and int or a list of int as the value")
+            bin = [float("-inf")] + bin + [float("inf")]
+            bucketizer = Bucketizer(splits=bin, inputCol=column, outputCol=out_col)
+            df_buck = bucketizer.setHandleInvalid("keep").transform(df_buck)
+            if label is not None:
+                assert isinstance(label, list),\
+                    "labels should be a list of str or a dict with column name as the " \
+                    "key and a list of str as the value"
+                assert len(label) == len(bin) - 1, \
+                    "labels should be of length {} to match bins".format(len(bin) - 1)
+                to_label = {i: l for (i, l) in enumerate(label)}
+                udf_label = udf(lambda i: to_label[i], StringType())
+                df_buck = df_buck.withColumn(out_col, udf_label(out_col))
+            if drop:
+                df_buck = df_buck.drop(column)
+        return self._clone(df_buck)
 
 
 class StringIndex(Table):
