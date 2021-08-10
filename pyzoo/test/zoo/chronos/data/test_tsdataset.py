@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 import pytest
 import numpy as np
 import pandas as pd
 import random
+import tempfile
+import os
+import shutil
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.chronos.data import TSDataset
@@ -114,6 +116,27 @@ class TestTSDataset(ZooTestCase):
             tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col=["value1"],
                                            extra_feature_col="extra feature", id_col="id")
 
+    def test_tsdataset_from_parquet(self):
+        df = get_ts_df()
+
+        configs = dict(dt_col="datetime",
+                       target_col="value",
+                       extra_feature_col=["extra feature"],
+                       id_col="id")
+        tsdata_pd = TSDataset.from_pandas(df, **configs)
+
+        temp = tempfile.mkdtemp()
+        try:
+            path = os.path.join(temp, "test.parquet")
+            df.to_parquet(path)
+
+            tsdata_pq = TSDataset.from_parquet(path, **configs)
+
+            pd.testing.assert_frame_equal(tsdata_pd.to_pandas(), tsdata_pq.to_pandas(),
+                                          check_like=True)
+        finally:
+            shutil.rmtree(temp)
+
     def test_tsdataset_initialization_multiple(self):
         df = get_multi_id_ts_df()
         # legal input
@@ -169,7 +192,7 @@ class TestTSDataset(ZooTestCase):
         with pytest.raises(RuntimeError):
             tsdata.to_numpy()
 
-        # roll train
+        # roll train, diff input.
         tsdata.roll(lookback=lookback, horizon=horizon)
         x, y = tsdata.to_numpy()
         assert x.shape == (len(df)-lookback-horizon+1, lookback, 2)
@@ -180,6 +203,7 @@ class TestTSDataset(ZooTestCase):
         assert x.shape == (len(df)-lookback-horizon+1, lookback, 2)
         assert y.shape == (len(df)-lookback-horizon+1, horizon, 1)
 
+        # add extra_feature_col.
         tsdata.roll(lookback=lookback, horizon=horizon,
                     feature_col=["extra feature"], target_col="value")
         x, y = tsdata.to_numpy()
@@ -204,7 +228,7 @@ class TestTSDataset(ZooTestCase):
         assert x.shape == (len(df)-lookback-horizon+1, lookback, 1)
         assert y.shape == (len(df)-lookback-horizon+1, horizon, 1)
 
-        # roll test
+        # roll test.
         horizon = 0
         lookback = random.randint(1, 20)
 
@@ -237,6 +261,30 @@ class TestTSDataset(ZooTestCase):
         x, y = tsdata.to_numpy()
         assert x.shape == ((50-lookback-horizon+1)*2, lookback, 2)
         assert y.shape == ((50-lookback-horizon+1)*2, horizon, 1)
+
+        # horizon list.
+        horizon_list = [1, 3, 5]
+        tsdata.roll(lookback=lookback, horizon=horizon_list)
+        x, y = tsdata.to_numpy()
+        assert x.shape == ((50-lookback-max(horizon_list)+1)*2, lookback, 2)
+        assert y.shape == ((50-lookback-max(horizon_list)+1)*2, len(horizon_list), 1)
+
+        horizon_list = [1, 5, 9]
+        tsdata.roll(lookback=lookback, horizon=horizon_list, id_sensitive=True)
+        x, y = tsdata.to_numpy()
+        assert x.shape == ((50-lookback-max(horizon_list)+1), lookback, 4)
+        assert y.shape == ((50-lookback-max(horizon_list)+1), len(horizon_list), 2)
+
+        # target multi.
+        tsdata = TSDataset.from_pandas(df,
+                                       dt_col="datetime",
+                                       target_col=["value", "extra feature"],
+                                       id_col="id")
+        tsdata.roll(lookback=lookback, horizon=horizon, id_sensitive=False)
+        x, y = tsdata.to_numpy()
+        assert x.shape == ((50-lookback-horizon+1)*2, lookback, 2)
+        assert y.shape == ((50-lookback-horizon+1)*2, horizon, 2)
+
         tsdata._check_basic_invariants()
 
     def test_tsdataset_roll_order(self):
@@ -259,6 +307,68 @@ class TestTSDataset(ZooTestCase):
         assert x.shape == (1, 1, 6) and y.shape == (1, 1, 2)
         assert np.array_equal(x, np.array([[[1.9, 2.3, 1, 2, 0, 9]]]))
         assert np.array_equal(y, np.array([[[2.4, 2.6]]]))
+
+    def test_tsdataset_to_torch_loader_roll(self):
+        df_single_id = get_ts_df()
+        df_multi_id = get_multi_id_ts_df()
+        for df in [df_single_id, df_multi_id]:
+            horizon = random.randint(1, 10)
+            lookback = random.randint(1, 20)
+            batch_size = 32
+
+            tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                           extra_feature_col=["extra feature"], id_col="id")
+
+            # train
+            torch_loader = tsdata.to_torch_data_loader(batch_size=32,
+                                                       roll=True,
+                                                       lookback=lookback,
+                                                       horizon=horizon)
+            for x_batch, y_batch in torch_loader:
+                assert tuple(x_batch.size()) == (batch_size, lookback, 2)
+                assert tuple(y_batch.size()) == (batch_size, horizon, 1)
+                break
+
+            # test
+            torch_loader = tsdata.to_torch_data_loader(batch_size=32,
+                                                       roll=True,
+                                                       lookback=lookback,
+                                                       horizon=0)
+            for x_batch in torch_loader:
+                assert tuple(x_batch.size()) == (batch_size, lookback, 2)
+                break
+
+            # specify feature_col
+            torch_loader = tsdata.to_torch_data_loader(batch_size=32,
+                                                       roll=True,
+                                                       lookback=lookback,
+                                                       horizon=horizon,
+                                                       feature_col=[])
+            for x_batch, y_batch in torch_loader:
+                assert tuple(x_batch.size()) == (batch_size, lookback, 1)
+                assert tuple(y_batch.size()) == (batch_size, horizon, 1)
+                break
+
+    def test_tsdataset_to_torch_loader(self):
+        df = get_ts_df()
+        horizon = random.randint(1, 10)
+        lookback = random.randint(1, 20)
+        batch_size = 32
+
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                       extra_feature_col=["extra feature"], id_col="id")
+
+        with pytest.raises(RuntimeError):
+            tsdata.to_torch_data_loader()
+
+        tsdata.roll(lookback=lookback, horizon=horizon)
+        loader = tsdata.to_torch_data_loader(batch_size=32,
+                                             lookback=lookback,
+                                             horizon=horizon)
+        for x_batch, y_batch in loader:
+            assert tuple(x_batch.size()) == (batch_size, lookback, 2)
+            assert tuple(y_batch.size()) == (batch_size, horizon, 1)
+            break
 
     def test_tsdataset_imputation(self):
         for val in ["last", "const", "linear"]:
@@ -469,8 +579,7 @@ class TestTSDataset(ZooTestCase):
             _, unscaled_y_test_reproduce = tsdata_test.to_numpy()
 
             assert_array_almost_equal(unscaled_pred, unscaled_y_test_reproduce)
-            assert_array_almost_equal(
-                unscaled_y_test, unscaled_y_test_reproduce)
+            assert_array_almost_equal(unscaled_y_test, unscaled_y_test_reproduce)
 
             tsdata._check_basic_invariants()
 
@@ -479,7 +588,7 @@ class TestTSDataset(ZooTestCase):
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
         tsdata.resample('2D', df["datetime"][0], df["datetime"][df.shape[0]-1])
-        assert len(tsdata.to_pandas()) == df.shape[0] // 2
+        assert len(tsdata.to_pandas()) == (df.shape[0] + 1) // 2
         tsdata._check_basic_invariants()
 
     def test_tsdataset_resample_multiple(self):
@@ -558,7 +667,7 @@ class TestTSDataset(ZooTestCase):
         assert tsdata_test.target_col[0] != "new value"
 
     def test_tsdataset_global_feature(self):
-        for val in ["minimal", "comprehensive", "efficient"]:
+        for val in ["minimal"]:
             df = get_ts_df()
             tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                            extra_feature_col=["extra feature"], id_col="id")
@@ -571,6 +680,10 @@ class TestTSDataset(ZooTestCase):
                                        extra_feature_col=["extra feature"], id_col="id")
         tsdata.gen_global_feature(settings="minimal")
         tsdata._check_basic_invariants()
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                       extra_feature_col=["extra feature"], id_col="id")
+        tsdata.gen_global_feature(settings="minimal", n_jobs=2)
+        tsdata._check_basic_invariants()
 
     def test_tsdataset_rolling_feature_multiple(self):
         df = get_multi_id_ts_df()
@@ -579,6 +692,10 @@ class TestTSDataset(ZooTestCase):
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
         tsdata.gen_rolling_feature(settings="minimal", window_size=lookback)
+        tsdata._check_basic_invariants()
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                       extra_feature_col=["extra feature"], id_col="id")
+        tsdata.gen_rolling_feature(settings="minimal", window_size=lookback, n_jobs=2)
         tsdata._check_basic_invariants()
 
         # roll train
@@ -594,3 +711,26 @@ class TestTSDataset(ZooTestCase):
         assert y.shape == ((50-lookback-horizon+1), horizon, 2)
 
         tsdata._check_basic_invariants()
+
+    def test_check_scale_sequence(self):
+        df = get_multi_id_ts_df()
+        # with split is True.
+        td_train, td_valid, td_test = TSDataset.from_pandas(df, dt_col="datetime",
+                                                            target_col="value",
+                                                            extra_feature_col=[
+                                                                "extra feature"],
+                                                            id_col="id",
+                                                            with_split=True,
+                                                            val_ratio=0.1,
+                                                            test_ratio=0.1)
+        from sklearn.preprocessing import StandardScaler
+        stand = StandardScaler()
+        with pytest.raises(AssertionError):
+            for tsdata in [td_train, td_valid, td_test]:
+                tsdata.scale(stand, fit=False)
+            tsdata._check_basic_invariants()
+
+        # remove due to the possible large cost on test sys
+        # with pytest.raises(AssertionError):
+        #     tsdata.gen_global_feature(settings="minimal")\
+        #           .gen_rolling_feature(settings="minimal", window_size=5)
