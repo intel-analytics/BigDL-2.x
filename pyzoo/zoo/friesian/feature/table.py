@@ -1176,7 +1176,11 @@ class FeatureTable(Table):
         :return: A new FeatureTable after column transformation.
         """
         udf_func = udf(func, dtype)
-        df = self.df.withColumn(out_col, udf_func(pyspark_col(in_col)))
+        if isinstance(in_col, str):
+            df = self.df.withColumn(out_col, udf_func(pyspark_col(in_col)))
+        else:
+            assert isinstance(in_col, list), "in_col must be a s"
+            df = self.df.withColumn(out_col, udf_func(array(in_col)))
         return FeatureTable(df)
 
     def join(self, table, on=None, how=None, lsuffix=None, rsuffix=None):
