@@ -1,0 +1,85 @@
+# This is a general manifest template for running Bash and core utility programs,
+# including ls, cat, cp, date, and rm.
+
+loader.preload = "file:{{ graphene.libos }}"
+libos.entrypoint = "{{ execdir }}/bash"
+loader.log_level = "error"
+
+# loader.env.LD_LIBRARY_PATH = Error: Could not find or load main class com.mycompany.app.Testls"/lib:{{ arch_libdir }}:/usr{{ arch_libdir }}"
+
+loader.env.LD_LIBRARY_PATH = "/lib:{{ arch_libdir }}:/usr/{{ arch_libdir }}:{{ jdk_home }}:{{ jdk_home }}/lib/amd64/jli"
+loader.env.PATH = "{{ execdir }}"
+
+loader.env.JAVA_HOME = "{{ jdk_home }}"
+loader.env.JAVA_OPTS = "'-Djava.library.path={{ jdk_home }}/lib -Dsun.boot.library.path={{ jdk_home }}/lib'"
+loader.env.NEW_JAVA_HOME = "{{ jdk_home }}"
+
+
+loader.insecure__use_cmdline_argv = true
+
+fs.mount.lib.type = "chroot"
+fs.mount.lib.path = "/lib"
+fs.mount.lib.uri = "file:{{ graphene.runtimedir() }}"
+
+fs.mount.lib64.type = "chroot"
+fs.mount.lib64.path = "{{ arch_libdir }}"
+fs.mount.lib64.uri = "file:{{ arch_libdir }}"
+
+fs.mount.usr_lib.type = "chroot"
+fs.mount.usr_lib.path = "/usr/lib"
+fs.mount.usr_lib.uri = "file:/usr/lib"
+
+fs.mount.opt.type= "chroot"
+fs.mount.opt.path= "/opt"
+fs.mount.opt.uri= "file:/opt"
+
+
+fs.mount.work.type = "chroot"
+fs.mount.work.path = "{{ work_dir }}"
+fs.mount.work.uri = "file:{{ work_dir }}"
+
+fs.mount.bin.type = "chroot"
+# fs.mount.bin.path = "{{ execdir }}"
+
+fs.mount.bin.path = "/bin"
+fs.mount.bin.uri = "file:/bin"
+
+sgx.nonpie_binary = true
+sgx.enclave_size = "65536M"
+sgx.thread_num = 128
+
+sgx.trusted_files.execs = "file:{{ execdir }}/"
+sgx.trusted_files.runtime = "file:{{ graphene.runtimedir() }}/"
+sgx.trusted_files.arch_libdir = "file:{{ arch_libdir }}/"
+
+sgx.trusted_files.usr_arch_libdir = "file:/usr/{{ arch_libdir }}/"
+sgx.trusted_files.java = "file:{{ jdk_home }}/bin/java"
+
+sgx.allowed_files.scripts = "file:scripts/"
+sgx.allowed_files.jdk       = "file:{{ jdk_home }}"
+
+sgx.allowed_files.workfile = "file:{{ work_dir }}"
+sgx.trusted_files.workfile="file:{{ work_dir }}"
+
+
+sgx.trusted_files.jdk_libjli = "file:{{ jdk_home }}/lib/amd64/jli/libjli.so"
+sgx.trusted_files.jdk_jvmcfg = "file:{{ jdk_home }}/jre/lib/amd64/jvm.cfg"
+sgx.trusted_files.jdk_libverify = "file:{{ jdk_home }}/jre/lib/amd64/libverify.so"
+sgx.trusted_files.jdk_libjava = "file:{{ jdk_home }}/jre/lib/amd64/libjava.so"
+sgx.trusted_files.jdk_libzip = "file:{{ jdk_home }}/jre/lib/amd64/libzip.so"
+#sgx.trusted_files.jdk_modules = "file:{{ jdk_home }}/lib/modules"
+#sgx.trusted_files.jdk_libjimage = "file:{{ jdk_home }}/lib/libjimage.so"
+sgx.trusted_files.jdk_libnet = "file:{{ jdk_home }}/jre/lib/amd64/libnet.so"
+sgx.trusted_files.jdk_libnio = "file:{{ jdk_home }}/jre/lib/amd64/libnio.so"
+#sgx.trusted_files.jdk_librmi = "file:{{ jdk_home }}/jre/lib/amd64/librmi.so"
+sgx.trusted_files.jdk_libjawt = "file:{{ jdk_home }}/jre/lib/amd64/libjawt.so"
+sgx.trusted_files.jdk_libawt = "file:{{ jdk_home }}/jre/lib/amd64/libawt.so"
+#sgx.trusted_files.jdk_libextnet = "file:{{ jdk_home }}/lib/libextnet.so"
+#sgx.trusted_files.jdk_libjavajpeg = "file:{{ jdk_home }}/lib/libjavajpeg.so"
+sgx.trusted_files.jdk_libattach = "file:{{ jdk_home }}/jre/lib/amd64/libattach.so"
+sgx.trusted_files.jdk_libdt_socket = "file:{{ jdk_home }}/jre/lib/amd64/libdt_socket.so"
+sgx.trusted_files.jdk_libfontmanager = "file:{{ jdk_home }}/jre/lib/amd64/libfontmanager.so"
+#sgx.trusted_files.jdk_libprefs = "file:{{ jdk_home }}/lib/libprefs.so"
+sgx.trusted_files.jdk_libjvm = "file:{{ jdk_home }}/jre/lib/amd64/server/libjvm.so"
+sgx.trusted_files.jdk_libjsig = "file:{{ jdk_home }}/jre/lib/amd64/server/libjsig.so"
+

@@ -1,10 +1,10 @@
-loader.preload = "file:{{ GRAPHENEDIR }}/Runtime/libsysdb.so"
-libos.entrypoint = "file:{{ JDK_HOME }}/bin/java"
+loader.preload = "file:{{ GRAPHENEDIR }}/build/LibOS/shim/src/libsysdb.so"
+libos.entrypoint = "{{ JDK_HOME }}/bin/java"
 
 loader.log_level = "all"
 
-loader.insecure_disable_aslr = 1
-loader.insecure__use_cmdline_argv = 1
+loader.insecure_disable_aslr = true
+loader.insecure__use_cmdline_argv = true
 
 loader.pal_internal_mem_size = "512M"
 
@@ -23,7 +23,8 @@ loader.env.SPARK_MASTER_OPTS = "'-Dspark.worker.timeout=60'"
 
 fs.mount.lib.type = "chroot"
 fs.mount.lib.path = "/lib"
-fs.mount.lib.uri = "file:{{ GRAPHENEDIR }}/Runtime"
+# f s.mount.lib.uri = "file:{{ GRAPHENEDIR }}/Runtime"
+fs.mount.lib.uri = "file:{{ graphene.runtimedir() }}"
 
 fs.mount.lib2.type = "chroot"
 fs.mount.lib2.path = "{{ ARCH_LIBDIR }}"
@@ -57,7 +58,7 @@ fs.mount.work.type = "chroot"
 fs.mount.work.path = "{{ WORK_DIR }}"
 fs.mount.work.uri = "file:{{ WORK_DIR }}"
 
-sgx.enclave_size = "{{ G_SGX_SIZE }}"
+sgx.enclave_size = "4096M"
 sgx.thread_num = 1024
 
 sgx.allow_file_creation   = 1
@@ -77,7 +78,7 @@ sgx.trusted_files.libm = "file:{{ GRAPHENEDIR }}/Runtime/libm.so.6"
 sgx.trusted_files.libdl = "file:{{ GRAPHENEDIR }}/Runtime/libdl.so.2"
 sgx.trusted_files.librt = "file:{{ GRAPHENEDIR }}/Runtime/librt.so.1"
 sgx.trusted_files.libpthread = "file:{{ GRAPHENEDIR }}/Runtime/libpthread.so.0"
-
+sgx.trusted_files.runtime="file:{{ graphene.runtimedir() }}"
 # Name Service Switch (NSS) libraries (Glibc dependencies)
 sgx.trusted_files.libnsscompat = "file:{{ ARCH_LIBDIR }}/libnss_compat.so.2"
 sgx.trusted_files.libnssfiles  = "file:{{ ARCH_LIBDIR }}/libnss_files.so.2"

@@ -6,11 +6,11 @@ G_SGX_SIZE ?= 8G
 G_SGX_THREAD_NUM ?= 256
 
 THIS_DIR ?= /ppml/trusted-big-data-ml
-JDK_HOME ?= /opt/jdk8
+JDK_HOME ?= /usr
 SPARK_LOCAL_IP ?= 127.0.0.1
 SPARK_USER ?= root
 SPARK_HOME ?= $(THIS_DIR)/work/spark-2.4.3/
-WORK_DIR ?= $(THIS_DIR)/work
+WORK_DIR ?= /home/sdp/hangrui/myzoo/analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene/bashexm
 
 ifeq ($(DEBUG),1)
 GRAPHENE_LOG_LEVEL = debug
@@ -28,7 +28,7 @@ include $(GRAPHENEDIR)/Scripts/Makefile.configs
 
 #### java
 java.manifest: java.manifest.template
-         /graphene/python/graphene-manifest \
+	graphene-manifest \
             -DGRAPHENEDIR=$(GRAPHENEDIR) \
             -DGRAPHENEDEBUG=$(GRAPHENEDEBUG) \
             -DARGV0_OVERRIDE=java \
@@ -44,7 +44,7 @@ java.manifest: java.manifest.template
             $< > $@
 
 java.manifest.sgx: java.manifest
-        $(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-sign \
+	graphene-sgx-sign \
                 -libpal $(GRAPHENEDIR)/Runtime/libpal-Linux-SGX.so \
                 -key $(SGX_SIGNER_KEY) \
                 -manifest java.manifest -output $@
@@ -52,37 +52,36 @@ java.manifest.sgx: java.manifest
 java.sig: java.manifest.sgx
 
 java.token: java.sig
-        $(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-get-token \
+	graphene-sgx-get-token \
                 -output java.token -sig java.sig
 
 pal_loader:
-        ln -s $(GRAPHENEDIR)/Runtime/pal_loader $@
+	ln -s $(GRAPHENEDIR)/Runtime/pal_loader $@
 
 .PHONY: regression
 regression: all
-        @mkdir -p scripts/testdir
+	@mkdir -p scripts/testdir
+	./pal_loader ./bash -c "ls" > OUTPUT
+	@grep -q "Makefile" OUTPUT && echo "[ Success 1/6 ]"
+	@rm OUTPUT
 
-        ./pal_loader ./bash -c "ls" > OUTPUT
-        @grep -q "Makefile" OUTPUT && echo "[ Success 1/6 ]"
-        @rm OUTPUT
+	./pal_loader ./bash -c "cd scripts && bash bash_test.sh 1" > OUTPUT
+	@grep -q "hello 1" OUTPUT      && echo "[ Success 2/6 ]"
+	@grep -q "createdfile" OUTPUT  && echo "[ Success 3/6 ]"
+	@grep -q "somefile" OUTPUT     && echo "[ Success 4/6 ]"
+	@grep -q "current date" OUTPUT && echo "[ Success 5/6 ]"
+	@rm OUTPUT
 
-        ./pal_loader ./bash -c "cd scripts && bash bash_test.sh 1" > OUTPUT
-        @grep -q "hello 1" OUTPUT      && echo "[ Success 2/6 ]"
-        @grep -q "createdfile" OUTPUT  && echo "[ Success 3/6 ]"
-        @grep -q "somefile" OUTPUT     && echo "[ Success 4/6 ]"
-        @grep -q "current date" OUTPUT && echo "[ Success 5/6 ]"
-        @rm OUTPUT
+	./pal_loader ./bash -c "cd scripts && bash bash_test.sh 3" > OUTPUT
+	@grep -q "hello 3" OUTPUT      && echo "[ Success 6/6 ]"
+	@rm OUTPUT
 
-        ./pal_loader ./bash -c "cd scripts && bash bash_test.sh 3" > OUTPUT
-        @grep -q "hello 3" OUTPUT      && echo "[ Success 6/6 ]"
-        @rm OUTPUT
-
-        @rm -rf scripts/testdir
+	@rm -rf scripts/testdir
 
 
 .PHONY: clean
 clean:
-        $(RM) *.manifest *.manifest.sgx *.token *.sig trusted-libs pal_loader OUTPUT scripts/testdir/*
+	$(RM) *.manifest *.manifest.sgx *.token *.sig trusted-libs pal_loader OUTPUT scripts/testdir/*
 
 .PHONY: distclean
 distclean: clean
