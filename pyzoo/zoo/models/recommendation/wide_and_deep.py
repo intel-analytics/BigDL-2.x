@@ -92,7 +92,8 @@ class ColumnFeatureInfo(object):
 
     @property
     def feature_cols(self):
-        return self.wide_base_cols + self.wide_cross_cols + self.indicator_cols + self.embed_cols + self.continuous_cols
+        return self.wide_base_cols + self.wide_cross_cols +\
+            self.indicator_cols + self.embed_cols + self.continuous_cols
 
     @property
     def label_cols(self):
