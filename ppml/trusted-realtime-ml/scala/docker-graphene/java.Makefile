@@ -16,6 +16,13 @@ else
 GRAPHENE_LOG_LEVEL = error
 endif
 
+ifeq ($(SGX),)
+GRAPHENE = graphene-direct
+else
+GRAPHENE = graphene-sgx
+endif
+
+
 .PHONY: all
 all: java.manifest | pal_loader
 ifeq ($(SGX),1)

@@ -1,12 +1,13 @@
 # stage.1 graphene
 FROM ubuntu:18.04 AS graphene
+ENV GRAPHENE_BRANCH=newbranch
 
 RUN env DEBIAN_FRONTEND=noninteractive apt-get update && \
     env DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf bison build-essential coreutils gawk git libcurl4-openssl-dev libprotobuf-c-dev protobuf-c-compiler python3-protobuf wget
-RUN git clone https://github.com/analytics-zoo/graphene.git /graphene
+RUN git clone https://github.com/DiegoCao/graphene.git /graphene
 RUN cd /graphene && \
-    git fetch origin branch-0.2 && \
-    git checkout branch-0.2
+    git fetch origin $(GRAPHENE_BRANCH) && \
+    git checkout $(GRAPHENE_BRANCH)
 RUN cd /graphene/Pal/src/host/Linux-SGX && \
     git clone https://github.com/intel/SGXDataCenterAttestationPrimitives.git linux-sgx-driver && \
     cd linux-sgx-driver && \
@@ -48,7 +49,7 @@ ARG HTTPS_PROXY_HOST
 ARG HTTPS_PROXY_PORT
 ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
 ARG BIGDL_VERSION=0.12.2
-ARG SPARK_VERSION=2.4.3
+ARG SPARK_VERSION=2.4.6
 ARG SPARK_MAJOR_VERSION=2.4
 ENV ANALYTICS_ZOO_VERSION	${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION		${SPARK_VERSION}
@@ -79,7 +80,7 @@ RUN cd /opt && \
 FROM ubuntu:18.04
 ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
 ARG BIGDL_VERSION=0.12.2
-ARG SPARK_VERSION=2.4.3
+ARG SPARK_VERSION=2.4.6
 ARG FLINK_VERSION=1.10.1
 ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION			${SPARK_VERSION}

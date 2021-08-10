@@ -23,14 +23,14 @@ redis-server.manifest: redis-server.manifest.template
                 $< > $@
 
 redis-server.sig redis-server.manifest.sgx &: redis-server.manifest src/src/redis-server
-	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-sign \
+	graphene-sgx-sign \
                 -libpal $(GRAPHENEDIR)/Runtime/libpal-Linux-SGX.so \
                 -key $(SGX_SIGNER_KEY) \
                 -manifest redis-server.manifest \
                 -output redis-server.manifest.sgx
 
 redis-server.token: redis-server.sig
-	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-get-token -output $@ -sig $<
+	graphene-sgx-get-token -output $@ -sig $<
 
 pal_loader:
 	ln -s $(GRAPHENEDIR)/Runtime/pal_loader $@
