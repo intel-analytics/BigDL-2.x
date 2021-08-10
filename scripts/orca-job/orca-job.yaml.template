@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+ name: orca-job
+spec:
+ template:
+  metadata:
+    name: orca-job
+  spec:
+   containers:
+   - name: myjob
+     image: SPARK_K8S_IMAGE
+     command: ["/bin/sh"]
+     args: ["-c","USER_COMMAND"]
+     volumeMounts:
+     - name: nfs-storage
+       mountPath: MOUNT_PATH
+   volumes:
+   - name: nfs-storage
+     persistentVolumeClaim:
+       claimName: PVC_NAME
+
+   restartPolicy: Never
