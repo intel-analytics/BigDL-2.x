@@ -1,6 +1,6 @@
 # stage.1 graphene
 FROM ubuntu:18.04 AS graphene
-ENV GRAPHENE_BRANCH=branch-0.6
+ENV GRAPHENE_BRANCH=newbranch
 
 RUN env DEBIAN_FRONTEND=noninteractive apt-get update && \
     env DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf bison build-essential coreutils gawk git libcurl4-openssl-dev libprotobuf-c-dev protobuf-c-compiler python3-protobuf wget
@@ -26,7 +26,7 @@ RUN for f in $(find /graphene/Runtime -type l); do cp --remove-destination $(rea
 
 # stage.2 jdk & spark
 FROM ubuntu:18.04 as spark
-ARG SPARK_VERSION=2.4.3
+ARG SPARK_VERSION=2.4.6
 ARG JDK_VERSION=8u192
 ARG JDK_URL=your_jdk_url
 ENV SPARK_VERSION	${SPARK_VERSION}
@@ -146,9 +146,10 @@ RUN apt-get update --fix-missing && \
 RUN pip3 install ninja meson && \
     python3 -m pip install toml==0.10.2 click jinja2
 
-ADD ./java.manifest.template /ppml/trusted-big-data-ml/java.manifest.template
+ADD ./bash.manifest.template /ppml/trusted-big-data-ml/bash.manifest.template
 ADD ./Makefile /ppml/trusted-big-data-ml/Makefile
 ADD ./init.sh /ppml/trusted-big-data-ml/init.sh
+ADD ./train_sample.sh /ppml/trusted-big-data-ml/train_sample.sh
 ADD ./start-spark-local-train-sgx.sh /ppml/trusted-big-data-ml/start-spark-local-train-sgx.sh
 ADD ./start-spark-standalone-master-sgx.sh /ppml/trusted-big-data-ml/start-spark-standalone-master-sgx.sh
 ADD ./start-spark-standalone-worker-sgx.sh /ppml/trusted-big-data-ml/start-spark-standalone-worker-sgx.sh
