@@ -107,7 +107,7 @@ class RayDLCluster:
 
             ray.get(result)
         else:
-            ray.get([worker.disable_cpu_affinity(self.worker_cores)
+            ray.get([worker.disable_cpu_affinity.remote(self.worker_cores)
                      for worker in self.remote_workers])
 
     def get_workers(self):
