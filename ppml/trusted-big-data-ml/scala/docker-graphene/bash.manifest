@@ -1,0 +1,103 @@
+# This is a general manifest template for running Bash and core utility programs,
+# including ls, cat, cp, date, and rm.
+
+loader.preload = "file:/usr/local/lib/x86_64-linux-gnu/graphene/libsysdb.so"
+libos.entrypoint = "/bin/bash"
+loader.log_level = "error"
+
+
+loader.env.LD_LIBRARY_PATH = "/lib:/lib/x86_64-linux-gnu:/usr//lib/x86_64-linux-gnu:/opt/jdk:/opt/jdk/lib/amd64/jli"
+loader.env.PATH = "/bin"
+
+loader.env.JAVA_HOME = "/opt/jdk"
+loader.env.JAVA_OPTS = "'-Djava.library.path=/opt/jdk/lib -Dsun.boot.library.path=/opt/jdk/lib'"
+loader.env.NEW_JAVA_HOME = "/opt/jdk"
+loader.env.SPARK_LOCAL_IP = "127.0.0.1"
+loader.env.SPARK_USER = "root"
+loader.env.SPARK_SCALA_VERSION = "2.11"
+loader.env.SPARK_HOME = "/home/sdp/hangrui/myzoo/analytics-zoo/ppml/trusted-big-data-ml/work/spark-2.4.3/"
+loader.env.SPARK_MASTER_OPTS = "'-Dspark.worker.timeout=60'"
+
+loader.insecure__use_cmdline_argv = true
+
+fs.mount.lib.type = "chroot"
+fs.mount.lib.path = "/lib"
+fs.mount.lib.uri = "file:/usr/local/lib/x86_64-linux-gnu/graphene/runtime/glibc"
+
+fs.mount.lib64.type = "chroot"
+fs.mount.lib64.path = "/lib/x86_64-linux-gnu"
+fs.mount.lib64.uri = "file:/lib/x86_64-linux-gnu"
+
+fs.mount.usr_lib.type = "chroot"
+fs.mount.usr_lib.path = "/usr/lib"
+fs.mount.usr_lib.uri = "file:/usr/lib"
+
+fs.mount.opt.type= "chroot"
+fs.mount.opt.path= "/opt"
+fs.mount.opt.uri= "file:/opt"
+
+
+fs.mount.work.type = "chroot"
+fs.mount.work.path = "/home/sdp/hangrui/myzoo/analytics-zoo/ppml/trusted-big-data-ml/work"
+fs.mount.work.uri = "file:/home/sdp/hangrui/myzoo/analytics-zoo/ppml/trusted-big-data-ml/work"
+
+fs.mount.bin.type = "chroot"
+# fs.mount.bin.path = "/bin"
+
+fs.mount.bin.path = "/bin"
+fs.mount.bin.uri = "file:/bin"
+
+sgx.nonpie_binary = true
+sgx.enclave_size = "65536M"
+sgx.thread_num = 128
+
+sgx.trusted_files.execs = "file:/bin/"
+sgx.trusted_files.runtime = "file:/usr/local/lib/x86_64-linux-gnu/graphene/runtime/glibc/"
+sgx.trusted_files.arch_libdir = "file:/lib/x86_64-linux-gnu/"
+
+sgx.trusted_files.usr_arch_libdir = "file:/usr//lib/x86_64-linux-gnu/"
+sgx.trusted_files.java = "file:/opt/jdk/bin/java"
+
+sgx.allowed_files.scripts = "file:scripts/"
+sgx.allowed_files.jdk       = "file:/opt/jdk"
+
+sgx.allowed_files.workfile = "file:/home/sdp/hangrui/myzoo/analytics-zoo/ppml/trusted-big-data-ml/work"
+sgx.trusted_files.workfile="file:/home/sdp/hangrui/myzoo/analytics-zoo/ppml/trusted-big-data-ml/work"
+
+
+sgx.trusted_files.jdk_libjli = "file:/opt/jdk/lib/amd64/jli/libjli.so"
+sgx.trusted_files.jdk_jvmcfg = "file:/opt/jdk/jre/lib/amd64/jvm.cfg"
+sgx.trusted_files.jdk_libverify = "file:/opt/jdk/jre/lib/amd64/libverify.so"
+sgx.trusted_files.jdk_libjava = "file:/opt/jdk/jre/lib/amd64/libjava.so"
+sgx.trusted_files.jdk_libzip = "file:/opt/jdk/jre/lib/amd64/libzip.so"
+#sgx.trusted_files.jdk_modules = "file:/opt/jdk/lib/modules"
+#sgx.trusted_files.jdk_libjimage = "file:/opt/jdk/lib/libjimage.so"
+sgx.trusted_files.jdk_libnet = "file:/opt/jdk/jre/lib/amd64/libnet.so"
+sgx.trusted_files.jdk_libnio = "file:/opt/jdk/jre/lib/amd64/libnio.so"
+#sgx.trusted_files.jdk_librmi = "file:/opt/jdk/jre/lib/amd64/librmi.so"
+sgx.trusted_files.jdk_libjawt = "file:/opt/jdk/jre/lib/amd64/libjawt.so"
+sgx.trusted_files.jdk_libawt = "file:/opt/jdk/jre/lib/amd64/libawt.so"
+#sgx.trusted_files.jdk_libextnet = "file:/opt/jdk/lib/libextnet.so"
+#sgx.trusted_files.jdk_libjavajpeg = "file:/opt/jdk/lib/libjavajpeg.so"
+sgx.trusted_files.jdk_libattach = "file:/opt/jdk/jre/lib/amd64/libattach.so"
+sgx.trusted_files.jdk_libdt_socket = "file:/opt/jdk/jre/lib/amd64/libdt_socket.so"
+sgx.trusted_files.jdk_libfontmanager = "file:/opt/jdk/jre/lib/amd64/libfontmanager.so"
+#sgx.trusted_files.jdk_libprefs = "file:/opt/jdk/lib/libprefs.so"
+sgx.trusted_files.jdk_libjvm = "file:/opt/jdk/jre/lib/amd64/server/libjvm.so"
+sgx.trusted_files.jdk_libjsig = "file:/opt/jdk/jre/lib/amd64/server/libjsig.so"
+
+
+# from older version trusted
+
+
+# Glibc libraries
+
+
+# Name Service Switch (NSS) libraries (Glibc dependencies)
+sgx.trusted_files.libnsscompat = "file:/lib/x86_64-linux-gnu/libnss_compat.so.2"
+sgx.trusted_files.libnssfiles  = "file:/lib/x86_64-linux-gnu/libnss_files.so.2"
+sgx.trusted_files.libnssnis  = "file:/lib/x86_64-linux-gnu/libnss_nis.so.2"
+
+# libNSL is a dependency of libnss_compat above.
+#sgx.trusted_files.libnsl = "file:/lib/x86_64-linux-gnu/libnsl.so.1"
+

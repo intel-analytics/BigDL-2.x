@@ -5,7 +5,7 @@ JDK_HOME ?= /home/sdp/opt/jdk
 SPARK_LOCAL_IP ?= 127.0.0.1
 SPARK_USER ?= root
 SPARK_HOME ?= $(THIS_DIR)/work/spark-2.4.3/
-WORK_DIR ?= $(THIS_DIR)/work
+# WORK_DIR ?= $(THIS_DIR)/work
 #SPARK_LOCAL_IP ?= $(THIS_DIR)/work/spark-2.4.6-bin-hadoop2.7
 EXECDIR?=/home
 

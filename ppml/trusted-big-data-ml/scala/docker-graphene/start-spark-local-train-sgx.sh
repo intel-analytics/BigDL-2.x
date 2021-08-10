@@ -15,7 +15,7 @@ bash ppml-spark-submit.sh \
         --conf spark.io.compression.codec=lz4 \
         --class com.intel.analytics.bigdl.models.lenet.Train \
         --driver-memory 10G \
-        /ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar \
-        -f /ppml/trusted-big-data-ml/work/data \
+        /home/sdp/hangrui/myzoo/analytics-zoo/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar \
+        -f /home/sdp/hangrui/myzoo/analytics-zoo/ppml/trusted-big-data-ml/work/data \
         -b 64 \
         -e 1 | tee spark.local.sgx.log
