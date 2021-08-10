@@ -17,6 +17,7 @@
 import ray
 from zoo.orca.cpu_info import schedule_workers
 import os
+import sys
 import logging
 log = logging.getLogger(__name__)
 
