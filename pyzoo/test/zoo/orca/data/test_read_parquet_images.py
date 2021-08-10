@@ -94,14 +94,14 @@ class TestReadParquet(TestCase):
             dataloader_shard = read_parquet("dataloader", path=path,
                                             config={"num_shards": num_shards, "rank": rank})
             cur_dl = iter(dataloader_shard)
-            shard_count = 0
+            cur_count = 0
             while True:
                 try:
                     print(next(cur_dl)['label'])
-                    shard_count += 1
+                    cur_count += 1
                 except StopIteration:
                     break
-            assert shard_count == len(list(dataset_shard))
+            assert cur_count == len(list(dataset_shard))
         finally:
             shutil.rmtree(temp_dir)
 
