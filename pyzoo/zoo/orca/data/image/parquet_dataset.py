@@ -138,7 +138,7 @@ class ParquetDataset:
         raise NotImplementedError()
 
 
-class ParquetIterableDataset(torch.utils.data.IterableDataset):
+class ParquetIterable:
     """
     Creates a `Dataset` that includes only 1/`num_shards` of this dataset.
     The Dataset will contain all elements of total dataset whose index % num_shards = rank.
@@ -146,7 +146,7 @@ class ParquetIterableDataset(torch.utils.data.IterableDataset):
 
     def __init__(self, row_group, schema, num_shards=None,
                  rank=None, transforms=None):
-        super(ParquetIterableDataset).__init__()
+        super(ParquetIterable).__init__()
         self.row_group = row_group
 
         # To get the indices we expect
@@ -154,14 +154,15 @@ class ParquetIterableDataset(torch.utils.data.IterableDataset):
 
         self.num_shards = num_shards
         self.rank = rank
-        self.datapiece = None
-
         self.transforms = transforms
+        self.datapiece = self._load_data(schema)
+        self.cur = 0
+        self.cur_tail = len(self.datapiece)
 
-        filter_row_group_indexed = []
-
-        if not self.num_shards or not self.rank:
-            filter_row_group_indexed = list(range(len(self.row_group)))
+    def _load_data(self, schema):
+        if self.num_shards is None or self.rank is None:
+            filter_row_group_indexed = [
+                index for index in list(range(len(self.row_group)))]
         else:
             assert self.num_shards <= len(
                 self.row_group), "num_shards should be not larger than partitions." \
@@ -179,10 +180,7 @@ class ParquetIterableDataset(torch.utils.data.IterableDataset):
             pq_table = pq.read_table(select_chunk_path)
             df = decode_feature_type_ndarray(pq_table.to_pandas(), schema)
             data_record.extend(df.to_dict("records"))
-
-        self.datapiece = data_record
-        self.cur = 0
-        self.cur_tail = len(self.datapiece)
+        return data_record
 
     def __iter__(self):
         return self
@@ -202,6 +200,21 @@ class ParquetIterableDataset(torch.utils.data.IterableDataset):
     def __call__(self):
         self.cur = 0
         return self
+
+
+class ParquetIterableDataset(torch.utils.data.IterableDataset):
+    def __init__(self, row_group, schema, num_shards=None,
+                 rank=None, transforms=None):
+        super(ParquetIterable).__init__()
+        self.iterator = ParquetIterable(row_group, schema, num_shards, rank, transforms)
+        self.cur = self.iterator.cur
+        self.cur_tail = self.iterator.cur_tail
+
+    def __iter__(self):
+        return self.iterator.__iter__()
+
+    def __next__(self):
+        self.iterator.__next__()
 
 
 def _read32(bytestream):
@@ -362,7 +375,7 @@ def read_as_tfdataset(path, output_types, config=None, output_shapes=None, *args
                 chunk_path = os.path.join(path, name)
                 row_group.append(chunk_path)
 
-    dataset = ParquetIterableDataset(
+    dataset = ParquetIterable(
         row_group=row_group, schema=schema, num_shards=config.get("num_shards"),
         rank=config.get("rank"))
 
