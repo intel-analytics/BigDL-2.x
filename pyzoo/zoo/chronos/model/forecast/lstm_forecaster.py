@@ -19,6 +19,7 @@ from zoo.chronos.model.forecast.utils import set_pytorch_seed
 from zoo.chronos.model.VanillaLSTM_pytorch import VanillaLSTMPytorch
 from zoo.chronos.model.VanillaLSTM_pytorch import model_creator, optimizer_creator, loss_creator
 
+
 class LSTMForecaster(BasePytorchForecaster):
     """
     Example:
@@ -100,12 +101,12 @@ class LSTMForecaster(BasePytorchForecaster):
             "dropout": dropout
         }
 
-        # model creator settings       
+        # model creator settings
         self.local_model = VanillaLSTMPytorch
         self.model_creator = model_creator
         self.optimizer_creator = optimizer_creator
         self.loss_creator = loss_creator
-        
+
         # distributed settings
         self.distributed = distributed
         self.distributed_backend = distributed_backend

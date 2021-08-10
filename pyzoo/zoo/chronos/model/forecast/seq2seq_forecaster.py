@@ -19,6 +19,7 @@ from zoo.chronos.model.forecast.utils import set_pytorch_seed
 from zoo.chronos.model.Seq2Seq_pytorch import Seq2SeqPytorch
 from zoo.chronos.model.Seq2Seq_pytorch import model_creator, optimizer_creator, loss_creator
 
+
 class Seq2SeqForecaster(BasePytorchForecaster):
     """
         Example:
@@ -110,7 +111,7 @@ class Seq2SeqForecaster(BasePytorchForecaster):
             "dropout": dropout
         }
 
-        # model creator settings       
+        # model creator settings
         self.local_model = Seq2SeqPytorch
         self.model_creator = model_creator
         self.optimizer_creator = optimizer_creator

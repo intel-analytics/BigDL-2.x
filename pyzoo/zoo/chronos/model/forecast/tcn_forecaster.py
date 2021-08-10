@@ -19,6 +19,7 @@ from zoo.chronos.model.forecast.utils import set_pytorch_seed
 from zoo.chronos.model.tcn import TCNPytorch
 from zoo.chronos.model.tcn import model_creator, optimizer_creator, loss_creator
 
+
 class TCNForecaster(BasePytorchForecaster):
     """
         Example:
@@ -111,7 +112,7 @@ class TCNForecaster(BasePytorchForecaster):
             "dropout": dropout
         }
 
-        # model creator settings       
+        # model creator settings
         self.local_model = TCNPytorch
         self.model_creator = model_creator
         self.optimizer_creator = optimizer_creator

@@ -24,6 +24,7 @@ from zoo.orca.learn.metrics import MSE, MAE
 
 ORCA_METRICS = {"mse": MSE, "mae": MAE}
 
+
 class BasePytorchForecaster(Forecaster):
     '''
     Forecaster base model for lstm, mtnet, seq2seq and tcn forecasters.
@@ -69,7 +70,8 @@ class BasePytorchForecaster(Forecaster):
 
         :return: Evaluation results on data.
         """
-        # input adaption        
+
+        # input adaption
         self.config["batch_size"] = batch_size
 
         # input transform
@@ -129,7 +131,7 @@ class BasePytorchForecaster(Forecaster):
                 if self.data_config["future_seq_len"] == 1:
                     expand_dim.append(1)
                 if self.data_config["output_feature_num"] == 1:
-                    expand_dim.append(2) 
+                    expand_dim.append(2)
                 yhat = xshard_to_np(yhat, mode="yhat", expand_dim=expand_dim)
             return yhat
         else:

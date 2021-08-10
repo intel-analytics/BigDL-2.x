@@ -57,10 +57,10 @@ class TestChronosModelLSTMForecaster(TestCase):
     def test_tcn_forecaster_fit_eva_pred(self):
         train_data, val_data, test_data = create_data()
         forecaster = LSTMForecaster(past_seq_len=24,
-                                   input_feature_num=2,
-                                   output_feature_num=2,
-                                   loss="mae",
-                                   lr=0.01)
+                                    input_feature_num=2,
+                                    output_feature_num=2,
+                                    loss="mae",
+                                    lr=0.01)
         train_loss = forecaster.fit(train_data, epochs=2)
         test_pred = forecaster.predict(test_data[0])
         assert test_pred.shape == test_data[1].shape
@@ -69,10 +69,10 @@ class TestChronosModelLSTMForecaster(TestCase):
     def test_tcn_forecaster_onnx_methods(self):
         train_data, val_data, test_data = create_data()
         forecaster = LSTMForecaster(past_seq_len=24,
-                                   input_feature_num=2,
-                                   output_feature_num=2,
-                                   loss="mae",
-                                   lr=0.01)
+                                    input_feature_num=2,
+                                    output_feature_num=2,
+                                    loss="mae",
+                                    lr=0.01)
         forecaster.fit(train_data, epochs=2)
         try:
             import onnx
@@ -93,10 +93,10 @@ class TestChronosModelLSTMForecaster(TestCase):
     def test_tcn_forecaster_save_load(self):
         train_data, val_data, test_data = create_data()
         forecaster = LSTMForecaster(past_seq_len=24,
-                                   input_feature_num=2,
-                                   output_feature_num=2,
-                                   loss="mae",
-                                   lr=0.01)
+                                    input_feature_num=2,
+                                    output_feature_num=2,
+                                    loss="mae",
+                                    lr=0.01)
         train_mse = forecaster.fit(train_data, epochs=2)
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             ckpt_name = os.path.join(tmp_dir_name, "ckpt")
@@ -109,10 +109,10 @@ class TestChronosModelLSTMForecaster(TestCase):
     def test_tcn_forecaster_runtime_error(self):
         train_data, val_data, test_data = create_data()
         forecaster = LSTMForecaster(past_seq_len=24,
-                                   input_feature_num=2,
-                                   output_feature_num=2,
-                                   loss="mae",
-                                   lr=0.01)
+                                    input_feature_num=2,
+                                    output_feature_num=2,
+                                    loss="mae",
+                                    lr=0.01)
         with pytest.raises(RuntimeError):
             with tempfile.TemporaryDirectory() as tmp_dir_name:
                 ckpt_name = os.path.join(tmp_dir_name, "ckpt")
@@ -125,10 +125,10 @@ class TestChronosModelLSTMForecaster(TestCase):
     def test_tcn_forecaster_shape_error(self):
         train_data, val_data, test_data = create_data()
         forecaster = LSTMForecaster(past_seq_len=24,
-                                   input_feature_num=2,
-                                   output_feature_num=1,
-                                   loss="mae",
-                                   lr=0.01)
+                                    input_feature_num=2,
+                                    output_feature_num=1,
+                                    loss="mae",
+                                    lr=0.01)
         with pytest.raises(AssertionError):
             forecaster.fit(train_data, epochs=2)
 
@@ -137,8 +137,10 @@ class TestChronosModelLSTMForecaster(TestCase):
         print("original", train_data[0].dtype)
         init_orca_context(cores=4, memory="2g")
         from zoo.orca.data import XShards
+
         def transform_to_dict(data):
             return {'x': data[0], 'y': data[1]}
+
         def transform_to_dict_x(data):
             return {'x': data[0]}
         train_data = XShards.partition(train_data).transform_shard(transform_to_dict)

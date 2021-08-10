@@ -142,8 +142,10 @@ class TestChronosModelTCNForecaster(TestCase):
         print("original", train_data[0].dtype)
         init_orca_context(cores=4, memory="2g")
         from zoo.orca.data import XShards
+
         def transform_to_dict(data):
             return {'x': data[0], 'y': data[1]}
+
         def transform_to_dict_x(data):
             return {'x': data[0]}
         train_data = XShards.partition(train_data).transform_shard(transform_to_dict)
@@ -164,7 +166,7 @@ class TestChronosModelTCNForecaster(TestCase):
 
     def test_tcn_forecaster_distributed(self):
         train_data, val_data, test_data = create_data()
-        
+
         init_orca_context(cores=4, memory="2g")
 
         forecaster = Seq2SeqForecaster(past_seq_len=24,

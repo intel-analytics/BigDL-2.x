@@ -56,11 +56,14 @@ def xshard_to_np(shard, mode="fit", expand_dim=None):
             yhat = np.expand_dims(yhat, axis=expand_dim)
         return yhat
 
+
 def np_to_xshard(x, prefix="x"):
     x = XShards.partition(x)
+
     def transform_to_dict(train_data):
         return {prefix: train_data}
     return x.transform_shard(transform_to_dict)
+
 
 def check_data(x, y, data_config):
     assert data_config["past_seq_len"] == x.shape[-2], \
