@@ -23,7 +23,7 @@ The `deploy-nfs` folder contains `deployment.template.yaml` , `class.yaml`  and 
 
 
 
-The `orca-job-k8s.sh` includes four phases. First, it would check whether nfs server is success or not. If it shows "success". The next phase is use files in `deploy-nfs` to deploy persistent volume claim. Then, it would copy user data to nfs share data folder. After that, it would create a job to execute your command.
+The `orca-job-k8s.sh` includes four phases. First, it would check whether nfs server is success or not. The next phase is use files in `deploy-nfs` to deploy persistent volume claim. Then, it would copy user data to nfs share data folder. After that, it would create a job to execute your command.
 
 
 
