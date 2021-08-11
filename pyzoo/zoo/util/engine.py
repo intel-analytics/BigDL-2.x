@@ -23,6 +23,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 def exist_pyspark():
     # check whether pyspark package exists
     try:
