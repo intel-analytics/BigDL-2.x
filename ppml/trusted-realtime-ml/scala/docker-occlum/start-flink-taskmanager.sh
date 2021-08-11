@@ -43,7 +43,7 @@ run_taskmanager() {
     -Dlog.file=$log \
     -Dlog4j.configuration=file:/opt/conf/log4j.properties \
     -Dlogback.configurationFile=file:/opt/conf/logback.xml \
-    -classpath /bin/lib/*.jar org.apache.flink.runtime.taskexecutor.TaskManagerRunner \
+    -classpath /bin/lib/* org.apache.flink.runtime.taskexecutor.TaskManagerRunner \
     -Dorg.apache.flink.shaded.netty4.io.netty.tryReflectionSetAccessible=true \
     -Dorg.apache.flink.shaded.netty4.io.netty.eventLoopThreads=${core_num} \
     -Dcom.intel.analytics.zoo.shaded.io.netty.tryReflectionSetAccessible=true \
