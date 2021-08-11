@@ -145,7 +145,6 @@ class ParquetIterable:
 
     def __init__(self, row_group, schema, num_shards=None,
                  rank=None, transforms=None):
-        super(ParquetIterable).__init__()
         self.row_group = row_group
 
         # To get the indices we expect
@@ -387,7 +386,7 @@ def read_as_dataloader(path, config=None, transforms=None, batch_size=1, *args, 
     class ParquetIterableDataset(torch.utils.data.IterableDataset):
         def __init__(self, row_group, schema, num_shards=None,
                      rank=None, transforms=None):
-            super(ParquetIterable).__init__()
+            super().__init__()
             self.iterator = ParquetIterable(row_group, schema, num_shards, rank, transforms)
             self.cur = self.iterator.cur
             self.cur_tail = self.iterator.cur_tail
