@@ -10,7 +10,6 @@
     <version>0.12.0-SNAPSHOT</version>
 
     <name>analytics-zoo</name>
-
     <description>Big Data AI platform for distributed TensorFlow and PyTorch on Apache Spark.</description>
     <url>https://github.com/intel-analytics/analytics-zoo</url>
 
@@ -828,6 +827,7 @@
         </extensions>
         <pluginManagement>
             <plugins>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
@@ -1058,7 +1058,6 @@
                     </relocations>
                 </configuration>
                 <executions>
-
                     <execution>
                         <id>shade</id>
                         <phase>package</phase>
@@ -1129,7 +1128,6 @@
                             </artifactSet>
                         </configuration>
                     </execution>
-
 
                     <execution>
                         <id>http</id>
@@ -1427,5 +1425,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
