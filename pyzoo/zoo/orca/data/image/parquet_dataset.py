@@ -31,7 +31,6 @@ import random
 import pyarrow.parquet as pq
 import io
 import math
-import torch
 
 
 class ParquetDataset:
@@ -200,21 +199,6 @@ class ParquetIterable:
     def __call__(self):
         self.cur = 0
         return self
-
-
-class ParquetIterableDataset(torch.utils.data.IterableDataset):
-    def __init__(self, row_group, schema, num_shards=None,
-                 rank=None, transforms=None):
-        super(ParquetIterable).__init__()
-        self.iterator = ParquetIterable(row_group, schema, num_shards, rank, transforms)
-        self.cur = self.iterator.cur
-        self.cur_tail = self.iterator.cur_tail
-
-    def __iter__(self):
-        return self.iterator.__iter__()
-
-    def __next__(self):
-        self.iterator.__next__()
 
 
 def _read32(bytestream):
@@ -386,6 +370,7 @@ def read_as_tfdataset(path, output_types, config=None, output_shapes=None, *args
 def read_as_dataloader(path, config=None, transforms=None, batch_size=1, *args, **kwargs):
     path, _ = pa_fs(path)
     import tensorflow as tf
+    import torch
 
     schema_path = os.path.join(path, "_orca_metadata")
     j_str = open_text(schema_path)[0]
@@ -398,6 +383,20 @@ def read_as_dataloader(path, config=None, transforms=None, batch_size=1, *args, 
             if name.startswith("chunk="):
                 chunk_path = os.path.join(path, name)
                 row_group.append(chunk_path)
+
+    class ParquetIterableDataset(torch.utils.data.IterableDataset):
+        def __init__(self, row_group, schema, num_shards=None,
+                     rank=None, transforms=None):
+            super(ParquetIterable).__init__()
+            self.iterator = ParquetIterable(row_group, schema, num_shards, rank, transforms)
+            self.cur = self.iterator.cur
+            self.cur_tail = self.iterator.cur_tail
+
+        def __iter__(self):
+            return self.iterator.__iter__()
+
+        def __next__(self):
+            self.iterator.__next__()
 
     def worker_init_fn(w_id):
         worker_info = torch.utils.data.get_worker_info()
