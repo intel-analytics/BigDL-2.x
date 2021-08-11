@@ -16,9 +16,9 @@
 
 package com.intel.analytics.zoo.serving.grpc
 
-import akka.actor.ActorSystem
+
 import com.intel.analytics.zoo.serving.utils.Conventions
-import com.typesafe.config.ConfigFactory
+
 import com.codahale.metrics.{MetricRegistry, Timer}
 import com.intel.analytics.zoo.grpc.ZooGrpcServer
 import com.intel.analytics.zoo.serving.grpc.service.generated.FrontEndGRPCServiceGrpc.FrontEndGRPCServiceImplBase
@@ -27,7 +27,7 @@ import com.intel.analytics.zoo.serving.grpc.service.generated._
 import io.grpc.stub.StreamObserver
 
 import scala.collection.mutable
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 object FrontEndGRPCServiceImpl extends Supportive{
   def main(args: Array[String]): Unit = {
@@ -380,9 +380,10 @@ class FrontEndGRPCServiceImpl (args: Array[String]) extends FrontEndGRPCServiceI
             val result = timing("inference model inference")(predictRequestTimer) {
               val outputs = servable.getMetaData.
                 asInstanceOf[InferenceModelMetaData].inputCompileType match {
-                case "direct" => timing("model inference")(modelInferenceTimer) {
-                  servable.predict(in.getInput)
-                }
+                case "direct" =>
+                  timing("model inference")(modelInferenceTimer) {
+                    servable.predict(in.getInput)
+                  }
                 case "instance" =>
                   val instances = timing("json deserialization")() {
                     JsonUtil.fromJson(classOf[Instances], in.getInput)
