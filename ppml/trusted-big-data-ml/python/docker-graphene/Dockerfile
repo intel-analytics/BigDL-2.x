@@ -136,6 +136,8 @@ RUN mkdir -p /graphene && \
     mkdir -p /ppml/trusted-big-data-ml/work/apps && \
     mkdir -p /ppml/trusted-big-data-ml/work/examples/bigdl && \
     mkdir -p /root/.keras/datasets && \
+    mkdir -p /root/.zinc && \
+    mkdir -p /root/.m2 && \
     mkdir -p /graphene/Pal/src/host/Linux-SGX/signer
 
 COPY --from=graphene /graphene/Scripts /graphene/Scripts
