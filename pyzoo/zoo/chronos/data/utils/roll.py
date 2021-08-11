@@ -16,6 +16,7 @@
 
 import numpy as np
 import pandas as pd
+from torch._C import dtype
 
 
 def roll_timeseries_dataframe(df,
@@ -120,7 +121,7 @@ def _roll_timeseries_dataframe_train(df,
 def _shift(arr, num, fill_value=np.nan):
     # this function is adapted from
     # https://stackoverflow.com/questions/30399534/shift-elements-in-a-numpy-array
-    result = np.empty_like(arr)
+    result = np.empty_like(arr, dtype=np.float32)
     if num > 0:
         result[:num] = fill_value
         result[num:] = arr[:-num]
