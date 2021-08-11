@@ -63,6 +63,7 @@ def get_ugly_ts_df():
     df["id"] = np.array(['00']*50 + ['01']*50)
     return df
 
+
 def get_int_target_df():
     sample_num = np.random.randint(100, 200)
     train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
@@ -70,6 +71,7 @@ def get_int_target_df():
                              "id": np.array(['00']*sample_num),
                              "extra feature": np.random.randn(sample_num)})
     return train_df
+
 
 class TestTSDataset(ZooTestCase):
     def setup_method(self, method):
@@ -314,19 +316,17 @@ class TestTSDataset(ZooTestCase):
         assert x.shape == (1, 1, 6) and y.shape == (1, 1, 2)
         assert np.array_equal(x, np.array([[[1.9, 2.3, 1, 2, 0, 9]]], dtype=np.float32))
         assert np.array_equal(y, np.array([[[2.4, 2.6]]], dtype=np.float32))
-    
 
     def test_tsdata_roll_int_target(self):
         horizon = random.randint(1, 10)
         lookback = random.randint(1, 20)
         df = get_int_target_df()
-        tsdata = TSDataset.from_pandas(df,dt_col='datetime',target_col='value',
-                                            extra_feature_col=['extra feature'], id_col="id")
-        x,y = tsdata.roll(lookback=lookback, horizon=horizon).to_numpy()
+        tsdata = TSDataset.from_pandas(df, dt_col='datetime', target_col='value',
+                                       extra_feature_col=['extra feature'], id_col="id")
+        x, y = tsdata.roll(lookback=lookback, horizon=horizon).to_numpy()
         assert x.dtype == np.float64
         assert y.dtype == np.float64
         tsdata._check_basic_invariants()
-    
 
     def test_tsdataset_to_torch_loader_roll(self):
         df_single_id = get_ts_df()
