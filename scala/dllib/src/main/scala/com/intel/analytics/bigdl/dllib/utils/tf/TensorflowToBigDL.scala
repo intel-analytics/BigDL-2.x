@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils.tf
+package com.intel.analytics.bigdl.dllib.utils.tf
 
 import java.nio.charset.Charset
 import java.nio.{ByteBuffer, ByteOrder}
@@ -28,9 +28,9 @@ import org.tensorflow.framework.{AttrValue, DataType, NodeDef, TensorProto}
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity, DataFormat}
 import com.intel.analytics.bigdl.dllib.nn.tf._
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.tf.FullConnectionTF.getOrSetTensor
-import com.intel.analytics.bigdl.common.utils.{DirectedGraph, Node, T}
-import com.intel.analytics.bigdl.common.utils.tf.TensorflowToBigDL._
+import com.intel.analytics.bigdl.dllib.utils.tf.FullConnectionTF.getOrSetTensor
+import com.intel.analytics.bigdl.dllib.utils.{DirectedGraph, Node, T}
+import com.intel.analytics.bigdl.dllib.utils.tf.TensorflowToBigDL._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.{ClassTag, classTag}

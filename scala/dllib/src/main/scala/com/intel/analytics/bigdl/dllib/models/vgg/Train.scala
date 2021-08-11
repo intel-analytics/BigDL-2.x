@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.models.vgg
+package com.intel.analytics.bigdl.dllib.models.vgg
 
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -24,8 +24,10 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.image._
 import com.intel.analytics.bigdl.dllib.nn.{ClassNLLCriterion, Module}
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric._
-import com.intel.analytics.bigdl.common.utils.{Engine, LoggerFilter, OptimizerV1, OptimizerV2, T, Table}
-import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.{Engine, OptimizerV1, OptimizerV2}
+import com.intel.analytics.bigdl.utils.LoggerFilter
+import com.intel.analytics.bigdl.dllib.utils.visualization.{TrainSummary, ValidationSummary}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 

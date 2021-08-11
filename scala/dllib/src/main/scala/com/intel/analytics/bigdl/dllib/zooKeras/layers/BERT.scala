@@ -19,12 +19,12 @@ package com.intel.analytics.bigdl.dllib.zooKeras.layers
 import com.intel.analytics.bigdl.dllib.nn.{RandomNormal, StaticGraph}
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.keras.{KerasLayer, KerasLayerSerializable}
-import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
+import com.intel.analytics.bigdl.dllib.utils.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.serializer._
-import com.intel.analytics.bigdl.common.utils.serializer.converters.DataConverter
-import com.intel.analytics.bigdl.common.utils.{MultiShape, Shape}
+import com.intel.analytics.bigdl.dllib.utils.serializer._
+import com.intel.analytics.bigdl.dllib.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.utils.{MultiShape, Shape}
 import com.intel.analytics.bigdl.dllib.inference.Net
 import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{AutoGrad, Variable}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.{GraphRef, KerasUtils}

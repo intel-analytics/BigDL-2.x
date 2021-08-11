@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.bigdl.dllib.optim.{OptimMethod, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.common.utils.{RandomGenerator, ThreadPool}
+import com.intel.analytics.bigdl.utils.{RandomGenerator, ThreadPool}
 import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag

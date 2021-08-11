@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.example.keras
+package com.intel.analytics.bigdl.dllib.example.keras
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.feature.dataset.DataSet
@@ -22,12 +22,12 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.image.{BytesToGreyImg, Gr
 import com.intel.analytics.bigdl.dllib.nn.ClassNLLCriterion
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.optim._
-import com.intel.analytics.bigdl.common.utils.Engine
-import com.intel.analytics.bigdl.models.lenet.LeNet5
+import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.dllib.models.lenet.LeNet5
 import org.apache.spark.SparkContext
 
 object Train {
-  import models.lenet.Utils._
+  import com.intel.analytics.bigdl.dllib.models.lenet.Utils._
 
   def main(args: Array[String]): Unit = {
     trainParser.parse(args, new TrainParams()).map(param => {

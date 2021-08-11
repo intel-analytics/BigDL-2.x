@@ -16,8 +16,8 @@
 package com.intel.analytics.bigdl.dllib.nn.ops
 
 import com.intel.analytics.bigdl.dllib.tensor.{DenseType, SparseType, Tensor}
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
-import com.intel.analytics.bigdl.common.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.mutable.ArrayBuffer

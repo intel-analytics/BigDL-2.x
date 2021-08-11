@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.example.loadmodel
+package com.intel.analytics.bigdl.dllib.example.loadmodel
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
@@ -22,11 +22,11 @@ import java.nio.file.{Files, Path, Paths}
 import com.intel.analytics.bigdl.DataSet
 import com.intel.analytics.bigdl.dllib.feature.dataset._
 import com.intel.analytics.bigdl.dllib.feature.dataset.image.{BGRImgCropper, BGRImgNormalizer, BGRImgPixelNormalizer, BytesToBGRImg, _}
-import com.intel.analytics.bigdl.example.loadmodel.ModelValidator.{BigDlModel, ModelType, TorchModel}
+import com.intel.analytics.bigdl.dllib.example.loadmodel.ModelValidator.{BigDlModel, ModelType, TorchModel}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation._
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
-import com.intel.analytics.bigdl.common.utils.File
+import com.intel.analytics.bigdl.dllib.utils.File
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 

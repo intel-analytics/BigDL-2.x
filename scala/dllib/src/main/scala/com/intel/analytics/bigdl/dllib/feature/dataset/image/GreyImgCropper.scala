@@ -35,7 +35,7 @@ object GreyImgCropper {
 class GreyImgCropper(cropWidth: Int, cropHeight: Int)
   extends Transformer[LabeledGreyImage, LabeledGreyImage] {
 
-  import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
+  import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 
   private val buffer = new LabeledGreyImage(cropWidth, cropHeight)
 

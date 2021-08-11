@@ -18,7 +18,7 @@ import com.intel.analytics.bigdl.mkl.{DataType, Memory, MklDnn}
 import com.intel.analytics.bigdl.dllib.nn.MklInt8Convertible
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.dllib.tensor.{DnnTensor, Tensor}
-import com.intel.analytics.bigdl.common.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 
 import scala.collection.mutable.ArrayBuffer
 

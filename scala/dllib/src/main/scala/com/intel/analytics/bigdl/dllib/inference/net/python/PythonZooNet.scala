@@ -21,9 +21,9 @@
 //import com.intel.analytics.bigdl.Module
 //import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 //import com.intel.analytics.bigdl.dllib.keras.KerasLayer
-//import com.intel.analytics.bigdl.python.api.JTensor
+//import com.intel.analytics.bigdl.dllib.python.api.JTensor
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-//import com.intel.analytics.bigdl.common.PythonZoo
+//import com.intel.analytics.bigdl.utils.PythonZoo
 //import com.intel.analytics.bigdl.dllib.inference.Net
 //import com.intel.analytics.bigdl.dllib.inference.net._
 //import org.apache.log4j.{Level, Logger}

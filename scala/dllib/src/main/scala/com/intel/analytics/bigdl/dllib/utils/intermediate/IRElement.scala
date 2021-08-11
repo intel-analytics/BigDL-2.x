@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common.utils.intermediate
+package com.intel.analytics.bigdl.dllib.utils.intermediate
 
 import com.intel.analytics.bigdl.dllib.nn.MklInt8Convertible
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity, DataFormat, TensorModule}

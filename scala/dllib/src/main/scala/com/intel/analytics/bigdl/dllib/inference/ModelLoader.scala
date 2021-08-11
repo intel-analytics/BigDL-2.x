@@ -21,9 +21,9 @@ import java.nio.channels.Channels
 
 import com.intel.analytics.bigdl.dllib.nn.Graph
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.common.utils.caffe.CaffeLoader
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleLoader
-import com.intel.analytics.bigdl.common.zooUtils
+import com.intel.analytics.bigdl.dllib.utils.caffe.CaffeLoader
+import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleLoader
+import com.intel.analytics.bigdl.dllib.utils.zooUtils
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.WordEmbedding
 import com.intel.analytics.bigdl.dllib.zooKeras.models.{Model, Sequential}
 import com.intel.analytics.bigdl.dllib.inference.net.{GraphNet, TFNet, TorchModel}

@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.TensorModule
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.MKLBlas
+import com.intel.analytics.bigdl.dllib.utils.MKLBlas
 
 import scala.reflect.ClassTag
 

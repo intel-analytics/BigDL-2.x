@@ -20,12 +20,13 @@ import java.nio.file.Paths
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.feature.dataset.image._
 import com.intel.analytics.bigdl.dllib.feature.dataset.{ByteRecord, Sample, Transformer}
-import com.intel.analytics.bigdl.models.lenet.{Utils => LeNetUtils}
-import com.intel.analytics.bigdl.models.resnet.{Utils => ResNetUtils}
+import com.intel.analytics.bigdl.dllib.models.lenet.{Utils => LeNetUtils}
+import com.intel.analytics.bigdl.dllib.models.resnet.{Utils => ResNetUtils}
 import com.intel.analytics.bigdl.dllib.nn.Module
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.optim.{Top1Accuracy, Top5Accuracy, ValidationMethod, ValidationResult}
-import com.intel.analytics.bigdl.common.utils.{Engine, LoggerFilter}
+import com.intel.analytics.bigdl.utils.{Engine}
+import com.intel.analytics.bigdl.utils.LoggerFilter
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -73,7 +74,7 @@ class QuantizationSpec extends FlatSpec with Matchers with BeforeAndAfter{
           LeNetUtils.testStd) -> GreyImgToSample()
 
       case "resnet" =>
-        import com.intel.analytics.bigdl.models.resnet.Cifar10DataSet
+        import com.intel.analytics.bigdl.dllib.models.resnet.Cifar10DataSet
 
         BytesToBGRImg() -> BGRImgNormalizer(Cifar10DataSet.trainMean,
           Cifar10DataSet.trainStd) -> BGRImgToSample()

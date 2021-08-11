@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.models.rnn
+package com.intel.analytics.bigdl.dllib.models.rnn
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, FixedLength, PaddingParam, SampleToMiniBatch}
@@ -24,7 +24,8 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.text.utils.SentenceToken
 import com.intel.analytics.bigdl.dllib.nn.{CrossEntropyCriterion, Module, TimeDistributedCriterion}
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.common.utils.{Engine, OptimizerV1, OptimizerV2, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.{Engine, OptimizerV1, OptimizerV2}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric._
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext

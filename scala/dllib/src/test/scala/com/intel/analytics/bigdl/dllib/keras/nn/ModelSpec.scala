@@ -18,8 +18,8 @@ package com.intel.analytics.bigdl.keras.nn
 
 import com.intel.analytics.bigdl.dllib.keras.{Dense, Input, Model}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.Shape
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
 
 class ModelSerialTest extends ModuleSerializationTest {
   override def test(): Unit = {

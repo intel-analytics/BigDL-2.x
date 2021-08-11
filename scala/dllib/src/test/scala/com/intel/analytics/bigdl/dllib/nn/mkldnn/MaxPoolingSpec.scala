@@ -20,9 +20,10 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.{InferencePhase, TrainingPhase}
 import com.intel.analytics.bigdl.dllib.nn.{Graph, SpatialAveragePooling, SpatialMaxPooling, StaticGraph}
 import com.intel.analytics.bigdl.dllib.tensor.{DnnTensor, Tensor}
-import com.intel.analytics.bigdl.common.utils.{BigDLSpecHelper, Engine, MklDnn}
-import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
-import com.intel.analytics.bigdl.common.utils.intermediate.{BlasToIR, IRToDnn}
+import com.intel.analytics.bigdl.dllib.utils.{BigDLSpecHelper}
+import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
+import com.intel.analytics.bigdl.utils._
+import com.intel.analytics.bigdl.dllib.utils.intermediate.{BlasToIR, IRToDnn}
 import org.apache.commons.lang3.SerializationUtils
 
 import scala.util.Random

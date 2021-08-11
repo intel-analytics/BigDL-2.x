@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.dllib.nn.ops.Operation
 import com.intel.analytics.bigdl.dllib.tensor.{BooleanType, Tensor}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.{Edge, Node, T}
+import com.intel.analytics.bigdl.dllib.utils.{Edge, Node, T}
 
 import scala.reflect.ClassTag
 

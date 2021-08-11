@@ -15,17 +15,17 @@
  */
 package com.intel.analytics.bigdl.dllib.nn.tf
 
-import com.intel.analytics.bigdl.common.utils.tf.TFRecordIterator
+import com.intel.analytics.bigdl.dllib.utils.tf.TFRecordIterator
 import org.scalatest.{FlatSpec, Matchers}
 import java.io.{File => JFile}
 import java.nio.{ByteBuffer, ByteOrder}
 
 import com.google.protobuf.ByteString
 import com.intel.analytics.bigdl.dllib.tensor.{FloatType, Tensor}
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
 import org.tensorflow.example.Example
 import org.tensorflow.framework.DataType
-import com.intel.analytics.bigdl.common.utils.tf.TFTensorNumeric.NumericByteString
+import com.intel.analytics.bigdl.dllib.utils.tf.TFTensorNumeric.NumericByteString
 
 class DecodeImageSpec extends FlatSpec with Matchers {
 

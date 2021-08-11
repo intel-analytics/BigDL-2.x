@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common
+package com.intel.analytics.bigdl.dllib.utils
 
 import java.io.InputStream
 import java.util.Properties
 
-import com.intel.analytics.bigdl.common.utils.{Engine, OptimizerV1, OptimizerV2, OptimizerVersion}
+import com.intel.analytics.bigdl.utils.{Engine, OptimizerV1, OptimizerV2, OptimizerVersion}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.{EngineRef, KerasUtils}
 import org.apache.log4j.Logger
 import org.apache.spark.{SPARK_VERSION, SparkConf, SparkContext, SparkException}

@@ -17,11 +17,12 @@
 package com.intel.analytics.bigdl.dllib.optim
 
 import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, MiniBatch, Sample}
-import com.intel.analytics.bigdl.models.lenet.LeNet5
+import com.intel.analytics.bigdl.dllib.models.lenet.LeNet5
 import com.intel.analytics.bigdl.dllib.nn.CrossEntropyCriterion
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{Engine, MklBlas, MklDnn, SparkContextLifeCycle}
-import com.intel.analytics.bigdl.common.utils.RandomGenerator._
+import com.intel.analytics.bigdl.dllib.utils.{SparkContextLifeCycle}
+import com.intel.analytics.bigdl.utils.{Engine, MklBlas, MklDnn}
+import com.intel.analytics.bigdl.utils.RandomGenerator._
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import com.intel.analytics.bigdl._

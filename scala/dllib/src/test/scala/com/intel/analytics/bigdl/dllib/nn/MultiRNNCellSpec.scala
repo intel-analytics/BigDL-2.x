@@ -18,12 +18,12 @@ package com.intel.analytics.bigdl.dllib.nn
 
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.optim.{L2Regularizer, SGD}
-import com.intel.analytics.bigdl.common.utils._
+import com.intel.analytics.bigdl.dllib.utils._
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.common.utils.RandomGenerator._
-import com.intel.analytics.bigdl.common.utils.Table
-import com.intel.analytics.bigdl.common.utils.TorchObject.TYPE_DOUBLE_TENSOR
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.dllib.utils.Table
+import com.intel.analytics.bigdl.dllib.utils.TorchObject.TYPE_DOUBLE_TENSOR
+import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.collection.mutable

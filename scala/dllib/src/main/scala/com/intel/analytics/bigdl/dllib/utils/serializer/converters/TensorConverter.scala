@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common.utils.serializer.converters
+package com.intel.analytics.bigdl.dllib.utils.serializer.converters
 
 import com.google.protobuf.ByteString
 import com.intel.analytics.bigdl.dllib.nn.quantized._
 import com.intel.analytics.bigdl.dllib.tensor._
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.serializer.{BigDLStorage, DeserializeContext, ProtoStorageType, SerializeContext}
-import com.intel.analytics.bigdl.serialization.Bigdl._
+import com.intel.analytics.bigdl.dllib.utils.serializer.{BigDLStorage, DeserializeContext, ProtoStorageType, SerializeContext}
+import com.intel.analytics.bigdl.dllib.utils.serialization.Bigdl._
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -223,7 +223,7 @@ object TensorConverter extends DataConverter {
         } else created.asInstanceOf[Storage[Long]]
         Tensor[Long](storage, offSet, sizes, strides)
       case DataType.BYTES =>
-        import com.intel.analytics.bigdl.common.utils.tf.TFTensorNumeric.NumericByteString
+        import com.intel.analytics.bigdl.dllib.utils.tf.TFTensorNumeric.NumericByteString
         val storage: Storage[ByteString] = if (created == null ) {
           if (storageId == -1) {
             null

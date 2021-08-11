@@ -21,7 +21,7 @@ import java.nio.file.NoSuchFileException
 import java.util
 import java.util.{Arrays, Properties}
 
-import com.intel.analytics.bigdl.common.zooUtils
+import com.intel.analytics.bigdl.dllib.utils.zooUtils
 import com.intel.analytics.bigdl.pipeline.inference.OpenVinoTest
 import org.codehaus.plexus.util.FileUtils
 import org.scalatest._

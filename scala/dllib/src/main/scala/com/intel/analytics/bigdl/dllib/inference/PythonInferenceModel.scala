@@ -17,7 +17,7 @@
 //package com.intel.analytics.bigdl.dllib.inference
 //
 //import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-//import com.intel.analytics.bigdl.common.PythonZoo
+//import com.intel.analytics.bigdl.utils.PythonZoo
 //import java.util.{List => JList}
 //
 //import scala.reflect.ClassTag
@@ -99,7 +99,7 @@
 //
 //  def inferenceModelPredict(
 //      model: InferenceModel,
-//      inputs: JList[com.intel.analytics.bigdl.python.api.JTensor],
+//      inputs: JList[com.intel.analytics.bigdl.dllib.python.api.JTensor],
 //      inputIsTable: Boolean): JList[Object] = {
 //    val inputActivity = jTensorsToActivity(inputs, inputIsTable)
 //    val outputActivity = model.doPredict(inputActivity)

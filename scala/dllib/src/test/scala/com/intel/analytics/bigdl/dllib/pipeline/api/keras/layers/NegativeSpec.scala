@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.nn.{Negative => BNegative}
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.{Negative => ZNegative}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.Shape
+import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
 

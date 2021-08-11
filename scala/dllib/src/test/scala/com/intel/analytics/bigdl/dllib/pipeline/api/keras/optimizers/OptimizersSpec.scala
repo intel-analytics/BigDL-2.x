@@ -19,9 +19,9 @@ import com.intel.analytics.bigdl.dllib.nn.{BCECriterion, Linear, Sequential, Sig
 import com.intel.analytics.bigdl.dllib.optim.SGD._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric.NumericFloat
-import com.intel.analytics.bigdl.common.utils.Engine
-import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
-import com.intel.analytics.bigdl.common.NNContext
+import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
+import com.intel.analytics.bigdl.dllib.utils.NNContext
 import com.intel.analytics.bigdl.dllib.nnframes.{NNClassifier, NNClassifierModel, NNEstimatorSpec}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext

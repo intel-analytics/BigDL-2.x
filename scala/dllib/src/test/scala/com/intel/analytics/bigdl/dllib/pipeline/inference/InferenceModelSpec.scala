@@ -20,7 +20,7 @@ import java.io._
 import java.util
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.CheckedObjectInputStream
+import com.intel.analytics.bigdl.utils.CheckedObjectInputStream
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 

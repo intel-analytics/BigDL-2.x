@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils.tf
+package com.intel.analytics.bigdl.dllib.utils.tf
 
 import java.nio.{ByteOrder, DoubleBuffer, FloatBuffer}
 
@@ -24,15 +24,16 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractCriterion, Abstrac
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.{NumericWildcard, TensorNumeric}
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.common.utils._
+import com.intel.analytics.bigdl.dllib.utils._
+import com.intel.analytics.bigdl.utils._
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.tensorflow.framework.{GraphDef, NodeDef}
 import com.google.protobuf.ByteString
-import com.intel.analytics.bigdl.models.utils.ModelBroadcast
+import com.intel.analytics.bigdl.dllib.models.utils.ModelBroadcast
 import TFTensorNumeric.NumericByteString
-import com.intel.analytics.bigdl.common.utils.tf.BigDLSessionImpl.FakeCriterion
+import com.intel.analytics.bigdl.dllib.utils.tf.BigDLSessionImpl.FakeCriterion
 import org.apache.hadoop.io.{BytesWritable, NullWritable}
 
 import scala.collection.mutable

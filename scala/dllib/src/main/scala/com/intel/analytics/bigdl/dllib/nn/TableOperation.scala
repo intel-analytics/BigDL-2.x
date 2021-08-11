@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation.Expand
-import com.intel.analytics.bigdl.common.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 
 import scala.reflect.ClassTag
 

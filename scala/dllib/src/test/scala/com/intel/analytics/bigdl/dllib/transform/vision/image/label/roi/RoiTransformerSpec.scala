@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentati
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.util.{BboxUtil, BoundingBox}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{BytesToMat, ImageFeature, ImageFrame, LocalImageFrame}
-import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import org.opencv.imgcodecs.Imgcodecs
 import org.scalatest.{FlatSpec, Matchers}
 

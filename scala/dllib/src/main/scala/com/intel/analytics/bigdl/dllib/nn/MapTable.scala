@@ -18,9 +18,9 @@ package com.intel.analytics.bigdl.dllib.nn
 import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.Table
-import com.intel.analytics.bigdl.common.utils.serializer.{ContainerSerializable, DeserializeContext, ModuleData, SerializeContext}
-import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
+import com.intel.analytics.bigdl.dllib.utils.Table
+import com.intel.analytics.bigdl.dllib.utils.serializer.{ContainerSerializable, DeserializeContext, ModuleData, SerializeContext}
+import com.intel.analytics.bigdl.dllib.utils.serialization.Bigdl.BigDLModule
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag

@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dllib.keras.{KerasLayer, Highway => BigDLHighwa
 import com.intel.analytics.bigdl.dllib.optim.Regularizer
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.Shape
+import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.dllib.inference.Net
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
 

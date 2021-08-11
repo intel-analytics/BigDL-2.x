@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils.serializer
+package com.intel.analytics.bigdl.dllib.utils.serializer
 
 import java.io.File
 import java.lang.reflect.Modifier
@@ -21,11 +21,11 @@ import java.lang.reflect.Modifier
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.nn.Module
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
+import com.intel.analytics.bigdl.dllib.utils.serialization.Bigdl.{AttrValue, BigDLModule}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.{Tensor, TensorNumericMath}
-import com.intel.analytics.bigdl.common.utils.BigDLSpecHelper
-import com.intel.analytics.bigdl.common.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.dllib.utils.BigDLSpecHelper
+import com.intel.analytics.bigdl.dllib.utils.serializer.converters.DataConverter
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.{ClasspathHelper, ConfigurationBuilder, FilterBuilder}
@@ -40,12 +40,12 @@ class SerializerSpec extends BigDLSpecHelper {
   private val excluded = Set[String](
     "com.intel.analytics.bigdl.dllib.nn.CellUnit",
     "com.intel.analytics.bigdl.dllib.nn.tf.ControlDependency",
-    "com.intel.analytics.bigdl.common.utils.tf.AdapterForTest",
-    "com.intel.analytics.bigdl.common.utils.serializer.TestModule",
-    "com.intel.analytics.bigdl.common.utils.TestModule",
-    "com.intel.analytics.bigdl.common.utils.ExceptionTest",
-    "com.intel.analytics.bigdl.common.utils.serializer.SubModuleOne",
-    "com.intel.analytics.bigdl.common.utils.serializer.SubModuleTwo",
+    "com.intel.analytics.bigdl.dllib.utils.tf.AdapterForTest",
+    "com.intel.analytics.bigdl.dllib.utils.serializer.TestModule",
+    "com.intel.analytics.bigdl.dllib.utils.TestModule",
+    "com.intel.analytics.bigdl.dllib.utils.ExceptionTest",
+    "com.intel.analytics.bigdl.dllib.utils.serializer.SubModuleOne",
+    "com.intel.analytics.bigdl.dllib.utils.serializer.SubModuleTwo",
     "com.intel.analytics.bigdl.dllib.nn.mkldnn.AvgPooling",
     "com.intel.analytics.bigdl.dllib.nn.mkldnn.CAddTable",
     "com.intel.analytics.bigdl.dllib.nn.mkldnn.ConcatTable",
@@ -68,7 +68,7 @@ class SerializerSpec extends BigDLSpecHelper {
     "com.intel.analytics.bigdl.dllib.nn.mkldnn.BlasWrapper",
     "com.intel.analytics.bigdl.dllib.nn.mkldnn.Output",
     "com.intel.analytics.bigdl.dllib.nn.mkldnn.InputWrapper",
-    "com.intel.analytics.bigdl.common.utils.intermediate.IRGraph",
+    "com.intel.analytics.bigdl.dllib.utils.intermediate.IRGraph",
     "com.intel.analytics.bigdl.dllib.nn.mkldnn.RNN"
   )
 
@@ -296,7 +296,7 @@ class SerializerSpec extends BigDLSpecHelper {
         val ins = Class.forName(clsWholeName)
         val testClass = ins.getConstructors()(0).newInstance()
         require(testClass.isInstanceOf[ModuleSerializationTest], s"$clsWholeName should be a " +
-          s"subclass of com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest")
+          s"subclass of com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest")
         testClass.asInstanceOf[ModuleSerializationTest].test()
       } catch {
         case t: Throwable => throw t
@@ -306,7 +306,7 @@ class SerializerSpec extends BigDLSpecHelper {
 
   "Group serializer" should "work properly" in {
     ModuleSerializer.
-      registerGroupModules("com.intel.analytics.bigdl.common.utils.serializer.ParentModule",
+      registerGroupModules("com.intel.analytics.bigdl.dllib.utils.serializer.ParentModule",
       ParentModuleSerializer)
     val subOne = new SubModuleOne[Float]()
     val subTwo = new SubModuleTwo[Float]()

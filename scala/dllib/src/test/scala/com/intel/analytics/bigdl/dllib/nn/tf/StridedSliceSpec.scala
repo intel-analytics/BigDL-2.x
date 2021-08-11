@@ -16,8 +16,8 @@
 package com.intel.analytics.bigdl.dllib.nn.tf
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.T
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.dllib.utils.T
+import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util.Random

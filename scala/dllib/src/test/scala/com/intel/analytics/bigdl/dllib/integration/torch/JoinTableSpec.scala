@@ -17,7 +17,8 @@ package com.intel.analytics.bigdl.integration.torch
 
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{RandomGenerator, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.RandomGenerator
 
 @com.intel.analytics.bigdl.tags.Serial
 class JoinTableSpec extends TorchSpec {

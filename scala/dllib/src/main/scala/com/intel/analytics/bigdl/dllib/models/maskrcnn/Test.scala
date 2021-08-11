@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.models.maskrcnn
+package com.intel.analytics.bigdl.dllib.models.maskrcnn
 
-import com.intel.analytics.bigdl.models.resnet.Utils.{TestParams, _}
+import com.intel.analytics.bigdl.dllib.models.resnet.Utils.{TestParams, _}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation._
-import com.intel.analytics.bigdl.common.utils.{Engine, T}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.{Engine, OptimizerV1, OptimizerV2}
 import scopt.OptionParser
 import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, MiniBatch, segmentation}
 import com.intel.analytics.bigdl.dllib.nn.Module

@@ -17,7 +17,7 @@ package com.intel.analytics.bigdl.dllib.zooKeras.layers
 
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.Shape
+import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.dllib.zooKeras.models.Sequential
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
 

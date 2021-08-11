@@ -24,7 +24,8 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.image.{BGRImage, BGRImgTo
 import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, Sample}
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation._
-import com.intel.analytics.bigdl.common.utils.{Engine, TestUtils}
+import com.intel.analytics.bigdl.dllib.utils.{TestUtils}
+import com.intel.analytics.bigdl.utils._
 import org.apache.commons.io.FileUtils
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
@@ -166,7 +167,7 @@ class ImageFrameSpec extends FlatSpec with Matchers with BeforeAndAfter {
   "mnist data source" should "load image with ImageFrame correct" in {
     val resource = getClass().getClassLoader().getResource("mnist")
 
-    val dataSet = com.intel.analytics.bigdl.models.lenet.Utils.load(
+    val dataSet = com.intel.analytics.bigdl.dllib.models.lenet.Utils.load(
       processPath(resource.getPath()) + File.separator + "t10k-images.idx3-ubyte",
       processPath(resource.getPath()) + File.separator + "t10k-labels.idx1-ubyte")
     val array = dataSet.map(x => {

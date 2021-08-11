@@ -22,15 +22,15 @@ import com.intel.analytics.bigdl.dllib.nn.mkldnn
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.TrainingPhase
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{BigDLSpecHelper, ReflectionUtils}
-import com.intel.analytics.bigdl.common.utils.intermediate.{IRToBlas, IRToDnn}
+import com.intel.analytics.bigdl.dllib.utils.{BigDLSpecHelper, ReflectionUtils}
+import com.intel.analytics.bigdl.dllib.utils.intermediate.{IRToBlas, IRToDnn}
 import com.intel.analytics.bigdl.{Module}
 
 class ReflectionUtilsSpec extends BigDLSpecHelper {
 
   "test SpatialConvolution reflection" should "be right" in {
     val model1 = nn.SpatialConvolution[Float](2, 4, 3, 3, 4, 4, 0, 0).asInstanceOf[Module[Float]]
-    val className = "com.intel.analytics.bigdl.common.utils.intermediate.IRSpatialConvolution"
+    val className = "com.intel.analytics.bigdl.dllib.utils.intermediate.IRSpatialConvolution"
     val cls = Class.forName(className)
     val ir = ReflectionUtils.reflectToIR[Float](model1, cls)
     val cls2 = Class.forName(
@@ -78,7 +78,7 @@ class ReflectionUtilsSpec extends BigDLSpecHelper {
 
   "test BatchNorm reflection" should "be right" in {
     val model1 = nn.SpatialBatchNormalization(3).asInstanceOf[Module[Float]]
-    val className = "com.intel.analytics.bigdl.common.utils.intermediate.IRSpatialBatchNormalization"
+    val className = "com.intel.analytics.bigdl.dllib.utils.intermediate.IRSpatialBatchNormalization"
     val cls = Class.forName(className)
     val ir = ReflectionUtils.reflectToIR[Float](model1, cls)
 

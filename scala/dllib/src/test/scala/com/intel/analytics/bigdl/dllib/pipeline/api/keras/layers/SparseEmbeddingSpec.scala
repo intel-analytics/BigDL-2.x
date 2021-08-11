@@ -20,9 +20,10 @@ import com.intel.analytics.bigdl.dllib.nn.LookupTableSparse
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{Shape, T}
+import com.intel.analytics.bigdl.dllib.utils.{T}
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.utils._
 
 class SparseEmbeddingSpec extends ZooSpecHelper {
 

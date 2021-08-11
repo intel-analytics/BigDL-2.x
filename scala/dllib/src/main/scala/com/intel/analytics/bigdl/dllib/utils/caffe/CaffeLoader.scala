@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils.caffe
+package com.intel.analytics.bigdl.dllib.utils.caffe
 
 import java.io._
 
@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.{FileReader, Table}
+import com.intel.analytics.bigdl.dllib.utils.{FileReader, Table}
 import org.apache.log4j.Logger
 
 import scala.collection.JavaConverters._

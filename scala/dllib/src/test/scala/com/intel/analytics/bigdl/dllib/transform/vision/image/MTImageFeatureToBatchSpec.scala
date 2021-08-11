@@ -20,7 +20,8 @@ import com.intel.analytics.bigdl.dllib.feature.dataset.{DataSet, MiniBatch}
 import com.intel.analytics.bigdl.dllib.feature.dataset.segmentation.RLEMasks
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.label.roi.RoiLabel
-import com.intel.analytics.bigdl.common.utils.{Engine, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
+import com.intel.analytics.bigdl.utils._
 import org.apache.spark.SparkContext
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 

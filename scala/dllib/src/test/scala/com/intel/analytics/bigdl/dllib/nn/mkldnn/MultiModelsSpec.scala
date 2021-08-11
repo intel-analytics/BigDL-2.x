@@ -17,13 +17,14 @@
 package com.intel.analytics.bigdl.dllib.nn.mkldnn
 
 import com.intel.analytics.bigdl.dllib.feature.dataset.Sample
-import com.intel.analytics.bigdl.models.inception.Inception_v1_NoAuxClassifier
-import com.intel.analytics.bigdl.models.lenet.LeNet5
+import com.intel.analytics.bigdl.dllib.models.inception.Inception_v1_NoAuxClassifier
+import com.intel.analytics.bigdl.dllib.models.lenet.LeNet5
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{ImageFeature, ImageFrame, ImageFrameToSample, MatToTensor}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.augmentation.{CenterCrop, ChannelNormalize, Resize}
-import com.intel.analytics.bigdl.common.utils.{Engine, LoggerFilter}
-import com.intel.analytics.bigdl.common.utils.RandomGenerator._
+import com.intel.analytics.bigdl.utils.{Engine}
+import com.intel.analytics.bigdl.utils.LoggerFilter
+import com.intel.analytics.bigdl.utils.RandomGenerator._
 import org.apache.spark.SparkContext
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 

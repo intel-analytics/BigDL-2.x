@@ -15,7 +15,7 @@
  */
 package com.intel.analytics.bigdl.dllib.feature
 
-import com.intel.analytics.bigdl.common.NNContext
+import com.intel.analytics.bigdl.dllib.utils.NNContext
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 

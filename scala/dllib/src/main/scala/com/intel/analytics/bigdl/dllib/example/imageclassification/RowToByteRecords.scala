@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.example.imageclassification
+package com.intel.analytics.bigdl.dllib.example.imageclassification
 
 import com.intel.analytics.bigdl.dllib.feature.dataset.{ByteRecord, Transformer}
 import org.apache.log4j.Logger

@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 
 import com.intel.analytics.bigdl.dllib.nn.JoinTable
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 

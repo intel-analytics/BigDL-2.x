@@ -17,8 +17,8 @@ package com.intel.analytics.bigdl.dllib.nn.ops
 
 import com.google.protobuf.ByteString
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.T
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.dllib.utils.T
+import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util.Random
@@ -90,7 +90,7 @@ class EqualSpec extends FlatSpec with Matchers {
   }
 
   "Equal String operation" should "works correctly" in {
-    import com.intel.analytics.bigdl.common.utils.tf.TFTensorNumeric.NumericByteString
+    import com.intel.analytics.bigdl.dllib.utils.tf.TFTensorNumeric.NumericByteString
     val input =
       T(
 

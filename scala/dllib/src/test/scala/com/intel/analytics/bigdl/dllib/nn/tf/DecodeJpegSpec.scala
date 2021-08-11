@@ -19,8 +19,8 @@ import java.io.File
 
 import com.google.protobuf.ByteString
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
-import com.intel.analytics.bigdl.common.utils.tf.TFRecordIterator
+import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.dllib.utils.tf.TFRecordIterator
 import org.tensorflow.example.Example
 
 class DecodeJpegSerialTest extends ModuleSerializationTest {
@@ -31,7 +31,7 @@ class DecodeJpegSerialTest extends ModuleSerializationTest {
   }
 
   private def getInputs(name: String): Tensor[ByteString] = {
-    import com.intel.analytics.bigdl.common.utils.tf.TFTensorNumeric.NumericByteString
+    import com.intel.analytics.bigdl.dllib.utils.tf.TFTensorNumeric.NumericByteString
     val index = name match {
       case "png" => 0
       case "jpeg" => 1

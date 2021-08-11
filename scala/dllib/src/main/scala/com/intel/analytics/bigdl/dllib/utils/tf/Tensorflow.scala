@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils.tf
+package com.intel.analytics.bigdl.dllib.utils.tf
 
 import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.charset.Charset
@@ -22,7 +22,7 @@ import com.google.protobuf.ByteString
 import com.intel.analytics.bigdl.dllib.nn.{Graph, Module}
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.tensor._
-import com.intel.analytics.bigdl.common.utils.Engine
+import com.intel.analytics.bigdl.utils.Engine
 import org.tensorflow.framework.AttrValue.ListValue
 import org.tensorflow.framework._
 import org.tensorflow.framework.TensorShapeProto.Dim

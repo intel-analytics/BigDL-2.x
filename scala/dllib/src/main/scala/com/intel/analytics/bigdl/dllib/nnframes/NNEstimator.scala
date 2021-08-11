@@ -19,14 +19,14 @@ package com.intel.analytics.bigdl.dllib.nnframes
 import java.util.{List => JList, Map => JMap}
 
 import com.intel.analytics.bigdl.dllib.feature.dataset.{SampleToMiniBatch, _}
-import com.intel.analytics.bigdl.models.utils.ModelBroadcast
+import com.intel.analytics.bigdl.dllib.models.utils.ModelBroadcast
 import com.intel.analytics.bigdl.dllib.optim._
-import com.intel.analytics.bigdl.python.api.EvaluatedResult
+import com.intel.analytics.bigdl.dllib.python.api.EvaluatedResult
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.{Tensor, DoubleType => TensorDouble, FloatType => TensorFloat}
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleLoader
-import com.intel.analytics.bigdl.common.utils.{File, T}
-import com.intel.analytics.bigdl.common.visualization.{TrainSummary, ValidationSummary}
+import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleLoader
+import com.intel.analytics.bigdl.dllib.utils.{File, T}
+import com.intel.analytics.bigdl.dllib.utils.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.bigdl.{Criterion, DataSet, Module}
 import com.intel.analytics.bigdl.dllib.feature.FeatureSet
 import com.intel.analytics.bigdl.dllib.feature.common.{Preprocessing, _}

@@ -27,12 +27,13 @@ import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.{QuantizedTensor, Tensor, TensorDataType}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{DistributedImageFrame, ImageFeature, ImageFrame, LocalImageFrame}
-import com.intel.analytics.bigdl.common.utils.TorchObject.TYPE_MODULE
-import com.intel.analytics.bigdl.common.utils._
-import com.intel.analytics.bigdl.common.utils.caffe.CaffePersister
-import com.intel.analytics.bigdl.common.utils.intermediate.ConversionUtils
-import com.intel.analytics.bigdl.common.utils.serializer._
-import com.intel.analytics.bigdl.common.utils.tf.{TensorflowDataFormat, TensorflowSaver}
+import com.intel.analytics.bigdl.dllib.utils.TorchObject.TYPE_MODULE
+import com.intel.analytics.bigdl.utils._
+import com.intel.analytics.bigdl.dllib.utils._
+import com.intel.analytics.bigdl.dllib.utils.caffe.CaffePersister
+import com.intel.analytics.bigdl.dllib.utils.intermediate.ConversionUtils
+import com.intel.analytics.bigdl.dllib.utils.serializer._
+import com.intel.analytics.bigdl.dllib.utils.tf.{TensorflowDataFormat, TensorflowSaver}
 import org.apache.commons.lang3.SerializationUtils
 import org.apache.spark.rdd.RDD
 

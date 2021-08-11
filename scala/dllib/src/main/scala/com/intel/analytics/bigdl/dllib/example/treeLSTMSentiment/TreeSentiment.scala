@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.example.treeLSTMSentiment
+package com.intel.analytics.bigdl.dllib.example.treeLSTMSentiment
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.nn._

@@ -21,13 +21,13 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.intel.analytics.bigdl.dllib.nn.{Identity => BIdentity}
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.serialization.Bigdl._
+import com.intel.analytics.bigdl.dllib.utils.serialization.Bigdl._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.Shape
-import com.intel.analytics.bigdl.common.utils.serializer.{DeserializeContext, SerializeContext}
-import com.intel.analytics.bigdl.common.utils.serializer.converters.{DataConverter, TensorConverter}
-import com.intel.analytics.bigdl.common.CheckedObjectInputStream
+import com.intel.analytics.bigdl.utils.Shape
+import com.intel.analytics.bigdl.dllib.utils.serializer.{DeserializeContext, SerializeContext}
+import com.intel.analytics.bigdl.dllib.utils.serializer.converters.{DataConverter, TensorConverter}
+import com.intel.analytics.bigdl.utils.CheckedObjectInputStream
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.WordEmbedding.EmbeddingMatrixHolder
 import com.intel.analytics.bigdl.dllib.inference.net.{NetUtils, RegistryMap, SerializationHolder}
 import org.slf4j.LoggerFactory

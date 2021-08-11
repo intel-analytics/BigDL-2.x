@@ -20,7 +20,7 @@ import java.io.{File, IOException}
 import java.nio.file.{Files, Paths}
 import java.util.{ArrayList, Arrays, UUID, List => JList}
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.common.zooUtils.createTmpDir
+import com.intel.analytics.bigdl.dllib.utils.zooUtils.createTmpDir
 import com.intel.analytics.bigdl.dllib.inference.net.{NetUtils, RegistryMap, SerializationHolder}
 import com.intel.analytics.bigdl.dllib.inference.DeviceType.DeviceTypeEnumVal
 import com.intel.analytics.bigdl.dllib.inference.OpenVINOModel.OpenVINOModelHolder

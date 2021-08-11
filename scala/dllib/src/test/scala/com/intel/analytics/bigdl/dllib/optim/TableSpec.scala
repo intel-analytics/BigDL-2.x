@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.optim
 
 import com.intel.analytics.bigdl.dllib.nn.{ConcatTable, Linear}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util.Properties

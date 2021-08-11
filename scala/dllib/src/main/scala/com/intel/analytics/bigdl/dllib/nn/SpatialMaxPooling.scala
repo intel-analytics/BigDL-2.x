@@ -20,10 +20,10 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity, 
 import com.intel.analytics.bigdl.dllib.tensor
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.Engine
-import com.intel.analytics.bigdl.common.utils.serializer._
-import com.intel.analytics.bigdl.common.utils.serializer.converters.DataConverter
-import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, BigDLModule}
+import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.dllib.utils.serializer._
+import com.intel.analytics.bigdl.dllib.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.dllib.utils.serialization.Bigdl.{AttrValue, BigDLModule}
 
 import scala.reflect._
 import scala.reflect.runtime.universe

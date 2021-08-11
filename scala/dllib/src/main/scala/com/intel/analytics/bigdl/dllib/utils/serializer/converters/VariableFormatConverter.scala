@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.common.utils.serializer.converters
+package com.intel.analytics.bigdl.dllib.utils.serializer.converters
 
 import com.intel.analytics.bigdl.dllib.nn.VariableFormat
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.serializer.{DeserializeContext, SerializeContext}
-import com.intel.analytics.bigdl.serialization.Bigdl.{AttrValue, DataType, VarFormat}
+import com.intel.analytics.bigdl.dllib.utils.serializer.{DeserializeContext, SerializeContext}
+import com.intel.analytics.bigdl.dllib.utils.serialization.Bigdl.{AttrValue, DataType, VarFormat}
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe

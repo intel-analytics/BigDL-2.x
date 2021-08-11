@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.models.autoencoder
+package com.intel.analytics.bigdl.dllib.models.autoencoder
 
 import java.nio.ByteBuffer
 import java.nio.file.{Files, Path}

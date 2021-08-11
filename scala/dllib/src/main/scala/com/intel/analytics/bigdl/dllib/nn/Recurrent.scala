@@ -21,11 +21,11 @@ import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity, TensorModule}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.serializer._
-import com.intel.analytics.bigdl.common.utils.serializer.{ContainerSerializable, ModuleSerializer}
-import com.intel.analytics.bigdl.common.utils.{T, Table}
-import com.intel.analytics.bigdl.common.utils.serializer.converters.DataConverter
-import serialization.Bigdl.{AttrValue, BigDLModule}
+import com.intel.analytics.bigdl.dllib.utils.serializer._
+import com.intel.analytics.bigdl.dllib.utils.serializer.{ContainerSerializable, ModuleSerializer}
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
+import com.intel.analytics.bigdl.dllib.utils.serializer.converters.DataConverter
+import com.intel.analytics.bigdl.dllib.utils.serialization.Bigdl.{AttrValue, BigDLModule}
 
 import scala.reflect.runtime.universe
 import scala.collection.mutable.ArrayBuffer

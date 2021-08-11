@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.zooKeras.layers.internal
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.nn.{BatchNormalization, Linear, LogSoftMax, Sequential}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.RandomGenerator._
+import com.intel.analytics.bigdl.utils.RandomGenerator._
 import com.intel.analytics.bigdl.dllib.zooKeras.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 

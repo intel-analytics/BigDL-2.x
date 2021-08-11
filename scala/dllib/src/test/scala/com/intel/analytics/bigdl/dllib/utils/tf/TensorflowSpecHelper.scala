@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils.tf
+package com.intel.analytics.bigdl.dllib.utils.tf
 
-import com.intel.analytics.bigdl.common.utils.TestUtils.processPath
+import com.intel.analytics.bigdl.dllib.utils.TestUtils.processPath
 import java.io.{OutputStream, File => JFile}
 import java.nio.ByteOrder
 
@@ -24,8 +24,9 @@ import com.intel.analytics.bigdl.dllib.nn.Module
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.{NumericWildCard, TensorNumeric}
-import com.intel.analytics.bigdl.common.utils.{BigDLSpecHelper, FileWriter, RandomGenerator, T}
-import com.intel.analytics.bigdl.common.utils.tf.Tensorflow.const
+import com.intel.analytics.bigdl.dllib.utils.{BigDLSpecHelper, FileWriter, T}
+import com.intel.analytics.bigdl.dllib.utils.tf.Tensorflow.const
+import com.intel.analytics.bigdl.utils._
 import org.tensorflow.framework.{GraphDef, NodeDef}
 
 import scala.language.postfixOps

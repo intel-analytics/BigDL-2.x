@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.nn
 
 import com.intel.analytics.bigdl.dllib.optim.L2Regularizer
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
-import com.intel.analytics.bigdl.common.utils.serializer.ModuleSerializationTest
+import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
 import org.scalatest.{FlatSpec, Matchers}
 
 class NormalizeScaleSpec extends FlatSpec with Matchers {

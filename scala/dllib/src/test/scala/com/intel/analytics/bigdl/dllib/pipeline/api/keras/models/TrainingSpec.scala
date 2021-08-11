@@ -19,14 +19,14 @@ package com.intel.analytics.bigdl.dllib.zooKeras.models
 import com.intel.analytics.bigdl.dllib.feature.dataset.{LocalDataSet, MiniBatch, Sample}
 import com.intel.analytics.bigdl.dllib.nn.MSECriterion
 import com.intel.analytics.bigdl.dllib.optim.{SGD, Top1Accuracy}
-import com.intel.analytics.bigdl.python.api.PythonBigDL
+import com.intel.analytics.bigdl.dllib.python.api.PythonBigDL
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.ImageFeature
-import com.intel.analytics.bigdl.common.utils.RandomGenerator.RNG
-import com.intel.analytics.bigdl.common.utils.{RandomGenerator, Shape}
-import com.intel.analytics.bigdl.common.NNContext
+import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
+import com.intel.analytics.bigdl.utils.{RandomGenerator, Shape}
+import com.intel.analytics.bigdl.dllib.utils.NNContext
 import com.intel.analytics.bigdl.dllib.feature.image._
 import com.intel.analytics.bigdl.dllib.zooKeras.autograd.{Variable, AutoGrad => A}
 import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper

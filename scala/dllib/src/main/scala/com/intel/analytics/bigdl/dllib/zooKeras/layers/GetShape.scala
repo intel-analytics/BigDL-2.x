@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.keras.KerasLayer
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.Shape
+import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils
 
 import scala.reflect.ClassTag

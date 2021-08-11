@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 
 import scala.math.tanh
 import com.intel.analytics.bigdl.dllib.tensor._
-import com.intel.analytics.bigdl.common.utils.Shape
+import com.intel.analytics.bigdl.utils.Shape
 
 import scala.reflect.ClassTag
 

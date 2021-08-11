@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.example.tensorflow.loadandsave
+package com.intel.analytics.bigdl.dllib.example.tensorflow.loadandsave
 
 import com.intel.analytics.bigdl.dllib.nn.Module
 import com.intel.analytics.bigdl.numeric.NumericFloat

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils.tf
+package com.intel.analytics.bigdl.dllib.utils.tf
 
 import java.io.{FileOutputStream, OutputStream}
 import java.nio.ByteOrder
@@ -23,13 +23,13 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.{File, FileWriter, T}
+import com.intel.analytics.bigdl.dllib.utils.{File, FileWriter, T}
 import org.apache.log4j.Logger
 import org.tensorflow.framework._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import com.intel.analytics.bigdl.common.utils.tf.Tensorflow._
+import com.intel.analytics.bigdl.dllib.utils.tf.Tensorflow._
 
 import scala.reflect.ClassTag
 

@@ -17,7 +17,7 @@
 package com.intel.analytics.bigdl.dllib.optim
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.{File, T, Table}
+import com.intel.analytics.bigdl.dllib.utils.{File, T, Table}
 import org.apache.commons.lang3.SerializationUtils
 
 import scala.reflect.ClassTag

@@ -23,8 +23,8 @@ import java.nio.file.{Files, Paths}
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.tensor.{QuantizedTensor, QuantizedType, Storage, Tensor}
-import com.intel.analytics.bigdl.common.utils.T
-import com.intel.analytics.bigdl.common.PythonInterpreter
+import com.intel.analytics.bigdl.dllib.utils.T
+import com.intel.analytics.bigdl.dllib.utils.PythonInterpreter
 import com.intel.analytics.bigdl.dllib.feature.PythonFeatureSet
 import com.intel.analytics.bigdl.dllib.inference.net.TorchModel.TorchModel2Holder
 import jep.{Jep, NDArray}

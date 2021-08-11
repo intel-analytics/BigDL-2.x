@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.models.rnn
+package com.intel.analytics.bigdl.dllib.models.rnn
 import scopt.OptionParser
 import java.io._
 

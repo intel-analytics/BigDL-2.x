@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.common.utils.tf.loaders
+package com.intel.analytics.bigdl.dllib.utils.tf.loaders
 
 import java.nio.ByteOrder
 
@@ -26,7 +26,7 @@ import org.tensorflow.framework.NodeDef
 import scala.reflect.ClassTag
 import Utils._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.tf.Context
+import com.intel.analytics.bigdl.dllib.utils.tf.Context
 
 class Conv2DBackpropInput extends TensorflowOpsLoader {
   override def build[T: ClassTag](nodeDef: NodeDef, byteOrder: ByteOrder,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.models.autoencoder
+package com.intel.analytics.bigdl.dllib.models.autoencoder
 
 import com.intel.analytics.bigdl._
 import com.intel.analytics.bigdl.dllib.nn.{Graph, _}

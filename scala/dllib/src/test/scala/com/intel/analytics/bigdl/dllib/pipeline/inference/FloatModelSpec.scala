@@ -20,7 +20,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectOutputStream}
 import java.util
 
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.CheckedObjectInputStream
+import com.intel.analytics.bigdl.utils.CheckedObjectInputStream
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 class FloatModelSpec extends FlatSpec with Matchers with BeforeAndAfter

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.models.resnet
+package com.intel.analytics.bigdl.dllib.models.resnet
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.nn.Module
-import com.intel.analytics.bigdl.common.utils.Engine
-import com.intel.analytics.bigdl.models.resnet.Utils._
+import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.dllib.models.resnet.Utils._
 import com.intel.analytics.bigdl.dllib.optim.{Top1Accuracy, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.dllib.feature.dataset.image.{BGRImgNormalizer, BGRImgToSample, BytesToBGRImg}
 import org.apache.log4j.{Level, Logger}

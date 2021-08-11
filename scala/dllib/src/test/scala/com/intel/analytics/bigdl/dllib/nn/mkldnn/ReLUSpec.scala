@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.dllib.nn
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.Phase.TrainingPhase
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 import org.apache.commons.lang3.SerializationUtils
 import org.scalatest.{FlatSpec, Matchers}
 

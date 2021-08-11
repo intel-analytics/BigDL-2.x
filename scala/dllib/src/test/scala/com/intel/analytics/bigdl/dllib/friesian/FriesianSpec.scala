@@ -18,7 +18,7 @@
 //
 //import java.net.URL
 //
-//import com.intel.analytics.bigdl.common.NNContext
+//import com.intel.analytics.bigdl.dllib.utils.NNContext
 //import com.intel.analytics.bigdl.dllib.zooKeras.ZooSpecHelper
 //import com.intel.analytics.zoo.friesian.python.PythonFriesian
 //import org.apache.log4j.{Level, Logger}

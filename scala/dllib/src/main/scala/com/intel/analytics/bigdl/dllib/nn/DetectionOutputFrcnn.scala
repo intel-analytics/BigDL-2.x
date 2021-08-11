@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.label.roi.RoiLabel
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.util.BboxUtil
-import com.intel.analytics.bigdl.common.utils.Table
+import com.intel.analytics.bigdl.dllib.utils.Table
 import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer

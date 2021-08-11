@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import scala.reflect.ClassTag
 import java.util.Calendar
 
-import com.intel.analytics.bigdl.common.utils.RandomGenerator._
+import com.intel.analytics.bigdl.utils.RandomGenerator._
 
 object Crop3D {
   /**

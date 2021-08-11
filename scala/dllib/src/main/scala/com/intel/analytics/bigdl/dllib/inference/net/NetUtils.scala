@@ -22,10 +22,10 @@ import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.keras.KerasLayer
 import com.intel.analytics.bigdl.dllib.nn.{Container, Graph, StaticGraph}
-import com.intel.analytics.bigdl.serialization.Bigdl.BigDLModule
+import com.intel.analytics.bigdl.dllib.utils.serialization.Bigdl.BigDLModule
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.serializer._
+import com.intel.analytics.bigdl.dllib.utils.serializer._
 import com.intel.analytics.bigdl.dllib.inference.Predictable
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.KerasLayerWrapper
 import com.intel.analytics.bigdl.dllib.zooKeras.layers.utils.KerasUtils

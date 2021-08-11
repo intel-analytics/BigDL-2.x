@@ -19,7 +19,7 @@ import com.intel.analytics.bigdl.mkl.DataType
 import com.intel.analytics.bigdl.dllib.nn.DynamicContainer
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.tensor.{DenseType, DnnTensor, MklDnnType, Tensor}
-import com.intel.analytics.bigdl.common.utils.T
+import com.intel.analytics.bigdl.dllib.utils.T
 
 import scala.collection.mutable.ArrayBuffer
 

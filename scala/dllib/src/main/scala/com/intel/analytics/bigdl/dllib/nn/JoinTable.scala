@@ -19,8 +19,9 @@ import com.google.protobuf.ByteString
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.tensor._
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.{NumericWildcard, TensorNumeric}
-import com.intel.analytics.bigdl.common.utils.tf.TFTensorNumeric.NumericByteString
-import com.intel.analytics.bigdl.common.utils.{Engine, Table}
+import com.intel.analytics.bigdl.dllib.utils.tf.TFTensorNumeric.NumericByteString
+import com.intel.analytics.bigdl.dllib.utils.{T, Table}
+import com.intel.analytics.bigdl.utils.{Engine, OptimizerV1, OptimizerV2}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag

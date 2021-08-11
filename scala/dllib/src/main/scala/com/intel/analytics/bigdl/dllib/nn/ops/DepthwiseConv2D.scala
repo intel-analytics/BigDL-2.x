@@ -19,8 +19,8 @@ import com.intel.analytics.bigdl.dllib.nn.{SpatialConvolution, SpatialSeparableC
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity, DataFormat}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.Table
-import com.intel.analytics.bigdl.common.utils.tf.loaders.Adapter
+import com.intel.analytics.bigdl.dllib.utils.Table
+import com.intel.analytics.bigdl.dllib.utils.tf.loaders.Adapter
 
 import scala.reflect.ClassTag
 

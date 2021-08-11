@@ -22,7 +22,9 @@ import com.intel.analytics.bigdl.dllib.keras.KerasLayer
 import com.intel.analytics.bigdl.dllib.nn.{InitializationMethod, RandomUniform, VariableFormat}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-import com.intel.analytics.bigdl.common.utils.{Node, Shape}
+import com.intel.analytics.bigdl.dllib.utils.{Node}
+import com.intel.analytics.bigdl.utils.{Shape}
+import com.intel.analytics.bigdl.utils._
 import com.intel.analytics.bigdl.dllib.inference.Net
 
 import scala.reflect.ClassTag
