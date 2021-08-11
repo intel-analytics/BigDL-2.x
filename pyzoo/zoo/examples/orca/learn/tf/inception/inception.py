@@ -43,7 +43,7 @@ _NUM_IMAGES = {
 
 _NUM_TRAIN_FILES = 1024
 _NUM_VAL_FILES = 128
-_SHUFFLE_BUFFER = 1500
+_SHUFFLE_BUFFER = 2112
 
 _NUM_EXAMPLES_NAME = "num_examples"
 
@@ -55,18 +55,13 @@ _RESIZE_MIN = 256
 
 
 def preprocess_image(image_buffer, output_height, output_width,
-                     is_training=False):
+                     num_channels=_NUM_CHANNELS, is_training=False):
     if is_training:
         return preprocess_for_train(
-            image_buffer,
-            output_height,
-            output_width,
-            bbox=None)
+            image_buffer, output_height, output_width, num_channels)
     else:
         return preprocess_for_eval(
-            image_buffer,
-            output_height,
-            output_width)
+            image_buffer, output_height, output_width, num_channels)
 
 
 def _parse_example_proto(example_serialized):
@@ -90,7 +85,6 @@ def _parse_example_proto(example_serialized):
 
 def parse_record(raw_record, is_training, dtype):
     image_buffer, label = _parse_example_proto(raw_record)
-    image_buffer = tf.image.decode_jpeg(image_buffer, channels=3)
 
     image = preprocess_image(
         image_buffer=image_buffer,
@@ -99,7 +93,7 @@ def parse_record(raw_record, is_training, dtype):
         is_training=is_training)
     image = tf.cast(image, dtype)
 
-    label = tf.cast(tf.reshape(label, shape=[1]), dtype=tf.int32)
+    label = tf.cast(tf.reshape(label, shape=[1]), dtype=tf.int32) - 1
 
     return image, label
 
