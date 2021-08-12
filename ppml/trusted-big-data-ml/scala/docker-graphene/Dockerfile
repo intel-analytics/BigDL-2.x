@@ -21,7 +21,7 @@ RUN cd /graphene && \
     ISGX_DRIVER_PATH=/graphene/Pal/src/host/Linux-SGX/linux-sgx-driver make -s -j4 SGX=1 && \
     meson setup build/ --buildtype=release -Ddirect=enabled -Dsgx=enabled && \
     ninja -C build/ && \
-    sudo ninja -C build/ install
+    ninja -C build/ install
 RUN ls
 RUN for f in $(find /graphene/Runtime -type l); do cp --remove-destination $(realpath $f) $f; done
 

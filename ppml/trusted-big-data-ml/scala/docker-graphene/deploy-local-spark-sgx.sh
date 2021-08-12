@@ -5,7 +5,7 @@ export DATA_PATH=~/hangrui/myzoo/analytics-zoo/ppml/trusted-big-data-ml/work/dat
 export KEYS_PATH=/home/sdp/qiyuan/keys
 export LOCAL_IP=192.168.0.113
 
-sudo docker pull intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:0.10-SNAPSHOT 
+sudo docker pull 10.239.45.10/arda/intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:0.11-SNAPSHOTchrnew
 
 sudo docker run -itd \
     --privileged \
@@ -22,5 +22,5 @@ sudo docker run -itd \
     --name=spark-local \
     -e LOCAL_IP=$LOCAL_IP \
     -e SGX_MEM_SIZE=64G \
-    10.239.45.10/arda/intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:0.11-SNAPSHOTchrtmp
+     10.239.45.10/arda/intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:0.11-SNAPSHOTchrnew
 
