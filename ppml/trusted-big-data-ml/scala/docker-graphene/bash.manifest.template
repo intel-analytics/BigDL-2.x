@@ -11,7 +11,6 @@ loader.env.PATH = "{{ execdir }}"
 
 loader.env.JAVA_HOME = "{{ jdk_home }}"
 loader.env.JAVA_OPTS = "'-Djava.library.path={{ jdk_home }}/lib -Dsun.boot.library.path={{ jdk_home }}/lib'"
-loader.env.NEW_JAVA_HOME = "{{ jdk_home }}"
 loader.env.SPARK_LOCAL_IP = "{{ spark_local_ip }}"
 loader.env.SPARK_USER = "{{ spark_user }}"
 loader.env.SPARK_SCALA_VERSION = "2.11"
@@ -42,8 +41,6 @@ fs.mount.work.path = "{{ work_dir }}"
 fs.mount.work.uri = "file:{{ work_dir }}"
 
 fs.mount.bin.type = "chroot"
-# fs.mount.bin.path = "{{ execdir }}"
-
 fs.mount.bin.path = "/bin"
 fs.mount.bin.uri = "file:/bin"
 
