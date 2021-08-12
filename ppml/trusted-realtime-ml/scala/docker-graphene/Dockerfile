@@ -131,6 +131,10 @@ COPY --from=graphene /graphene/Pal/src/host/Linux-SGX/generated_offsets.py /grap
 COPY --from=graphene /graphene/Examples/common_tools/get_deps.sh /graphene/get_deps.sh
 COPY --from=graphene /graphene/Tools/argv_serializer /graphene/Tools
 COPY --from=graphene /redis.tar.gz /ppml/trusted-realtime-ml/redis
+COPY --from=graphene /graphene/Tools/argv_serializer /graphene/Tools
+COPY --from=graphene /graphene/meson_build_output /graphene/meson_build_output
+ENV PATH="/graphene/meson_build_output/bin:$PATH"
+
 COPY --from=flink /opt/jdk  /opt/jdk8
 COPY --from=flink /opt/flink-${FLINK_VERSION} /ppml/trusted-realtime-ml/java/work/flink-${FLINK_VERSION}
 COPY --from=analytics-zoo /analytics-zoo/zoo/target/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar /ppml/trusted-realtime-ml/java/work/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar

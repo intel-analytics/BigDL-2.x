@@ -1,4 +1,4 @@
-GRAPHENEDIR ?= /graphene
+GRAPHENEDIR ?= /home/sdp/qiyuan/redis_test/graphene
 SGX_SIGNER_KEY ?= $(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/enclave-key.pem
 
 G_JAVA_XMX ?= 2G

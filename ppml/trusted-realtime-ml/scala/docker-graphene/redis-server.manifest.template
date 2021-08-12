@@ -1,4 +1,4 @@
-loader.preload = "file:{{  graphenedir }}/Runtime/libsysdb.so"
+loader.preload = "file:{{  graphenedir.libos }}"
 libos.entrypoint = "file:redis-server"
 
 loader.log_level = "{{ GRAPHENE_LOG_LEVEL }}"
