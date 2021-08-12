@@ -1179,6 +1179,7 @@ class FeatureTable(Table):
         :return: A new FeatureTable after column transformation.
         """
         udf_func = udf(func, dtype)
+        assert isinstance(out_col, str), "out_col must be a single column"
         if isinstance(in_col, str):
             df = self.df.withColumn(out_col, udf_func(pyspark_col(in_col)))
         else:
