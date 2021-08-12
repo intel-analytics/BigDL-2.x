@@ -720,6 +720,9 @@ class FeatureTable(Table):
             columns = [columns]
         if not isinstance(indices, dict):
             indices = {columns[0]: indices}
+        elif  (isinstance(next(iter(indices.values())), int)
+            or isinstance(next(iter(indices.values())), float)):
+            indices = {columns[0]: indices}
         assert len(columns) == len(indices)
         if isinstance(next(iter(indices.values())), dict):
             indices = {col_name: StringIndex.from_dict(dic, col_name)

@@ -229,6 +229,12 @@ class TestTable(TestCase):
         new_tbl2 = feature_tbl.encode_string(['col_4', 'col_5'], string_idx_dict2)
         assert new_tbl2.max("col_5").to_list("max")[0] == 4, "col_5 max value should be 4"
 
+        string_idx_3 = feature_tbl \
+            .gen_string_idx({"src_cols": ["col_4", "col_5"], "col_name": 'col_5'}, freq_limit=1)
+        assert string_idx_dict2['col_5'].size() == 4, "col_5 should have 5 indices"
+        new_tbl3 = feature_tbl.encode_string('col_4', string_idx_3)
+        assert new_tbl3.max("col_5").to_list("max")[0] == 4, "col_5 max value should be 4"
+
     def test_clip(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
