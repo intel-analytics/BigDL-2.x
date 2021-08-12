@@ -1,11 +1,11 @@
 #!/bin/bash
 
-export ENCLAVE_KEY_PATH=the_dir_of_your_enclave_key
-export DATA_PATH=the_dir_path_of_your_prepared_data
-export KEYS_PATH=the_dir_path_of_your_prepared_keys
-export LOCAL_IP=10
+export ENCLAVE_KEY_PATH=/home/sdp/qiyuan/redis_test/graphene/Pal/src/host/Linux-SGX/signer/enclave-key.pem
+export DATA_PATH=~/hangrui/myzoo/analytics-zoo/ppml/trusted-big-data-ml/work/data/
+export KEYS_PATH=/home/sdp/qiyuan/keys
+export LOCAL_IP=192.168.0.113
 
-#sudo docker pull intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:0.10-SNAPSHOT 
+sudo docker pull intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:0.10-SNAPSHOT 
 
 sudo docker run -itd \
     --privileged \

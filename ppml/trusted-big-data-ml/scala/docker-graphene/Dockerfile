@@ -119,6 +119,7 @@ RUN mkdir -p /graphene && \
     mkdir -p /graphene/python && \
     mkdir -p /graphene/Tools && \
     mkdir -p /graphene/Pal/src && \
+    mkdir -p /graphene/meson_build_output && \
     mkdir -p /ppml/trusted-big-data-ml/work && \
     mkdir -p /ppml/trusted-big-data-ml/work/keys && \
     mkdir -p /ppml/trusted-big-data-ml/work/password && \

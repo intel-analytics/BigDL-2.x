@@ -4,10 +4,13 @@ ENV GRAPHENE_BRANCH=newbranch
 
 RUN env DEBIAN_FRONTEND=noninteractive apt-get update && \
     env DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf bison build-essential coreutils gawk git libcurl4-openssl-dev libprotobuf-c-dev protobuf-c-compiler python3-protobuf wget
+RUN apt-get install -y build-essential autoconf gawk bison wget python3 libcurl4-openssl-dev python3-protobuf libprotobuf-c-dev protobuf-c-compiler python3-pip
+RUN pip3 install ninja meson && \
+    python3 -m pip install toml==0.10.2 click jinja2
 RUN git clone https://github.com/DiegoCao/graphene.git /graphene
 RUN cd /graphene && \
-    git fetch origin $(GRAPHENE_BRANCH) && \
-    git checkout $(GRAPHENE_BRANCH)
+    git fetch origin newbranch && \
+    git checkout newbranch
 RUN cd /graphene/Pal/src/host/Linux-SGX && \
     git clone https://github.com/intel/SGXDataCenterAttestationPrimitives.git linux-sgx-driver && \
     cd linux-sgx-driver && \
@@ -112,6 +115,7 @@ RUN mkdir -p /graphene && \
     mkdir -p /graphene/Runtime && \
     mkdir -p /graphene/python && \
     mkdir -p /graphene/Tools && \
+    mkdir -p /graphene/meson_build_output && \
     mkdir -p /graphene/Pal/src && \
     mkdir -p /ppml/trusted-realtime-ml/redis && \
     mkdir -p /ppml/trusted-realtime-ml/redis/work/keys && \
