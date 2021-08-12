@@ -27,13 +27,13 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.codahale.metrics.{MetricRegistry, Timer}
-
+import org.scalatest.{FlatSpec, Matchers}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-object MockMultipleServingHttpClient extends App with Supportive {
+class MockMultipleServingHttpClient extends FlatSpec with Matchers with App with Supportive {
 
   override val logger = LoggerFactory.getLogger(getClass)
   // load various model
@@ -45,7 +45,6 @@ object MockMultipleServingHttpClient extends App with Supportive {
   val timer: Timer = metrics.timer("test")
 
   testCaffe()
-  testBigDL()
 
   def testCaffe() : Unit = {
     val resource = getClass().getClassLoader().getResource("models")
@@ -63,59 +62,7 @@ object MockMultipleServingHttpClient extends App with Supportive {
     "floatTensor" : [ [ [0.6804766, 0.30136853, 0.17394465, 0.44770062, 0.20275897] ] ]
   } ]
 }"""
-
-    inferenceServable.predict(content)
-
-  }
-
-  def testBigDL() : Unit = {
-    val resource = getClass().getClassLoader().getResource("models")
-    val modelPath = resource.getPath + "/bigdl/bigdl_lenet.model"
-    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "BigDL", null,
-      1, "instance", null)
-
-    val inferenceServable = new InferenceModelServable(inferenceModelMetaData, timer)
-
-    inferenceServable.load()
-  }
-
-  def testPyTorch() : Unit = {
-    val resource = getClass().getClassLoader().getResource("models")
-    val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
-    val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
-    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "BigDL",
-      weightPath, 1, "instance", null)
-
-    val inferenceServable = new InferenceModelServable(inferenceModelMetaData, timer)
-
-  }
-
-  // Test Model Retrive Path. Starting FrontEnd App with MultiServing Tag
-  /* example yaml
-
-   */
-  def testMultiModelFunction() : Unit = {
-    val rawRequest = HttpRequest(
-      method = HttpMethods.GET,
-      uri = Uri(s"http://localhost:10020/models"))
-
-
-    silent(s"get models request")() {
-      val getModelsResponse = handle(rawRequest)
-      println(s"$getModelsResponse")
-
-    }
-  }
-  def handle(request: HttpRequest): (Int, String) = {
-    val future = timing("send")() {
-      Http().singleRequest(request)
-    }
-    val response = timing("receive")() {
-      Await.result(future, Duration.Inf)
-    }
-    val status = response.status.intValue()
-    val entity = Await.result(Unmarshal(response.entity).to[String], Duration.Inf).trim
-    (status, entity)
+    require(inferenceServable.predict(content).mkString == "1")
   }
 
 }
