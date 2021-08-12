@@ -15,6 +15,13 @@ RUN cd /graphene/Pal/src/host/Linux-SGX && \
     cp -r driver/linux/* .
 RUN cd /graphene && \
     ISGX_DRIVER_PATH=/graphene/Pal/src/host/Linux-SGX/linux-sgx-driver make -s -j4 SGX=1 WERROR=1 && true
+# Add install graphene
+RUN cd /graphene && \
+    make && \
+    ISGX_DRIVER_PATH=/graphene/Pal/src/host/Linux-SGX/linux-sgx-driver make -s -j4 SGX=1 && \
+    meson setup build/ --buildtype=release -Ddirect=enabled -Dsgx=enabled && \
+    ninja -C build/ && \
+    sudo ninja -C build/ install
 RUN for f in $(find /graphene/Runtime -type l); do cp --remove-destination $(realpath $f) $f; done
 RUN /graphene/Scripts/download --output redis.tar.gz --sha256 f7ded6c27d48c20bc78e797046c79b6bc411121f0c2d7eead9fea50d6b0b6290 --url https://github.com/antirez/redis/archive/6.0.5.tar.gz
 
@@ -47,8 +54,8 @@ ARG HTTP_PROXY_HOST
 ARG HTTP_PROXY_PORT
 ARG HTTPS_PROXY_HOST
 ARG HTTPS_PROXY_PORT
-ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.2
+ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
+ARG BIGDL_VERSION=0.13.0
 ARG SPARK_VERSION=2.4.6
 ARG SPARK_MAJOR_VERSION=2.4
 ENV ANALYTICS_ZOO_VERSION	${ANALYTICS_ZOO_VERSION}
@@ -78,8 +85,8 @@ RUN cd /opt && \
 
 # stage.4 az ppml
 FROM ubuntu:18.04
-ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.2
+ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
+ARG BIGDL_VERSION=0.13.0
 ARG SPARK_VERSION=2.4.6
 ARG FLINK_VERSION=1.10.1
 ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}

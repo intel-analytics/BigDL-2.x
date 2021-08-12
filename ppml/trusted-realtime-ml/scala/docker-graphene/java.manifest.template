@@ -1,4 +1,4 @@
-loader.preload = "file:{{ graphenedir }}/Runtime/libsysdb.so"
+loader.preload = "file:{{ graphenedir.libos }}"
 libos.entrypoint = "file:{{ jdk_home }}/bin/java"
 
 loader.log_level = "error"
@@ -24,7 +24,7 @@ loader.env.TF_MKL_ALLOC_MAX_BYTES = "10737418240"
 
 fs.mount.lib.type = "chroot"
 fs.mount.lib.path = "/lib"
-fs.mount.lib.uri = "file:{{ graphenedir }}/Runtime"
+fs.mount.lib.uri = "file:{{ graphenedir.runtimedir() }}"
 
 fs.mount.lib2.type = "chroot"
 fs.mount.lib2.path = "{{ arch_libdir }}"
@@ -62,7 +62,7 @@ fs.mount.redis.type = "chroot"
 fs.mount.redis.path = "/ppml/trusted-realtime-ml/redis"
 fs.mount.redis.uri = "file:/ppml/trusted-realtime-ml/redis"
 
-sgx.enclave_size = "$(G_SGX_SIZE)"
+sgx.enclave_size = "{{ g_sgx_size }}"
 sgx.thread_num = 1024
 
 sgx.allow_file_creation   = 1

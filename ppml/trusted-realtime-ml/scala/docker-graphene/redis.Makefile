@@ -13,14 +13,15 @@ ifeq ($(SGX),1)
 all: redis-server.manifest.sgx redis-server.sig redis-server.token
 endif
 
-include $(GRAPHENEDIR)/Scripts/Makefile.configs
+#include $(GRAPHENEDIR)/Scripts/Makefile.configs
 
 redis-server.manifest: redis-server.manifest.template
-	sed -e 's|$$(GRAPHENEDIR)|'"$(GRAPHENEDIR)"'|g' \
-                -e 's|$$(GRAPHENE_LOG_LEVEL)|'"$(GRAPHENE_LOG_LEVEL)"'|g' \
-                -e 's|$$(ARCH_LIBDIR)|'"$(ARCH_LIBDIR)"'|g' \
-                -e 's|$$(G_SGX_SIZE)|'"$(G_SGX_SIZE)"'|g' \
-                $< > $@
+		-Dlog_level=$(GRAPHENE_LOG_LEVEL) \
+		-Dexecdir=$(shell dirname $(shell which bash)) \
+		-Darch_libdir=$(ARCH_LIBDIR) \
+        -Dwork_dir=$(WORK_DIR) \
+		$< >$@
+
 
 redis-server.sig redis-server.manifest.sgx &: redis-server.manifest src/src/redis-server
 	graphene-sgx-sign \
