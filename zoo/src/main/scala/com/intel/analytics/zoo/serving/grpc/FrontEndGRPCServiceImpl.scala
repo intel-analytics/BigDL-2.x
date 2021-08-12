@@ -31,11 +31,9 @@ import scala.concurrent.Future
 
 object FrontEndGRPCServiceImpl extends Supportive{
   def main(args: Array[String]): Unit = {
-
-    // WARN: Firstly, only single connection is supported
     val server = new ZooGrpcServer(new FrontEndGRPCServiceImpl(args))
-    server.start
-    server.blockUntilShutdown
+    server.start()
+    server.blockUntilShutdown()
   }
 
 
