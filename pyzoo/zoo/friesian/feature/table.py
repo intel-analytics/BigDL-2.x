@@ -700,7 +700,7 @@ class FeatureTable(Table):
         """
         return cls(Table._read_csv(paths, delimiter, header, names, dtype))
 
-    def encode_string(self, columns, indices):
+    def encode_string(self, columns, indices, broadcast=True):
         """
         Encode columns with provided list of StringIndex.
 
@@ -727,7 +727,8 @@ class FeatureTable(Table):
         for i in range(len(columns)):
             index_tbl = indices[i]
             col_name = columns[i]
-            index_tbl.broadcast()
+            if broadcast:
+                index_tbl.broadcast()
             data_df = data_df.join(index_tbl.df, col_name, how="left") \
                 .drop(col_name).withColumnRenamed("id", col_name)
         return FeatureTable(data_df)
