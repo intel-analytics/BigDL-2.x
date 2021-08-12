@@ -709,7 +709,7 @@ class FeatureTable(Table):
                The StringIndex should at least have two columns: id and the corresponding
                categorical column.
                Or it can be a dict of categorical column value -> id or
-               a dict of column_name -> dict of id->column value. In this case,
+               a dict of column_name -> dict of column value->id. In this case,
                the keys of the dict should be within the categorical column
                and the values are the target ids to be encoded.
 
