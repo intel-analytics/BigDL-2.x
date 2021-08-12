@@ -2,23 +2,23 @@
 
 import os
 import fnmatch
-from setuptools import setup, find_packages
+from setuptools import setup
 
-exclude_patterns = ["*__pycache__*", "lightning_logs"]
-orca_lite_home = os.path.abspath(__file__ + "/../")
+exclude_patterns = ["*__pycache__*", "lightning_logs", "recipe", "setup.py"]
+nano_home = os.path.abspath(__file__ + "/../")
 
 
-def get_orca_lite_packages():
-    orca_lite_packages = []
-    for dirpath, dirs, files in os.walk(orca_lite_home + "/orca_lite"):
-        package = dirpath.split(orca_lite_home + "/")[1].replace('/', '.')
+def get_nano_packages():
+    nano_packages = []
+    for dirpath, _, _ in os.walk(nano_home):
+        package = dirpath.split(nano_home + "/")[1].replace('/', '.')
         if any(fnmatch.fnmatchcase(package, pat=pattern)
                 for pattern in exclude_patterns):
             print("excluding", package)
         else:
-            orca_lite_packages.append(package)
+            nano_packages.append(package)
             print("including", package)
-    return orca_lite_packages
+    return nano_packages
 
 
 def load_requirements(file_name="requirements.txt", comment_char='#'):
@@ -55,17 +55,16 @@ def setup_package():
     install_requires_list = load_requirements()
 
     metadata = dict(
-        name='orca-lite',
+        name='nano',
         version='0.0.1.dev0',
         description='',
         author='',
         author_email='',
-        url='https://github.com/analytics-zoo/orca-lite-poc',
+        url='https://github.com/intel-analytics/analytics-zoo/tree/bigdl-2.0',
         install_requires=install_requires_list,
-        packages=get_orca_lite_packages(),
-        scripts=['script/orca-lite-run'],
-            entry_points={
-                'console_scripts': ['orca-lite-init=orca_lite.common.init_orca_lite:main'],
+        packages=get_nano_packages(),
+        entry_points={
+            'console_scripts': ['nano-init=nano.common.init_nano:main'],
         }
     )
 

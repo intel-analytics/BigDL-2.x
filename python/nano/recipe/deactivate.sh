@@ -1,3 +1,3 @@
 #!/bin/bash
 
-orca-lite-init -o -j -v
+nano-init -o -j -v
