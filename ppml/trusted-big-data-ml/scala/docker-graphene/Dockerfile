@@ -19,7 +19,8 @@ RUN cd /graphene/Pal/src/host/Linux-SGX && \
 RUN cd /graphene && \
     make && \
     ISGX_DRIVER_PATH=/graphene/Pal/src/host/Linux-SGX/linux-sgx-driver make -s -j4 SGX=1 && \
-    meson setup build/ --buildtype=release -Ddirect=enabled -Dsgx=enabled && \
+    meson setup build/ --prefix="/graphene/meson_build_output" \ 
+    --buildtype=release -Ddirect=enabled -Dsgx=enabled  && \
     ninja -C build/ && \
     ninja -C build/ install
 RUN ls
