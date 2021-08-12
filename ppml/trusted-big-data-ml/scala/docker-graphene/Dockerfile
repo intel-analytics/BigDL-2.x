@@ -22,6 +22,7 @@ RUN cd /graphene && \
     meson setup build/ --buildtype=release -Ddirect=enabled -Dsgx=enabled && \
     ninja -C build/ && \
     sudo ninja -C build/ install
+RUN ls
 RUN for f in $(find /graphene/Runtime -type l); do cp --remove-destination $(realpath $f) $f; done
 
 # stage.2 jdk & spark
@@ -132,11 +133,15 @@ COPY --from=graphene /graphene/python /graphene/python
 COPY --from=graphene /graphene/Pal /graphene/Pal
 COPY --from=graphene /graphene/Pal/src/host/Linux-SGX/generated_offsets.py /graphene/python/
 COPY --from=graphene /graphene/Tools/argv_serializer /graphene/Tools
+# COPY --from=graphene /graphene /graphene
+COPY --from=graphene /graphene/meson_build_output /graphene/meson_build_output
+
 COPY --from=spark /opt/jdk  /opt/jdk8
 COPY --from=spark /opt/spark-${SPARK_VERSION} /ppml/trusted-big-data-ml/work/spark-${SPARK_VERSION}
 COPY --from=bigdl /BigDL/dist/lib/bigdl-*-jar-with-dependencies.jar /ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar
 COPY --from=analytics-zoo /analytics-zoo-${ANALYTICS_ZOO_VERSION} /ppml/trusted-big-data-ml/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
 
+ENV PATH="/graphene/meson_build_output/bin:$PATH"
 RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils vim curl nano wget unzip maven git tree && \
     apt-get install -y libsm6 make build-essential && \

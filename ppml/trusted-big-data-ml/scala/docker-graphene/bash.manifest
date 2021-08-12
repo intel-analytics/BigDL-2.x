@@ -11,7 +11,6 @@ loader.env.PATH = "/bin"
 
 loader.env.JAVA_HOME = "/opt/jdk"
 loader.env.JAVA_OPTS = "'-Djava.library.path=/opt/jdk/lib -Dsun.boot.library.path=/opt/jdk/lib'"
-loader.env.NEW_JAVA_HOME = "/opt/jdk"
 loader.env.SPARK_LOCAL_IP = "127.0.0.1"
 loader.env.SPARK_USER = "root"
 loader.env.SPARK_SCALA_VERSION = "2.11"
@@ -42,8 +41,6 @@ fs.mount.work.path = "/home/sdp/hangrui/myzoo/analytics-zoo/ppml/trusted-big-dat
 fs.mount.work.uri = "file:/home/sdp/hangrui/myzoo/analytics-zoo/ppml/trusted-big-data-ml/work"
 
 fs.mount.bin.type = "chroot"
-# fs.mount.bin.path = "/bin"
-
 fs.mount.bin.path = "/bin"
 fs.mount.bin.uri = "file:/bin"
 
