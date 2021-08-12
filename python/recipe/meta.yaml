@@ -1,0 +1,111 @@
+{% set name = "orca-lite" %}
+{% set version = "0.0.2" %}
+
+package:
+    name: orca-lite.base
+    version: {{ version }}
+
+build:
+    number: 0
+    skip: True # [py<36]
+    skip: True # [win]
+    noarch: python
+    script_env:
+      - http_proxy
+      - https_proxy
+
+source:
+    # Uncomment this line to build from local 
+    path: ../../orca-lite-poc
+    
+    # Uncomment this line to build from source
+    # git_url: https://github.com/analytics-zoo/orca-lite-poc.git
+    include_recipe: True
+
+requirements:
+    build:
+       - python
+       - setuptools
+
+    run:
+        - python
+        - 'intel-openmp >=2021.2.0'
+        - 'jemalloc >=5.2.1'
+        - 'PyTurboJPEG'
+        - 'opencv-python-headless'
+        - 'opencv_transforms'
+
+test:
+    imports:
+        - orca_lite
+
+outputs:
+    - name: orca-lite.base
+    - name: orca-lite.pytorch
+      version: {{ version }}
+      build:
+        number: 0
+        skip: True # [py<36]
+        skip: True # [win]
+        noarch: python
+        script_env:
+            - http_proxy
+            - https_proxy
+      requirements:
+        build:
+            - python
+            - setuptools
+        run:
+            - {{ pin_subpackage("orca-lite.base", exact=True) }}
+            - 'pytorch-lightning >=1.3.0'
+            - 'intel_pytorch_extension'
+            - 'cpuonly >=1.0'
+            - 'pytorch ==1.8.0'
+            - 'torchvision ==0.9.0'
+      test:
+        imports:
+            - orca_lite.pytorch
+    - name: orca-lite.tf
+      version: {{ version }}
+      build:
+        number: 0
+        skip: True # [py<37]
+        skip: True # [win]
+        noarch: python
+        script_env:
+            - http_proxy
+            - https_proxy
+      requirements:
+        build:
+            - python
+            - setuptools
+        run:
+            - {{ pin_subpackage("orca-lite.base", exact=True) }}
+            - 'tensorflow >=2.5'
+      test:
+          imports:
+            - orca_lite.tf
+    - name: orca-lite
+      version: {{ version }}
+      build:
+        number: 0
+        skip: True # [py<36]
+        skip: True # [win]
+        noarch: python
+        script_env:
+            - http_proxy
+            - https_proxy
+      requirements:
+        build:
+            - python
+            - setuptools
+        run:
+            - {{ pin_subpackage("orca-lite.pytorch", exact=True) }}
+      test:
+        imports:
+            - orca_lite.pytorch
+      
+
+about:
+    home: https://github.com/analytics-zoo/orca-lite-poc
+    description: orca-lite
