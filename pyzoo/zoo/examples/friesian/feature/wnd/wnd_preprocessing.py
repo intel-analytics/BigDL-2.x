@@ -124,8 +124,8 @@ if __name__ == '__main__':
     # change name for all columns
     columns = dict([("_c{}".format(i), "c{}".format(i)) for i in range(40)])
     tbl = tbl.rename(columns)
-    idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
-    cat_sizes = [idx.size() for idx in idx_list]
+    idx_dict = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
+    cat_sizes = [idx_dict[c].size() for c in CAT_COLS]
 
     cross_sizes = args.cross_sizes
 
@@ -140,14 +140,14 @@ if __name__ == '__main__':
 
     if args.days == 24:  # Full Criteo dataset
         train_data = FeatureTable.read_parquet(paths[:-1])
-        preprocess_and_save(train_data, idx_list, os.path.join(args.output_folder, "train_parquet"))
+        preprocess_and_save(train_data, idx_dict, os.path.join(args.output_folder, "train_parquet"))
 
         test_data = FeatureTable.read_parquet(
             os.path.join(args.input_folder, "day_23_test.parquet"))
-        preprocess_and_save(test_data, idx_list, os.path.join(args.output_folder, "test_parquet"))
+        preprocess_and_save(test_data, idx_dict, os.path.join(args.output_folder, "test_parquet"))
     else:  # Sample data
         data = FeatureTable.read_parquet(paths)
-        preprocess_and_save(data, idx_list, os.path.join(args.output_folder, "data_parquet"))
+        preprocess_and_save(data, idx_dict, os.path.join(args.output_folder, "data_parquet"))
 
     time_end = time()
     print("Total data loading and preprocessing time: ", time_end - time_start)

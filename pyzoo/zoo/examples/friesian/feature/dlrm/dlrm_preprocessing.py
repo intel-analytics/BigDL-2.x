@@ -114,22 +114,22 @@ if __name__ == "__main__":
 
     paths = [os.path.join(args.input_folder, "day_%d.parquet" % i) for i in args.day_range]
     tbl = FeatureTable.read_parquet(paths)
-    idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
+    idx_dict = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
 
     train_data = FeatureTable.read_parquet(paths[:-1])
-    train_preprocessed = preprocess_and_save(train_data, idx_list, "train", args.output_folder)
+    train_preprocessed = preprocess_and_save(train_data, idx_dict, "train", args.output_folder)
 
     if args.days == 24:  # Full Criteo dataset
         test_data = FeatureTable.read_parquet(
             os.path.join(args.input_folder, "day_23_test.parquet"))
-        test_preprocessed = preprocess_and_save(test_data, idx_list, "test", args.output_folder)
+        test_preprocessed = preprocess_and_save(test_data, idx_dict, "test", args.output_folder)
 
     time_end = time()
     print("Total preprocessing time: ", time_end - time_start)
     train_preprocessed.show(5)
 
     if args.output_folder:
-        for idx in idx_list:
+        for idx in idx_dict.values():
             idx.write_parquet(args.output_folder)
 
     print("Finished")

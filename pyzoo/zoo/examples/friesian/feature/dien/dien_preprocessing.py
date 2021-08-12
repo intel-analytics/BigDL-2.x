@@ -105,15 +105,15 @@ if __name__ == "__main__":
 
     user_index = transaction_tbl.gen_string_idx('user', 1)
     item_category_indices = item_tbl.gen_string_idx(["item", "category"], 1)
-    item_size = item_category_indices[0].size()
-    category_index = item_category_indices[1]
+    item_size = item_category_indices['item'].size()
+    category_index = item_category_indices['category']
 
     item_tbl = item_tbl\
-        .encode_string(["item", "category"], [item_category_indices[0], category_index])\
+        .encode_string(["item", "category"], item_category_indices)\
         .distinct()
 
     transaction_tbl = transaction_tbl\
-        .encode_string(['user', 'item'], [user_index, item_category_indices[0]])\
+        .encode_string(['user', 'item'], {'user': user_index, 'item': item_category_indices['item']})\
         .dropna(columns="item")\
         .add_hist_seq(cols=['item'], user_col="user",
                       sort_col='time', min_len=1, max_len=100)\
@@ -132,7 +132,7 @@ if __name__ == "__main__":
 
     # write out
     user_index.write_parquet(args.output)
-    item_category_indices[0].write_parquet(args.output + "item_index")
+    item_category_indices['item'].write_parquet(args.output + "item_index")
     category_index.write_parquet(args.output + "category_index")
     item_tbl.write_parquet(args.output + "item2cat")
     full_tbl.write_parquet(args.output + "data")

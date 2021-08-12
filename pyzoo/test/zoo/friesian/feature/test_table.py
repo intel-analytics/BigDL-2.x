@@ -173,11 +173,11 @@ class TestTable(TestCase):
     def test_gen_string_idx(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
-        string_idx_list = feature_tbl.gen_string_idx(["col_4", "col_5"], freq_limit=1)
-        assert string_idx_list[0].size() == 3, "col_4 should have 3 indices"
-        assert string_idx_list[1].size() == 2, "col_5 should have 2 indices"
+        string_idx_dict = feature_tbl.gen_string_idx(["col_4", "col_5"], freq_limit=1)
+        assert string_idx_dict['col_4'].size() == 3, "col_4 should have 3 indices"
+        assert string_idx_dict['col_5'].size() == 2, "col_5 should have 2 indices"
         with tempfile.TemporaryDirectory() as local_path:
-            for str_idx in string_idx_list:
+            for str_idx in string_idx_dict.values():
                 str_idx.write_parquet(local_path)
                 str_idx_log = str_idx.log(["id"])
                 assert str_idx.df.filter("id == 1").count() == 1, "id in str_idx should = 1"
@@ -194,21 +194,40 @@ class TestTable(TestCase):
     def test_gen_string_idx_dict(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
-        string_idx_list = feature_tbl.gen_string_idx(["col_4", "col_5"], freq_limit={"col_4": 1,
+        string_idx_dict = feature_tbl.gen_string_idx(["col_4", "col_5"], freq_limit={"col_4": 1,
                                                                                      "col_5": 3})
         with self.assertRaises(Exception) as context:
             feature_tbl.gen_string_idx(["col_4", "col_5"], freq_limit="col_4:1,col_5:3")
         self.assertTrue('freq_limit only supports int, dict or None, but get str' in str(
             context.exception))
-        assert string_idx_list[0].size() == 3, "col_4 should have 3 indices"
-        assert string_idx_list[1].size() == 1, "col_5 should have 1 indices"
+        assert string_idx_dict['col_4'].size() == 3, "col_4 should have 3 indices"
+        assert string_idx_dict['col_5'].size() == 1, "col_5 should have 1 indices"
 
     def test_gen_string_idx_none(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
-        string_idx_list = feature_tbl.gen_string_idx(["col_4", "col_5"], freq_limit=None)
-        assert string_idx_list[0].size() == 3, "col_4 should have 3 indices"
-        assert string_idx_list[1].size() == 2, "col_5 should have 2 indices"
+        string_idx_dict = feature_tbl.gen_string_idx(["col_4", "col_5"], freq_limit=None)
+        assert string_idx_dict['col_4'].size() == 3, "col_4 should have 3 indices"
+        assert string_idx_dict['col_5'].size() == 2, "col_5 should have 2 indices"
+
+    def test_gen_string_idx_union(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        string_idx_dict1 = feature_tbl \
+            .gen_string_idx(["col_4", 'col_5'],
+                            freq_limit=1)
+        assert string_idx_dict1['col_4'].size() == 3, "col_4 should have 3 indices"
+        assert string_idx_dict1['col_5'].size() == 2, "col_5 should have 2 indices"
+        new_tbl1 = feature_tbl.encode_string(['col_4', 'col_5'], string_idx_dict1)
+        assert new_tbl1.max("col_5").to_list("max")[0] == 2, "col_5 max value should be 2"
+
+        string_idx_dict2 = feature_tbl\
+            .gen_string_idx(["col_4", {"src_cols": ["col_4", "col_5"], "col_name":'col_5'}],
+                            freq_limit=1)
+        assert string_idx_dict2['col_4'].size() == 3, "col_4 should have 3 indices"
+        assert string_idx_dict2['col_5'].size() == 4, "col_5 should have 5 indices"
+        new_tbl2 = feature_tbl.encode_string(['col_4', 'col_5'], string_idx_dict2)
+        assert new_tbl2.max("col_5").to_list("max")[0] == 4, "col_5 max value should be 4"
 
     def test_clip(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
@@ -582,9 +601,9 @@ class TestTable(TestCase):
                              StructField("height", IntegerType(), True)])
         tbl = FeatureTable(spark.createDataFrame(data, schema))
         columns = ["name", "num"]
-        indices = []
-        indices.append({"jack": 1, "alice": 2, "rose": 3})
-        indices.append({"123": 3, "34": 1, "25344": 2})
+        indices = {}
+        indices['name'] = {"jack": 1, "alice": 2, "rose": 3}
+        indices['num'] = {"123": 3, "34": 1, "25344": 2}
         tbl = tbl.encode_string(columns, indices)
         assert 'name' in tbl.df.columns, "name should be still in the columns"
         assert 'num' in tbl.df.columns, "num should be still in the columns"
@@ -999,11 +1018,11 @@ class TestTable(TestCase):
         file_path = os.path.join(self.resource_path, "friesian/feature/data.csv")
         feature_tbl = FeatureTable.read_csv(file_path, header=True)
         feature_tbl, indices = feature_tbl.category_encode(columns=["col2", "col3"])
-        assert isinstance(indices, list) and len(indices) == 2
-        assert isinstance(indices[0], StringIndex) and isinstance(indices[1], StringIndex)
-        assert indices[0].size() == 3 and indices[1].size() == 4
-        dict1 = indices[0].to_dict()
-        dict2 = indices[1].to_dict()
+        assert isinstance(indices, dict) and len(indices) == 2
+        assert isinstance(indices['col2'], StringIndex) and isinstance(indices['col3'], StringIndex)
+        assert indices['col2'].size() == 3 and indices['col3'].size() == 4
+        dict1 = indices['col2'].to_dict()
+        dict2 = indices['col3'].to_dict()
         records = feature_tbl.df.collect()
         assert records[0][1] == dict1["x"] and records[0][2] == dict2["abc"]
         assert records[3][1] == dict1["z"] and records[2][2] == dict2["aaa"]
