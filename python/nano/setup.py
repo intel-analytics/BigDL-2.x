@@ -65,13 +65,11 @@ def setup_package():
         url='https://github.com/intel-analytics/analytics-zoo/tree/bigdl-2.0',
         install_requires=install_requires_list,
         packages=get_nano_packages(),
-        entry_points={
-            'console_scripts': ['nano-init=bigdl.nano.common.init_nano:main'],
-        }
+        scripts=['script/orca-lite-run']
     )
 
     setup(**metadata)
 
 
-# if __name__ == '__main__':
-#     setup_package()
+if __name__ == '__main__':
+    setup_package()
