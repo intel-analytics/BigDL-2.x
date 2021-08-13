@@ -794,4 +794,3 @@ class TSDataset:
         # check no n/a in critical col
         _check_col_no_na(self.df, self.dt_col)
         _check_col_no_na(self.df, self.id_col)
-
