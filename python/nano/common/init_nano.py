@@ -4,7 +4,7 @@ import subprocess
 from typing import Union, Optional
 import warnings
 
-from nano.common.cpu_schedule import schedule_workers, get_cpu_info
+from bigdl.nano.common.cpu_schedule import schedule_workers, get_cpu_info
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-o", "--openmp", action="store_false", default=True,

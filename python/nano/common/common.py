@@ -6,7 +6,7 @@ from typing import Union, Dict, List, Optional
 import numpy as np
 import re
 
-from nano.common.cpu_schedule import schedule_workers
+from bigdl.nano.common.cpu_schedule import schedule_workers
 
 
 def _env_variable_is_set(variable: str,
@@ -66,7 +66,7 @@ def init_nano(use_jemalloc: bool = True, use_openmp: bool = True,
     # Get a copy of os environment
     env_copy = os.environ.copy()
 
-    if _env_variable_is_set("NANO_CHILD", env_copy):
+    if _env_variable_is_set("BIGDL_NANO_CHILD", env_copy):
         return
 
     # Find conda directory
@@ -130,7 +130,7 @@ def init_nano(use_jemalloc: bool = True, use_openmp: bool = True,
         ld_preload = [lib for lib in ld_preload if "libjemalloc.so" not in lib]
 
     env_copy["LD_PRELOAD"] = " ".join(ld_preload)
-    env_copy["NANO_CHILD"] = "1"
+    env_copy["BIGDL_NANO_CHILD"] = "1"
     if print_environment:
         print(env_copy)
 

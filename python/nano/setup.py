@@ -55,7 +55,7 @@ def setup_package():
     install_requires_list = load_requirements()
 
     metadata = dict(
-        name='nano',
+        name='bigdl-nano',
         version='0.0.1.dev0',
         description='',
         author='',
@@ -64,7 +64,7 @@ def setup_package():
         install_requires=install_requires_list,
         packages=get_nano_packages(),
         entry_points={
-            'console_scripts': ['nano-init=nano.common.init_nano:main'],
+            'console_scripts': ['nano-init=bigdl.nano.common.init_nano:main'],
         }
     )
 

@@ -38,7 +38,7 @@ requirements:
 
 test:
     imports:
-        - nano
+        - bigdl.nano
 
 outputs:
     - name: bigdl-nano.base
@@ -65,7 +65,7 @@ outputs:
             - 'torchvision ==0.9.0'
       test:
         imports:
-            - nano.pytorch
+            - bigdl.nano.pytorch
     - name: bigdl-nano.tf
       version: {{ version }}
       build:
@@ -85,7 +85,7 @@ outputs:
             - 'tensorflow >=2.5'
       test:
           imports:
-            - nano.tf
+            - bigdl.nano.tf
     - name: bigdl-nano
       version: {{ version }}
       build:
@@ -104,7 +104,7 @@ outputs:
             - {{ pin_subpackage("bigdl-nano.pytorch", exact=True) }}
       test:
         imports:
-            - nano.pytorch
+            - bigdl.nano.pytorch
       
 
 about:
