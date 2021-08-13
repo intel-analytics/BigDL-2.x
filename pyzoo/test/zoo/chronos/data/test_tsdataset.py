@@ -314,7 +314,7 @@ class TestTSDataset(ZooTestCase):
         for df in [df_single_id, df_multi_id]:
             horizon = random.randint(1, 10)
             lookback = random.randint(1, 20)
-            batch_size = random.randint(32, 64)
+            batch_size = random.randint(16, 32)
 
             tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                            extra_feature_col=["extra feature"], id_col="id")
@@ -384,7 +384,7 @@ class TestTSDataset(ZooTestCase):
         df = get_ts_df()
         horizon = random.randint(1, 10)
         lookback = random.randint(1, 20)
-        batch_size = random.randint(32, 64)
+        batch_size = random.randint(16, 32)
 
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
                                        extra_feature_col=["extra feature"], id_col="id")
@@ -404,7 +404,7 @@ class TestTSDataset(ZooTestCase):
     def test_tsdata_multi_unscale_numpy_torch_load(self):
         lookback = random.randint(1, 10)
         horizon = random.randint(1, 20)
-        batch_size = random.randint(32, 64)
+        batch_size = random.randint(16, 32)
         df = get_multi_id_ts_df()
         df_test = get_multi_id_ts_df()
         tsdata_train = TSDataset.from_pandas(df,
