@@ -26,7 +26,7 @@ from zoo.chronos.data.utils.scale import unscale_timeseries_numpy
 from zoo.chronos.data.utils.resample import resample_timeseries_dataframe
 from zoo.chronos.data.utils.split import split_timeseries_dataframe
 from zoo.chronos.data.utils.utils import _to_list, _check_type,\
-    _check_col_within, _check_col_no_na
+    _check_col_within, _check_col_no_na, _check_is_aligned
 
 from tsfresh.utilities.dataframe_functions import roll_time_series
 from tsfresh.utilities.dataframe_functions import impute as impute_tsfresh
@@ -795,6 +795,3 @@ class TSDataset:
         _check_col_no_na(self.df, self.dt_col)
         _check_col_no_na(self.df, self.id_col)
 
-def _check_is_aligned(df, id_col, dt_col, _id_list):
-    res = [hash(str(df.groupby(id_col).get_group(x)[dt_col].values)) for x in _id_list]
-    return len(set(res)) == 1
