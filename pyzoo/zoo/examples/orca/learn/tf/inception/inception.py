@@ -192,9 +192,9 @@ def config_option_parser():
 if __name__ == "__main__":
     parser = config_option_parser()
     (options, args) = parser.parse_args(sys.argv)
-    #tf.compat.v1.enable_eager_execution()
+    # tf.compat.v1.enable_eager_execution()
 
-    #write_tfrecord(format="imagenet", imagenet_path=options.folder, output_path=options.imagenet)
+    # write_tfrecord(format="imagenet", imagenet_path=options.folder, output_path=options.imagenet)
 
     train_data = train_data_creator(
         config={"data_dir": os.path.join(options.imagenet, "train")})
@@ -254,12 +254,23 @@ if __name__ == "__main__":
     else:
         checkpoint_trigger = SeveralIteration(options.checkpointIteration)
 
+
+    def calculate_top_k_accuracy(logits, targets, k=1):
+        values, indices = tf.math.top_k(logits, k=k, sorted=True)
+        y = tf.reshape(targets, [-1, 1])
+        correct = tf.cast(tf.equal(y, indices), tf.float32)
+        top_k_accuracy = tf.reduce_mean(correct) * k
+        return top_k_accuracy
+
+    acc = calculate_top_k_accuracy(logits, targets=labels)
+
     est = Estimator.from_graph(inputs=images,
                                outputs=logits,
                                labels=labels,
                                loss=loss,
                                optimizer=optim,
-                               model_dir="/tmp/logs")
+                               model_dir="/tmp/logs",
+                               metrics={"acc" : acc})
 
     if options.resumeTrainingCheckpoint is not None:
         assert options.resumeTrainingVersion is not None, \
@@ -270,7 +281,7 @@ if __name__ == "__main__":
     est.fit(data=train_data,
             batch_size=options.batchSize,
             epochs=options.maxEpoch,
-            validation_data=train_data,
+            validation_data=val_data,
             feed_dict={is_training: [True, False]},
             checkpoint_trigger=checkpoint_trigger)
 
