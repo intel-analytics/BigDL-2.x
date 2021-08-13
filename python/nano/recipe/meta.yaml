@@ -16,7 +16,7 @@ build:
 
 source:
     # Uncomment this line to build from local 
-    path: ../nano
+    path: ../../nano
     
     # Uncomment this line to build from source
     # Unavailable for now

@@ -1,7 +1,6 @@
 # Build Conda Package Guidance
 
 ## Check your envs
-Because of IPEX we use are build on python3.7 only, so we are supposed to use [Anaconda based on python37](https://mirrors.tuna.tsinghua.edu.cn/anaconda/archive/Anaconda3-2019.03-Linux-x86_64.sh) to build this package, please check if your base envs is on python3.7.
 Install conda-build:
 ```bash
 conda install conda-build
