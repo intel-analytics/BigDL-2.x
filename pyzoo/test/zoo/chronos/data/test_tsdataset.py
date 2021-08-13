@@ -324,8 +324,8 @@ class TestTSDataset(ZooTestCase):
         tsdata = TSDataset.from_pandas(df, dt_col='datetime', target_col='value',
                                        extra_feature_col=['extra feature'], id_col="id")
         x, y = tsdata.roll(lookback=lookback, horizon=horizon).to_numpy()
-        assert x.dtype == np.float64
-        assert y.dtype == np.float64
+        assert x.dtype == np.float32
+        assert y.dtype == np.float32
         tsdata._check_basic_invariants()
 
     def test_tsdataset_to_torch_loader_roll(self):

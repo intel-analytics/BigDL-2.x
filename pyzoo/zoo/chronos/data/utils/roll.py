@@ -16,7 +16,6 @@
 
 import numpy as np
 import pandas as pd
-from torch._C import dtype
 
 
 def roll_timeseries_dataframe(df,
@@ -89,7 +88,7 @@ def _roll_timeseries_dataframe_test(df,
                                     lookback,
                                     feature_col,
                                     target_col):
-    x = df.loc[:, target_col+feature_col].values
+    x = df.loc[:, target_col+feature_col].astype(np.float32).values
 
     output_x, mask_x = _roll_timeseries_ndarray(x, lookback)
     mask = (mask_x == 1)
@@ -106,8 +105,8 @@ def _roll_timeseries_dataframe_train(df,
                                      feature_col,
                                      target_col):
     max_horizon = horizon if isinstance(horizon, int) else max(horizon)
-    x = df[:-max_horizon].loc[:, target_col+feature_col].values
-    y = df.iloc[lookback:].loc[:, target_col].values
+    x = df[:-max_horizon].loc[:, target_col+feature_col].astype(np.float32).values
+    y = df.iloc[lookback:].loc[:, target_col].astype(np.float32).values
 
     output_x, mask_x = _roll_timeseries_ndarray(x, lookback)
     output_y, mask_y = _roll_timeseries_ndarray(y, horizon)
@@ -121,7 +120,7 @@ def _roll_timeseries_dataframe_train(df,
 def _shift(arr, num, fill_value=np.nan):
     # this function is adapted from
     # https://stackoverflow.com/questions/30399534/shift-elements-in-a-numpy-array
-    result = np.empty_like(arr, dtype=np.float32)
+    result = np.empty_like(arr)
     if num > 0:
         result[:num] = fill_value
         result[num:] = arr[:-num]
