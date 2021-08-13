@@ -5,12 +5,14 @@ import fnmatch
 from setuptools import setup
 
 exclude_patterns = ["*__pycache__*", "lightning_logs", "recipe", "setup.py"]
-nano_home = os.path.abspath(__file__ + "/../")
+nano_home = os.path.abspath(__file__ + "/../src/")
+print(nano_home)
 
 
 def get_nano_packages():
     nano_packages = []
-    for dirpath, _, _ in os.walk(nano_home):
+    for dirpath, _, _ in os.walk(nano_home + "/bigdl"):
+        print(dirpath)
         package = dirpath.split(nano_home + "/")[1].replace('/', '.')
         if any(fnmatch.fnmatchcase(package, pat=pattern)
                 for pattern in exclude_patterns):
@@ -19,7 +21,7 @@ def get_nano_packages():
             nano_packages.append(package)
             print("including", package)
     return nano_packages
-
+print(get_nano_packages())
 
 def load_requirements(file_name="requirements.txt", comment_char='#'):
     """
@@ -71,5 +73,5 @@ def setup_package():
     setup(**metadata)
 
 
-if __name__ == '__main__':
-    setup_package()
+# if __name__ == '__main__':
+#     setup_package()

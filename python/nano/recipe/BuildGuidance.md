@@ -13,7 +13,7 @@ Details at https://docs.conda.io/projects/conda-build/en/latest/resources/define
 For example, we plan to build a package based on python3.7
 1. Just run:
     ```bash
-    cd orca-lite-poc
+    cd python/nano
 
     conda build . -c chriskafka -c pytorch -c conda-forge --python 3.7
     ```
@@ -34,7 +34,7 @@ For example, we plan to build a package based on python3.7
     There are currently 7 accumulated.
     To remove them, you can run the ```conda build purge``` command
     ```
-    And you will see `/usr/local/conda-bld/linux-64/nano-1.2.0-py37_0.tar.bz2` exist. But installing tar file directly does not resolve dependencies, refer to  https://docs.anaconda.com/anaconda/user-guide/tasks/install-packages.
+    And you will see `/usr/local/conda-bld/linux-64/bigdl-nano-1.2.0-py37_0.tar.bz2` exist. But installing tar file directly does not resolve dependencies, refer to  https://docs.anaconda.com/anaconda/user-guide/tasks/install-packages.
 
 1. Upload conda package:
    
@@ -45,20 +45,20 @@ For example, we plan to build a package based on python3.7
    ```
    Then you can upload your package by:
    ```
-   anaconda upload /opt/conda/conda-bld/linux-64/nano-0.0.2-py39_0.tar.bz2
+   anaconda upload /opt/conda/conda-bld/linux-64/bigdl-nano-0.0.2-py39_0.tar.bz2
    ```
-   Now you can see a nano package lies on your anaconda dashbroad.
+   Now you can see a bigdl-nano package lies on your anaconda dashbroad.
 
 1. Test your conda package:
     ```bash
     conda create -n test37 python=3.7
     conda activate test37
 
-    conda install nano -c conda-forge -c pytorch -c chriskafka
+    conda install bigdl-nano -c conda-forge -c pytorch -c chriskafka
     ```
     Note that default channel may conflict with pytorch channel when it comes to torch, so we specify channels here.
     ```bash
-    python -c "import nano"
+    python -c "import bigdl.nano"
     conda list | grep torch
     pip list | grep ipex
     ```
