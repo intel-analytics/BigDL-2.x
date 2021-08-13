@@ -917,7 +917,8 @@ class FeatureTable(Table):
 
         :param columns: str, dict or a list of str, dict, target column(s) to generate StringIndex.
          dict is a mapping of source column names -> target column name if needs to combine multiple
-         source columns to generate index. For example: {'src_cols':['a_user', 'b_user'], 'col_name':'user'}.
+         source columns to generate index.
+         For example: {'src_cols':['a_user', 'b_user'], 'col_name':'user'}.
         :param freq_limit: int, dict or None. Categories with a count/frequency below freq_limit
                will be omitted from the encoding. Can be represented as either an integer,
                dict. For instance, 15, {'col_4': 10, 'col_5': 2} etc. Default is None,
@@ -975,14 +976,16 @@ class FeatureTable(Table):
                         dict_df = self.df.select(F.col(src_c).alias(col_name))
                     else:
                         dict_df = dict_df.union(self.df.select(F.col(src_c).alias(col_name)))
-                union_id_list = generate_string_idx(dict_df, [col_name], freq_limit, order_by_freq)
+                union_id_list = generate_string_idx(dict_df, [col_name],
+                                                    freq_limit, order_by_freq)
                 df_id_list.extend(union_id_list)
                 out_columns.append(col_name)
             else:
                 simple_columns.append(c)
                 out_columns.append(c)
         if simple_columns:
-            simple_df_id_list = generate_string_idx(self.df, simple_columns, freq_limit, order_by_freq)
+            simple_df_id_list = generate_string_idx(self.df, simple_columns,
+                                                    freq_limit, order_by_freq)
             df_id_list.extend(simple_df_id_list)
 
         string_idx_list = list(map(lambda x: StringIndex(x[0], x[1]),
