@@ -17,6 +17,7 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 
 import types
+import os
 
 from zoo.automl.model.abstract import BaseModel, ModelBuilder
 from zoo.automl.common.util import *
@@ -93,7 +94,7 @@ class PytorchBaseModel(BaseModel):
         return data_creator
 
     def fit_eval(self, data, validation_data=None, mc=False, verbose=0, epochs=1, metric=None,
-                 metric_func=None,
+                 metric_func=None, resources_per_trial=None,
                  **config):
         """
         :param data: data could be a tuple with numpy ndarray with form (x, y) or a
@@ -114,6 +115,11 @@ class PytorchBaseModel(BaseModel):
 
         if not metric:
             raise ValueError("You must input a valid metric value for fit_eval.")
+
+        # resources_per_trial
+        if resources_per_trial is not None:
+            torch.set_num_threads(resources_per_trial["cpu"])
+            os.environ["OMP_NUM_THREADS"] = str(resources_per_trial["cpu"])
 
         # update config settings
         def update_config():
@@ -232,12 +238,12 @@ class PytorchBaseModel(BaseModel):
         for i in range(len(list(self.model.parameters()))):
             print(list(self.model.parameters())[i].size())
 
-    def evaluate(self, x, y, metrics=['mse'], multioutput="raw_values"):
+    def evaluate(self, x, y, metrics=['mse'], multioutput="raw_values", batch_size=32):
         # reshape 1dim input
         x = self._reshape_input(x)
         y = self._reshape_input(y)
 
-        yhat = self.predict(x)
+        yhat = self.predict(x, batch_size=batch_size)
         eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput=multioutput)
                        for m in metrics]
         return eval_result
@@ -255,10 +261,11 @@ class PytorchBaseModel(BaseModel):
             self.model.eval()
         test_loader = DataLoader(TensorDataset(x),
                                  batch_size=int(batch_size))
-        yhat_list = []
-        for x_test_batch in test_loader:
-            yhat_list.append(self.model(x_test_batch[0]).detach().numpy())
-        yhat = np.concatenate(yhat_list, axis=0)
+        y_list = []
+        with torch.no_grad():
+            for x_test_batch in test_loader:
+                y_list.append(self.model(x_test_batch[0]).numpy())
+        yhat = np.concatenate(y_list, axis=0)
         return yhat
 
     def predict_with_uncertainty(self, x, n_iter=100):
@@ -297,12 +304,13 @@ class PytorchBaseModel(BaseModel):
         state_dict = torch.load(checkpoint)
         self.load_state_dict(state_dict)
 
-    def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None, multioutput="raw_values"):
+    def evaluate_with_onnx(self, x, y, metrics=['mse'], dirname=None,
+                           multioutput="raw_values", batch_size=32):
         # reshape 1dim input
         x = self._reshape_input(x)
         y = self._reshape_input(y)
 
-        yhat = self.predict_with_onnx(x, dirname=dirname)
+        yhat = self.predict_with_onnx(x, dirname=dirname, batch_size=batch_size)
         eval_result = [Evaluator.evaluate(m, y_true=y, y_pred=yhat, multioutput=multioutput)
                        for m in metrics]
         return eval_result
@@ -335,7 +343,7 @@ class PytorchBaseModel(BaseModel):
         self.ort_session = onnxruntime.InferenceSession(os.path.join(dirname, "cache.onnx"))
         self.onnx_model_built = True
 
-    def predict_with_onnx(self, x, mc=False, dirname=None):
+    def predict_with_onnx(self, x, mc=False, dirname=None, batch_size=32):
         # reshape 1dim input
         x = self._reshape_input(x)
 
@@ -343,12 +351,20 @@ class PytorchBaseModel(BaseModel):
         if not self.onnx_model_built:
             self._build_onnx(x[0:1], dirname=dirname)
 
+        test_loader = DataLoader(TensorDataset(x),
+                                 batch_size=int(batch_size))
+        yhat_list = []
+
         def to_numpy(tensor):
             return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
 
-        ort_inputs = {self.ort_session.get_inputs()[0].name: to_numpy(x)}
-        ort_outs = self.ort_session.run(None, ort_inputs)
-        return ort_outs[0]
+        for x_test_batch in test_loader:
+            ort_inputs = {self.ort_session.get_inputs()[0].name: to_numpy(x_test_batch[0])}
+            ort_outs = self.ort_session.run(None, ort_inputs)
+            yhat_list.append(ort_outs[0])
+        yhat = np.concatenate(yhat_list, axis=0)
+
+        return yhat
 
     def _get_required_parameters(self):
         return {}

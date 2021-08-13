@@ -198,15 +198,8 @@ class TestAutoTrainer(TestCase):
         tsdata_train = get_tsdataset().gen_dt_feature().scale(scaler, fit=True)
         tsdata_valid = get_tsdataset().gen_dt_feature().scale(scaler, fit=False)
 
-        search_space = {
-            'hidden_dim': hp.grid_search([32, 64]),
-            'layer_num': hp.randint(1, 3),
-            'lr': hp.choice([0.001, 0.003, 0.01]),
-            'dropout': hp.uniform(0.1, 0.2)
-        }
-
         auto_estimator = AutoTSEstimator(model='lstm',
-                                         search_space=search_space,
+                                         search_space="minimal",
                                          past_seq_len=hp.randint(4, 6),
                                          future_seq_len=1,
                                          selected_features="auto",
@@ -251,6 +244,17 @@ class TestAutoTrainer(TestCase):
         np.testing.assert_almost_equal(eval_result[0], eval_result_new[0])
         np.testing.assert_almost_equal(y_pred, y_pred_new)
 
+        # check if load ppl is the same as previous with onnx
+        try:
+            import onnx
+            import onnxruntime
+            eval_result_new_onnx = new_ts_pipeline.evaluate_with_onnx(tsdata_valid)
+            y_pred_new_onnx = new_ts_pipeline.predict_with_onnx(tsdata_valid)
+            np.testing.assert_almost_equal(eval_result[0], eval_result_new_onnx[0], decimal=5)
+            np.testing.assert_almost_equal(y_pred, y_pred_new_onnx, decimal=5)
+        except ImportError:
+            pass
+
         # use tspipeline to incrementally train
         new_ts_pipeline.fit(tsdata_valid)
 
@@ -260,15 +264,8 @@ class TestAutoTrainer(TestCase):
         tsdata_train = get_tsdataset().gen_dt_feature().scale(scaler, fit=True)
         tsdata_valid = get_tsdataset().gen_dt_feature().scale(scaler, fit=False)
 
-        search_space = {
-            'hidden_units': hp.grid_search([32, 64]),
-            'levels': hp.randint(4, 6),
-            'kernel_size': hp.randint(3, 5),
-            'dropout': hp.uniform(0.1, 0.2),
-            'lr': hp.loguniform(0.001, 0.01)
-        }
         auto_estimator = AutoTSEstimator(model='tcn',
-                                         search_space=search_space,
+                                         search_space="minimal",
                                          past_seq_len=hp.randint(4, 6),
                                          future_seq_len=1,
                                          selected_features="auto",
@@ -313,6 +310,84 @@ class TestAutoTrainer(TestCase):
         y_pred_new = new_ts_pipeline.predict(tsdata_valid)
         np.testing.assert_almost_equal(eval_result[0], eval_result_new[0])
         np.testing.assert_almost_equal(y_pred, y_pred_new)
+
+        # check if load ppl is the same as previous with onnx
+        try:
+            import onnx
+            import onnxruntime
+            eval_result_new_onnx = new_ts_pipeline.evaluate_with_onnx(tsdata_valid)
+            y_pred_new_onnx = new_ts_pipeline.predict_with_onnx(tsdata_valid)
+            np.testing.assert_almost_equal(eval_result[0], eval_result_new_onnx[0], decimal=5)
+            np.testing.assert_almost_equal(y_pred, y_pred_new_onnx, decimal=5)
+        except ImportError:
+            pass
+
+        # use tspipeline to incrementally train
+        new_ts_pipeline.fit(tsdata_valid)
+
+    def test_fit_seq2seq_feature(self):
+        from sklearn.preprocessing import StandardScaler
+        scaler = StandardScaler()
+        tsdata_train = get_tsdataset().gen_dt_feature().scale(scaler, fit=True)
+        tsdata_valid = get_tsdataset().gen_dt_feature().scale(scaler, fit=False)
+
+        auto_estimator = AutoTSEstimator(model='seq2seq',
+                                         search_space="minimal",
+                                         past_seq_len=hp.randint(4, 6),
+                                         future_seq_len=1,
+                                         selected_features="auto",
+                                         metric="mse",
+                                         optimizer="Adam",
+                                         loss=torch.nn.MSELoss(),
+                                         logs_dir="/tmp/auto_trainer",
+                                         cpus_per_trial=2,
+                                         name="auto_trainer")
+        ts_pipeline = auto_estimator.fit(data=tsdata_train,
+                                         epochs=1,
+                                         batch_size=hp.choice([32, 64]),
+                                         validation_data=tsdata_valid,
+                                         n_sampling=1)
+        best_config = auto_estimator.get_best_config()
+        best_model = auto_estimator._get_best_automl_model()
+        assert 4 <= best_config["past_seq_len"] <= 6
+
+        assert isinstance(ts_pipeline, TSPipeline)
+
+        # use raw base model to predic and evaluate
+        tsdata_valid.roll(lookback=best_config["past_seq_len"],
+                          horizon=0,
+                          feature_col=best_config["selected_features"])
+        x_valid, y_valid = tsdata_valid.to_numpy()
+        y_pred_raw = best_model.predict(x_valid)
+        y_pred_raw = tsdata_valid.unscale_numpy(y_pred_raw)
+
+        # use tspipeline to predic and evaluate
+        eval_result = ts_pipeline.evaluate(tsdata_valid)
+        y_pred = ts_pipeline.predict(tsdata_valid)
+
+        # check if they are the same
+        np.testing.assert_almost_equal(y_pred, y_pred_raw)
+
+        # save and load
+        ts_pipeline.save("/tmp/auto_trainer/autots_tmp_model_seq2seq")
+        new_ts_pipeline = TSPipeline.load("/tmp/auto_trainer/autots_tmp_model_seq2seq")
+
+        # check if load ppl is the same as previous
+        eval_result_new = new_ts_pipeline.evaluate(tsdata_valid)
+        y_pred_new = new_ts_pipeline.predict(tsdata_valid)
+        np.testing.assert_almost_equal(eval_result[0], eval_result_new[0])
+        np.testing.assert_almost_equal(y_pred, y_pred_new)
+
+        # check if load ppl is the same as previous with onnx
+        try:
+            import onnx
+            import onnxruntime
+            eval_result_new_onnx = new_ts_pipeline.evaluate_with_onnx(tsdata_valid)
+            y_pred_new_onnx = new_ts_pipeline.predict_with_onnx(tsdata_valid)
+            np.testing.assert_almost_equal(eval_result[0], eval_result_new_onnx[0], decimal=5)
+            np.testing.assert_almost_equal(y_pred, y_pred_new_onnx, decimal=5)
+        except ImportError:
+            pass
 
         # use tspipeline to incrementally train
         new_ts_pipeline.fit(tsdata_valid)

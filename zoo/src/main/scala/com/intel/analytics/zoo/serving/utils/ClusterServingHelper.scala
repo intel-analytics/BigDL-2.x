@@ -127,7 +127,7 @@ class ClusterServingHelper
       case "openvino" => modelEncrypted match {
         case true => model.doLoadEncryptedOpenVINO(
           defPath, weightPath, secret, salt, threadPerModel)
-        case false => model.doLoadOpenVINO(defPath, weightPath, threadPerModel)
+        case false => model.doLoadOpenVINONg(defPath, weightPath, threadPerModel)
       }
       case _ => logError("Invalid model type, please check your model directory")
     }

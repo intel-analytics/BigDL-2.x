@@ -48,6 +48,29 @@ Before running the following command, please modify the paths in `build-docker-i
   sudo bash ../../../scripts/generate-password.sh used_password_when_generate_keys
   ```
 
+## Run Your Pyspark Program
+
+#### 1. Start the container to run native python examples
+
+Before you run the following commands to start the container, you need to modify the paths in `deploy-local-spark-sgx.sh` and then run the following commands.
+
+```bash
+./deploy-local-spark-sgx.sh
+sudo docker exec -it spark-local bash
+cd /ppml/trusted-big-data-ml
+./init.sh
+```
+
+ #### 2. Run your pyspark program
+
+To run your pyspark program, first you need to prepare your own pyspark program and put it under the trusted directory in SGX  `/ppml/trusted-big-data-ml/work`. Then run with `ppml-spark-submit.sh` using the command:
+
+```bash
+./ppml-spark-submit.sh work/YOUR_PROMGRAM.py | tee YOUR_PROGRAM-sgx.log
+```
+
+When the program finishes, check the results with the log `YOUR_PROGRAM-sgx.log`.
+
 ## Run Native Python Examples
 
 #### 1. Start the container to run native python examples
@@ -79,8 +102,6 @@ cat test-helloworld-sgx.log | egrep "Hello World"
 The result should be 
 
 > Hello World
-
-
 
 ##### Example 2: `test-numpy.py`
 
@@ -117,7 +138,7 @@ cd /ppml/trusted-big-data-ml
 
 ##### Example 1: `pi.py`
 
-Run the example with SGX and standalone mode with the following command in the terminal. 
+Run the example with SGX spark local mode with the following command in the terminal. 
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
@@ -138,11 +159,9 @@ The result should be similar to
 
 >Pi is roughly 3.146760
 
-
-
 ##### Example 2: `test-wordcount.py`
 
-Run the example with SGX and standalone mode with the following command in the terminal. 
+Run the example with SGX spark local mode with the following command in the terminal. 
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
@@ -165,13 +184,11 @@ The result should be similar to
 >
 > print(sys.path);: 1
 
-
-
 ##### Example 3: Basic SQL
 
 Before running the example, make sure that the paths of resource in `/ppml/trusted-big-data-ml/work/spark-2.4.6/examples/src/main/python/sql/basic.py` are the same as the paths of `people.json`  and `people.txt`.
 
-Run the example with SGX and standalone mode with the following command in the terminal. 
+Run the example with SGX spark local mode with the following command in the terminal. 
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
@@ -206,11 +223,9 @@ The result should be similar to
 >
 > |  Justin|
 
-
-
 ##### Example 4: Bigdl lenet
 
-Run the example with SGX and standalone mode with the following command in the terminal. 
+Run the example with SGX spark local mode with the following command in the terminal. 
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
@@ -249,11 +264,9 @@ The result should be similar to
 >
 >2021-06-18 01:46:20 INFO DistriOptimizer$:180 - [Epoch 2 60032/60000][Iteration 938][Wall Clock 845.747782s] Top1Accuracy is Accuracy(correct: 9696, count: 10000, accuracy: 0.9696)
 
-
-
 ##### Example 5: XGBoost Regressor
 
-Before running the example, make sure that `Boston_Housing.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace `your_IP_address` with your IP address and `path_of_boston_housing_csv` with your path of `Boston_Housing.csv`.
+Before running the example, make sure that `Boston_Housing.csv` is under `work/data` directory or the same path in the command. Run the example with SGX spark local mode with the following command in the terminal. Replace `your_IP_address` with your IP address and `path_of_boston_housing_csv` with your path of `Boston_Housing.csv`.
 
 ```bash
 SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=your_IP_address && /opt/jdk8/bin/java -cp \
@@ -320,8 +333,6 @@ The result should be similar to
 >
 >|[7.02259,0.0,18.1...| 14.2| 13.38729190826416|
 
-
-
 ##### Example 6: XGBoost Classifier
 
 Before running the example, download the sample dataset from [pima-indians-diabetes](https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv) dataset manually or with following command. 
@@ -330,7 +341,7 @@ Before running the example, download the sample dataset from [pima-indians-diabe
 wget https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv
 ```
 
-After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace `your_IP_address` with your IP address and `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv`.
+After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the command. Run the example with SGX spark local mode with the following command in the terminal. Replace `your_IP_address` with your IP address and `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv`.
 
 ```bash
 SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=your_IP_address && /opt/jdk8/bin/java -cp \
@@ -373,8 +384,6 @@ The result should be similar to
 >
 > | 0.0|119.0| 0.0| 0.0| 0.0|32.4|0.141|24.0| 1.0|[-0.4473398327827...|[0.55266016721725...|    0.0|
 
-
-
 ##### Example 7: Orca data
 
 Before running the example, download the [NYC Taxi](https://raw.githubusercontent.com/numenta/NAB/master/data/realKnownCause/nyc_taxi.csv) dataset in Numenta Anoomaly Benchmark for demo manually or with following command. 
@@ -383,7 +392,7 @@ Before running the example, download the [NYC Taxi](https://raw.githubuserconten
 wget https://raw.githubusercontent.com/numenta/NAB/master/data/realKnownCause/nyc_taxi.csv
 ```
 
-After downloading the dataset, make sure that `nyc_taxi.csv` is under `work/data` directory or the same path in the command. Run the example with SGX and standalone mode with the following command in the terminal. Replace `path_of_nyc_taxi_csv` with your path of `nyc_taxi.csv`.
+After downloading the dataset, make sure that `nyc_taxi.csv` is under `work/data` directory or the same path in the command. Run the example with SGX spark local mode with the following command in the terminal. Replace `path_of_nyc_taxi_csv` with your path of `nyc_taxi.csv`.
 
 ```bash
 SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
@@ -461,6 +470,39 @@ Then the result should contain the similar content as
 >\--
 >
 >Stopping orca context
+
+##### Example 8: Orca learn Tensorflow basic text classification
+
+Run the example with SGX spark local mode with the following command in the terminal. To run the example in SGX standalone mode, replace `-e SGX_MEM_SIZE=32G \` with `-e SGX_MEM_SIZE=64G \` in `start-distributed-spark-driver.sh`
+
+```bash
+SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
+  '/ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_2.4.6-0.12.0-SNAPSHOT-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*' \
+  -Xmx3g \
+  org.apache.spark.deploy.SparkSubmit \
+  --master 'local[4]' \
+  --conf spark.driver.memory=3g \
+  --conf spark.executor.extraClassPath=/ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_2.4.6-0.12.0-SNAPSHOT-jar-with-dependencies.jar \
+  --conf spark.driver.extraClassPath=/ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_2.4.6-0.12.0-SNAPSHOT-jar-with-dependencies.jar \
+  --properties-file /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/conf/spark-analytics-zoo.conf \
+  --jars /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_2.4.6-0.12.0-SNAPSHOT-jar-with-dependencies.jar \
+  --py-files /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_2.4.6-0.12.0-SNAPSHOT-python-api.zip \
+  --executor-memory 3g \
+  --executor-cores 2 \
+  --driver-cores 2 \
+  /ppml/trusted-big-data-ml/work/examples/pyzoo/orca/learn/tf/basic_text_classification/basic_text_classification.py \
+  --cluster_mode local" | tee test-orca-tf-text-sgx.log
+```
+
+Then check the output with the following command.
+
+```bash
+cat test-orca-tf-text.log | egrep "results"
+```
+
+Then the result should be similar to
+
+> INFO results: {'loss': 0.6932533979415894, 'acc Top1Accuracy': 0.7544000148773193}
 
 ## Run as Spark Standalone Mode
 

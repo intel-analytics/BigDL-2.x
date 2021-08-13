@@ -51,7 +51,7 @@ class TestMetrics(ZooTestCase):
         assert_almost_equal(MPE(y_true, y_pred), [10.6], decimal=2)
         assert_almost_equal(RMSE(y_true, y_pred), [0.57], decimal=2)
         assert_almost_equal(ME(y_true, y_pred), [-0.17], decimal=2)
-        assert_almost_equal(MSPE(y_true, y_pred), [0.32], decimal=2)
+        assert_almost_equal(MSPE(y_true, y_pred), [5.2], decimal=2)
         assert_almost_equal(MDAPE(y_true, y_pred), [15.48], decimal=2)
         assert_almost_equal(sMDAPE(y_true, y_pred), [7.88], decimal=2)
 
@@ -81,7 +81,7 @@ class TestMetrics(ZooTestCase):
         assert_almost_equal(RMSE(y_true, y_pred, multioutput='uniform_average'), [0.57], decimal=2)
 
         assert_almost_equal(ME(y_true, y_pred, multioutput='uniform_average'), [-0.18], decimal=2)
-        assert_almost_equal(MSPE(y_true, y_pred, multioutput='uniform_average'), [0.32], decimal=2)
+        assert_almost_equal(MSPE(y_true, y_pred, multioutput='uniform_average'), [5.2], decimal=2)
         assert_almost_equal(MDAPE(y_true, y_pred, multioutput='uniform_average'),
                             [17.74], decimal=2)
         assert_almost_equal(sMDAPE(y_true, y_pred, multioutput='uniform_average'),
@@ -97,7 +97,7 @@ class TestMetrics(ZooTestCase):
         assert_almost_equal(RMSE(y_true, y_pred, multioutput='uniform_average'), [0.57], decimal=2)
 
         assert_almost_equal(ME(y_true, y_pred, multioutput='uniform_average'), [-0.18], decimal=2)
-        assert_almost_equal(MSPE(y_true, y_pred, multioutput='uniform_average'), [0.32], decimal=2)
+        assert_almost_equal(MSPE(y_true, y_pred, multioutput='uniform_average'), [5.2], decimal=2)
         assert_almost_equal(MDAPE(y_true, y_pred, multioutput='uniform_average'),
                             [17.74], decimal=2)
         assert_almost_equal(sMDAPE(y_true, y_pred, multioutput='uniform_average'),
@@ -140,7 +140,7 @@ class TestMetrics(ZooTestCase):
         assert_array_almost_equal(ME(y_true, y_pred, multioutput='raw_values'),
                                   [0., 0.12], decimal=2)
         assert_array_almost_equal(MSPE(y_true, y_pred, multioutput='raw_values'),
-                                  [0.12, 0.56], decimal=2)
+                                  [1.31, 9.16], decimal=2)
         assert_array_almost_equal(MDAPE(y_true, y_pred, multioutput='raw_values'),
                                   [5.56, 20.24], decimal=2)
         assert_array_almost_equal(sMDAPE(y_true, y_pred, multioutput='raw_values'),
