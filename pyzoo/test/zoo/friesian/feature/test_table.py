@@ -52,7 +52,7 @@ class TestTable(TestCase):
         # udf on multi columns
         transform = lambda x: "xxxx"
         feature_tbl = feature_tbl.apply(["col_2", "col_4", "col_5"], "out", transform)
-        out_values = feature_tbl.select("out").df.rdd.flatMap(lambda x: x).collect()  # assert out_values == ["xxxx"]
+        out_values = feature_tbl.select("out").df.rdd.flatMap(lambda x: x).collect()
         assert out_values == ["xxxx"] * len(out_values)
 
     def test_apply_with_data(self):
@@ -60,7 +60,7 @@ class TestTable(TestCase):
         feature_tbl = FeatureTable.read_parquet(file_path)
         feature_tbl = feature_tbl.fillna(0, "col_1")
         # udf on single column
-        y = {"ace":1, "aa":2}
+        y = {"ace": 1, "aa": 2}
         transform = lambda x: y.get(x, 0)
         feature_tbl = feature_tbl.apply("col_5", "out", transform, "int")
         assert(feature_tbl.filter(col("out") == 2).size() == 3)

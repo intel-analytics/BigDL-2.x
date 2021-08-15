@@ -687,6 +687,7 @@ class Table:
         sparkDF = spark.createDataFrame(pandas_df)
         return Table(sparkDF)
 
+
 class FeatureTable(Table):
     @classmethod
     def read_parquet(cls, paths):
