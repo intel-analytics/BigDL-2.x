@@ -1,5 +1,5 @@
 # stage.1 Redis
-FROM occlum/occlum:0.23.6-ubuntu18.04 as redis-tls
+FROM occlum/occlum:0.23.7-ubuntu18.04 as redis-tls
 
 WORKDIR /opt
 
