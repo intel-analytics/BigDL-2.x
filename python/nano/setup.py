@@ -20,6 +20,9 @@
 import os
 import fnmatch
 from setuptools import setup
+import urllib.request
+import os
+import stat
 
 exclude_patterns = ["*__pycache__*", "lightning_logs", "recipe", "setup.py"]
 nano_home = os.path.abspath(__file__ + "/../src/")
@@ -73,6 +76,19 @@ def load_requirements(file_name="requirements.txt", comment_char='#'):
 def setup_package():
     install_requires_list = load_requirements()
 
+    def download_libs():
+        url = "https://github.com/yangw1234/jemalloc/releases/download/v5.2.1-binary/libjemalloc.so"
+        libs_dir = os.path.join(nano_home, "bigdl", "nano", "libs")
+        if not os.path.exists(libs_dir):
+            os.mkdir(libs_dir)
+        jemalloc_file = os.path.join(libs_dir, "libjemalloc.so")
+        if not os.path.exists(jemalloc_file):
+            urllib.request.urlretrieve(url, jemalloc_file)
+        st = os.stat(jemalloc_file)
+        os.chmod(jemalloc_file, st.st_mode | stat.S_IEXEC)
+
+    download_libs()
+
     metadata = dict(
         name='bigdl-nano',
         version='0.0.1.dev0',
@@ -82,7 +98,8 @@ def setup_package():
         url='https://github.com/intel-analytics/analytics-zoo/tree/bigdl-2.0',
         install_requires=install_requires_list,
         packages=get_nano_packages(),
-        package_dir = {'': 'src'},
+        package_data={"bigdl.nano": ["libs/libjemalloc.so"]},
+        package_dir={'': 'src'},
         scripts=['script/bigdl-nano-run']
     )
 
