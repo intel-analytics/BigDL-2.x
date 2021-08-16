@@ -19,7 +19,6 @@ import warnings
 
 import tqdm
 import pandas as pd
-import numpy as np
 from zoo.chronos.data.tsdataset import TSDataset
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -154,7 +153,6 @@ class PublicDataset:
         self.df.reset_index(inplace=True, drop=True)
         self.df["time_step"] = \
             pd.to_datetime(self.df["time_step"], unit='s', origin=pd.Timestamp('2018-01-01'))
-        self.df.cpu_usage = self.df.cpu_usage.astype(np.float)
         return self
 
     def preprocess_fsi(self):
@@ -184,8 +182,9 @@ class PublicDataset:
                                   mode='a')
                 _is_first_columns = False
 
-        self.df = pd.read_csv(self.final_file_path, usecols=[0, 5])
-        self.df.y = self.df.y.astype(np.float)
+        self.df = pd.read_csv(self.final_file_path, usecols=[0, 5], parse_dates=[0])
+        self.df.ds = pd.to_datetime(self.df.ds)
+
         return self
 
     def preprocess_nyc_taxi(self):
@@ -196,8 +195,7 @@ class PublicDataset:
         if not os.path.exists(self.final_file_path):
             with open(raw_csv_name, 'rb') as src, open(self.final_file_path, 'wb') as dst:
                 dst.write(src.read())
-        self.df = pd.read_csv(self.final_file_path)
-        self.df.value = self.df.value.astype(np.float)
+        self.df = pd.read_csv(self.final_file_path, parse_dates=['timestamp'])
         return self
 
     def get_tsdata(self,
