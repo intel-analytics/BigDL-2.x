@@ -21,7 +21,7 @@ def get_nano_packages():
             nano_packages.append(package)
             print("including", package)
     return nano_packages
-print(get_nano_packages())
+    
 
 def load_requirements(file_name="requirements.txt", comment_char='#'):
     """
