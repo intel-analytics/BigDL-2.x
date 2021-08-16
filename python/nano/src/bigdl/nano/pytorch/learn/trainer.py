@@ -19,7 +19,7 @@ class Trainer(pl.Trainer):
                  cpu_for_each_process: Optional[List[List[int]]] = None,
                  *args: Any, **kwargs: Any) -> None:
         """
-        A pytorch lightning trainer that uses bigdl.nano lite optimization.
+        A pytorch lightning trainer that uses bigdl.nano optimization.
 
         :param num_processes: number of processes in distributed training. default: 4.
         :param use_ipex: whether we use ipex as accelerator for trainer. default: True.
