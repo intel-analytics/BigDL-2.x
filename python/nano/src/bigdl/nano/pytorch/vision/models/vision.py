@@ -16,7 +16,7 @@
 
 
 import torchvision
-from bigdl.nano.pytorch.models._utils import *
+from ._utils import *
 
 
 def resnet18(pretrained: bool = False, include_top: bool = False, freeze: bool = False):

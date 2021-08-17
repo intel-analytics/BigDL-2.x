@@ -20,7 +20,7 @@ from typing import Callable
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from bigdl.nano.pytorch.models._utils import BackboneModule
+from ._utils import BackboneModule
 
 
 class ImageClassifier(pl.LightningModule):
