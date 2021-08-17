@@ -15,12 +15,13 @@
 #
 
 
-from logging import warn
+from logging import warning
 import torch
 import pytorch_lightning as pl
 import intel_pytorch_extension as ipex
-from bigdl.nano.pytorch.accelerator.ipex_accelerator import IPEXAccelerator
-from bigdl.nano.pytorch.ddp_spawn import DDPSpawnPlugin
+from bigdl.nano.pytorch.accelerators.ipex_accelerator import IPEXAccelerator
+from bigdl.nano.pytorch.plugins.ddp_spawn import DDPSpawnPlugin
+from bigdl.nano.common import check_avx512
 from pytorch_lightning.plugins.environments import LightningEnvironment
 from typing import Any, List, Optional
 
@@ -30,13 +31,13 @@ distributed_backends = ["spawn", "ray"]
 class Trainer(pl.Trainer):
 
     def __init__(self, num_processes: int = 1,
-                 use_ipex: bool = True,
+                 use_ipex: bool = False,
                  enable_bf16=False,
                  distributed_backend="spawn",
                  cpu_for_each_process: Optional[List[List[int]]] = None,
                  *args: Any, **kwargs: Any) -> None:
         """
-        A pytorch lightning trainer that uses bigdl.nano optimization.
+        A pytorch lightning trainer that uses bigdl-nano optimization.
 
         :param num_processes: number of processes in distributed training. default: 4.
         :param use_ipex: whether we use ipex as accelerator for trainer. default: True.
@@ -47,12 +48,12 @@ class Trainer(pl.Trainer):
 
         # Check keyword arguments
         if "accelerator" in kwargs:
-            warn(f"""Accelerator will be specified by bigdl.nano,
+            warning(f"""Accelerator will be specified by bigdl-nano,
             accelerator entered {kwargs['accelerator']} will be ignored. """)
 
             kwargs.pop('accelerator')
         if "plugins" in kwargs:
-            warn(f"""Plugins will be specified by bigdl.nano,
+            warning(f"""Plugins will be specified by bigdl-nano,
              plugines entered {kwargs['plugins']} will be ignored. """)
 
             kwargs.pop('plugins')
@@ -63,11 +64,14 @@ class Trainer(pl.Trainer):
                                  f" processes {num_processes}.")
 
         # Initialize trainer
+        if use_ipex and not check_avx512():
+            warning("Enable ipex in a cpu instruction set"
+                   " without avx512 may cause some random error."
+                   "Fall back to cpu device.")
+            use_ipex = False
 
         if num_processes == 1:
             accelerator = IPEXAccelerator(enable_bf16=enable_bf16) if use_ipex else None
-            print(accelerator)
-
             super().__init__(accelerator=accelerator, *args, **kwargs)
         else:
             plugin = None
@@ -84,7 +88,7 @@ class Trainer(pl.Trainer):
                 # Import RayPlugins may entangle with openmp even if it has not been used,
                 # which leads to an unacceptably low performance.
                 # So we import when we need.
-                from bigdl.nano.pytorch.ray_distributed import RayPlugin
+                from bigdl.nano.pytorch.plugins.ray_distributed import RayPlugin
                 plugin = RayPlugin(num_workers=num_processes, use_ipex=use_ipex)  # type: ignore
 
             accelerator = IPEXAccelerator(training_type_plugin=plugin,  # type: ignore

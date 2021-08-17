@@ -17,7 +17,6 @@
 
 from typing import Union, Dict, Any, Optional
 import logging
-import subprocess
 import intel_pytorch_extension as ipex
 
 import torch
@@ -30,18 +29,7 @@ from pytorch_lightning.plugins.training_type import TrainingTypePlugin
 from pytorch_lightning.plugins.precision import PrecisionPlugin, MixedPrecisionPlugin
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-
 _STEP_OUTPUT_TYPE = Union[torch.Tensor, Dict[str, Any]]
-
-
-def check_avx512():
-    cmd = "lscpu | grep avx512"
-    try:
-        subprocess.check_output(cmd, shell=True)
-        return True
-    except subprocess.CalledProcessError:
-        logging.warning("avx512 disabled, fall back to non-ipex mode.")
-        return False
 
 
 class IPEXAccelerator(Accelerator):
@@ -65,12 +53,6 @@ class IPEXAccelerator(Accelerator):
             ipex.enable_auto_mixed_precision(mixed_dtype=torch.bfloat16)
 
         self.device = ipex.DEVICE
-        if not check_avx512():
-            logging.warning("Enable ipex in a cpu instruction set"
-                            " without avx512 may cause some random error.")
-            self.device = 'cpu'
-            training_type_plugin = SingleDevicePlugin(
-                torch.device(self.device))
 
         super().__init__(precision_plugin=precision_plugin,
                          training_type_plugin=training_type_plugin)
@@ -80,12 +62,10 @@ class IPEXAccelerator(Accelerator):
         Raises:
             MisconfigurationException:
                 If AMP is used with XPU.
-
-        TODO: Supprot mix precision
         """
         if isinstance(self.precision_plugin, MixedPrecisionPlugin):
             raise MisconfigurationException(
-                "amp + xpu is not supported. Please use a GPU option")
+                "amp is not supported in bigdl-nano.")
 
         return super().setup(trainer, model)
 

@@ -18,12 +18,23 @@
 import os
 import sys
 import subprocess
+import logging
 import warnings
 from typing import Union, Dict, List, Optional
 import numpy as np
 import re
 
 from bigdl.nano.common.cpu_schedule import schedule_workers
+
+
+def check_avx512():
+    cmd = "lscpu | grep avx512"
+    try:
+        subprocess.check_output(cmd, shell=True)
+        return True
+    except subprocess.CalledProcessError:
+        logging.warning("avx512 disabled, fall back to non-ipex mode.")
+        return False
 
 
 def _env_variable_is_set(variable: str,
