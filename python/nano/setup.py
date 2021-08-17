@@ -117,7 +117,7 @@ def setup_package():
         packages=get_nano_packages(),
         package_data={"bigdl.nano": ["libs/libjemalloc.so"]},
         package_dir={'': 'src'},
-        scripts=['script/bigdl-nano-run']
+        scripts=['script/bigdl-nano-init']
     )
 
     setup(**metadata)

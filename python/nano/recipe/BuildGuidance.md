@@ -14,7 +14,7 @@ For example, we plan to build a package based on python3.7
     ```bash
     cd python/nano
 
-    conda build . -c chriskafka -c pytorch --python 3.7
+    conda build . -c chriskafka -c pytorch -c conda-forge --python 3.7
     ```
    What's more, we have pointed out building a `noarch:python` conda package in meta.yaml, so it's ok if you are not specfying --python. It will output a package ends with `py_0` indicated its cross-platform.  
 1. Output on success:
@@ -53,7 +53,7 @@ For example, we plan to build a package based on python3.7
     conda create -n test37 python=3.7
     conda activate test37
 
-    conda install bigdl-nano -c pytorch -c chriskafka
+    conda install bigdl-nano -c pytorch -c chriskafka -c conda-forge
     ```
     Note that default channel may conflict with pytorch channel when it comes to torch, so we specify channels here.
     ```bash
