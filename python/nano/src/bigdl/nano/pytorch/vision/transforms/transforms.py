@@ -25,6 +25,7 @@ import warnings
 import torch
 from typing import Tuple, List, Optional
 import collections
+from torchvision.transforms.functional import InterpolationMode
 
 _cv_strToModes_mapping = {
     'nearest': cv2.INTER_NEAREST,
@@ -34,12 +35,21 @@ _cv_strToModes_mapping = {
     'lanczos': cv2.INTER_LANCZOS4
 }
 _torch_intToModes_mapping = {
-    0: 'nearest',
-    2: 'bilinear',
-    3: 'bicubic',
-    4: 'box',
-    5: 'hamming',
-    1: 'lanczos',
+    0: InterpolationMode.NEAREST,
+    2: InterpolationMode.BILINEAR,
+    3: InterpolationMode.BICUBIC,
+    4: InterpolationMode.BOX,
+    5: InterpolationMode.HAMMING,
+    1: InterpolationMode.LANCZOS,
+}
+
+_torch_strToModes_mapping = {
+    'nearest': InterpolationMode.NEAREST,
+    'bilinear': InterpolationMode.BILINEAR,
+    'bicubic': InterpolationMode.BICUBIC,
+    'box': InterpolationMode.BOX,
+    'hamming': InterpolationMode.HAMMING,
+    'lanczos': InterpolationMode.LANCZOS,
 }
 
 
@@ -62,7 +72,7 @@ class Compose(object):
 
 
 class Resize(object):
-    def __init__(self, size, interpolation='biliner'):
+    def __init__(self, size, interpolation=InterpolationMode.BILINEAR):
         self.size = size
         if isinstance(interpolation, int):
             warnings.warn(
@@ -71,10 +81,17 @@ class Resize(object):
             )
             interpolation = _torch_intToModes_mapping[interpolation]
 
+        if isinstance(interpolation, str):
+            warnings.warn(
+                "Argument interpolation should be of type InterpolationMode instead of str."
+                "Please, use InterpolationMode enum."
+            )
+            interpolation = _torch_strToModes_mapping[interpolation]
+
         if interpolation in _torch_intToModes_mapping.values():
             self.tv_F = tv_t.Resize(size, interpolation)
         else:
-            self.tv_F = tv_t.Resize(size, 'bilinear')
+            self.tv_F = tv_t.Resize(size, InterpolationMode.BILINEAR)
         if interpolation in _cv_strToModes_mapping:
             self.cv_F = cv_t.Resize(size, _cv_strToModes_mapping[interpolation])
         else:
