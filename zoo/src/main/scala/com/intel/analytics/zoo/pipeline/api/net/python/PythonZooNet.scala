@@ -125,7 +125,7 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     TFNet(path, config)
   }
 
-  var processGpToBeKill :String = ""
+  var processGpToBeKill: String = ""
   registerKiller()
 
   private def killPgid(pgid: String, killCommand: String): Boolean = {
