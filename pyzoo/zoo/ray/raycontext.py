@@ -42,7 +42,7 @@ class JVMGuard:
             from zoo.common.utils import callZooFunc
             import zoo
             callZooFunc("float",
-                        "jvmGuardRegisterGpid",
+                        "jvmGuardRegisterPgid",
                         pgid)
         except Exception as err:
             print(traceback.format_exc())

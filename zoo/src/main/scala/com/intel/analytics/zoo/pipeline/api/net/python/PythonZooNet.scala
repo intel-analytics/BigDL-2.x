@@ -150,7 +150,7 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     })
   }
 
-  def jvmGuardRegisterGpid(gpid: Int): Unit = {
+  def jvmGuardRegisterPgid(gpid: Int): Unit = {
     this.processGpToBeKill = gpid + ""
   }
 
