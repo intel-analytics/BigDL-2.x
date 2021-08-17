@@ -69,21 +69,23 @@ class ProphetModel(BaseModel):
                                    metrics=[self.metric])[0].item()
         return {self.metric: val_metric}
 
-    def predict(self, data=None, horizon=24):
+    def predict(self, ds_data=None, horizon=24, freq="D"):
         """
         Predict horizon time-points ahead the input data in fit_eval
         :param data: Prophet predicts the horizon steps foreward from the training data.
             So data should be None as it is not used.
         :param horizon: horizon length to predict
+        :param freq: the freqency of the predicted dataframe, defaulted to day("D"),
+               the frequency can be anything from the pandas list of frequency strings.
+
         :return: predicted result of length horizon
         """
-        if data is not None:
-            raise ValueError("We don't support input data currently")
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling predict")
-        future = self.model.make_future_dataframe(periods=horizon)
+        if ds_data is not None:
+            return self.model.predict(ds_data)
+        future = self.model.make_future_dataframe(periods=horizon, freq=freq)
         out = self.model.predict(future)[-horizon:]
-
         return out
 
     def evaluate(self, target, data=None, metrics=['mse']):
@@ -93,7 +95,8 @@ class ProphetModel(BaseModel):
         target.
         :param data: Prophet predicts the horizon steps foreward from the training data.
             So data should be None as it is not used.
-        :param target: target for evaluation.
+        :param target: target for evaluation. A dataframe with 2 columns, where column 'ds'
+               indicating date and column 'y' indicating target.
         :param metrics: a list of metrics in string format
         :return: a list of metric evaluation results
         """
@@ -104,10 +107,8 @@ class ProphetModel(BaseModel):
         if self.model is None:
             raise Exception("Needs to call fit_eval or restore first before calling evaluate")
 
-        horizon = len(target)
-        future = self.model.make_future_dataframe(periods=horizon)
-        target_pred = self.predict(horizon=horizon)[['yhat']]
-        return [Evaluator.evaluate(m, target[['y']].values, target_pred.values) for m in metrics]
+        target_pred = self.model.predict(target)
+        return [Evaluator.evaluate(m, target.y.values, target_pred.yhat.values) for m in metrics]
 
     def save(self, checkpoint):
         if self.model is None:
