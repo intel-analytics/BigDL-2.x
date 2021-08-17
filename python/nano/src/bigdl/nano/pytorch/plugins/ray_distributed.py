@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-# This file is adapted from ray_lightning。 https://github.com/ray-project/ray_lightning
+# This file is adapted from ray_lightning. https://github.com/ray-project/ray_lightning
 # Copyright 2021 Ray Lightning Author
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
