@@ -49,9 +49,9 @@ if [ $MVN_INSTALL -eq 0 ]; then
   exit 1
 fi
 
-cd spark
+cd scala
 # Append Spark platform variable to bigdl artifact name and spark-version artifact name
-mv dl/pom.xml dl/pom.xml.origin
+mv dllib/pom.xml dllib/pom.xml.origin
 cat dllib/pom.xml.origin | sed 's/<artifactId>bigdl-dllib<\/artifactId>/<artifactId>bigdl-dllib-${SPARK_PLATFORM}<\/artifactId>/' | \
         sed 's/<artifactId>${spark-version.project}<\/artifactId>/<artifactId>${spark-version.project}-${SPARK_PLATFORM}<\/artifactId>/' > dllib/pom.xml
 mv common/spark-version/3.0/pom.xml common/spark-version/3.0/pom.xml.origin
