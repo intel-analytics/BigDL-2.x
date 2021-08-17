@@ -33,7 +33,7 @@ from zoo.ray.utils import resource_to_bytes
 
 class JVMGuard:
     """
-    The registered pids would be put into the killing list of Spark Executor.
+    The process group id would be registered and killed in the shutdown hook of Spark Executor.
     """
     @staticmethod
     def register_pgid(pgid):
