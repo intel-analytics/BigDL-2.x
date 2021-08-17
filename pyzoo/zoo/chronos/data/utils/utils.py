@@ -46,6 +46,6 @@ def _check_cols_no_na(df, col_names):
         _check_col_no_na(df, col_name)
 
 
-def _check_is_aligned(df, id_col, dt_col, _id_list):
-    res = [hash(str(df.groupby(id_col).get_group(x)[dt_col].values)) for x in _id_list]
-    return len(set(res)) == 1
+def _check_is_aligned(df, id_col, dt_col):
+    res = len(set(df.groupby(id_col).apply(lambda df: hash(str(df[dt_col].values))))) == 1
+    return res

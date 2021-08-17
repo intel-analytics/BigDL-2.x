@@ -63,6 +63,7 @@ def get_ugly_ts_df():
     df["id"] = np.array(['00']*50 + ['01']*50)
     return df
 
+
 def get_int_target_df():
     sample_num = np.random.randint(100, 200)
     train_df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
@@ -70,6 +71,7 @@ def get_int_target_df():
                              "id": np.array(['00']*sample_num),
                              "extra feature": np.random.randn(sample_num)})
     return train_df
+
 
 def get_non_dt():
     df = pd.DataFrame({"datetime": np.arange(100),
