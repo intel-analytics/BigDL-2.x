@@ -1,5 +1,0 @@
-pytorch_lightning
-opencv-python-headless
-PyTurboJPEG
-opencv-transforms
-intel-openmp
