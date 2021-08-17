@@ -126,7 +126,7 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
   }
 
   var processGpToBeKill :String = ""
-  registerKillerPg()
+  registerKiller()
 
   private def killPgid(pgid: String, killCommand: String): Boolean = {
     println("JVM is stopping process group: " +  pgid)
@@ -135,7 +135,7 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     process.exitValue() == 0
   }
 
-  private def registerKillerPg(): Unit = {
+  private def registerKiller(): Unit = {
     Logger.getLogger("py4j.reflection.ReflectionEngine").setLevel(Level.ERROR)
     Logger.getLogger("py4j.GatewayConnection").setLevel(Level.ERROR)
     Runtime.getRuntime().addShutdownHook(new Thread {
