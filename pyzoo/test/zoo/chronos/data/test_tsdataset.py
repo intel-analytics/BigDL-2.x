@@ -851,6 +851,7 @@ class TestTSDataset(ZooTestCase):
         with pytest.raises(AssertionError):
             for tsdata in [td_train, td_valid, td_test]:
                 tsdata.scale(stand, fit=False)
+            tsdata._check_basic_invariants()
 
         # remove due to the possible large cost on test sys
         # with pytest.raises(AssertionError):
