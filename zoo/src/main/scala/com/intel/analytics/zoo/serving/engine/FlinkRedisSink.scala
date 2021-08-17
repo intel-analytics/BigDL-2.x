@@ -37,7 +37,7 @@ class FlinkRedisSink(helperSer: ClusterServingHelper)
     // Sink is first initialized among Source, Map, Sink, so initialize static variable in sink.
     ClusterServing.helper = helperSer
     helper = ClusterServing.helper
-    RedisUtils.initializeRedis(helper)
+    ClusterServing.initializeRedis()
     jedis = RedisUtils.getRedisClient(RedisUtils.jedisPool)
   }
 
