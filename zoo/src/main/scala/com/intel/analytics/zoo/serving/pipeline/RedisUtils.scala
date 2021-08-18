@@ -118,41 +118,5 @@ object RedisUtils {
     val streamValue = Map[String, String]("value" -> value).asJava
     ppl.xadd(streamKey, StreamEntryID.NEW_ENTRY, streamValue)
   }
-  def initializeRedis(helperSer: ClusterServingHelper): Unit = {
-    val params = ClusterServing.helper
-    if (params.redisSecureEnabled) {
-      System.setProperty("javax.net.ssl.trustStore", params.redisSecureTrustStorePath)
-      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStoreToken)
-      System.setProperty("javax.net.ssl.keyStoreType", "JKS")
-      System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
-      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStoreToken)
-    }
-    if (jedisPool == null) {
-      this.synchronized {
-        if (jedisPool == null) {
-          logger.info(
-            s"Creating JedisPool at ${params.redisHost}:${params.redisPort}")
-          val jedisPoolConfig = new JedisPoolConfig()
-          jedisPoolConfig.setMaxTotal(256)
-          jedisPool = new JedisPool(jedisPoolConfig,
-            params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
-        }
-      }
-    }
 
-    logger.info(
-      s"FlinkRedisSource connect to Redis: redis://${params.redisHost}:${params.redisPort} " +
-        s"with timeout: ${params.redisTimeout} and redisSecureEnabled: " +
-        s"${params.redisSecureEnabled}")
-    params.redisSecureEnabled match {
-      case true => logger.info(
-        s"FlinkRedisSource connect to secured Redis successfully.")
-      case false => logger.info(
-        s"FlinkRedisSource connect to plain Redis successfully.")
-    }
-
-//    // add Redis configuration here if necessary
-    val jedis = RedisUtils.getRedisClient(jedisPool)
-    jedis.close()
-  }
 }
