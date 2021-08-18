@@ -338,6 +338,29 @@ class BasePytorchForecaster(Forecaster):
         else:
             return self.internal.model
 
+    def build_onnx(self, thread_num=None):
+        '''
+        Build onnx model to speed up inference and reduce latency.
+        The method is Not required to call before predict_with_onnx,
+        evaluate_with_onnx or export_onnx_file.
+        It is recommended to use when you want to:
+
+        | 1. Strictly control the thread to be used during inferencing.
+        | 2. Alleviate the cold start problem when you call predict_with_onnx
+             for the first time.
+
+        :param thread_num: int, the num of thread limit. The value is set to None by
+               default where no limit is set.
+        '''
+        if self.distributed:
+            raise NotImplementedError("build_onnx has not been supported for distributed\
+                                       forecaster. You can call .to_local() to transform the\
+                                       forecaster to a non-distributed version.")
+        import torch
+        dummy_input = torch.rand(1, self.data_config["past_seq_len"],
+                                 self.data_config["input_feature_num"])
+        self.internal._build_onnx(dummy_input, dirname=None, thread_num=thread_num)
+
     def export_onnx_file(self, dirname):
         """
         Save the onnx model file to the disk.
