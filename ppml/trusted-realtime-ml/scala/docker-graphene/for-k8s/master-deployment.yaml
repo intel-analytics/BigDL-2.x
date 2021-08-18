@@ -23,13 +23,13 @@ spec:
         args: ["bash /ppml/trusted-realtime-ml/start-all-but-flink.sh | tee /ppml/trusted-realtime-ml/log; tail -f /dev/null"]
         securityContext:
           privileged: true
-        resources:
-          requests:
-            cpu: 10
-            sgx.intel.com/epc: ${EPC_MEM}
-          limits:
-            cpu: 12
-            sgx.intel.com/epc: ${EPC_MEM}
+#        resources:
+#          requests:
+#            cpu: 10
+#            sgx.intel.com/epc: 133258905600
+#          limits:
+#            cpu: 12
+#            sgx.intel.com/epc: 133258905600
         volumeMounts:
           - name: device-plugin
             mountPath: /var/lib/kubelet/device-plugins
@@ -61,10 +61,10 @@ spec:
           path: /var/run/aesmd/aesm.socket
       - name: enclave-keys
         hostPath:
-          path: /home/sdp/yiding/enclave-key/enclave-key.pem
+          path: path_to_enclave-key.pem
       - name: entry
         hostPath:
-          path: /home/sdp/yiding/intel-sgx-plugin/start-all-but-flink.sh
+          path: path_to_start-all-but-flink.sh
       - name: redis-secure-keys
         secret:
           secretName: ssl-keys
