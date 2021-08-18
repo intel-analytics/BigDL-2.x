@@ -1,4 +1,5 @@
 import pytest
+import os
 from unittest import TestCase
 from bigdl.nano.pytorch.vision.models import vision
 from test._train_torch_lightning import train_with_linear_top_layer
@@ -6,7 +7,7 @@ from test._train_torch_lightning import train_with_linear_top_layer
 
 batch_size = 256
 num_workers = 0
-data_dir = "./data"
+data_dir = os.path.join(os.path.dirname(__file__), "data")
 
 
 class TestModelsVision(TestCase):

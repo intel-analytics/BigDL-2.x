@@ -59,7 +59,7 @@ def train_torch_lightning(model, batch_size, num_workers, data_dir, accelerator=
         data_dir, batch_size, num_workers, data_transform)
 
     if use_orca_lite_trainer:
-        from bigdl.nano.pytorch.learn import Trainer
+        from bigdl.nano.pytorch.trainer import Trainer
 
         trainer = Trainer(max_epochs=1)
     else:
