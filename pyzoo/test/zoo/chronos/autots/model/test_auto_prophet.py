@@ -79,13 +79,13 @@ class TestAutoProphet(TestCase):
                          epochs=1,
                          n_sampling=1,
                          )
-        
+
         auto_prophet.predict(horizon=1, freq="D")
         test_data = pd.DataFrame(pd.date_range('20150101', periods=10),
                                  columns=['ds'])
         test_data.insert(1, 'y', np.random.rand(10))
         auto_prophet.evaluate(test_data)
-    
+
     def test_auto_prophet_save_load(self):
         data, expect_horizon = get_data()
         auto_prophet = AutoProphet(metric="mse",

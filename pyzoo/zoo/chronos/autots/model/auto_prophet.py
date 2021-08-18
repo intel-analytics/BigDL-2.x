@@ -145,7 +145,7 @@ class AutoProphet:
             raise RuntimeError(
                 "You must call fit or restore first before calling predict!")
         return self.best_model.predict(horizon=horizon, freq=freq, ds_data=ds_data)
-    
+
     def evaluate(self, data, metrics=['mse']):
         """
         Evaluate using the best model after HPO.
@@ -161,7 +161,7 @@ class AutoProphet:
             raise RuntimeError(
                 "You must call fit or restore first before calling evaluate!")
         return self.best_model.evaluate(target=data,
-                                      metrics=metrics)
+                                        metrics=metrics)
 
     def save(self, checkpoint_file):
         """
