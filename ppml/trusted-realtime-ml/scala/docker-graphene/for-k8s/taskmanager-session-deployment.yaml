@@ -6,12 +6,12 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: flink
+      app: analytics-zoo-ppml-trusted-realtime-ml-graphene
       component: taskmanager
   template:
     metadata:
       labels:
-        app: flink
+        app: analytics-zoo-ppml-trusted-realtime-ml-graphene
         component: taskmanager
     spec:
       tolerations:
@@ -78,7 +78,7 @@ spec:
             path: log4j-console.properties
       - name: enclave-keys
         hostPath:
-          path: /home/sdp/yiding/enclave-key/enclave-key.pem
+          path: path_to_enclave-key.pem
       - name: java-secure-keys
         secret:
           secretName: ssl-keys

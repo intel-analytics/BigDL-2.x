@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: flink-config
   labels:
-    app: flink
+    app: analytics-zoo-ppml-trusted-realtime-ml-graphene
 data:
   flink-conf.yaml: |+
     jobmanager.rpc.address: flink-jobmanager
