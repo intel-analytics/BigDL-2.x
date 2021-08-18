@@ -355,7 +355,6 @@ class PytorchBaseModel(BaseModel):
         yhat_list = []
         sample_num = x.shape[0]
         batch_num = math.ceil(sample_num/batch_size)
-        batch_id = 0
 
         for batch_id in range(batch_num):
             ort_inputs = {self.ort_session.get_inputs()[0].name: x[batch_id*batch_size:
