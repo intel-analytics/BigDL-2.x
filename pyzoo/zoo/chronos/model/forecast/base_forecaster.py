@@ -351,6 +351,14 @@ class BasePytorchForecaster(Forecaster):
 
         :param thread_num: int, the num of thread limit. The value is set to None by
                default where no limit is set.
+
+        Example:
+            >>> # to pre build onnx sess
+            >>> forecaster.build_onnx(thread_num=1)  # build onnx runtime sess for single thread
+            >>> pred = forecaster.predict_with_onnx(data)
+            >>> # ------------------------------------------------------
+            >>> # directly call onnx related method is also supported
+            >>> pred = forecaster.predict_with_onnx(data)
         '''
         if self.distributed:
             raise NotImplementedError("build_onnx has not been supported for distributed\
