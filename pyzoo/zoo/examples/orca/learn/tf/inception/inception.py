@@ -245,7 +245,7 @@ if __name__ == "__main__":
     lrSchedule = SequentialSchedule(iterationPerEpoch)
     lrSchedule.add(Warmup(warmupDelta), warmup_iteration)
     lrSchedule.add(Poly(0.5, maxIteration), polyIteration)
-    optim = SGD(learningrate=0.01, learningrate_decay=0.0,
+    optim = SGD(learningrate=options.learningRate, learningrate_decay=0.0,
                 weightdecay=0.0001, momentum=0.9, dampening=0.0,
                 nesterov=False, learningrate_schedule=lrSchedule)
 
@@ -262,6 +262,7 @@ if __name__ == "__main__":
         top_k_accuracy = tf.reduce_mean(correct) * k
         return top_k_accuracy
 
+
     acc = calculate_top_k_accuracy(logits, targets=labels)
 
     est = Estimator.from_graph(inputs=images,
@@ -270,7 +271,7 @@ if __name__ == "__main__":
                                loss=loss,
                                optimizer=optim,
                                model_dir="/tmp/logs",
-                               metrics={"acc" : acc})
+                               metrics={"acc": acc})
 
     if options.resumeTrainingCheckpoint is not None:
         assert options.resumeTrainingVersion is not None, \
