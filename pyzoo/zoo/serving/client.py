@@ -74,7 +74,7 @@ class API:
 
         if not ssl:
             self.db = redis.StrictRedis(host=self.host,
-                                    port=self.port, db=0)
+                                        port=self.port, db=0)
         else:
             # TODO none for self-signed key
             self.db = redis.StrictRedis(host=self.host,
