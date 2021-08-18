@@ -18,6 +18,7 @@ from torch.utils.data import TensorDataset, DataLoader
 
 import types
 import os
+import math
 
 from zoo.automl.model.abstract import BaseModel, ModelBuilder
 from zoo.automl.common.util import *
@@ -347,21 +348,21 @@ class PytorchBaseModel(BaseModel):
         # reshape 1dim input
         x = self._reshape_input(x)
 
-        x = PytorchBaseModel.to_torch(x).float()
         if not self.onnx_model_built:
-            self._build_onnx(x[0:1], dirname=dirname)
+            x_torch_tensor = PytorchBaseModel.to_torch(x[0:1]).float()
+            self._build_onnx(x_torch_tensor, dirname=dirname)
 
-        test_loader = DataLoader(TensorDataset(x),
-                                 batch_size=int(batch_size))
         yhat_list = []
+        sample_num = x.shape[0]
+        batch_num = math.ceil(sample_num/batch_size)
+        batch_id = 0
 
-        def to_numpy(tensor):
-            return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
-
-        for x_test_batch in test_loader:
-            ort_inputs = {self.ort_session.get_inputs()[0].name: to_numpy(x_test_batch[0])}
+        for batch_id in range(batch_num):
+            ort_inputs = {self.ort_session.get_inputs()[0].name: x[batch_id*batch_size:
+                                                                   (batch_id+1)*batch_size]}
             ort_outs = self.ort_session.run(None, ort_inputs)
             yhat_list.append(ort_outs[0])
+
         yhat = np.concatenate(yhat_list, axis=0)
 
         return yhat
