@@ -49,7 +49,6 @@ if [ $MVN_INSTALL -eq 0 ]; then
   exit 1
 fi
 
-cd scala
 # Append Spark platform variable to bigdl artifact name and spark-version artifact name
 mv dllib/pom.xml dllib/pom.xml.origin
 cat dllib/pom.xml.origin | sed 's/<artifactId>bigdl-dllib<\/artifactId>/<artifactId>bigdl-dllib-${SPARK_PLATFORM}<\/artifactId>/' | \
@@ -59,12 +58,10 @@ cat common/spark-version/3.0/pom.xml.origin | sed 's/<artifactId>3.0<\/artifactI
 
 function deploy {
     mvn clean install -DskipTests -P sign -Dspark.version=$1 -DSPARK_PLATFORM=$2 $3
-    cd common/spark-version && mvn deploy -DskipTests -P sign -Dspark.version=$1 -DSPARK_PLATFORM=$2 $3 && cd ..
+    cd common/spark-version && mvn deploy -DskipTests -P sign -Dspark.version=$1 -DSPARK_PLATFORM=$2 $3 && cd ../..
     cd dllib && mvn deploy -DskipTests -P sign -Dspark.version=$1 -DSPARK_PLATFORM=$2 $3 && cd ..
-    cd dist && mvn deploy -DskipTests -P sign -Dspark.version=$1 -DSPARK_PLATFORM=$2 $3 && cd ..
 }
 
-deploy 3.0.0 SPARK_3.0 '-P spark_3.x'
 deploy 3.1.2 SPARK_3.1 '-P spark_3.x'
 
 mv dllib/pom.xml.origin dllib/pom.xml
