@@ -43,5 +43,20 @@ This guidance is used to provide guidance to BigDL and Analytics zoo users to mi
 
    ***python application***
 
+    Change ```from bigdl.XYZ import *``` to ```from bigdl.dllib.XYZ import *```
+
+    except the following:
+
+   ```from bigdl.dataset.XYZ import *``` to ```from bigdl.dllib.feature.dataset.XYZ import *```
+
+   ```from bigdl.transform.XYZ import *``` to ```from bigdl.dllib.feature.transform.XYZ import *```
+
+   ```bigdl.nn.keras.XYZ``` is deprecated and will be removed. Please use zoo keras api instead
+
+   ```from bigdl.util.tf_utils import *``` to ```from bigdl.dllib.utils.tf_utils import *```
+
+   ```from bigdl.util.common import *``` to ```from bigdl.utils.common import *```
+
+   ```from bigdl.util.Engine import *``` to ```from bigdl.utils.Engine import *```
 
 * **For Analytics Zoo users**
