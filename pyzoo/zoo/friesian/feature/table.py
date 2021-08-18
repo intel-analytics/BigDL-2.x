@@ -831,7 +831,9 @@ class FeatureTable(Table):
         cross_hash_df = FeatureTable(cross_hash_df).hash_encode([cross_col_name], bins)
         return cross_hash_df
 
-    def category_encode(self, columns, freq_limit=None, order_by_freq=False):
+    def category_encode(self, columns, freq_limit=None, order_by_freq=False,
+                        do_split=False, sep='\t', sort_for_array=False, keep_most_frequent=False,
+                        broadcast=True):
         """
         Category encode the given columns.
 
@@ -847,8 +849,11 @@ class FeatureTable(Table):
         :return: A tuple of a new FeatureTable which transforms categorical features into unique
                  integer values, and a list of StringIndex for the mapping.
         """
-        indices = self.gen_string_idx(columns, freq_limit, order_by_freq)
-        return self.encode_string(columns, indices), indices
+        indices = self.gen_string_idx(columns, freq_limit=freq_limit, order_by_freq=order_by_freq,
+                                      do_split=do_split, sep=sep)
+        return self.encode_string(columns, indices, do_split=do_split, sep=sep,
+                                  sort_for_array=sort_for_array, keep_most_frequent=keep_most_frequent,
+                                  broadcast=broadcast), indices
 
     def one_hot_encode(self, columns, sizes=None, prefix=None, keep_original_columns=False):
         """
