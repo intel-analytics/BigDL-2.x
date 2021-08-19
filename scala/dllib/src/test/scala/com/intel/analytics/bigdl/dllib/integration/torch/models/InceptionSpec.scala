@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.integration.torch.models
+package com.intel.analytics.bigdl.dllib.integration.torch.models
 
 import com.intel.analytics.bigdl.dllib.models.inception._
 import com.intel.analytics.bigdl.dllib.nn.{ClassNLLCriterion, Graph, Input}

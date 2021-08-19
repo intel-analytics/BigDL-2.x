@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.integration.torch.models
+package com.intel.analytics.bigdl.dllib.integration.torch.models
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.example.loadmodel.AlexNet_OWT
