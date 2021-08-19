@@ -16,6 +16,12 @@
 
 import zoo.orca.automl.hp as hp
 
+from .auto_lstm import AutoLSTM
+from .auto_tcn import AutoTCN
+from .auto_seq2seq import AutoSeq2Seq
+from .auto_prophet import AutoProphet
+from .auto_arima import AutoARIMA
+
 
 AUTO_MODEL_SUPPORT_LIST = ["lstm", "tcn", "seq2seq"]
 
@@ -72,17 +78,14 @@ class AutoModelFactory:
     def create_auto_model(name, search_space):
         name = name.lower()
         if name == "lstm":
-            from .auto_lstm import AutoLSTM
             revised_search_space = search_space.copy()
             assert revised_search_space["future_seq_len"] == 1, \
                 "future_seq_len should be set to 1 if you choose lstm model."
             del revised_search_space["future_seq_len"]  # future_seq_len should always be 1
             return AutoLSTM(**revised_search_space)
         if name == "tcn":
-            from .auto_tcn import AutoTCN
             return AutoTCN(**search_space)
         if name == "seq2seq":
-            from .auto_seq2seq import AutoSeq2Seq
             return AutoSeq2Seq(**search_space)
         return NotImplementedError(f"{AUTO_MODEL_SUPPORT_LIST} are supported for auto model,\
                                     but get {name}.")
