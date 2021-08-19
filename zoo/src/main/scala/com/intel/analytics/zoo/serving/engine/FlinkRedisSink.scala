@@ -38,7 +38,7 @@ class FlinkRedisSink(helperSer: ClusterServingHelper)
     ClusterServing.helper = helperSer
     helper = ClusterServing.helper
     ClusterServing.initializeRedis()
-    jedis = RedisUtils.getRedisClient(RedisUtils.jedisPool)
+    jedis = RedisUtils.getRedisClient(ClusterServing.jedisPool)
   }
 
   override def close(): Unit = {
