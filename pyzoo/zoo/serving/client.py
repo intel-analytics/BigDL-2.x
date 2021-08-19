@@ -66,13 +66,26 @@ class API:
     select data pipeline here, Redis/Kafka/...
     interface preserved for API class
     """
-    def __init__(self, host=None, port=None, name="serving_stream"):
+    def __init__(self, host=None, port=None, name="serving_stream", ssl=False,
+                 ssl_certfile=None, ssl_keyfile=None, ssl_ca_certs=None):
         self.name = name
         self.host = host if host else "localhost"
         self.port = port if port else "6379"
 
-        self.db = redis.StrictRedis(host=self.host,
-                                    port=self.port, db=0)
+        if not ssl:
+            self.db = redis.StrictRedis(host=self.host,
+                                        port=self.port, db=0)
+        else:
+            # TODO none for self-signed key
+            self.db = redis.StrictRedis(host=self.host,
+                                        port=self.port,
+                                        db=0,
+                                        ssl=True,
+                                        ssl_cert_reqs="none",
+                                        ssl_certfile=ssl_certfile,
+                                        ssl_keyfile=ssl_keyfile,
+                                        ssl_ca_certs=ssl_ca_certs)
+
         try:
             self.db.xgroup_create(name, "serving")
         except Exception:

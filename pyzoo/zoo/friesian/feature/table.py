@@ -729,7 +729,7 @@ class FeatureTable(Table):
         """
         return cls(Table._read_csv(paths, delimiter, header, names, dtype))
 
-    def encode_string(self, columns, indices):
+    def encode_string(self, columns, indices, broadcast=True):
         """
         Encode columns with provided list of StringIndex.
 
@@ -756,7 +756,8 @@ class FeatureTable(Table):
         for i in range(len(columns)):
             index_tbl = indices[i]
             col_name = columns[i]
-            index_tbl.broadcast()
+            if broadcast:
+                index_tbl.broadcast()
             data_df = data_df.join(index_tbl.df, col_name, how="left") \
                 .drop(col_name).withColumnRenamed("id", col_name)
         return FeatureTable(data_df)
@@ -791,7 +792,7 @@ class FeatureTable(Table):
         :param bins: int, defines the number of equal-width bins in the range of column(s) values.
         :param method: hashlib supported method, like md5, sha256 etc.
 
-        :return: A new FeatureTable which hash encoded columns.
+        :return: A new FeatureTable with hash encoded columns.
         """
         hash_df = self.df
         if not isinstance(columns, list):
@@ -803,7 +804,7 @@ class FeatureTable(Table):
             hash_df = hash_df.withColumn(col_name, hash_int(pyspark_col(col_name)))
         return FeatureTable(hash_df)
 
-    def cross_hash_encode(self, columns, bins, cross_col_name=None):
+    def cross_hash_encode(self, columns, bins, cross_col_name=None, method='md5'):
         """
         Hash encode for cross column(s).
 
@@ -813,8 +814,9 @@ class FeatureTable(Table):
         :param cross_col_name: str, the column name for output cross column. Default is None, and
                in this case the default cross column name will be 'crossed_col1_col2'
                for ['col1', 'col2'].
+        :param method: hashlib supported method, like md5, sha256 etc.
 
-        :return: A new FeatureTable which the target cross column.
+        :return: A new FeatureTable with the target cross column.
         """
         cross_hash_df = self.df
         assert isinstance(columns, list), "columns should be a list of column names"
@@ -825,7 +827,7 @@ class FeatureTable(Table):
                 cross_string = cross_string + '_' + column
             cross_col_name = 'crossed' + cross_string
         cross_hash_df = cross_hash_df.withColumn(cross_col_name, concat(*columns))
-        cross_hash_df = FeatureTable(cross_hash_df).hash_encode([cross_col_name], bins)
+        cross_hash_df = FeatureTable(cross_hash_df).hash_encode([cross_col_name], bins, method)
         return cross_hash_df
 
     def category_encode(self, columns, freq_limit=None, order_by_freq=False):
@@ -943,7 +945,10 @@ class FeatureTable(Table):
         Generate unique index value of categorical features. The resulting index would
         start from 1 with 0 reserved for unknown features.
 
-        :param columns: str or a list of str, target columns to generate StringIndex.
+        :param columns: str, dict or a list of str, dict, target column(s) to generate StringIndex.
+         dict is a mapping of source column names -> target column name if needs to combine multiple
+         source columns to generate index.
+         For example: {'src_cols':['a_user', 'b_user'], 'col_name':'user'}.
         :param freq_limit: int, dict or None. Categories with a count/frequency below freq_limit
                will be omitted from the encoding. Can be represented as either an integer,
                dict. For instance, 15, {'col_4': 10, 'col_5': 2} etc. Default is None,
@@ -956,11 +961,18 @@ class FeatureTable(Table):
         """
         if columns is None:
             raise ValueError("columns should be str or a list of str, but got None.")
-        columns_is_str = False
+        is_single_column = False
         if not isinstance(columns, list):
-            columns_is_str = True
+            is_single_column = True
             columns = [columns]
-        check_col_exists(self.df, columns)
+        src_columns = []
+        for c in columns:
+            if isinstance(c, dict):
+                if 'src_cols' in c:
+                    src_columns.extend(c['src_cols'])
+            else:
+                src_columns.append(c)
+        check_col_exists(self.df, src_columns)
         if freq_limit:
             if isinstance(freq_limit, int):
                 freq_limit = str(freq_limit)
@@ -969,11 +981,48 @@ class FeatureTable(Table):
             else:
                 raise ValueError("freq_limit only supports int, dict or None, but get " +
                                  freq_limit.__class__.__name__)
-        df_id_list = generate_string_idx(self.df, columns, freq_limit, order_by_freq)
+        out_columns = []
+        simple_columns = []
+        df_id_list = []
+        for c in columns:
+            if isinstance(c, dict):
+                if 'src_cols' in c:
+                    src_cols = c['src_cols']
+                else:
+                    raise ValueError("Union columns must has argument 'src_cols'")
+                if 'col_name' in c:
+                    col_name = c['col_name']
+                else:
+                    col_name = src_cols[0] + '_union'
+                # process simple columns
+                if simple_columns:
+                    simple_df_id_list = generate_string_idx(self.df, simple_columns,
+                                                            freq_limit, order_by_freq)
+                    df_id_list.extend(simple_df_id_list)
+                    simple_columns = []
+                # process union columns
+                for i, src_c in enumerate(src_cols):
+                    if i == 0:
+                        dict_df = self.df.select(F.col(src_c).alias(col_name))
+                    else:
+                        dict_df = dict_df.union(self.df.select(F.col(src_c).alias(col_name)))
+                union_id_list = generate_string_idx(dict_df, [col_name],
+                                                    freq_limit, order_by_freq)
+                df_id_list.extend(union_id_list)
+                out_columns.append(col_name)
+            else:
+                simple_columns.append(c)
+                out_columns.append(c)
+        if simple_columns:
+            simple_df_id_list = generate_string_idx(self.df, simple_columns,
+                                                    freq_limit, order_by_freq)
+            df_id_list.extend(simple_df_id_list)
+
         string_idx_list = list(map(lambda x: StringIndex(x[0], x[1]),
-                                   zip(df_id_list, columns)))
+                                   zip(df_id_list, out_columns)))
+
         # If input is a single column (not a list), then the output would be a single StringIndex.
-        if len(string_idx_list) == 1 and columns_is_str:
+        if len(string_idx_list) == 1 and is_single_column:
             return string_idx_list[0]
         else:
             return string_idx_list
