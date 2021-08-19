@@ -56,7 +56,8 @@ class AutoEstimator:
                    loss,
                    logs_dir="/tmp/auto_estimator_logs",
                    resources_per_trial=None,
-                   name=None,
+                   name="auto_pytorch_estimator",
+                   remote_dir=None,
                    ):
         """
         Create an AutoEstimator for torch.
@@ -72,7 +73,10 @@ class AutoEstimator:
         :param logs_dir: Local directory to save logs and results. It defaults to
             "/tmp/auto_estimator_logs"
         :param resources_per_trial: Dict. resources for each trial. e.g. {"cpu": 2}.
-        :param name: Name of the auto estimator.
+        :param name: Name of the auto estimator. It defaults to "auto_pytorch_estimator"
+        :param remote_dir: String. Remote directory to sync training results and checkpoints. It
+            defaults to None and doesn't take effects while running in local. While running in
+            cluster, it defaults to "hdfs:///tmp/{name}".
 
         :return: an AutoEstimator object.
         """
@@ -84,6 +88,7 @@ class AutoEstimator:
         return AutoEstimator(model_builder=model_builder,
                              logs_dir=logs_dir,
                              resources_per_trial=resources_per_trial,
+                             remote_dir=remote_dir,
                              name=name)
 
     @staticmethod
@@ -91,7 +96,8 @@ class AutoEstimator:
                    model_creator,
                    logs_dir="/tmp/auto_estimator_logs",
                    resources_per_trial=None,
-                   name=None,
+                   name="auto_keras_estimator",
+                   remote_dir=None,
                    ):
         """
         Create an AutoEstimator for tensorflow keras.
@@ -100,7 +106,10 @@ class AutoEstimator:
         :param logs_dir: Local directory to save logs and results. It defaults to
             "/tmp/auto_estimator_logs"
         :param resources_per_trial: Dict. resources for each trial. e.g. {"cpu": 2}.
-        :param name: Name of the auto estimator.
+        :param name: Name of the auto estimator. It defaults to "auto_keras_estimator"
+        :param remote_dir: String. Remote directory to sync training results and checkpoints. It
+            defaults to None and doesn't take effects while running in local. While running in
+            cluster, it defaults to "hdfs:///tmp/{name}".
 
         :return: an AutoEstimator object.
         """
@@ -109,6 +118,7 @@ class AutoEstimator:
         return AutoEstimator(model_builder=model_builder,
                              logs_dir=logs_dir,
                              resources_per_trial=resources_per_trial,
+                             remote_dir=remote_dir,
                              name=name)
 
     def fit(self,
