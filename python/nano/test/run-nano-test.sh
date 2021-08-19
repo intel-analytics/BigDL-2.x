@@ -24,7 +24,3 @@ time2=$((now-start))
 echo "Bigdl nano tests finished"
 echo "#1 imagefolder time used:$time1 seconds"
 echo "#2 models vision time used:$time2 seconds"
-
-unset NANO_HOME
-unset NANO_TEST_DIR
-unset PYTHONPATH
