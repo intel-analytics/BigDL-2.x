@@ -49,10 +49,13 @@ def create_data_loader(root_dir, batch_size):
     catdogs = ImageFolder(dir_path, data_transform)
     val_num = len(catdogs) // 10
     train_num = len(catdogs) - val_num
-    train_set, val_set = torch.utils.data.random_split(catdogs, [train_num, val_num])
+    train_set, val_set = torch.utils.data.random_split(
+        catdogs, [train_num, val_num])
 
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0)
-    val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False, num_workers=0)
+    train_loader = DataLoader(
+        train_set, batch_size=batch_size, shuffle=True, num_workers=0)
+    val_loader = DataLoader(val_set, batch_size=batch_size,
+                            shuffle=False, num_workers=0)
     return train_loader, val_loader
 
 

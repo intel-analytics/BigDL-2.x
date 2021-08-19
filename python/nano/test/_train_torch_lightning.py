@@ -93,7 +93,8 @@ def train_torch_lightning(model, batch_size, num_workers, data_dir, accelerator=
                 name1 == "new_classifier.1.bias" or name1 == "new_classifier.1.weight":
             # Top layer is trained
             if torch.all(torch.eq(para1, para2)):
-                raise Exception("Parameter " + name1 + " remains the same after training.")
+                raise Exception("Parameter " + name1 +
+                                " remains the same after training.")
         else:
             # Frozen parameters should not change
             if not torch.all(torch.eq(para1, para2)):
