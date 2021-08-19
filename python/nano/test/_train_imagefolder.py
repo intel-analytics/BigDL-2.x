@@ -20,7 +20,7 @@ import torch
 from bigdl.nano.pytorch.vision.datasets import ImageFolder
 from bigdl.nano.pytorch.vision.transforms import transforms
 import pytorch_lightning as pl
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from bigdl.nano.pytorch.vision.models import ImageClassifier
 
 
@@ -57,10 +57,8 @@ def create_data_loader(root_dir, batch_size):
 
 
 def train_torch_lightning(model, root_dir, batch_size):
-    # init_orca_lite()
     train_loader, val_loader = create_data_loader(root_dir, batch_size)
     net = Net(model)
-    # learn = pl.Trainer(max_epochs=15, accelerator=IPEXAccelerator())
     trainer = pl.Trainer(max_epochs=10)
     trainer.fit(net, train_loader)
     trainer.test(net, val_loader)
