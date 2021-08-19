@@ -700,7 +700,7 @@ class FeatureTable(Table):
         """
         return cls(Table._read_csv(paths, delimiter, header, names, dtype))
 
-    def encode_string_1(self, columns, indices,
+    def encode_string(self, columns, indices,
                       do_split=False, sep='\t', sort_for_array=False, keep_most_frequent=False,
                       broadcast=True):
         """
@@ -745,7 +745,8 @@ class FeatureTable(Table):
                     .drop(col_name).withColumnRenamed("id", col_name)
             else:
                 data_df = data_df.withColumn('row_id', F.monotonically_increasing_id())
-                tmp_df = data_df.select('row_id', col_name).withColumn(col_name, F.explode(F.split(F.col(col_name), sep)))
+                tmp_df = data_df.select('row_id', col_name)\
+                    .withColumn(col_name, F.explode(F.split(F.col(col_name), sep)))
                 tmp_df = tmp_df.join(index_tbl.df, col_name, how="left")\
                     .filter(F.col("id").isNotNull())
                 tmp_df = tmp_df.select('row_id', F.col("id"))
@@ -763,95 +764,6 @@ class FeatureTable(Table):
                     .drop('row_id').drop(col_name).withColumnRenamed("id", col_name)
 
         return FeatureTable(data_df)
-
-    def encode_string(self, columns, indices,
-                      do_split=False, sep='\t', sort_for_array=False, keep_most_frequent=False,
-                      broadcast=True):
-        """
-        Encode columns with provided list of StringIndex.
-
-        :param columns: str or a list of str, the target columns to be encoded.
-        :param indices: StringIndex or a list of StringIndex, StringIndexes of target columns.
-               The StringIndex should at least have two columns: id and the corresponding
-               categorical column.
-               Or it can be a dict or a list of dicts. In this case,
-               the keys of the dict should be within the categorical column
-               and the values are the target ids to be encoded.
-        :param do_split: bool, whether need to split column value to array to encode string.
-        Default is False.
-        :param sep: str, a string representing a regular expression to split a column value.
-        Default is '\t'
-        :param sort_for_array: bool, whether need to sort array columns. Default is False.
-        :param keep_most_frequent: bool, whether need to keep most frequent value as the
-        column value. Default is False.
-        :param broadcast: bool, whether need to broadcast index when encode string.
-        Default is True.
-
-        :return: A new FeatureTable which transforms categorical features into unique integer
-                 values with provided StringIndexes.
-        """
-        if not isinstance(columns, list):
-            columns = [columns]
-        if not isinstance(indices, list):
-            indices = [indices]
-        assert len(columns) == len(indices)
-        if isinstance(indices[0], dict):
-            indices = list(map(lambda x: StringIndex.from_dict(x[1], columns[x[0]]),
-                               enumerate(indices)))
-        data_df = self.df
-        sc = OrcaContext.get_spark_session().sparkContext
-        for i in range(len(columns)):
-            index_tbl = indices[i]
-            col_name = columns[i]
-            if broadcast:
-                index_tbl.broadcast()
-            if not do_split:
-                data_df = data_df.join(index_tbl.df, col_name, how="left") \
-                    .drop(col_name).withColumnRenamed("id", col_name)
-            else:
-                index_df = index_tbl.df
-                dict_data = dict((row[col_name], row['id'])
-                                 for row in index_df.collect())
-                broadcast_dict = sc.broadcast(dict_data)
-
-                def encode(x):
-                    broadcast_data = broadcast_dict.value
-                    if x != '':
-                        val = []
-                        for v in x.split(sep):
-                            if v != '' and v in broadcast_data:
-                                val.append(broadcast_data[v])
-                        if len(val) > 0:
-                            if sort_for_array:
-                                val.sort()
-                                return val
-                            if keep_most_frequent:
-                                val.sort()
-                                return val[0]
-                            return val
-                        else:
-                            if keep_most_frequent:
-                                return 0
-                            return val
-                    else:
-                        if keep_most_frequent:
-                            if "" in broadcast_data:
-                                return broadcast_data[""]
-                            else:
-                                return 0
-                        else:
-                            if "" in broadcast_data:
-                                return [broadcast_data[""]]
-                            else:
-                                return [0]
-                if keep_most_frequent:
-                    encode_udf = udf(encode, "int")
-                    data_df = data_df.withColumn(col_name, encode_udf(F.col(col_name)))
-                else:
-                    encode_udf = udf(encode, "array<int>")
-                    data_df = data_df.withColumn(col_name, encode_udf(F.col(col_name)))
-        return FeatureTable(data_df)
-
 
     def filter_by_frequency(self, columns, min_freq=2):
         """
