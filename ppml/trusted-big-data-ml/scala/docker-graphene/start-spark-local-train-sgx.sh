@@ -13,6 +13,7 @@ bash ppml-spark-submit.sh \
         --conf spark.driver.host=127.0.0.1 \
         --conf spark.driver.blockManager.port=10026 \
         --conf spark.io.compression.codec=lz4 \
+	--conf spark.jars.ivy=/tmp/.ivy \
         --class com.intel.analytics.bigdl.models.lenet.Train \
         --driver-memory 10G \
         /ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar \

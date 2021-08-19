@@ -44,9 +44,9 @@ fi
 
 set -x
 
-SGX=1 ./pal_loader ${JAVA_HOME}/bin/java $SSL \
+graphene-sgx ./bash -c "${JAVA_HOME}/bin/java $SSL \
         -XX:ActiveProcessorCount=24 \
         -cp "/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:${SPARK_HOME}/conf/:${SPARK_HOME}/jars/*" \
         -Xmx${DRIVER_MEMORY} \
-        org.apache.spark.deploy.SparkSubmit "$@"
+        org.apache.spark.deploy.SparkSubmit "$@" "
 
