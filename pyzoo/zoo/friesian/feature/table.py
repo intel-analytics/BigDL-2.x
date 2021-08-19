@@ -692,7 +692,7 @@ class Table:
         """
         Persist this table in memory
 
-        :return:
+        :return: this Table
         """
         self.df.cache()
         return self
@@ -702,7 +702,7 @@ class Table:
 
         Make this table as non-persistent, and remove all blocks for it from memory
 
-        :return:
+        :return: this Table
         """
         if self.df.is_cached:
             try:
