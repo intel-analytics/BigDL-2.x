@@ -97,8 +97,8 @@ class PytorchBaseModel(BaseModel):
                  metric_func=None, resources_per_trial=None,
                  **config):
         """
-        :param data: data could be a tuple with numpy ndarray with form (x, y) or a
-               data creator which takes a config dict and returns a
+        :param data: data could be a tuple with numpy ndarray with form (x, y) or
+               a PyTorch DataLoader or a data creator which takes a config dict and returns a
                torch.utils.data.DataLoader. torch.Tensor should be generated from the
                dataloader.
         :param validation_data: validation data could be a tuple with numpy ndarray
