@@ -1246,7 +1246,7 @@ class TestTable(TestCase):
         feature_tbl.cache()
         assert feature_tbl.df.is_cached, "Cache table should be cached"
         feature_tbl.uncache()
-        assert feature_tbl.df.is_cached == False, "Uncache table should be uncached"
+        assert not feature_tbl.df.is_cached, "Uncache table should be uncached"
 
 
 if __name__ == "__main__":
