@@ -880,14 +880,6 @@ class TestTSDataset(ZooTestCase):
                                        dt_col="datetime",
                                        extra_feature_col="extra feature",
                                        id_col="id")
-        assert tsdata._is_aligned is False
-        with pytest.raises(AssertionError):
-            tsdata.roll(lookback=5, horizon=2, id_sensitive=True)
-        tsdata._check_basic_invariants()
-        tsdata = TSDataset.from_pandas(df, target_col="value",
-                                       dt_col="datetime",
-                                       extra_feature_col="extra feature",
-                                       id_col="id",)
         with pytest.raises(AssertionError):
             tsdata.roll(lookback=5, horizon=2, id_sensitive=True)
         tsdata._check_basic_invariants()

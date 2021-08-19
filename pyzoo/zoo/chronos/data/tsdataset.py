@@ -75,7 +75,6 @@ class TSDataset:
                 self._freq = None
             else:
                 self._freq = self.df[self.dt_col].iloc[1] - self.df[self.dt_col].iloc[0]
-        self._is_aligned = _check_is_aligned(self.df, id_col=self.id_col, dt_col=self.dt_col)
 
     @staticmethod
     def from_pandas(df,
@@ -286,10 +285,6 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
-        from warnings import warn
-        if (start_time is None or end_time is None) and not self._is_aligned:
-            warn("The resample method will not align the time of tsdata for each id,\
-             please set the start_time and end_time to align them.", UserWarning)
         assert self._is_pd_datetime,\
             "The time series data does not have a Pandas datetime format\
             (you can use pandas.to_datetime to convert a string into a datetime format)."
@@ -304,7 +299,6 @@ class TSDataset:
         self._freq = pd.Timedelta(interval)
         self._freq_certainty = True
         self.df.reset_index(drop=True, inplace=True)
-        self._is_aligned = _check_is_aligned(self.df, id_col=self.id_col, dt_col=self.dt_col)
         return self
 
     def gen_dt_feature(self, features="auto", one_hot_features=None):
@@ -521,7 +515,7 @@ class TSDataset:
         >>> print(x.shape, y.shape) # x.shape = (1, 1, 6) y.shape = (1, 1, 2)
 
         '''
-        if id_sensitive and not self._is_aligned:
+        if id_sensitive and not _check_is_aligned(self.df, self.id_col, self.dt_col):
             raise AssertionError("The time series data should be\
                  aligned if id_sensitive is set to True.")
         feature_col = _to_list(feature_col, "feature_col") if feature_col is not None \
