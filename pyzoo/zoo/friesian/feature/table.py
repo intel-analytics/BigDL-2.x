@@ -24,7 +24,7 @@ from pyspark.sql import Row, Window
 from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, DecimalType, \
     DoubleType, ArrayType, DataType, StructType, StringType, StructField
 from pyspark.sql.functions import col as pyspark_col, concat, udf, array, broadcast, \
-    lit, rank, monotonically_increasing_id, split, explode
+    lit, rank, monotonically_increasing_id
 
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler, VectorAssembler, Bucketizer
