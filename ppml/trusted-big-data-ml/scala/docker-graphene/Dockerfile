@@ -1,6 +1,6 @@
 # stage.1 graphene
 FROM ubuntu:18.04 AS graphene
-ENV GRAPHENE_BRANCH=branch-ppml4g1.2rc1
+ENV GRAPHENE_BRANCH=branch-1.2-RC1-0.1
 
 RUN env DEBIAN_FRONTEND=noninteractive apt-get update && \
     env DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf bison build-essential coreutils gawk git libcurl4-openssl-dev libprotobuf-c-dev protobuf-c-compiler python3-protobuf wget
