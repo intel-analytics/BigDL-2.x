@@ -25,8 +25,8 @@ from intel_pytorch_extension.ops.save import *
 # because it will be modified in ipex.ops.save.
 torch.save = _torch_save
 
-import pickle
 import copy
+import pickle
 
 DEFAULT_PROTOCOL = 2
 
