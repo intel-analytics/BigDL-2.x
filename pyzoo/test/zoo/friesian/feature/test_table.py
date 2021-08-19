@@ -1253,5 +1253,14 @@ class TestTable(TestCase):
             diff_tbl2.df.filter("c1p1 == -1").count(), \
             "c1p1 should be the same in diff_tbl4 and in diff_tbl2"
 
+    def test_cache(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data2.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        feature_tbl.cache()
+        assert feature_tbl.df.is_cached, "Cache table should be cached"
+        feature_tbl.uncache()
+        assert feature_tbl.df.is_cached == False, "Uncache table should be uncached"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
