@@ -8,7 +8,7 @@ export PYTHONPATH=${NANO_HOME}:${PYTHONPATH}
 wget -nv ${FTP_URI}/analytics-zoo-data/cifar-10-python.tar.gz -P ${NANO_TEST_DIR}/data
 
 set -e
-echo "#Start bigdl-nano tests"
+echo "#Start bigdl-nano ipex tests"
 echo "#1 Start test model vision ipex"
 start=$(date "+%s")
 python -m pytest -s ${NANO_TEST_DIR}/test_models_vision_ipex.py
@@ -21,6 +21,6 @@ python -m pytest -s ${NANO_TEST_DIR}/test_trainer_ipex.py
 now=$(date "+%s")
 time2=$((now-start))
 
-echo "Bigdl nano tests finished"
+echo "Bigdl-nano ipex tests finished"
 echo "#1 model vision ipex time used:$time1 seconds"
 echo "#2 trainer ipex time used:$time2 seconds"
