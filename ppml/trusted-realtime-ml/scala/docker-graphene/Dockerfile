@@ -1,12 +1,16 @@
 # stage.1 graphene
 FROM ubuntu:18.04 AS graphene
+ENV GRAPHENE_BRANCH=branch-ppml4g1.2rc1
 
 RUN env DEBIAN_FRONTEND=noninteractive apt-get update && \
     env DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf bison build-essential coreutils gawk git libcurl4-openssl-dev libprotobuf-c-dev protobuf-c-compiler python3-protobuf wget
+RUN apt-get install -y build-essential autoconf gawk bison wget python3 libcurl4-openssl-dev python3-protobuf libprotobuf-c-dev protobuf-c-compiler python3-pip
+RUN pip3 install ninja meson && \
+    python3 -m pip install toml==0.10.2 click jinja2
 RUN git clone https://github.com/analytics-zoo/graphene.git /graphene
 RUN cd /graphene && \
-    git fetch origin branch-0.2 && \
-    git checkout branch-0.2
+    git fetch origin newbranch && \
+    git checkout newbranch
 RUN cd /graphene/Pal/src/host/Linux-SGX && \
     git clone https://github.com/intel/SGXDataCenterAttestationPrimitives.git linux-sgx-driver && \
     cd linux-sgx-driver && \
@@ -14,12 +18,20 @@ RUN cd /graphene/Pal/src/host/Linux-SGX && \
     cp -r driver/linux/* .
 RUN cd /graphene && \
     ISGX_DRIVER_PATH=/graphene/Pal/src/host/Linux-SGX/linux-sgx-driver make -s -j4 SGX=1 WERROR=1 && true
+# Add install graphene
+RUN cd /graphene && \
+    make && \
+    ISGX_DRIVER_PATH=/graphene/Pal/src/host/Linux-SGX/linux-sgx-driver make -s -j4 SGX=1 && \
+    meson setup build/ --prefix="/graphene/meson_build_output" \ 
+     --buildtype=release -Ddirect=enabled -Dsgx=enabled && \
+    ninja -C build/ && \
+    ninja -C build/ install
 RUN for f in $(find /graphene/Runtime -type l); do cp --remove-destination $(realpath $f) $f; done
 RUN /graphene/Scripts/download --output redis.tar.gz --sha256 f7ded6c27d48c20bc78e797046c79b6bc411121f0c2d7eead9fea50d6b0b6290 --url https://github.com/antirez/redis/archive/6.0.5.tar.gz
 
 # stage.2 jdk & flink
 FROM ubuntu:18.04 as flink
-ARG FLINK_VERSION=1.11.3
+ARG FLINK_VERSION=1.10.1
 ARG JDK_VERSION=8u192
 ARG JDK_URL=your_jdk_url
 ENV FLINK_VERSION ${FLINK_VERSION}
@@ -60,7 +72,7 @@ COPY --from=flink /opt/jdk  /opt/jdk8
 
 RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils curl wget unzip git maven
-RUN git clone --single-branch --branch master https://github.com/intel-analytics/analytics-zoo.git && \
+RUN git clone https://github.com/intel-analytics/analytics-zoo.git && \
     cd analytics-zoo/zoo && \
     export MAVEN_OPTS="-XX:ReservedCodeCacheSize=512m -XX:MaxPermSize=3G \
         -Dhttp.proxyHost=$HTTP_PROXY_HOST \
@@ -80,7 +92,7 @@ FROM ubuntu:18.04
 ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
 ARG BIGDL_VERSION=0.13.0
 ARG SPARK_VERSION=2.4.6
-ARG FLINK_VERSION=1.11.3
+ARG FLINK_VERSION=1.10.1
 ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION			${SPARK_VERSION}
 ENV BIGDL_VERSION			${BIGDL_VERSION}
@@ -104,6 +116,7 @@ RUN mkdir -p /graphene && \
     mkdir -p /graphene/Runtime && \
     mkdir -p /graphene/python && \
     mkdir -p /graphene/Tools && \
+    mkdir -p /graphene/meson_build_output && \
     mkdir -p /graphene/Pal/src && \
     mkdir -p /ppml/trusted-realtime-ml/redis && \
     mkdir -p /ppml/trusted-realtime-ml/redis/work/keys && \
@@ -123,6 +136,10 @@ COPY --from=graphene /graphene/Pal/src/host/Linux-SGX/generated_offsets.py /grap
 COPY --from=graphene /graphene/Examples/common_tools/get_deps.sh /graphene/get_deps.sh
 COPY --from=graphene /graphene/Tools/argv_serializer /graphene/Tools
 COPY --from=graphene /redis.tar.gz /ppml/trusted-realtime-ml/redis
+COPY --from=graphene /graphene/Tools/argv_serializer /graphene/Tools
+COPY --from=graphene /graphene/meson_build_output /graphene/meson_build_output
+ENV PATH="/graphene/meson_build_output/bin:$PATH"
+
 COPY --from=flink /opt/jdk  /opt/jdk8
 COPY --from=flink /opt/flink-${FLINK_VERSION} /ppml/trusted-realtime-ml/java/work/flink-${FLINK_VERSION}
 COPY --from=analytics-zoo /analytics-zoo/zoo/target/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar /ppml/trusted-realtime-ml/java/work/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar
@@ -152,7 +169,6 @@ ADD ./start-flink-jobmanager.sh /ppml/trusted-realtime-ml/java/start-flink-jobma
 ADD ./start-flink-taskmanager.sh /ppml/trusted-realtime-ml/java/start-flink-taskmanager.sh
 ADD ./start-http-frontend.sh /ppml/trusted-realtime-ml/java/start-http-frontend.sh
 ADD ./cluster-serving-config.yaml /ppml/trusted-realtime-ml/java/config.yaml
-ADD ./servables.yaml /ppml/trusted-realtime-ml/java/work/servables.yaml
 ADD ./init-cluster-serving.sh /ppml/trusted-realtime-ml/java/init-cluster-serving.sh
 ADD ./start-cluster-serving-job.sh /ppml/trusted-realtime-ml/java/start-cluster-serving-job.sh
 ADD ./check-status.sh /ppml/trusted-realtime-ml/check-status.sh
