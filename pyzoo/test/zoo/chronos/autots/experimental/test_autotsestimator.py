@@ -436,12 +436,12 @@ class TestAutoTrainer(TestCase):
                                                           val_ratio=0.1,
                                                           test_ratio=0.1)
         for tsdata in [train_ts, val_ts, test_ts]:
-            tsdata.roll(lookback=lookback, horizon=horizon, feature_col=[])\
-                  .to_torch_data_loader(batch_size=32,
+            tsdata.to_torch_data_loader(batch_size=32,
                                         lookback=lookback,
                                         horizon=horizon,
-                                        roll=False)
-        
+                                        roll=True,
+                                        feature_col=[])
+
         search_space = {
             'hidden_dim': hp.grid_search([32, 64]),
             'layer_num': hp.randint(1, 3),
@@ -449,7 +449,7 @@ class TestAutoTrainer(TestCase):
             'dropout': hp.uniform(0.1, 0.2)
         }
 
-        input_feature_dim = 1; output_feature_dim = 1
+        input_feature_dim, output_feature_dim = 1, 1
         auto_estimator = AutoTSEstimator(model='lstm',
                                          search_space=search_space,
                                          past_seq_len=6,
@@ -459,7 +459,6 @@ class TestAutoTrainer(TestCase):
                                          selected_features="auto",
                                          metric="mse",
                                          loss=torch.nn.MSELoss(),
-                                         logs_dir="/home/zehuan/.test_exper/auto_trainer",
                                          cpus_per_trial=2,
                                          name="auto_trainer")
 
@@ -470,7 +469,6 @@ class TestAutoTrainer(TestCase):
                            n_sampling=1)
         config = auto_estimator.get_best_config()
         assert config['past_seq_len'] == 6
-
 
 
 if __name__ == "__main__":
