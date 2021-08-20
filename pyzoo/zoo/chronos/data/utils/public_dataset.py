@@ -15,13 +15,11 @@
 #
 import os
 import requests
-import warnings
 
 import tqdm
 import pandas as pd
 from zoo.chronos.data.tsdataset import TSDataset
 
-warnings.simplefilter(action='ignore', category=FutureWarning)
 
 DATASET_NAME = {'network_traffic': ['2018%02d.agr' % i for i in range(1, 13)]
                 + ['2019%02d.agr' % i for i in range(1, 13)],
