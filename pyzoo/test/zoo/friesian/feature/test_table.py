@@ -922,7 +922,6 @@ class TestTable(TestCase):
 
     def test_to_pandas(self):
         spark = OrcaContext.get_spark_session()
-        # test the case the column of key is unique
         data = [("jack", "123", 14),
                 ("alice", "34", 25),
                 ("rose", "25344", 23)]
