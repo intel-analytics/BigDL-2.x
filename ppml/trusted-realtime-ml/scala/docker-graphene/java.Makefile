@@ -1,4 +1,4 @@
-GRAPHENEDIR ?= /graphene
+GRAPHENEDIR ?= /home/sdp/qiyuan/redis_test/graphene
 SGX_SIGNER_KEY ?= $(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/enclave-key.pem
 
 G_JAVA_XMX ?= 2G
@@ -8,13 +8,20 @@ G_SGX_THREAD_NUM ?= 256
 THIS_DIR ?= /ppml/trusted-realtime-ml/java
 JDK_HOME ?= /opt/jdk8
 WORK_DIR ?= $(THIS_DIR)/work
-FLINK_HOME ?= /ppml/trusted-realtime-ml/java/work/flink-1.10.1
+FLINK_HOME ?= 
 
 ifeq ($(DEBUG),1)
 GRAPHENE_LOG_LEVEL = debug
 else
 GRAPHENE_LOG_LEVEL = error
 endif
+
+ifeq ($(SGX),)
+GRAPHENE = graphene-direct
+else
+GRAPHENE = graphene-sgx
+endif
+
 
 .PHONY: all
 all: java.manifest | pal_loader
@@ -26,23 +33,22 @@ include $(GRAPHENEDIR)/Scripts/Makefile.configs
 
 #### java
 java.manifest: java.manifest.template
-	sed -e 's|$$(GRAPHENEDIR)|'"$(GRAPHENEDIR)"'|g' \
-                -e 's|$$(GRAPHENEDEBUG)|'"$(GRAPHENEDEBUG)"'|g' \
-                -e 's|$$(ARGV0_OVERRIDE)|java|g' \
-                -e 's|$$(EXECPATH)|'"$(shell which java)"'|g' \
-                -e 's|$$(EXECDIR)|'"$(shell dirname $(shell which java))"'|g' \
-                -e 's|$$(ARCH_LIBDIR)|'"$(ARCH_LIBDIR)"'|g' \
-                -e 's|$$(JDK_HOME)|'"$(JDK_HOME)"'|g' \
-                -e 's|$$(SPARK_LOCAL_IP)|'"$(SPARK_LOCAL_IP)"'|g' \
-                -e 's|$$(SPARK_USER)|'"$(SPARK_USER)"'|g' \
-                -e 's|$$(SPARK_HOME)|'"$(SPARK_HOME)"'|g' \
-                -e 's|$$(WORK_DIR)|'"$(WORK_DIR)"'|g' \
-                -e 's|$$(G_SGX_SIZE)|'"$(G_SGX_SIZE)"'|g' \
-                -e 's|$$(FLINK_HOME)|'"$(FLINK_HOME)"'|g' \
-                $< > $@
+	graphene-manifest \
+		-Dlog_level=$(GRAPHENE_LOG_LEVEL) \
+		-Dexecdir=$(shell dirname $(shell which bash)) \
+		-Darch_libdir=$(ARCH_LIBDIR) \
+		-Djdk_home=$(JDK_HOME) \
+		-Dspark_local_ip=$(SPARK_LOCAL_IP) \
+        -Dspark_user=$(SPARK_USER) \
+        -Dspark_home=$(SPARK_HOME) \
+        -Dwork_dir=$(WORK_DIR) \
+		-Dflink_home=$(FLINK_HOME) \
+		-Dg_sgx_size=$(G_SGX_SIZE)
+		$< > $@
+
 
 java.manifest.sgx: java.manifest
-	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-sign \
+	graphene-sgx-sign \
                 -libpal $(GRAPHENEDIR)/Runtime/libpal-Linux-SGX.so \
                 -key $(SGX_SIGNER_KEY) \
                 -manifest java.manifest -output $@
@@ -50,7 +56,7 @@ java.manifest.sgx: java.manifest
 java.sig: java.manifest.sgx
 
 java.token: java.sig
-	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-get-token \
+	graphene-sgx-get-token \
                 -output java.token -sig java.sig
 
 pal_loader:

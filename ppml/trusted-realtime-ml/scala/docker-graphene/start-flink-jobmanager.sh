@@ -12,7 +12,7 @@ flink_version=$FLINK_VERSION
 
 echo "### Launching Flink Jobmanager ###"
 
-SGX=1 ./pal_loader /opt/jdk8/bin/java \
+graphene-sgx ./bash -c "/opt/jdk8/bin/java \
     -Xms5g \
     -Xmx10g \
     -XX:ActiveProcessorCount=${core_num} \
@@ -36,4 +36,4 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
     -D security.ssl.internal.keystore-password=${secure_password} \
     -D security.ssl.internal.truststore-password=${secure_password} \
     -D security.ssl.internal.key-password=${secure_password} \
-    --executionMode cluster | tee ./flink-jobmanager-sgx.log
+    --executionMode cluster | tee ./flink-jobmanager-sgx.log"
