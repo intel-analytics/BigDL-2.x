@@ -58,20 +58,12 @@ cd /ppml/trusted-big-data-ml
 ##### Example 1: Spark PI on Graphene-SGX
 ```bash
 ./init.sh
-vim start-spark-local-pi-sgx.sh
+vim start-spark-local-pi.sh
 ```
-Add these code in `start-spark-local-pi-sgx.sh`: <br>
+Add these code in `start-spark-local-pi.sh`: <br>
 ```bash
 #!/bin/bash
-
-set -x
-
-SGX=1 ./pal_loader /opt/jdk8/bin/java \
-        -cp '/ppml/trusted-big-data-ml/work/spark-2.4.6/examples/jars/spark-examples_2.11-2.4.6.jar:/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*' \
-        -Xmx10g \
-        -Dbigdl.mklNumThreads=1 \
-        -XX:ActiveProcessorCount=24 \
-        org.apache.spark.deploy.SparkSubmit \
+bash ppml-spark-submit.sh \
         --master 'local[4]' \
         --conf spark.driver.port=10027 \
         --conf spark.scheduler.maxRegisteredResourcesWaitingTime=5000000 \
@@ -83,15 +75,13 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
         --conf spark.driver.blockManager.port=10026 \
         --conf spark.io.compression.codec=lz4 \
         --class org.apache.spark.examples.SparkPi \
-        --executor-cores 4 \
-        --total-executor-cores 4 \
-        --executor-memory 10G \
-        /ppml/trusted-big-data-ml/work/spark-2.4.6/examples/jars/spark-examples_2.11-2.4.6.jar | tee spark.local.pi.sgx.log
+        --driver-memory 10G \
+        /ppml/trusted-big-data-ml/work/spark-2.4.3/examples/jars/spark-examples_2.11-2.4.3.jar | tee spark.local.pi.sgx.log
 ```
 
 Then run the script to run pi test in spark: <br>
 ```bash
-sh start-spark-local-pi-sgx.sh
+sh start-spark-local-pi.sh
 ```
 
 Open another terminal and check the log:
