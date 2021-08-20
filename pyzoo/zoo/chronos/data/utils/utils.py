@@ -49,3 +49,15 @@ def _check_cols_no_na(df, col_names):
 def _check_is_aligned(df, id_col, dt_col):
     res = len(set(df.groupby(id_col).apply(lambda df: hash(str(df[dt_col].values))))) == 1
     return res
+
+
+def _check_dt_is_sorted(df, dt_col):
+    import numpy as np
+    import warnings
+    temp_df = df[dt_col].copy()
+    try:
+        res = np.diff(temp_df.values.astype(np.float32))
+        (res <= 0).all() or (res >= 0).all()
+    except Exception:
+        warnings.warn(f"{dt_col} column not sorted.", Warning)
+
