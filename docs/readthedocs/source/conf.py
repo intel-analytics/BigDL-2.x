@@ -212,4 +212,3 @@ epub_exclude_files = ['search.html']
 
 autoclass_content = 'both'
 autodoc_member_order = 'bysource'
-autodoc_mock_imports = ["numpy"]
