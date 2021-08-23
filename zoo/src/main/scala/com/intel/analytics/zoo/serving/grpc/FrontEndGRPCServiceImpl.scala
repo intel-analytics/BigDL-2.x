@@ -35,8 +35,6 @@ object FrontEndGRPCServiceImpl extends Supportive{
     server.start()
     server.blockUntilShutdown()
   }
-
-
 }
 
 class FrontEndGRPCServiceImpl (args: Array[String]) extends FrontEndGRPCServiceImplBase
