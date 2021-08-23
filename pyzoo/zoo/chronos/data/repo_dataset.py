@@ -29,7 +29,7 @@ def get_public_dataset(name, path='~/.chronos/dataset', redownload=False, **kwar
     :param **kwargs: dict, extra arguments passed to initialize the tsdataset,
                      including with_split, val_ratio and test_ratio.
     """
-    assert isinstance(name, str) or isinstance(path, str),\
+    assert isinstance(name, str) and isinstance(path, str),\
         "Name and path must be string."
 
     if name.lower().strip() == 'network_traffic':
