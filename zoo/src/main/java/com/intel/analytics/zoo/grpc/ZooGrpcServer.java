@@ -21,6 +21,7 @@ package com.intel.analytics.zoo.grpc;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import org.apache.commons.cli.*;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -34,19 +35,40 @@ import java.util.logging.Logger;
  */
 public class ZooGrpcServer {
     private static final Logger logger = Logger.getLogger(ZooGrpcServer.class.getName());
-    private final int port;
-    private final Server server;
+    private int port;
+    private Server server;
     public ZooGrpcServer(BindableService service) {
-        this(8980, "zoo-grpc-conf.yaml", service);
+        this(null, service);
     }
-    public ZooGrpcServer(String configPath, BindableService service) {
-        this(8980, configPath, service);
+    public ZooGrpcServer(String[] args, BindableService service) {
+        Options options = new Options();
+        Option portArg = new Option(
+                "p", "port", true, "The port to listen.");
+        options.addOption(portArg);
+        Option configPathArg = new Option(
+                "c", "config", true, "The path to config YAML file");
+        options.addOption(configPathArg);
+        CommandLineParser parser = new DefaultParser();
+        HelpFormatter formatter = new HelpFormatter();
+        CommandLine cmd = null;
+
+        try {
+            cmd = parser.parse(options, args);
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+            formatter.printHelp("utility-name", options);
+            System.exit(1);
+        }
+        assert cmd != null;
+        int port = Integer.parseInt(cmd.getOptionValue("port", "8082"));
+        String configPath = cmd.getOptionValue("config", "config.yaml");
+        buildServer(port, service, configPath);
     }
     /** Entrypoint of ZooGrpcServer */
-    public ZooGrpcServer(int port, String configPath, BindableService service) {
-        this.port = port;
+    private void buildServer(int port, BindableService service, String configPath) {
         server = ServerBuilder.forPort(port)
                 .addService(service)
+                .maxInboundMessageSize(Integer.MAX_VALUE)
                 .build();
     }
 
