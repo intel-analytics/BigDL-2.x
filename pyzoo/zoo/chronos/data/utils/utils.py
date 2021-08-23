@@ -57,7 +57,6 @@ def _check_dt_is_sorted(df, dt_col):
     temp_df = df[dt_col].copy()
     try:
         res = np.diff(temp_df.values.astype(np.float32))
-        (res <= 0).all() or (res >= 0).all()
+        (res >= 0).all()
     except Exception:
         warnings.warn(f"{dt_col} column not sorted.", Warning)
-
