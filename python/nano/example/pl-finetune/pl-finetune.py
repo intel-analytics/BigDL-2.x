@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The cats and dogs dataset is sited at
-# https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip
-
-# This file is adapted from PyTorch Lightning. https://github.com/PyTorchLightning/pytorch-lightning
+# This file is adapted from PyTorch Lightning. 
+# https://github.com/PyTorchLightning/pytorch-lightning/blob/master/
+# pl_examples/domain_templates/computer_vision_fine_tuning.py
 # Copyright The PyTorch Lightning team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
