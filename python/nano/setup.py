@@ -93,25 +93,36 @@ def setup_package():
 
     py_version = sys.version_info
     ipex_version = "1.8.0"
-    ipex_links = parse_find_index_page("https://software.intel.com/ipex-whl-stable")
+    ipex_version_major = "1.8"
     ipex_whl_name = f"torch_ipex-{ipex_version}-cp{py_version.major}{py_version.minor}" \
                     f"-cp{py_version.major}{py_version.minor}m-linux_x86_64.whl"
-    ipex_link = ipex_links[ipex_whl_name]
+    ipex_link = f"https://intel-optimized-pytorch.s3.cn-north-1.amazonaws.com.cn/wheels/" \
+                f"v{ipex_version_major}/{ipex_whl_name}"
 
+    torch_links = parse_find_index_page("https://download.pytorch.org/whl/torch_stable.html")
     torchvision_version = "0.9.0"
-    torchvision_links = parse_find_index_page("https://download.pytorch.org/whl/torch_stable.html")
     torchvision_whl_name = f"cpu/torchvision-{torchvision_version}%2Bcpu-cp{py_version.major}{py_version.minor}" \
                            f"-cp{py_version.major}{py_version.minor}m-linux_x86_64.whl"
-    torchvision_link = "https://download.pytorch.org/whl/" + torchvision_links[torchvision_whl_name]
+    pytorch_version = "1.8.0"
+    pytorch_whl_name = f"cpu/torch-{pytorch_version}%2Bcpu-cp{py_version.major}{py_version.minor}" \
+                       f"-cp{py_version.major}{py_version.minor}m-linux_x86_64.whl"
 
-    install_requires_list = ["pytorch_lightning",
-                             "opencv-python-headless",
-                             "PyTurboJPEG",
-                             "opencv-transforms",
-                             "intel-openmp",
-                             "torchvision",
-                             f"torch_ipex @ {ipex_link}",
-                             f"torchvision @ {torchvision_link}"]
+    # both pytorch_lightning and ipex depends on pytorch
+    # listing it here to make sure installing the correct version
+    pytorch_link = "https://download.pytorch.org/whl/" + torch_links[pytorch_whl_name]
+    torchvision_link = "https://download.pytorch.org/whl/" + torch_links[torchvision_whl_name]
+
+    install_requires = ["intel-openmp"]
+
+    tensorflow_requires = ["intel-tensorflow"]
+
+    pytorch_requires = ["pytorch_lightning",
+                        "opencv-python-headless",
+                        "PyTurboJPEG",
+                        "opencv-transforms",
+                        f"torch_ipex @ {ipex_link}",
+                        f"torchvision @ {torchvision_link}"]
+
 
     download_libs()
 
@@ -122,7 +133,8 @@ def setup_package():
         author='',
         author_email='',
         url='https://github.com/intel-analytics/analytics-zoo/tree/bigdl-2.0',
-        install_requires=install_requires_list,
+        install_requires=install_requires,
+        extras_require={"tensorflow": tensorflow_requires, "pytorch": pytorch_requires},
         packages=get_nano_packages(),
         package_data={"bigdl.nano": ["libs/libjemalloc.so"]},
         package_dir={'': 'src'},

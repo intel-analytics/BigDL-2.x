@@ -5,7 +5,7 @@
     <parent>
         <artifactId>bigdl-parent</artifactId>
         <groupId>com.intel.analytics.bigdl</groupId>
-        <version>2.0.0-SNAPSHOT</version>
+        <version>0.14.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -21,11 +21,6 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>com.intel.analytics.bigdl</groupId>
-            <artifactId>bigdl-utils</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.apache.opennlp</groupId>
             <artifactId>opennlp-tools</artifactId>
@@ -266,7 +261,7 @@
                         <inherited>false</inherited>
                         <configuration>
                             <descriptors>
-                                <descriptor>${project.basedir}/../../python/python-zip.xml
+                                <descriptor>${project.basedir}/../../python/dllib/src/python-zip.xml
                                 </descriptor>
                             </descriptors>
                         </configuration>
