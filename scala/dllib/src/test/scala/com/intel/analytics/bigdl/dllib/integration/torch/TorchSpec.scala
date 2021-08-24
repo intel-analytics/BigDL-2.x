@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.integration.torch
-import com.intel.analytics.bigdl.utils.RandomGenerator._
+package com.intel.analytics.bigdl.dllib.integration.torch
+import com.intel.analytics.bigdl.dllib.utils.RandomGenerator._
 import org.scalatest._
 
 import scala.util.Random

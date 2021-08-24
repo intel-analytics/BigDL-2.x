@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.integration.torch
+package com.intel.analytics.bigdl.dllib.integration.torch
 
 import com.intel.analytics.bigdl.dllib.nn.Threshold
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.Engine
+import com.intel.analytics.bigdl.dllib.utils.Engine
 
 import scala.math._
 

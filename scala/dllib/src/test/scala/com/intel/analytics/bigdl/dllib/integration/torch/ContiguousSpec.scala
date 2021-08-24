@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.integration.torch
+package com.intel.analytics.bigdl.dllib.integration.torch
 
 import com.intel.analytics.bigdl.dllib.nn.Contiguous
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.dllib.utils.RandomGenerator._
 
 @com.intel.analytics.bigdl.tags.Serial
 class ContiguousSpec extends TorchSpec {

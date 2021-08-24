@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intel.analytics.bigdl.integration
+package com.intel.analytics.bigdl.dllib.integration
 
 import java.nio.file.Paths
 
@@ -25,8 +25,8 @@ import com.intel.analytics.bigdl.dllib.models.resnet.{Utils => ResNetUtils}
 import com.intel.analytics.bigdl.dllib.nn.Module
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.dllib.optim.{Top1Accuracy, Top5Accuracy, ValidationMethod, ValidationResult}
-import com.intel.analytics.bigdl.utils.{Engine}
-import com.intel.analytics.bigdl.utils.LoggerFilter
+import com.intel.analytics.bigdl.dllib.utils.{Engine}
+import com.intel.analytics.bigdl.dllib.utils.LoggerFilter
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD

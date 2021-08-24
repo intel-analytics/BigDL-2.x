@@ -27,11 +27,11 @@ import com.intel.analytics.bigdl.dllib.nn.abstractnn.EmptyGradInput
 import com.intel.analytics.bigdl.dllib.nn.ops.Less
 import com.intel.analytics.bigdl.dllib.nn.tf.{ControlNodes, Enter, Const}
 import com.intel.analytics.bigdl.numeric.NumericFloat
-import com.intel.analytics.bigdl.utils.RandomGenerator._
+import com.intel.analytics.bigdl.dllib.utils.RandomGenerator._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.utils._
 import com.intel.analytics.bigdl.dllib.utils.serializer.ModuleSerializationTest
-import com.intel.analytics.bigdl.utils._
+import com.intel.analytics.bigdl.dllib.utils._
 
 import scala.reflect.ClassTag
 import scala.util.Random
@@ -1341,7 +1341,8 @@ class DynamicGraphSpec  extends FlatSpec with Matchers {
       Seq((updateInput, add)),
       Seq(input)
     )
-    val model = Graph.dynamic(Array[ModuleNode[Float]](), Array(exit(0)), None, false)
+    val model = Graph.dynamic(Array[ModuleNode[Float]](),
+      Array(exit(0)), None, false)
     model.forward(null)
     val result = model.forward(null)
     result.toTensor.valueAt(1) should be(10)
@@ -1354,7 +1355,8 @@ class DynamicGraphSpec  extends FlatSpec with Matchers {
 
     val conditionInput1 = Input("conditionInput1")
     val conditionInput2 = Input("conditionInput2")
-    val const = new com.intel.analytics.bigdl.dllib.nn.tf.Const(Tensor(T(9))).setName("inc").inputs()
+    val const = new com.intel.analytics.bigdl.dllib.nn.tf.Const(Tensor(T(9))).
+      setName("inc").inputs()
     val less = Less().setName("less").inputs(const, conditionInput1)
 
     val updateInput1 = Input("updateInput1")

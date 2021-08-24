@@ -25,8 +25,8 @@ import com.intel.analytics.bigdl.mkl.Memory
 import com.intel.analytics.bigdl.dllib.nn.mkldnn.HeapData
 import com.intel.analytics.bigdl.dllib.tensor.{DnnStorage, Storage, Tensor}
 import com.intel.analytics.bigdl.dllib.utils.{T}
-import com.intel.analytics.bigdl.utils._
-import com.intel.analytics.bigdl.dllib.utils.visualization.TrainSummary
+import com.intel.analytics.bigdl.dllib.utils._
+import com.intel.analytics.bigdl.dllib.visualization.TrainSummary
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 object DummyDataSet extends LocalDataSet[MiniBatch[Float]] {
