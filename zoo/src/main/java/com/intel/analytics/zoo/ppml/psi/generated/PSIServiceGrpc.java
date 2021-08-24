@@ -20,29 +20,29 @@ public final class PSIServiceGrpc {
   public static final String SERVICE_NAME = "PSIService";
 
   // Static method descriptors that strictly reflect the proto.
-  private static volatile io.grpc.MethodDescriptor<SaltRequest,
-      SaltReply> getSaltMethod;
+  private static volatile io.grpc.MethodDescriptor<com.intel.analytics.zoo.ppml.psi.generated.SaltRequest,
+      com.intel.analytics.zoo.ppml.psi.generated.SaltReply> getSaltMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
       fullMethodName = SERVICE_NAME + '/' + "salt",
-      requestType = SaltRequest.class,
-      responseType = SaltReply.class,
+      requestType = com.intel.analytics.zoo.ppml.psi.generated.SaltRequest.class,
+      responseType = com.intel.analytics.zoo.ppml.psi.generated.SaltReply.class,
       methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
-  public static io.grpc.MethodDescriptor<SaltRequest,
-      SaltReply> getSaltMethod() {
-    io.grpc.MethodDescriptor<SaltRequest, SaltReply> getSaltMethod;
-    if ((getSaltMethod = PSIServiceGrpc.getSaltMethod) == null) {
-      synchronized (PSIServiceGrpc.class) {
-        if ((getSaltMethod = PSIServiceGrpc.getSaltMethod) == null) {
-          PSIServiceGrpc.getSaltMethod = getSaltMethod =
-              io.grpc.MethodDescriptor.<SaltRequest, SaltReply>newBuilder()
+  public static io.grpc.MethodDescriptor<com.intel.analytics.zoo.ppml.psi.generated.SaltRequest,
+      com.intel.analytics.zoo.ppml.psi.generated.SaltReply> getSaltMethod() {
+    io.grpc.MethodDescriptor<com.intel.analytics.zoo.ppml.psi.generated.SaltRequest, com.intel.analytics.zoo.ppml.psi.generated.SaltReply> getSaltMethod;
+    if ((getSaltMethod = com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc.getSaltMethod) == null) {
+      synchronized (com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc.class) {
+        if ((getSaltMethod = com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc.getSaltMethod) == null) {
+          com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc.getSaltMethod = getSaltMethod =
+              io.grpc.MethodDescriptor.<com.intel.analytics.zoo.ppml.psi.generated.SaltRequest, com.intel.analytics.zoo.ppml.psi.generated.SaltReply>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "salt"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  SaltRequest.getDefaultInstance()))
+                  com.intel.analytics.zoo.ppml.psi.generated.SaltRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  SaltReply.getDefaultInstance()))
+                  com.intel.analytics.zoo.ppml.psi.generated.SaltReply.getDefaultInstance()))
               .setSchemaDescriptor(new PSIServiceMethodDescriptorSupplier("salt"))
               .build();
         }
@@ -51,29 +51,29 @@ public final class PSIServiceGrpc {
     return getSaltMethod;
   }
 
-  private static volatile io.grpc.MethodDescriptor<UploadRequest,
-      UploadResponse> getUploadSetMethod;
+  private static volatile io.grpc.MethodDescriptor<com.intel.analytics.zoo.ppml.psi.generated.UploadRequest,
+      com.intel.analytics.zoo.ppml.psi.generated.UploadResponse> getUploadSetMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
       fullMethodName = SERVICE_NAME + '/' + "uploadSet",
-      requestType = UploadRequest.class,
-      responseType = UploadResponse.class,
+      requestType = com.intel.analytics.zoo.ppml.psi.generated.UploadRequest.class,
+      responseType = com.intel.analytics.zoo.ppml.psi.generated.UploadResponse.class,
       methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
-  public static io.grpc.MethodDescriptor<UploadRequest,
-      UploadResponse> getUploadSetMethod() {
-    io.grpc.MethodDescriptor<UploadRequest, UploadResponse> getUploadSetMethod;
-    if ((getUploadSetMethod = PSIServiceGrpc.getUploadSetMethod) == null) {
-      synchronized (PSIServiceGrpc.class) {
-        if ((getUploadSetMethod = PSIServiceGrpc.getUploadSetMethod) == null) {
-          PSIServiceGrpc.getUploadSetMethod = getUploadSetMethod =
-              io.grpc.MethodDescriptor.<UploadRequest, UploadResponse>newBuilder()
+  public static io.grpc.MethodDescriptor<com.intel.analytics.zoo.ppml.psi.generated.UploadRequest,
+      com.intel.analytics.zoo.ppml.psi.generated.UploadResponse> getUploadSetMethod() {
+    io.grpc.MethodDescriptor<com.intel.analytics.zoo.ppml.psi.generated.UploadRequest, com.intel.analytics.zoo.ppml.psi.generated.UploadResponse> getUploadSetMethod;
+    if ((getUploadSetMethod = com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc.getUploadSetMethod) == null) {
+      synchronized (com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc.class) {
+        if ((getUploadSetMethod = com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc.getUploadSetMethod) == null) {
+          com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc.getUploadSetMethod = getUploadSetMethod =
+              io.grpc.MethodDescriptor.<com.intel.analytics.zoo.ppml.psi.generated.UploadRequest, com.intel.analytics.zoo.ppml.psi.generated.UploadResponse>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "uploadSet"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  UploadRequest.getDefaultInstance()))
+                  com.intel.analytics.zoo.ppml.psi.generated.UploadRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  UploadResponse.getDefaultInstance()))
+                  com.intel.analytics.zoo.ppml.psi.generated.UploadResponse.getDefaultInstance()))
               .setSchemaDescriptor(new PSIServiceMethodDescriptorSupplier("uploadSet"))
               .build();
         }
@@ -82,29 +82,29 @@ public final class PSIServiceGrpc {
     return getUploadSetMethod;
   }
 
-  private static volatile io.grpc.MethodDescriptor<DownloadRequest,
-      DownloadResponse> getDownloadIntersectionMethod;
+  private static volatile io.grpc.MethodDescriptor<com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest,
+      com.intel.analytics.zoo.ppml.psi.generated.DownloadResponse> getDownloadIntersectionMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
       fullMethodName = SERVICE_NAME + '/' + "downloadIntersection",
-      requestType = DownloadRequest.class,
-      responseType = DownloadResponse.class,
+      requestType = com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest.class,
+      responseType = com.intel.analytics.zoo.ppml.psi.generated.DownloadResponse.class,
       methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
-  public static io.grpc.MethodDescriptor<DownloadRequest,
-      DownloadResponse> getDownloadIntersectionMethod() {
-    io.grpc.MethodDescriptor<DownloadRequest, DownloadResponse> getDownloadIntersectionMethod;
-    if ((getDownloadIntersectionMethod = PSIServiceGrpc.getDownloadIntersectionMethod) == null) {
-      synchronized (PSIServiceGrpc.class) {
-        if ((getDownloadIntersectionMethod = PSIServiceGrpc.getDownloadIntersectionMethod) == null) {
-          PSIServiceGrpc.getDownloadIntersectionMethod = getDownloadIntersectionMethod =
-              io.grpc.MethodDescriptor.<DownloadRequest, DownloadResponse>newBuilder()
+  public static io.grpc.MethodDescriptor<com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest,
+      com.intel.analytics.zoo.ppml.psi.generated.DownloadResponse> getDownloadIntersectionMethod() {
+    io.grpc.MethodDescriptor<com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest, com.intel.analytics.zoo.ppml.psi.generated.DownloadResponse> getDownloadIntersectionMethod;
+    if ((getDownloadIntersectionMethod = com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc.getDownloadIntersectionMethod) == null) {
+      synchronized (com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc.class) {
+        if ((getDownloadIntersectionMethod = com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc.getDownloadIntersectionMethod) == null) {
+          com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc.getDownloadIntersectionMethod = getDownloadIntersectionMethod =
+              io.grpc.MethodDescriptor.<com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest, com.intel.analytics.zoo.ppml.psi.generated.DownloadResponse>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
               .setFullMethodName(generateFullMethodName(SERVICE_NAME, "downloadIntersection"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  DownloadRequest.getDefaultInstance()))
+                  com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  DownloadResponse.getDefaultInstance()))
+                  com.intel.analytics.zoo.ppml.psi.generated.DownloadResponse.getDefaultInstance()))
               .setSchemaDescriptor(new PSIServiceMethodDescriptorSupplier("downloadIntersection"))
               .build();
         }
@@ -166,22 +166,22 @@ public final class PSIServiceGrpc {
      * Gives SHA256 Hash salt
      * </pre>
      */
-    public void salt(SaltRequest request,
-                     io.grpc.stub.StreamObserver<SaltReply> responseObserver) {
+    public void salt(com.intel.analytics.zoo.ppml.psi.generated.SaltRequest request,
+        io.grpc.stub.StreamObserver<com.intel.analytics.zoo.ppml.psi.generated.SaltReply> responseObserver) {
       asyncUnimplementedUnaryCall(getSaltMethod(), responseObserver);
     }
 
     /**
      */
-    public void uploadSet(UploadRequest request,
-                          io.grpc.stub.StreamObserver<UploadResponse> responseObserver) {
+    public void uploadSet(com.intel.analytics.zoo.ppml.psi.generated.UploadRequest request,
+        io.grpc.stub.StreamObserver<com.intel.analytics.zoo.ppml.psi.generated.UploadResponse> responseObserver) {
       asyncUnimplementedUnaryCall(getUploadSetMethod(), responseObserver);
     }
 
     /**
      */
-    public void downloadIntersection(DownloadRequest request,
-                                     io.grpc.stub.StreamObserver<DownloadResponse> responseObserver) {
+    public void downloadIntersection(com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest request,
+        io.grpc.stub.StreamObserver<com.intel.analytics.zoo.ppml.psi.generated.DownloadResponse> responseObserver) {
       asyncUnimplementedUnaryCall(getDownloadIntersectionMethod(), responseObserver);
     }
 
@@ -191,22 +191,22 @@ public final class PSIServiceGrpc {
             getSaltMethod(),
             asyncUnaryCall(
               new MethodHandlers<
-                SaltRequest,
-                SaltReply>(
+                com.intel.analytics.zoo.ppml.psi.generated.SaltRequest,
+                com.intel.analytics.zoo.ppml.psi.generated.SaltReply>(
                   this, METHODID_SALT)))
           .addMethod(
             getUploadSetMethod(),
             asyncUnaryCall(
               new MethodHandlers<
-                UploadRequest,
-                UploadResponse>(
+                com.intel.analytics.zoo.ppml.psi.generated.UploadRequest,
+                com.intel.analytics.zoo.ppml.psi.generated.UploadResponse>(
                   this, METHODID_UPLOAD_SET)))
           .addMethod(
             getDownloadIntersectionMethod(),
             asyncUnaryCall(
               new MethodHandlers<
-                DownloadRequest,
-                DownloadResponse>(
+                com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest,
+                com.intel.analytics.zoo.ppml.psi.generated.DownloadResponse>(
                   this, METHODID_DOWNLOAD_INTERSECTION)))
           .build();
     }
@@ -231,24 +231,24 @@ public final class PSIServiceGrpc {
      * Gives SHA256 Hash salt
      * </pre>
      */
-    public void salt(SaltRequest request,
-                     io.grpc.stub.StreamObserver<SaltReply> responseObserver) {
+    public void salt(com.intel.analytics.zoo.ppml.psi.generated.SaltRequest request,
+        io.grpc.stub.StreamObserver<com.intel.analytics.zoo.ppml.psi.generated.SaltReply> responseObserver) {
       ClientCalls.asyncUnaryCall(
           getChannel().newCall(getSaltMethod(), getCallOptions()), request, responseObserver);
     }
 
     /**
      */
-    public void uploadSet(UploadRequest request,
-                          io.grpc.stub.StreamObserver<UploadResponse> responseObserver) {
+    public void uploadSet(com.intel.analytics.zoo.ppml.psi.generated.UploadRequest request,
+        io.grpc.stub.StreamObserver<com.intel.analytics.zoo.ppml.psi.generated.UploadResponse> responseObserver) {
       ClientCalls.asyncUnaryCall(
           getChannel().newCall(getUploadSetMethod(), getCallOptions()), request, responseObserver);
     }
 
     /**
      */
-    public void downloadIntersection(DownloadRequest request,
-                                     io.grpc.stub.StreamObserver<DownloadResponse> responseObserver) {
+    public void downloadIntersection(com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest request,
+        io.grpc.stub.StreamObserver<com.intel.analytics.zoo.ppml.psi.generated.DownloadResponse> responseObserver) {
       ClientCalls.asyncUnaryCall(
           getChannel().newCall(getDownloadIntersectionMethod(), getCallOptions()), request, responseObserver);
     }
@@ -273,21 +273,21 @@ public final class PSIServiceGrpc {
      * Gives SHA256 Hash salt
      * </pre>
      */
-    public SaltReply salt(SaltRequest request) {
+    public com.intel.analytics.zoo.ppml.psi.generated.SaltReply salt(com.intel.analytics.zoo.ppml.psi.generated.SaltRequest request) {
       return blockingUnaryCall(
           getChannel(), getSaltMethod(), getCallOptions(), request);
     }
 
     /**
      */
-    public UploadResponse uploadSet(UploadRequest request) {
+    public com.intel.analytics.zoo.ppml.psi.generated.UploadResponse uploadSet(com.intel.analytics.zoo.ppml.psi.generated.UploadRequest request) {
       return blockingUnaryCall(
           getChannel(), getUploadSetMethod(), getCallOptions(), request);
     }
 
     /**
      */
-    public DownloadResponse downloadIntersection(DownloadRequest request) {
+    public com.intel.analytics.zoo.ppml.psi.generated.DownloadResponse downloadIntersection(com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest request) {
       return blockingUnaryCall(
           getChannel(), getDownloadIntersectionMethod(), getCallOptions(), request);
     }
@@ -312,24 +312,24 @@ public final class PSIServiceGrpc {
      * Gives SHA256 Hash salt
      * </pre>
      */
-    public com.google.common.util.concurrent.ListenableFuture<SaltReply> salt(
-        SaltRequest request) {
+    public com.google.common.util.concurrent.ListenableFuture<com.intel.analytics.zoo.ppml.psi.generated.SaltReply> salt(
+        com.intel.analytics.zoo.ppml.psi.generated.SaltRequest request) {
       return futureUnaryCall(
           getChannel().newCall(getSaltMethod(), getCallOptions()), request);
     }
 
     /**
      */
-    public com.google.common.util.concurrent.ListenableFuture<UploadResponse> uploadSet(
-        UploadRequest request) {
+    public com.google.common.util.concurrent.ListenableFuture<com.intel.analytics.zoo.ppml.psi.generated.UploadResponse> uploadSet(
+        com.intel.analytics.zoo.ppml.psi.generated.UploadRequest request) {
       return futureUnaryCall(
           getChannel().newCall(getUploadSetMethod(), getCallOptions()), request);
     }
 
     /**
      */
-    public com.google.common.util.concurrent.ListenableFuture<DownloadResponse> downloadIntersection(
-        DownloadRequest request) {
+    public com.google.common.util.concurrent.ListenableFuture<com.intel.analytics.zoo.ppml.psi.generated.DownloadResponse> downloadIntersection(
+        com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest request) {
       return futureUnaryCall(
           getChannel().newCall(getDownloadIntersectionMethod(), getCallOptions()), request);
     }
@@ -357,16 +357,16 @@ public final class PSIServiceGrpc {
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
         case METHODID_SALT:
-          serviceImpl.salt((SaltRequest) request,
-              (io.grpc.stub.StreamObserver<SaltReply>) responseObserver);
+          serviceImpl.salt((com.intel.analytics.zoo.ppml.psi.generated.SaltRequest) request,
+              (io.grpc.stub.StreamObserver<com.intel.analytics.zoo.ppml.psi.generated.SaltReply>) responseObserver);
           break;
         case METHODID_UPLOAD_SET:
-          serviceImpl.uploadSet((UploadRequest) request,
-              (io.grpc.stub.StreamObserver<UploadResponse>) responseObserver);
+          serviceImpl.uploadSet((com.intel.analytics.zoo.ppml.psi.generated.UploadRequest) request,
+              (io.grpc.stub.StreamObserver<com.intel.analytics.zoo.ppml.psi.generated.UploadResponse>) responseObserver);
           break;
         case METHODID_DOWNLOAD_INTERSECTION:
-          serviceImpl.downloadIntersection((DownloadRequest) request,
-              (io.grpc.stub.StreamObserver<DownloadResponse>) responseObserver);
+          serviceImpl.downloadIntersection((com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest) request,
+              (io.grpc.stub.StreamObserver<com.intel.analytics.zoo.ppml.psi.generated.DownloadResponse>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -390,7 +390,7 @@ public final class PSIServiceGrpc {
 
     @Override
     public com.google.protobuf.Descriptors.FileDescriptor getFileDescriptor() {
-      return PSIProto.getDescriptor();
+      return com.intel.analytics.zoo.ppml.psi.generated.PSIProto.getDescriptor();
     }
 
     @Override
@@ -424,7 +424,7 @@ public final class PSIServiceGrpc {
   public static io.grpc.ServiceDescriptor getServiceDescriptor() {
     io.grpc.ServiceDescriptor result = serviceDescriptor;
     if (result == null) {
-      synchronized (PSIServiceGrpc.class) {
+      synchronized (com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc.class) {
         result = serviceDescriptor;
         if (result == null) {
           serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)

@@ -28,7 +28,7 @@ public interface DownloadResponseOrBuilder extends
    * <code>.SIGNAL status = 2;</code>
    * @return The status.
    */
-  SIGNAL getStatus();
+  com.intel.analytics.zoo.ppml.psi.generated.SIGNAL getStatus();
 
   /**
    * <code>int32 split = 3;</code>

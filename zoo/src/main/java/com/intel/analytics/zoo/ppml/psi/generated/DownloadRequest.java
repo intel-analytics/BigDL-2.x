@@ -23,7 +23,7 @@ private static final long serialVersionUID = 0L;
   @SuppressWarnings({"unused"})
   protected Object newInstance(
       UnusedPrivateParameter unused) {
-    return new DownloadRequest();
+    return new com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest();
   }
 
   @Override
@@ -81,15 +81,15 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return PSIProto.internal_static_DownloadRequest_descriptor;
+    return com.intel.analytics.zoo.ppml.psi.generated.PSIProto.internal_static_DownloadRequest_descriptor;
   }
 
   @Override
   protected FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return PSIProto.internal_static_DownloadRequest_fieldAccessorTable
+    return com.intel.analytics.zoo.ppml.psi.generated.PSIProto.internal_static_DownloadRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            DownloadRequest.class, Builder.class);
+            com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest.class, com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest.Builder.class);
   }
 
   public static final int TASK_ID_FIELD_NUMBER = 1;
@@ -187,10 +187,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof DownloadRequest)) {
+    if (!(obj instanceof com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest)) {
       return super.equals(obj);
     }
-    DownloadRequest other = (DownloadRequest) obj;
+    com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest other = (com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest) obj;
 
     if (!getTaskId()
         .equals(other.getTaskId())) return false;
@@ -216,69 +216,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static DownloadRequest parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static DownloadRequest parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static DownloadRequest parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static DownloadRequest parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static DownloadRequest parseFrom(byte[] data)
+  public static com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static DownloadRequest parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static DownloadRequest parseFrom(java.io.InputStream input)
+  public static com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static DownloadRequest parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static DownloadRequest parseDelimitedFrom(java.io.InputStream input)
+  public static com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static DownloadRequest parseDelimitedFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static DownloadRequest parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static DownloadRequest parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -291,7 +291,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(DownloadRequest prototype) {
+  public static Builder newBuilder(com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @Override
@@ -312,18 +312,18 @@ private static final long serialVersionUID = 0L;
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:DownloadRequest)
-      DownloadRequestOrBuilder {
+      com.intel.analytics.zoo.ppml.psi.generated.DownloadRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return PSIProto.internal_static_DownloadRequest_descriptor;
+      return com.intel.analytics.zoo.ppml.psi.generated.PSIProto.internal_static_DownloadRequest_descriptor;
     }
 
     @Override
     protected FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return PSIProto.internal_static_DownloadRequest_fieldAccessorTable
+      return com.intel.analytics.zoo.ppml.psi.generated.PSIProto.internal_static_DownloadRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              DownloadRequest.class, Builder.class);
+              com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest.class, com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest.Builder.class);
     }
 
     // Construct using com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest.newBuilder()
@@ -354,17 +354,17 @@ private static final long serialVersionUID = 0L;
     @Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return PSIProto.internal_static_DownloadRequest_descriptor;
+      return com.intel.analytics.zoo.ppml.psi.generated.PSIProto.internal_static_DownloadRequest_descriptor;
     }
 
     @Override
-    public DownloadRequest getDefaultInstanceForType() {
-      return DownloadRequest.getDefaultInstance();
+    public com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest getDefaultInstanceForType() {
+      return com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest.getDefaultInstance();
     }
 
     @Override
-    public DownloadRequest build() {
-      DownloadRequest result = buildPartial();
+    public com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest build() {
+      com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -372,8 +372,8 @@ private static final long serialVersionUID = 0L;
     }
 
     @Override
-    public DownloadRequest buildPartial() {
-      DownloadRequest result = new DownloadRequest(this);
+    public com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest buildPartial() {
+      com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest result = new com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest(this);
       result.taskId_ = taskId_;
       result.split_ = split_;
       onBuilt();
@@ -414,16 +414,16 @@ private static final long serialVersionUID = 0L;
     }
     @Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof DownloadRequest) {
-        return mergeFrom((DownloadRequest)other);
+      if (other instanceof com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest) {
+        return mergeFrom((com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(DownloadRequest other) {
-      if (other == DownloadRequest.getDefaultInstance()) return this;
+    public Builder mergeFrom(com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest other) {
+      if (other == com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest.getDefaultInstance()) return this;
       if (!other.getTaskId().isEmpty()) {
         taskId_ = other.taskId_;
         onChanged();
@@ -446,11 +446,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      DownloadRequest parsedMessage = null;
+      com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (DownloadRequest) e.getUnfinishedMessage();
+        parsedMessage = (com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -583,37 +583,37 @@ private static final long serialVersionUID = 0L;
   }
 
   // @@protoc_insertion_point(class_scope:DownloadRequest)
-  private static final DownloadRequest DEFAULT_INSTANCE;
+  private static final com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new DownloadRequest();
+    DEFAULT_INSTANCE = new com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest();
   }
 
-  public static DownloadRequest getDefaultInstance() {
+  public static com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<DownloadRequest>
-      PARSER = new com.google.protobuf.AbstractParser<DownloadRequest>() {
+  private static final com.google.protobuf.Parser<com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest>
+      PARSER = new com.google.protobuf.AbstractParser<com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest>() {
     @Override
-    public DownloadRequest parsePartialFrom(
+    public com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new DownloadRequest(input, extensionRegistry);
+      return new com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest(input, extensionRegistry);
     }
   };
 
-  public static com.google.protobuf.Parser<DownloadRequest> parser() {
+  public static com.google.protobuf.Parser<com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest> parser() {
     return PARSER;
   }
 
   @Override
-  public com.google.protobuf.Parser<DownloadRequest> getParserForType() {
+  public com.google.protobuf.Parser<com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest> getParserForType() {
     return PARSER;
   }
 
   @Override
-  public DownloadRequest getDefaultInstanceForType() {
+  public com.intel.analytics.zoo.ppml.psi.generated.DownloadRequest getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

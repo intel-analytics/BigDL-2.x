@@ -28,5 +28,5 @@ public interface UploadResponseOrBuilder extends
    * <code>.SIGNAL status = 2;</code>
    * @return The status.
    */
-  SIGNAL getStatus();
+  com.intel.analytics.zoo.ppml.psi.generated.SIGNAL getStatus();
 }

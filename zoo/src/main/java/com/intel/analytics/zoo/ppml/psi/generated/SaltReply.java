@@ -9,7 +9,7 @@ package com.intel.analytics.zoo.ppml.psi.generated;
 public final class SaltReply extends
     com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:SaltReply)
-        SaltReplyOrBuilder {
+        com.intel.analytics.zoo.ppml.psi.generated.SaltReplyOrBuilder {
 private static final long serialVersionUID = 0L;
   // Use SaltReply.newBuilder() to construct.
   private SaltReply(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
@@ -23,7 +23,7 @@ private static final long serialVersionUID = 0L;
   @SuppressWarnings({"unused"})
   protected Object newInstance(
       UnusedPrivateParameter unused) {
-    return new SaltReply();
+    return new com.intel.analytics.zoo.ppml.psi.generated.SaltReply();
   }
 
   @Override
@@ -76,15 +76,15 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return PSIProto.internal_static_SaltReply_descriptor;
+    return com.intel.analytics.zoo.ppml.psi.generated.PSIProto.internal_static_SaltReply_descriptor;
   }
 
   @Override
   protected FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return PSIProto.internal_static_SaltReply_fieldAccessorTable
+    return com.intel.analytics.zoo.ppml.psi.generated.PSIProto.internal_static_SaltReply_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            SaltReply.class, Builder.class);
+            com.intel.analytics.zoo.ppml.psi.generated.SaltReply.class, com.intel.analytics.zoo.ppml.psi.generated.SaltReply.Builder.class);
   }
 
   public static final int SALT_REPLY_FIELD_NUMBER = 1;
@@ -164,10 +164,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof SaltReply)) {
+    if (!(obj instanceof com.intel.analytics.zoo.ppml.psi.generated.SaltReply)) {
       return super.equals(obj);
     }
-    SaltReply other = (SaltReply) obj;
+    com.intel.analytics.zoo.ppml.psi.generated.SaltReply other = (com.intel.analytics.zoo.ppml.psi.generated.SaltReply) obj;
 
     if (!getSaltReply()
         .equals(other.getSaltReply())) return false;
@@ -189,69 +189,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static SaltReply parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.SaltReply parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static SaltReply parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.SaltReply parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static SaltReply parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.SaltReply parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static SaltReply parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.SaltReply parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static SaltReply parseFrom(byte[] data)
+  public static com.intel.analytics.zoo.ppml.psi.generated.SaltReply parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static SaltReply parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.SaltReply parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static SaltReply parseFrom(java.io.InputStream input)
+  public static com.intel.analytics.zoo.ppml.psi.generated.SaltReply parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static SaltReply parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.SaltReply parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static SaltReply parseDelimitedFrom(java.io.InputStream input)
+  public static com.intel.analytics.zoo.ppml.psi.generated.SaltReply parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static SaltReply parseDelimitedFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.SaltReply parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static SaltReply parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.SaltReply parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static SaltReply parseFrom(
+  public static com.intel.analytics.zoo.ppml.psi.generated.SaltReply parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -264,7 +264,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(SaltReply prototype) {
+  public static Builder newBuilder(com.intel.analytics.zoo.ppml.psi.generated.SaltReply prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @Override
@@ -285,18 +285,18 @@ private static final long serialVersionUID = 0L;
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
       // @@protoc_insertion_point(builder_implements:SaltReply)
-      SaltReplyOrBuilder {
+      com.intel.analytics.zoo.ppml.psi.generated.SaltReplyOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return PSIProto.internal_static_SaltReply_descriptor;
+      return com.intel.analytics.zoo.ppml.psi.generated.PSIProto.internal_static_SaltReply_descriptor;
     }
 
     @Override
     protected FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return PSIProto.internal_static_SaltReply_fieldAccessorTable
+      return com.intel.analytics.zoo.ppml.psi.generated.PSIProto.internal_static_SaltReply_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              SaltReply.class, Builder.class);
+              com.intel.analytics.zoo.ppml.psi.generated.SaltReply.class, com.intel.analytics.zoo.ppml.psi.generated.SaltReply.Builder.class);
     }
 
     // Construct using com.intel.analytics.zoo.ppml.psi.generated.SaltReply.newBuilder()
@@ -325,17 +325,17 @@ private static final long serialVersionUID = 0L;
     @Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return PSIProto.internal_static_SaltReply_descriptor;
+      return com.intel.analytics.zoo.ppml.psi.generated.PSIProto.internal_static_SaltReply_descriptor;
     }
 
     @Override
-    public SaltReply getDefaultInstanceForType() {
-      return SaltReply.getDefaultInstance();
+    public com.intel.analytics.zoo.ppml.psi.generated.SaltReply getDefaultInstanceForType() {
+      return com.intel.analytics.zoo.ppml.psi.generated.SaltReply.getDefaultInstance();
     }
 
     @Override
-    public SaltReply build() {
-      SaltReply result = buildPartial();
+    public com.intel.analytics.zoo.ppml.psi.generated.SaltReply build() {
+      com.intel.analytics.zoo.ppml.psi.generated.SaltReply result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -343,8 +343,8 @@ private static final long serialVersionUID = 0L;
     }
 
     @Override
-    public SaltReply buildPartial() {
-      SaltReply result = new SaltReply(this);
+    public com.intel.analytics.zoo.ppml.psi.generated.SaltReply buildPartial() {
+      com.intel.analytics.zoo.ppml.psi.generated.SaltReply result = new com.intel.analytics.zoo.ppml.psi.generated.SaltReply(this);
       result.saltReply_ = saltReply_;
       onBuilt();
       return result;
@@ -384,16 +384,16 @@ private static final long serialVersionUID = 0L;
     }
     @Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof SaltReply) {
-        return mergeFrom((SaltReply)other);
+      if (other instanceof com.intel.analytics.zoo.ppml.psi.generated.SaltReply) {
+        return mergeFrom((com.intel.analytics.zoo.ppml.psi.generated.SaltReply)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(SaltReply other) {
-      if (other == SaltReply.getDefaultInstance()) return this;
+    public Builder mergeFrom(com.intel.analytics.zoo.ppml.psi.generated.SaltReply other) {
+      if (other == com.intel.analytics.zoo.ppml.psi.generated.SaltReply.getDefaultInstance()) return this;
       if (!other.getSaltReply().isEmpty()) {
         saltReply_ = other.saltReply_;
         onChanged();
@@ -413,11 +413,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      SaltReply parsedMessage = null;
+      com.intel.analytics.zoo.ppml.psi.generated.SaltReply parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (SaltReply) e.getUnfinishedMessage();
+        parsedMessage = (com.intel.analytics.zoo.ppml.psi.generated.SaltReply) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -519,37 +519,37 @@ private static final long serialVersionUID = 0L;
   }
 
   // @@protoc_insertion_point(class_scope:SaltReply)
-  private static final SaltReply DEFAULT_INSTANCE;
+  private static final com.intel.analytics.zoo.ppml.psi.generated.SaltReply DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new SaltReply();
+    DEFAULT_INSTANCE = new com.intel.analytics.zoo.ppml.psi.generated.SaltReply();
   }
 
-  public static SaltReply getDefaultInstance() {
+  public static com.intel.analytics.zoo.ppml.psi.generated.SaltReply getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<SaltReply>
-      PARSER = new com.google.protobuf.AbstractParser<SaltReply>() {
+  private static final com.google.protobuf.Parser<com.intel.analytics.zoo.ppml.psi.generated.SaltReply>
+      PARSER = new com.google.protobuf.AbstractParser<com.intel.analytics.zoo.ppml.psi.generated.SaltReply>() {
     @Override
-    public SaltReply parsePartialFrom(
+    public com.intel.analytics.zoo.ppml.psi.generated.SaltReply parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new SaltReply(input, extensionRegistry);
+      return new com.intel.analytics.zoo.ppml.psi.generated.SaltReply(input, extensionRegistry);
     }
   };
 
-  public static com.google.protobuf.Parser<SaltReply> parser() {
+  public static com.google.protobuf.Parser<com.intel.analytics.zoo.ppml.psi.generated.SaltReply> parser() {
     return PARSER;
   }
 
   @Override
-  public com.google.protobuf.Parser<SaltReply> getParserForType() {
+  public com.google.protobuf.Parser<com.intel.analytics.zoo.ppml.psi.generated.SaltReply> getParserForType() {
     return PARSER;
   }
 
   @Override
-  public SaltReply getDefaultInstanceForType() {
+  public com.intel.analytics.zoo.ppml.psi.generated.SaltReply getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

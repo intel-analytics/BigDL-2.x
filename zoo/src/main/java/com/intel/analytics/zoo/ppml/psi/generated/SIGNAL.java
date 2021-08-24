@@ -67,7 +67,7 @@ public enum SIGNAL
    * @deprecated Use {@link #forNumber(int)} instead.
    */
   @Deprecated
-  public static SIGNAL valueOf(int value) {
+  public static com.intel.analytics.zoo.ppml.psi.generated.SIGNAL valueOf(int value) {
     return forNumber(value);
   }
 
@@ -75,7 +75,7 @@ public enum SIGNAL
    * @param value The numeric wire value of the corresponding enum entry.
    * @return The enum associated with the given numeric wire value.
    */
-  public static SIGNAL forNumber(int value) {
+  public static com.intel.analytics.zoo.ppml.psi.generated.SIGNAL forNumber(int value) {
     switch (value) {
       case 0: return SUCCESS;
       case 1: return WAIT;
@@ -86,15 +86,15 @@ public enum SIGNAL
     }
   }
 
-  public static com.google.protobuf.Internal.EnumLiteMap<SIGNAL>
+  public static com.google.protobuf.Internal.EnumLiteMap<com.intel.analytics.zoo.ppml.psi.generated.SIGNAL>
       internalGetValueMap() {
     return internalValueMap;
   }
   private static final com.google.protobuf.Internal.EnumLiteMap<
-          SIGNAL> internalValueMap =
-        new com.google.protobuf.Internal.EnumLiteMap<SIGNAL>() {
-          public SIGNAL findValueByNumber(int number) {
-            return SIGNAL.forNumber(number);
+          com.intel.analytics.zoo.ppml.psi.generated.SIGNAL> internalValueMap =
+        new com.google.protobuf.Internal.EnumLiteMap<com.intel.analytics.zoo.ppml.psi.generated.SIGNAL>() {
+          public com.intel.analytics.zoo.ppml.psi.generated.SIGNAL findValueByNumber(int number) {
+            return com.intel.analytics.zoo.ppml.psi.generated.SIGNAL.forNumber(number);
           }
         };
 
@@ -112,12 +112,12 @@ public enum SIGNAL
   }
   public static final com.google.protobuf.Descriptors.EnumDescriptor
       getDescriptor() {
-    return PSIProto.getDescriptor().getEnumTypes().get(0);
+    return com.intel.analytics.zoo.ppml.psi.generated.PSIProto.getDescriptor().getEnumTypes().get(0);
   }
 
-  private static final SIGNAL[] VALUES = values();
+  private static final com.intel.analytics.zoo.ppml.psi.generated.SIGNAL[] VALUES = values();
 
-  public static SIGNAL valueOf(
+  public static com.intel.analytics.zoo.ppml.psi.generated.SIGNAL valueOf(
       com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
     if (desc.getType() != getDescriptor()) {
       throw new IllegalArgumentException(
