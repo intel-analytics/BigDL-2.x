@@ -424,23 +424,15 @@ class TestAutoTrainer(TestCase):
 
     def test_select_feature(self):
         sample_num = np.random.randint(100, 200)
-        lookback, horizon = 6, 1
         df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
                            "value": np.random.randn(sample_num),
                            "id": np.array(['00']*sample_num)})
-        train_ts, val_ts, test_ts = TSDataset.from_pandas(df,
+        train_ts, val_ts, _ = TSDataset.from_pandas(df,
                                                           target_col=['value'],
                                                           dt_col='datetime',
                                                           id_col='id',
                                                           with_split=True,
-                                                          val_ratio=0.1,
-                                                          test_ratio=0.1)
-        for tsdata in [train_ts, val_ts, test_ts]:
-            tsdata.to_torch_data_loader(batch_size=32,
-                                        lookback=lookback,
-                                        horizon=horizon,
-                                        roll=True,
-                                        feature_col=[])
+                                                          val_ratio=0.1)        
 
         search_space = {
             'hidden_dim': hp.grid_search([32, 64]),
