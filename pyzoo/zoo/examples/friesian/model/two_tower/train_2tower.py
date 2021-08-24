@@ -45,9 +45,9 @@ spark_conf = {"spark.network.timeout": "10000000",
 
 
 def train(config, train_data, test_data, epochs=1, batch_size=128, model_dir='.'):
-
+    two_tower = TwoTowerModel(config["user_col_info"], config["item_col_info"])
     def model_creator(config):
-        model = build_model(config["user_col_info"], config["item_col_info"])
+        model = two_tower.build_model()
         print(model.summary())
         optimizer = tf.keras.optimizers.Adam(config["lr"])
         model.compile(optimizer=optimizer,
@@ -80,8 +80,8 @@ def train(config, train_data, test_data, epochs=1, batch_size=128, model_dir='.'
                   validation_steps=val_steps)
 
     model = estimator.get_model()
-    user_model = get_1tower_model(model, user_col_info)
-    item_model = get_1tower_model(model, item_col_info)
+    user_model = two_tower.get_1tower_model(user_col_info)
+    item_model = two_tower.get_1tower_model(item_col_info)
     tf.saved_model.save(model, os.path.join(model_dir, "twotower-model"))
     tf.saved_model.save(user_model, os.path.join(model_dir, "user-model"))
     tf.saved_model.save(item_model, os.path.join(model_dir, "item-model"))
@@ -203,7 +203,7 @@ def prepare_features(train_tbl, test_tbl, embed_index_dicts):
     with open(os.path.join(args.model_dir, "stats/min_max.pkl"), 'wb') as f:
         pickle.dump(min_max_dic, f)
 
-    user_col_info = ColumnInfo2Tower(indicator_cols=["enaging_user_is_verified"],
+    user_col_info = ColumnInfoTower(indicator_cols=["enaging_user_is_verified"],
                                      indicator_dims=[2],
                                      embed_cols=["user_id"],
                                      embed_in_dims=[embed_in_dims["user_id"]],
@@ -211,7 +211,7 @@ def prepare_features(train_tbl, test_tbl, embed_index_dicts):
                                      numerical_cols=["user_num"],
                                      numerical_dims=[3],
                                      name="user")
-    item_col_info = ColumnInfo2Tower(indicator_cols=["engaged_with_user_is_verified",
+    item_col_info = ColumnInfoTower(indicator_cols=["engaged_with_user_is_verified",
                                                      "present_media", "tweet_type", "language"],
                                      indicator_dims=[2, 13, 3, 67],  # max + 1
                                      embed_cols=["engaged_with_user_id", "hashtags",
@@ -234,7 +234,7 @@ def prepare_features(train_tbl, test_tbl, embed_index_dicts):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Two Tower Training/Inference')
-    parser.add_argument('--cluster_mode', type=str, default="spark-submit",
+    parser.add_argument('--cluster_mode', type=str, default="local",
                         help='The cluster mode, such as local, yarn or standalone.')
     parser.add_argument('--master', type=str, default=None,
                         help='The master url, only used when cluster mode is standalone.')
