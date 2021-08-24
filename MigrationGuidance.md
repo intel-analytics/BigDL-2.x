@@ -16,29 +16,18 @@ This guidance is used to provide guidance to BigDL and Analytics zoo users to mi
    
    ```com.intel.analytics.bigdl.nn.keras.XYZ``` is deprecated and will be removed. Pleaase use zoo keras api instead
 
-
-   And below classes remain the same:
-
-   ```com.intel.analytics.bigdl.utils.Engine```
-
-   ```com.intel.analytics.bigdl.utils.LoggerFilter```
-
-   ```com.intel.analytics.bigdl.utils.RandomGenerator```
-
-   ```com.intel.analytics.bigdl.utils.Shape```
-
    If you are a maven user and add BigDL as dependency to your own project. Please change the dependency as :
    ```
    <dependency>
        <groupId>com.intel.analytics.bigdl</groupId>
-       <artifactId>bigdl-dllib-SPARAK_2.4</artifactId>
+       <artifactId>bigdl-dllib</artifactId>
        <version>${BIGDL_VERSION}</version>
    </dependency>
    ```
 
    If you are a sbt user, please change libraryDependencies to:
    ```
-   libraryDependencies += "com.intel.analytics.bigdl" % "bigdl-dllib-SPARK_2.4" % "${BIGDL_VERSION}"
+   libraryDependencies += "com.intel.analytics.bigdl" % "bigdl-dllib" % "${BIGDL_VERSION}"
    ```
 
    ***python application***
@@ -52,11 +41,5 @@ This guidance is used to provide guidance to BigDL and Analytics zoo users to mi
    ```from bigdl.transform.XYZ import *``` to ```from bigdl.dllib.feature.transform.XYZ import *```
 
    ```bigdl.nn.keras.XYZ``` is deprecated and will be removed. Please use zoo keras api instead
-
-   ```from bigdl.util.tf_utils import *``` to ```from bigdl.dllib.utils.tf_utils import *```
-
-   ```from bigdl.util.common import *``` to ```from bigdl.utils.common import *```
-
-   ```from bigdl.util.Engine import *``` to ```from bigdl.utils.Engine import *```
 
 * **For Analytics Zoo users**
