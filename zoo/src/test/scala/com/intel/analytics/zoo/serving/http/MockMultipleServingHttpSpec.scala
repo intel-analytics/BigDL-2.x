@@ -17,29 +17,18 @@
 
 package com.intel.analytics.zoo.serving.http
 
-
-import java.util.concurrent.TimeUnit
-
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
-import akka.util.Timeout
 import com.codahale.metrics.{MetricRegistry, Timer}
 import org.scalatest.{FlatSpec, Matchers}
-import org.slf4j.LoggerFactory
 
 
-class MockMultipleServingHttpSpec extends FlatSpec with Matchers with App with Supportive {
 
-  override val logger = LoggerFactory.getLogger(getClass)
-  // load various model
-  implicit val system = ActorSystem("zoo-serving-frontend-system")
-  implicit val materializer = ActorMaterializer()
-  implicit val executionContext = system.dispatcher
-  implicit val timeout: Timeout = Timeout(100, TimeUnit.SECONDS)
+class MockMultipleServingHttpSpec extends FlatSpec with Matchers with Supportive {
+
   val metrics = new MetricRegistry
   val timer: Timer = metrics.timer("test")
 
-  "Load BigDL model" should "work properly" in {
+
+  "Load Servable" should "work properly" in {
     val resource = getClass().getClassLoader().getResource("models")
     val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
     val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
@@ -49,34 +38,7 @@ class MockMultipleServingHttpSpec extends FlatSpec with Matchers with App with S
     val inferenceServable = new InferenceModelServable(inferenceModelMetaData, timer)
 
     inferenceServable.load()
-    val content =
-      """{
-  "instances" : [ {
-    "floatTensor" : [ [ [0.6804766, 0.30136853, 0.17394465, 0.44770062, 0.20275897] ] ]
-  } ]
-}"""
-    inferenceServable.predict(content).mkString should be("1")
-
+    inferenceServable.getMetaData should be(inferenceModelMetaData)
   }
-//  testPredict
-//
-//  def testPredict() : Unit = {
-//    val resource = getClass().getClassLoader().getResource("models")
-//    val modelPath = resource.getPath + "/caffe/test_persist.prototxt"
-//    val weightPath = resource.getPath + "/caffe/test_persist.caffemodel"
-//    val features = Array("floatTensor")
-//    val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "Caffe",
-//      weightPath, 1, "instance", features)
-//    val inferenceServable = new InferenceModelServable(inferenceModelMetaData, timer)
-//
-//    inferenceServable.load()
-//    val content =
-//      """{
-//  "instances" : [ {
-//    "floatTensor" : [ [ [0.6804766, 0.30136853, 0.17394465, 0.44770062, 0.20275897] ] ]
-//  } ]
-//}"""
-//    require(inferenceServable.predict(content).mkString == "1")
-//  }
 
 }
