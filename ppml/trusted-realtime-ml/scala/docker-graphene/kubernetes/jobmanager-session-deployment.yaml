@@ -24,7 +24,6 @@ spec:
         command: ["/bin/bash","-c"]
         args: 
           - export FLINK_JOB_MANAGER_IP=0.0.0.0; 
-            export FLINK_JOB_MANAGER_IP=0.0.0.0;
             cd /ppml/trusted-realtime-ml/java; 
             bash init-java.sh 2> ../init-java.sh ; 
             bash start-flink-jobmanager.sh | tee ../jobmanager.log; 
