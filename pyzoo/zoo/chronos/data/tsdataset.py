@@ -92,7 +92,7 @@ class TSDataset:
 
         :param df: a pandas dataframe for your raw time series data.
         :param dt_col: a str indicates the col name of datetime
-               column in the input data frame.
+               column in the input data frame, must be sorted.
         :param target_col: a str or list indicates the col name of target column
                in the input data frame.
         :param id_col: (optional) a str indicates the col name of dataframe id. If
@@ -760,7 +760,7 @@ class TSDataset:
         '''
         return unscale_timeseries_numpy(data, self.scaler, self.scaler_index)
 
-    def _check_basic_invariants(self):
+    def _check_basic_invariants(self, strict_check=False):
         '''
         This function contains a bunch of assertions to make sure strict rules(the invariants)
         for the internal dataframe(self.df) must stands. If not, clear and user-friendly error
@@ -789,4 +789,5 @@ class TSDataset:
         _check_col_no_na(self.df, self.id_col)
 
         # check dt sorted
-        _check_dt_is_sorted(self.df, self.dt_col)
+        if strict_check:
+            _check_dt_is_sorted(self.df, self.dt_col)

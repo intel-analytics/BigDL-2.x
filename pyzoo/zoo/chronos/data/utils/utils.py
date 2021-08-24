@@ -51,12 +51,13 @@ def _check_is_aligned(df, id_col, dt_col):
     return res
 
 
-def _check_dt_is_sorted(df, dt_col):
+def _check_dt_is_sorted(df, dt_col, id_col="id"):
     import numpy as np
     import warnings
-    temp_df = df[dt_col].copy()
+    df = df.copy()
     try:
-        res = np.diff(temp_df.values.astype(np.float32))
-        (res >= 0).all()
-    except Exception:
+        res = (np.diff(df[dt_col].values.astype(np.float32)) >=0).all()
+        if not res:
+            raise RuntimeError(f"{dt_col} must be sorted.")
+    except (ValueError, TypeError):
         warnings.warn(f"{dt_col} column not sorted.", Warning)
