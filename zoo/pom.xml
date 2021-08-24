@@ -76,6 +76,7 @@
                             <target>1.8</target>
                             <excludes>
                                 <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/ppml/**</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
@@ -87,6 +88,7 @@
                                 <exclude>**/com/intel/analytics/zoo/examples/serving/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/serving/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/ppml/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/pipeline/nnframes/XgboostTrainSpec.scala</exclude>
                                 <exclude>**/com/intel/analytics/zoo/friesian/python/PythonFriesian.scala</exclude>
                                 <exclude>**/com/intel/analytics/zoo/friesian/feature/Utils.scala</exclude>
@@ -123,6 +125,7 @@
                             <target>1.8</target>
                             <excludes>
                                 <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/ppml/**</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
@@ -132,6 +135,7 @@
                         <configuration>
                             <excludes>
                                 <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/ppml/**</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
