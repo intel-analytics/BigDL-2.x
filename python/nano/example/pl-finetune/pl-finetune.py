@@ -12,7 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+
+# The cats and dogs dataset is sited at https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip
 
 # This file is adapted from PyTorch Lightning. https://github.com/PyTorchLightning/pytorch-lightning
 # Copyright The PyTorch Lightning team.
@@ -28,6 +29,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Computer vision example on Transfer Learning.
+This computer vision example illustrates how one could fine-tune a pre-trained
+network (by default, a ResNet50 is used) using pytorch-lightning. For the sake
+of this example, the 'cats and dogs dataset' (~60MB, see `DATA_URL` below) and
+the proposed network (denoted by `TransferLearningModel`, see below) is
+trained for 15 epochs.
+The training consists of three stages.
+From epoch 0 to 4, the feature extractor (the pre-trained network) is frozen except
+maybe for the BatchNorm layers (depending on whether `train_bn = True`). The BatchNorm
+layers (if `train_bn = True`) and the parameters of the classifier are trained as a
+single parameters group with lr = 1e-2.
+From epoch 5 to 9, the last two layer groups of the pre-trained network are unfrozen
+and added to the optimizer as a new parameter group with lr = 1e-4 (while lr = 1e-3
+for the first parameter group in the optimizer).
+Eventually, from epoch 10, all the remaining layer groups of the pre-trained network
+are unfrozen and added to the optimizer as a third parameter group. From epoch 10,
+the parameters of the pre-trained network are trained with lr = 1e-5 while those of
+the classifier is trained with lr = 1e-4.
+Note:
+    See: https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html
+"""
 
 import logging
 from pathlib import Path
@@ -40,10 +62,8 @@ from torch.optim.lr_scheduler import MultiStepLR
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy
-from torchvision import models
-import torchvision
-from bigdl.nano.pytorch.vision.datasets import ImageFolder
-from bigdl.nano.pytorch.vision.transforms import transforms
+from torchvision import models, transforms
+from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import download_and_extract_archive
 
 import pytorch_lightning as pl
@@ -60,46 +80,35 @@ DATA_URL = "https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered
 
 
 class MilestonesFinetuning(BaseFinetuning):
-
     def __init__(self, milestones: tuple = (5, 10), train_bn: bool = False):
         super().__init__()
         self.milestones = milestones
-        print("init")
-        print(type(self.milestones))
-        # print(self.milestones)
         self.train_bn = train_bn
 
     def freeze_before_training(self, pl_module: pl.LightningModule):
-        self.freeze(modules=pl_module.feature_extractor, train_bn=self.train_bn)
+        self.freeze(modules=pl_module.feature_extractor,
+                    train_bn=self.train_bn)
 
     def finetune_function(self, pl_module: pl.LightningModule, epoch: int,
                           optimizer: Optimizer, opt_idx: int):
         if epoch == self.milestones[0]:
             # unfreeze 5 last layers
             self.unfreeze_and_add_param_group(
-                modules=pl_module.feature_extractor[-5:],
+                modules=pl_module.feature_extractor[-5:], # type: ignore
                 optimizer=optimizer, train_bn=self.train_bn
             )
 
         elif epoch == self.milestones[1]:
             # unfreeze remaing layers
             self.unfreeze_and_add_param_group(
-                modules=pl_module.feature_extractor[:-5],
+                modules=pl_module.feature_extractor[:-5], # type: ignore
                 optimizer=optimizer, train_bn=self.train_bn
             )
-    
-    def to_dict(self):
-        return {"milestones": self.milestones, "train_bn": self.train_bn}
 
 
 class CatDogImageDataModule(LightningDataModule):
-
-    def __init__(
-        self,
-        dl_path: Union[str, Path] = "data",
-        num_workers: int = 0,
-        batch_size: int = 8,
-    ):
+    def __init__(self, dl_path: Union[str, Path] = "data",
+                 num_workers: int = 0, batch_size: int = 8):
         """CatDogImageDataModule
         Args:
             dl_path: root directory where to download the data
@@ -114,9 +123,8 @@ class CatDogImageDataModule(LightningDataModule):
 
     def prepare_data(self):
         """Download images and prepare images datasets."""
-        download_and_extract_archive(url=DATA_URL,
-                                     download_root=self._dl_path,
-                                     remove_finished=True)
+        download_and_extract_archive(
+            url=DATA_URL, download_root=self._dl_path, remove_finished=True)
 
     @property
     def data_path(self):
@@ -128,17 +136,19 @@ class CatDogImageDataModule(LightningDataModule):
 
     @property
     def train_transform(self):
-        return transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(), self.normalize_transform
-        ])
+        return transforms.Compose(
+            [
+                transforms.Resize((224, 224)),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                self.normalize_transform,
+            ]
+        )
 
     @property
     def valid_transform(self):
         return transforms.Compose([transforms.Resize((224, 224)),
-                                   transforms.ToTensor(),
-                                   self.normalize_transform])
+                                  transforms.ToTensor(), self.normalize_transform])
 
     def create_dataset(self, root, transform):
         return ImageFolder(root=root, transform=transform)
@@ -146,10 +156,11 @@ class CatDogImageDataModule(LightningDataModule):
     def __dataloader(self, train: bool):
         """Train/validation loaders."""
         if train:
-            dataset = self.create_dataset(self.data_path.joinpath("train"), self.train_transform)
+            dataset = self.create_dataset(
+                self.data_path.joinpath("train"), self.train_transform)
         else:
-            dataset = self.create_dataset(self.data_path.joinpath("validation"),
-                                          self.valid_transform)
+            dataset = self.create_dataset(
+                self.data_path.joinpath("validation"), self.valid_transform)
         return DataLoader(dataset=dataset, batch_size=self._batch_size,
                           num_workers=self._num_workers, shuffle=train)
 
@@ -166,7 +177,6 @@ class CatDogImageDataModule(LightningDataModule):
 
 
 class TransferLearningModel(pl.LightningModule):
-
     def __init__(
         self,
         backbone: str = "resnet50",
@@ -212,12 +222,8 @@ class TransferLearningModel(pl.LightningModule):
         self.feature_extractor = nn.Sequential(*_layers)
 
         # 2. Classifier:
-        _fc_layers = [
-            nn.Linear(2048, 256),
-            nn.ReLU(),
-            nn.Linear(256, 32),
-            nn.Linear(32, 1),
-        ]
+        _fc_layers = [nn.Linear(2048, 256), nn.ReLU(),
+                      nn.Linear(256, 32), nn.Linear(32, 1)]
         self.fc = nn.Sequential(*_fc_layers)
 
         # 3. Loss:
@@ -249,7 +255,8 @@ class TransferLearningModel(pl.LightningModule):
         train_loss = self.loss(y_logits, y_true)
 
         # 3. Compute accuracy:
-        self.log("train_acc", self.train_acc(y_scores, y_true.int()), prog_bar=True)
+        self.log("train_acc", self.train_acc(
+            y_scores, y_true.int()), prog_bar=True)
 
         return train_loss
 
@@ -264,46 +271,48 @@ class TransferLearningModel(pl.LightningModule):
         self.log("val_loss", self.loss(y_logits, y_true), prog_bar=True)
 
         # 3. Compute accuracy:
-        self.log("val_acc", self.valid_acc(y_scores, y_true.int()), prog_bar=True)
+        self.log("val_acc", self.valid_acc(
+            y_scores, y_true.int()), prog_bar=True)
 
     def configure_optimizers(self):
         parameters = list(self.parameters())
-        trainable_parameters = list(filter(lambda p: p.requires_grad, parameters))
+        trainable_parameters = list(
+            filter(lambda p: p.requires_grad, parameters))
         rank_zero_info(
             f"The model will start training with only {len(trainable_parameters)} "
             f"trainable parameters out of {len(parameters)}."
         )
         optimizer = optim.Adam(trainable_parameters, lr=self.lr)
-        scheduler = MultiStepLR(optimizer, milestones=self.milestones,
-                                gamma=self.lr_scheduler_gamma)
+        scheduler = MultiStepLR(
+            optimizer, milestones=self.milestones, gamma=self.lr_scheduler_gamma)
         return [optimizer], [scheduler]
 
 
 class MyLightningCLI(LightningCLI):
-
     def add_arguments_to_parser(self, parser):
-        parser.add_class_arguments(MilestonesFinetuning, 'finetuning')
-        parser.link_arguments('data.batch_size', 'model.batch_size')
-        parser.link_arguments('finetuning.milestones', 'model.milestones')
-        parser.link_arguments('finetuning.train_bn', 'model.train_bn')
-        parser.set_defaults({
-            'trainer.max_epochs': 1,
-            'trainer.weights_summary': None,
-            'trainer.progress_bar_refresh_rate': 1,
-            'trainer.num_sanity_val_steps': 0,
-        })
+        parser.add_class_arguments(MilestonesFinetuning, "finetuning")
+        parser.link_arguments("data.batch_size", "model.batch_size")
+        parser.link_arguments("finetuning.milestones", "model.milestones")
+        parser.link_arguments("finetuning.train_bn", "model.train_bn")
+        parser.set_defaults(
+            {
+                "trainer.max_epochs": 15,
+                "trainer.weights_summary": None,
+                "trainer.progress_bar_refresh_rate": 1,
+                "trainer.num_sanity_val_steps": 0,
+            }
+        )
 
     def instantiate_trainer(self):
-        finetuning_callback = MilestonesFinetuning(**self.config_init['finetuning'].to_dict())
-        self.trainer_defaults['callbacks'] = [finetuning_callback]
+        finetuning_callback = MilestonesFinetuning(
+            **self.config_init["finetuning"])
+        self.trainer_defaults["callbacks"] = [finetuning_callback]
         super().instantiate_trainer()
 
 
 def cli_main():
-    from bigdl.nano.pytorch.trainer import Trainer
-
     MyLightningCLI(TransferLearningModel, CatDogImageDataModule,
-                   seed_everything_default=1234, trainer_class=Trainer)
+                   seed_everything_default=1234)
 
 
 if __name__ == "__main__":
