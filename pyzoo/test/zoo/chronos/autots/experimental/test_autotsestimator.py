@@ -428,11 +428,11 @@ class TestAutoTrainer(TestCase):
                            "value": np.random.randn(sample_num),
                            "id": np.array(['00']*sample_num)})
         train_ts, val_ts, _ = TSDataset.from_pandas(df,
-                                                          target_col=['value'],
-                                                          dt_col='datetime',
-                                                          id_col='id',
-                                                          with_split=True,
-                                                          val_ratio=0.1)        
+                                                    target_col=['value'],
+                                                    dt_col='datetime',
+                                                    id_col='id',
+                                                    with_split=True,
+                                                    val_ratio=0.1)
 
         search_space = {
             'hidden_dim': hp.grid_search([32, 64]),
