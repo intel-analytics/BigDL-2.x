@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.ppml.psi.example;
+package com.intel.analytics.zoo.ppml.psi.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

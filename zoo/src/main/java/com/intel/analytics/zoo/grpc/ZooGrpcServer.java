@@ -34,23 +34,34 @@ import java.util.logging.Logger;
  * to start serving request.
  */
 public class ZooGrpcServer {
-    private static final Logger logger = Logger.getLogger(ZooGrpcServer.class.getName());
-    private int port;
-    private Server server;
+    protected static final Logger logger = Logger.getLogger(ZooGrpcServer.class.getName());
+    protected int port;
+    protected Server server;
+    protected String[] args;
+    protected Options options;
+    protected String configPath;
+    protected BindableService service;
+    protected CommandLine cmd;
+
     public ZooGrpcServer(BindableService service) {
         this(null, service);
     }
     public ZooGrpcServer(String[] args, BindableService service) {
-        Options options = new Options();
+        options = new Options();
         Option portArg = new Option(
                 "p", "port", true, "The port to listen.");
         options.addOption(portArg);
         Option configPathArg = new Option(
                 "c", "config", true, "The path to config YAML file");
         options.addOption(configPathArg);
+        this.service = service;
+        this.args = args;
+
+    }
+    protected void parseArgs() {
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
-        CommandLine cmd = null;
+        cmd = null;
 
         try {
             cmd = parser.parse(options, args);
@@ -60,12 +71,12 @@ public class ZooGrpcServer {
             System.exit(1);
         }
         assert cmd != null;
-        int port = Integer.parseInt(cmd.getOptionValue("port", "8082"));
-        String configPath = cmd.getOptionValue("config", "config.yaml");
-        buildServer(port, service, configPath);
+        port = Integer.parseInt(cmd.getOptionValue("port", "8082"));
+        configPath = cmd.getOptionValue("config", "config.yaml");
     }
     /** Entrypoint of ZooGrpcServer */
-    private void buildServer(int port, BindableService service, String configPath) {
+    private void buildServer() {
+        parseArgs();
         server = ServerBuilder.forPort(port)
                 .addService(service)
                 .maxInboundMessageSize(Integer.MAX_VALUE)
