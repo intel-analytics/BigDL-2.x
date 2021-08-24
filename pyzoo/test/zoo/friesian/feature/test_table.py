@@ -39,6 +39,34 @@ class TestTable(TestCase):
         """
         self.resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
 
+    def test_apply(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        feature_tbl = feature_tbl.fillna(0, "col_1")
+        # udf on single column
+        transform = lambda x: x + 1
+        feature_tbl = feature_tbl.apply("col_1", "new_col_1", transform, dtype="int")
+        col1_values = feature_tbl.select("col_1").df.rdd.flatMap(lambda x: x).collect()
+        updated_col1_values = feature_tbl.select("new_col_1").df.rdd.flatMap(lambda x: x).collect()
+        assert [v + 1 for v in col1_values] == updated_col1_values
+        # udf on multi columns
+        transform = lambda x: "xxxx"
+        feature_tbl = feature_tbl.apply(["col_2", "col_4", "col_5"], "out", transform)
+        out_values = feature_tbl.select("out").df.rdd.flatMap(lambda x: x).collect()
+        assert out_values == ["xxxx"] * len(out_values)
+
+    def test_apply_with_data(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        feature_tbl = feature_tbl.fillna(0, "col_1")
+        # udf on single column
+        y = {"ace": 1, "aa": 2}
+        transform = lambda x: y.get(x, 0)
+        feature_tbl = feature_tbl.apply("col_5", "out", transform, "int")
+        assert(feature_tbl.filter(col("out") == 2).size() == 3)
+        assert(feature_tbl.filter(col("out") == 1).size() == 1)
+        assert(feature_tbl.filter(col("out") == 0).size() == 1)
+
     def test_fillna_int(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
@@ -209,6 +237,31 @@ class TestTable(TestCase):
         string_idx_list = feature_tbl.gen_string_idx(["col_4", "col_5"], freq_limit=None)
         assert string_idx_list[0].size() == 3, "col_4 should have 3 indices"
         assert string_idx_list[1].size() == 2, "col_5 should have 2 indices"
+
+    def test_gen_string_idx_union(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        string_idx_list1 = feature_tbl \
+            .gen_string_idx(["col_4", 'col_5'],
+                            freq_limit=1)
+        assert string_idx_list1[0].size() == 3, "col_4 should have 3 indices"
+        assert string_idx_list1[1].size() == 2, "col_5 should have 2 indices"
+        new_tbl1 = feature_tbl.encode_string(['col_4', 'col_5'], string_idx_list1)
+        assert new_tbl1.max("col_5").to_list("max")[0] == 2, "col_5 max value should be 2"
+
+        string_idx_list2 = feature_tbl \
+            .gen_string_idx(["col_4", {"src_cols": ["col_4", "col_5"], "col_name": 'col_5'}],
+                            freq_limit=1)
+        assert string_idx_list2[0].size() == 3, "col_4 should have 3 indices"
+        assert string_idx_list2[1].size() == 4, "col_5 should have 4 indices"
+        new_tbl2 = feature_tbl.encode_string(['col_4', 'col_5'], string_idx_list2)
+        assert new_tbl2.max("col_5").to_list("max")[0] == 4, "col_5 max value should be 4"
+
+        string_idx_3 = feature_tbl \
+            .gen_string_idx({"src_cols": ["col_4", "col_5"], "col_name": 'col_5'}, freq_limit=1)
+        assert string_idx_3.size() == 4, "col_5 should have 4 indices"
+        new_tbl3 = feature_tbl.encode_string('col_5', string_idx_3)
+        assert new_tbl3.max("col_5").to_list("max")[0] == 4, "col_5 max value should be 4"
 
     def test_clip(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
@@ -867,6 +920,23 @@ class TestTable(TestCase):
         print(dictionary)
         assert dictionary["name"] == ['jack', 'alice', 'rose']
 
+    def test_from_pandas(self):
+        import pandas as pd
+        data = [['tom', 10], ['nick', 15], ['juli', 14]]
+        pddf = pd.DataFrame(data, columns=['Name', 'Age'])
+        tbl = FeatureTable.from_pandas(pddf)
+        assert(tbl.size() == 3)
+
+    def test_sort(self):
+        import pandas as pd
+        data = [['tom', 10], ['nick', 15], ['juli', 14]]
+        pddf = pd.DataFrame(data, columns=['Name', 'Age'])
+        tbl = FeatureTable.from_pandas(pddf)
+        tbl = tbl.sort("Age", ascending=False)
+        assert(tbl.select("Name").to_list("Name") == ["nick", "juli", "tom"])
+        tbl = tbl.sort("Name")
+        assert(tbl.select("Name").to_list("Name") == ["juli", "nick", "tom"])
+
     def test_add(self):
         spark = OrcaContext.get_spark_session()
         data = [("jack", "123", 14, 8.5),
@@ -1169,6 +1239,15 @@ class TestTable(TestCase):
         assert diff_tbl4.df.filter("c1p1 == -1").count() == \
             diff_tbl2.df.filter("c1p1 == -1").count(), \
             "c1p1 should be the same in diff_tbl4 and in diff_tbl2"
+
+    def test_cache(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data2.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        feature_tbl.cache()
+        assert feature_tbl.df.is_cached, "Cache table should be cached"
+        feature_tbl.uncache()
+        assert not feature_tbl.df.is_cached, "Uncache table should be uncached"
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
