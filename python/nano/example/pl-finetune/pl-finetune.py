@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The cats and dogs dataset is sited at https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip
+# The cats and dogs dataset is sited at
+# https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip
 
 # This file is adapted from PyTorch Lightning. https://github.com/PyTorchLightning/pytorch-lightning
 # Copyright The PyTorch Lightning team.
@@ -94,16 +95,19 @@ class MilestonesFinetuning(BaseFinetuning):
         if epoch == self.milestones[0]:
             # unfreeze 5 last layers
             self.unfreeze_and_add_param_group(
-                modules=pl_module.feature_extractor[-5:], # type: ignore
+                modules=pl_module.feature_extractor[-5:],  # type: ignore
                 optimizer=optimizer, train_bn=self.train_bn
             )
 
         elif epoch == self.milestones[1]:
             # unfreeze remaing layers
             self.unfreeze_and_add_param_group(
-                modules=pl_module.feature_extractor[:-5], # type: ignore
+                modules=pl_module.feature_extractor[:-5],  # type: ignore
                 optimizer=optimizer, train_bn=self.train_bn
             )
+
+    def to_dict(self):
+        return {"milestones": self.milestones, "train_bn": self.train_bn}
 
 
 class CatDogImageDataModule(LightningDataModule):
@@ -305,7 +309,7 @@ class MyLightningCLI(LightningCLI):
 
     def instantiate_trainer(self):
         finetuning_callback = MilestonesFinetuning(
-            **self.config_init["finetuning"])
+            **self.config_init["finetuning"].to_dict())
         self.trainer_defaults["callbacks"] = [finetuning_callback]
         super().instantiate_trainer()
 
