@@ -1,4 +1,4 @@
-package com.intel.analytics.zoo.ppml.generated;
+package com.intel.analytics.zoo.ppml.psi.generated;
 
 import io.grpc.stub.ClientCalls;
 
