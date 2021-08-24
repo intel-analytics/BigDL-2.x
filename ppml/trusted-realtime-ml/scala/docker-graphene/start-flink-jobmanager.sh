@@ -27,6 +27,7 @@ SGX=1 ./pal_loader /opt/jdk8/bin/java \
     --configDir ${flink_home}/conf \
     -D rest.bind-address=${job_manager_host} \
     -D rest.bind-port=${job_manager_rest_port} \
+    -D blob.server.port=$FLINK_TASK_MANAGER_DATA_PORT \
     -D jobmanager.rpc.address=${job_manager_host} \
     -D jobmanager.rpc.port=${job_manager_rpc_port} \
     -D jobmanager.heap.size=5g \
