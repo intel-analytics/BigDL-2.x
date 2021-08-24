@@ -88,7 +88,8 @@ class MilestonesFinetuning(BaseFinetuning):
         self.train_bn = train_bn
 
     def freeze_before_training(self, pl_module: pl.LightningModule):
-        self.freeze(modules=pl_module.feature_extractor, train_bn=self.train_bn)
+        self.freeze(modules=pl_module.feature_extractor,
+                    train_bn=self.train_bn)
 
     def finetune_function(self, pl_module: pl.LightningModule, epoch: int,
                           optimizer: Optimizer, opt_idx: int):
@@ -105,19 +106,15 @@ class MilestonesFinetuning(BaseFinetuning):
                 modules=pl_module.feature_extractor[:-5],  # type: ignore
                 optimizer=optimizer, train_bn=self.train_bn
             )
-    
+
     def to_dict(self):
         return {"milestones": self.milestones, "train_bn": self.train_bn}
 
 
 class CatDogImageDataModule(LightningDataModule):
 
-    def __init__(
-        self,
-        dl_path: Union[str, Path] = "data",
-        num_workers: int = 0,
-        batch_size: int = 8,
-    ):
+    def __init__(self, dl_path: Union[str, Path] = "data",
+                 num_workers: int = 0, batch_size: int = 8):
         """CatDogImageDataModule
         Args:
             dl_path: root directory where to download the data
@@ -132,9 +129,8 @@ class CatDogImageDataModule(LightningDataModule):
 
     def prepare_data(self):
         """Download images and prepare images datasets."""
-        download_and_extract_archive(url=DATA_URL,
-                                     download_root=self._dl_path,
-                                     remove_finished=True)
+        download_and_extract_archive(
+            url=DATA_URL, download_root=self._dl_path, remove_finished=True)
 
     @property
     def data_path(self):
@@ -146,17 +142,19 @@ class CatDogImageDataModule(LightningDataModule):
 
     @property
     def train_transform(self):
-        return transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(), self.normalize_transform
-        ])
+        return transforms.Compose(
+            [
+                transforms.Resize((224, 224)),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                self.normalize_transform,
+            ]
+        )
 
     @property
     def valid_transform(self):
         return transforms.Compose([transforms.Resize((224, 224)),
-                                   transforms.ToTensor(),
-                                   self.normalize_transform])
+                                  transforms.ToTensor(), self.normalize_transform])
 
     def create_dataset(self, root, transform):
         return ImageFolder(root=root, transform=transform)
@@ -164,10 +162,11 @@ class CatDogImageDataModule(LightningDataModule):
     def __dataloader(self, train: bool):
         """Train/validation loaders."""
         if train:
-            dataset = self.create_dataset(self.data_path.joinpath("train"), self.train_transform)
+            dataset = self.create_dataset(
+                self.data_path.joinpath("train"), self.train_transform)
         else:
-            dataset = self.create_dataset(self.data_path.joinpath("validation"),
-                                          self.valid_transform)
+            dataset = self.create_dataset(
+                self.data_path.joinpath("validation"), self.valid_transform)
         return DataLoader(dataset=dataset, batch_size=self._batch_size,
                           num_workers=self._num_workers, shuffle=train)
 
@@ -193,7 +192,7 @@ class TransferLearningModel(pl.LightningModule):
         batch_size: int = 32,
         lr: float = 1e-3,
         lr_scheduler_gamma: float = 1e-1,
-        num_workers: int = 0,
+        num_workers: int = 6,
         **kwargs,
     ) -> None:
         """TransferLearningModel
@@ -230,12 +229,8 @@ class TransferLearningModel(pl.LightningModule):
         self.feature_extractor = nn.Sequential(*_layers)
 
         # 2. Classifier:
-        _fc_layers = [
-            nn.Linear(2048, 256),
-            nn.ReLU(),
-            nn.Linear(256, 32),
-            nn.Linear(32, 1),
-        ]
+        _fc_layers = [nn.Linear(2048, 256), nn.ReLU(),
+                      nn.Linear(256, 32), nn.Linear(32, 1)]
         self.fc = nn.Sequential(*_fc_layers)
 
         # 3. Loss:
@@ -267,7 +262,8 @@ class TransferLearningModel(pl.LightningModule):
         train_loss = self.loss(y_logits, y_true)
 
         # 3. Compute accuracy:
-        self.log("train_acc", self.train_acc(y_scores, y_true.int()), prog_bar=True)
+        self.log("train_acc", self.train_acc(
+            y_scores, y_true.int()), prog_bar=True)
 
         return train_loss
 
@@ -286,34 +282,38 @@ class TransferLearningModel(pl.LightningModule):
 
     def configure_optimizers(self):
         parameters = list(self.parameters())
-        trainable_parameters = list(filter(lambda p: p.requires_grad, parameters))
+        trainable_parameters = list(
+            filter(lambda p: p.requires_grad, parameters))
         rank_zero_info(
             f"The model will start training with only {len(trainable_parameters)} "
             f"trainable parameters out of {len(parameters)}."
         )
         optimizer = optim.Adam(trainable_parameters, lr=self.lr)
-        scheduler = MultiStepLR(optimizer, milestones=self.milestones,
-                                gamma=self.lr_scheduler_gamma)
+        scheduler = MultiStepLR(
+            optimizer, milestones=self.milestones, gamma=self.lr_scheduler_gamma)
         return [optimizer], [scheduler]
 
 
 class MyLightningCLI(LightningCLI):
 
     def add_arguments_to_parser(self, parser):
-        parser.add_class_arguments(MilestonesFinetuning, 'finetuning')
-        parser.link_arguments('data.batch_size', 'model.batch_size')
-        parser.link_arguments('finetuning.milestones', 'model.milestones')
-        parser.link_arguments('finetuning.train_bn', 'model.train_bn')
-        parser.set_defaults({
-            'trainer.max_epochs': 15,
-            'trainer.weights_summary': None,
-            'trainer.progress_bar_refresh_rate': 1,
-            'trainer.num_sanity_val_steps': 0,
-        })
+        parser.add_class_arguments(MilestonesFinetuning, "finetuning")
+        parser.link_arguments("data.batch_size", "model.batch_size")
+        parser.link_arguments("finetuning.milestones", "model.milestones")
+        parser.link_arguments("finetuning.train_bn", "model.train_bn")
+        parser.set_defaults(
+            {
+                "trainer.max_epochs": 15,
+                "trainer.weights_summary": None,
+                "trainer.progress_bar_refresh_rate": 1,
+                "trainer.num_sanity_val_steps": 0,
+            }
+        )
 
     def instantiate_trainer(self):
-        finetuning_callback = MilestonesFinetuning(**self.config_init['finetuning'].to_dict())
-        self.trainer_defaults['callbacks'] = [finetuning_callback]
+        finetuning_callback = MilestonesFinetuning(
+            **self.config_init["finetuning"].to_dict())
+        self.trainer_defaults["callbacks"] = [finetuning_callback]
         super().instantiate_trainer()
 
 
@@ -327,3 +327,4 @@ def cli_main():
 if __name__ == "__main__":
     cli_lightning_logo()
     cli_main()
+    
