@@ -159,8 +159,6 @@ def main():
                         epochs=initial_epochs,
                         validation_data=validation_dataset)
 
-    loss, accuracy = model.evaluate(test_dataset)
-    print('Test accuracy before fine-tunning :', accuracy)
     base_model.trainable = True
 
     # Let's take a look to see how many layers are in the base model
