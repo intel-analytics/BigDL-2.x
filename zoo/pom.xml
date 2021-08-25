@@ -137,6 +137,7 @@
                         <artifactId>scala-maven-plugin</artifactId>
                         <configuration>
                             <excludes>
+                                <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/serving/grpc/**</exclude>
                             </excludes>
                         </configuration>
