@@ -32,15 +32,13 @@ Build the docker image:
 bash build-docker-image.sh
 ```
 
-### Prepare Cifar-10 DataSet
-
 To train a model with PPML in Analytics Zoo and BigDL, you need to prepare the data first. The Docker image is taking ResNet and CIFAR-10 as example.
-Users can download the Cifar-10 dataset from [here](https://www.cs.toronto.edu/~kriz/cifar.html)
-The dataset contains two sub-directories, namely, train and val. Users need to set this dataset directory behind the "-f" flag in command line.
+
+You can download the Cifar-10 dataset from [here](https://www.cs.toronto.edu/~kriz/cifar.html) The dataset contains two sub-directories, namely, train and val. Users need to set this dataset directory behind the "-f" flag in command line. If need, you can modify this dataset to meet your useful need.
 
 To run BigDL&ResNet&CIFAR-10 example, start the docker container with:
 ``` bash
-bash start-spark-local.sh bigdl
+bash start-spark-local.sh cifar
 ```
 The examples are run in the docker container. Attach it and see the results.
 
