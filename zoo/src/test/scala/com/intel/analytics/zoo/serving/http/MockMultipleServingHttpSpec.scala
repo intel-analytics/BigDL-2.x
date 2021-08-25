@@ -40,5 +40,4 @@ class MockMultipleServingHttpSpec extends FlatSpec with Matchers with Supportive
     inferenceServable.load()
     inferenceServable.getMetaData should be(inferenceModelMetaData)
   }
-
 }

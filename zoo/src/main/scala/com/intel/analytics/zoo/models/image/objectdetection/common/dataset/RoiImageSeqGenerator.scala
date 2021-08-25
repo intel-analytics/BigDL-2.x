@@ -45,7 +45,7 @@ object RoiImageSeqGenerator {
       .action((x, c) => c.copy(folder = x))
       .required()
     opt[String]('o', "output folder")
-      .text("where you put the com.intel.analytics.zoo.serving.generated seq files")
+      .text("where you put the generated seq files")
       .action((x, c) => c.copy(output = x))
       .required()
     opt[Int]('p', "parallel")

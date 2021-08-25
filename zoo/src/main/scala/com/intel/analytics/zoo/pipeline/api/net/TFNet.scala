@@ -77,7 +77,7 @@ class TFNet(private val graphDef: TFGraphHolder,
   private val outputTypes = outputNames.map(name2type)
   if (graphMeta.variables.isDefined) {
     // Sanity check. If variables is defined, it means the backward graph
-    // is com.intel.analytics.zoo.serving.generated. We cannot compute the gradInput/gradWeight if output is not a float
+    // is generated. We cannot compute the gradInput/gradWeight if output is not a float
     require(outputTypes.map(_ == DataType.FLOAT).reduce(_ && _),
       "all input types are required to be float if backward are allowed")
   }

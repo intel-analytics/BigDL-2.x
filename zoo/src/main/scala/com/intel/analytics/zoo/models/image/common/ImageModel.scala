@@ -133,7 +133,7 @@ object ImageModel {
     // Calling quantize may not keep the original name. Thus first get modelName here.
     val modelName = labor.getName()
     // If there exists a SpatialConvolution layer in the model that has weight scales,
-    // then it should be an int8 model with scales com.intel.analytics.zoo.serving.generated.
+    // then it should be an int8 model with scales generated.
     val isInt8Model = labor.toGraph().getForwardExecutions().map(_.element)
       .exists(x => x.isInstanceOf[SpatialConvolution[T]] &&
         MklInt8ConvertibleRef.getWeightScalesBuffer(

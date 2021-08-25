@@ -36,4 +36,4 @@ ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 ```
 
 ### Results
-You can find new com.intel.analytics.zoo.serving.generated images stored in output_path, and the objects in the images are with a box around them [labeled "name"]
+You can find new generated images stored in output_path, and the objects in the images are with a box around them [labeled "name"]
