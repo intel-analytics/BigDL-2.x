@@ -176,7 +176,7 @@ def config_option_parser():
                            + " in model.$iter_num")
     parser.add_option('--cluster_mode', type=str, default="local",
                       help='The mode for the Spark cluster.')
-    parser.add_option("--worker_num", type=int, default=2,
+    parser.add_option("--worker_num", type=int, default=1,
                       help="The number of slave nodes to be used in the cluster."
                            "You can change it depending on your own cluster setting.")
     parser.add_option("--cores", type=int, default=4,
@@ -192,16 +192,13 @@ def config_option_parser():
 if __name__ == "__main__":
     parser = config_option_parser()
     (options, args) = parser.parse_args(sys.argv)
-    # tf.compat.v1.enable_eager_execution()
 
-    # write_tfrecord(format="imagenet", imagenet_path=options.folder, output_path=options.imagenet)
+    write_tfrecord(format="imagenet", imagenet_path=options.folder, output_path=options.imagenet)
 
     train_data = train_data_creator(
         config={"data_dir": os.path.join(options.imagenet, "train")})
     val_data = val_data_creator(
         config={"data_dir": os.path.join(options.imagenet, "validation")})
-    # for dt in train_data.take(4):
-    #      print(dt)
 
     num_nodes = 1 if options.cluster_mode == "local" else options.worker_num
     init_orca_context(cluster_mode=options.cluster_mode, cores=options.cores, num_nodes=num_nodes,
@@ -246,7 +243,7 @@ if __name__ == "__main__":
     lrSchedule.add(Warmup(warmupDelta), warmup_iteration)
     lrSchedule.add(Poly(0.5, maxIteration), polyIteration)
     optim = SGD(learningrate=options.learningRate, learningrate_decay=0.0,
-                weightdecay=0.0001, momentum=0.9, dampening=0.0,
+                weightdecay=options.weightDecay, momentum=0.9, dampening=0.0,
                 nesterov=False, learningrate_schedule=lrSchedule)
 
     if options.maxEpoch:
