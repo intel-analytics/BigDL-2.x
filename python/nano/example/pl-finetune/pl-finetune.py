@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This file is adapted from PyTorch Lightning. 
+# This file is adapted from PyTorch Lightning.
 # https://github.com/PyTorchLightning/pytorch-lightning/blob/master/
 # pl_examples/domain_templates/computer_vision_fine_tuning.py
 # Copyright The PyTorch Lightning team.
@@ -112,7 +112,6 @@ class MilestonesFinetuning(BaseFinetuning):
 
 
 class CatDogImageDataModule(LightningDataModule):
-
     def __init__(self, dl_path: Union[str, Path] = "data",
                  num_workers: int = 0, batch_size: int = 8):
         """CatDogImageDataModule
@@ -183,7 +182,6 @@ class CatDogImageDataModule(LightningDataModule):
 
 
 class TransferLearningModel(pl.LightningModule):
-
     def __init__(
         self,
         backbone: str = "resnet50",
@@ -278,7 +276,8 @@ class TransferLearningModel(pl.LightningModule):
         self.log("val_loss", self.loss(y_logits, y_true), prog_bar=True)
 
         # 3. Compute accuracy:
-        self.log("val_acc", self.valid_acc(y_scores, y_true.int()), prog_bar=True)
+        self.log("val_acc", self.valid_acc(
+            y_scores, y_true.int()), prog_bar=True)
 
     def configure_optimizers(self):
         parameters = list(self.parameters())
@@ -295,7 +294,6 @@ class TransferLearningModel(pl.LightningModule):
 
 
 class MyLightningCLI(LightningCLI):
-
     def add_arguments_to_parser(self, parser):
         parser.add_class_arguments(MilestonesFinetuning, "finetuning")
         parser.link_arguments("data.batch_size", "model.batch_size")
@@ -327,4 +325,3 @@ def cli_main():
 if __name__ == "__main__":
     cli_lightning_logo()
     cli_main()
-    

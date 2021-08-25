@@ -1,6 +1,6 @@
 # Bigdl-nano Fine-tune example on Cat vs. Dog dataset
 
-This example illustrates how to apply bigdl-nano optimizations on a fine-tuning case based on pytorch-lightning framework. For the sake of this example, we train the proposed network(by default, a ResNet50 is used) on the [cats and dogs dataset](https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip), which consists both [freezen and unfreezen stages](https://github.com/PyTorchLightning/pytorch-lightning/blob/495812878dfe2e31ec2143c071127990afbb082b/pl_examples/domain_templates/computer_vision_fine_tuning.py#L21-L35).
+This example illustrates how to apply bigdl-nano optimizations on a fine-tuning case based on pytorch-lightning framework. For the sake of this example, we train the proposed network(by default, a ResNet50 is used) on the [cats and dogs dataset](https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip), which consists both [freezen and unfreezen stages](https://github.com/PyTorchLightning/pytorch-lightning/blob/495812878dfe2e31ec2143c071127990afbb082b/pl_examples/domain_templates/computer_vision_fine_tuning.py#L21-L35). With all the optimizations provided by bigdl-nano, we could achieve 6x times faster than the official PL finetune example in only 3 lines of changes.
 
 
 ## Prepare the environment
