@@ -251,14 +251,12 @@ if __name__ == "__main__":
     else:
         checkpoint_trigger = SeveralIteration(options.checkpointIteration)
 
-
     def calculate_top_k_accuracy(logits, targets, k=1):
         values, indices = tf.math.top_k(logits, k=k, sorted=True)
         y = tf.reshape(targets, [-1, 1])
         correct = tf.cast(tf.equal(y, indices), tf.float32)
         top_k_accuracy = tf.reduce_mean(correct) * k
         return top_k_accuracy
-
 
     acc = calculate_top_k_accuracy(logits, targets=labels)
 

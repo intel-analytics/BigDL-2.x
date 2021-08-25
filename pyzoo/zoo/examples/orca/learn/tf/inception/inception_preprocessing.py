@@ -156,4 +156,3 @@ def preprocess_for_eval(image_buffer, output_height, output_width, num_channels)
     image = _central_crop(image, output_height, output_width)
     image.set_shape([output_height, output_width, num_channels])
     return _mean_image_subtraction(image, _CHANNEL_MEANS, num_channels)
-
