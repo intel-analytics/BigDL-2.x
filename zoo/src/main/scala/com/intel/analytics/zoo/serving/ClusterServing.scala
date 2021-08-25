@@ -20,6 +20,7 @@ package com.intel.analytics.zoo.serving
 
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
+import com.intel.analytics.zoo.serving.pipeline.RedisUtils
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Conventions, DeprecatedUtils}
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
 import org.apache.log4j.{Level, Logger}
@@ -64,7 +65,43 @@ object ClusterServing {
     logger.info(s"Cluster Serving Flink job graph details \n${streamingEnv.getExecutionPlan}")
     streamingEnv.executeAsync()
   }
+  def initializeRedis(): Unit = {
+    val params = ClusterServing.helper
+    if (params.redisSecureEnabled) {
+      System.setProperty("javax.net.ssl.trustStore", params.redisSecureTrustStorePath)
+      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStoreToken)
+      System.setProperty("javax.net.ssl.keyStoreType", "JKS")
+      System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
+      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStoreToken)
+    }
+    if (jedisPool == null) {
+      this.synchronized {
+        if (jedisPool == null) {
+          logger.info(
+            s"Creating JedisPool at ${params.redisHost}:${params.redisPort}")
+          val jedisPoolConfig = new JedisPoolConfig()
+          jedisPoolConfig.setMaxTotal(256)
+          jedisPool = new JedisPool(jedisPoolConfig,
+            params.redisHost, params.redisPort, params.redisTimeout, params.redisSecureEnabled)
+        }
+      }
+    }
 
+    logger.info(
+      s"FlinkRedisSource connect to Redis: redis://${params.redisHost}:${params.redisPort} " +
+        s"with timeout: ${params.redisTimeout} and redisSecureEnabled: " +
+        s"${params.redisSecureEnabled}")
+    params.redisSecureEnabled match {
+      case true => logger.info(
+        s"FlinkRedisSource connect to secured Redis successfully.")
+      case false => logger.info(
+        s"FlinkRedisSource connect to plain Redis successfully.")
+    }
+
+    //    // add Redis configuration here if necessary
+    val jedis = RedisUtils.getRedisClient(jedisPool)
+    jedis.close()
+  }
   def main(args: Array[String]): Unit = {
     argv = parser.parse(args, ServingParams()).head
     val configParser = new ConfigParser(argv.configPath)

@@ -99,8 +99,9 @@ class AutoLSTM:
         Automatically fit the model and search for the best hyper parameters.
 
         :param data: train data.
-               For backend of "torch", data can be a tuple of ndarrays or a function that takes a
-               config dictionary as parameter and returns a PyTorch DataLoader.
+               For backend of "torch", data can be a tuple of ndarrays or a PyTorch DataLoader
+               or a function that takes a config dictionary as parameter and returns a
+               PyTorch DataLoader.
                For backend of "keras", data can be a tuple of ndarrays.
                If data is a tuple of ndarrays, it should be in the form of (x, y),
                 where x is training input data and y is training target data.
@@ -123,8 +124,6 @@ class AutoLSTM:
                metric and searcher mode
         :param scheduler: str, all supported scheduler provided by ray tune
         :param scheduler_params: parameters for scheduler
-
-        :return:
         """
         self.search_space["batch_size"] = batch_size
         self.auto_est.fit(

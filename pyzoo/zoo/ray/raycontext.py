@@ -24,6 +24,7 @@ import warnings
 import tempfile
 import filelock
 import multiprocessing
+from packaging import version
 
 from zoo.ray.process import session_execute, ProcessMonitor
 from zoo.ray.utils import is_local
@@ -32,22 +33,21 @@ from zoo.ray.utils import resource_to_bytes
 
 class JVMGuard:
     """
-    The registered pids would be put into the killing list of Spark Executor.
+    The process group id would be registered and killed in the shutdown hook of Spark Executor.
     """
     @staticmethod
-    def register_pids(pids):
+    def register_pgid(pgid):
         import traceback
         try:
             from zoo.common.utils import callZooFunc
             import zoo
             callZooFunc("float",
-                        "jvmGuardRegisterPids",
-                        pids)
+                        "jvmGuardRegisterPgid",
+                        pgid)
         except Exception as err:
             print(traceback.format_exc())
             print("Cannot successfully register pid into JVMGuard")
-            for pid in pids:
-                os.kill(pid, signal.SIGKILL)
+            os.killpg(pgid, signal.SIGKILL)
             raise err
 
 
@@ -204,7 +204,7 @@ class RayServiceFuncGenerator(object):
         modified_env = self._prepare_env()
         print("Starting {} by running: {}".format(tag, command))
         process_info = session_execute(command=command, env=modified_env, tag=tag)
-        JVMGuard.register_pids(process_info.pids)
+        JVMGuard.register_pgid(process_info.pgid)
         import ray._private.services as rservices
         process_info.node_ip = rservices.get_node_ip_address()
         return process_info
@@ -527,12 +527,17 @@ class RayContext(object):
                     for k, v in self.extra_params.items():
                         kw = k.replace("-", "_")
                         kwargs[kw] = v
-                self._address_info = ray.init(num_cpus=self.ray_node_cpu_cores,
-                                              _redis_password=self.redis_password,
-                                              object_store_memory=self.object_store_memory,
-                                              include_dashboard=self.include_webui,
-                                              dashboard_host="0.0.0.0",
-                                              *kwargs)
+                init_params = dict(
+                    num_cpus=self.ray_node_cpu_cores,
+                    _redis_password=self.redis_password,
+                    object_store_memory=self.object_store_memory,
+                    include_dashboard=self.include_webui,
+                    dashboard_host="0.0.0.0",
+                )
+                init_params.update(kwargs)
+                if version.parse(ray.__version__) >= version.parse("1.4.0"):
+                    init_params["namespace"] = "az"
+                self._address_info = ray.init(**init_params)
             else:
                 self.cluster_ips = self._gather_cluster_ips()
                 from bigdl.util.common import init_executor_gateway
@@ -614,6 +619,11 @@ class RayContext(object):
                                       node_ip_address=node_ip,
                                       redis_address=redis_address)
         ray.shutdown()
-        return ray.init(address=redis_address,
-                        _redis_password=self.ray_service.password,
-                        _node_ip_address=node_ip)
+        init_params = dict(
+            address=redis_address,
+            _redis_password=self.ray_service.password,
+            _node_ip_address=node_ip
+        )
+        if version.parse(ray.__version__) >= version.parse("1.4.0"):
+            init_params["namespace"] = "az"
+        return ray.init(**init_params)

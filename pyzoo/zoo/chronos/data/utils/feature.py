@@ -31,7 +31,7 @@ def _is_busy_hours(hour):
 
 
 def _is_weekend(weekday):
-    return (weekday >= 5).values
+    return (weekday >= 5).values.astype(np.int64)
 
 
 TIME_FEATURE = ("MINUTE", "DAY", "DAYOFYEAR", "HOUR", "WEEKDAY", "WEEKOFYEAR", "MONTH")
@@ -60,7 +60,7 @@ FEATURE_BIN_NUM = {"MINUTE": range(0, 60),
 def _one_hot_encode_helper(df, class_name, class_range, features_generated):
     for i in class_range:
         df[class_name + "_" + str(i)] = 0
-        df[class_name + "_" + str(i)][df[class_name] == i] = 1
+        df.loc[df[class_name] == i, class_name + "_" + str(i)] = 1
         features_generated.append(class_name + "_" + str(i))
     df.drop([class_name], axis=1, inplace=True)
     features_generated.remove(class_name)
@@ -132,7 +132,8 @@ def generate_global_features(input_df,
                              column_id,
                              column_sort,
                              default_fc_parameters=None,
-                             kind_to_fc_parameters=None):
+                             kind_to_fc_parameters=None,
+                             n_jobs=1):
     '''
     generate global features by tsfresh.
     :param input_df: input dataframe.
@@ -140,6 +141,7 @@ def generate_global_features(input_df,
     :param column_sort: time column name
     :param default_fc_parameters: same as tsfresh.
     :param kind_to_fc_parameters: same as tsfresh.
+    :param n_jobs: int. The number of processes to use for parallelization.
 
     :return : a new input_df that contains all generated feature.
     '''
@@ -147,12 +149,14 @@ def generate_global_features(input_df,
         global_feature = extract_features(input_df,
                                           column_id=column_id,
                                           column_sort=column_sort,
-                                          kind_to_fc_parameters=kind_to_fc_parameters)
+                                          kind_to_fc_parameters=kind_to_fc_parameters,
+                                          n_jobs=n_jobs)
     else:
         global_feature = extract_features(input_df,
                                           column_id=column_id,
                                           column_sort=column_sort,
-                                          default_fc_parameters=default_fc_parameters)
+                                          default_fc_parameters=default_fc_parameters,
+                                          n_jobs=n_jobs)
     res_df = input_df.copy()
     id_list = list(np.unique(input_df[column_id]))
     addtional_feature = []
