@@ -79,6 +79,7 @@
                             <target>1.8</target>
                             <excludes>
                                 <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/serving/grpc/**</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
@@ -127,6 +128,7 @@
                             <target>1.8</target>
                             <excludes>
                                 <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/serving/grpc/**</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
