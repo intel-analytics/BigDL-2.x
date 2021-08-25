@@ -178,7 +178,7 @@ def main():
 
     model.summary()
 
-    print("Number of trainable variaables now:", len(model.trainable_variables))
+    print("Number of trainable variables now:", len(model.trainable_variables))
 
     fine_tune_epochs = 10
     total_epochs = initial_epochs + fine_tune_epochs
