@@ -262,7 +262,7 @@ public  final class Prediction extends
               Prediction.class, Builder.class);
     }
 
-    // Construct using com.intel.analytics.zoo.grpc.com.intel.analytics.zoo.serving.generated.azinference.Prediction.newBuilder()
+    // Construct using com.intel.analytics.zoo.grpc.generated.azinference.Prediction.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }

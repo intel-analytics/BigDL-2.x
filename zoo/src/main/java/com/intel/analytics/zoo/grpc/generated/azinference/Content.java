@@ -262,7 +262,7 @@ public  final class Content extends
               Content.class, Builder.class);
     }
 
-    // Construct using com.intel.analytics.zoo.grpc.com.intel.analytics.zoo.serving.generated.azinference.Content.newBuilder()
+    // Construct using com.intel.analytics.zoo.grpc.generated.azinference.Content.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
