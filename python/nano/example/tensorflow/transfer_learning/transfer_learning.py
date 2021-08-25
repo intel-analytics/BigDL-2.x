@@ -146,7 +146,7 @@ def main():
 
     model.summary()
 
-    len(model.trainable_variables)
+    print("Number of trainable Varaiables:", len(model.trainable_variables))
 
     initial_epochs = 10
 
@@ -159,6 +159,8 @@ def main():
                         epochs=initial_epochs,
                         validation_data=validation_dataset)
 
+    loss, accuracy = model.evaluate(test_dataset)
+    print('Test accuracy before fine-tunning :', accuracy)
     base_model.trainable = True
 
     # Let's take a look to see how many layers are in the base model
@@ -178,7 +180,7 @@ def main():
 
     model.summary()
 
-    len(model.trainable_variables)
+    print("Number of trainable variaables now:", len(model.trainable_variables))
 
     fine_tune_epochs = 10
     total_epochs = initial_epochs + fine_tune_epochs
