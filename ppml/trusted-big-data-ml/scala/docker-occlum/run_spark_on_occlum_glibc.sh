@@ -60,19 +60,6 @@ run_spark_test() {
                 -cp '/bin/conf/:/bin/jars/*' -Xmx10g org.apache.spark.deploy.SparkSubmit --jars /bin/examples/jars/spark-examples_2.11-2.4.6.jar,/bin/examples/jars/scopt_2.11-3.7.0.jar --class org.apache.spark.examples.SparkPi spark-internal
 }
 
-run_spark(){
-    init_instance spark
-    build_spark
-    echo -e "${BLUE}logfile=$log${NC}"
-    spark-submit --master 'local[*]' \
-                 --driver-memory 50G \
-                 --class com.intel.analytics.bigdl.models.resnet.TrainCIFAR10 \
-                 /bin/jars/bigdl-0.13.0-jar-with-dependencies.jar \ \
-                 -f cifar/ \
-                 --batchSize 480 --optnet true --depth 20 --classes 10 --shortcutType A --nEpochs 156 \
-                 --learningRate 0.1  | tee spark.local.sgx.log
-}
-
 run_spark_bigdl(){
     init_instance spark
     build_spark
@@ -142,10 +129,6 @@ arg=$1
 case "$arg" in
     test)
         run_spark_test
-        cd ../
-        ;;
-    task)
-        run_task
         cd ../
         ;;
     bigdl)
