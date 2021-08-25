@@ -33,7 +33,7 @@ import scala.reflect.ClassTag
  * Separable convolutions consist in first performing a depthwise spatial convolution (which acts
  * on each input channel separately) followed by a pointwise convolution which mixes together the
  * resulting output channels. The depthMultiplier argument controls how many output channels are
- * generated per input channel in the depthwise step.
+ * com.intel.analytics.zoo.serving.generated per input channel in the depthwise step.
  * You can also use SeparableConv2D as an alias of this layer.
  * The input of this layer should be 4D.
  *

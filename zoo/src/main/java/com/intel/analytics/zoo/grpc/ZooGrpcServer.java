@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 
 /**
  * Zoo gRPC server class
- * After protobuf generated and service is implemented, service could be passed to ZooGrpcServer
+ * After protobuf com.intel.analytics.zoo.serving.generated and service is implemented, service could be passed to ZooGrpcServer
  * to start serving request.
  */
 public class ZooGrpcServer {

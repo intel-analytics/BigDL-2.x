@@ -114,12 +114,12 @@ abstract class TextSet {
    * ---------------------------------------Training--------------------------------------------
    * During the training, you need to generate a new wordIndex map according to the texts you are
    * dealing with. Thus this method will first do the map generation and then convert words to
-   * indices based on the generated map.
+   * indices based on the com.intel.analytics.zoo.serving.generated map.
    * You can specify the following arguments which pose some constraints when generating the map.
    * In the result map, index will start from 1 and corresponds to the occurrence frequency of
    * each word sorted in descending order.
    * Here we adopt the convention that index 0 will be reserved for unknown words.
-   * After word2idx, you can get the generated wordIndex map by calling 'getWordIndex'.
+   * After word2idx, you can get the com.intel.analytics.zoo.serving.generated wordIndex map by calling 'getWordIndex'.
    * Also, you can call `saveWordIndex` to save this wordIndex map to be used in future training.
    *
    * @param removeTopN Non-negative integer. Remove the topN words with highest frequencies in
@@ -131,8 +131,8 @@ abstract class TextSet {
    * @param minFreq Positive integer. Only those words with frequency >= minFreq will be taken into
    *                consideration. Default is 1, namely all words that occur will be considered.
    * @param existingMap Existing map of word index if any. Default is null and in this case a new
-   *                    map with index starting from 1 will be generated.
-   *                    If not null, then the generated map will preserve the word index in
+   *                    map with index starting from 1 will be com.intel.analytics.zoo.serving.generated.
+   *                    If not null, then the com.intel.analytics.zoo.serving.generated map will preserve the word index in
    *                    existingMap and assign subsequent indices to new words.
    *
    * ---------------------------------------Inference--------------------------------------------
@@ -598,8 +598,8 @@ object TextSet {
    *
    * @param words Array of words.
    * @param existingMap Existing map of word index if any. Default is null and in this case a new
-   *                    map with index starting from 1 will be generated.
-   *                    If not null, then the generated map will preserve the word index in
+   *                    map with index starting from 1 will be com.intel.analytics.zoo.serving.generated.
+   *                    If not null, then the com.intel.analytics.zoo.serving.generated map will preserve the word index in
    *                    existingMap and assign subsequent indices to new words.
    * @return wordIndex map.
    */
