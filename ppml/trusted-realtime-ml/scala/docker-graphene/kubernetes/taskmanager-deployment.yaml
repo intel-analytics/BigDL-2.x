@@ -52,6 +52,12 @@ spec:
               configMapKeyRef:
                 name: flink-config
                 key: xmx.size
+        env:
+          - name: TASKMANAGER_RPC_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: flink-config
+                key: taskmanager.rpc.port
         ports:
         - containerPort: 6122
           name: rpc
