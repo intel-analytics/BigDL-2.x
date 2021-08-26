@@ -5,6 +5,7 @@ import psutil
 import logging
 logging.basicConfig(filename='daemon.log', level=logging.INFO)
 
+
 def is_jvm_alive(spark_executor_pid):
     return psutil.pid_exists(spark_executor_pid)
 

@@ -541,9 +541,6 @@ class RayContext(object):
                 self._address_info = ray.init(**init_params)
             else:
                 self.cluster_ips = self._gather_cluster_ips()
-                from bigdl.util.common import init_executor_gateway
-                init_executor_gateway(self.sc)
-                print("JavaGatewayServer has been successfully launched on executors")
                 redis_address = self._start_cluster()
                 self._address_info = self._start_driver(num_cores=driver_cores,
                                                         redis_address=redis_address)

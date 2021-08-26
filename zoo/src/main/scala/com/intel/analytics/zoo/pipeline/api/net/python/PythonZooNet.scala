@@ -125,35 +125,6 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
     TFNet(path, config)
   }
 
-  var processGpToBeKill: String = ""
-  registerKiller()
-
-  private def killPgid(pgid: String, killCommand: String): Boolean = {
-    println("JVM is stopping process group: " +  pgid)
-    val process = Runtime.getRuntime().exec(killCommand + pgid)
-    process.waitFor(2, TimeUnit.SECONDS)
-    process.exitValue() == 0
-  }
-
-  private def registerKiller(): Unit = {
-    Logger.getLogger("py4j.reflection.ReflectionEngine").setLevel(Level.ERROR)
-    Logger.getLogger("py4j.GatewayConnection").setLevel(Level.ERROR)
-    Runtime.getRuntime().addShutdownHook(new Thread {
-      override def run(): Unit = {
-        if (processGpToBeKill == "") return
-        // Give it a chance to be gracefully killed
-        val success = killPgid(processGpToBeKill, "kill -- -")
-        if (!success) {
-          killPgid(processGpToBeKill, "kill -9 -")
-        }
-      }
-    })
-  }
-
-  def jvmGuardRegisterPgid(gpid: Int): Unit = {
-    this.processGpToBeKill = gpid.toString
-  }
-
   def getModuleExtraParameters(model: AbstractModule[_, _, T]): Array[JTensor] = {
     model.getExtraParameter().map(toJTensor)
   }
