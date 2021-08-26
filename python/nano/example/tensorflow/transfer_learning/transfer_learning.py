@@ -15,7 +15,7 @@
 #
 
 # This file is adapted from
-# https://github.com/tensorflow/docs-l10n/blob/master/site/zh-cn/tutorials/images/transfer_learning.ipynb
+# https://github.com/tensorflow/docs/blob/r2.4/site/en/tutorials/images/transfer_learning.ipynb
 # Copyright 2019 The TensorFlow Authors.
 
 # @title Licensed under the Apache License, Version 2.0 (the "License");
