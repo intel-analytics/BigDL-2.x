@@ -6,14 +6,13 @@
 
 ---
 
-**In this guide we will demonstrate how to use _Chronos TSDataset_ and _Chronos AutoTSEstimator_ to auto tune a time seires forecasting task.**
-
+**In this guide we will demonstrate how to use _Chronos AutoTSEstimator_ and _Chronos TSPipeline_ to auto tune a time seires forecasting task and handle the whole model development process easily.**
 
 ### **Introduction**
 
 Chronos provides `AutoTSEstimator` as a highly integrated solution for time series forecasting task with hyperparameter autotuning, auto feature selection and auto preprocessing. Users can prepare a `TSDataset`(recommended, used in this notebook) or their own data creator as input data. By constructing a `AutoTSEstimator` and calling `fit` on the data, a `TSPipeline` contains the best model and pre/post data processing will be returned for further development of deployment.
 
-`AutoTSEstimator` is experimental right now and only support LSTM, TCN, and Seq2seq model for now.
+`AutoTSEstimator` is experimental and only support LSTM, TCN, and Seq2seq model for now.
 
 ### **Step 0: Prepare Environment**
 
@@ -57,6 +56,8 @@ There is no need to call `.roll()` or `.to_torch_data_loader()` in this step, wh
 
 Please call `.gen_dt_feature()`(recommended), `.gen_rolling_feature()`, and `gen_global_feature()` to generate all candidate features to be selected by `AutoTSEstimator` as well as your input extra feature.
 
+Detailed information please refer to [TSDataset API doc](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/tsdataset.html#tsdataset) and [Time series data basic concepts](https://analytics-zoo.readthedocs.io/en/latest/doc/Chronos/Overview/chronos.html#data-processing-and-feature-engineering).
+
 ### **Step 3: Create an AutoTSEstimator**
 
 ```python
@@ -65,8 +66,13 @@ from zoo.chronos.autots.experimental import AutoTSEstimator
 auto_estimator = AutoTSEstimator(model='lstm', # the model name used for training
                                  search_space='normal', # a default hyper parameter search space
                                  past_seq_len=hp.randint(1, 10), # hp sampling function of past_seq_len for auto-tuning
-                                 selected_feature="auto") # select features automatically
+) 
 ```
+We prebuild three defualt search space for each build-in model, which you can use the by setting `search_space` to "minimal"，"normal", or "large" or define your own search space in a dictionary. The larger the search space, the better accuracy you will get and the more time will be cost.
+
+`past_seq_len` can be set as a hp sample function, the proper range is highly related to your data. A range between 0.5 cycle and 3 cycle is reasonable.
+
+Detailed information please refer to [AutoTSEstimator API doc](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/autotsestimator.html#id1) and some basic concepts [here](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/distributed-tuning.html#search-space-and-search-algorithms).
 
 ### **Step 4: Fit with AutoTSEstimator**
 ```python
@@ -75,8 +81,9 @@ ts_pipeline = auto_estimator.fit(data=tsdata_train, # train dataset
                                  validation_data=tsdata_val, # validation dataset
                                  epochs=5) # number of epochs to train in each trial
 ```
-
+Detailed information please refer to [AutoTSEstimator API doc](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/autotsestimator.html#id1).
 ### **Step 5: Further deployment with TSPipeline**
+The `TSPipeline` will reply the same preprcessing and corresponding postprocessing operations on the test data. You may carry out predict, evaluate or save/load for further development.
 ```python
 # predict with the best trial
 y_pred = ts_pipeline.predict(tsdata_test)
@@ -97,10 +104,13 @@ ts_pipeline.save(my_ppl_file_path)
 from zoo.chronos.autots.experimental import TSPipeline
 loaded_ppl = TSPipeline.load(my_ppl_file_path)
 ```
+Detailed information please refer to [TSPipeline API doc](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/autotsestimator.html#tspipeline-experimental).
 
 ### **Optional: Examine the leaderboard visualization**
+To view the evaluation result of "not chosen" trails and find some insight or even possibly improve you search space for a new autotuning task. We provide a leaderboard through tensorboard.
 ```python
 # show a tensorboard view
 %load_ext tensorboard
 %tensorboard --logdir /tmp/autots_estimator/autots_estimator_leaderboard/
 ```
+Detailed information please refer to [our old document](https://analytics-zoo.github.io/master/#ProgrammingGuide/AutoML/visualization/). Please only refer to this very page for visualization.
