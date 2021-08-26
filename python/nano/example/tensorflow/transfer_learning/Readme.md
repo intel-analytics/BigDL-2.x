@@ -12,7 +12,7 @@ https://github.com/tensorflow/docs/blob/r2.4/site/en/tutorials/images/transfer_l
     You can install the necessary packages with the following command
     
     ```
-    pip install bigdl-nano[tf]
+    pip install bigdl-nano[tensorflow]
     ```
 
     Then setup the environment with the scrip `bigdl-nano-init`:
