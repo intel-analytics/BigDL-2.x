@@ -922,7 +922,6 @@ class TestTable(TestCase):
 
     def test_to_pandas(self):
         spark = OrcaContext.get_spark_session()
-        # test the case the column of key is unique
         data = [("jack", "123", 14),
                 ("alice", "34", 25),
                 ("rose", "25344", 23)]
@@ -931,7 +930,7 @@ class TestTable(TestCase):
                              StructField("age", IntegerType(), True)])
         tbl = FeatureTable(spark.createDataFrame(data, schema))
         pddf = tbl.to_pandas()
-        assert pddf["name"].values.tolist() == ['jack', 'alice', 'rose']
+        assert(pddf["name"].values.tolist() == ['jack', 'alice', 'rose'])
 
     def test_from_pandas(self):
         import pandas as pd
@@ -1252,6 +1251,15 @@ class TestTable(TestCase):
         assert diff_tbl4.df.filter("c1p1 == -1").count() == \
             diff_tbl2.df.filter("c1p1 == -1").count(), \
             "c1p1 should be the same in diff_tbl4 and in diff_tbl2"
+
+    def test_cache(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data2.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        feature_tbl.cache()
+        assert feature_tbl.df.is_cached, "Cache table should be cached"
+        feature_tbl.uncache()
+        assert not feature_tbl.df.is_cached, "Uncache table should be uncached"
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

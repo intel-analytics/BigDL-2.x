@@ -16,8 +16,7 @@
 
 package com.intel.analytics.zoo.serving.pipeline
 
-import com.intel.analytics.zoo.serving.ClusterServing
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Conventions}
+import com.intel.analytics.zoo.serving.utils.Conventions
 
 import scala.collection.JavaConverters._
 import redis.clients.jedis.exceptions.JedisConnectionException
@@ -25,7 +24,6 @@ import redis.clients.jedis._
 import org.apache.log4j.Logger
 object RedisUtils {
   val logger = Logger.getLogger(getClass)
-  var jedisPool: JedisPool = _
   def createRedisGroupIfNotExist(jedis: Jedis, streamName: String): Unit = {
     try {
       jedis.xgroupCreate(streamName,
