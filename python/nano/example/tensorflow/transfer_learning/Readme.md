@@ -3,6 +3,9 @@
 This example describes how BigDL Nano optimizes transfer learning. 
 We use cat-vs-dog data sets to train a partial freezen neural network based on Mobile Net V2, and train unfreezen trainable variables through transfer learning.
 
+This example is migrate from the tensorflow tutorial notebook at 
+https://github.com/tensorflow/docs/blob/r2.4/site/en/tutorials/images/transfer_learning.ipynb
+
 ## Quick Start
 1. Prepare Envrionment
 
