@@ -10,9 +10,17 @@ https://github.com/tensorflow/docs/blob/r2.4/site/en/tutorials/images/transfer_l
 1. Prepare Envrionment
 
     You can install the necessary packages with the following command
+    
     ```
     pip install bigdl-nano[tf]
     ```
+
+    Then setup the environment with the scrip `bigdl-nano-init`:
+
+    ```
+    source bigdl-nano-init
+    ```
+
 2. Run the Example
 
     You can run this example in your conda environment with the following command:
