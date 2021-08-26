@@ -30,13 +30,13 @@ spec:
                 tail -f /dev/null
 #        args: ["export FLINK_JOB_MANAGER_IP=flink-jobmanager; tail -f /dev/null"]
         env:
-          - name: FLINK_JOBMANAGER_IP
+          - name: FLINK_JOB_MANAGER_IP
             valueFrom:
               configMapKeyRef:
                 name: flink-config
                 key: flink.jobmanager.ip
         env:
-          - name: TASKMANAGER.MEMORY.MANAGED.SIZE
+          - name: TASKMANAGER_MEMORY_MANAGED_SIZE
             valueFrom:
               configMapKeyRef:
                 name: flink-config
@@ -62,8 +62,6 @@ spec:
         ports:
         - containerPort: 6125
           name: rpc
-#        - containerPort: 6125
-#          name: query-state
 #        resources:
 #          requests:
 #            cpu: 10

@@ -29,7 +29,7 @@ spec:
             tail -f /dev/null
 #        args: ["tail -f /dev/null"]
         env: 
-          - name: FLINK_JOBMANAGER_IP
+          - name: FLINK_JOB_MANAGER_IP
             valueFrom:
               configMapKeyRef:
                 name: flink-config
