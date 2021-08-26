@@ -26,6 +26,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import com.codahale.metrics.{MetricRegistry, Timer}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
@@ -39,9 +40,9 @@ object MockMultipleServingHttpClient extends App with Supportive {
   implicit val materializer = ActorMaterializer()
   implicit val executionContext = system.dispatcher
   implicit val timeout: Timeout = Timeout(100, TimeUnit.SECONDS)
+  val metrics = new MetricRegistry
+  val timer: Timer = metrics.timer("test")
 
-  testCaffe()
-  testBigDL()
 
   def testCaffe() : Unit = {
     val resource = getClass().getClassLoader().getResource("models")
@@ -51,7 +52,7 @@ object MockMultipleServingHttpClient extends App with Supportive {
     val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "Caffe",
       weightPath, 1, "instance", features)
 
-    val inferenceServable = new InferenceModelServable(inferenceModelMetaData)
+    val inferenceServable = new InferenceModelServable(inferenceModelMetaData, timer)
     inferenceServable.load()
     val content =
       """{
@@ -70,7 +71,7 @@ object MockMultipleServingHttpClient extends App with Supportive {
     val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "BigDL", null,
       1, "instance", null)
 
-    val inferenceServable = new InferenceModelServable(inferenceModelMetaData)
+    val inferenceServable = new InferenceModelServable(inferenceModelMetaData, timer)
     inferenceServable.load()
   }
 
@@ -81,7 +82,7 @@ object MockMultipleServingHttpClient extends App with Supportive {
     val inferenceModelMetaData = InferenceModelMetaData("caffe", "1.0", modelPath, "BigDL",
       weightPath, 1, "instance", null)
 
-    val inferenceServable = new InferenceModelServable(inferenceModelMetaData)
+    val inferenceServable = new InferenceModelServable(inferenceModelMetaData, timer)
   }
 
   // Test Model Retrive Path. Starting FrontEnd App with MultiServing Tag
@@ -113,3 +114,4 @@ object MockMultipleServingHttpClient extends App with Supportive {
   }
 
 }
+
