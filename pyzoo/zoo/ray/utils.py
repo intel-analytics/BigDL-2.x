@@ -68,7 +68,8 @@ def gen_shutdown_per_node(pgids, node_ips=None):
         for pgid in effect_pgids:
             print("Stopping by pgid {}".format(pgid))
             try:
-                os.killpg(pgid, signal.SIGTERM)
+                # SIGTERM may not kill all the children processes in the group.
+                os.killpg(pgid, signal.SIGKILL)
             except Exception:
                 print("WARNING: cannot kill pgid: {}".format(pgid))
 
@@ -78,3 +79,8 @@ def gen_shutdown_per_node(pgids, node_ips=None):
 def is_local(sc):
     master = sc.getConf().get("spark.master")
     return master == "local" or master.startswith("local[")
+
+
+def get_parent_pid(pid):
+    cur_proc = psutil.Process(pid)
+    return cur_proc.ppid()
