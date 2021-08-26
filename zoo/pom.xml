@@ -36,7 +36,7 @@
         <akka.http.version>10.1.11</akka.http.version>
         <akka.actor.version>2.5.26</akka.actor.version>
         <guava.version>15.0</guava.version>
-        <scala.version>2.11.8</scala.version>
+        <scala.version>2.11.12</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>3.0.7</scalatest.version>
         <spark.version>2.4.6</spark.version>
