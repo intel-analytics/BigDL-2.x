@@ -60,10 +60,10 @@ spec:
                 name: flink-config
                 key: taskmanager.rpc.port
         ports:
-        - containerPort: 6122
-          name: rpc
         - containerPort: 6125
-          name: query-state
+          name: rpc
+#        - containerPort: 6125
+#          name: query-state
 #        resources:
 #          requests:
 #            cpu: 10
