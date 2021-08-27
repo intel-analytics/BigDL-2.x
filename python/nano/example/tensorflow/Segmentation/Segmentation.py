@@ -19,6 +19,7 @@
 import tensorflow as tf
 
 from tensorflow_examples.models.pix2pix import pix2pix
+from bigdl.nano.tf.keras import Model as BigdlModel
 
 import tensorflow_datasets as tfds
 tfds.disable_progress_bar()
@@ -80,7 +81,7 @@ def main():
     layers = [base_model.get_layer(name).output for name in layer_names]
 
     # 创建特征提取模型
-    down_stack = tf.keras.Model(inputs=base_model.input, outputs=layers)
+    down_stack = BigdlModel(inputs=base_model.input, outputs=layers)
 
     down_stack.trainable = False
 
@@ -113,7 +114,7 @@ def main():
 
         x = last(x)
 
-        return tf.keras.Model(inputs=inputs, outputs=x)
+        return BigdlModel(inputs=inputs, outputs=x)
 
     model = unet_model(OUTPUT_CHANNELS)
     model.compile(optimizer='adam',
