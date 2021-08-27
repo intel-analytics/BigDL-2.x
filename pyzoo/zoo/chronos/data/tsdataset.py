@@ -92,7 +92,8 @@ class TSDataset:
 
         :param df: a pandas dataframe for your raw time series data.
         :param dt_col: a str indicates the col name of datetime
-               column in the input data frame, must be sorted.
+               column in the input data frame, the dt_col must be sorted
+               from past to latest respectively for each id.
         :param target_col: a str or list indicates the col name of target column
                in the input data frame.
         :param id_col: (optional) a str indicates the col name of dataframe id. If
