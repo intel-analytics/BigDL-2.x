@@ -18,20 +18,20 @@
 package com.intel.analytics.zoo.grpc;
 
 
+import com.intel.analytics.zoo.ppml.ps.Aggregator;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import org.apache.commons.cli.*;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 
 /**
- * Zoo gRPC server class
- * After protobuf generated and service is implemented, service could be passed to ZooGrpcServer
- * to start serving request.
+ * All Analytics Zoo gRPC server are based on ZooGrpcServer
+ * This class could also be directly used for start a single service
  */
 public class ZooGrpcServer {
     protected static final Logger logger = Logger.getLogger(ZooGrpcServer.class.getName());
@@ -41,8 +41,15 @@ public class ZooGrpcServer {
     protected Options options;
     protected String configPath;
     protected BindableService service;
+    protected String[] services;
+    protected Aggregator aggregator;
     protected CommandLine cmd;
 
+    /**
+     * One Server could support multiple servives.
+     * Also support a single service constructor
+     * @param service
+     */
     public ZooGrpcServer(BindableService service) {
         this(null, service);
     }
@@ -57,6 +64,9 @@ public class ZooGrpcServer {
         this.service = service;
         this.args = args;
 
+    }
+    public ZooGrpcServer(String[] args) {
+        this(args, null);
     }
     protected void parseArgs() {
         CommandLineParser parser = new DefaultParser();
@@ -73,14 +83,20 @@ public class ZooGrpcServer {
         assert cmd != null;
         port = Integer.parseInt(cmd.getOptionValue("port", "8082"));
         configPath = cmd.getOptionValue("config", "config.yaml");
+        services = cmd.getOptionValue("s", "").split(",");
+
+    }
+    public void setAggregator(Aggregator aggregator) {
+        this.aggregator = aggregator;
     }
     /** Entrypoint of ZooGrpcServer */
     public void build() {
         parseArgs();
-        server = ServerBuilder.forPort(port)
-                .addService(service)
-                .maxInboundMessageSize(Integer.MAX_VALUE)
-                .build();
+        ServerBuilder builder = ServerBuilder.forPort(port);
+        if (service != null) {
+            builder.addService(service);
+        }
+        server = builder.maxInboundMessageSize(Integer.MAX_VALUE).build();
     }
 
     /** Start serving requests. */

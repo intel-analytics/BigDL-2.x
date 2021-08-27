@@ -20,10 +20,11 @@ package com.intel.analytics.zoo.ppml.ps.test;
 import com.intel.analytics.zoo.ppml.generated.FLProto.FloatTensor;
 import com.intel.analytics.zoo.ppml.generated.FLProto.Table;
 import com.intel.analytics.zoo.ppml.generated.FLProto.TableMetaData;
-import io.grpc.netty.GrpcSslContexts;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+
 
 import javax.net.ssl.SSLException;
 import java.io.File;

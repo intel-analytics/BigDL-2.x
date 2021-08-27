@@ -31,7 +31,7 @@ public class ParameterServerServiceImpl
     private static final Logger logger = LoggerFactory.getLogger(ParameterServerServiceImpl.class);
     private final Aggregator aggregator;
 
-    public ParameterServerServiceImpl(int clientNum, Aggregator aggregator) {
+    public ParameterServerServiceImpl(Aggregator aggregator) {
         this.aggregator = aggregator;
     }
 

@@ -4,16 +4,16 @@ package com.intel.analytics.zoo.grpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.apache.commons.cli.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.UUID;
 
 public class ZooGrpcClient {
-    protected static final Logger logger = LoggerFactory.getLogger(ZooGrpcClient.class);
+    protected static final Logger logger = Logger.getLogger(ZooGrpcServer.class.getName());
     protected String[] args;
     protected Options options;
     protected String target;
+    protected String[] services;
     protected String configPath;
     protected final String clientUUID;
     protected CommandLine cmd;
@@ -26,6 +26,8 @@ public class ZooGrpcClient {
         options.addOption(portArg);
         Option configPathArg = new Option(
                 "c", "config", true, "The path to config YAML file");
+        options.addOption(new Option(
+                "s", "service", true, "service to use"));
         options.addOption(configPathArg);
         this.args = args;
 
@@ -46,6 +48,7 @@ public class ZooGrpcClient {
         assert cmd != null;
         target = cmd.getOptionValue("t", "locaohost:8980");
         configPath = cmd.getOptionValue("config", "config.yaml");
+        services = cmd.getOptionValue("s", "").split(",");
     }
     public void build() {
         parseArgs();
