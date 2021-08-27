@@ -24,6 +24,7 @@ import java.io.File;
  * Supported types: PSI, VFL,
  */
 public class FLServer extends ZooGrpcServer {
+    protected Aggregator aggregator;
     String certChainFilePath;
     String privateKeyFilePath;
     String trustCertCollectionFilePath;

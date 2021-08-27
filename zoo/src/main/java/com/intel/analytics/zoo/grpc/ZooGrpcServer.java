@@ -42,7 +42,6 @@ public class ZooGrpcServer {
     protected String configPath;
     protected BindableService service;
     protected String[] services;
-    protected Aggregator aggregator;
     protected CommandLine cmd;
 
     /**
