@@ -1357,6 +1357,69 @@ class FeatureTable(Table):
             df = df.withColumn(c.replace("item", "category"), cat_udf(pyspark_col(c)))
         return FeatureTable(df)
 
+    def reindex(self, columns=[], index_dicts=[]):
+        """
+        Replace the value using index_dicts for each col in columns, set 0 for default
+
+        :param columns: str of a list of str
+        :param index_dicts: dict or list of dicts from int to int
+
+        :return: FeatureTable and dimentionss of columns
+         """
+        if isinstance(columns, str):
+            columns = [columns]
+        assert isinstance(columns, list), "columns should be str or a list of str"
+        if isinstance(index_dicts, dict):
+            index_dicts = [index_dicts]
+        assert isinstance(index_dicts, list), "index_dicts should be dict or a list of dict"
+        assert len(columns) == len(index_dicts), \
+            "each column of columns should have one corresponding index_dict"
+
+        embed_in_dims = {}
+        tbl = FeatureTable(self.df)
+        for i, c in enumerate(columns):
+            index_dict = index_dicts[i]
+            embed_in_dims[c] = max(index_dict.values()) + 1
+            spark = OrcaContext.get_spark_session()
+            index_dict_bc = spark.sparkContext.broadcast(index_dict)
+            index_lookup = lambda x: index_dict_bc.value.get(x, 0)
+            tbl = tbl.apply(c, c, index_lookup, "int")
+        return tbl, embed_in_dims
+
+    def gen_index_dicts(self, columns=[], freq_limit=10):
+        """
+        Generate a mapping from old index to new one based on popularity count on descending order
+         :param columns: str or a list of str
+         :param freq_limit: int, dict or None. Indices with a count below freq_limit
+               will be omitted. Can be represented as either an integer or dict.
+               For instance, 15, {'col_4': 10, 'col_5': 2} etc. Default is 10,
+
+        :return: a dictionary of list of dictionaries, a mapping from old index to new index
+                new index starts from 1, save 0 for default
+         """
+        if isinstance(columns, str):
+            columns = [columns]
+        assert isinstance(columns, list), "columns should be str or a list of str"
+        if isinstance(freq_limit, int):
+            freq_limit = {col: freq_limit for col in columns}
+        assert isinstance(freq_limit, dict), "freq_limit should be int or dict"
+
+        index_dicts = []
+        for c in columns:
+            c_count = self.select(c).group_by(c, agg={c: "count"}).rename(
+                {"count(" + c + ")": "count"})
+            c_count = c_count.filter(pyspark_col("count") >= freq_limit[c])\
+                .order_by("count", ascending=False)
+            c_count_pd = c_count.to_pandas()
+            c_count_pd.reindex()
+            c_count_pd[c + "_new"] = c_count_pd.index + 1
+            index_dict = dict(zip(c_count_pd[c], c_count_pd[c + "_new"]))
+            index_dicts.append(index_dict)
+        if isinstance(columns, str):
+            index_dicts = index_dicts[0]
+
+        return index_dicts
+
     def group_by(self, columns=[], agg="count", join=False):
         """
         Group the Table with specified columns and then run aggregation. Optionally join the result
