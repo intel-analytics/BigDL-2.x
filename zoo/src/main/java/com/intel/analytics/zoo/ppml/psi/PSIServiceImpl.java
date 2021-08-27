@@ -15,15 +15,12 @@
  */
 package com.intel.analytics.zoo.ppml.psi;
 
-import com.intel.analytics.zoo.grpc.ZooGrpcServer;
-import com.intel.analytics.zoo.ppml.psi.generated.*;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
+import com.intel.analytics.zoo.ppml.generated.FLProto.*;
+import com.intel.analytics.zoo.ppml.generated.PSIServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,14 +41,14 @@ public class PSIServiceImpl extends PSIServiceGrpc.PSIServiceImplBase {
     protected int splitSize = 1000000;
 
     @Override
-    public void salt(SaltRequest req, StreamObserver<SaltReply> responseObserver) {
+    public void getSalt(SaltRequest req, StreamObserver<SaltReply> responseObserver) {
         String salt;
         // Store salt
         String taskId = req.getTaskId();
         if (clientSalt.containsKey(taskId)) {
             salt = clientSalt.get(taskId);
         } else {
-            salt = SecurityUtils.getRandomUUID();
+            salt = Utils.getRandomUUID();
             clientSalt.put(taskId, salt);
         }
         // Store clientNum
@@ -66,7 +63,7 @@ public class PSIServiceImpl extends PSIServiceGrpc.PSIServiceImplBase {
         }
         // Store random seed for shuffling
         if (!clientShuffleSeed.containsKey(taskId)) {
-            clientShuffleSeed.put(taskId, SecurityUtils.getRandomInt());
+            clientShuffleSeed.put(taskId, Utils.getRandomInt());
         }
         SaltReply reply = SaltReply.newBuilder().setSaltReply(salt).build();
         responseObserver.onNext(reply);
@@ -74,8 +71,8 @@ public class PSIServiceImpl extends PSIServiceGrpc.PSIServiceImplBase {
     }
 
     @Override
-    public void uploadSet(UploadRequest request,
-                          StreamObserver<UploadResponse> responseObserver) {
+    public void uploadSet(UploadSetRequest request,
+                          StreamObserver<UploadSetResponse> responseObserver) {
         String taskId = request.getTaskId();
         SIGNAL signal;
         if (!clientNum.containsKey(taskId)) {
@@ -136,7 +133,7 @@ public class PSIServiceImpl extends PSIServiceGrpc.PSIServiceImplBase {
             }
         }
 
-        UploadResponse response = UploadResponse.newBuilder()
+        UploadSetResponse response = UploadSetResponse.newBuilder()
                 .setTaskId(taskId)
                 .setStatus(signal)
                 .build();
@@ -145,8 +142,8 @@ public class PSIServiceImpl extends PSIServiceGrpc.PSIServiceImplBase {
     }
 
     @Override
-    public void downloadIntersection(DownloadRequest request,
-                                     StreamObserver<DownloadResponse> responseObserver) {
+    public void downloadIntersection(DownloadIntersectionRequest request,
+                                     StreamObserver<DownloadIntersectionResponse> responseObserver) {
         String taskId = request.getTaskId();
         SIGNAL signal = SIGNAL.SUCCESS;
         if (psiTasks.containsKey(taskId)) {
@@ -155,7 +152,7 @@ public class PSIServiceImpl extends PSIServiceGrpc.PSIServiceImplBase {
                 int split = request.getSplit();
                 int numSplit = Utils.getTotalSplitNum(intersection, splitSize);
                 List<String> splitIntersection = Utils.getSplit(intersection, split, numSplit, splitSize);
-                DownloadResponse response = DownloadResponse.newBuilder()
+                DownloadIntersectionResponse response = DownloadIntersectionResponse.newBuilder()
                         .setTaskId(taskId)
                         .setStatus(signal)
                         .setSplit(split)
@@ -168,7 +165,7 @@ public class PSIServiceImpl extends PSIServiceGrpc.PSIServiceImplBase {
             } catch (InterruptedException e) {
                 logger.error(e.getMessage());
                 signal = SIGNAL.ERROR;
-                DownloadResponse response = DownloadResponse.newBuilder()
+                DownloadIntersectionResponse response = DownloadIntersectionResponse.newBuilder()
                         .setTaskId(taskId)
                         .setStatus(signal).build();
                 responseObserver.onNext(response);

@@ -75,7 +75,7 @@ public class ZooGrpcServer {
         configPath = cmd.getOptionValue("config", "config.yaml");
     }
     /** Entrypoint of ZooGrpcServer */
-    private void buildServer() {
+    public void build() {
         parseArgs();
         server = ServerBuilder.forPort(port)
                 .addService(service)

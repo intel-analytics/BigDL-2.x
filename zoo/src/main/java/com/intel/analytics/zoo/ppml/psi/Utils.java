@@ -33,25 +33,15 @@ public class Utils {
     public static void shuffle(List<String> array,int seed){
         Collections.shuffle(array,new Random(seed));
     }
-
-    /***
-     * Gen random HashMap<String, String> for test
-     * @param size HashMap size, int
-     * @return
-     */
-    public static HashMap<String, String> genRandomHashSet(int size) {
-        HashMap<String, String> data = new HashMap<>();
-        Random rand = new Random();
-        for (int i = 0; i < size; i++) {
-            String name = "User_" + rand.nextInt();
-            data.put(name, Integer.toString(i));
-        }
-        logger.info("IDs are: ");
-        for (Map.Entry<String, String> element : data.entrySet()) {
-            logger.info(element.getKey() + ",  " + element.getValue());
-        }
-        return data;
+    public static String getRandomUUID() {
+        return UUID.randomUUID().toString();
     }
+
+    public static int getRandomInt() {
+        Random rand = new Random();
+        return rand.nextInt();
+    }
+
 
     public static int getTotalSplitNum(List<String> list, int splitSize) {
         return (int)Math.ceil((double)list.size() / splitSize);

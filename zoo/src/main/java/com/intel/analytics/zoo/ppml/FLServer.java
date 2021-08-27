@@ -1,24 +1,16 @@
 package com.intel.analytics.zoo.ppml;
 
 import com.intel.analytics.zoo.grpc.ZooGrpcServer;
-import com.intel.analytics.zoo.ppml.psi.PSIServiceImpl;
 import io.grpc.BindableService;
+import io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.NettyServerBuilder;
+import io.netty.handler.ssl.ClientAuth;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import org.apache.commons.cli.Option;
 
-import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
-import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
-import io.grpc.netty.shaded.io.netty.handler.ssl.ClientAuth;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
-
-
-import org.apache.commons.cli.*;
-import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
-
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import java.io.File;
-import java.io.IOException;
 
 /**
  * FLServer is Analytics Zoo PPML gRPC server used for FL based on ZooGrpcServer
@@ -61,37 +53,4 @@ public class FLServer extends ZooGrpcServer {
         return GrpcSslContexts.configure(sslClientContextBuilder).build();
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        Options options = new Options();
-        options.addOption(new Option(
-                "s", "serverType", true, "Server type."));
-        CommandLine cmd = null;
-        CommandLineParser parser = new DefaultParser();
-        HelpFormatter formatter = new HelpFormatter();
-        try {
-            cmd = parser.parse(options, args);
-        } catch (ParseException e) {
-            System.out.println(e.getMessage());
-            formatter.printHelp("utility-name", options);
-            System.exit(1);
-        }
-        assert cmd != null;
-        String serverType = cmd.getOptionValue("s", null);
-        if (serverType == null) {
-            System.out.println("No serverType chosen, exiting..");
-            System.exit(1);
-        }
-        ZooGrpcServer server;
-        if (serverType == "vflpsi") {
-            server = new ZooGrpcServer(args, new PSIServiceImpl());
-        } else if (serverType == "vflps") {
-            //TODO: add other supported types
-        } else {
-            System.out.println("Type not supported: " + serverType);
-            System.exit(0);
-        }
-
-        server.start();
-        server.blockUntilShutdown();
-    }
 }

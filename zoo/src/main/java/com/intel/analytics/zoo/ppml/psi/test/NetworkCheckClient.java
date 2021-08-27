@@ -16,10 +16,7 @@
 
 package com.intel.analytics.zoo.ppml.psi.test;
 
-import com.intel.analytics.zoo.ppml.psi.ClientGrpc;
-import com.intel.analytics.zoo.ppml.psi.SecurityUtils;
-import com.intel.analytics.zoo.ppml.psi.generated.PSIServiceGrpc;
-import io.grpc.Channel;
+import com.intel.analytics.zoo.ppml.FLClient;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
@@ -28,27 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class NetworkCheckClient extends ClientGrpc {
-    //private static final Logger logger = LoggerFactory.getLogger(BenchmarkClient.class);
-
-    private static PSIServiceGrpc.PSIServiceBlockingStub blockingStub;
-
-    /**
-     * Construct client for accessing server using the existing channel.
-     */
-    public NetworkCheckClient(Channel channel) {
-        // 'channel' here is a Channel,  not a ManagedChannel,  so it is not this code's responsibility to
-        // shut it down.
-        // Passing Channels to code makes code easier to test and makes it easier to reuse Channels.
-        super(channel);
-	blockingStub = PSIServiceGrpc.newBlockingStub(channel);
-    }
-
-    public NetworkCheckClient(Channel channel, String taskID) {
-	super(channel, taskID);
-        blockingStub = PSIServiceGrpc.newBlockingStub(channel);
-    }
-
+public class NetworkCheckClient{
     public static void main(String[] args) throws Exception {
         String taskID;
         String target;
@@ -75,7 +52,7 @@ public class NetworkCheckClient extends ClientGrpc {
         // Example code for client
         int idSize = 150000;
         // Quick lookup for the plaintext of hashed ids
-        HashMap<String, String> data = ExampleUtils.getRandomHashSetOfStringForFiveFixed(idSize);//Utils.genRandomHashSet(idSize);
+        HashMap<String, String> data = TestUtils.getRandomHashSetOfStringForFiveFixed(idSize);//Utils.genRandomHashSet(idSize);
         HashMap<String, String> hashedIds = new HashMap<>();
         List<String> hashedIdArray;
         String salt;
@@ -91,12 +68,13 @@ public class NetworkCheckClient extends ClientGrpc {
 		.usePlaintext()
                 .build();
         try {
-            NetworkCheckClient client = new NetworkCheckClient(channel, taskID);
+            String[] arg = {"-t", target, "-tid", taskID};
+            FLClient client = new FLClient(arg);
             // Get salt from Server
             salt = client.getSalt();
             //logger.debug("Client get Slat=" + salt);
             // Hash(IDs, salt) into hashed IDs
-            hashedIdArray = SecurityUtils.parallelToSHAHexString(ids, salt);
+            hashedIdArray = TestUtils.parallelToSHAHexString(ids, salt);
             for (int i = 0; i < ids.size(); i++) {
                 hashedIds.put(hashedIdArray.get(i), ids.get(i));
             }

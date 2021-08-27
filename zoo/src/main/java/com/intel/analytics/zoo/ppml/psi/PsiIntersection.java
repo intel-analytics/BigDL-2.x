@@ -1,19 +1,3 @@
-/*
- * Copyright 2021 The Analytic Zoo Authors
- *
- * Licensed under the Apache License,  Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,  software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,  either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.intel.analytics.zoo.ppml.psi;
 
 import java.util.ArrayList;
@@ -66,6 +50,43 @@ public class PsiIntersection {
         }
     }
 
+    // Join a with b, a should be sorted.
+    private static class FindIntersection implements Callable<List<String>> {
+        protected String[] a;
+        protected String[] b;
+        protected int bStart;
+        protected int length;
+
+        public FindIntersection(String[] a,
+                                String[] b,
+                                int bStart,
+                                int length) {
+            this.a = a;
+            this.b = b;
+            this.bStart = bStart;
+            this.length = length;
+        }
+
+        @Override
+        public List<String> call() {
+            return findIntersection(a, b, bStart, length);
+        }
+
+        protected static List<String> findIntersection(
+                String[] a,
+                String[] b,
+                int start,
+                int length){
+            ArrayList<String> intersection = new ArrayList<String>();
+            for(int i = start; i < length + start; i++) {
+                if (Arrays.binarySearch(a, b[i]) >= 0){
+                    intersection.add(b[i]);
+                }
+            }
+            return intersection;
+        }
+    }
+
     protected List<String> findIntersection(
             String[] a,
             String[] b) throws InterruptedException, ExecutionException{
@@ -96,38 +117,6 @@ public class PsiIntersection {
         synchronized (this) {
             if(null == intersection) {
                 this.wait();
-            }
-            return intersection;
-        }
-    }
-
-    /**
-     * A single thread implementation of psi algorithm
-     * Join a with b, a should be sorted.
-     */
-    private static class FindIntersection implements Callable<List<String>> {
-        protected String[] a;
-        protected String[] b;
-        protected int bStart;
-        protected int length;
-
-        public FindIntersection(String[] a,
-                                String[] b,
-                                int bStart,
-                                int length) {
-            this.a = a;
-            this.b = b;
-            this.bStart = bStart;
-            this.length = length;
-        }
-
-        @Override
-        public List<String> call() {
-            ArrayList<String> intersection = new ArrayList<String>();
-            for(int i = bStart; i < length + bStart; i++) {
-                if (Arrays.binarySearch(a, b[i]) >= 0){
-                    intersection.add(b[i]);
-                }
             }
             return intersection;
         }
