@@ -115,9 +115,43 @@ ts_pipeline = trainer.fit(train_df, validation_df, recipe=SmokeRecipe())
 After training, it will return a [TSPipeline](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.TSPipeline), which includes not only the model, but also the data preprocessing/post processing steps. 
 
 Appropriate hyperparameters are automatically selected for the models and data processing steps in the pipeline during the fit process, and you may use built-in [visualization tool](https://analytics-zoo.github.io/master/#ProgrammingGuide/AutoML/visualization/) (This link lead to our old document, please head back after reading the visualization page.) to inspect the training results after training stopped. 
+<span></span>
+##### **4.2.4 Visualization**
 
+AutoML visualization provides two kinds of visualization.
+* During the searching process, the visualizations of each trail are shown and updated every 30 seconds. (Monitor view)
+* After the searching process, a leaderboard of each trail's configs and metrics is shown. (Leaderboard view)
 
-##### **4.2.4 Use TSPipeline**
+**Note**: AutoML visualization is based on tensorboard and tensorboardx. They should be installed properly before the training starts.
+
+**Monitor view**
+<span>tensorboard --logdir=<logs_dir>/<job_name>/</span>
+
+`logs_dir` is the log directory you set for your predictor(e.g. TimeSequencePredictor in Automated Time Series Prediction). It is default to "/home/\<username>/zoo_automl_logs", where `username` is your login username. `job_name` is the name parameter you set for your predictor.
+
+<img src="../../../../../docs/Image/automl_monitor.png" alt='automl_monitor.png' style="zoom:50%" />
+
+After training, start the tensorboard server through
+<span>tensorboard --logdir=<logs_dir>/<job_name>_leaderboard/</span>
+
+where `logs_dir` and `job_name` are the same as stated in [Monitor view]().
+A dashboard of each trail's configs and metrics is shown in the SCALARS tag.
+
+<img src="../../../../../docs/Image/automl_scalars.png" alt='automl_scalars.png' style="zoom:50%" />
+A leaderboard of each trail's configs and metrics is shown in the HPARAMS tag.
+
+<img src="../../../../../docs/Image/automl_hparams.png" alt='automl_hparams.png' style="zoom:50%" />
+You can enable a tensorboard view in jupyter notebook by the following code.
+
+```python
+%load_ext tensorboard
+# for scalar view
+%tensorboard --logdir <logs_dir>/<job_name>/
+# for leaderboard view
+%tensorboard --logdir <logs_dir>/<job_name>_leaderboard/
+```
+
+##### **4.2.5 Use TSPipeline**
 
 Use `TSPipeline.predict|evaluate|fit` for prediction, evaluation or (incremental) fitting. **Note**: incremental fitting on TSPipeline just update the model weights the standard way, which does not involve AutoML.
 
