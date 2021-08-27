@@ -39,7 +39,7 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
-from typing import cast, List, Optional, Type, TypeVar, Union
+from typing import Union
 
 import pytorch_lightning as pl
 from pl_examples import cli_lightning_logo
