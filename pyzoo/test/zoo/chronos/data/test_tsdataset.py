@@ -870,7 +870,7 @@ class TestTSDataset(ZooTestCase):
         with pytest.raises(AssertionError):
             tsdata.gen_dt_feature()
         with pytest.raises(AssertionError):
-            tsdata.gen_rolling_feature(window_size=1000)
+            tsdata.gen_rolling_feature(settings="minimal", window_size=1000)
 
         tsdata._check_basic_invariants()
 
