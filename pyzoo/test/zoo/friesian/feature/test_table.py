@@ -244,7 +244,7 @@ class TestTable(TestCase):
         feature_tbl = FeatureTable.read_parquet(file_path)
         feature_tbl.show(20, False)
         string_idx_list = feature_tbl.gen_string_idx(["col_4", "col_5"],
-                                                     freq_limit={"col_4": 1,"col_5": 1},
+                                                     freq_limit={"col_4": 1, "col_5": 1},
                                                      order_by_freq=False)
         tbl = feature_tbl.encode_string(["col_4", "col_5"], string_idx_list)
         index_dicts = tbl.gen_index_dicts(["col_4", "col_5"], 2)
@@ -256,7 +256,7 @@ class TestTable(TestCase):
         feature_tbl = FeatureTable.read_parquet(file_path)
         feature_tbl.show(20, False)
         string_idx_list = feature_tbl.gen_string_idx(["col_4", "col_5"],
-                                                     freq_limit={"col_4": 1,"col_5": 1},
+                                                     freq_limit={"col_4": 1, "col_5": 1},
                                                      order_by_freq=False)
         tbl_with_index = feature_tbl.encode_string(["col_4", "col_5"], string_idx_list)
         tbl_with_index.show(100)
