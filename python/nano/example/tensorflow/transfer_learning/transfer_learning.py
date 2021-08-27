@@ -146,7 +146,7 @@ def main():
 
     model.summary()
 
-    print("Number of trainable Varaiables:", len(model.trainable_variables))
+    print("Number of trainable variables:", len(model.trainable_variables))
 
     initial_epochs = 10
 

@@ -3,7 +3,7 @@
 This example describes how BigDL Nano optimizes transfer learning. 
 We use cat-vs-dog data sets to train a partial freezen neural network based on Mobile Net V2, and train unfreezen trainable variables through transfer learning.
 
-This example is migrate from the tensorflow tutorial notebook at 
+This example is migrated from the tensorflow tutorial notebook at 
 https://github.com/tensorflow/docs/blob/r2.4/site/en/tutorials/images/transfer_learning.ipynb
 
 ## Quick Start
@@ -15,7 +15,7 @@ https://github.com/tensorflow/docs/blob/r2.4/site/en/tutorials/images/transfer_l
     pip install bigdl-nano[tensorflow]
     ```
 
-    Then setup the environment with the scrip `bigdl-nano-init`:
+    Then setup the environment with the script `bigdl-nano-init`:
 
     ```
     source bigdl-nano-init
@@ -33,7 +33,7 @@ https://github.com/tensorflow/docs/blob/r2.4/site/en/tutorials/images/transfer_l
 We use the Mobile Net V2 as our base model, build our model combined with Preprocessing, Prediction and other Layers. The initial loss and accuary will be printed before training steps like this:
 
 ```
-Number of trainable Varaiables: 2
+Number of trainable variables: 2
 26/26 [==============================] - 5s 87ms/step - loss: 0.9020 - accuracy: 0.4468
 initial loss: 0.90
 initial accuracy: 0.45
@@ -42,7 +42,7 @@ initial accuracy: 0.45
 Then we freeze the base model and train other layers in the model. After 10 epoches of training, We unfreeze the last 100 layers of base model and continued to train on the basis of previous training. We will get the final accuracy after the evaluation of the model at the end of workflow.
 
 ```
-Number of trainable variaables now: 56
+Number of trainable variables now: 56
 Epoch 10/20
 63/63 [==============================] - 14s 172ms/step - loss: 0.1472 - accuracy: 0.9390 - val_loss: 0.0623 - val_accuracy: 0.9790
 Epoch 11/20
