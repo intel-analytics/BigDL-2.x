@@ -86,9 +86,7 @@ public class ZooGrpcServer {
         services = cmd.getOptionValue("s", "").split(",");
 
     }
-    public void setAggregator(Aggregator aggregator) {
-        this.aggregator = aggregator;
-    }
+
     /** Entrypoint of ZooGrpcServer */
     public void build() {
         parseArgs();
