@@ -282,13 +282,12 @@ class TestTable(TestCase):
         l1 = new_tbl2.to_list("list1")[0]
         l2 = l1.copy()
         l2.sort()
-        assert l1 ==l2, "encode list with sort should sort"
+        assert l1 == l2, "encode list with sort should sort"
 
         new_tbl3 = tbl.encode_string(['list1'], string_idx_1, do_split=True, sep=",",
                                      keep_most_frequent=True)
         assert isinstance(new_tbl3.to_list("list1")[0], int), \
             "encode list with keep most frequent should only keep one int"
-
 
     def test_clip(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")

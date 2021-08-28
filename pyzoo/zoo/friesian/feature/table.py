@@ -905,7 +905,8 @@ class FeatureTable(Table):
         indices = self.gen_string_idx(columns, freq_limit=freq_limit, order_by_freq=order_by_freq,
                                       do_split=do_split, sep=sep)
         return self.encode_string(columns, indices, do_split=do_split, sep=sep,
-                                  sort_for_array=sort_for_array, keep_most_frequent=keep_most_frequent,
+                                  sort_for_array=sort_for_array,
+                                  keep_most_frequent=keep_most_frequent,
                                   broadcast=broadcast), indices
 
     def one_hot_encode(self, columns, sizes=None, prefix=None, keep_original_columns=False):
@@ -999,7 +1000,8 @@ class FeatureTable(Table):
         data_df = data_df.drop("friesian_onehot")
         return FeatureTable(data_df)
 
-    def gen_string_idx(self, columns, do_split=False, sep=',', freq_limit=None, order_by_freq=False):
+    def gen_string_idx(self, columns, do_split=False, sep=',',
+                       freq_limit=None, order_by_freq=False):
         """
         Generate unique index value of categorical features. The resulting index would
         start from 1 with 0 reserved for unknown features.
