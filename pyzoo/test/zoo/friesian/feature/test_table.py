@@ -55,6 +55,18 @@ class TestTable(TestCase):
         out_values = feature_tbl.select("out").df.rdd.flatMap(lambda x: x).collect()
         assert out_values == ["xxxx"] * len(out_values)
 
+    def test_apply_with_data(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        feature_tbl = feature_tbl.fillna(0, "col_1")
+        # udf on single column
+        y = {"ace": 1, "aa": 2}
+        transform = lambda x: y.get(x, 0)
+        feature_tbl = feature_tbl.apply("col_5", "out", transform, "int")
+        assert(feature_tbl.filter(col("out") == 2).size() == 3)
+        assert(feature_tbl.filter(col("out") == 1).size() == 1)
+        assert(feature_tbl.filter(col("out") == 0).size() == 1)
+
     def test_fillna_int(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
@@ -935,6 +947,35 @@ class TestTable(TestCase):
         print(dictionary)
         assert dictionary["name"] == ['jack', 'alice', 'rose']
 
+    def test_to_pandas(self):
+        spark = OrcaContext.get_spark_session()
+        data = [("jack", "123", 14),
+                ("alice", "34", 25),
+                ("rose", "25344", 23)]
+        schema = StructType([StructField("name", StringType(), True),
+                             StructField("num", StringType(), True),
+                             StructField("age", IntegerType(), True)])
+        tbl = FeatureTable(spark.createDataFrame(data, schema))
+        pddf = tbl.to_pandas()
+        assert(pddf["name"].values.tolist() == ['jack', 'alice', 'rose'])
+
+    def test_from_pandas(self):
+        import pandas as pd
+        data = [['tom', 10], ['nick', 15], ['juli', 14]]
+        pddf = pd.DataFrame(data, columns=['Name', 'Age'])
+        tbl = FeatureTable.from_pandas(pddf)
+        assert(tbl.size() == 3)
+
+    def test_sort(self):
+        import pandas as pd
+        data = [['tom', 10], ['nick', 15], ['juli', 14]]
+        pddf = pd.DataFrame(data, columns=['Name', 'Age'])
+        tbl = FeatureTable.from_pandas(pddf)
+        tbl = tbl.sort("Age", ascending=False)
+        assert(tbl.select("Name").to_list("Name") == ["nick", "juli", "tom"])
+        tbl = tbl.sort("Name")
+        assert(tbl.select("Name").to_list("Name") == ["juli", "nick", "tom"])
+
     def test_add(self):
         spark = OrcaContext.get_spark_session()
         data = [("jack", "123", 14, 8.5),
@@ -1237,6 +1278,15 @@ class TestTable(TestCase):
         assert diff_tbl4.df.filter("c1p1 == -1").count() == \
             diff_tbl2.df.filter("c1p1 == -1").count(), \
             "c1p1 should be the same in diff_tbl4 and in diff_tbl2"
+
+    def test_cache(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data2.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        feature_tbl.cache()
+        assert feature_tbl.df.is_cached, "Cache table should be cached"
+        feature_tbl.uncache()
+        assert not feature_tbl.df.is_cached, "Uncache table should be uncached"
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

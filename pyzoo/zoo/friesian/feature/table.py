@@ -18,6 +18,7 @@ import os
 import hashlib
 import numpy as np
 from functools import reduce
+from py4j.protocol import Py4JError
 
 import pyspark.sql.functions as F
 from pyspark.sql import Row, Window
@@ -658,6 +659,56 @@ class Table:
         """
         return pyspark_col(name)
 
+    def sort(self, *cols, **kwargs):
+        """
+        Sort table by the specified col(s).
+        :param cols: list of :class:`Column` or column names to sort by.
+        :param ascending: boolean or list of boolean (default ``True``).
+            Sort ascending vs. descending. Specify list for multiple sort orders.
+            If a list is specified, length of the list must equal length of the `cols`.
+        """
+        if not cols:
+            raise ValueError("cols should be str or a list of str, but got None.")
+        return self._clone(self.df.sort(*cols, **kwargs))
+
+    order_by = sort
+
+    def to_pandas(self):
+        return self.df.toPandas()
+
+    @staticmethod
+    def from_pandas(pandas_df):
+        """
+        Returns the contents of this :class:`pandas.DataFrame` as Table
+        :param pandas_df: pandas dataframe
+        """
+        spark = OrcaContext.get_spark_session()
+        sparkDF = spark.createDataFrame(pandas_df)
+        return Table(sparkDF)
+
+    def cache(self):
+        """
+        Persist this table in memory
+
+        :return: this Table
+        """
+        self.df.cache()
+        return self
+
+    def uncache(self):
+        """
+
+        Make this table as non-persistent, and remove all blocks for it from memory
+
+        :return: this Table
+        """
+        if self.df.is_cached:
+            try:
+                self.df.unpersist()
+            except Py4JError:
+                print("Try to unpersist an uncached table")
+        return self
+
 
 class FeatureTable(Table):
     @classmethod
@@ -795,7 +846,7 @@ class FeatureTable(Table):
         :param bins: int, defines the number of equal-width bins in the range of column(s) values.
         :param method: hashlib supported method, like md5, sha256 etc.
 
-        :return: A new FeatureTable which hash encoded columns.
+        :return: A new FeatureTable with hash encoded columns.
         """
         hash_df = self.df
         if not isinstance(columns, list):
@@ -807,7 +858,7 @@ class FeatureTable(Table):
             hash_df = hash_df.withColumn(col_name, hash_int(pyspark_col(col_name)))
         return FeatureTable(hash_df)
 
-    def cross_hash_encode(self, columns, bins, cross_col_name=None):
+    def cross_hash_encode(self, columns, bins, cross_col_name=None, method='md5'):
         """
         Hash encode for cross column(s).
 
@@ -817,8 +868,9 @@ class FeatureTable(Table):
         :param cross_col_name: str, the column name for output cross column. Default is None, and
                in this case the default cross column name will be 'crossed_col1_col2'
                for ['col1', 'col2'].
+        :param method: hashlib supported method, like md5, sha256 etc.
 
-        :return: A new FeatureTable which the target cross column.
+        :return: A new FeatureTable with the target cross column.
         """
         cross_hash_df = self.df
         assert isinstance(columns, list), "columns should be a list of column names"
@@ -829,7 +881,7 @@ class FeatureTable(Table):
                 cross_string = cross_string + '_' + column
             cross_col_name = 'crossed' + cross_string
         cross_hash_df = cross_hash_df.withColumn(cross_col_name, concat(*columns))
-        cross_hash_df = FeatureTable(cross_hash_df).hash_encode([cross_col_name], bins)
+        cross_hash_df = FeatureTable(cross_hash_df).hash_encode([cross_col_name], bins, method)
         return cross_hash_df
 
     def category_encode(self, columns, freq_limit=None, order_by_freq=False,
