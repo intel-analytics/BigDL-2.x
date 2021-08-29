@@ -15,8 +15,11 @@
 
 import json
 import pandas as pd
+import numpy as np
 from prophet import Prophet
 from prophet.serialize import model_to_json, model_from_json
+from prophet.diagnostics import performance_metrics
+from prophet.diagnostics import cross_validation
 
 from zoo.automl.common.metrics import Evaluator
 from zoo.automl.model.abstract import BaseModel, ModelBuilder
@@ -50,7 +53,10 @@ class ProphetModel(BaseModel):
                              changepoint_range=changepoint_range,
                              seasonality_mode=seasonality_mode)
 
-    def fit_eval(self, data, validation_data, **config):
+    def fit_eval(self,
+                 data,
+                 validation_data,
+                 **config):
         """
         Fit on the training data from scratch.
 
@@ -58,6 +64,11 @@ class ProphetModel(BaseModel):
             and 2 columns, with column 'ds' indicating date and column 'y' indicating target
             and Td is the time dimension
         :param validation_data: validation data, should be the same type as data.
+        :param cross_validation: bool, if the eval result comes from cross_validation.
+               The value is set to False by default. Setting this option to true may
+               significantly slow down the process.
+        :param expected_horizon: int or pandas interval str, only effective when
+               cross_validation is set to True.
         :return: the evaluation metric value
         """
         if not self.model_init:
@@ -65,9 +76,20 @@ class ProphetModel(BaseModel):
             self.model_init = True
 
         self.model.fit(data)
-        val_metric = self.evaluate(target=validation_data,
-                                   metrics=[self.metric])[0].item()
-        return {self.metric: val_metric}
+
+        cross_validation = config.get('cross_validation', False)
+        expected_horizon = config.get('expect_horizon', int(0.1*len(data)))
+        if cross_validation:
+            return self._eval_cross_validation(expected_horizon)
+        else:
+            val_metric = self.evaluate(target=validation_data,
+                                       metrics=[self.metric])[0].item()
+            return {self.metric: val_metric}
+
+    def _eval_cross_validation(self, expected_horizon):
+        df_cv = cross_validation(self.model, horizon=expected_horizon)
+        df_p = performance_metrics(df_cv, metrics=[self.metric], rolling_window=1)
+        return {self.metric: np.mean(df_p[self.metric].values)}  # here we use the mean metrics
 
     def predict(self, ds_data=None, horizon=24, freq="D"):
         """

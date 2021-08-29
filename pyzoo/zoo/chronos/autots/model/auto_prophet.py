@@ -71,8 +71,9 @@ class AutoProphet:
             "seasonality_prior_scale": seasonality_prior_scale,
             "holidays_prior_scale": holidays_prior_scale,
             "seasonality_mode": seasonality_mode,
-            "changepoint_range": changepoint_range,
+            "changepoint_range": changepoint_range
         }
+        self.search_space.update(prophet_config)  # update other configs
         self.metric = metric
         model_builder = ProphetBuilder()
         self.auto_est = AutoEstimator(model_builder=model_builder,
@@ -82,9 +83,11 @@ class AutoProphet:
 
     def fit(self,
             data,
+            cross_validation=True,
             expect_horizon=None,
+            freq=None,
             metric_threshold=None,
-            n_sampling=1,
+            n_sampling=50,
             search_alg=None,
             search_alg_params=None,
             scheduler=None,
@@ -96,12 +99,19 @@ class AutoProphet:
         :param data: training data, a pandas dataframe with Td rows,
                and 2 columns, with column 'ds' indicating date and column 'y' indicating value
                and Td is the time dimension
-        :param expect_horizon: validation data will be automatically splited from training data,
+        :param cross_validation: bool, if the eval result comes from cross_validation.
+               The value is set to False by default. Setting this option to true may
+               significantly slow down the process.
+        :param expect_horizon: int, validation data will be automatically splited from training data,
                and expect_horizon is the horizon you may need to use once the mode is fitted.
-               The value defaults to None, where the last 10% of training data will be taken
+               The value defaults to None, where 10% of training data will be taken
                as the validation data.
+        :param freq: the freqency of the training dataframe. the frequency can be anything from the
+               pandas list of frequency strings here:
+               https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliasesDefaulted
+               to None, where an unreliable frequency will be infer implicitly.
         :param metric_threshold: a trial will be terminated when metric threshold is met
-        :param n_sampling: Number of times to sample from the search_space. Defaults to 1.
+        :param n_sampling: Number of times to sample from the search_space. Defaults to 20.
                If hp.grid_search is in search_space, the grid will be repeated n_sampling of times.
                If this is -1, (virtually) infinite samples are generated
                until a stopping condition is met.
@@ -116,8 +126,17 @@ class AutoProphet:
         """
         if expect_horizon is None:
             expect_horizon = int(0.1*len(data))
-        self.auto_est.fit(data=data[:len(data)-expect_horizon],
-                          validation_data=data[len(data)-expect_horizon:],
+        if freq is None:
+            self._freq = data["ds"].iloc[1] - data["ds"].iloc[0]
+        else:
+            self._freq = pd.Timedelta(freq)
+        expect_horizon_str = str(self._freq * expect_horizon)
+        self.search_space.update({"expect_horizon": expect_horizon_str,
+                                  "cross_validation": cross_validation})
+        train_data = data if cross_validation else data[:len(data)-expect_horizon]
+        validation_data = None if cross_validation else data[len(data)-expect_horizon:]
+        self.auto_est.fit(data=train_data,
+                          validation_data=validation_data,
                           metric=self.metric,
                           metric_threshold=metric_threshold,
                           n_sampling=n_sampling,

@@ -29,7 +29,7 @@ def get_data():
     seq_len = 480
     data = pd.DataFrame(pd.date_range('20130101', periods=seq_len), columns=['ds'])
     data.insert(1, 'y', np.random.rand(seq_len))
-    expect_horizon = np.random.randint(2, 50)
+    expect_horizon = np.random.randint(40, 50)
     return data, expect_horizon
 
 
@@ -74,6 +74,7 @@ class TestAutoProphet(TestCase):
                                    )
 
         auto_prophet.fit(data=data,
+                         cross_validation=False,
                          expect_horizon=expect_horizon,
                          n_sampling=1,
                          )
