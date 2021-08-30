@@ -1,13 +1,12 @@
 # BigDL-Nano Transfer Learning Example with Tensorflow
 
-This example describes how BigDL Nano optimizes transfer learning. 
-We use cat-vs-dog data sets to train a partial freezen neural network based on Mobile Net V2, and train unfreezen trainable variables through transfer learning.
+This example describes how to use BigDL Nano to optimize a TensorFlow transfer learning workload.
 
-This example is migrated from the tensorflow tutorial notebook at 
+This example is migrated from the TensorFlow tutorial notebook at 
 https://github.com/tensorflow/docs/blob/r2.4/site/en/tutorials/images/transfer_learning.ipynb
 
 ## Quick Start
-1. Prepare Envrionment
+1. Prepare Environment
 
     You can install the necessary packages with the following command
     
@@ -30,7 +29,7 @@ https://github.com/tensorflow/docs/blob/r2.4/site/en/tutorials/images/transfer_l
 
 
 ## Workflow and Results
-We use the Mobile Net V2 as our base model, build our model combined with Preprocessing, Prediction and other Layers. The initial loss and accuary will be printed before training steps like this:
+We use the MobileNetV2 network as our base model combined with "Preprocessing" and "Prediction" Layers. The initial loss and accuracy will be printed before training steps like this:
 
 ```
 Number of trainable variables: 2
@@ -50,9 +49,10 @@ Epoch 11/20
 ...
 ```
 
-After the training, we will evaluate the model. You can check the accuracy at the end of workflow. 
+After the training, we evaluate the model. You can check the accuracy at the end of workflow. 
 
 ```
 6/6 [==============================] - 1s 66ms/step - loss: 0.0351 - accuracy: 0.9844
 Test accuracy : 0.984375
 ```
+
