@@ -475,11 +475,6 @@ class RayContext(object):
             return
         import ray
         ray.shutdown()
-        if not self.is_local:
-            if not self.ray_processesMonitor:
-                print("Please start the runner first before closing it")
-            else:
-                self.ray_processesMonitor.clean_fn()
         self.initialized = False
 
     def purge(self):
@@ -610,7 +605,6 @@ class RayContext(object):
         RayServiceFuncGenerator.start_ray_daemon("python",
                                                  pid_to_watch=os.getpid(),
                                                  pgid_to_kill=process_info.pgid)
-        # ProcessMonitor.register_shutdown_hook(pgid=process_info.pgid)
 
     def _start_driver(self, num_cores, redis_address):
         print("Start to launch ray driver on local")
