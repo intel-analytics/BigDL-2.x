@@ -6,25 +6,21 @@ import logging
 logging.basicConfig(filename='daemon.log', level=logging.INFO)
 
 
-def is_jvm_alive(spark_executor_pid):
-    return psutil.pid_exists(spark_executor_pid)
-
-
-def stop_ray(pgid):
+def stop(pgid):
     logging.info(f"Stopping pgid {pgid} by ray_daemon.")
     try:
         os.killpg(pgid, signal.SIGKILL)
     except Exception:
-        logging.error("WARNING: cannot kill pgid: {}".format(pgid))
+        logging.error("Cannot kill pgid: {}".format(pgid))
 
 
 def manager():
-    pgid = int(sys.argv[1])
-    spark_executor_pid = int(sys.argv[2])
+    pid_to_watch = int(sys.argv[1])
+    pgid_to_kill = int(sys.argv[2])
     import time
-    while is_jvm_alive(spark_executor_pid):
+    while psutil.pid_exists(pid_to_watch):
         time.sleep(1)
-    stop_ray(pgid)
+    stop(pgid_to_kill)
 
 
 if __name__ == "__main__":

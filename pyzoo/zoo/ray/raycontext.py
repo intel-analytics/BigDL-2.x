@@ -193,8 +193,8 @@ class RayServiceFuncGenerator(object):
     @staticmethod
     def start_ray_daemon(python_loc, pid_to_watch, pgid_to_kill):
         daemon_path = os.path.join(os.path.dirname(__file__), "ray_daemon.py")
-        start_daemon_command = ['nohup', python_loc, daemon_path,
-                                str(pgid_to_kill), str(pid_to_watch)]
+        start_daemon_command = ['nohup', python_loc, daemon_path, str(pid_to_watch),
+                                str(pgid_to_kill)]
         subprocess.Popen(start_daemon_command, preexec_fn=os.setpgrp)
         time.sleep(1)
 
