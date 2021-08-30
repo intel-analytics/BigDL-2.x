@@ -38,7 +38,7 @@ initial loss: 0.90
 initial accuracy: 0.45
 ```
 
-Then we freeze the base model and train other layers in the model. After 10 epoches of training, We unfreeze the last 100 layers of base model and continued to train on the basis of previous training. We will get the final accuracy after the evaluation of the model at the end of workflow.
+Then we freeze the base model and train other layers in the model. After 10 epoches of training, we unfreeze the model except the first 100 layers of the base model and continue to train. We will get the final accuracy after the evaluation of the model at the end of the workflow.
 
 ```
 Number of trainable variables now: 56
