@@ -102,8 +102,8 @@ class AutoProphet:
                and 2 columns, with column 'ds' indicating date and column 'y' indicating value
                and Td is the time dimension
         :param cross_validation: bool, if the eval result comes from cross_validation.
-               The value is set to False by default. Setting this option to true may
-               significantly slow down the process.
+               The value is set to True by default. Setting this option to False to
+               speed up the process.
         :param expect_horizon: int, validation data will be automatically splited from training
                data, and expect_horizon is the horizon you may need to use once the mode is fitted.
                The value defaults to None, where 10% of training data will be taken
