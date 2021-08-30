@@ -16,6 +16,8 @@
 # limitations under the License.
 #
 
+import pandas as pd
+
 from zoo.orca.automl.auto_estimator import AutoEstimator
 import zoo.orca.automl.hp as hp
 from zoo.chronos.model.prophet import ProphetBuilder
@@ -127,6 +129,9 @@ class AutoProphet:
         if expect_horizon is None:
             expect_horizon = int(0.1*len(data))
         if freq is None:
+            assert len(data) >= 2, "The training dataframe should contains more than 2 records."
+            assert pd.api.types.is_datetime64_any_dtype(data["ds"].dtypes), \
+                "The \"ds\" col should be in datetime 64 type, or you need to set `freq` in fit."
             self._freq = data["ds"].iloc[1] - data["ds"].iloc[0]
         else:
             self._freq = pd.Timedelta(freq)
