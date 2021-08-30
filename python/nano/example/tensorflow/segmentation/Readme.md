@@ -1,6 +1,6 @@
 # BigDL-Nano Image Segmentation Example with Tensorflow
 
-This example describe how BigDL Nano optimizes Image Segmentation example. 
+This example describes how to use BigDL Nano to optimize a TensorFlow image segmentation example. 
 
 ## Quick Start 
 
@@ -17,11 +17,9 @@ This example describe how BigDL Nano optimizes Image Segmentation example.
     ```
     pip install git+https://github.com/tensorflow/examples.git
     pip install tensorflow_datasets
-    pip install pydot
-    sudo apt install graphviz
     ```
 
-    You may need to install the `pydot` and `graphviz` for `plot_model/model_to_dot` if you want to plot model with `tf.keras.utils.plot_model`. You can install with following command in Ubuntu 18.04+
+    You may need to install the `pydot` and `graphviz` for `plot_model/model_to_dot` if you want to plot the model with `tf.keras.utils.plot_model`. You can install with the following command in Ubuntu 18.04+
 
     ```
     pip install pydot
@@ -33,11 +31,11 @@ This example describe how BigDL Nano optimizes Image Segmentation example.
     You can run this example in your conda environment with the following command:
     
     ```
-    python Segmentation.py
+    python segmentation.py
     ```
 
 ## Result
-You can check the evaluate result at the end of running output.
+You can check the evaluation result at the end of the running output.
 ```
 58/58 [==============================] - 12s 211ms/step - loss: 0.3430 - accuracy: 0.8843
 ```
