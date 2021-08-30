@@ -60,4 +60,4 @@ def _check_dt_is_sorted(df, dt_col, id_col="id"):
         if not res:
             raise RuntimeError(f"{dt_col} must be sorted.")
     except (ValueError, TypeError):
-        warnings.warn(f"{dt_col} column not sorted.", Warning)
+        warnings.warn(f"{dt_col} may not be sorted.", Warning)
