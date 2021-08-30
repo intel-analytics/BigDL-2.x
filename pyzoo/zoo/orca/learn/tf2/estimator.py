@@ -203,6 +203,7 @@ class TensorFlow2Estimator(OrcaSparkEstimator):
         )
 
         sc = SparkContext()
+        spark_rdd = sc.parallelize([1, 2, 3, 4], self.num_workers)
 
         from zoo.orca.data import SparkXShards
         data, validation_data = maybe_dataframe_to_xshards(data, validation_data,
@@ -216,16 +217,27 @@ class TensorFlow2Estimator(OrcaSparkEstimator):
                 data, validation_data = process_xshards_of_pandas_dataframe(data, feature_cols,
                                                                             label_cols,
                                                                             validation_data, "fit")
-            spark_rdd = sc.parallelize([1, 2, 3, 4], self.num_workers)
 
             if validation_data is None:
                 def transform_func(partition_refs):
                     params["data_creator"] = make_data_creator(partition_refs)
                     return TFRunner.step(**params)
                 worker_stats = spark_rdd.mapPartitions(transform_func).collect()
-
+            else:
+                def zip_transform_func(this_partition_refs, that_partition_refs):
+                    params["data_creator"] = make_data_creator(this_partition_refs)
+                    params["validation_data_creator"] = make_data_creator(that_partition_refs)
+                    return TFRunner.step(**params)
+                worker_stats = spark_rdd.mapPartitions(zip_transform_func).collect()
+        else:
+            params["data_creator"] = data
+            params["validation_data_creator"] = validation_data
+            def train_func(x):
+                return TFRunner.step(**params)
+            worker_stats = spark_rdd.mapPartitions(train_func).collect()
         stats = worker_stats[0].copy()
         return stats
+
 
     def evaluate(self, data, batch_size=32, num_steps=None, verbose=1,
                  sample_weight=None, callbacks=None, data_config=None,
