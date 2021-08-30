@@ -21,13 +21,11 @@ import subprocess
 import time
 import uuid
 import random
-import signal
 import warnings
 import tempfile
 import filelock
 import multiprocessing
 from packaging import version
-import psutil
 
 from zoo.ray.process import session_execute, ProcessMonitor
 from zoo.ray.utils import is_local
@@ -184,27 +182,30 @@ class RayServiceFuncGenerator(object):
                                                        object_store_memory=object_store_memory,
                                                        extra_params=extra_params)
 
-    def _get_spark_executor_pid(self):
+    @staticmethod
+    def _get_spark_executor_pid():
         # TODO: This might not work on OS other than Linux
         this_pid = os.getpid()
         pyspark_daemon_pid = get_parent_pid(this_pid)
         spark_executor_pid = get_parent_pid(pyspark_daemon_pid)
         return spark_executor_pid
 
-    def start_ray_daemon(self, python_loc, pid_to_watch, pgid_to_kill):
+    @staticmethod
+    def start_ray_daemon(python_loc, pid_to_watch, pgid_to_kill):
         daemon_path = os.path.join(os.path.dirname(__file__), "ray_daemon.py")
         start_daemon_command = ['nohup', python_loc, daemon_path,
                                 str(pgid_to_kill), str(pid_to_watch)]
-        pro = subprocess.Popen(start_daemon_command, preexec_fn=os.setpgrp)
+        subprocess.Popen(start_daemon_command, preexec_fn=os.setpgrp)
         time.sleep(1)
-
 
     def _start_ray_node(self, command, tag):
         modified_env = self._prepare_env()
         print("Starting {} by running: {}".format(tag, command))
         process_info = session_execute(command=command, env=modified_env, tag=tag)
-        spark_executor_pid = self._get_spark_executor_pid()
-        self.start_ray_daemon(self.python_loc, spark_executor_pid, process_info.pgid)
+        spark_executor_pid = RayServiceFuncGenerator._get_spark_executor_pid()
+        RayServiceFuncGenerator.start_ray_daemon(self.python_loc,
+                                                 pid_to_watch=spark_executor_pid,
+                                                 pgid_to_kill=process_info.pgid)
         import ray._private.services as rservices
         process_info.node_ip = rservices.get_node_ip_address()
         return process_info
@@ -606,7 +607,9 @@ class RayContext(object):
         print("Executing command: {}".format(command))
         process_info = session_execute(command=command, env=modified_env,
                                        tag="raylet", fail_fast=True)
-        self.ray_service.start_ray_daemon("python", os.getpid(), process_info.pgid)
+        RayServiceFuncGenerator.start_ray_daemon("python",
+                                                 pid_to_watch=os.getpid(),
+                                                 pgid_to_kill=process_info.pgid)
         # ProcessMonitor.register_shutdown_hook(pgid=process_info.pgid)
 
     def _start_driver(self, num_cores, redis_address):
