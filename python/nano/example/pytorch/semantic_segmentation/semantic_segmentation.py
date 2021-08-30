@@ -314,8 +314,6 @@ if __name__ == "__main__":
     cli_lightning_logo()
     parser = ArgumentParser(add_help=False)
     parser = SegModel.add_model_specific_args(parser)
-    parser.add_argument("--ipex", action="store_true",
-                        help="Whether to use Intel PyTorch extension.")
     hparams = parser.parse_args()
 
     main(hparams)
