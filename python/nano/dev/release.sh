@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 #
 # Copyright 2016 The BigDL Authors.
 #
