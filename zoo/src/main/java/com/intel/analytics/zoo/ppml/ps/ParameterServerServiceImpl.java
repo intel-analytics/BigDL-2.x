@@ -20,9 +20,13 @@ package com.intel.analytics.zoo.ppml.ps;
 import com.intel.analytics.zoo.ppml.generated.FLProto.*;
 import com.intel.analytics.zoo.ppml.generated.ParameterServerServiceGrpc;
 import io.grpc.stub.StreamObserver;
+import io.netty.handler.ssl.ClientAuth;
+import io.netty.handler.ssl.SslContextBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 
@@ -161,9 +165,9 @@ public class ParameterServerServiceImpl
 //            }
 
         UploadResponse response = UploadResponse.newBuilder()
-          .setCode(0)
-          .setResponse("Evaluate successfully.")
-          .build();
+                .setCode(0)
+                .setResponse("Evaluate successfully.")
+                .build();
 
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -184,12 +188,12 @@ public class ParameterServerServiceImpl
         if (last) {
             Table result = aggregator.getEvaluateResult(version);
             response = EvaluateResponse.newBuilder()
-              .setData(result)
-              .setResponse("Evaluate successfully.")
-              .build();
+                    .setData(result)
+                    .setResponse("Evaluate successfully.")
+                    .build();
         } else {
             response = EvaluateResponse.newBuilder()
-              .setResponse("Adding to evaluate pipeline.").build();
+                    .setResponse("Adding to evaluate pipeline.").build();
         }
 
         responseObserver.onNext(response);
@@ -207,8 +211,8 @@ public class ParameterServerServiceImpl
         logger.info("agg version: " + version);
         Table result = aggregator.getPredictResult(version);
         PredictTreeResponse response = PredictTreeResponse.newBuilder()
-          .setResult(result)
-          .build();
+                .setResult(result)
+                .build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

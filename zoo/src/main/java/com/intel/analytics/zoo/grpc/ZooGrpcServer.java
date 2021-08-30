@@ -1,15 +1,15 @@
 /*
- * Copyright 2018 Analytics Zoo Authors.
+ * Copyright 2021 The Analytic Zoo Authors
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License,  Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
+ * Unless required by applicable law or agreed to in writing,  software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,  either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -18,7 +18,11 @@
 package com.intel.analytics.zoo.grpc;
 
 
+import com.intel.analytics.zoo.ppml.generated.PSIServiceGrpc;
+import com.intel.analytics.zoo.ppml.generated.ParameterServerServiceGrpc;
 import com.intel.analytics.zoo.ppml.ps.Aggregator;
+import com.intel.analytics.zoo.ppml.ps.ParameterServerServiceImpl;
+import com.intel.analytics.zoo.ppml.psi.PSIServiceImpl;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -27,6 +31,7 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+
 
 
 /**
@@ -42,6 +47,7 @@ public class ZooGrpcServer {
     protected String configPath;
     protected BindableService service;
     protected String[] services;
+    protected Aggregator aggregator;
     protected CommandLine cmd;
 
     /**
@@ -54,12 +60,12 @@ public class ZooGrpcServer {
     }
     public ZooGrpcServer(String[] args, BindableService service) {
         options = new Options();
-        Option portArg = new Option(
-                "p", "port", true, "The port to listen.");
-        options.addOption(portArg);
-        Option configPathArg = new Option(
-                "c", "config", true, "The path to config YAML file");
-        options.addOption(configPathArg);
+        options.addOption(new Option(
+                "p", "port", true, "The port to listen."));
+        options.addOption(new Option(
+                "c", "config", true, "The path to config YAML file"));
+        options.addOption(new Option(
+                "s", "service", true, "service to use"));
         this.service = service;
         this.args = args;
 
@@ -85,7 +91,9 @@ public class ZooGrpcServer {
         services = cmd.getOptionValue("s", "").split(",");
 
     }
-
+    public void setAggregator(Aggregator aggregator) {
+        this.aggregator = aggregator;
+    }
     /** Entrypoint of ZooGrpcServer */
     public void build() {
         parseArgs();
