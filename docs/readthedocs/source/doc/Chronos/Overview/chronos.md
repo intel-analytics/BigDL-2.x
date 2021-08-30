@@ -124,27 +124,37 @@ AutoML visualization provides two kinds of visualization.
 
 **Note**: AutoML visualization is based on tensorboard and tensorboardx. They should be installed properly before the training starts.
 
-**Monitor view**
+<span id="monitor_view">**Monitor view**</span>
+
+Before training, start the tensorboard server through
+
+```python
 tensorboard --logdir=<logs_dir>/<job_name>
+```
 
 `logs_dir` is the log directory you set for your predictor(e.g. TimeSequencePredictor in Automated Time Series Prediction). It is default to "/home/\<username>/zoo_automl_logs", where `username` is your login username. `job_name` is the name parameter you set for your predictor.
 
+The data in SCALARS tag will be updated every 30 seconds for users to see the training progress.
+
 ![](../Image/automl_monitor.png)
-<!-- <img src="../Image/automl_monitor.png" alt='automl_monitor.png' style="zoom:50%" /> -->
 
 After training, start the tensorboard server through
-tensorboard --logdir=<logs_dir>/<job_name>_leaderboard/
 
-where `logs_dir` and `job_name` are the same as stated in [Monitor view]().
+```python
+tensorboard --logdir=<logs_dir>/<job_name>_leaderboard/
+```
+
+where `logs_dir` and `job_name` are the same as stated in [Monitor view](#monitor_view).
+
 A dashboard of each trail's configs and metrics is shown in the SCALARS tag.
 
 ![](../Image/automl_scalars.png)
-<!-- <img src="../Image/automl_scalars.png" alt='automl_scalars.png' style="zoom:50%" /> -->
 
 A leaderboard of each trail's configs and metrics is shown in the HPARAMS tag.
 
 ![](../Image/automl_hparams.png)
-<!-- <img src="../Image/automl_hparams.png" alt='automl_hparams.png' style="zoom:50%" /> -->
+
+**Use visualization in Jupyter Notebook**
 
 You can enable a tensorboard view in jupyter notebook by the following code.
 
