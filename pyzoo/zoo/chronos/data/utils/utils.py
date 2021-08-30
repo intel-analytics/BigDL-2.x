@@ -56,7 +56,7 @@ def _check_dt_is_sorted(df, dt_col, id_col="id"):
     import warnings
     df = df.copy()
     try:
-        res = (np.diff(df[dt_col].values.astype(np.float32)) >=0).all()
+        res = (np.diff(df[dt_col].values.astype(np.float32)) >= 0).all()
         if not res:
             raise RuntimeError(f"{dt_col} must be sorted.")
     except (ValueError, TypeError):
