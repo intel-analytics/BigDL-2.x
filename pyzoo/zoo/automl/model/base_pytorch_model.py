@@ -320,7 +320,7 @@ class PytorchBaseModel(BaseModel):
                        for m in metrics]
         return eval_result
 
-    def _build_onnx(self, x, dirname=None):
+    def _build_onnx(self, x, dirname=None, thread_num=None, sess_options=None):
         if not self.model_built:
             raise RuntimeError("You must call fit_eval or restore\
                                first before calling onnx methods!")
@@ -345,7 +345,12 @@ class PytorchBaseModel(BaseModel):
                                         'output': {0: 'batch_size'}})
         self.onnx_model = onnx.load(os.path.join(dirname, "cache.onnx"))
         onnx.checker.check_model(self.onnx_model)
-        self.ort_session = onnxruntime.InferenceSession(os.path.join(dirname, "cache.onnx"))
+        if sess_options is None:
+            sess_options = onnxruntime.SessionOptions()
+            if thread_num is not None:
+                sess_options.intra_op_num_threads = thread_num
+        self.ort_session = onnxruntime.InferenceSession(os.path.join(dirname, "cache.onnx"),
+                                                        sess_options=sess_options)
         self.onnx_model_built = True
 
     def predict_with_onnx(self, x, mc=False, dirname=None, batch_size=32):
