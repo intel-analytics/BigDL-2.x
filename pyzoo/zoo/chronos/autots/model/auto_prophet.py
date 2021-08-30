@@ -102,8 +102,8 @@ class AutoProphet:
         :param cross_validation: bool, if the eval result comes from cross_validation.
                The value is set to False by default. Setting this option to true may
                significantly slow down the process.
-        :param expect_horizon: int, validation data will be automatically splited from training data,
-               and expect_horizon is the horizon you may need to use once the mode is fitted.
+        :param expect_horizon: int, validation data will be automatically splited from training
+               data, and expect_horizon is the horizon you may need to use once the mode is fitted.
                The value defaults to None, where 10% of training data will be taken
                as the validation data.
         :param freq: the freqency of the training dataframe. the frequency can be anything from the
@@ -111,7 +111,7 @@ class AutoProphet:
                https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliasesDefaulted
                to None, where an unreliable frequency will be infer implicitly.
         :param metric_threshold: a trial will be terminated when metric threshold is met
-        :param n_sampling: Number of times to sample from the search_space. Defaults to 20.
+        :param n_sampling: Number of times to sample from the search_space. Defaults to 50.
                If hp.grid_search is in search_space, the grid will be repeated n_sampling of times.
                If this is -1, (virtually) infinite samples are generated
                until a stopping condition is met.
