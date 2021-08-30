@@ -9,52 +9,42 @@ import subprocess
 import tempfile
 import pickle
 
-import numpy as np
 import tensorflow as tf
-from tensorflow.keras.utils import Sequence
-from pyspark.ml.evaluation import BinaryClassificationEvaluator
 
 from zoo.orca import init_orca_context, stop_orca_context
-from zoo.orca.data.utils import extract_one_path
-
 from zoo.models.recommendation.wide_and_deep import ColumnFeatureInfo
 from zoo.orca import OrcaContext
 from zoo.orca.learn.tf2.estimator import Estimator
-from zoo.orca.data.file import open_text, exists, write_text, makedirs
+from zoo.orca.data.file import exists, makedirs
 from zoo.friesian.feature import FeatureTable
 from zoo.common.utils import get_remote_file_to_local
 
-from wnd_model import *
+wide_cols = ['engaged_with_user_is_verified', 'enaging_user_is_verified']
+wide_dims = [1, 1]
+cross_cols = ['present_media_language']
 
-cross_cols = [['present_media', 'tweet_type']]
+cat_cols = ['present_media',
+            'tweet_type',
+            'language']
+
+count_cols = ['engaged_with_user_follower_count',
+              'engaged_with_user_following_count',
+              'enaging_user_follower_count',
+              'enaging_user_following_count']
+
+indicator_cols = cat_cols + count_cols
+# indicator_dims = cat_dims + count_dims
 
 embedding_cols = [
-                  'tweet_id',
-                  'engaged_with_user_id',
-                  'enaging_user_id',
-                  'present_media',  #
-                  'present_links',  #
-                  'present_domains',  #
-                  ]
+    'engaged_with_user_id',
+    'enaging_user_id',
+    'hashtags',
+    'present_domains',  #
+]
 
-indicator_cols = ['present_media',  #
-                  'tweet_type',  #
-                  'language',  #
-                  'engaged_with_user_is_verified',
-                  'enaging_user_is_verified',
-                  ]
-
-cont_cols = ['engaged_with_user_follower_count',  # Engaged With User Features
-             'engaged_with_user_following_count',  #
-             'enaging_user_follower_count',  # Engaging User Features
-             'enaging_user_following_count',  #
-             'len_hashtags',
-             'len_domains',
-             'len_links'
-             ]
-
-
-_SHUFFLE_BUFFER = 1500
+len_cols = ['len_hashtags',
+            'len_domains',
+            'len_links']
 
 conf = {"spark.network.timeout": "10000000",
         "spark.sql.broadcastTimeout": "7200",
@@ -71,6 +61,7 @@ conf = {"spark.network.timeout": "10000000",
         "spark.driver.memoryOverhead": "100G",
         "spark.executor.memoryOverhead": "100G"}
 
+
 def get_size(data_dir):
     spark = OrcaContext.get_spark_session()
     if data_dir.split("://")[0] == data_dir:  # no prefix
@@ -78,9 +69,13 @@ def get_size(data_dir):
     else:
         data_dir_with_prefix = data_dir
 
-    if exists(os.path.join(data_dir, "train_parquet")) and exists(os.path.join(data_dir, "test_parquet")):
-        train_df = spark.read.parquet(os.path.join(data_dir_with_prefix, "train_parquet"))
-        test_df = spark.read.parquet(os.path.join(data_dir_with_prefix, "test_parquet"))
+    if not exists(os.path.join(data_dir, "train_parquet")) or \
+            not exists(os.path.join(data_dir, "test_parquet")):
+        raise Exception("Not train and test data parquet specified")
+    else:
+        train_tbl = FeatureTable.read_parquet(os.path.join(data_dir_with_prefix, "train_parquet"))
+        test_tbl = FeatureTable.read_parquet(os.path.join(data_dir_with_prefix, "test_parquet"))
+
 
     # get cat sizes
     with tempfile.TemporaryDirectory() as local_path:
@@ -89,32 +84,88 @@ def get_size(data_dir):
         with open(os.path.join(local_path, "categorical_sizes.pkl"), 'rb') as f:
             cat_sizes_dic = pickle.load(f)
 
-    indicator_sizes = [cat_sizes_dic[c] for c in indicator_cols] + [1] * 2
+    indicator_sizes = [cat_sizes_dic[c] for c in indicator_cols]
     print("indicator sizes: ", indicator_sizes)
-    embedding_sizes = [cat_sizes_dic[c] for c in embedding_cols]  # tweet_id, engaged_user, engaging_user
+    embedding_sizes = [cat_sizes_dic[c] for c in embedding_cols]
     print("embedding sizes: ", embedding_sizes)
+    cross_sizes = [cat_sizes_dic[c] for c in cross_cols]
 
-    with tempfile.TemporaryDirectory() as local_path:
-        get_remote_file_to_local(os.path.join(data_dir, "meta/cross_sizes.pkl"),
-                                 os.path.join(local_path, "cross_sizes.pkl"))
-        with open(os.path.join(local_path, "cross_sizes.pkl"), 'rb') as f:
-            cross_sizes_dic = pickle.load(f)
+    return train_tbl, test_tbl, indicator_sizes, embedding_sizes, cross_sizes
 
-    cross_sizes = [cross_sizes_dic[c] for c in ["_".join(cross_names) for cross_names in cross_cols]]
 
-    return train_df, test_df, indicator_sizes, embedding_sizes, cross_sizes
+def build_model(column_info, hidden_units=[100, 50, 25]):
+    """Build an estimator appropriate for the given model type."""
+    wide_base_input_layers = []
+    wide_base_layers = []
+    for i in range(len(column_info.wide_base_cols)):
+        wide_base_input_layers.append(tf.keras.layers.Input(shape=[], dtype="int32"))
+        wide_base_layers.append(tf.keras.backend.one_hot(wide_base_input_layers[i], column_info.wide_base_dims[i] + 1))
+
+    wide_cross_input_layers = []
+    wide_cross_layers = []
+    for i in range(len(column_info.wide_cross_cols)):
+        wide_cross_input_layers.append(tf.keras.layers.Input(shape=[], dtype="int32"))
+        wide_cross_layers.append(tf.keras.backend.one_hot(wide_cross_input_layers[i], column_info.wide_cross_dims[i]))
+
+    indicator_input_layers = []
+    indicator_layers = []
+    for i in range(len(column_info.indicator_cols)):
+        indicator_input_layers.append(tf.keras.layers.Input(shape=[], dtype="int32"))
+        indicator_layers.append(tf.keras.backend.one_hot(indicator_input_layers[i], column_info.indicator_dims[i] + 1))
+
+    embed_input_layers = []
+    embed_layers = []
+    for i in range(len(column_info.embed_in_dims)):
+        embed_input_layers.append(tf.keras.layers.Input(shape=[], dtype="int32"))
+        iembed = tf.keras.layers.Embedding(column_info.embed_in_dims[i] + 1,
+                                           output_dim=column_info.embed_out_dims[i])(embed_input_layers[i])
+        flat_embed = tf.keras.layers.Flatten()(iembed)
+        embed_layers.append(flat_embed)
+
+    continuous_input_layers = []
+    continuous_layers = []
+    for i in range(len(column_info.continuous_cols)):
+        continuous_input_layers.append(tf.keras.layers.Input(shape=[]))
+        continuous_layers.append(tf.keras.layers.Reshape(target_shape=(1,))(continuous_input_layers[i]))
+
+    if len(wide_base_layers + wide_cross_layers) > 1:
+        wide_input = tf.keras.layers.concatenate(wide_base_layers + wide_cross_layers, axis=1)
+    else:
+        wide_input = (wide_base_layers + wide_cross_layers)[0]
+    wide_out = tf.keras.layers.Dense(1)(wide_input)
+    if len(indicator_layers + embed_layers + continuous_layers) > 1:
+        deep_concat = tf.keras.layers.concatenate(indicator_layers +
+                                                  embed_layers +
+                                                  continuous_layers, axis=1)
+    else:
+        deep_concat = (indicator_layers + embed_layers + continuous_layers)[0]
+    linear = deep_concat
+    for ilayer in range(0, len(hidden_units)):
+        linear_mid = tf.keras.layers.Dense(hidden_units[ilayer])(linear)
+        bn = tf.keras.layers.BatchNormalization()(linear_mid)
+        relu = tf.keras.layers.ReLU()(bn)
+        dropout = tf.keras.layers.Dropout(0.1)(relu)
+        linear = dropout
+    deep_out = tf.keras.layers.Dense(1)(linear)
+    added = tf.keras.layers.add([wide_out, deep_out])
+    out = tf.keras.layers.Activation("sigmoid")(added)
+    model = tf.keras.models.Model(wide_base_input_layers +
+                                  wide_cross_input_layers +
+                                  indicator_input_layers +
+                                  embed_input_layers +
+                                  continuous_input_layers,
+                                  out)
+
+    return model
 
 
 def model_creator(config):
-    model = build_model(class_num=config["class_num"],
-                        column_info=config["column_info"],
-                        model_type=config["model_type"],
-                        hidden_units=config["hidden_units"])
+    model = build_model(column_info=config["column_info"],
+                        hidden_units=config['hidden_units'])
     optimizer = tf.keras.optimizers.Adam(config["lr"])
     model.compile(optimizer=optimizer,
-                  loss='sparse_categorical_crossentropy',
-                  metrics=['accuracy'])
-
+                  loss='binary_crossentropy',
+                  metrics=['binary_accuracy', 'binary_crossentropy', 'AUC', 'Precision', 'Recall'])
     return model
 
 
@@ -124,9 +175,9 @@ if __name__ == "__main__":
                       help='The cluster mode, such as local, yarn or standalone.')
     parser.add_option('--master', type=str, default=None,
                       help='The master url, only used when cluster mode is standalone.')
-    parser.add_option('--executor_cores', type=int, default=48,
+    parser.add_option('--executor_cores', type=int, default=44,
                       help='The executor core number.')
-    parser.add_option('--executor_memory', type=str, default="160g",
+    parser.add_option('--executor_memory', type=str, default="30g",
                       help='The executor memory.')
     parser.add_option('--num_executor', type=int, default=8,
                       help='The number of executor.')
@@ -136,12 +187,9 @@ if __name__ == "__main__":
                       help='The driver memory.')
     parser.add_option("--data_dir", dest="data_dir")
     parser.add_option("--model_dir", dest="model_dir")
-    parser.add_option("--model_type", dest="model_type", default="wnd")
-    parser.add_option("--batch_size", "-b", dest="batch_size", default=400, type=int)
+    parser.add_option("--batch_size", "-b", dest="batch_size", default=102400, type=int)
     parser.add_option("--epoch", "-e", dest="epochs", default=2, type=int)
     parser.add_option("--learning_rate", "-l", dest="learning_rate", default=1e-4, type=float)
-    parser.add_option("--class_num", dest="class_num", default=2, type=int)
-    parser.add_option('--mode', type=str, default="train", dest="mode")
     parser.add_option('--early_stopping', type=int, default=3, dest="early_stopping")
     parser.add_option('--hidden_units', dest="hidden_units", type=str,
                       help='hidden units for deep mlp', default="1024, 1024")
@@ -171,18 +219,18 @@ if __name__ == "__main__":
     elif options.cluster_mode == "spark-submit":
         init_orca_context("spark-submit")
 
-    train_df, test_df, indicator_sizes, embedding_sizes, cross_sizes = get_size(options.data_dir)
+    train_tbl, test_tbl, indicator_sizes, embedding_sizes, cross_sizes = get_size(options.data_dir)
 
-    column_info = ColumnFeatureInfo(wide_base_cols=[],
-                                    wide_base_dims=[],
-                                    wide_cross_cols=["_".join(cross_names) for cross_names in cross_cols],
+    column_info = ColumnFeatureInfo(wide_base_cols=wide_cols,
+                                    wide_base_dims=wide_dims,
+                                    wide_cross_cols=cross_cols,
                                     wide_cross_dims=cross_sizes,
                                     indicator_cols=indicator_cols,
                                     indicator_dims=indicator_sizes,
                                     embed_cols=embedding_cols,
                                     embed_in_dims=embedding_sizes,
-                                    embed_out_dims=[16] * len(embedding_cols),
-                                    continuous_cols=cont_cols,
+                                    embed_out_dims=[8] * len(embedding_cols),
+                                    continuous_cols=len_cols,
                                     label="label"
                                     )
 
@@ -202,56 +250,39 @@ if __name__ == "__main__":
         config=config,
         backend="tf2")
 
-    if options.mode == "train":
-        train_count = train_df.count()
-        print("train size: ", train_count)
-        steps = math.ceil(train_count / options.batch_size)
-        test_count = test_df.count()
-        print("test size: ", test_count)
-        val_steps = math.ceil(test_count / options.batch_size)
+    train_count = train_tbl.size()
+    print("train size: ", train_count)
+    steps = math.ceil(train_count / options.batch_size)
+    test_count = test_tbl.size()
+    print("test size: ", test_count)
+    val_steps = math.ceil(test_count / options.batch_size)
 
-        if not exists(options.model_dir):
-            makedirs(options.model_dir)
+    if not exists(options.model_dir):
+        makedirs(options.model_dir)
 
-        callbacks = []
+    callbacks = []
 
-        # early stopping
-        earlystopping = options.early_stopping
-        if earlystopping:
-            from tensorflow.keras.callbacks import EarlyStopping
+    # early stopping
+    earlystopping = options.early_stopping
+    if earlystopping:
+        from tensorflow.keras.callbacks import EarlyStopping
 
-            callbacks.append(EarlyStopping(monitor='accuracy', mode='max', verbose=1, patience=earlystopping))
+        callbacks.append(EarlyStopping(monitor='val_auc', mode='max', verbose=1, patience=earlystopping))
 
-        start = time()
-        est.fit(data=train_df,
-                epochs=options.epochs,
-                batch_size=options.batch_size,
-                callbacks=callbacks,
-                steps_per_epoch=steps,
-                feature_cols=column_info.wide_base_cols +
-                             column_info.wide_cross_cols +
-                             column_info.indicator_cols +
-                             column_info.embed_cols +
-                             column_info.continuous_cols,
-                label_cols=['label'])
-        end = time()
-        print("Training time is: ", end - start)
-        est.save(os.path.join(options.model_dir, "model-%d.ckpt" % options.epochs))
-        model = est.get_model()
-        model.save_weights(os.path.join(options.model_dir, "model.h5"))
+    start = time()
+    est.fit(data=train_tbl.df,
+            epochs=options.epochs,
+            batch_size=options.batch_size,
+            callbacks=callbacks,
+            steps_per_epoch=steps,
+            validation_data=test_tbl.df,
+            validation_steps=val_steps,
+            feature_cols=column_info.feature_cols,
+            label_cols=column_info.label_cols)
+    end = time()
+    print("Training time is: ", end - start)
+    est.save(os.path.join(options.model_dir, "model-%d.ckpt" % options.epochs))
+    model = est.get_model()
+    model.save_weights(os.path.join(options.model_dir, "model.h5"))
 
-        prediction_df = est.predict(test_df, batch_size=options.batch_size,
-                                    feature_cols=column_info.wide_base_cols +
-                                                 column_info.wide_cross_cols +
-                                                 column_info.indicator_cols +
-                                                 column_info.embed_cols +
-                                                 column_info.continuous_cols
-                                    )
-        prediction_df.cache()
-
-        evaluator = BinaryClassificationEvaluator(rawPredictionCol="prediction",
-                                                  labelCol="label",
-                                                  metricName="areaUnderROC")
-        auc = evaluator.evaluate(prediction_df)
-        print("AUC score is: ", auc)
     stop_orca_context()

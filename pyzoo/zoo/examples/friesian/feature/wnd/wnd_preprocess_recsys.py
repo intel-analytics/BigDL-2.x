@@ -1,10 +1,14 @@
 import os
 
 from argparse import ArgumentParser
+import tempfile
+import pickle
 from time import time
 from functools import reduce
 
 from zoo.orca import init_orca_context, stop_orca_context, OrcaContext
+from zoo.orca.data.file import makedirs, write_text, exists
+from zoo.common.utils import put_local_file_to_remote
 from zoo.friesian.feature import FeatureTable
 import time
 
@@ -28,14 +32,23 @@ timestamp_cols = [
 ]
 
 cat_cols = [
+    'engaged_with_user_id',
+    'enaging_user_id',
     'present_media',
     'tweet_type',
     'language'
 ]
 
+list_cols = [
+    "hashtags",
+    "present_domains",
+    "present_links"
+]
+
 len_cols = ['len_hashtags',
             'len_domains',
             'len_links']
+
 
 media_map = {
     '': 0,
@@ -59,12 +72,8 @@ type_map = {
     'TopLevel': 2,
 }
 
+cross_cols = [['present_media', 'language']]
 
-executor_cores = 44
-num_executor = 8
-executor_memory = "130g"
-driver_cores = 4
-driver_memory = "36g"
 conf = {"spark.network.timeout": "10000000",
         "spark.sql.broadcastTimeout": "7200",
         "spark.sql.shuffle.partitions": "2000",
@@ -85,9 +94,9 @@ def _parse_args():
                         help='The cluster mode, such as local, yarn or standalone.')
     parser.add_argument('--master', type=str, default=None,
                         help='The master url, only used when cluster mode is standalone.')
-    parser.add_argument('--executor_cores', type=int, default=48,
+    parser.add_argument('--executor_cores', type=int, default=44,
                         help='The executor core number.')
-    parser.add_argument('--executor_memory', type=str, default="160g",
+    parser.add_argument('--executor_memory', type=str, default="130",
                         help='The executor memory.')
     parser.add_argument('--num_executor', type=int, default=8,
                         help='The number of executor.')
@@ -103,11 +112,8 @@ def _parse_args():
                         help="Path to the folder of parquet files.")
     parser.add_argument('--output_folder', type=str, default=".",
                         help="The path to save the preprocessed data to parquet files. ")
-    parser.add_argument('--frequency_limit', type=int, default=15,
-                        help="frequency below frequency_limit will be "
-                             "omitted from the encoding.")
     parser.add_argument('--cross_sizes', type=str,
-                        help='bucket sizes for cross columns', default="1000, 1000")
+                        help='bucket sizes for cross columns', default="600")
 
     args = parser.parse_args()
     start, end = args.files.split('-')
@@ -144,14 +150,12 @@ def encode_user_id(tbl):
         .rename({"user_id": "enaging_user_id"})
     return tbl
 
-def generate_features(tbl):
+def generate_features(tbl, bins, cross_sizes):
     tbl = tbl.cut_bins(columns=count_cols,
-                       bins=[1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7],
+                       bins=bins,
                        out_cols=count_cols)
 
-    cross_cols = [['present_media', 'language']]
-    cross_dims = [600]
-    tbl = tbl.cross_columns(cross_cols, cross_dims)
+    tbl = tbl.cross_columns(cross_cols, cross_sizes)
     return tbl
 
 def transform_label(tbl):
@@ -181,29 +185,31 @@ if __name__ == '__main__':
     test_paths = [os.path.join(args.input_folder, 'part-%05d.parquet' % i) for i in args.files]
     train_tbl = FeatureTable.read_parquet(train_paths)
     test_tbl = FeatureTable.read_parquet(test_paths)
+
     train_tbl = preprocess(train_tbl)
     test_tbl = preprocess(test_tbl)
 
     train_tbl, language_idx = train_tbl.category_encode("language")
     test_tbl = test_tbl.encode_string("language", language_idx)
 
-    user_index = train_tbl.gen_string_idx({'src_cols': ['engaged_with_user_id', 'enaging_user_id'], 'col_name': 'user_id'})
+    user_index = train_tbl.gen_string_idx({'src_cols': ['engaged_with_user_id', 'enaging_user_id'],
+                                           'col_name': 'user_id'})
     train_tbl = encode_user_id(train_tbl)
     test_tbl = encode_user_id(test_tbl)
 
-    indexes = train_tbl.gen_string_idx(["hashtags", "present_domains", "present_links"],
-                                       do_split=True, sep='\t')
-    train_tbl = train_tbl.encode_string(["hashtags", "present_domains", "present_links"], indexes,
+    indexes = train_tbl.gen_string_idx(list_cols, do_split=True, sep='\t')
+    train_tbl = train_tbl.encode_string(list_cols, indexes,
                                         do_split=True, sep='\t', keep_most_frequent=True)
-    test_tbl = test_tbl.encode_string(["hashtags", "present_domains", "present_links"], indexes,
-                                        do_split=True, sep='\t', keep_most_frequent=True)
+    test_tbl = test_tbl.encode_string(list_cols, indexes,
+                                      do_split=True, sep='\t', keep_most_frequent=True)
 
     train_tbl.cache()
 
     test_tbl.cache()
 
-    train_tbl = generate_features(train_tbl)
-    test_tbl = generate_features(test_tbl)
+    bins = [1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7]
+    train_tbl = generate_features(train_tbl, bins, args.cross_sizes)
+    test_tbl = generate_features(test_tbl, bins, args.cross_sizes)
 
     train_tbl, min_max_dict = train_tbl.min_max_scale(len_cols)
     test_tbl = test_tbl.transform_min_max_scale(len_cols, min_max_dict)
@@ -211,45 +217,39 @@ if __name__ == '__main__':
     train_tbl = transform_label(train_tbl)
     test_tbl = transform_label(test_tbl)
 
+    # save preprocessed data
     train_tbl.write_parquet(os.path.join(args.output_folder, "train_parquet"))
     test_tbl.write_parquet(os.path.join(args.output_folder, "test_parquet"))
 
     # save meta
-    cat_sizes_1 = [c.size() for c in cat_indexes_1]
-    cat_sizes_dic = dict(zip(cat_cols_1, cat_sizes_1))
-    cat_sizes_dic['engaged_with_user_id'] = user_size
-    cat_sizes_dic['enaging_user_id'] = user_size
-    print("cat sizes: ", cat_sizes_dic)
+    cat_sizes_dict = {}
+    cat_sizes_dict['present_media'] = len(media_map)
+    cat_sizes_dict['tweet_type'] = len(type_map)
+    cat_sizes_dict['language'] = language_idx.size()
+    for i in range(len(list_cols)):
+        cat_sizes_dict[list_cols[i]] = indexes[i]
+    cat_sizes_dict['engaged_with_user_id'] = user_index.size()
+    cat_sizes_dict['enaging_user_id'] = user_index.size()
+
+    cross_sizes_dict = dict(zip(["_".join(cross_names) for cross_names in cross_cols],
+                               args.cross_sizes))
+
+    cat_sizes_dict.update(cross_sizes_dict)
+
+    count_sizes_dict = dict(zip(count_cols, [len(bins)] * len(count_cols)))
+    cat_sizes_dict.update(count_sizes_dict)
 
     if not exists(os.path.join(args.output_folder, "meta")):
         makedirs(os.path.join(args.output_folder, "meta"))
 
     with tempfile.TemporaryDirectory() as local_path:
         with open(os.path.join(local_path, "categorical_sizes.pkl"), 'wb') as f:
-            pickle.dump(cat_sizes_dic, f)
+            pickle.dump(cat_sizes_dict, f)
         put_local_file_to_remote(os.path.join(local_path, "categorical_sizes.pkl"),
                                  os.path.join(args.output_folder, "meta/categorical_sizes.pkl"),
                                  over_write=True)
 
-    cross_sizes_dic = dict(zip(["_".join(cross_names) for cross_names in cross_cols],
-                               args.cross_sizes))
-
-    print("cross sizes: ", cross_sizes_dic)
-    # cross_sizes_text = "\n".join([str(s) for s in args.cross_sizes])
-    # write_text(os.path.join(args.output_folder, "meta/cross_sizes.txt"), cross_sizes_text)
-    with tempfile.TemporaryDirectory() as local_path:
-        with open(os.path.join(local_path, "cross_sizes.pkl"), 'wb') as f:
-            pickle.dump(cross_sizes_dic, f)
-        put_local_file_to_remote(os.path.join(local_path, "cross_sizes.pkl"),
-                                 os.path.join(args.output_folder, "meta/cross_sizes.pkl"),
-                                 over_write=True)
-
-    # save data
-    new_tbl.write_parquet(os.path.join(args.output_folder, "data_parquet"))
     end = time()
-    print("Preprocessing and save time: ", end - time_start)
-
-    end = time.time()
-    print("preprocessing time is: ", end - start)
+    print("Preprocessing and save time: ", end - start)
 
     stop_orca_context()
