@@ -63,7 +63,6 @@ conf = {"spark.network.timeout": "10000000",
 
 
 def get_size(data_dir):
-    spark = OrcaContext.get_spark_session()
     if data_dir.split("://")[0] == data_dir:  # no prefix
         data_dir_with_prefix = "file://" + data_dir
     else:
@@ -75,7 +74,6 @@ def get_size(data_dir):
     else:
         train_tbl = FeatureTable.read_parquet(os.path.join(data_dir_with_prefix, "train_parquet"))
         test_tbl = FeatureTable.read_parquet(os.path.join(data_dir_with_prefix, "test_parquet"))
-
 
     # get cat sizes
     with tempfile.TemporaryDirectory() as local_path:
@@ -197,8 +195,6 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args(sys.argv)
     options.hidden_units = [int(x) for x in options.hidden_units.split(',')]
 
-    model_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "wnd_model.py")
-
     if options.cluster_mode == "local":
         init_orca_context("local", cores=options.executor_cores, memory=options.executor_memory,
                           init_ray_on_spark=True)
@@ -207,15 +203,13 @@ if __name__ == "__main__":
                           cores=options.executor_cores, num_nodes=options.num_executor,
                           memory=options.executor_memory,
                           driver_cores=options.driver_cores, driver_memory=options.driver_memory, conf=conf,
-                          init_ray_on_spark=True,
-                          extra_python_lib=model_file)
+                          init_ray_on_spark=True)
     elif options.cluster_mode == "yarn":
         init_orca_context("yarn-client", cores=options.executor_cores,
                           num_nodes=options.num_executor, memory=options.executor_memory,
                           driver_cores=options.driver_cores, driver_memory=options.driver_memory,
                           conf=conf,
-                          init_ray_on_spark=True,
-                          extra_python_lib=model_file)
+                          init_ray_on_spark=True)
     elif options.cluster_mode == "spark-submit":
         init_orca_context("spark-submit")
 

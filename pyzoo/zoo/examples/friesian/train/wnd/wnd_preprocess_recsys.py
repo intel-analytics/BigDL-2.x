@@ -104,10 +104,10 @@ def _parse_args():
                         help='The driver core number.')
     parser.add_argument('--driver_memory', type=str, default="36g",
                         help='The driver memory.')
-    parser.add_argument('--train_files', type=str, required=True,
+    parser.add_argument('--train_files', type=str, default="000-269", required=True,
                         help="range for preprocessing train files, such as 000-269, 000-001.")
-    parser.add_argument('--test_files', type=str, required=True,
-                        help="range for preprocessing test files, such as 000-269, 000-001.")
+    parser.add_argument('--test_files', type=str, default="00-63", required=True,
+                        help="range for preprocessing test files, such as 00-63, 00-01.")
     parser.add_argument('--input_folder', type=str, required=True,
                         help="Path to the folder of parquet files.")
     parser.add_argument('--output_folder', type=str, default=".",
@@ -181,8 +181,8 @@ if __name__ == '__main__':
                           conf=conf)
 
     start = time()
-    train_paths = [os.path.join(args.input_folder, 'part-%05d.parquet' % i) for i in args.files]
-    test_paths = [os.path.join(args.input_folder, 'part-%05d.parquet' % i) for i in args.files]
+    train_paths = [os.path.join(args.input_folder, 'spark_parquet/part-%05d.parquet' % i) for i in args.files]
+    test_paths = [os.path.join(args.input_folder, 'test_spark_parquet/part-%05d.parquet' % i) for i in args.files]
     train_tbl = FeatureTable.read_parquet(train_paths)
     test_tbl = FeatureTable.read_parquet(test_paths)
 
