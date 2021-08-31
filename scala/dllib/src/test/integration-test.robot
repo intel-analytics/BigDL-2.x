@@ -17,7 +17,7 @@ Test template    BigDL Test
 *** Keywords ***
 Build SparkJar
    [Arguments]       ${spark_version}
-   ${build}=         Catenate                        SEPARATOR=/    ${curdir}    make-dist.sh
+   ${build}=         Catenate                        SEPARATOR=/    ${curdir}    scala/make-dist.sh
    Log To Console    ${spark_version}
    Log To Console    start to build jar ${build} -P ${spark_version}
    Run               ${build} -P ${spark_version}
