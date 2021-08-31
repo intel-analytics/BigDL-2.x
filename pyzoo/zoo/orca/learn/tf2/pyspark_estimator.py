@@ -104,8 +104,7 @@ class TensorFlow2SparkEstimator(OrcaSparkEstimator):
         executor_cores = sc.getConf().get("spark.executor.cores")
         num_executors = sc.getConf().get("spark.executor.instances")
 
-        self.num_workers = num_executors
-        self.worker_cores = executor_cores
+        self.num_workers = num_executors * executor_cores
 
     def fit(self, data, epochs=1, batch_size=32, verbose=1,
             callbacks=None, validation_data=None, class_weight=None,
