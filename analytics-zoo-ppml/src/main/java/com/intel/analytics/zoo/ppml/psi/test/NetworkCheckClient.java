@@ -17,6 +17,8 @@
 package com.intel.analytics.zoo.ppml.psi.test;
 
 import com.intel.analytics.zoo.ppml.FLClient;
+import com.intel.analytics.zoo.ppml.generated.PSIServiceGrpc;
+import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 

@@ -17,17 +17,14 @@
 package com.intel.analytics.zoo.ppml;
 
 import com.intel.analytics.zoo.grpc.ZooGrpcServer;
-import com.intel.analytics.zoo.ppml.ps.Aggregator;
-import com.intel.analytics.zoo.ppml.ps.ParameterServerServiceImpl;
 import com.intel.analytics.zoo.ppml.psi.PSIServiceImpl;
 import io.grpc.BindableService;
 import io.grpc.ServerBuilder;
-
-import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
-import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
-import io.grpc.netty.shaded.io.netty.handler.ssl.ClientAuth;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
+import io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.NettyServerBuilder;
+import io.netty.handler.ssl.ClientAuth;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import org.apache.commons.cli.*;
 
 import javax.net.ssl.SSLException;
@@ -41,7 +38,6 @@ import java.io.IOException;
  * Supported types: PSI, VFL,
  */
 public class FLServer extends ZooGrpcServer {
-    protected Aggregator aggregator;
     String certChainFilePath;
     String privateKeyFilePath;
     String trustCertCollectionFilePath;
@@ -78,9 +74,6 @@ public class FLServer extends ZooGrpcServer {
         }
         return GrpcSslContexts.configure(sslClientContextBuilder).build();
     }
-    public void setAggregator(Aggregator aggregator) {
-        this.aggregator = aggregator;
-    }
     @Override
     public void build() {
         parseArgs();
@@ -92,7 +85,7 @@ public class FLServer extends ZooGrpcServer {
             if (service.equals("psi")) {
                 builder.addService(new PSIServiceImpl());
             } else if (service.equals("ps")) {
-                builder.addService(new ParameterServerServiceImpl(aggregator));
+                // add algorithms here
             } else {
                 logger.warn("Type is not supported, skipped. Type: " + service);
             }

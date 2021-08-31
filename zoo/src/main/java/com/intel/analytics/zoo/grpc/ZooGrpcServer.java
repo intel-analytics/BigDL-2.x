@@ -17,12 +17,6 @@
 
 package com.intel.analytics.zoo.grpc;
 
-
-import com.intel.analytics.zoo.ppml.generated.PSIServiceGrpc;
-import com.intel.analytics.zoo.ppml.generated.ParameterServerServiceGrpc;
-import com.intel.analytics.zoo.ppml.ps.Aggregator;
-import com.intel.analytics.zoo.ppml.ps.ParameterServerServiceImpl;
-import com.intel.analytics.zoo.ppml.psi.PSIServiceImpl;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -31,8 +25,6 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-
-
 
 /**
  * All Analytics Zoo gRPC server are based on ZooGrpcServer
@@ -47,7 +39,6 @@ public class ZooGrpcServer {
     protected String configPath;
     protected BindableService service;
     protected String[] services;
-    protected Aggregator aggregator;
     protected CommandLine cmd;
 
     /**
@@ -90,9 +81,6 @@ public class ZooGrpcServer {
         configPath = cmd.getOptionValue("config", "config.yaml");
         services = cmd.getOptionValue("s", "").split(",");
 
-    }
-    public void setAggregator(Aggregator aggregator) {
-        this.aggregator = aggregator;
     }
     /** Entrypoint of ZooGrpcServer */
     public void build() {
