@@ -260,7 +260,7 @@ class TestTable(TestCase):
                                                      order_by_freq=False)
         tbl_with_index = feature_tbl.encode_string(["col_4", "col_5"], string_idx_list)
         tbl_with_index.show(100)
-        index_dicts = tbl_with_index.gen_index_dicts(["col_4", "col_5"], 2)
+        index_dicts = tbl_with_index.gen_reindex_mapping(["col_4", "col_5"], 2)
         reindexed, embed_in_dims = tbl_with_index.reindex(["col_4", "col_5"], index_dicts)
         reindexed.show(100)
         assert(reindexed.filter(col("col_4") == 0).size() == 3)
