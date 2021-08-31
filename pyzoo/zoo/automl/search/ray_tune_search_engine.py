@@ -47,9 +47,21 @@ class RayTuneSearchEngine(SearchEngine):
         self.train_func = None
         self.resources_per_trial = resources_per_trial
         self.trials = None
-        self.remote_dir = remote_dir
         self.name = name
+        self.remote_dir = remote_dir or RayTuneSearchEngine.get_default_remote_dir(name)
         self.logs_dir = os.path.abspath(os.path.expanduser(logs_dir))
+
+    @staticmethod
+    def get_default_remote_dir(name):
+        from zoo.ray import RayContext
+        from zoo.automl.common.util import process
+        ray_ctx = RayContext.get()
+        if ray_ctx.is_local:
+            return None
+        else:
+            default_remote_dir = f"hdfs:///tmp/{name}"
+            process(command=f"hadoop fs -mkdir -p {default_remote_dir}")
+            return default_remote_dir
 
     def compile(self,
                 data,
