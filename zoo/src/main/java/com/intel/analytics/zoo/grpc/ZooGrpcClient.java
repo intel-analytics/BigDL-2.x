@@ -67,12 +67,17 @@ public class ZooGrpcClient {
         configPath = cmd.getOptionValue("config", "config.yaml");
         services = cmd.getOptionValue("s", "").split(",");
     }
+    public void loadServices() {
+
+    }
     public void build() {
         parseArgs();
+
         channel = ManagedChannelBuilder.forTarget(target)
                 // Channels are secure by default (via SSL/TLS).
                 .usePlaintext()
                 .build();
+        loadServices();
     }
     public <I, O> O call(Function<I, O> f, I msg) {
         O r = null;

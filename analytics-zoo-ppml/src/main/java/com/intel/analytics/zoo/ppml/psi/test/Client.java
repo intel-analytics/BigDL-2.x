@@ -70,7 +70,7 @@ public class Client {
                 // Channels are secure by default (via SSL/TLS).
                 .usePlaintext()
                 .build();
-        String[] arg = {"-t", target, "-tid", taskID};
+        String[] arg = {"-t", target, "-tid", taskID, "-s", "psi"};
 
         try {
             FLClient client = new FLClient(arg);

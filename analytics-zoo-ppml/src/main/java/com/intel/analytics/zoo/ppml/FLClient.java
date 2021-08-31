@@ -45,14 +45,20 @@ public class FLClient extends ZooGrpcClient {
                 "tid", "taskId", true, "."));
     }
 
-    public void loadService() {
+    @Override
+    protected void parseArgs() {
+        super.parseArgs();
+        taskID = cmd.getOptionValue("tid", "");
+    }
 
+    @Override
+    public void loadServices() {
         assert services.length > 0;
         for (String service : services) {
-            if (service == "psi") {
+            if (service.equals("psi")) {
                 blockingStubPSI = PSIServiceGrpc.newBlockingStub(channel);
-            } else if (service == "ps") {
-                blockingStubPS = ParameterServerServiceGrpc.newBlockingStub(channel);
+            } else if (service.equals("ps")) {
+                // TODO: algorithms stub add here
             } else {
                 logger.warn("Type is not supported, skipped. Type: " + service);
             }

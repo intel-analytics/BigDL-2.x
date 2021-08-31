@@ -85,7 +85,7 @@ public class FLServer extends ZooGrpcServer {
             if (service.equals("psi")) {
                 builder.addService(new PSIServiceImpl());
             } else if (service.equals("ps")) {
-                // add algorithms here
+                // TODO: add algorithms here
             } else {
                 logger.warn("Type is not supported, skipped. Type: " + service);
             }
