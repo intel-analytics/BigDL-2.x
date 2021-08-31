@@ -237,12 +237,17 @@ class SegModel(pl.LightningModule):
     def forward(self, x):
         return self.net(x)
 
+    def workaround_cross_entropy(self, out, mask, ignore_index=250):
+        sfmax = F.log_softmax(out, dim=1).contiguous()
+        loss = F.nll_loss(sfmax, mask,ignore_index=ignore_index)
+        return loss
+
     def training_step(self, batch, batch_nb):
         img, mask = batch
         img = img.float()
         mask = mask.long()
         out = self(img)
-        loss = F.cross_entropy(out, mask, ignore_index=250)
+        loss = self.workaround_cross_entropy(out, mask)
         log_dict = {"train_loss": loss.detach()}
         return {"loss": loss, "log": log_dict, "progress_bar": log_dict}
 
@@ -251,7 +256,7 @@ class SegModel(pl.LightningModule):
         img = img.float()
         mask = mask.long()
         out = self(img)
-        loss_val = F.cross_entropy(out, mask, ignore_index=250)
+        loss_val = self.workaround_cross_entropy(out, mask)
         return {"val_loss": loss_val}
 
     def validation_epoch_end(self, outputs):
@@ -317,6 +322,8 @@ if __name__ == "__main__":
     parser = SegModel.add_model_specific_args(parser)
     parser.add_argument("--num_processes", type=int, default=1,
                         help="The number of processes in distributed training.")
+    parser.add_argument('--use_ipex', action='store_true', default=False,
+                        help='use intel pytorch extension') 
     hparams = parser.parse_args()
 
     main(hparams)

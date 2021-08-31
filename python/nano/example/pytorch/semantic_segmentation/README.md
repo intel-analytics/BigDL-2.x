@@ -41,11 +41,12 @@ Register an account in KITTI and access [KITTI Semantic Segmentation Benchmark d
 You can run this example with command line:
 
 ```bash
-python semantic_segmentation_tmp.py --data_path data/ --num_processes 4
+python semantic_segmentation_tmp.py --data_path data/ --use_ipex
 ```
 
 **Options**
 * `--data_path` The path to the unarchived dataset.Required.
+* `--use_ipex` Whether we use ipex as accelerator for trainer. Default is False.
 * `--num_processes` The number of processes in distributed training. Default: 1.
 
 ## Results
