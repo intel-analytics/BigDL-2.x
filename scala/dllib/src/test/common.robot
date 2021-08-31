@@ -22,7 +22,7 @@ Run Shell
    Should Be Equal As Integers      ${rc}          0
 
 Get BigDL Version
-   ${root}=               Parse XML           pom.xml
+   ${root}=               Parse XML           scala/pom.xml
    ${version}=            Get Element Text    ${root}    version   
    Log To Console         ${version}
    Set Global Variable    ${version}
