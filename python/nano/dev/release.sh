@@ -27,4 +27,4 @@ ${wheel_command}
 upload_command="twine upload dist/bigdl_nano-0.0.1.dev0-py3-none-manylinux2010_x86_64.whl"
 echo "Please manually upload with this command:  $upload_command"
 
-$upload_command
+# $upload_command
