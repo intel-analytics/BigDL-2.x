@@ -251,8 +251,6 @@ class SegModel(pl.LightningModule):
         img = img.float()
         mask = mask.long()
         out = self(img)
-        mask = mask.cpu()
-        out = out.cpu()
         loss_val = F.cross_entropy(out, mask, ignore_index=250)
         return {"val_loss": loss_val}
 
