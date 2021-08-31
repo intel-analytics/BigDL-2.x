@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.ppml;
 
 import com.intel.analytics.zoo.grpc.ZooGrpcServer;
 import com.intel.analytics.zoo.ppml.psi.PSIServiceImpl;
-import com.intel.analytics.zoo.ppml.psi.test.BenchmarkClient;
 import io.grpc.BindableService;
 import io.grpc.ServerBuilder;
 import io.grpc.netty.GrpcSslContexts;

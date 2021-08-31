@@ -21,7 +21,6 @@ import com.intel.analytics.zoo.ppml.generated.FLProto.*;
 import com.intel.analytics.zoo.ppml.generated.PSIServiceGrpc;
 import com.intel.analytics.zoo.ppml.generated.ParameterServerServiceGrpc;
 import com.intel.analytics.zoo.ppml.psi.Utils;
-import com.intel.analytics.zoo.ppml.psi.test.BenchmarkClient;
 import io.grpc.StatusRuntimeException;
 import org.apache.commons.cli.Option;
 import org.slf4j.Logger;
