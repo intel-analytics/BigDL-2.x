@@ -26,5 +26,5 @@ Get BigDL Version
    ${version}=            Get Element Text    ${root}    version   
    Log To Console         ${version}
    Set Global Variable    ${version}
-   ${jar_path}=           Set Variable        ${jar_dir}/bigdl-${version}-jar-with-dependencies.jar
+   ${jar_path}=           Set Variable        ${jar_dir}/bigdl-dllib-*-jar-with-dependencies.jar
    Set Global Variable    ${jar_path}     

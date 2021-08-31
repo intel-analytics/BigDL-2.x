@@ -8,12 +8,11 @@ Test template    BigDL Test
 *** Test Cases ***   SuiteName
 1                    Spark2.2 Test Suite
 2                    Hdfs Test Suite
-3                    Spark1.6 on Yarn Test Suite
-4                    Spark2.3 on Yarn Test Suite
-5                    Quantization Test Suite
-6                    PySpark2.2 Test Suite
-7                    PySpark3.0 Test Suite
-8                    Spark3.0 on Yarn Test Suite
+3                    Spark2.3 on Yarn Test Suite
+4                    Quantization Test Suite
+5                    PySpark2.2 Test Suite
+6                    PySpark3.0 Test Suite
+7                    Spark3.0 on Yarn Test Suite
 
 *** Keywords ***
 Build SparkJar
@@ -23,7 +22,7 @@ Build SparkJar
    Log To Console    start to build jar ${build} -P ${spark_version}
    Run               ${build} -P ${spark_version}
    Remove File       ${jar_path}
-   Copy File         spark/dl/target/bigdl-${version}-jar-with-dependencies.jar    ${jar_path}
+   Copy File         dllib/target/bigdl-dllib-*-jar-with-dependencies.jar        ${jar_path}
    Log To Console    build jar finished
 
 DownLoad Input
@@ -105,9 +104,6 @@ Quantization Test Suite
    Set Environment Variable         resnetfp32model          ${public_hdfs_master}:9000/resnet4IT4J1.7B4.bigdl
    Remove Environment Variable      mnist                    cifar10                 lenetfp32model                  resnetfp32model
 
-Spark1.6 on Yarn Test Suite
-   Yarn Test Suite	spark_1.6	/opt/work/spark-1.6.0-bin-hadoop2.6
-   
 Spark2.3 on Yarn Test Suite
    Yarn Test Suite	spark_2.x	/opt/work/spark-2.3.1-bin-hadoop2.7
 
@@ -136,7 +132,6 @@ Yarn Test Suite
    Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --executor-cores 8 --num-executors 1 --driver-memory 20g --executor-memory 40g --class com.intel.analytics.bigdl.example.languagemodel.PTBWordLM ${jar_path} -f ./simple-examples/data -b 120 --numLayers 2 --vocab 10001 --hidden 650 --numSteps 35 --learningRate 0.005 -e 1 --learningRateDecay 0.001 --keepProb 0.5 --overWrite 
    Log To Console                   begin inceptionV1 train
    Run Shell                        ${submit} --master yarn --deploy-mode client --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" --executor-cores 10 --num-executors 2 --driver-memory 20g --executor-memory 40g --class com.intel.analytics.bigdl.models.inception.TrainInceptionV1 ${jar_path} -b 40 -f ${imagenet_test_data_source} --learningRate 0.1 -i 100 
-   Run Shell                        ${submit} --master yarn --deploy-mode client --executor-memory 2g --driver-memory 2g --executor-cores 10 --num-executors 2 --properties-file ${curdir}/dist/conf/spark-bigdl.conf --jars ${jar_path} --py-files ${curdir}/dist/lib/bigdl-${version}-python-api.zip --conf spark.driver.extraClassPath=${jar_path} --conf spark.executor.extraClassPath=bigdl-${version}-jar-with-dependencies.jar ${curdir}/pyspark/bigdl/models/lenet/lenet5.py -b 200 --action train --endTriggerType epoch --endTriggerNum 1 
    Remove Environment Variable      http_proxy                https_proxy
    Remove Input
    
