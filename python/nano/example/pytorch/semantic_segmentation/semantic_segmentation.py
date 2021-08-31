@@ -36,7 +36,6 @@ from argparse import ArgumentParser, Namespace
 import numpy as np
 import torch
 import torch.nn.functional as F
-# import torchvision.transforms as transforms
 from bigdl.nano.pytorch.vision.transforms import transforms
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
@@ -243,8 +242,6 @@ class SegModel(pl.LightningModule):
         img = img.float()
         mask = mask.long()
         out = self(img)
-        mask = mask.cpu()
-        out = out.cpu()
         loss = F.cross_entropy(out, mask, ignore_index=250)
         log_dict = {"train_loss": loss.detach()}
         return {"loss": loss, "log": log_dict, "progress_bar": log_dict}
@@ -320,8 +317,6 @@ if __name__ == "__main__":
     cli_lightning_logo()
     parser = ArgumentParser(add_help=False)
     parser = SegModel.add_model_specific_args(parser)
-    parser.add_argument("--use_ipex", action="store_true",
-                        help="Whether to use Intel PyTorch extension.")
     hparams = parser.parse_args()
 
     main(hparams)
