@@ -15,8 +15,6 @@
 #
 
 import re
-import os
-import signal
 import psutil
 
 
@@ -53,28 +51,6 @@ def resource_to_bytes(resource_str):
         raise Exception("Size must be specified as bytes(b),"
                         "kilobytes(k), megabytes(m), gigabytes(g). "
                         "E.g. 50b, 100k, 250m, 30g")
-
-
-def gen_shutdown_per_node(pgids, node_ips=None):
-    import ray._private.services as rservices
-    pgids = to_list(pgids)
-
-    def _shutdown_per_node(iter):
-        print("Stopping pgids: {}".format(pgids))
-        if node_ips:
-            current_node_ip = rservices.get_node_ip_address()
-            effect_pgids = [pair[0] for pair in zip(pgids, node_ips) if pair[1] == current_node_ip]
-        else:
-            effect_pgids = pgids
-        for pgid in effect_pgids:
-            print("Stopping by pgid {}".format(pgid))
-            try:
-                # SIGTERM may not kill all the children processes in the group.
-                os.killpg(pgid, signal.SIGKILL)
-            except Exception:
-                print("WARNING: cannot kill pgid: {}".format(pgid))
-
-    return _shutdown_per_node
 
 
 def is_local(sc):

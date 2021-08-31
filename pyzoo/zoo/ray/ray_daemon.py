@@ -9,6 +9,7 @@ logging.basicConfig(filename='daemon.log', level=logging.INFO)
 def stop(pgid):
     logging.info(f"Stopping pgid {pgid} by ray_daemon.")
     try:
+        # SIGTERM may not kill all the children processes in the group.
         os.killpg(pgid, signal.SIGKILL)
     except Exception:
         logging.error("Cannot kill pgid: {}".format(pgid))

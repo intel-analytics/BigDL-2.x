@@ -195,6 +195,7 @@ class RayServiceFuncGenerator(object):
         daemon_path = os.path.join(os.path.dirname(__file__), "ray_daemon.py")
         start_daemon_command = ['nohup', python_loc, daemon_path, str(pid_to_watch),
                                 str(pgid_to_kill)]
+        # put ray daemon process in its children's process group to avoid being killed by spark.
         subprocess.Popen(start_daemon_command, preexec_fn=os.setpgrp)
         time.sleep(1)
 

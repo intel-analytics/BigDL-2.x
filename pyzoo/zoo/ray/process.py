@@ -16,11 +16,7 @@
 
 import os
 import subprocess
-import signal
-import atexit
-import sys
-
-from zoo.ray.utils import gen_shutdown_per_node, is_local
+from zoo.ray.utils import is_local
 
 
 class ProcessInfo(object):
