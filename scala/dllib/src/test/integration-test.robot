@@ -22,7 +22,7 @@ Build SparkJar
    Log To Console    start to build jar ${build} -P ${spark_version}
    Run               ${build} -P ${spark_version}
    Remove File       ${jar_path}
-   Copy File         dllib/target/bigdl-dllib-*-jar-with-dependencies.jar        ${jar_path}
+   Copy File         scala/dllib/target/bigdl-dllib-*-jar-with-dependencies.jar        ${jar_path}
    Log To Console    build jar finished
 
 DownLoad Input
