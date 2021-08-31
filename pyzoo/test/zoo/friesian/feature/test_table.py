@@ -239,7 +239,7 @@ class TestTable(TestCase):
         assert string_idx_list[0].size() == 3, "col_4 should have 3 indices"
         assert string_idx_list[1].size() == 2, "col_5 should have 2 indices"
 
-    def test_gen_index_dicts(self):
+    def test_gen_reindex_mapping(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
         feature_tbl.show(20, False)
@@ -247,7 +247,7 @@ class TestTable(TestCase):
                                                      freq_limit={"col_4": 1, "col_5": 1},
                                                      order_by_freq=False)
         tbl = feature_tbl.encode_string(["col_4", "col_5"], string_idx_list)
-        index_dicts = tbl.gen_index_dicts(["col_4", "col_5"], 2)
+        index_dicts = tbl.gen_reindex_mapping(["col_4", "col_5"], 2)
         assert(index_dicts[0][2] == 1)
         assert(index_dicts[1][2] == 1)
 

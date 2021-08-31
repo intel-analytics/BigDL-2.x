@@ -1386,7 +1386,7 @@ class FeatureTable(Table):
             tbl = tbl.apply(c, c, index_lookup, "int")
         return tbl, embed_in_dims
 
-    def gen_index_dicts(self, columns=[], freq_limit=10):
+    def gen_reindex_mapping(self, columns=[], freq_limit=10):
         """
         Generate a mapping from old index to new one based on popularity count on descending order
          :param columns: str or a list of str
