@@ -24,7 +24,7 @@ from zoo.orca import init_orca_context
 from zoo.orca import OrcaContext
 from zoo.orca.learn.tf2.estimator import Estimator
 from zoo.friesian.feature import FeatureTable
-from two_tower import *
+from model import *
 
 spark_conf = {"spark.network.timeout": "10000000",
               "spark.sql.broadcastTimeout": "7200",
@@ -80,8 +80,8 @@ def train(config, train_data, test_data, epochs=1, batch_size=128, model_dir='.'
                   validation_steps=val_steps)
 
     model = estimator.get_model()
-    user_model = two_tower.get_1tower_model(user_col_info)
-    item_model = two_tower.get_1tower_model(item_col_info)
+    user_model = get_1tower_model(model, two_tower.user_col_info)
+    item_model = get_1tower_model(model, two_tower.item_col_info)
     tf.saved_model.save(model, os.path.join(model_dir, "twotower-model"))
     tf.saved_model.save(user_model, os.path.join(model_dir, "user-model"))
     tf.saved_model.save(item_model, os.path.join(model_dir, "item-model"))
@@ -110,66 +110,7 @@ def load_data(data_path):
 
     return tbl
 
-def gen_stats_dicts(tbl, model_dir, frequency_limit=25):
-    stats = {}
-    for c in embed_cols + cat_cols + num_cols:
-        min = tbl.select(c).get_stats(c, "min")[c]
-        max = tbl.select(c).get_stats(c, "max")[c]
-        total_num = tbl.select(c).size()
-        dist_num = tbl.select(c).distinct().size()
-        null_num = tbl.filter(col(c).isNull()).size()
-        stats[c + "_min"] = min
-        stats[c + "_max"] = max
-        stats[c + "_total_num"] = total_num
-        stats[c + "_ditinct_num"] = dist_num
-        stats[c + "_null_num"] = null_num
-        stats[c + "_null_ratio"] = null_num / float(total_num)
-
-    for c in ts_cols + ["label"]:
-        label0_cnt = tbl.select(c).filter(col(c) == 0).size()
-        label1_cnt = tbl.select(c).filter(col(c) > 0).size()
-        stats[c + "_label0_cnt"] = label0_cnt
-        stats[c + "_label1_cnt"] = label1_cnt
-
-    # for item in stats.items():
-    #     print(item)
-    stats_dir = model_dir + "/stats"
-    if not os.path.exists(stats_dir):
-        os.makedirs(stats_dir)
-    with open(os.path.join(stats_dir, "feature_stats"), 'wb') as f:
-        pickle.dump(stats, f)
-
-    index_dicts=[]
-    for c in embed_cols:
-        c_count = tbl.select(c).group_by(c, agg={c: "count"}).rename({"count(" + c + ")": "count"})
-        c_count.df.printSchema()
-        c_count = c_count.filter(col("count") >= frequency_limit).order_by("count", ascending=False)
-        c_count_pd = c_count.to_pandas()
-        c_count_pd.reindex()
-        c_count_pd[c + "_new"] = c_count_pd.index + 1
-        index_dict = dict(zip(c_count_pd[c], c_count_pd[c + "_new"]))
-        index_dict_reverse = dict(zip(c_count_pd[c + "_new"], c_count_pd[c]))
-        index_dicts.append(index_dict)
-        with open(os.path.join(stats_dir, c + "_index_dict.txt"), 'w') as text_file:
-            c_count_pd.to_csv(text_file, index=False)
-        with open(os.path.join(stats_dir, c + "_index_dict"), 'wb') as f:
-            pickle.dump(index_dict, f)
-        with open(os.path.join(stats_dir, c + "_index_dict_reverse"), 'wb') as f:
-            pickle.dump(index_dict_reverse, f)
-    return stats, index_dicts
-
-def prepare_features(train_tbl, test_tbl, embed_index_dicts):
-    def reindex_embeds(tbl):
-        embed_in_dims = {}
-        for i, c in enumerate(embed_cols):
-            index_dict = embed_index_dicts[i]
-            embed_in_dims[c] = max(index_dict.values()) + 1
-            spark = OrcaContext.get_spark_session()
-            index_dict_bc = spark.sparkContext.broadcast(index_dict)
-            index_lookup = lambda x: index_dict_bc.value.get(x, 0)
-            tbl = tbl.apply(c, c, index_lookup, "int")
-        return tbl, embed_in_dims
-
+def prepare_features(train_tbl, test_tbl, embed_reindex_dicts):
     def add_ratio_features(tbl):
         cal_ratio = (lambda x: x[1] / x[0] if x[0] > 0 else 0.0)
         tbl = tbl.apply(["engaged_with_user_follower_count","engaged_with_user_following_count"],
@@ -189,17 +130,17 @@ def prepare_features(train_tbl, test_tbl, embed_index_dicts):
         return tbl
 
     print("reindexing embedding cols")
-    train_tbl, embed_in_dims = reindex_embeds(train_tbl)
-    test_tbl, _ = reindex_embeds(test_tbl)
+    train_tbl, embed_in_dims = train_tbl.reindex(embed_cols, embed_reindex_dicts)
+    test_tbl, _ = test_tbl.reindex(embed_cols, embed_reindex_dicts)
 
     print("add ratio features")
     train_tbl = add_ratio_features(train_tbl)
     test_tbl = add_ratio_features(test_tbl)
 
+    print("scale numerical features")
     train_tbl, min_max_dic = train_tbl.min_max_scale(num_cols + ratio_cols)
-    for column, (col_min, col_max) in min_max_dic.items():
-        normalize = lambda x: (x - col_min) / (col_max - col_min)
-        test_tbl = test_tbl.apply(column, column, normalize, "float")
+    test_tbl = test_tbl.transform_min_max_scale(num_cols + ratio_cols, min_max_dic)
+
     with open(os.path.join(args.model_dir, "stats/min_max.pkl"), 'wb') as f:
         pickle.dump(min_max_dic, f)
 
@@ -292,16 +233,14 @@ if __name__ == '__main__':
     #test_tbl, _, _ = load_data(args.data_dir +"/saved_test.parquet")
     train_tbl = load_data(args.data_dir)
     test_tbl = load_data(args.data_dir)
-    stats, embed_dicts = gen_stats_dicts((train_tbl.concat(test_tbl, "outer")),
-                                         args.model_dir,
-                                         frequency_limit=args.frequency_limit)
-    train_df, test_df, user_col_info, item_col_info = prepare_features(train_tbl, test_tbl, embed_dicts)
+    full_tbl = train_tbl.concat(test_tbl, "outer")
+    embed_reindex_dicts = full_tbl.gen_reindex_mapping(embed_cols, freq_limit=args.frequency_limit)
+    train_df, test_df, user_col_info, item_col_info = prepare_features(train_tbl, test_tbl, embed_reindex_dicts)
 
-    num_partitions=args.num_executor * args.executor_cores * 2
-    train_df = train_df.repartition(num_partitions)
-    test_df = test_df.repartition(num_partitions)
-    train_df.persist(StorageLevel.DISK_ONLY)
-    test_df.persist(StorageLevel.DISK_ONLY)
+    stats_dir = args.model_dir + "/stats"
+    for i, c in enumerate(embed_cols):
+        with open(os.path.join(stats_dir, c + "_index_dict"), 'wb') as f:
+            pickle.dump(embed_reindex_dicts[i], f)
 
     train_config = {"lr": 1e-3,
                     "user_col_info": user_col_info,

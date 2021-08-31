@@ -142,13 +142,13 @@ class TwoTowerModel(object):
         model = tf.keras.Model(user_input + item_input, out)
         return model
 
-    def get_1tower_model(model, column_info):
-        """
-        Conect layers of each tower to output embeddings of user or item
-        """
-        col_list = column_info.get_name_list()
-        input_names = [column_info.name + x for x in col_list]
-        inputs = [model.get_layer(x).input for x in input_names]
-        output = model.get_layer(column_info.name + "_embed_output").output
-        one_tower_model = tf.keras.models.Model(inputs, output)
-        return one_tower_model
+def get_1tower_model(model, column_info):
+    """
+    Conect layers of each tower to output embeddings of user or item
+    """
+    col_list = column_info.get_name_list()
+    input_names = [column_info.name + x for x in col_list]
+    inputs = [model.get_layer(x).input for x in input_names]
+    output = model.get_layer(column_info.name + "_embed_output").output
+    one_tower_model = tf.keras.models.Model(inputs, output)
+    return one_tower_model
