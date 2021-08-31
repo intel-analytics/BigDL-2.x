@@ -315,6 +315,8 @@ if __name__ == "__main__":
     cli_lightning_logo()
     parser = ArgumentParser(add_help=False)
     parser = SegModel.add_model_specific_args(parser)
+    parser.add_argument("--num_processes", type=int, default=1,
+                        help="The number of processes in distributed training.")
     hparams = parser.parse_args()
 
     main(hparams)
