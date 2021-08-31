@@ -19,6 +19,7 @@ RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
 echo $RUN_SCRIPT_DIR
 NANO_DIR="$(cd ${RUN_SCRIPT_DIR}/../; pwd)"
 echo $NANO_DIR
+cd $NANO_DIR
 
 wheel_command="python setup.py bdist_wheel --plat-name manylinux2010_x86_64"
 echo "Packing python distribution:   $wheel_command"
