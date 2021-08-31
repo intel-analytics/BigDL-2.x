@@ -32,24 +32,8 @@ public class Client {
     private static final Logger logger = LoggerFactory.getLogger(Client.class);
 
     public static void main(String[] args) throws Exception {
-        String taskID;
-        String target;
-        // Number of arguments to be passed.
-        int argNum = 3;
-        if (args.length == 0) {
-            logger.info("No argument passed, using default parameters.");
-            taskID = "taskID";
-            target = "localhost:50051";
-        } else if (args.length < argNum || args.length > argNum + 1) {
-            logger.info("Error: detecting " + Integer.toString(args.length) + " arguments. Expecting " + Integer.toString(argNum) + ".");
-            logger.info("Usage: ClientGrpc taskID ServerIP ServerPort");
-            taskID = "";
-            target = "";
-            System.exit(0);
-        } else {
-            taskID = args[0];
-            target = args[1] + ":" + args[2];
-        }
+        String taskID = "taskID";
+        String target = "localhost:8980";
         logger.info("TaskID is: " + taskID);
         logger.info("Accessing service at: " + target);
 

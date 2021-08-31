@@ -22,18 +22,14 @@ import org.apache.commons.cli.*;
 import org.apache.log4j.Logger;
 
 
+import java.io.IOException;
 import java.util.UUID;
 import java.util.function.Function;
 
-public class ZooGrpcClient {
-    protected static final Logger logger = Logger.getLogger(ZooGrpcServer.class.getName());
-    protected String[] args;
-    protected Options options;
+public class ZooGrpcClient extends AbstractZooGrpc{
+    protected static final Logger logger = Logger.getLogger(ZooGrpcClient.class.getName());
     protected String target;
-    protected String[] services;
-    protected String configPath;
     protected final String clientUUID;
-    protected CommandLine cmd;
     protected ManagedChannel channel;
     public ZooGrpcClient(String[] args) {
         clientUUID = UUID.randomUUID().toString();
@@ -50,7 +46,7 @@ public class ZooGrpcClient {
 
 
     }
-    protected void parseArgs() {
+    protected void parseArgs() throws IOException {
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
         cmd = null;
@@ -70,7 +66,7 @@ public class ZooGrpcClient {
     public void loadServices() {
 
     }
-    public void build() {
+    public void build() throws IOException {
         parseArgs();
 
         channel = ManagedChannelBuilder.forTarget(target)

@@ -17,6 +17,7 @@
 
 package com.intel.analytics.zoo.grpc;
 
+import com.intel.analytics.zoo.utils.ConfigParser;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -30,16 +31,12 @@ import java.util.concurrent.TimeUnit;
  * All Analytics Zoo gRPC server are based on ZooGrpcServer
  * This class could also be directly used for start a single service
  */
-public class ZooGrpcServer {
+public class ZooGrpcServer extends AbstractZooGrpc{
     protected static final Logger logger = Logger.getLogger(ZooGrpcServer.class.getName());
-    protected int port;
+    protected int port = 8980;
     protected Server server;
-    protected String[] args;
-    protected Options options;
-    protected String configPath;
     protected BindableService service;
-    protected String[] services;
-    protected CommandLine cmd;
+
 
     /**
      * One Server could support multiple servives.
@@ -64,26 +61,14 @@ public class ZooGrpcServer {
     public ZooGrpcServer(String[] args) {
         this(args, null);
     }
-    protected void parseArgs() {
-        CommandLineParser parser = new DefaultParser();
-        HelpFormatter formatter = new HelpFormatter();
-        cmd = null;
 
-        try {
-            cmd = parser.parse(options, args);
-        } catch (ParseException e) {
-            System.out.println(e.getMessage());
-            formatter.printHelp("utility-name", options);
-            System.exit(1);
-        }
-        assert cmd != null;
-        port = Integer.parseInt(cmd.getOptionValue("port", "8082"));
-        configPath = cmd.getOptionValue("config", "config.yaml");
-        services = cmd.getOptionValue("s", "").split(",");
-
+    public void parseArgs() throws IOException {
+        getCmd(null);
+        port = Integer.parseInt(cmd.getOptionValue("port", String.valueOf(port)));
+        services = cmd.getOptionValue("s", serviceList).split(",");
     }
     /** Entrypoint of ZooGrpcServer */
-    public void build() {
+    public void build() throws IOException {
         parseArgs();
         ServerBuilder builder = ServerBuilder.forPort(port);
         if (service != null) {

@@ -21,19 +21,20 @@ import com.intel.analytics.zoo.ppml.generated.FLProto.*;
 import com.intel.analytics.zoo.ppml.generated.PSIServiceGrpc;
 import com.intel.analytics.zoo.ppml.generated.ParameterServerServiceGrpc;
 import com.intel.analytics.zoo.ppml.psi.Utils;
+import com.intel.analytics.zoo.ppml.psi.test.BenchmarkClient;
 import io.grpc.StatusRuntimeException;
 import org.apache.commons.cli.Option;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class FLClient extends ZooGrpcClient {
-
+    private static final Logger logger = LoggerFactory.getLogger(FLClient.class);
     protected String taskID;
-    protected String clientID;
+    protected String clientID = UUID.randomUUID().toString();
     protected String salt;
     protected int splitSize = 1000000;
     private static PSIServiceGrpc.PSIServiceBlockingStub blockingStubPSI;
@@ -46,9 +47,16 @@ public class FLClient extends ZooGrpcClient {
     }
 
     @Override
-    protected void parseArgs() {
+    protected void parseArgs() throws IOException {
+        FLHelper flHelper = getCmd(FLHelper.class);
+        if (flHelper != null) {
+            services = flHelper.servicesList.split(",");
+            taskID = flHelper.taskID;
+        }
+
+
         super.parseArgs();
-        taskID = cmd.getOptionValue("tid", "");
+        taskID = cmd.getOptionValue("tid", taskID);
     }
 
     @Override

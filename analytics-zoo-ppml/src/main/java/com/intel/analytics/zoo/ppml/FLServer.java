@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.ppml;
 
 import com.intel.analytics.zoo.grpc.ZooGrpcServer;
 import com.intel.analytics.zoo.ppml.psi.PSIServiceImpl;
+import com.intel.analytics.zoo.ppml.psi.test.BenchmarkClient;
 import io.grpc.BindableService;
 import io.grpc.ServerBuilder;
 import io.grpc.netty.GrpcSslContexts;
@@ -26,6 +27,8 @@ import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import org.apache.commons.cli.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLException;
 import java.io.File;
@@ -38,6 +41,7 @@ import java.io.IOException;
  * Supported types: PSI, VFL,
  */
 public class FLServer extends ZooGrpcServer {
+    private static final Logger logger = LoggerFactory.getLogger(FLServer.class);
     String certChainFilePath;
     String privateKeyFilePath;
     String trustCertCollectionFilePath;
@@ -53,7 +57,8 @@ public class FLServer extends ZooGrpcServer {
     FLServer(String[] args) {
         this(args, null);
     }
-    void startWithTls() throws SSLException {
+    void startWithTls() throws IOException {
+        // TODO: to add for multi-services
         parseArgs();
         certChainFilePath = cmd.getOptionValue("cc", null);
         privateKeyFilePath = cmd.getOptionValue("pk", null);
@@ -74,8 +79,20 @@ public class FLServer extends ZooGrpcServer {
         }
         return GrpcSslContexts.configure(sslClientContextBuilder).build();
     }
+
     @Override
-    public void build() {
+    public void parseArgs() throws IOException {
+        FLHelper flHelper = getCmd(FLHelper.class);
+        if (flHelper != null) {
+            serviceList = flHelper.servicesList;
+            port = flHelper.serverPort;
+        }
+
+        super.parseArgs();
+    }
+
+    @Override
+    public void build() throws IOException {
         parseArgs();
         ServerBuilder builder = ServerBuilder.forPort(port);
         if (service != null) {
