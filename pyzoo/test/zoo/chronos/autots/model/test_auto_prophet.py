@@ -54,7 +54,6 @@ class TestAutoProphet(TestCase):
 
         auto_prophet.fit(data=data,
                          expect_horizon=expect_horizon,
-                         cross_validation=False,
                          n_sampling=1,
                          )
         best_model = auto_prophet.get_best_model()
@@ -98,7 +97,6 @@ class TestAutoProphet(TestCase):
 
         auto_prophet.fit(data=data,
                          expect_horizon=expect_horizon,
-                         cross_validation=False,
                          n_sampling=1,
                          )
         with tempfile.TemporaryDirectory() as tmp_dir_name:
