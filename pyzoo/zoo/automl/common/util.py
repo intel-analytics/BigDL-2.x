@@ -78,16 +78,27 @@ def save(file_path, feature_transformers=None, model=None, config=None):
         save_config(config_path, config)
 
 
-def process(cmd):
+def process(command, fail_fast=False, timeout=120):
     import subprocess
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    # process.wait()
-    outs, errors = proc.communicate()
-    # if outs:
-    #     print("hdfs std out:", outs)
-    if errors:
-        print("hdfs errors:", errors)
-    return outs, errors
+    pro = subprocess.Popen(
+        command,
+        shell=True,
+        cwd=None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        preexec_fn=os.setsid)
+    out, err = pro.communicate(timeout=timeout)
+    out = out.decode("utf-8")
+    err = err.decode("utf-8")
+    print(out)
+    print(err)
+    errorcode = pro.returncode
+    if errorcode != 0:
+        if fail_fast:
+            raise Exception(err)
+        print(err)
+    else:
+        print(out)
 
 
 def get_remote_list(dir_in):
