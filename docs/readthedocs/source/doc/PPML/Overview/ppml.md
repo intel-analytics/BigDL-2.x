@@ -43,7 +43,7 @@ Download scripts and dockerfiles from [this link](https://github.com/intel-analy
     openssl genrsa -3 -out enclave-key.pem 3072
     ```
 
-3. Prepare keys for TLS with root permission (test only, need input security password for keys).
+3. Prepare keys for TLS with root permission (test only, need input security password for keys). Please also install jdk/openjdk to get keytool.
 
     ```bash
     sudo ./ppml/scripts/generate-keys.sh
