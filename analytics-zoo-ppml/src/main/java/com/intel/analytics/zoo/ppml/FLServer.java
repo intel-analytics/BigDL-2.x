@@ -63,7 +63,7 @@ public class FLServer extends ZooGrpcServer {
         privateKeyFilePath = cmd.getOptionValue("pk", null);
         trustCertCollectionFilePath = cmd.getOptionValue("tcc", null);
         NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port);
-        for (BindableService bindableService : serverSevices) {
+        for (BindableService bindableService : serverServices) {
             serverBuilder.addService(bindableService);
         }
         if (certChainFilePath != null && privateKeyFilePath != null) {
@@ -92,7 +92,7 @@ public class FLServer extends ZooGrpcServer {
         super.parseArgs();
         for (String service : services) {
             if (service.equals("psi")) {
-                serverSevices.add(new PSIServiceImpl());
+                serverServices.add(new PSIServiceImpl());
             } else if (service.equals("ps")) {
                 // TODO: add algorithms here
             } else {
