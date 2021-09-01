@@ -56,17 +56,20 @@ public class FLServer extends ZooGrpcServer {
     FLServer(String[] args) {
         this(args, null);
     }
-    void startWithTls() throws IOException {
+    void buildWithTls() throws IOException {
         // TODO: to add for multi-services
         parseArgs();
         certChainFilePath = cmd.getOptionValue("cc", null);
         privateKeyFilePath = cmd.getOptionValue("pk", null);
         trustCertCollectionFilePath = cmd.getOptionValue("tcc", null);
-        NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
-                .addService(service);
+        NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port);
+        for (BindableService bindableService : serverSevices) {
+            serverBuilder.addService(bindableService);
+        }
         if (certChainFilePath != null && privateKeyFilePath != null) {
             serverBuilder.sslContext(getSslContext());
         }
+        server = serverBuilder.build();
     }
 
     SslContext getSslContext() throws SSLException {
@@ -86,27 +89,16 @@ public class FLServer extends ZooGrpcServer {
             serviceList = flHelper.servicesList;
             port = flHelper.serverPort;
         }
-
         super.parseArgs();
-    }
-
-    @Override
-    public void build() throws IOException {
-        parseArgs();
-        ServerBuilder builder = ServerBuilder.forPort(port);
-        if (service != null) {
-            builder.addService(service);
-        }
         for (String service : services) {
             if (service.equals("psi")) {
-                builder.addService(new PSIServiceImpl());
+                serverSevices.add(new PSIServiceImpl());
             } else if (service.equals("ps")) {
                 // TODO: add algorithms here
             } else {
                 logger.warn("Type is not supported, skipped. Type: " + service);
             }
         }
-        server = builder.maxInboundMessageSize(Integer.MAX_VALUE).build();
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {

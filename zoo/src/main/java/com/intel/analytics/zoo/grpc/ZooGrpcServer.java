@@ -25,6 +25,7 @@ import org.apache.commons.cli.*;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,7 +36,7 @@ public class ZooGrpcServer extends AbstractZooGrpc{
     protected static final Logger logger = Logger.getLogger(ZooGrpcServer.class.getName());
     protected int port = 8980;
     protected Server server;
-    protected BindableService service;
+    protected LinkedList<BindableService> serverSevices;
 
 
     /**
@@ -54,7 +55,11 @@ public class ZooGrpcServer extends AbstractZooGrpc{
                 "c", "config", true, "The path to config YAML file"));
         options.addOption(new Option(
                 "s", "service", true, "service to use"));
-        this.service = service;
+        serverSevices = new LinkedList<>();
+        if (service != null) {
+            serverSevices.add(service);
+        }
+
         this.args = args;
 
     }
@@ -67,12 +72,13 @@ public class ZooGrpcServer extends AbstractZooGrpc{
         port = Integer.parseInt(cmd.getOptionValue("port", String.valueOf(port)));
         services = cmd.getOptionValue("s", serviceList).split(",");
     }
+
     /** Entrypoint of ZooGrpcServer */
     public void build() throws IOException {
         parseArgs();
         ServerBuilder builder = ServerBuilder.forPort(port);
-        if (service != null) {
-            builder.addService(service);
+        for (BindableService bindableService : serverSevices) {
+            builder.addService(bindableService);
         }
         server = builder.maxInboundMessageSize(Integer.MAX_VALUE).build();
     }
