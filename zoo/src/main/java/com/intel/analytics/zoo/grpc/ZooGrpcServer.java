@@ -17,7 +17,6 @@
 
 package com.intel.analytics.zoo.grpc;
 
-import com.intel.analytics.zoo.utils.ConfigParser;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -36,7 +35,7 @@ public class ZooGrpcServer extends AbstractZooGrpc{
     protected static final Logger logger = Logger.getLogger(ZooGrpcServer.class.getName());
     protected int port = 8980;
     protected Server server;
-    protected LinkedList<BindableService> serverSevices;
+    protected LinkedList<BindableService> serverServices;
 
 
     /**
@@ -55,9 +54,9 @@ public class ZooGrpcServer extends AbstractZooGrpc{
                 "c", "config", true, "The path to config YAML file"));
         options.addOption(new Option(
                 "s", "service", true, "service to use"));
-        serverSevices = new LinkedList<>();
+        serverServices = new LinkedList<>();
         if (service != null) {
-            serverSevices.add(service);
+            serverServices.add(service);
         }
 
         this.args = args;
@@ -77,7 +76,7 @@ public class ZooGrpcServer extends AbstractZooGrpc{
     public void build() throws IOException {
         parseArgs();
         ServerBuilder builder = ServerBuilder.forPort(port);
-        for (BindableService bindableService : serverSevices) {
+        for (BindableService bindableService : serverServices) {
             builder.addService(bindableService);
         }
         server = builder.maxInboundMessageSize(Integer.MAX_VALUE).build();
