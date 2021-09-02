@@ -15,6 +15,7 @@
 #
 
 
+from .ipex_torchfunctional import apply_torch_functional_replacement
 from typing import Dict, List, Tuple
 import pickle
 import copy
@@ -69,5 +70,4 @@ def nano_save(obj, f, pickle_module=pickle, pickle_protocol=DEFAULT_PROTOCOL,
 
 torch.save = nano_save
 
-from .ipex_torchfunctional import apply_torch_functional_replacement
 apply_torch_functional_replacement()
