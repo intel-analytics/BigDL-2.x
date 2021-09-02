@@ -237,17 +237,12 @@ class SegModel(pl.LightningModule):
     def forward(self, x):
         return self.net(x)
 
-    def workaround_cross_entropy(self, out, mask, ignore_index=250):
-        sfmax = F.log_softmax(out, dim=1).contiguous()
-        loss = F.nll_loss(sfmax, mask,ignore_index=ignore_index)
-        return loss
-
     def training_step(self, batch, batch_nb):
         img, mask = batch
         img = img.float()
         mask = mask.long()
         out = self(img)
-        loss = self.workaround_cross_entropy(out, mask)
+        loss = loss = F.cross_entropy(out, mask, ignore_index=250)
         log_dict = {"train_loss": loss.detach()}
         return {"loss": loss, "log": log_dict, "progress_bar": log_dict}
 
@@ -256,7 +251,7 @@ class SegModel(pl.LightningModule):
         img = img.float()
         mask = mask.long()
         out = self(img)
-        loss_val = self.workaround_cross_entropy(out, mask)
+        loss_val = loss = F.cross_entropy(out, mask, ignore_index=250)
         return {"val_loss": loss_val}
 
     def validation_epoch_end(self, outputs):
