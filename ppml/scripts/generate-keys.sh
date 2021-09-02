@@ -1,6 +1,5 @@
 #!/bin/bash
 OUTPUT=path_of_output_yaml_file
-KEYS_PATH=./keys
 
 mkdir -p keys && cd keys
 openssl genrsa -des3 -out server.key 2048
