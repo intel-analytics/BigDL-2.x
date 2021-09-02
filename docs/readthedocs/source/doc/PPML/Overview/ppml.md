@@ -123,9 +123,9 @@ Enter `analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene` dir.
     ./init.sh
     ```
     **ENCLAVE_KEY_PATH** means the absolute path to the "enclave-key.pem", according to the above commands, the path would be like "analytics-zoo/ppml/scripts/enclave-key.pem". <br>
-    **DATA_PATH** means the absolute path to the data(like mnist) that would used later in the spark program. According to the above commands, the path would be like "analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene/mnist"
-    **KEYS_PATH** means the absolute path to the keys you just created and copied to. According to the above commands, the path would be like "analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene/keys"
-    **LOCAL_IP** means your local IP address.
+    **DATA_PATH** means the absolute path to the data(like mnist) that would used later in the spark program. According to the above commands, the path would be like "analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene/mnist" <br>
+    **KEYS_PATH** means the absolute path to the keys you just created and copied to. According to the above commands, the path would be like "analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene/keys" <br>
+    **LOCAL_IP** means your local IP address. <br>
 
 ##### 2.2.2.2 Run Your Spark Program with Analytics Zoo PPML on SGX
 
