@@ -242,7 +242,7 @@ class SegModel(pl.LightningModule):
         img = img.float()
         mask = mask.long()
         out = self(img)
-        loss = loss = F.cross_entropy(out, mask, ignore_index=250)
+        loss = F.cross_entropy(out, mask, ignore_index=250)
         log_dict = {"train_loss": loss.detach()}
         return {"loss": loss, "log": log_dict, "progress_bar": log_dict}
 
@@ -251,7 +251,7 @@ class SegModel(pl.LightningModule):
         img = img.float()
         mask = mask.long()
         out = self(img)
-        loss_val = loss = F.cross_entropy(out, mask, ignore_index=250)
+        loss_val = F.cross_entropy(out, mask, ignore_index=250)
         return {"val_loss": loss_val}
 
     def validation_epoch_end(self, outputs):
