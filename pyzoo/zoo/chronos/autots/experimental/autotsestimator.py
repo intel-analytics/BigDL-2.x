@@ -53,7 +53,7 @@ class AutoTSEstimator:
                  past_seq_len=2,
                  future_seq_len=1,
                  input_feature_num=None,
-                 output_target_num=None,
+                 output_feature_num=None,
                  selected_features="auto",
                  backend="torch",
                  logs_dir="/tmp/autots_estimator",
@@ -96,7 +96,7 @@ class AutoTSEstimator:
                to 1.
         :param input_feature_num: Int. The number of features in the input. The value is ignored if
                you use chronos.data.TSDataset as input data type.
-        :param output_target_num: Int. The number of targets in the output. The value is ignored if
+        :param output_feature_num: Int. The number of targets in the output. The value is ignored if
                you use chronos.data.TSDataset as input data type.
         :param selected_features: String. "all" and "auto" are supported for now. For "all",
                all features that are generated are used for each trial. For "auto", a subset
@@ -136,7 +136,7 @@ class AutoTSEstimator:
             search_space.update({"past_seq_len": past_seq_len,
                                  "future_seq_len": future_seq_len,
                                  "input_feature_num": input_feature_num,
-                                 "output_feature_num": output_target_num})
+                                 "output_feature_num": output_feature_num})
             self.search_space = search_space
 
         if isinstance(model, str):
@@ -145,7 +145,7 @@ class AutoTSEstimator:
             search_space.update({"past_seq_len": past_seq_len,
                                  "future_seq_len": future_seq_len,
                                  "input_feature_num": input_feature_num,
-                                 "output_target_num": output_target_num,
+                                 "output_feature_num": output_feature_num,
                                  "loss": loss,
                                  "metric": metric,
                                  "optimizer": optimizer,

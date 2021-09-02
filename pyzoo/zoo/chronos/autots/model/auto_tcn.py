@@ -22,7 +22,7 @@ from zoo.chronos.model.tcn import model_creator
 class AutoTCN:
     def __init__(self,
                  input_feature_num,
-                 output_target_num,
+                 output_feature_num,
                  past_seq_len,
                  future_seq_len,
                  optimizer,
@@ -44,7 +44,7 @@ class AutoTCN:
         Create an AutoTCN.
 
         :param input_feature_num: Int. The number of features in the input
-        :param output_target_num: Int. The number of targets in the output
+        :param output_feature_num: Int. The number of targets in the output
         :param past_seq_len: Int. The number of historical steps used for forecasting.
         :param future_seq_len: Int. The number of future steps to forecast.
         :param optimizer: String or pyTorch optimizer creator function or
@@ -62,7 +62,7 @@ class AutoTCN:
         :param num_channels: List of integers. A list of hidden_units for each level. You could
                specify num_channels if you want different hidden_units for different levels.
                By default, num_channels equals to
-               [hidden_units] * (levels - 1) + [output_target_num].
+               [hidden_units] * (levels - 1) + [output_feature_num].
         :param kernel_size: Int or hp sampling function from an integer space.
                The size of the kernel to use in each convolutional layer.
         :param lr: float or hp sampling function from a float space. Learning rate.
@@ -83,7 +83,7 @@ class AutoTCN:
             raise ValueError(f"We only support backend as torch. Got {backend}")
         self.search_space = dict(
             input_feature_num=input_feature_num,
-            output_feature_num=output_target_num,
+            output_feature_num=output_feature_num,
             past_seq_len=past_seq_len,
             future_seq_len=future_seq_len,
             nhid=hidden_units,

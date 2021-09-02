@@ -93,7 +93,7 @@ if __name__ == '__main__':
     tsdata_train, tsdata_valid, tsdata_test = get_nyc_taxi_tsdataset(args)
 
     auto_lstm = AutoLSTM(input_feature_num=1,
-                         output_target_num=1,
+                         output_feature_num=1,
                          past_seq_len=14,
                          optimizer='Adam',
                          loss=torch.nn.MSELoss(),

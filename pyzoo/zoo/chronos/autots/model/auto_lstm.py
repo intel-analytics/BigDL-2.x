@@ -22,7 +22,7 @@ from zoo.chronos.model.VanillaLSTM_pytorch import model_creator
 class AutoLSTM:
     def __init__(self,
                  input_feature_num,
-                 output_target_num,
+                 output_feature_num,
                  past_seq_len,
                  optimizer,
                  loss,
@@ -41,7 +41,7 @@ class AutoLSTM:
         Create an AutoLSTM.
 
         :param input_feature_num: Int. The number of features in the input
-        :param output_target_num: Int. The number of targets in the output
+        :param output_feature_num: Int. The number of targets in the output
         :param past_seq_len: Int or hp sampling function The number of historical
                steps used for forecasting.
         :param optimizer: String or pyTorch optimizer creator function or
@@ -74,7 +74,7 @@ class AutoLSTM:
             lr=lr,
             dropout=dropout,
             input_feature_num=input_feature_num,
-            output_feature_num=output_target_num,
+            output_feature_num=output_feature_num,
             past_seq_len=past_seq_len,
             future_seq_len=1
         )

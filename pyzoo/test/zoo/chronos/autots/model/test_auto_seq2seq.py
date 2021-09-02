@@ -60,7 +60,7 @@ def valid_dataloader_creator(config):
 
 def get_auto_estimator():
     auto_seq2seq = AutoSeq2Seq(input_feature_num=input_feature_dim,
-                               output_target_num=output_feature_dim,
+                               output_feature_num=output_feature_dim,
                                past_seq_len=past_seq_len,
                                future_seq_len=future_seq_len,
                                optimizer='Adam',

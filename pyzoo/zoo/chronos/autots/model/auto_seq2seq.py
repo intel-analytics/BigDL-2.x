@@ -22,7 +22,7 @@ from zoo.chronos.model.Seq2Seq_pytorch import model_creator
 class AutoSeq2Seq:
     def __init__(self,
                  input_feature_num,
-                 output_target_num,
+                 output_feature_num,
                  past_seq_len,
                  future_seq_len,
                  optimizer,
@@ -43,7 +43,7 @@ class AutoSeq2Seq:
         Create an AutoSeq2Seq.
 
         :param input_feature_num: Int. The number of features in the input
-        :param output_target_num: Int. The number of targets in the output
+        :param output_feature_num: Int. The number of targets in the output
         :param past_seq_len: Int. The number of historical steps used for forecasting.
         :param future_seq_len: Int. The number of future steps to forecast.
         :param optimizer: String or pyTorch optimizer creator function or
@@ -75,7 +75,7 @@ class AutoSeq2Seq:
             raise ValueError(f"We only support backend as torch. Got {backend}")
         self.search_space = dict(
             input_feature_num=input_feature_num,
-            output_feature_num=output_target_num,
+            output_feature_num=output_feature_num,
             past_seq_len=past_seq_len,
             future_seq_len=future_seq_len,
             lstm_hidden_dim=lstm_hidden_dim,
