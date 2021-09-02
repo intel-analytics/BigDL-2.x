@@ -48,7 +48,7 @@ Download scripts and dockerfiles from [this link](https://github.com/intel-analy
     ```bash
     sudo ./ppml/scripts/generate-keys.sh
     ```
-    When entering pass phrase or password, you could input the same password by yourself; and these passwords could also be used for the next step of generating password. These passwords would be used for future remote attestations and to start SGX enclaves more securely. This scrips will generate 5 files in `keys` dir (you can replace them with your own TLS keys).
+    When entering pass phrase or password, you could input the same password by yourself; and these passwords could also be used for the next step of generating password. Password should be longer than 6 bits and containing number and letter, and one sample password is "3456abcd". These passwords would be used for future remote attestations and to start SGX enclaves more securely. And This scripts will generate 5 files in `keys` dir (you can replace them with your own TLS keys).
 
     ```bash
     keystore.pkcs12
