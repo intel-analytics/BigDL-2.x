@@ -32,7 +32,9 @@ Download scripts and dockerfiles from [this link](https://github.com/intel-analy
     Check SGX driver with `ls /dev | grep sgx`. If SGX driver is not installed, please install [SGX DCAP driver](https://github.com/intel/SGXDataCenterAttestationPrimitives/tree/master/driver/linux):
 
     ```bash
-    ./ppml/scripts/install-graphene-driver.sh
+    cd ./ppml/scripts/
+    ./install-graphene-driver.sh
+    cd ../..
     ```
 
 2. Generate key for SGX enclave
@@ -40,15 +42,19 @@ Download scripts and dockerfiles from [this link](https://github.com/intel-analy
    Generate the enclave key using the command below, and keep it safely for future remote attestations and to start SGX enclaves more securely. It will generate a file `enclave-key.pem` in the current working directory, which will be the  enclave key. To store the key elsewhere, modify the output file path.
 
     ```bash
+    cd ./ppml/scripts/
     openssl genrsa -3 -out enclave-key.pem 3072
+    cd ../..
     ```
 
 3. Prepare keys for TLS with root permission (test only, need input security password for keys). Please also install jdk/openjdk and set the environment path of java path to get keytool.
 
     ```bash
-    sudo ./ppml/scripts/generate-keys.sh
+    cd ./ppml/scripts/
+    ./generate-keys.sh
+    cd ../..
     ```
-    When entering pass phrase or password, you could input the same password by yourself; and these passwords could also be used for the next step of generating password. Password should be longer than 6 bits and containing number and letter, and one sample password is "3456abcd". These passwords would be used for future remote attestations and to start SGX enclaves more securely. And This scripts will generate 5 files in `keys` dir (you can replace them with your own TLS keys).
+    When entering pass phrase or password, you could input the same password by yourself; and these passwords could also be used for the next step of generating password. Password should be longer than 6 bits and containing number and letter, and one sample password is "3456abcd". These passwords would be used for future remote attestations and to start SGX enclaves more securely. And This scripts will generate 5 files in `./ppml/scripts/keys` dir (you can replace them with your own TLS keys).
 
     ```bash
     keystore.pkcs12
@@ -61,9 +67,11 @@ Download scripts and dockerfiles from [this link](https://github.com/intel-analy
 4. Generate `password` to avoid plain text security password (used for key generation in `generate-keys.sh`) transfer.
 
     ```bash
-    ./ppml/scripts/generate-password.sh used_password_when_generate_keys
+    cd ./ppml/scripts/
+    ./generate-password.sh used_password_when_generate_keys
+    cd ../..
     ```
-    This scrips will generate 2 files in `password` dir.
+    This scrips will generate 2 files in `./ppml/scripts/password` dir.
 
     ```bash
     key.txt
