@@ -20,8 +20,6 @@ import zipfile
 import os
 import json
 
-from zoo.chronos.feature.utils import save_config
-
 IDENTIFIER_LEN = 27
 
 
@@ -29,19 +27,6 @@ def load_config(file_path):
     with open(file_path, "r") as input_file:
         data = json.load(input_file)
     return data
-
-
-def save(file_path, feature_transformers=None, model=None, config=None):
-    if not os.path.isdir(file_path):
-        os.mkdir(file_path)
-    config_path = os.path.join(file_path, "config.json")
-    model_path = os.path.join(file_path, "weights_tune.h5")
-    if feature_transformers is not None:
-        feature_transformers.save(config_path, replace=True)
-    if model is not None:
-        model.save(model_path, config_path)
-    if config is not None:
-        save_config(config_path, config)
 
 
 def process(command, fail_fast=False, timeout=120):
