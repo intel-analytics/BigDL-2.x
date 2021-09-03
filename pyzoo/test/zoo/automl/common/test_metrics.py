@@ -16,9 +16,9 @@
 
 import numpy as np
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.common.metrics import ME, MAE, MSE, RMSE, MSLE, R2
+from zoo.automl.metrics import ME, MAE, MSE, RMSE, MSLE, R2
 
-from zoo.automl.common.metrics import MPE, MAPE, MSPE, sMAPE, MDAPE, sMDAPE
+from zoo.automl.metrics import MPE, MAPE, MSPE, sMAPE, MDAPE, sMDAPE
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 

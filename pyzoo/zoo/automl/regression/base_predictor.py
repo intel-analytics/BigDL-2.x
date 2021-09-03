@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-from zoo.automl.common.metrics import Evaluator
+from zoo.automl.metrics import Evaluator
 from zoo.chronos.pipeline.time_sequence import TimeSequencePipeline
 from zoo.automl.common.util import *
 from zoo.chronos.config.recipe import *

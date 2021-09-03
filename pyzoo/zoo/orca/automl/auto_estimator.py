@@ -238,7 +238,7 @@ class AutoEstimator:
             if callable(metric):
                 raise ValueError("You must specify `metric_mode` for your metric function")
             try:
-                from zoo.automl.common.metrics import Evaluator
+                from zoo.automl.metrics import Evaluator
                 mode = Evaluator.get_metric_mode(metric)
             except ValueError:
                 pass
