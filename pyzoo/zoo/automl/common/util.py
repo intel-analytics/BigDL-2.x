@@ -17,46 +17,12 @@ import shutil
 import tempfile
 import zipfile
 
-import numpy as np
 import os
 import json
 
+from zoo.chronos.feature.utils import save_config
+
 IDENTIFIER_LEN = 27
-
-
-class NumpyEncoder(json.JSONEncoder):
-    """
-    convert numpy array to list for JSON serialize
-    """
-    def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
-
-
-def save_config(file_path, config, replace=False):
-    """
-    :param file_path: the file path of config to be saved.
-    :param config: dict. The config to be saved
-    :param replace: whether to replace if the config file already existed.
-    :return:
-    """
-    if os.path.isfile(file_path) and not replace:
-        with open(file_path, "r") as input_file:
-            old_config = json.load(input_file)
-        old_config.update(config)
-        config = old_config.copy()
-
-    file_dirname = os.path.dirname(os.path.abspath(file_path))
-    if file_dirname and not os.path.exists(file_dirname):
-        os.makedirs(file_dirname)
-
-    with open(file_path, "w") as output_file:
-        json.dump(config, output_file, cls=NumpyEncoder)
 
 
 def load_config(file_path):
