@@ -62,18 +62,18 @@ def valid_dataloader_creator(config):
 
 def get_auto_estimator():
     auto_lstm = AutoLSTM(input_feature_num=input_feature_dim,
-                             output_target_num=output_feature_dim,
-                             past_seq_len=5,
-                             optimizer='Adam',
-                             loss=torch.nn.MSELoss(),
-                             metric="mse",
-                             hidden_dim=hp.grid_search([32, 64]),
-                             layer_num=hp.randint(1, 3),
-                             lr=hp.choice([0.001, 0.003, 0.01]),
-                             dropout=hp.uniform(0.1, 0.2),
-                             logs_dir="/tmp/auto_lstm",
-                             cpus_per_trial=2,
-                             name="auto_lstm")
+                         output_target_num=output_feature_dim,
+                         past_seq_len=5,
+                         optimizer='Adam',
+                         loss=torch.nn.MSELoss(),
+                         metric="mse",
+                         hidden_dim=hp.grid_search([32, 64]),
+                         layer_num=hp.randint(1, 3),
+                         lr=hp.choice([0.001, 0.003, 0.01]),
+                         dropout=hp.uniform(0.1, 0.2),
+                         logs_dir="/tmp/auto_lstm",
+                         cpus_per_trial=2,
+                         name="auto_lstm")
     return auto_lstm
 
 
@@ -92,8 +92,7 @@ class TestAutoLSTM(TestCase):
                       epochs=1,
                       batch_size=hp.choice([32, 64]),
                       validation_data=get_x_y(size=400),
-                      n_sampling=1,
-                      )
+                      n_sampling=1)
         assert auto_lstm.get_best_model()
         best_config = auto_lstm.get_best_config()
         assert 0.1 <= best_config['dropout'] <= 0.2
@@ -106,8 +105,7 @@ class TestAutoLSTM(TestCase):
                       epochs=1,
                       batch_size=hp.choice([32, 64]),
                       validation_data=valid_dataloader_creator,
-                      n_sampling=1,
-                      )
+                      n_sampling=1)
         assert auto_lstm.get_best_model()
         best_config = auto_lstm.get_best_config()
         assert 0.1 <= best_config['dropout'] <= 0.2
@@ -117,9 +115,9 @@ class TestAutoLSTM(TestCase):
     def test_predict_evaluation(self):
         auto_lstm = get_auto_estimator()
         auto_lstm.fit(data=train_dataloader_creator(config={"batch_size": 64}),
-                         epochs=1,
-                         validation_data=valid_dataloader_creator(config={"batch_size": 64}),
-                         n_sampling=1)
+                      epochs=1,
+                      validation_data=valid_dataloader_creator(config={"batch_size": 64}),
+                      n_sampling=1)
         test_data_x, test_data_y = get_x_y(size=100)
         auto_lstm.predict(test_data_x)
         auto_lstm.evaluate((test_data_x, test_data_y))
@@ -127,9 +125,9 @@ class TestAutoLSTM(TestCase):
     def test_onnx_methods(self):
         auto_lstm = get_auto_estimator()
         auto_lstm.fit(data=train_dataloader_creator(config={"batch_size": 64}),
-                         epochs=1,
-                         validation_data=valid_dataloader_creator(config={"batch_size": 64}),
-                         n_sampling=1)
+                      epochs=1,
+                      validation_data=valid_dataloader_creator(config={"batch_size": 64}),
+                      n_sampling=1)
         test_data_x, test_data_y = get_x_y(size=100)
         pred = auto_lstm.predict(test_data_x)
         eval_res = auto_lstm.evaluate((test_data_x, test_data_y))
@@ -146,9 +144,9 @@ class TestAutoLSTM(TestCase):
     def test_save_load(self):
         auto_lstm = get_auto_estimator()
         auto_lstm.fit(data=train_dataloader_creator(config={"batch_size": 64}),
-                         epochs=1,
-                         validation_data=valid_dataloader_creator(config={"batch_size": 64}),
-                         n_sampling=1)
+                      epochs=1,
+                      validation_data=valid_dataloader_creator(config={"batch_size": 64}),
+                      n_sampling=1)
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             auto_lstm.save(tmp_dir_name)
             auto_lstm.load(tmp_dir_name)

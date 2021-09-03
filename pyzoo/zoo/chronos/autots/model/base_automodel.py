@@ -205,7 +205,7 @@ class BasePytorchAutomodel:
                                                   dirname=dirname,
                                                   multioutput=multioutput,
                                                   batch_size=batch_size)
-    
+
     def save(self, checkpoint_path):
         """
         Save the best model.
