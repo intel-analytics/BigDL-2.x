@@ -13,14 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import shutil
-import tempfile
-import zipfile
-
 import os
 import json
-
-from zoo.chronos.feature.utils import restore
 
 IDENTIFIER_LEN = 27
 
@@ -58,7 +52,6 @@ def get_remote_list(dir_in):
         filename = filename.decode()
         name_list = filename.split('/')
         names.append(name_list[-1])
-    # print(names)
     return names
 
 
