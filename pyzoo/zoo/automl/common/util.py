@@ -99,23 +99,6 @@ def get_ckpt_hdfs(remote_dir, local_ckpt):
     process(cmd)
 
 
-def restore_hdfs(model_path, remote_dir, feature_transformers=None, model=None, config=None):
-    model_name = os.path.basename(model_path)
-    local_best_dirname = os.path.basename(os.path.dirname(model_path))
-    remote_model = os.path.join(remote_dir, local_best_dirname[-IDENTIFIER_LEN:], model_name)
-    tmp_dir = tempfile.mkdtemp(prefix="automl_save_")
-    try:
-        cmd = "hadoop fs -get {} {}".format(remote_model, tmp_dir)
-        process(cmd)
-        with zipfile.ZipFile(os.path.join(tmp_dir, model_name)) as zf:
-            zf.extractall(tmp_dir)
-
-        all_config = restore(tmp_dir, feature_transformers, model, config)
-    finally:
-        shutil.rmtree(tmp_dir)
-    return all_config
-
-
 def convert_bayes_configs(config):
     selected_features = []
     new_config = {}
