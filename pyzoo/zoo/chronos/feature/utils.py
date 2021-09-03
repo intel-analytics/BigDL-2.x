@@ -65,3 +65,25 @@ def save(file_path, feature_transformers=None, model=None, config=None):
         model.save(model_path, config_path)
     if config is not None:
         save_config(config_path, config)
+
+
+def load_config(file_path):
+    with open(file_path, "r") as input_file:
+        data = json.load(input_file)
+    return data
+
+
+def restore(file, feature_transformers=None, model=None, config=None):
+    model_path = os.path.join(file, "weights_tune.h5")
+    config_path = os.path.join(file, "config.json")
+    local_config = load_config(config_path)
+    if config is not None:
+        all_config = config.copy()
+        all_config.update(local_config)
+    else:
+        all_config = local_config
+    if model:
+        model.restore(model_path, **all_config)
+    if feature_transformers:
+        feature_transformers.restore(**all_config)
+    return all_config
