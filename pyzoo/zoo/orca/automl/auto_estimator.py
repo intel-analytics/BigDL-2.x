@@ -157,7 +157,7 @@ class AutoEstimator:
         :param metric_mode: One of ["min", "max"]. "max" means greater metric value is better.
             You have to specify metric_mode if you use a customized metric function.
             You don't have to specify metric_mode if you use the built-in metric in
-            zoo.automl.common.metrics.Evaluator.
+            zoo.automl.metrics.Evaluator.
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: Number of times to sample from the search_space. Defaults to 1.
             If hp.grid_search is in search_space, the grid will be repeated n_sampling of times.
