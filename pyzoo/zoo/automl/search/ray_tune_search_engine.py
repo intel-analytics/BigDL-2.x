@@ -20,7 +20,7 @@ from ray import tune
 import os
 from zoo.automl.search.base import SearchEngine, TrialOutput, GoodError
 from zoo.automl.common.util import get_ckpt_hdfs, put_ckpt_hdfs, convert_bayes_configs
-from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME, DEFAULT_METRIC_NAME
+from zoo.automl.search.parameters import DEFAULT_LOGGER_NAME, DEFAULT_METRIC_NAME
 from ray.tune import Stopper
 from zoo.automl.logger import TensorboardXLogger
 from zoo.automl.model.abstract import ModelBuilder
