@@ -51,7 +51,7 @@ def _check_is_aligned(df, id_col, dt_col):
     return res
 
 
-def _check_dt_is_sorted(df, dt_col, id_col="id"):
+def _check_dt_is_sorted(df, dt_col):
     import numpy as np
     import warnings
     df = df.copy()
