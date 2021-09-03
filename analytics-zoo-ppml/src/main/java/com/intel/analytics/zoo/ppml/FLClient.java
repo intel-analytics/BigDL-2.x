@@ -22,7 +22,6 @@ import com.intel.analytics.zoo.ppml.generated.PSIServiceGrpc;
 import com.intel.analytics.zoo.ppml.generated.ParameterServerServiceGrpc;
 import com.intel.analytics.zoo.ppml.psi.Utils;
 import io.grpc.StatusRuntimeException;
-import org.apache.commons.cli.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,28 +39,22 @@ public class FLClient extends ZooGrpcClient {
     private static ParameterServerServiceGrpc.ParameterServerServiceBlockingStub blockingStubPS;
     public FLClient(String[] args) {
         super(args);
-
-        options.addOption(new Option(
-                "tid", "taskId", true, "."));
     }
 
     @Override
     protected void parseArgs() throws IOException {
-        FLHelper flHelper = getCmd(FLHelper.class);
+        FLHelper flHelper = getConfigFromYaml(FLHelper.class, configPath);
         if (flHelper != null) {
-            services = flHelper.servicesList.split(",");
+            serviceList = flHelper.servicesList;
+            target = flHelper.clientTarget;
             taskID = flHelper.taskID;
         }
-
-
         super.parseArgs();
-        taskID = cmd.getOptionValue("tid", taskID);
     }
 
     @Override
     public void loadServices() {
-        assert services.length > 0;
-        for (String service : services) {
+        for (String service : serviceList.split(",")) {
             if (service.equals("psi")) {
                 blockingStubPSI = PSIServiceGrpc.newBlockingStub(channel);
             } else if (service.equals("ps")) {

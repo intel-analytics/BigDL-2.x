@@ -27,8 +27,12 @@ public abstract class AbstractZooGrpc {
     protected String configPath;
     protected CommandLine cmd;
     protected String serviceList = "";
-    protected String[] services;
-    protected <T> T getCmd(Class<T> valueType) throws IOException {
+
+    protected <T> T getConfigFromYaml(Class<T> valueType, String defaultConfigPath)
+            throws IOException {
+        options = new Options();
+        options.addOption(new Option(
+                "c", "config", true, "config path"));
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
         cmd = null;
@@ -41,13 +45,14 @@ public abstract class AbstractZooGrpc {
             System.exit(1);
         }
         assert cmd != null;
-        configPath = cmd.getOptionValue("config", null);
+        configPath = cmd.getOptionValue("config", defaultConfigPath);
         if (configPath != null) {
             // config YAML passed, use config YAML first, command-line could overwrite
             assert valueType != null;
             return ConfigParser.loadConfigFromPath(configPath, valueType);
         }
         else {
+            System.out.println("Config is not provided, using default");
             return null;
         }
 

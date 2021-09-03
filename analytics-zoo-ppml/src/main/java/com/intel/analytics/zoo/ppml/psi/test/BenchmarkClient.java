@@ -85,8 +85,10 @@ public class BenchmarkClient {
 		.usePlaintext()
                 .build();
         try {
-            String[] arg = {"-t", target, "-tid", taskID};
+            String[] arg = {"-c", BenchmarkClient.class.getClassLoader()
+                    .getResource("psi/psi-conf.yaml").getPath()};
             FLClient client = new FLClient(arg);
+            client.build();
             // Get salt from Server
             salt = client.getSalt();
             logger.info("Client get Slat=" + salt);

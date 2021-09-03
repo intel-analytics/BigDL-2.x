@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ZooGrpcServer extends AbstractZooGrpc{
     protected static final Logger logger = Logger.getLogger(ZooGrpcServer.class.getName());
-    protected int port = 8980;
+    protected int port;
     protected Server server;
     protected LinkedList<BindableService> serverServices;
 
@@ -47,18 +47,10 @@ public class ZooGrpcServer extends AbstractZooGrpc{
         this(null, service);
     }
     public ZooGrpcServer(String[] args, BindableService service) {
-        options = new Options();
-        options.addOption(new Option(
-                "p", "port", true, "The port to listen."));
-        options.addOption(new Option(
-                "c", "config", true, "The path to config YAML file"));
-        options.addOption(new Option(
-                "s", "service", true, "service to use"));
         serverServices = new LinkedList<>();
         if (service != null) {
             serverServices.add(service);
         }
-
         this.args = args;
 
     }
@@ -66,11 +58,8 @@ public class ZooGrpcServer extends AbstractZooGrpc{
         this(args, null);
     }
 
-    public void parseArgs() throws IOException {
-        getCmd(null);
-        port = Integer.parseInt(cmd.getOptionValue("port", String.valueOf(port)));
-        services = cmd.getOptionValue("s", serviceList).split(",");
-    }
+    public void parseArgs() throws IOException {}
+
 
     /** Entrypoint of ZooGrpcServer */
     public void build() throws IOException {

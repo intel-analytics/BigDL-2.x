@@ -19,7 +19,6 @@ package com.intel.analytics.zoo.ppml;
 import com.intel.analytics.zoo.grpc.ZooGrpcServer;
 import com.intel.analytics.zoo.ppml.psi.PSIServiceImpl;
 import io.grpc.BindableService;
-import io.grpc.ServerBuilder;
 import io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.NettyServerBuilder;
 import io.netty.handler.ssl.ClientAuth;
@@ -46,12 +45,7 @@ public class FLServer extends ZooGrpcServer {
     String trustCertCollectionFilePath;
     FLServer(String[] args, BindableService service) {
         super(args, service);
-        options.addOption(new Option(
-                "cc", "certChainFilePath", true, "certChainFilePath"));
-        options.addOption(new Option(
-                "pk", "privateKeyFilePath", true, "privateKeyFilePath"));
-        options.addOption(new Option(
-                "tcc", "trustCertCollectionFilePath", true, "trustCertCollectionFilePath"));
+        configPath = "ppml-conf.yaml";
     }
     FLServer(String[] args) {
         this(args, null);
@@ -59,9 +53,6 @@ public class FLServer extends ZooGrpcServer {
     void buildWithTls() throws IOException {
         // TODO: to add for multi-services
         parseArgs();
-        certChainFilePath = cmd.getOptionValue("cc", null);
-        privateKeyFilePath = cmd.getOptionValue("pk", null);
-        trustCertCollectionFilePath = cmd.getOptionValue("tcc", null);
         NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port);
         for (BindableService bindableService : serverServices) {
             serverBuilder.addService(bindableService);
@@ -82,15 +73,16 @@ public class FLServer extends ZooGrpcServer {
         return GrpcSslContexts.configure(sslClientContextBuilder).build();
     }
 
+
+
     @Override
     public void parseArgs() throws IOException {
-        FLHelper flHelper = getCmd(FLHelper.class);
+        FLHelper flHelper = getConfigFromYaml(FLHelper.class, configPath);
         if (flHelper != null) {
             serviceList = flHelper.servicesList;
             port = flHelper.serverPort;
         }
-        super.parseArgs();
-        for (String service : services) {
+        for (String service : serviceList.split(",")) {
             if (service.equals("psi")) {
                 serverServices.add(new PSIServiceImpl());
             } else if (service.equals("ps")) {

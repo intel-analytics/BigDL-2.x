@@ -33,38 +33,14 @@ public class ZooGrpcClient extends AbstractZooGrpc{
     protected ManagedChannel channel;
     public ZooGrpcClient(String[] args) {
         clientUUID = UUID.randomUUID().toString();
-        options = new Options();
-        Option portArg = new Option(
-                "t", "target", true, "URL.");
-        options.addOption(portArg);
-        Option configPathArg = new Option(
-                "c", "config", true, "The path to config YAML file");
-        options.addOption(new Option(
-                "s", "service", true, "service to use"));
-        options.addOption(configPathArg);
         this.args = args;
-
-
     }
-    protected void parseArgs() throws IOException {
-        CommandLineParser parser = new DefaultParser();
-        HelpFormatter formatter = new HelpFormatter();
-        cmd = null;
+    protected void parseArgs() throws IOException {}
 
-        try {
-            cmd = parser.parse(options, args);
-        } catch (ParseException e) {
-            System.out.println(e.getMessage());
-            formatter.printHelp("utility-name", options);
-            System.exit(1);
-        }
-        assert cmd != null;
-        target = cmd.getOptionValue("t", "locaohost:8980");
-        configPath = cmd.getOptionValue("config", "config.yaml");
-        services = cmd.getOptionValue("s", "").split(",");
-    }
-    public void loadServices() {
+    public void loadServices() {}
 
+    public ManagedChannel getChannel() {
+        return channel;
     }
     public void build() throws IOException {
         parseArgs();
@@ -85,15 +61,5 @@ public class ZooGrpcClient extends AbstractZooGrpc{
             return r;
         }
 
-    }
-    public int t(int a) {
-        return a;
-    }
-    public static void main(String[] args) {
-        String[] a = null;
-        ZooGrpcClient z = new ZooGrpcClient(a);
-        Object res = z.call(z::t, 1);
-        res = (Object)res;
-        return;
     }
 }

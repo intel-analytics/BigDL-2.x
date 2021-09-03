@@ -20,11 +20,11 @@ public class FLHelper {
     String servicesList;
 
     // Server property
-    int serverPort;
+    int serverPort = 8980;
 
     // Client property
-    String clientTarget;
-    String taskID;
+    String clientTarget = "localhost:8980";
+    String taskID = "taskID";
 
     public void setServicesList(String servicesList) {
         this.servicesList = servicesList;

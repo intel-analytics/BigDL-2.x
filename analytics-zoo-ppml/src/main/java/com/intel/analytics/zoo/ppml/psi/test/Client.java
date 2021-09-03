@@ -32,10 +32,6 @@ public class Client {
     private static final Logger logger = LoggerFactory.getLogger(Client.class);
 
     public static void main(String[] args) throws Exception {
-        String taskID = "taskID";
-        String target = "localhost:8980";
-        logger.info("TaskID is: " + taskID);
-        logger.info("Accessing service at: " + target);
 
         int max_wait = 20;
         // Example code for client
@@ -50,14 +46,10 @@ public class Client {
         // Create a communication channel to the server,  known as a Channel. Channels are thread-safe
         // and reusable. It is common to create channels at the beginning of your application and reuse
         // them until the application shuts down.
-        ManagedChannel channel = ManagedChannelBuilder.forTarget(target)
-                // Channels are secure by default (via SSL/TLS).
-                .usePlaintext()
-                .build();
-        String[] arg = {"-t", target, "-tid", taskID, "-s", "psi"};
-
+        String[] arg = {"-c", BenchmarkClient.class.getClassLoader()
+                .getResource("psi/psi-conf.yaml").getPath()};
+        FLClient client = new FLClient(arg);
         try {
-            FLClient client = new FLClient(arg);
             client.build();
             // Get salt from Server
             salt = client.getSalt();
@@ -82,12 +74,13 @@ public class Client {
                 }
                 max_wait--;
             }
-
-        } finally {
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally{
             // ManagedChannels use resources like threads and TCP connections. To prevent leaking these
             // resources the channel should be shut down when it will no longer be used. If it may be used
             // again leave it running.
-            channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+            client.getChannel().shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
         }
     }
 }

@@ -1,8 +1,8 @@
-servicesList:
+servicesList: psi
 
 # Server property
-serverPort:
+# serverPort:
 
 # Client property
-clientTarget:
-taskID:
+# clientTarget:
+# taskID:
