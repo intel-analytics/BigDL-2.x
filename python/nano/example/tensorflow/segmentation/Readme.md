@@ -26,6 +26,12 @@ This example describes how to use BigDL Nano to optimize a TensorFlow image segm
     sudo apt install graphviz
     ```
 
+    Then setup the environment with the script `bigdl-nano-init`:
+
+    ```
+    source bigdl-nano-init
+    ```
+
 2. Run the Example
 
     You can run this example in your conda environment with the following command:
