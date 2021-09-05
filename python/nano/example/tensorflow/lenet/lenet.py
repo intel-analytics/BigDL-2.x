@@ -81,17 +81,18 @@ def main():
     )
     import time
     start = time.time()
-    model.fit(
+    history = model.fit(
         ds_train,
-        epochs=12,
-        validation_data=ds_test,
+        epochs=1,
+        # validation_data=ds_test,
     )
     end=time.time()
     
-    # throughput=len(ds_train)/(end-start)
-    # print("Throughput:", throughput)
+    throughput=int(ds_info.splits['train'].num_examples/batch_size)/(end-start)
+    print("Throughput:", throughput)
 
-    model.evaluate(ds_test)
+    result = model.evaluate(ds_test)
+    print(result)
 
 if __name__=="__main__":
     main()
