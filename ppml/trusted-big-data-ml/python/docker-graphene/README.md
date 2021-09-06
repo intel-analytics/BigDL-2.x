@@ -29,7 +29,9 @@ Before running the following command, please modify the paths in `build-docker-i
   The ppml in analytics zoo needs secured keys to enable spark security such as Authentication, RPC Encryption, Local Storage Encryption and TLS, you need to prepare the secure keys and keystores. In this tutorial, you can generate keys and keystores with root permission (test only, need input security password for keys).
 
   ```bash
-  sudo ../../../scripts/generate-keys.sh
+  cd ../../../scripts/
+  ./generate-keys.sh
+  cd ../trusted-big-data-ml/python/docker-graphene/
   ```
 
   You also need to generate your enclave key using the command below, and keep it safely for future remote attestations and to start SGX enclaves more securely.
@@ -37,7 +39,9 @@ Before running the following command, please modify the paths in `build-docker-i
   It will generate a file `enclave-key.pem` in your present working directory, which will be your enclave key. To store the key elsewhere, modify the outputted file path.
 
   ```bash
+  cd ../../../scripts/
   openssl genrsa -3 -out enclave-key.pem 3072
+  cd ../trusted-big-data-ml/python/docker-graphene/
   ```
 
 * ##### Prepare the Password
@@ -45,7 +49,9 @@ Before running the following command, please modify the paths in `build-docker-i
   Next, you need to store the password you used for key generation, i.e., `generate-keys.sh`, in a secured file.
 
   ```bash
+  cd ../../../scripts/
   sudo bash ../../../scripts/generate-password.sh used_password_when_generate_keys
+  cd ../trusted-big-data-ml/python/docker-graphene/
   ```
 
 ## Run Your Pyspark Program
