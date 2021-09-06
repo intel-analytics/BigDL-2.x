@@ -13,17 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 # 
-# workaround_cross_entropy is adapted from 
-# 
+# `workaround_cross_entropy` is adapted from pytorch team.
 # https://github.com/pytorch/pytorch/blob/c7c711bfb88fcb0ef573125a5a8655c49156055b
 # /torch/nn/functional.py#L2767
 # 
 # Note: This license has also been called the "New BSD License" or "Modified BSD License". See also
 # the 2-clause BSD License.
 #
-# Copyright (c) 2019 The DeepGLO Project.
+# Copyright (c) 2016 The Pytorch Project.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification, are permitted
