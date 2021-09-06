@@ -16,6 +16,7 @@
 #
 import pandas as pd
 import os
+from abc import abstractmethod
 
 from zoo.automl.metrics import Evaluator
 from zoo.chronos.pipeline.time_sequence import TimeSequencePipeline
