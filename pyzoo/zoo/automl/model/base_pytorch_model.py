@@ -154,9 +154,11 @@ class PytorchBaseModel(BaseModel):
                 f"data/validation_data should be a tuple or\
                  data creator function but found {type(data)}"
             assert isinstance(data[0], np.ndarray) and isinstance(validation_data[0], np.ndarray),\
-                f"x should be a np.ndarray but found {type(x)}"
+                f"Data and validation_data should be a tuple of np.ndarray " \
+                f"but found {type(data[0])} as the first element of data."
             assert isinstance(data[1], np.ndarray) and isinstance(validation_data[1], np.ndarray),\
-                f"y should be a np.ndarray but found {type(y)}"
+                f"Data and validation_data should be a tuple of np.ndarray " \
+                f"but found {type(data[1])} as the second element of data."
             train_data_creator = self._np_to_creator(data)
             valid_data_creator = self._np_to_creator(validation_data)
             train_loader = train_data_creator(self.config)
