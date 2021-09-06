@@ -16,5 +16,5 @@ source ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-env.sh
 export SPARK_CMD=spark-submit
 
 bash ${ANALYTICS_ZOO_HOME}/bin/analytics-zoo-base.sh \
-    --py-files ${ANALYTICS_ZOO_PY_ZIP} \
+    --py-files local://${ANALYTICS_ZOO_PY_ZIP} \
     "$@"

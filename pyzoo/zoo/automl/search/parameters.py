@@ -13,3 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+DEFAULT_LOGGER_NAME = "AutoML"
+DEFAULT_METRIC_NAME = "reward_metric"

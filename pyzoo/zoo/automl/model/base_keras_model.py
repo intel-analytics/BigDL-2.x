@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 from zoo.automl.model.abstract import BaseModel, ModelBuilder
-from zoo.automl.common.util import *
-from zoo.automl.common.metrics import Evaluator
+import numpy as np
+from zoo.automl.metrics import Evaluator
 import pickle
 import tensorflow as tf
 from tensorflow.keras import backend as K

@@ -13,3 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+# where pipeline saves file by default
+DEFAULT_PPL_DIR = "./saved_pipeline"
+DEFAULT_CONFIG_DIR = "./saved_configs"

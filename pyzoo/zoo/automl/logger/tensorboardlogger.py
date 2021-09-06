@@ -39,23 +39,29 @@
 from ray.tune.utils import flatten_dict
 import numpy as np
 import os
+import math
 
-from tensorboardX import SummaryWriter
-from tensorboardX.summary import hparams
+from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard.summary import hparams
 
-VALID_SUMMARY_TYPES = (int, float, np.float32, np.float64, np.int32)
+# types will be supported natively as continuous, which can be supported in both config and metrics
+VALID_SUMMARY_TYPES = (int, float)
+# types will be transformed to float, which can be supported in both config and metrics
+VALID_NUMPY_SUMMARY_TYPES = (np.float32, np.float64, np.int32)
+# types will be transformed to str, which can be supported in config
+VALID_SEQ_SUMMARY_TYPES = (list, tuple)
 
 
-class TensorboardXLogger():
+class TensorboardLogger():
     def __init__(self, logs_dir="", writer=None, name="AutoML"):
         '''
         Initialize a tensorboard logger
 
         Note that this logger relies on tensorboardx and only provide tensorboard hparams log.
-        An ImportError will be raised for the lack of tensorboardx
+        An ImportError will be raised for the lack of torch
 
         :param logs_dir: root directory for the log, default to the current working dir
-        :param writer: shared tensorboardx SummaryWriter, default to None.
+        :param writer: shared tensorboard SummaryWriter, default to None.
         '''
         self.logs_dir = logs_dir
         self.name = name
@@ -63,7 +69,7 @@ class TensorboardXLogger():
         if writer:
             self._file_writer = writer
         else:
-            self._file_writer = SummaryWriter(logdir=self.logs_dir)
+            self._file_writer = SummaryWriter(log_dir=self.logs_dir)
 
     def run(self, config, metric):
         '''
@@ -95,11 +101,27 @@ class TensorboardXLogger():
             "The keys of config and metric should be exactly the same"
 
         new_config = {}
+        hparam_domain_discrete = {}
         for key in config.keys():
             new_config[key] = {}
             for k, value in config[key].items():
-                if value is not None:
+                if value is None:
+                    pass
+                if type(value) in VALID_SUMMARY_TYPES:
                     new_config[key][f'{self.name}/' + k] = value
+                if type(value) in VALID_NUMPY_SUMMARY_TYPES and not np.isnan(value):
+                    new_config[key][f'{self.name}/' + k] = float(value)
+                if type(value) in VALID_SEQ_SUMMARY_TYPES:
+                    new_config[key][f'{self.name}/' + k] = str(value)
+                    if f'{self.name}/' + k in hparam_domain_discrete:
+                        hparam_domain_discrete[f'{self.name}/' + k].add(str(value))
+                    else:
+                        hparam_domain_discrete[f'{self.name}/' + k] = set([str(value)])
+        for k, v in hparam_domain_discrete.items():
+            hparam_domain_discrete[k] = list(v)
+        for key in new_config.keys():
+            if new_config[key] == {}:
+                del new_config[key]
 
         new_metric = {}
         for key in metric.keys():
@@ -107,18 +129,28 @@ class TensorboardXLogger():
             for k, value in metric[key].items():
                 if not isinstance(value, list):
                     value = [value]
-                if type(value[-1]) in VALID_SUMMARY_TYPES and not np.isnan(value[-1]):
+                if value[-1] is None:
+                    continue
+                if type(value[-1]) in VALID_SUMMARY_TYPES and not math.isnan(value[-1]):
                     new_metric[key][f'{self.name}/' + k] = value
+                if type(value[-1]) in VALID_NUMPY_SUMMARY_TYPES and not np.isnan(value[-1]):
+                    new_metric[key][f'{self.name}/' + k] = list(map(float, value))
+        for key in new_metric.keys():
+            if new_metric[key] == {}:
+                del new_metric[key]
 
         # hparams log write
         for key in new_metric.keys():
-            self._write_hparams(new_config[key], new_metric[key], name=key.replace("/", "_"))
+            self._write_hparams(new_config[key],
+                                new_metric[key],
+                                name=key.replace("/", "_"),
+                                hparam_domain_discrete=hparam_domain_discrete)
 
-    def _write_hparams(self, hparam_dict, metric_dict, name):
+    def _write_hparams(self, hparam_dict, metric_dict, name, hparam_domain_discrete):
         # adapted from
         # https://github.com/lanpa/tensorboardX/blob/master/tensorboardX/writer.py#L336-L376
-        exp, ssi, sei = hparams(hparam_dict, metric_dict)
-        w_hp = SummaryWriter(logdir=os.path.join(self._file_writer.logdir, name))
+        exp, ssi, sei = hparams(hparam_dict, metric_dict, hparam_domain_discrete)
+        w_hp = SummaryWriter(log_dir=os.path.join(self._file_writer.log_dir, name))
         w_hp.file_writer.add_summary(exp)
         w_hp.file_writer.add_summary(ssi)
         w_hp.file_writer.add_summary(sei)

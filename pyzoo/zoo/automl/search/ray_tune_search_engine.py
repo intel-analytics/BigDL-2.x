@@ -13,16 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import warnings
 
 import ray
 from ray import tune
 import os
 from zoo.automl.search.base import SearchEngine, TrialOutput, GoodError
-from zoo.automl.common.util import get_ckpt_hdfs, put_ckpt_hdfs, convert_bayes_configs
-from zoo.automl.common.parameters import DEFAULT_LOGGER_NAME, DEFAULT_METRIC_NAME
+from zoo.automl.search.parameters import DEFAULT_LOGGER_NAME, DEFAULT_METRIC_NAME
+from zoo.automl.search.util import get_ckpt_hdfs, put_ckpt_hdfs, convert_bayes_configs
 from ray.tune import Stopper
-from zoo.automl.logger import TensorboardXLogger
+from zoo.automl.logger import TensorboardLogger
 from zoo.automl.model.abstract import ModelBuilder
 
 
@@ -54,7 +53,7 @@ class RayTuneSearchEngine(SearchEngine):
     @staticmethod
     def get_default_remote_dir(name):
         from zoo.ray import RayContext
-        from zoo.automl.common.util import process
+        from zoo.automl.search.util import process
         ray_ctx = RayContext.get()
         if ray_ctx.is_local:
             return None
@@ -186,11 +185,11 @@ class RayTuneSearchEngine(SearchEngine):
 
         # Visualization code for ray (leaderboard)
         logger_name = self.name if self.name else DEFAULT_LOGGER_NAME
-        tf_config, tf_metric = TensorboardXLogger._ray_tune_searcher_log_adapt(analysis)
+        tf_config, tf_metric = TensorboardLogger._ray_tune_searcher_log_adapt(analysis)
 
-        self.logger = TensorboardXLogger(logs_dir=os.path.join(self.logs_dir,
-                                                               logger_name+"_leaderboard"),
-                                         name=logger_name)
+        self.logger = TensorboardLogger(logs_dir=os.path.join(self.logs_dir,
+                                                              logger_name+"_leaderboard"),
+                                        name=logger_name)
         self.logger.run(tf_config, tf_metric)
         self.logger.close()
 
