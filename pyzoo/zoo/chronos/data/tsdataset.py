@@ -348,7 +348,7 @@ class TSDataset:
         '''
         Generate per-time-series feature for each time series.
         This method will be implemented by tsfresh.
-        Make sure that the specified column name does not contain'__'.
+        Make sure that the specified column name does not contain '__'.
 
         TODO: relationship with scale should be figured out.
 
@@ -402,7 +402,7 @@ class TSDataset:
         '''
         Generate aggregation feature for each sample.
         This method will be implemented by tsfresh.
-        Make sure that the specified column name does not contain'__'.
+        Make sure that the specified column name does not contain '__'.
 
         TODO: relationship with scale should be figured out.
 
