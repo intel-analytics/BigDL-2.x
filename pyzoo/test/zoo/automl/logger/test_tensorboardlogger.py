@@ -16,13 +16,13 @@
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.logger import TensorboardXLogger
+from zoo.automl.logger import TensorboardLogger
 import numpy as np
 import random
 import os.path
 
 
-class TestTensorboardXLogger(ZooTestCase):
+class TestTensorboardLogger(ZooTestCase):
 
     def setup_method(self, method):
         pass
@@ -30,7 +30,7 @@ class TestTensorboardXLogger(ZooTestCase):
     def teardown_method(self, method):
         pass
 
-    def test_tbxlogger_valid_type(self):
+    def test_tblogger_valid_type(self):
         trail_num = 100
         test_config = {}
         test_metric = {}
@@ -43,14 +43,14 @@ class TestTensorboardXLogger(ZooTestCase):
                 {"matrix_good": random.randint(0, 100)/100,
                  "matrix_unstable": np.nan if random.random() < 0.5 else 1,
                  "matrix_bad": np.nan}
-        logger = TensorboardXLogger(os.path.abspath(os.path.expanduser("~/test_tbxlogger")))
+        logger = TensorboardLogger(os.path.abspath(os.path.expanduser("~/test_tbxlogger")))
         logger.run(test_config, test_metric)
         logger.close()
 
-    def test_tbxlogger_keys(self):
+    def test_tblogger_keys(self):
         test_config = {"run1": {"lr": 0.01}}
         test_metric = {"run2": {"lr": 0.02}}
-        logger = TensorboardXLogger(os.path.abspath(os.path.expanduser("~/test_tbxlogger")))
+        logger = TensorboardLogger(os.path.abspath(os.path.expanduser("~/test_tbxlogger")))
         with pytest.raises(Exception):
             logger.run(test_config, test_metric)
         logger.close()
