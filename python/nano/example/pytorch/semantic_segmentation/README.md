@@ -8,7 +8,6 @@ We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux)
 ```
 conda create -n nano python=3.7  # "nano" is conda environment name, you can use any name you like.
 conda activate nano
-conda install PyTurboJPEG -c conda-forge
 
 pip install bigdl-nano[pytorch]
 ```
