@@ -1,67 +1,76 @@
-import os
 import json
 
+from pyspark import BarrierTaskContext
 from pyspark.context import SparkContext
-from pyspark.conf import SparkConf
 import tensorflow as tf
-
-#from zoo.orca.learn.tf2.pyspark_estimator import Estimator
-
-sc = SparkContext()
-
 from numpy import array
-import numpy as np
-from keras.models import Sequential
-from keras.layers import LSTM
-from keras.layers import Dense 
+from contextlib import closing
+import socket
 
-workers = 2
 
-def build_and_compile_model():
+def model_creator():
+    import tensorflow as tf
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import LSTM
+    from tensorflow.keras.layers import Dense
     model = Sequential()
     model.add(LSTM(50, activation='relu', input_shape=(3, 1)))
     model.add(Dense(1))
     model.compile(optimizer='adam', loss='mse')
     return model
 
-os.environ['TF_CONFIG'] = json.dumps({
-    'cluster': {
-        'worker': ["172.168.0.204:20000", "172.168.0.202:20001"]
-    },
-    'task': {'type': 'worker', 'index': 0}
-})
+def find_free_port(tc):
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(("", 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        tc.barrier()
+        return f"{s.getsockname()[0]}:{s.getsockname()[1]}"
 
-urls =["172.168.0.204:20000", "172.168.0.202:20001"]
-no_proxy = os.environ.get("no_proxy", "")
-ips = [url.split(":")[0] for url in urls]
-os.environ["no_proxy"] = ",".join(ips) + "," + no_proxy
-
-strategy =  tf.distribute.experimental.MultiWorkerMirroredStrategy()
-print('Number of devices: %d' % strategy.num_replicas_in_sync)
-
-def transform_func(*args):
+def train_data_creator(*args):
     train_data = array([[10, 20, 30], [20, 30, 40], [30, 40, 50], [40, 50, 60]])
-    val_data = array([40, 50, 60, 70])
     train_data = train_data.reshape((4,3,1))
+    return train_data
+
+def val_data_creator(*args):
+    val_data = array([40, 50, 60, 70])
+    return val_data
+
+def transform_func(parent_iter):
+    tc = BarrierTaskContext().get()
+    rank = tc.partitionId()
+    free_port = find_free_port(tc)
+    cluster = tc.allGather(str(free_port))
+    print(cluster)
+
+    import os
+    os.environ["TF_CONFIG"] = json.dumps({
+      'cluster': {
+          'worker': cluster
+      },
+      'task': {'type': 'worker', 'index': rank}
+    })
+    ips = set([node.split(":")[0] for node in cluster])
+    os.environ["no_proxy"] = ",".join(ips)
+
+    strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
 
     with strategy.scope():
-        mutil_model = build_and_compile_model()
+        model = model_creator()
 
-    checkpoint_dir = './training_checkpoints'
-    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt_{epoch}")
-    callbacks = [
-        tf.keras.callbacks.TensorBoard(log_dir='./logs'),
-        tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_prefix,
-                                            save_weights_only=True)] 
+    train_data = train_data_creator()
+    val_data = val_data_creator()
+    model.fit(train_data, val_data, epochs=10, verbose=1)
 
-    mutil_model.fit(train_data, val_data, epochs=10, verbose=0, callbacks=callbacks)
+    return [model.get_weights()]
 
-    weights = mutil_model.get_weights()
-    return [weights]
 
-workerRDD = sc.parallelize(list(range(workers)), workers)
-res = workerRDD.mapPartitions(transform_func).collect()
+if __name__ == "__main__":
 
-print(res)
+    import numpy as np
 
-sc.stop()
+    sc = SparkContext()
+    sparkRDD = sc.parallelize(list(range(40)), 4)
+    workerRDD = sparkRDD.repartition(2)
+    res = workerRDD.barrier().mapPartitions(transform_func).collect()
+    assert np.all(res[0][0] == res[1][0])
+    sc.stop()
