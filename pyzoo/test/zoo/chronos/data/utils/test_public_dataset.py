@@ -13,4 +13,92 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
+import shutil
+import urllib.request as req
 import pandas as pd
+import pytest
+import tempfile
+
+from test.zoo.pipeline.utils.test_utils import ZooTestCase
+from zoo.chronos.data.utils.public_dataset import PublicDataset
+
+
+class TestPublicDataset(ZooTestCase):
+    def setup_method(self, method):
+        pass
+
+    def teardown_method(self, method):
+        pass
+
+    def test_init_get_dataset(self):
+        name = 'nyc_taxi'
+        path = '~/.chronos/dataset/'
+        public_data = PublicDataset(name, path, redownload=False, with_split=False)
+
+        # illegle input.
+        with pytest.raises(OSError):
+            PublicDataset(name, path, redownload=True).get_public_data(chunk_size=1024)
+
+        with pytest.raises(AssertionError):
+            PublicDataset(name, path, redownload=False).get_public_data(chunk_size='1024')
+
+    def test_get_nyc_taxi(self):
+        name = 'nyc_taxi'
+        path = '~/.chronos/dataset'
+        if os.environ.get('FTP_URI', None):
+            file_url = f"{os.environ['FTP_URI']}/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv"
+            public_data = PublicDataset(name, path, redownload=False)
+
+            with tempfile.TemporaryFile() as tf, req.urlopen(file_url) as fu:
+                shutil.copyfileobj(fu, tf)
+                tf.seek(0)
+                public_data.df = pd.read_csv(tf, parse_dates=['timestamp'])
+
+            tsdata = public_data.get_tsdata(target_col='value', dt_col='timestamp')
+            assert set(tsdata.df.columns) == {'id', 'timestamp', 'value'}
+            assert tsdata.df.shape == (10320, 3)
+            tsdata._check_basic_invariants()
+
+    def test_get_network_traffic(self):
+        name = 'network_traffic'
+        path = '~/.chronos/dataset'
+        if os.environ.get('FTP_URI', None):
+            file_url = f"{os.environ['FTP_URI']}/analytics-zoo-data/network-traffic/data/data.csv"
+
+            public_data = PublicDataset(name, path, redownload=False)
+            with tempfile.TemporaryFile() as tf, req.urlopen(file_url) as fu:
+                shutil.copyfileobj(fu, tf)
+                tf.seek(0)
+                public_data.df = pd.read_csv(tf)
+                public_data.df.StartTime = pd.to_datetime(public_data.df.StartTime)
+                public_data.df.AvgRate = public_data.df.AvgRate.apply(lambda x: float(x[:-4])
+                                                                      if x.endswith("Mbps")
+                                                                      else float(x[:-4])*1000)
+
+            tsdata = public_data.get_tsdata(target_col=['AvgRate', 'total'], dt_col='StartTime')
+            assert tsdata.df.shape == (8760, 5)
+            assert set(tsdata.df.columns) == {'StartTime', 'EndTime', 'AvgRate', 'total', 'id'}
+            tsdata._check_basic_invariants()
+
+    def test_get_fsi(self):
+        name = 'fsi'
+        path = '~/.chronos/dataset'
+        if os.environ.get('FTP_URI', None):
+            file_url = f"{os.environ['FTP_URI']}/analytics-zoo-data/chronos-aiops/m_1932.csv"
+
+            public_data = PublicDataset(name, path, redownload=False, with_split=False)
+            with tempfile.TemporaryFile() as tf, req.urlopen(file_url) as fu:
+                shutil.copyfileobj(fu, tf)
+                tf.seek(0)
+                public_data.df = pd.read_csv(tf, usecols=[1, 2, 3],
+                                             names=['time_step', 'cpu_usage', 'mem_usage'])
+                public_data.df.sort_values(by="time_step", inplace=True)
+                public_data.df.reset_index(inplace=True, drop=True)
+                public_data.df.time_step = pd.to_datetime(public_data.df.time_step,
+                                                          unit='s',
+                                                          origin=pd.Timestamp('2018-01-01'))
+            tsdata = public_data.get_tsdata(dt_col='time_step', target_col='cpu_usage')
+            assert tsdata.df.shape == (61570, 4)
+            assert set(tsdata.df.columns) == {'time_step', 'cpu_usage', 'mem_usage', 'id'}
+            tsdata._check_basic_invariants()
