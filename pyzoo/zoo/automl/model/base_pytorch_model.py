@@ -17,12 +17,11 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 
 import types
-import os
 import math
 
 from zoo.automl.model.abstract import BaseModel, ModelBuilder
 from zoo.automl.common.util import *
-from zoo.automl.common.metrics import Evaluator
+from zoo.automl.metrics import Evaluator
 import pandas as pd
 
 from zoo.orca.automl.pytorch_utils import LR_NAME, DEFAULT_LR
