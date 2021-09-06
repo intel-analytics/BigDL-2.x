@@ -18,8 +18,7 @@
 
 import tensorflow.compat.v2 as tf
 import tensorflow_datasets as tfds
-from bigdl.nano.tf.keras import Sequential
-# from tensorflow.keras import Sequential
+from tensorflow.keras import Sequential
 
 tf.enable_v2_behavior()
 
