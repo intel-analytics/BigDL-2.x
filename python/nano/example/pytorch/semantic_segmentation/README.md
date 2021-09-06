@@ -1,6 +1,6 @@
 # Bigdl-nano Pytorch Segmentation example on KITTI dataset
 
-This example illustrates how to apply bigdl-nano optimizations on a semantic segmentation case based on pytorch-lightning framework. The basic semantic segmentation module is implemented with [Lightning](https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pl_examples/domain_templates/semantic_segmentation.py) and trained on [KITTI Semantic Segmentation Benchmark dataset](http://www.cvlibs.net/datasets/kitti/eval_semseg.php?benchmark=semantics2015). With all the optimizations provided by bigdl-nano, we could achieve 2.41x times faster than the official segmentation example in only 4 lines of changes.
+This example illustrates how to apply bigdl-nano optimizations on a semantic segmentation case based on pytorch-lightning framework. The basic semantic segmentation module is implemented with [Lightning](https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pl_examples/domain_templates/semantic_segmentation.py) and trained on [KITTI Semantic Segmentation Benchmark dataset](http://www.cvlibs.net/datasets/kitti/eval_semseg.php?benchmark=semantics2015). With all the optimizations provided by bigdl-nano, we could achieve 2.41x times faster than the official segmentation example in few lines of changes.
 
 
 ## Prepare the environment
