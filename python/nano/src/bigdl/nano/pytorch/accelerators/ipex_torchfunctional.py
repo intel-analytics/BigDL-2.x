@@ -22,6 +22,7 @@ from typing import Callable
 Tensor = torch.Tensor
 _cross_entropy = F.cross_entropy
 
+
 def replace_torch_function(function_name: str, replace_func: Callable):
     setattr(torch.nn.functional, function_name, replace_func)
 
