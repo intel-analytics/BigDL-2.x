@@ -13,13 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-from .base import *
-
-
-class SearchEngineFactory:
-    @staticmethod
-    def create_engine(backend="ray", *args, **kwargs):
-        if backend == "ray":
-            from zoo.automl.search.ray_tune import RayTuneSearchEngine
-            return RayTuneSearchEngine(*args, **kwargs)
+from .ray_tune_search_engine import RayTuneSearchEngine

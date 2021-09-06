@@ -16,12 +16,11 @@
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.automl.search import SearchEngineFactory
-from zoo.automl.search.ray_tune_search_engine import RayTuneSearchEngine
+from zoo.automl.search.ray_tune import RayTuneSearchEngine
 from zoo.automl.model.base_pytorch_model import PytorchModelBuilder
 import torch
 import torch.nn as nn
 from zoo.orca.automl import hp
-import pandas as pd
 import numpy as np
 from zoo.orca import init_orca_context, stop_orca_context
 
