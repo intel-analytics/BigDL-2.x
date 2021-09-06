@@ -177,7 +177,7 @@ class RayTuneSearchEngine(SearchEngine):
         tf_config, tf_metric = TensorboardLogger._ray_tune_searcher_log_adapt(analysis)
 
         self.logger = TensorboardLogger(logs_dir=os.path.join(self.logs_dir,
-                                                               logger_name+"_leaderboard"),
+                                                              logger_name+"_leaderboard"),
                                         name=logger_name)
         self.logger.run(tf_config, tf_metric)
         self.logger.close()
