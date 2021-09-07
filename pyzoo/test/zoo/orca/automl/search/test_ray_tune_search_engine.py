@@ -16,7 +16,7 @@
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 from zoo.orca.automl.search import SearchEngineFactory
-from zoo.orca.automl.search import RayTuneSearchEngine
+from zoo.orca.automl.search.ray_tune import RayTuneSearchEngine
 from zoo.automl.model.base_pytorch_model import PytorchModelBuilder
 import torch
 import torch.nn as nn
