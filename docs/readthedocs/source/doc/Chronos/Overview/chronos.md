@@ -116,9 +116,8 @@ After training, it will return a [TSPipeline](../../PythonAPI/Chronos/autots.htm
 
 Appropriate hyperparameters are automatically selected for the models and data processing steps in the pipeline during the fit process, and you may use built-in [visualization tool](#Visualization) to inspect the training results after training stopped. 
 
-##### **4.2.4 Visualization**
-
 <span id="Visualization"></span>
+##### **4.2.4 Visualization**
 
 AutoML visualization provides two kinds of visualization.
 * During the searching process, the visualizations of each trail are shown and updated every 30 seconds. (Monitor view)
