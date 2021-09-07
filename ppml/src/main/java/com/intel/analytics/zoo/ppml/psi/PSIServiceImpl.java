@@ -77,7 +77,8 @@ public class PSIServiceImpl extends PSIServiceGrpc.PSIServiceImplBase {
         SIGNAL signal;
         if (!clientNum.containsKey(taskId)) {
             signal= SIGNAL.ERROR;
-            logger.error("TaskId not found in server, please get salt first.");
+            logger.error("TaskId not found in server, please get salt first. " +
+                    "TaskID:" + taskId + ", ClientID:" + request.getClientId());
         } else {
             signal= SIGNAL.SUCCESS;
             String clientId = request.getClientId();
@@ -89,7 +90,7 @@ public class PSIServiceImpl extends PSIServiceGrpc.PSIServiceImplBase {
             }
             if(!psiCollections.get(taskId).containsKey(clientId)){
                 if(psiCollections.get(taskId).size() >= clientNum.get(taskId)) {
-                    throw new IllegalArgumentException("Too many clients, already has " +
+                    logger.error("Too many clients, already has " +
                             psiCollections.get(taskId).keySet() +
                             ". The new one is " + clientId);
                 }

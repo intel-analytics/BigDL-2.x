@@ -42,14 +42,14 @@ public class FLClient extends ZooGrpcClient {
     }
 
     @Override
-    protected void parseArgs() throws IOException {
+    protected void parseConfig() throws IOException {
         FLHelper flHelper = getConfigFromYaml(FLHelper.class, configPath);
         if (flHelper != null) {
             serviceList = flHelper.servicesList;
             target = flHelper.clientTarget;
             taskID = flHelper.taskID;
         }
-        super.parseArgs();
+        super.parseConfig();
     }
 
     @Override
@@ -72,6 +72,13 @@ public class FLClient extends ZooGrpcClient {
         return getSalt(this.taskID, 2, "Test");
     }
 
+    /**
+     * To get salt from FL Server, will get a new one if its salt does not exist on server
+     * @param name String, taskID
+     * @param clientNum int, client number
+     * @param secureCode String, secure code
+     * @return String, the salt get from server
+     */
     public String getSalt(String name, int clientNum, String secureCode) {
         logger.info("Processing task with taskID: " + name + " ...");
         SaltRequest request = SaltRequest.newBuilder()
@@ -90,6 +97,10 @@ public class FLClient extends ZooGrpcClient {
         return response.getSaltReply();
     }
 
+    /**
+     * Upload local set to FL Server in VFL
+     * @param hashedIdArray List of String, the set trained at local
+     */
     public void uploadSet(List<String> hashedIdArray) {
         int numSplit = Utils.getTotalSplitNum(hashedIdArray, splitSize);
         int split = 0;
@@ -113,7 +124,10 @@ public class FLClient extends ZooGrpcClient {
         }
     }
 
-
+    /**
+     * Download intersection from FL Server in VFL
+     * @return List of String, the intersection downloaded
+     */
     public List<String> downloadIntersection() {
         List<String> result = new ArrayList<String>();
         try {

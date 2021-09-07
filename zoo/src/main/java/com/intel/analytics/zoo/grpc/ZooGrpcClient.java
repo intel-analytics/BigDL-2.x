@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.grpc;
 
 
 import io.grpc.*;
-import org.apache.commons.cli.*;
 import org.apache.log4j.Logger;
 
 
@@ -35,7 +34,7 @@ public class ZooGrpcClient extends AbstractZooGrpc{
         clientUUID = UUID.randomUUID().toString();
         this.args = args;
     }
-    protected void parseArgs() throws IOException {}
+    protected void parseConfig() throws IOException {}
 
     public void loadServices() {}
 
@@ -43,7 +42,7 @@ public class ZooGrpcClient extends AbstractZooGrpc{
         return channel;
     }
     public void build() throws IOException {
-        parseArgs();
+        parseConfig();
 
         channel = ManagedChannelBuilder.forTarget(target)
                 // Channels are secure by default (via SSL/TLS).

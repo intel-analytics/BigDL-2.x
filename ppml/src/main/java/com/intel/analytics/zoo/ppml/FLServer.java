@@ -40,9 +40,7 @@ import java.io.IOException;
  */
 public class FLServer extends ZooGrpcServer {
     private static final Logger logger = LoggerFactory.getLogger(FLServer.class);
-    String certChainFilePath;
-    String privateKeyFilePath;
-    String trustCertCollectionFilePath;
+
     FLServer(String[] args, BindableService service) {
         super(args, service);
         configPath = "ppml-conf.yaml";
@@ -50,33 +48,9 @@ public class FLServer extends ZooGrpcServer {
     FLServer(String[] args) {
         this(args, null);
     }
-    void buildWithTls() throws IOException {
-        // TODO: to add for multi-services
-        parseArgs();
-        NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port);
-        for (BindableService bindableService : serverServices) {
-            serverBuilder.addService(bindableService);
-        }
-        if (certChainFilePath != null && privateKeyFilePath != null) {
-            serverBuilder.sslContext(getSslContext());
-        }
-        server = serverBuilder.build();
-    }
-
-    SslContext getSslContext() throws SSLException {
-        SslContextBuilder sslClientContextBuilder = SslContextBuilder.forServer(new File(certChainFilePath),
-                new File(privateKeyFilePath));
-        if (trustCertCollectionFilePath != null) {
-            sslClientContextBuilder.trustManager(new File(trustCertCollectionFilePath));
-            sslClientContextBuilder.clientAuth(ClientAuth.REQUIRE);
-        }
-        return GrpcSslContexts.configure(sslClientContextBuilder).build();
-    }
-
-
 
     @Override
-    public void parseArgs() throws IOException {
+    public void parseConfig() throws IOException {
         FLHelper flHelper = getConfigFromYaml(FLHelper.class, configPath);
         if (flHelper != null) {
             serviceList = flHelper.servicesList;

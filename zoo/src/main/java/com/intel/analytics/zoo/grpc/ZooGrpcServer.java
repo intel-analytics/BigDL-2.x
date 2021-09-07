@@ -20,9 +20,16 @@ package com.intel.analytics.zoo.grpc;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import org.apache.commons.cli.*;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
+
+import io.grpc.netty.shaded.io.netty.handler.ssl.ClientAuth;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import org.apache.log4j.Logger;
 
+import javax.net.ssl.SSLException;
+import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +43,10 @@ public class ZooGrpcServer extends AbstractZooGrpc{
     protected int port;
     protected Server server;
     protected LinkedList<BindableService> serverServices;
+    // TLS arguments
+    String certChainFilePath;
+    String privateKeyFilePath;
+    String trustCertCollectionFilePath;
 
 
     /**
@@ -58,18 +69,40 @@ public class ZooGrpcServer extends AbstractZooGrpc{
         this(args, null);
     }
 
-    public void parseArgs() throws IOException {}
+    public void parseConfig() throws IOException {}
 
 
     /** Entrypoint of ZooGrpcServer */
     public void build() throws IOException {
-        parseArgs();
+        parseConfig();
         ServerBuilder builder = ServerBuilder.forPort(port);
         for (BindableService bindableService : serverServices) {
             builder.addService(bindableService);
         }
         server = builder.maxInboundMessageSize(Integer.MAX_VALUE).build();
     }
+
+    void buildWithTls() throws IOException {
+        parseConfig();
+        NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port);
+        for (BindableService bindableService : serverServices) {
+            serverBuilder.addService(bindableService);
+        }
+        if (certChainFilePath != null && privateKeyFilePath != null) {
+            serverBuilder.sslContext(getSslContext());
+        }
+        server = serverBuilder.build();
+    }
+    SslContext getSslContext() throws SSLException {
+        SslContextBuilder sslClientContextBuilder = SslContextBuilder.forServer(new File(certChainFilePath),
+                new File(privateKeyFilePath));
+        if (trustCertCollectionFilePath != null) {
+            sslClientContextBuilder.trustManager(new File(trustCertCollectionFilePath));
+            sslClientContextBuilder.clientAuth(ClientAuth.REQUIRE);
+        }
+        return GrpcSslContexts.configure(sslClientContextBuilder).build();
+    }
+
 
     /** Start serving requests. */
     public void start() throws IOException {
