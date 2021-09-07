@@ -73,6 +73,7 @@ public class FLClient extends ZooGrpcClient {
     }
 
     /**
+     * For PSI usage only
      * To get salt from FL Server, will get a new one if its salt does not exist on server
      * @param name String, taskID
      * @param clientNum int, client number
@@ -98,6 +99,7 @@ public class FLClient extends ZooGrpcClient {
     }
 
     /**
+     * For PSI usage only
      * Upload local set to FL Server in VFL
      * @param hashedIdArray List of String, the set trained at local
      */
@@ -125,6 +127,7 @@ public class FLClient extends ZooGrpcClient {
     }
 
     /**
+     * For PSI usage only
      * Download intersection from FL Server in VFL
      * @return List of String, the intersection downloaded
      */
