@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SPARK_VERSION=2.4.3
+
 if [[ -z "${SPARK_CMD}" ]]; then
     echo "Please set SPARK_CMD environment variable"
     exit 1
@@ -21,9 +23,22 @@ if [[ ! -f ${ANALYTICS_ZOO_JAR} ]]; then
     exit 1
 fi
 
-${SPARK_HOME}/bin/${SPARK_CMD} \
+function version_ge() { test "$(echo "$@" | tr " " "\n" | sort -rV | head -n 1)" == "$1"; }
+
+if version_ge $SPARK_VERSION 2.4.4;
+then
+    ${SPARK_HOME}/bin/${SPARK_CMD} \
     --properties-file ${ANALYTICS_ZOO_CONF} \
     --jars local://${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     "$@"
+else
+    ${SPARK_HOME}/bin/${SPARK_CMD} \
+    --properties-file ${ANALYTICS_ZOO_CONF} \
+    --jars ${ANALYTICS_ZOO_JAR} \
+    --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
+    "$@"
+fi
+
