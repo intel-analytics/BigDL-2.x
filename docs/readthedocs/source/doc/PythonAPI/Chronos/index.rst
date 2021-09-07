@@ -5,6 +5,7 @@ Chronos API
     :maxdepth: 1
 
     autotsestimator.rst
+    automodel.rst
     autots.rst
     forecasters.rst
     anomaly_detectors.rst

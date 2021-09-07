@@ -1,6 +1,8 @@
 AutoTS
 =====================
 
+Warning: The API in this page will be deprecated soon.
+
 AutoTSTrainer
 ----------------------------------------
 
