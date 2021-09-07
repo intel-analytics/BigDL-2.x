@@ -66,7 +66,7 @@ def put_ckpt_hdfs(remote_dir, ckpt_name):
     with a format of {time}_{tmp}, in order to avoid misinterpretation.
     """
 
-    local_ckpt_dir = os.path.abspath(".")
+    local_ckpt_dir = os.path.abspath("")
     remote_ckpt_basename = os.path.basename(local_ckpt_dir)[-IDENTIFIER_LEN:]
     remote_ckpt_dir = os.path.join(remote_dir, remote_ckpt_basename)
     if remote_ckpt_basename not in get_remote_list(remote_dir):
