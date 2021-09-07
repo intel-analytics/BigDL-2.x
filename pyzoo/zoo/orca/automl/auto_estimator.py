@@ -80,7 +80,7 @@ class AutoEstimator:
 
         :return: an AutoEstimator object.
         """
-        from zoo.automl.model.base_pytorch_model import PytorchModelBuilder
+        from zoo.orca.automl.model.base_pytorch_model import PytorchModelBuilder
         model_builder = PytorchModelBuilder(model_creator=model_creator,
                                             optimizer_creator=optimizer,
                                             loss_creator=loss)
@@ -113,7 +113,7 @@ class AutoEstimator:
 
         :return: an AutoEstimator object.
         """
-        from zoo.automl.model.base_keras_model import KerasModelBuilder
+        from zoo.orca.automl.model.base_keras_model import KerasModelBuilder
         model_builder = KerasModelBuilder(model_creator=model_creator)
         return AutoEstimator(model_builder=model_builder,
                              logs_dir=logs_dir,

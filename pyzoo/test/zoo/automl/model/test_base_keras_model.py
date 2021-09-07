@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 from unittest import TestCase
-from zoo.automl.model.base_keras_model import KerasBaseModel, KerasModelBuilder
+from zoo.orca.automl.model.base_keras_model import KerasBaseModel, KerasModelBuilder
 import numpy as np
 import tensorflow as tf
 import pytest
