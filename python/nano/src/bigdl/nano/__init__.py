@@ -28,13 +28,13 @@ def check_nano_envs():
             _unset_envs.append(k)
 
     if len(_unset_envs):
-        warning("\n" + "*"*150 +
-                f"\nNano environment variables {_unset_envs} are not set.\n"
+        highlight_boundary = "\n{}\n".format("*" * 150)
+        warning(f"{highlight_boundary}\nNano environment variables {_unset_envs} are not set.\n"
                 f"Please run `source bigdl-nano-init` to initialize them, "
                 f"or you can prefix `bigdl-nano-init` to the command you run.\n"
                 f"\nExample:\n"
                 f"bigdl-nano-init python pytorch-lenet.py --device ipex\n"
-                + "*"*150)
+                f"{highlight_boundary}")
 
 
 check_nano_envs()
