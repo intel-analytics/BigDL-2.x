@@ -13,4 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .tensorboardlogger import TensorboardLogger
+from .ray_tune_search_engine import RayTuneSearchEngine
