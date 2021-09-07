@@ -19,7 +19,7 @@ import torch
 from torch.nn import functional as F
 from typing import Callable
 
-Tensor = torch.Tensor
+from torch import tensor as Tensor
 _cross_entropy = F.cross_entropy
 
 
