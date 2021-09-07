@@ -1,7 +1,10 @@
 AutoTSEstimator (experimental)
 =====================
 
-AutoTSEstimator (experimental)
+.. warning::
+    The API in this page is still experimental.
+
+AutoTSEstimator
 -------------------------------------------
 
 Automated TimeSeries Estimator for time series forecasting task.
@@ -13,7 +16,7 @@ AutoTSEstimator will replace AutoTSTrainer in later version.
     :show-inheritance:
 
 
-TSPipeline (experimental)
+TSPipeline
 -------------------------------------------
 
 TSPipeline is an E2E solution for time series forecasting task.

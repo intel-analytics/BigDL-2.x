@@ -1,10 +1,11 @@
 Auto Model
 =====================
 
-chronos.autots.model.auto_tcn
+AutoTCN
 -------------------------------------------
 
-AutoTCN is a TCN forecasting model with Auto tuning. 
+AutoTCN is a TCN forecasting model with Auto tuning.
+Other API follows its base class(BasePytorchAutomodel).
 
 .. automodule:: zoo.chronos.autots.model.auto_tcn
     :members:
@@ -12,27 +13,29 @@ AutoTCN is a TCN forecasting model with Auto tuning.
     :show-inheritance:
     
 
-chronos.autots.model.auto_lstm
+AutoLSTM
 ----------------------------------------
 
 AutoLSTM is an LSTM forecasting model with Auto tuning.
+Other API follows its base class(BasePytorchAutomodel).
 
 .. automodule:: zoo.chronos.autots.model.auto_lstm
     :members:
     :undoc-members:
     :show-inheritance:
 
-chronos.autots.model.auto_seq2seq
+AutoSeq2Seq
 ----------------------------------------
 
 AutoSeq2Seq is an Seq2Seq forecasting model with Auto tuning.
+Other API follows its base class(BasePytorchAutomodel).
 
 .. automodule:: zoo.chronos.autots.model.auto_seq2seq
     :members:
     :undoc-members:
     :show-inheritance:
 
-chronos.autots.model.auto_arima
+AutoARIMA
 ----------------------------------------
 
 AutoARIMA is an ARIMA forecasting model with Auto tuning.
@@ -41,9 +44,8 @@ AutoARIMA is an ARIMA forecasting model with Auto tuning.
     :members:
     :undoc-members:
     :show-inheritance:
-    
-    
-chronos.autots.model.auto_prophet
+
+AutoProphet
 ----------------------------------------
 
 AutoProphet is a Prophet forecasting model with Auto tuning.
@@ -53,8 +55,9 @@ AutoProphet is a Prophet forecasting model with Auto tuning.
     :undoc-members:
     :show-inheritance:
 
-chronos.autots.model.base_automodel.BasePytorchAutomodel
+BasePytorchAutomodel
 ------------------------------------------------------------
+AutoLSTM, AutoSeq2Seq and AutoTCN all follow the same API as stated below.
 
 .. autoclass:: zoo.chronos.autots.model.base_automodel.BasePytorchAutomodel
     :members:
