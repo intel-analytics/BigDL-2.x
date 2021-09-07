@@ -15,7 +15,7 @@
 #
 from zoo.automl.model.abstract import BaseModel, ModelBuilder
 import numpy as np
-from zoo.automl.metrics import Evaluator
+from zoo.orca.automl.metrics import Evaluator
 import pickle
 import tensorflow as tf
 from tensorflow.keras import backend as K
