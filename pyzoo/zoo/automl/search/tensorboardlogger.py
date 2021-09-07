@@ -52,7 +52,7 @@ VALID_NUMPY_SUMMARY_TYPES = (np.float32, np.float64, np.int32)
 VALID_SEQ_SUMMARY_TYPES = (list, tuple)
 
 
-class TensorboardLogger():
+class TensorboardLogger:
     def __init__(self, logs_dir="", writer=None, name="AutoML"):
         '''
         Initialize a tensorboard logger

@@ -15,11 +15,12 @@
 #
 
 from .base import *
+from .tensorboardlogger import TensorboardLogger
 
 
 class SearchEngineFactory:
     @staticmethod
     def create_engine(backend="ray", *args, **kwargs):
         if backend == "ray":
-            from .ray_tune_search_engine import RayTuneSearchEngine
+            from zoo.automl.search.ray_tune import RayTuneSearchEngine
             return RayTuneSearchEngine(*args, **kwargs)
