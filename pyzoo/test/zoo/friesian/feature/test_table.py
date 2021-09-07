@@ -251,23 +251,6 @@ class TestTable(TestCase):
         assert(index_dicts[0][2] == 1)
         assert(index_dicts[1][2] == 1)
 
-    def test_reindex(self):
-        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
-        feature_tbl = FeatureTable.read_parquet(file_path)
-        feature_tbl.show(20, False)
-        string_idx_list = feature_tbl.gen_string_idx(["col_4", "col_5"],
-                                                     freq_limit={"col_4": 1, "col_5": 1},
-                                                     order_by_freq=False)
-        tbl_with_index = feature_tbl.encode_string(["col_4", "col_5"], string_idx_list)
-        tbl_with_index.show(100)
-        index_dicts = tbl_with_index.gen_reindex_mapping(["col_4", "col_5"], 2)
-        reindexed, embed_in_dims = tbl_with_index.reindex(["col_4", "col_5"], index_dicts)
-        reindexed.show(100)
-        assert(reindexed.filter(col("col_4") == 0).size() == 3)
-        assert(reindexed.filter(col("col_4") == 1).size() == 2)
-        assert(reindexed.filter(col("col_5") == 0).size() == 2)
-        assert(reindexed.filter(col("col_5") == 1).size() == 3)
-
     def test_gen_string_idx_union(self):
         file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
         feature_tbl = FeatureTable.read_parquet(file_path)
@@ -549,12 +532,31 @@ class TestTable(TestCase):
             .withColumn("category", col("category").cast("Integer"))
         tbl = FeatureTable(df)
         tbl2 = tbl.add_neg_hist_seq(9, "item_hist_seq", 4)
-        tbl3 = tbl2.add_value_features(["item_hist_seq", "neg_item_hist_seq"],
+        tbl3, _ = tbl2.add_value_features(["item_hist_seq", "neg_item_hist_seq"],
                                        FeatureTable(df2), "item", "category")
         assert tbl3.df.select("category_hist_seq").count() == 3
         assert tbl3.df.select("neg_category_hist_seq").count() == 3
         assert tbl3.df.filter("name like '%alice%'").select("neg_category_hist_seq").count() == 1
         assert tbl3.df.filter("name == 'rose'").select("neg_category_hist_seq").count() == 1
+
+    def test_add_value_features_reindex(self):
+        file_path = os.path.join(self.resource_path, "friesian/feature/parquet/data1.parquet")
+        feature_tbl = FeatureTable.read_parquet(file_path)
+        string_idx_list = feature_tbl.gen_string_idx(["col_4", "col_5"],
+                                                     freq_limit={"col_4": 1, "col_5": 1},
+                                                     order_by_freq=False)
+        tbl_with_index = feature_tbl.encode_string(["col_4", "col_5"], string_idx_list)
+        tbl_with_index.show(100)
+        index_dicts = tbl_with_index.gen_reindex_mapping(["col_4", "col_5"], 2)
+        tbls = []
+        for d in index_dicts:
+            dict_tbl = StringIndex.from_dict(d, "tmp").cast("tmp", "int")
+            tbls.append(dict_tbl)
+        reidxed, _ = tbl_with_index.add_value_features(["col_4", "col_5"], tbls, reindex_only=True)
+        assert(reidxed.filter(col("col_4") == 0).size() == 3)
+        assert(reidxed.filter(col("col_4") == 1).size() == 2)
+        assert(reidxed.filter(col("col_5") == 0).size() == 2)
+        assert(reidxed.filter(col("col_5") == 1).size() == 3)
 
     def test_pad(self):
         spark = OrcaContext.get_spark_session()
