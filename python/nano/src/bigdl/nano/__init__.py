@@ -28,7 +28,6 @@ def check_nano_envs():
             _unset_envs.append(k)
 
     if len(_unset_envs):
-        print
         warning("\n" + "*"*150 +
                 f"\nNano environment variables {_unset_envs} are not set.\n"
                 f"Please run `source bigdl-nano-init` to initialize them, "
