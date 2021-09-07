@@ -1,4 +1,4 @@
-Auto Model
+Auto Models
 =====================
 
 AutoTCN
