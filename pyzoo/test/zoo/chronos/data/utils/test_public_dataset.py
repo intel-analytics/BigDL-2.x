@@ -80,7 +80,7 @@ class TestPublicDataset(ZooTestCase):
 
             public_data = PublicDataset(name, path, redownload=False, with_split=False)
             public_data.df = pd.read_csv(file_url, usecols=[1, 2, 3],
-                                            names=['time_step', 'cpu_usage', 'mem_usage'])
+                                         names=['time_step', 'cpu_usage', 'mem_usage'])
             public_data.df.sort_values(by="time_step", inplace=True)
             public_data.df.reset_index(inplace=True, drop=True)
             public_data.df.time_step = pd.to_datetime(public_data.df.time_step,
