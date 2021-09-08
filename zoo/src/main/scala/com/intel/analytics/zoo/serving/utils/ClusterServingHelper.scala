@@ -266,7 +266,6 @@ class ClusterServingHelper
     if (coreNumberPerMachine > 0) {
       if (modelType == "openvino") {
         threadPerModel = coreNumberPerMachine
-        modelParallelism = 1
       } else {
         threadPerModel = 1
         modelParallelism = coreNumberPerMachine
