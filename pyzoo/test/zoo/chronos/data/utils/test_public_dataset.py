@@ -64,8 +64,8 @@ class TestPublicDataset(ZooTestCase):
             public_data.df = pd.read_csv(file_url)
             public_data.df.StartTime = pd.to_datetime(public_data.df.StartTime)
             public_data.df.AvgRate = public_data.df.AvgRate.apply(lambda x: float(x[:-4])
-                                                                    if x.endswith("Mbps")
-                                                                    else float(x[:-4])*1000)
+                                                                  if x.endswith("Mbps")
+                                                                  else float(x[:-4])*1000)
 
             tsdata = public_data.get_tsdata(target_col=['AvgRate', 'total'], dt_col='StartTime')
             assert tsdata.df.shape == (8760, 5)
@@ -84,8 +84,8 @@ class TestPublicDataset(ZooTestCase):
             public_data.df.sort_values(by="time_step", inplace=True)
             public_data.df.reset_index(inplace=True, drop=True)
             public_data.df.time_step = pd.to_datetime(public_data.df.time_step,
-                                                        unit='s',
-                                                        origin=pd.Timestamp('2018-01-01'))
+                                                      unit='s',
+                                                      origin=pd.Timestamp('2018-01-01'))
             tsdata = public_data.get_tsdata(dt_col='time_step', target_col='cpu_usage')
             assert tsdata.df.shape == (61570, 4)
             assert set(tsdata.df.columns) == {'time_step', 'cpu_usage', 'mem_usage', 'id'}
