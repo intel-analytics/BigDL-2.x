@@ -47,7 +47,8 @@ def workaround_cross_entropy(
 # Like `workaround_cross_entropy`, these method must has the same signature as the origin.
 #
 # The replacement only takes place when ipex accelerator is imported,
-# in another word `use_ipex` is specfied as true in Trainer, so it will not affect default behaviors.
+# in another word `use_ipex` is specfied as true in Trainer, so it will not
+#  affect default behaviors.
 #
 # Usage: append your target method and your own implements to  `replacement_dict`
 #
