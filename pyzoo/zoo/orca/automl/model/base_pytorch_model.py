@@ -23,7 +23,7 @@ import pandas as pd
 import tempfile
 import os
 
-from zoo.automl.model.abstract import BaseModel, ModelBuilder
+from zoo.orca.automl.model.abstract import BaseModel, ModelBuilder
 from zoo.orca.automl.metrics import Evaluator
 
 from zoo.orca.automl.pytorch_utils import LR_NAME, DEFAULT_LR

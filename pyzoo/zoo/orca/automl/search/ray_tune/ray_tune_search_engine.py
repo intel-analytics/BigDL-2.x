@@ -23,7 +23,7 @@ from zoo.orca.automl.search.ray_tune.utils import convert_bayes_configs
 from zoo.orca.automl.search.utils import get_ckpt_hdfs, put_ckpt_hdfs
 from zoo.orca.automl.search import TensorboardLogger
 from ray.tune import Stopper
-from zoo.automl.model.abstract import ModelBuilder
+from zoo.orca.automl.model.abstract import ModelBuilder
 
 
 class RayTuneSearchEngine(SearchEngine):
