@@ -15,6 +15,14 @@ def find_free_port(tc):
         tc.barrier()
         return f"{s.getsockname()[0]}:{s.getsockname()[1]}"
 
+def handle_datasets_train(data_creator, validation_data_creator):   
+        train_dataset = data_creator()
+        if validation_data_creator is not None:
+            test_dataset = validation_data_creator()
+        else:
+            test_dataset = None
+        return train_dataset, test_dataset
+
 class SparkRunner:
     def __init__(self, model_creator, data_creator, validation_data_creator, config=None):
         self.model_creator = model_creator
@@ -22,13 +30,6 @@ class SparkRunner:
         self.validation_data_creator = validation_data_creator
         self.config = {} if config is None else config
 
-    def handle_datasets_train(self, data_creator, validation_data_creator):   
-        train_dataset = data_creator()
-        if validation_data_creator is not None:
-            test_dataset = validation_data_creator()
-        else:
-            test_dataset = None
-        return train_dataset, test_dataset
 
     def disributed_train_func(self, *args):
         tc = BarrierTaskContext().get()
@@ -54,7 +55,7 @@ class SparkRunner:
 
         data_creator = self.data_creator
         validation_data_creator = self.validation_data_creator
-        train_dataset, test_dataset = self.handle_datasets_train(data_creator, validation_data_creator)
+        train_dataset, test_dataset = handle_datasets_train(data_creator, validation_data_creator)
         
         model.fit(train_dataset, test_dataset, epochs=10, verbose=1)
 
