@@ -34,9 +34,8 @@ import java.io.IOException;
 
 /**
  * FLServer is Analytics Zoo PPML gRPC server used for FL based on ZooGrpcServer
- * It would parse ZooGrpcServer args and add its specific args after it.
  * User could also call main method and parse server type to start gRPC service
- * Supported types: PSI, VFL,
+ * Supported types: PSI
  */
 public class FLServer extends ZooGrpcServer {
     private static final Logger logger = LoggerFactory.getLogger(FLServer.class);

@@ -25,6 +25,10 @@ import java.io.IOException;
 import java.util.UUID;
 import java.util.function.Function;
 
+/**
+ * All Analytics Zoo gRPC clients are based on ZooGrpcClient
+ * To implement specific gRPC client, overwrite parseConfig() and loadServices() method
+ */
 public class ZooGrpcClient extends AbstractZooGrpc{
     protected static final Logger logger = Logger.getLogger(ZooGrpcClient.class.getName());
     protected String target;

@@ -26,6 +26,9 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import java.io.IOException;
 
+/**
+ * ConfigParser has static method to read config formatted in JavaBean class from YAML file
+ */
 public class ConfigParser {
     static ObjectMapper objectMapper;
     static {

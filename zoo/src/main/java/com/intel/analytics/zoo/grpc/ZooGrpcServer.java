@@ -35,7 +35,8 @@ import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
 /**
- * All Analytics Zoo gRPC server are based on ZooGrpcServer
+ * All Analytics Zoo gRPC servers are based on ZooGrpcServer
+ * To implement specific gRPC server, overwrite parseConfig() method
  * This class could also be directly used for start a single service
  */
 public class ZooGrpcServer extends AbstractZooGrpc{
