@@ -1368,39 +1368,27 @@ class FeatureTable(Table):
         joined_df = self.df.join(table.df, on=on, how=how)
         return FeatureTable(joined_df)
 
-    def add_value_features(self, columns, tbls, key=None, value=None, reindex_only=False):
+    def add_value_features(self, key_cols, tbl, key, value):
         """
-         Add features based on columns and another key value table,
-         for each col in columns, it adds a value_col using key-value pairs from tbls, replace old
-         index with new one from key-value tbls if reindex_only is True.
+         Add features based on key_cols and another key value table,
+         for each col in key_cols, it adds a value_col using key-value pairs from tbl
 
-         :param columns: a list of str
-         :param tbls: Table with only two columns [key, value]
-         :param key: str, name of key column in tbl, None while reindex_only
-         :param value: str, name of value column in tbl, None while reindex_only
-         :param reindex_only: boolean, if reindex only or add values
+         :param key_cols: a list of str
+         :param tbl: Table with only two columns [key, value]
+         :param key: str, name of key column in tbl
+         :param value: str, name of value column in tbl
 
-         :return: FeatureTable, dict
+         :return: FeatureTable
          """
-        if isinstance(columns, str):
-            columns = [columns]
-        assert isinstance(columns, list), \
-            "columns should be str or a list of str but get " + type(columns)
-        if isinstance(tbls, Table):
-            tbls = [tbls]
-        assert isinstance(tbls, list), \
-            "tbls should be Table or a list of Tables  get " + type(tbls)
+        spark = OrcaContext.get_spark_session()
+        keyvalue_bc = spark.sparkContext.broadcast(dict(tbl.df.distinct().rdd.map(
+            lambda row: (row[0], row[1])).collect()))
 
-        if reindex_only:
-            assert len(columns) == len(tbls), \
-                "each column of columns should have one corresponding index table while reindex"
-        else:
-            assert len(tbls) == 1, \
-                "all columns should share one index table while add value features"
+        keyvalue_map = keyvalue_bc.value
 
-        def lookup(items, keyvalue_map):
-            getvalue = lambda item: keyvalue_map.get(item, 0)
-            if isinstance(items, int) or items is None:
+        def gen_values(items):
+            getvalue = lambda item: keyvalue_map.get(item)
+            if isinstance(items, int):
                 values = getvalue(items)
             elif isinstance(items, list) and isinstance(items[0], int):
                 values = [getvalue(item) for item in items]
@@ -1408,25 +1396,47 @@ class FeatureTable(Table):
                                                                                        int):
                 values = []
                 for line in items:
-                    line_values = [getvalue(item) for item in line]
-                    values.append(line_values)
+                    line_cats = [getvalue(item) for item in line]
+                    values.append(line_cats)
             else:
                 raise ValueError('only int, list[int], and list[list[int]] are supported.')
             return values
 
-        value_dims = {}
         df = self.df
-        spark = OrcaContext.get_spark_session()
-        for i, c in enumerate(columns):
-            (index_tb, new_c) = (tbls[i], c) if reindex_only else (tbls[0], c.replace(key, value))
-            key_value = dict(index_tb.df.rdd.map(lambda row: (row[0], row[1])).collect())
-            key_value_bc = spark.sparkContext.broadcast(key_value)
+        for c in key_cols:
             col_type = df.schema[c].dataType
-            lookup_udf = udf(lambda x: lookup(x, key_value_bc.value), col_type)
-            df = df.withColumn(new_c, lookup_udf(pyspark_col(c)))
-            value_dims[c] = max(key_value.values()) + 1
+            cat_udf = udf(gen_values, col_type)
+            df = df.withColumn(c.replace(key, value), cat_udf(pyspark_col(c)))
+        return FeatureTable(df)
 
-        return FeatureTable(df), value_dims
+    def reindex(self, columns=[], index_dicts=[]):
+        """
+        Replace the value using index_dicts for each col in columns, set 0 for default
+
+        :param columns: str of a list of str
+        :param index_dicts: dict or list of dicts from int to int
+
+        :return: FeatureTable and dimentionss of columns
+         """
+        if isinstance(columns, str):
+            columns = [columns]
+        assert isinstance(columns, list), \
+            "columns should be str or a list of str, but get a " + type(columns)
+        if isinstance(index_dicts, dict):
+            index_dicts = [index_dicts]
+        assert isinstance(index_dicts, list), \
+            "index_dicts should be dict or a list of dict, but get a " + type(index_dicts)
+        assert len(columns) == len(index_dicts), \
+            "each column of columns should have one corresponding index_dict"
+
+        tbl = FeatureTable(self.df)
+        for i, c in enumerate(columns):
+            index_dict = index_dicts[i]
+            spark = OrcaContext.get_spark_session()
+            index_dict_bc = spark.sparkContext.broadcast(index_dict)
+            index_lookup = lambda x: index_dict_bc.value.get(x, 0)
+            tbl = tbl.apply(c, c, index_lookup, "int")
+        return tbl
 
     def gen_reindex_mapping(self, columns=[], freq_limit=10):
         """
@@ -1442,18 +1452,16 @@ class FeatureTable(Table):
         if isinstance(columns, str):
             columns = [columns]
         assert isinstance(columns, list), \
-            "columns should be str or a list of str but get " + type(columns)
-
+            "columns should be str or a list of str, but get a " + type(columns)
         if isinstance(freq_limit, int):
             freq_limit = {col: freq_limit for col in columns}
-        assert isinstance(freq_limit, dict), \
-            "freq_limit should be int or dict but get " + type(freq_limit)
-
+        assert isinstance(freq_limit, dict),\
+            "freq_limit should be int or dict, but get a " + type(freq_limit)
         index_dicts = []
         for c in columns:
             c_count = self.select(c).group_by(c, agg={c: "count"}).rename(
                 {"count(" + c + ")": "count"})
-            c_count = c_count.filter(pyspark_col("count") >= freq_limit[c]) \
+            c_count = c_count.filter(pyspark_col("count") >= freq_limit[c])\
                 .order_by("count", ascending=False)
             c_count_pd = c_count.to_pandas()
             c_count_pd.reindex()
