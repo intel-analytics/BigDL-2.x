@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from zoo.automl.search import SearchEngineFactory
+from zoo.orca.automl.search import SearchEngineFactory
 
 
 class AutoEstimator:

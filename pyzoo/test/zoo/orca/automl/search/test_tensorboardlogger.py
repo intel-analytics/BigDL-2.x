@@ -16,7 +16,7 @@
 import pytest
 
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.automl.search import TensorboardLogger
+from zoo.orca.automl.search import TensorboardLogger
 import numpy as np
 import random
 import os.path
