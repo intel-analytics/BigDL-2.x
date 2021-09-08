@@ -61,111 +61,50 @@ Recent years, common deep learning architectures (e.g. RNN, CNN, Transformer, et
 
 _Chronos_ provides both deep learning/machine learning models and traditional statistical models for forecasting. For details, please refer to [here](#supported_forecasting_model).
 
-There're two ways to do forecasting:
-- Use AutoTS pipeline
-- Use Standalone Forecaster pipeline
+There're three ways to do forecasting:
+- Use highly integrated AutoTS pipeline with auto feature generation, data pre/post-processing, hyperparameter optimization.
+- Use auto forecasting models with auto hyperparameter optimization.
+- Use standalone forecasters.
 
-#### **4.2 Use AutoTS Pipeline (with AutoML)**
+| Model   | Style | Multi-Variate | Multi-Step | Distributed\* | Auto Models | AutoTS | Backend |
+| ----------------- | ----- | ------------- | ---------- | ----------- | ----------- | ----------- | ----------- |
+| LSTM    | RR    | ✅             | ❌          | ✅           | ✅          | ✅         | pytorch  |
+| Seq2Seq     | RR    | ✅             | ✅          | ✅           | ✅          | ✅         | pytorch  |
+| TCN | RR    | ✅             | ✅          | ✅           | ✅          | ✅         | pytorch  |
+| MTNet   | RR    | ✅             | ❌         | ✅           | ❌          | ✳️\*\*\*        | tensorflow |
+| TCMF    | TS    | ✅             | ✅          | ✳️\*\*           | ❌          | ❌         | pytorch  |
+| Prophet | TS    | ❌             | ✅          | ❌           | ✅          | ❌         | prophet  |
+| ARIMA   | TS    | ❌             | ✅          | ❌           | ✅          | ❌         | pmdarima |
 
-You can use the ```AutoTS``` package to to build a time series forecasting pipeline with AutoML.
+\* Distributed training/inferencing is only supported by standalone forecasters.<br>
+\*\* TCMF only partially support distributed training.<br>
+\*\*\*  Auto tuning of MTNet is only supported in our deprecated AutoTS API.<br>
 
-The general workflow has two steps:
+#### **4.2 Use AutoTS Pipeline**
+For AutoTS Pipeline, we will leverage `AutoTSEstimator`, `TSPipeline` and preferably `TSDataset`. A typical usage of AutoTS pipeline basically contains 3 steps.
+1. Prepare a `TSDataset` or customized data creator.
+2. Init a `AutoTSEstimator` and call `.fit()` on the data.
+3. Use the returned `TSPipeline` for further development.
 
-* Create a [AutoTSTrainer](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.AutoTSTrainer) and train; it will then return a [TSPipeline](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.TSPipeline).
-* Use [TSPipeline](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.TSPipeline) to do prediction, evaluation, and incremental fitting.
+View [Quick Start](https://analytics-zoo.readthedocs.io/en/latest/doc/Chronos/QuickStart/chronos-autotsest-quickstart.html) for a more detailed example.
 
-View [AutoTS notebook example](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.ipynb) for more details.
+##### **4.2.1 Prepare dataset**
+`AutoTSEstimator` support 2 types of data input. 
 
-
-##### **4.2.1 Prepare input data**
-
-You should prepare the training dataset and the optional validation dataset. Both training and validation data need to be provided as *Pandas Dataframe*.  The dataframe should have at least two columns:
-- The *datetime* column, which should have Pandas datetime format (you can use `pandas.to_datetime` to convert a string into a datetime format)
-- The *target* column, which contains the data points at the associated timestamps; these data points will be used to predict future data points. 
-
-You may have other input columns for each row as extra feature; so the final input data could look something like below.
-
-```bash
-datetime    target  extra_feature_1  extra_feature_2
-2019-06-06  1.2     1                2
-2019-06-07  2.30    2                1
-```
-
-##### **4.2.2 Create AutoTSTrainer**
-
-You can create an `AutoTSTrainer` as follows (`dt_col` is the datetime, `target_col` is the target column, and `extra_features_col` is the extra features):
-
+You can easily prepare your data in `TSDataset` (recommended).
 ```python
-from zoo.chronos.autots.forecast import AutoTSTrainer
-
-trainer = AutoTSTrainer(dt_col="datetime", target_col="target", horizon=1, extra_features_col=["extra_feature_1","extra_feature_2"])
+tsdata_train, tsdata_val, tsdata_test\
+    = TSDataset.from_pandas(df, dt_col="timestamp", target_col="value", with_split=True, val_ratio=0.1, test_ratio=0.1)
 ```
-
-View [AutoTSTrainer API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.AutoTSTrainer) for more details.
-
-##### **4.2.3 Train AutoTS pipeline**
-
-You can then train on the input data using `AutoTSTrainer.fit` with AutoML as follows:
-
+You can also create your own data creator.
 ```python
-ts_pipeline = trainer.fit(train_df, validation_df, recipe=SmokeRecipe())
+from torch.utils.data import DataLoader
+def training_data_creator(config):
+    return Dataloader(...)
 ```
+##### **4.2.2 Fit on AutoTSEstimator**
 
-`recipe` configures the search space for auto tuning. View [Recipe API docs](../../PythonAPI/Chronos/autots.html#chronos-config-recipe) for available recipes. 
-After training, it will return a [TSPipeline](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.TSPipeline), which includes not only the model, but also the data preprocessing/post processing steps. 
-
-Appropriate hyperparameters are automatically selected for the models and data processing steps in the pipeline during the fit process, and you may use built-in [visualization tool](#Visualization) to inspect the training results after training stopped. 
-
-<span id="Visualization"></span>
-##### **4.2.4 Visualization**
-
-AutoML visualization provides two kinds of visualization.
-* During the searching process, the visualizations of each trail are shown and updated every 30 seconds. (Monitor view)
-* After the searching process, a leaderboard of each trail's configs and metrics is shown. (Leaderboard view)
-
-**Note**: AutoML visualization is based on tensorboard and tensorboardx. They should be installed properly before the training starts.
-
-<span id="monitor_view">**Monitor view**</span>
-
-Before training, start the tensorboard server through
-
-```python
-tensorboard --logdir=<logs_dir>/<job_name>
-```
-
-`logs_dir` is the log directory you set for your predictor(e.g. TimeSequencePredictor in Automated Time Series Prediction). It is default to "/home/\<username>/zoo_automl_logs", where `username` is your login username. `job_name` is the name parameter you set for your predictor.
-
-The data in SCALARS tag will be updated every 30 seconds for users to see the training progress.
-
-![](../Image/automl_monitor.png)
-
-After training, start the tensorboard server through
-
-```python
-tensorboard --logdir=<logs_dir>/<job_name>_leaderboard/
-```
-
-where `logs_dir` and `job_name` are the same as stated in [Monitor view](#monitor_view).
-
-A dashboard of each trail's configs and metrics is shown in the SCALARS tag.
-
-![](../Image/automl_scalars.png)
-
-A leaderboard of each trail's configs and metrics is shown in the HPARAMS tag.
-
-![](../Image/automl_hparams.png)
-
-**Use visualization in Jupyter Notebook**
-
-You can enable a tensorboard view in jupyter notebook by the following code.
-
-```python
-%load_ext tensorboard
-# for scalar view
-%tensorboard --logdir <logs_dir>/<job_name>/
-# for leaderboard view
-%tensorboard --logdir <logs_dir>/<job_name>_leaderboard/
-```
+##### **4.2.3 Development on TSPipeline**
 
 ##### **4.2.5 Use TSPipeline**
 
@@ -194,17 +133,6 @@ View [TSPipeline API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots
 #### **4.3 Use Standalone Forecaster Pipeline**
 
 _Chronos_ provides a set of standalone time series forecasters without AutoML support, including deep learning models as well as traditional statistical models.
-
-
-| Forecaster        | Style | Multi-Variate | Multi-Step | Distributed |
-| ----------------- | ----- | ------------- | ---------- | ----------- |
-| [LSTMForecaster](#LSTMForecaster)    | RR    | ✅             | ❌          | ✅           |
-| [Seq2SeqForecaster](#Seq2SeqForecaster)     | RR    | ✅             | ✅          | ✅           |
-| [TCNForecaster](#TCNForecaster) | RR    | ✅             | ✅          | ✅           |
-| [MTNetForecaster](#MTNetForecaster)   | RR    | ✅             | ✳️          | ✅           |
-| [TCMFForecaster](#TCMFForecaster)    | TS    | ✅             | ✅          | ✳️           |
-| [ProphetForecaster](#ProphetForecaster) | TS    | ❌             | ✅          | ❌           |
-| [ARIMAForecaster](#ARIMAForecaster)   | TS    | ❌             | ✅          | ❌           |
 
 View some examples notebooks for [Network Traffic Prediction](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/) 
 
@@ -369,3 +297,56 @@ x = tsdata.to_pandas()["target"].to_numpy()
 anomaly_detector.fit(x)
 ```
 View [TSDataset API Doc](../../PythonAPI/Chronos/tsdataset.html#) for more details. 
+
+### **7 Other Utilities**
+
+<span id="Visualization"></span>
+##### **4.2.4 Visualization**
+
+AutoML visualization provides two kinds of visualization.
+* During the searching process, the visualizations of each trail are shown and updated every 30 seconds. (Monitor view)
+* After the searching process, a leaderboard of each trail's configs and metrics is shown. (Leaderboard view)
+
+**Note**: AutoML visualization is based on tensorboard and tensorboardx. They should be installed properly before the training starts.
+
+<span id="monitor_view">**Monitor view**</span>
+
+Before training, start the tensorboard server through
+
+```python
+tensorboard --logdir=<logs_dir>/<job_name>
+```
+
+`logs_dir` is the log directory you set for your predictor(e.g. TimeSequencePredictor in Automated Time Series Prediction). It is default to "/home/\<username>/zoo_automl_logs", where `username` is your login username. `job_name` is the name parameter you set for your predictor.
+
+The data in SCALARS tag will be updated every 30 seconds for users to see the training progress.
+
+![](../Image/automl_monitor.png)
+
+After training, start the tensorboard server through
+
+```python
+tensorboard --logdir=<logs_dir>/<job_name>_leaderboard/
+```
+
+where `logs_dir` and `job_name` are the same as stated in [Monitor view](#monitor_view).
+
+A dashboard of each trail's configs and metrics is shown in the SCALARS tag.
+
+![](../Image/automl_scalars.png)
+
+A leaderboard of each trail's configs and metrics is shown in the HPARAMS tag.
+
+![](../Image/automl_hparams.png)
+
+**Use visualization in Jupyter Notebook**
+
+You can enable a tensorboard view in jupyter notebook by the following code.
+
+```python
+%load_ext tensorboard
+# for scalar view
+%tensorboard --logdir <logs_dir>/<job_name>/
+# for leaderboard view
+%tensorboard --logdir <logs_dir>/<job_name>_leaderboard/
+```
