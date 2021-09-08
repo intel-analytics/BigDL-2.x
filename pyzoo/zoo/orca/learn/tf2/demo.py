@@ -26,12 +26,12 @@ def model_creator():
     model.compile(optimizer='adam', loss='mse')
     return model
 
-def data_creator(*args):
+def data_creator():
     train_data = array([[10, 20, 30], [20, 30, 40], [30, 40, 50], [40, 50, 60]])
     train_data = train_data.reshape((4,3,1))
     return train_data
 
-def validation_data_creator(*args):
+def validation_data_creator():
     val_data = array([40, 50, 60, 70])
     return val_data
 
@@ -71,22 +71,26 @@ class SparkRunner:
         with strategy.scope():
             model = self.model_creator()
 
-        train_dataset, test_dataset = handle_datasets_train(self.data_creator, self.validation_data_creator)#, config)
-        
+        train_dataset, test_dataset = handle_datasets_train(self.data_creator, self.validation_data_creator)
         model.fit(train_dataset, test_dataset, epochs=10, verbose=1)
 
         return [model.get_weights()]
     
+    def main(self):
+        import numpy as np
 
-if __name__ == "__main__":
+        model_creator = self.model_creator
+        data_creator = self.data_creator
+        validation_data_creator = self.validation_data_creator
 
-    import numpy as np
+        sc = SparkContext()
+        sparkRDD = sc.parallelize(list(range(40)), 4)
+        workerRDD = sparkRDD.repartition(2)
+        spark_func = SparkRunner(model_creator, data_creator, validation_data_creator).disributed_train_func
+        res = workerRDD.barrier().mapPartitions(spark_func).collect()
+        assert np.all(res[0][0] == res[1][0])
+        sc.stop()
 
-    sc = SparkContext()
-    sparkRDD = sc.parallelize(list(range(40)), 4)
-    workerRDD = sparkRDD.repartition(2)
-    spark_func = SparkRunner(model_creator, data_creator, validation_data_creator).disributed_train_func
-    res = workerRDD.barrier().mapPartitions(spark_func).collect()
-    assert np.all(res[0][0] == res[1][0])
-    sc.stop()
+        return res
 
+print(SparkRunner(model_creator, data_creator, validation_data_creator).main())
