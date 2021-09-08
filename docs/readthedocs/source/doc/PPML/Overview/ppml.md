@@ -23,7 +23,7 @@ With the trusted Big Data analytics and ML/DL support, users can run standard Sp
 
 ### 2.1 Prerequisite
 
-Download scripts and dockerfiles from [this link](https://github.com/intel-analytics/analytics-zoo.git). And do the following commands:
+Download scripts and dockerfiles from [this link](https://github.com/intel-analytics/analytics-zoo). And do the following commands:
 ```bash
 cd analytics-zoo/ppml/
 ```
