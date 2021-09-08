@@ -19,17 +19,9 @@ package com.intel.analytics.zoo.ppml;
 import com.intel.analytics.zoo.grpc.ZooGrpcServer;
 import com.intel.analytics.zoo.ppml.psi.PSIServiceImpl;
 import io.grpc.BindableService;
-import io.grpc.netty.GrpcSslContexts;
-import io.grpc.netty.NettyServerBuilder;
-import io.netty.handler.ssl.ClientAuth;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.SSLException;
-import java.io.File;
 import java.io.IOException;
 
 /**
