@@ -558,7 +558,7 @@ class TestTable(TestCase):
             .withColumn("category", col("category").cast("Integer"))
         tbl = FeatureTable(df)
         tbl2 = tbl.add_neg_hist_seq(9, "item_hist_seq", 4)
-        tbl3, _ = tbl2.add_value_features(["item_hist_seq", "neg_item_hist_seq"],
+        tbl3 = tbl2.add_value_features(["item_hist_seq", "neg_item_hist_seq"],
                                        FeatureTable(df2), "item", "category")
         assert tbl3.df.select("category_hist_seq").count() == 3
         assert tbl3.df.select("neg_category_hist_seq").count() == 3

@@ -1416,7 +1416,7 @@ class FeatureTable(Table):
         :param columns: str of a list of str
         :param index_dicts: dict or list of dicts from int to int
 
-        :return: FeatureTable and dimentionss of columns
+        :return: FeatureTable
          """
         if isinstance(columns, str):
             columns = [columns]
