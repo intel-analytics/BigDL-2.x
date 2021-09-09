@@ -85,6 +85,20 @@ class RecsysSchema:
             'enaging_user_account_creation',
         ]
 
+    def toColumns(self):
+        return self.string_cols1 \
+               + self.int_cols1 \
+               + self.string_cols2 \
+               + self.int_cols2 \
+               + self.bool_cols1 \
+               + self.int_cols3 \
+               + self.string_cols3 \
+               + self.int_cols4 \
+               + self.bool_cols2 \
+               + self.int_cols5 \
+               + self.bool_cols3 \
+               + self.float_cols
+
     def toDtype(self):
         str_fields1 = ["str" for i in self.string_cols1]
         int_fields1 = ["int" for i in self.int_cols1]
@@ -110,7 +124,6 @@ class RecsysSchema:
                + int_fields5 \
                + bool_fields3 \
                + float_fields
-
 
 
 
@@ -160,15 +173,16 @@ if __name__ == '__main__':
     #                                   delimiter="\x01",
     #                                   dtype=RecsysSchema().toDtype()
     #                                   )
-    train_tbl = FeatureTable.read_csv(os.path.join(args.input_folder, "train"),
-                                      delimiter="\x01"
-                                      )
-    train_tbl.df.printSchema()
-    train_tbl.write_parquet(os.path.join(args.output_folder, "spark_parquet"))
+    # train_tbl = FeatureTable.read_csv(os.path.join(args.input_folder, "train"),
+    #                                   delimiter="\x01"
+    #                                   )
+    # train_tbl.df.printSchema()
+    # train_tbl.write_parquet(os.path.join(args.output_folder, "spark_parquet"))
 
     val_tbl = FeatureTable.read_csv(os.path.join(args.input_folder, "valid"),
-                                      delimiter="\x01",
-                                      dtype=RecsysSchema().toDtype())
+                                    delimiter="\x01",
+                                    names=RecsysSchema().toColumns(),
+                                    dtype=RecsysSchema().toDtype())
     val_tbl.df.printSchema()
     val_tbl.write_parquet(os.path.join(args.output_folder, "test_spark_parquet"))
 
