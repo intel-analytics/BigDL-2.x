@@ -1,0 +1,14 @@
+2021-09-09 16:16:58 WARN  Reflections:181 - given scan urls are empty. set urls in the configuration
+2021-09-09 16:16:59 WARN  Engine$:64 - Engine.init(nExecutor, executorCores, onSpark) is deprecated. Please refer to https://bigdl-project.github.io/master/#APIGuide/Engine/
+2021-09-09 16:16:59 INFO  ThreadPool$:95 - Set mkl threads to 1 on thread 1
+2021-09-09 16:16:59 WARN  Utils:66 - Your hostname, joy resolves to a loopback address: 127.0.1.1; using 10.239.158.127 instead (on interface eno1)
+2021-09-09 16:16:59 WARN  Utils:66 - Set SPARK_LOCAL_IP if you need to bind to another address
+2021-09-09 16:17:01 WARN  NativeCodeLoader:62 - Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2021-09-09 16:17:01 INFO  IsInfSpec:32 - created file /tmp/UnitTest6861461000213148223BigDLSpecBase
+2021-09-09 16:17:01 INFO  IsInfSpec:59 - deleted file /tmp/UnitTest6861461000213148223BigDLSpecBase
+2021-09-09 16:17:01 INFO  LogSoftmaxSpec:32 - created file /tmp/UnitTest29210507590618695BigDLSpecBase
+2021-09-09 16:17:01 INFO  LogSoftmaxSpec:59 - deleted file /tmp/UnitTest29210507590618695BigDLSpecBase
+2021-09-09 16:17:01 WARN  TextFeature$:58 - TextFeature doesn't contain tokens
+2021-09-09 16:17:01 WARN  TextFeature$:58 - TextFeature doesn't contain sample
+2021-09-09 16:17:01 WARN  TextFeature$:58 - TextFeature doesn't contain predict
+2021-09-09 16:17:01 WARN  TextFeature$:94 - No label is stored in the TextFeature
