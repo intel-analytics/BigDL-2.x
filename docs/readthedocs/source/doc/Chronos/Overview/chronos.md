@@ -286,6 +286,8 @@ unscaled_y = tsdata_test.unscale_numpy(y)
 #### **6.5 Feature generation**
 Other than historical target data and other extra feature provided by users, some additional features can be generated automatically by [`TSDataset`](../../PythonAPI/Chronos/tsdataset.html). [`gen_dt_feature`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.gen_dt_feature) helps users to generate 10 datetime related features(e.g. MONTH, WEEKDAY, ...). [`gen_global_feature`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.gen_global_feature) and [`gen_rolling_feature`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.gen_rolling_feature) are powered by tsfresh to generate aggregated features (e.g. min, max, ...) for each time series or rolling windows respectively.
 #### **6.6 Roll sampling and other transformation**
+Note: You don't need to transform or call rolling related methods in this section on the `TSDataset` to use it in `AutoTSEstimator`.
+
 Roll sampling (or sliding window sampling) is useful when you want to train a supervised deep learning forecasting model. Please refer to the API doc [`roll`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.roll) for detailed behavior. A typical call of [`roll`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.roll) is as following:
 ```python
 # forecaster
