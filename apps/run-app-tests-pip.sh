@@ -641,7 +641,7 @@ else
 fi
 
 sed -i '/get_ipython()/d; /plot[.]/d; /plt[.]/d; /axs[.]/d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.py
-sed -i 's/epochs=2/epochs=1/g' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.py
+sed -i 's/epochs=2/epochs=1/g;' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.py
 cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/
 
 python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.py
@@ -702,7 +702,7 @@ chmod +x ${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 ${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
 sed -i '/get_ipython()/d;' ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset.py
-sed -i 's/epocu_num=5/epoch_num=2/g;' ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset.py
+sed -i 's/epoch_num=5/epoch_num=1/g;' ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset.py
 
 python ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset.py
 
