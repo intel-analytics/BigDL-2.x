@@ -18,9 +18,9 @@ import pandas as pd
 import os
 from abc import abstractmethod
 
-from zoo.automl.metrics import Evaluator
+from zoo.orca.automl.metrics import Evaluator
 from zoo.chronos.pipeline.time_sequence import TimeSequencePipeline
-from zoo.automl.search.utils import process
+from zoo.orca.automl.search.utils import process
 from zoo.chronos.config.recipe import *
 from zoo.ray import RayContext
 from zoo.orca.automl.auto_estimator import AutoEstimator

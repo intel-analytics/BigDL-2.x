@@ -288,6 +288,15 @@ class TSDataset:
         assert self._is_pd_datetime,\
             "The time series data does not have a Pandas datetime format\
             (you can use pandas.to_datetime to convert a string into a datetime format)."
+        from pandas.api.types import is_numeric_dtype
+        type_error_list = [val for val in self.target_col + self.feature_col
+                           if not is_numeric_dtype(self.df[val])]
+        try:
+            for val in type_error_list:
+                self.df[val] = self.df[val].astype(np.float32)
+        except Exception:
+            raise RuntimeError("All the columns of target_col"
+                               "and extra_feature_col should be of numeric type.")
         self.df = self.df.groupby([self.id_col]) \
             .apply(lambda df: resample_timeseries_dataframe(df=df,
                                                             dt_col=self.dt_col,
@@ -348,6 +357,7 @@ class TSDataset:
         '''
         Generate per-time-series feature for each time series.
         This method will be implemented by tsfresh.
+        Make sure that the specified column name does not contain '__'.
 
         TODO: relationship with scale should be figured out.
 
@@ -401,6 +411,7 @@ class TSDataset:
         '''
         Generate aggregation feature for each sample.
         This method will be implemented by tsfresh.
+        Make sure that the specified column name does not contain '__'.
 
         TODO: relationship with scale should be figured out.
 
