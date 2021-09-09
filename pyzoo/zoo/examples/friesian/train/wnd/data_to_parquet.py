@@ -20,7 +20,7 @@ conf = {"spark.network.timeout": "10000000",
         "spark.eventLog.enabled": "true",
         "spark.eventLog.dir": "hdfs://172.16.0.105:8020/sparkHistoryLogs",
         "spark.app.name": "recsys-kai",
-        "spark.executor.memoryOverhead": "64g"}
+        "spark.executor.memoryOverhead": "30g"}
 
 class RecsysSchema:
     def __init__(self):
@@ -156,16 +156,20 @@ if __name__ == '__main__':
                           conf=conf)
 
     start = time()
-    train_tbl = FeatureTable.read_csv(os.path.join(args.input_folder,"train"),
-                                      delimiter="\x01",
-                                      dtype=RecsysSchema().toDtype()
+    # train_tbl = FeatureTable.read_csv(os.path.join(args.input_folder,"train"),
+    #                                   delimiter="\x01",
+    #                                   dtype=RecsysSchema().toDtype()
+    #                                   )
+    train_tbl = FeatureTable.read_csv(os.path.join(args.input_folder, "train"),
+                                      delimiter="\x01"
                                       )
+    train_tbl.df.printSchema()
     train_tbl.write_parquet(os.path.join(args.output_folder, "spark_parquet"))
 
-    val_tbl = FeatureTable.read_csv(os.path.join(args.input_folder, "val"),
+    val_tbl = FeatureTable.read_csv(os.path.join(args.input_folder, "valid"),
                                       delimiter="\x01",
                                       dtype=RecsysSchema().toDtype())
-
+    val_tbl.df.printSchema()
     val_tbl.write_parquet(os.path.join(args.output_folder, "test_spark_parquet"))
 
     end = time()
