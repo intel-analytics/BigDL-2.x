@@ -24,8 +24,8 @@ echo $RUN_SCRIPT_DIR
 
 if (( $# < 1)); then
   echo "Usage: release_linux.sh version spark_version bigdl_artifactId spark_profile"
-  echo "Usage example: bash release_linux.sh default 2.4.3 bigdl-SPARK_2.4 spark_2.4+"
-  echo "Usage example: bash release_linux.sh 0.6.0.dev0 2.4.3 bigdl-SPARK_2.4 spark_2.4+"
+  echo "Usage example: bash release_linux.sh default 2.4.6 bigdl-SPARK_2.4 spark_2.4+"
+  echo "Usage example: bash release_linux.sh 0.12.0.dev0 2.4.6 bigdl-SPARK_2.4 spark_2.4+"
   exit -1
 fi
 

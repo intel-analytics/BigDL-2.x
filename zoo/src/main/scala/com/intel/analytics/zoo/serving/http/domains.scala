@@ -38,6 +38,7 @@ import org.apache.arrow.vector._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration.DurationInt
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.core.JsonParser
@@ -45,7 +46,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode, TextNode}
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer, JsonNode, ObjectMapper}
 import com.google.common.collect.ImmutableList
-import com.intel.analytics.zoo.serving.http.FrontEndApp.{handleResponseTimer, makeActivityTimer, metrics, overallRequestTimer, purePredictTimersMap, system, timeout, timing, waitRedisTimer}
+import com.google.common.util.concurrent.RateLimiter
+import com.intel.analytics.zoo.serving.http.FrontEndApp.{handleResponseTimer, makeActivityTimer, metrics, overallRequestTimer, system, timeout, timing, waitRedisTimer}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.opencv.imgcodecs.Imgcodecs
@@ -53,8 +55,11 @@ import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import redis.clients.jedis.JedisPoolConfig
+// import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.serialization.StreamSerializer
 import org.slf4j.LoggerFactory
+import redis.clients.jedis.JedisPool
 
 sealed trait ServingMessage
 
@@ -813,7 +818,10 @@ object ServingTimerMetrics {
 class ServableManager {
   private var modelVersionMap = new mutable.HashMap[String, mutable.HashMap[String, Servable]]
 
-  def load(servableManagerConfigDir: String): Unit = {
+  def load(servableManagerConfigDir: String,
+           purePredictTimersMap: mutable.HashMap[String, mutable.HashMap[String, Timer]],
+           modelInferenceTimersMap: mutable.HashMap[String, mutable.HashMap[String, Timer]]):
+                                                                                      Unit = {
     if (!Files.exists(Paths.get(servableManagerConfigDir))) {
       throw ServableLoadException("servable Manager config dir not exist", null)
     }
@@ -825,25 +833,26 @@ class ServableManager {
         val versionMapper = new mutable.HashMap[String, Servable]
         modelVersionMap(modelInfo.getModelName) = versionMapper
         val timerMapperInference = new mutable.HashMap[String, Timer]
-        FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName) = timerMapperInference
+        modelInferenceTimersMap(modelInfo.getModelName) = timerMapperInference
         val timerMapperPurePredict = new mutable.HashMap[String, Timer]
-        FrontEndApp.purePredictTimersMap(modelInfo.getModelName) = timerMapperPurePredict
+        purePredictTimersMap(modelInfo.getModelName) = timerMapperPurePredict
       }
       if (modelVersionMap(modelInfo.getModelName).contains(modelInfo.getModelVersion)) {
         throw ServableLoadException("duplicated model info. Model Name: " + modelInfo.getModelName
           + ", Model Version: " + modelInfo.getModelVersion, null)
       }
-      FrontEndApp.modelInferenceTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
+      modelInferenceTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
         metrics.timer("zoo.serving.inference." + modelInfo.getModelName + "."
           + modelInfo.getModelVersion)
-      FrontEndApp.purePredictTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
+      purePredictTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
         metrics.timer("zoo.pure.predict." + modelInfo.getModelName + "."
           + modelInfo.getModelVersion)
       val servable = modelInfo match {
         case clusterServingModelInfo: ClusterServingMetaData =>
           new ClusterServingServable(clusterServingModelInfo)
         case inferenceModelModelInfo: InferenceModelMetaData =>
-          new InferenceModelServable(inferenceModelModelInfo)
+          new InferenceModelServable(inferenceModelModelInfo,
+            purePredictTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion))
       }
       servable.load()
       modelVersionMap(modelInfo.getModelName)(modelInfo.getModelVersion) = servable
@@ -884,13 +893,13 @@ abstract class Servable(modelMetaData: ModelMetaData) {
   def getMetaData: ModelMetaData = modelMetaData
 }
 
-class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
+
+class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData,
+                             purePredictTimer: Timer)
   extends Servable(inferenceModelMetaData) {
   val logger = LoggerFactory.getLogger(getClass)
   var model: InferenceModel = _
   var isFirstTimePredict = true
-  val purePredictTimer = purePredictTimersMap(inferenceModelMetaData.modelName)(
-    inferenceModelMetaData.modelVersion)
 
   def load(): Unit = {
     model = new InferenceModel(inferenceModelMetaData.modelConCurrentNum)
@@ -911,6 +920,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   }
 
   def predict(inputs: Instances): Seq[PredictionOutput[String]] = {
+    logger.info(s"inference model predict as instance")
     val activities = timing("activity make")(makeActivityTimer) {
       inputs.makeActivities(inferenceModelMetaData.features)
     }
@@ -934,6 +944,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   }
 
   def predict(input: String): Seq[PredictionOutput[String]] = {
+    logger.info(s"inference model predict as string")
     val activities = timing("activity make")(makeActivityTimer) {
       JsonInputDeserializer.deserialize(input)
     }
@@ -972,6 +983,15 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
   var redisPutter: ActorRef = _
   var redisGetter: ActorRef = _
   var querierQueue: LinkedBlockingQueue[ActorRef] = _
+  val jedisPoolConfig = new JedisPoolConfig()
+  jedisPoolConfig.setMaxTotal(256)
+  val jedisPool = new JedisPool(jedisPoolConfig,
+    clusterServingMetaData.redisHost, clusterServingMetaData.redisPort.toInt)
+  val rateLimiter: RateLimiter = clusterServingMetaData.tokenBucketEnabled match {
+    case true => RateLimiter.create(clusterServingMetaData.tokensPerSecond)
+    case false => null
+  }
+  var ioActor: ActorRef = _
 
 
   def load(): Unit = {
@@ -1004,7 +1024,6 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
         clusterServingMetaData.redisTrustStoreToken))
       system.actorOf(redisGetterProps, name = redisGetterName)
     }
-    println("redisgetter:" + redisGetter)
 
     val querierNum = 1000
     querierQueue = timing(s"queriers initialized.")() {
@@ -1018,17 +1037,38 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
       })
       querierQueue
     }
+    val actorName = s"redis-ioActor-getter-${clusterServingMetaData.modelName}" +
+      s"-${clusterServingMetaData.modelVersion}"
+    ioActor = timing(s"$actorName initialized.")() {
+      val getterProps = Props(new RedisIOActor(jedisPool = jedisPool,
+        redisOutputQueue = clusterServingMetaData.redisOutputQueue,
+        redisInputQueue = clusterServingMetaData.redisInputQueue))
+      system.actorOf(getterProps, name = actorName)
+    }
+    system.scheduler.schedule(1 milliseconds, 1 millisecond,
+      ioActor, DequeueMessage())(system.dispatcher)
   }
 
   def predict(input: String): Seq[PredictionOutput[String]] = {
-    val instances = timing("json deserialization")() {
-      JsonUtil.fromJson(classOf[Instances], input)
+    val id = UUID.randomUUID().toString
+    val result = timing("response waiting")() {
+      val id = UUID.randomUUID().toString
+      val results = timing(s"query message wait for key $id")() {
+        Await.result(ioActor ? DataInputMessage(id, input), timeout.duration)
+          .asInstanceOf[ModelOutputMessage].valueMap
+      }
+      val objectMapper = new ObjectMapper()
+      results.map(r => {
+        val resultStr = objectMapper.writeValueAsString(r._2)
+        PredictionOutput(r._1, resultStr)
+      })
     }
-    predict(instances)
+    result.toSeq
   }
 
   def predict(instances: Instances):
   Seq[PredictionOutput[String]] = {
+    logger.info(s"cluster serving predict as instance")
     val inputs = instances.instances.map(instance => {
       InstancesPredictionInput(Instances(instance))
     })
@@ -1064,8 +1104,9 @@ class ClusterServingServable(clusterServingMetaData: ClusterServingMetaData)
       clusterServingMetaData.redisHost, clusterServingMetaData.redisPort,
       clusterServingMetaData.redisInputQueue, clusterServingMetaData.redisOutputQueue,
       clusterServingMetaData.timeWindow, clusterServingMetaData.countWindow,
-      clusterServingMetaData.redisSecureEnabled,
-      "*******", "*******", clusterServingMetaData.features)
+      clusterServingMetaData.tokenBucketEnabled, clusterServingMetaData.tokensPerSecond,
+      clusterServingMetaData.redisSecureEnabled, "*******", "*******",
+      clusterServingMetaData.inputCompileType, clusterServingMetaData.features)
   }
 
 }
@@ -1092,11 +1133,11 @@ abstract class ModelMetaData(modelName: String, modelVersion: String, features: 
 
 case class InferenceModelMetaData(modelName: String,
                                   modelVersion: String,
-                                  modelPath: String,
-                                  modelType: String,
-                                  weightPath: String,
+                                  modelPath: String = "",
+                                  modelType: String = "",
+                                  weightPath: String = "",
                                   modelConCurrentNum: Int = 1,
-                                  inputCompileType: String = "direct",
+                                  inputCompileType: String = "direct", // direct or instance
                                   features: Array[String])
   extends ModelMetaData(modelName, modelVersion, features)
 
@@ -1108,9 +1149,12 @@ case class ClusterServingMetaData(modelName: String,
                                   redisOutputQueue: String,
                                   timeWindow: Int = 0,
                                   countWindow: Int = 56,
+                                  tokenBucketEnabled: Boolean = false,
+                                  tokensPerSecond: Int = 100,
                                   redisSecureEnabled: Boolean = false,
                                   redisTrustStorePath: String = null,
                                   redisTrustStoreToken: String = "1234qwer",
+                                  inputCompileType: String = "direct",
                                   features: Array[String])
   extends ModelMetaData(modelName, modelVersion, features)
 

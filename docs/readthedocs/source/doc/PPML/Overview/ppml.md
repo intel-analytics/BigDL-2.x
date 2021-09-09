@@ -43,13 +43,12 @@ Download scripts and dockerfiles from [this link](https://github.com/intel-analy
     openssl genrsa -3 -out enclave-key.pem 3072
     ```
 
-3. Prepare keys for TLS with root permission (test only, need input security password for keys).
+3. Prepare keys for TLS with root permission (test only, need input security password for keys). Please also install jdk/openjdk and set the environment path of java path to get keytool.
 
     ```bash
     sudo ./ppml/scripts/generate-keys.sh
     ```
-
-    This scrips will generate 5 files in `keys` dir (you can replace them with your own TLS keys).
+    When entering pass phrase or password, you could input the same password by yourself; and these passwords could also be used for the next step of generating password. Password should be longer than 6 bits and containing number and letter, and one sample password is "3456abcd". These passwords would be used for future remote attestations and to start SGX enclaves more securely. And This scripts will generate 5 files in `keys` dir (you can replace them with your own TLS keys).
 
     ```bash
     keystore.pkcs12
@@ -76,7 +75,7 @@ Download scripts and dockerfiles from [this link](https://github.com/intel-analy
 
 Pull docker image from Dockerhub
 ```bash
-docker pull intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:0.10-SNAPSHOT
+docker pull intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-graphene:0.12.0-SNAPSHOT
 ```
 
 Alternatively, you can build docker image from Dockerfile (this will take some time):
@@ -106,7 +105,19 @@ Enter `analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene` dir.
     cd /ppml/trusted-big-data-ml
     ./init.sh
     ```
-##### 2.2.2.2 Run Trusted Spark Pi
+##### 2.2.2.2 Run Your Spark Program with Analytics Zoo PPML on SGX
+
+To run your pyspark program, first you need to prepare your own pyspark program and put it under the trusted directory in SGX  `/ppml/trusted-big-data-ml/work`. Then run with `ppml-spark-submit.sh` using the command:
+
+```bash
+./ppml-spark-submit.sh work/YOUR_PROMGRAM.py | tee YOUR_PROGRAM-sgx.log
+```
+
+When the program finishes, check the results with the log `YOUR_PROGRAM-sgx.log`.
+
+##### 2.2.2.3 Run Trusted Spark Examples with Analytics Zoo PPML SGX
+
+##### 2.2.2.3.1 Run Trusted Spark Pi
 
 This example runs a simple Spark PI program, which is an easy way to verify if the Trusted PPML environment is ready.  
 
@@ -126,7 +137,7 @@ The result should look something like:
 
 >   Pi is roughly 3.1422957114785572
 
-##### 2.2.2.3 Run Trusted Spark SQL
+##### 2.2.2.3.2 Run Trusted Spark SQL
 
 This example shows how to run trusted Spark SQL (e.g.,  TPC-H queries).
 
@@ -156,7 +167,7 @@ The result should look like:
 
 >   ----------------22 finished--------------------
 
-##### 2.2.2.4 Run Trusted Deep Learning
+##### 2.2.2.3.3 Run Trusted Deep Learning
 
 This example shows how to run trusted deep learning (using an BigDL LetNet program).
 
@@ -263,7 +274,19 @@ Enter `analytics-zoo/ppml/trusted-big-data-ml/python/docker-graphene` directory.
    ./init.sh
    ```
 
-##### 2.3.2.2 Run Trusted Python Helloworld
+##### 2.3.2.2 Run Your Pyspark Program with Analytics Zoo PPML on SGX
+
+To run your pyspark program, first you need to prepare your own pyspark program and put it under the trusted directory in SGX  `/ppml/trusted-big-data-ml/work`. Then run with `ppml-spark-submit.sh` using the command:
+
+```bash
+./ppml-spark-submit.sh work/YOUR_PROMGRAM.py | tee YOUR_PROGRAM-sgx.log
+```
+
+When the program finishes, check the results with the log `YOUR_PROGRAM-sgx.log`.
+
+##### 2.3.2.3 Run Python and Pyspark Examples with Analytics Zoo PPML on SGX
+
+##### 2.3.2.3.1 Run Trusted Python Helloworld
 
 This example runs a simple native python program, which is an easy way to verify if the Trusted PPML environment is correctly set up.
 
@@ -283,7 +306,7 @@ The result should look something like:
 
 > Hello World
 
-##### 2.3.2.3 Run Trusted Python Numpy
+##### 2.3.2.3.2 Run Trusted Python Numpy
 
 This example shows how to run trusted native python numpy.
 
@@ -303,7 +326,7 @@ The result should look something like:
 
 >  numpy.dot: 0.034211914986371994 sec
 
-##### 2.3.2.4 Run Trusted Spark Pi
+##### 2.3.2.3.3 Run Trusted Spark Pi
 
 This example runs a simple Spark PI program.
 
@@ -323,7 +346,7 @@ The result should look something like:
 
 > Pi is roughly 3.146760
 
-##### 2.3.2.5 Run Trusted Spark Wordcount
+##### 2.3.2.3.4 Run Trusted Spark Wordcount
 
 This example runs a simple Spark Wordcount program.
 
@@ -345,7 +368,7 @@ The result should look something like:
 >
 > print(sys.path);: 1
 
-##### 2.3.2.6 Run Trusted Spark SQL
+##### 2.3.2.3.5 Run Trusted Spark SQL
 
 This example shows how to run trusted Spark SQL.
 
@@ -381,7 +404,7 @@ The result should look something like:
 >
 >| Justin|
 
-##### 2.3.2.7 Run Trusted Spark BigDL
+##### 2.3.2.3.6 Run Trusted Spark BigDL
 
 This example shows how to run trusted Spark BigDL.
 
@@ -405,7 +428,7 @@ The result should look something like:
 >
 > 2021-06-18 01:46:20 INFO DistriOptimizer$:180 - [Epoch 2 60032/60000][Iteration 938][Wall Clock 845.747782s] Top1Accuracy is Accuracy(correct: 9696, count: 10000, accuracy: 0.9696)
 
-##### 2.3.2.8 Run Trusted Spark XGBoost Regressor
+##### 2.3.2.3.7 Run Trusted Spark XGBoost Regressor
 
 This example shows how to run trusted Spark XGBoost Regressor.
 
@@ -465,7 +488,9 @@ The result should look something like:
 >
 > |[7.02259,0.0,18.1...| 14.2| 13.38729190826416|
 
-##### 2.3.2.9 Run Trusted Spark XGBoost Classifier
+##### 2.3.2.3.8 Run Trusted Spark XGBoost Classifier
+
+This example shows how to run trusted Spark XGBoost Classifier.
 
 Before running the example, download the sample dataset from [pima-indians-diabetes](https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv) dataset. After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the `start-spark-local-xgboost-classifier-sgx.sh`. Replace `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv`  and the value of `RABIT_TRACKER_IP` with your own IP address in the script.
 
@@ -499,7 +524,7 @@ The result should look something like:
 >
 > | 0.0|119.0| 0.0| 0.0| 0.0|32.4|0.141|24.0| 1.0|[-0.4473398327827...|[0.55266016721725...|    0.0|
 
-##### 2.3.2.10 Run Trusted Spark Orca Data
+##### 2.3.2.3.9 Run Trusted Spark Orca Data
 
 This example shows how to run trusted Spark Orca Data.
 
@@ -569,6 +594,26 @@ The result should contain the content look like:
 >
 >Stopping orca context
 
+##### 2.3.2.3.10 Run Trusted Spark Orca Learn Tensorflow Basic Text Classification
+
+This example shows how to run trusted Spark Orca learn Tensorflow basic text classification.
+
+Run the script to run trusted Spark Orca learn Tensorflow basic text classification and it would take some time to show the final results. To run this example in standalone mode, replace `-e SGX_MEM_SIZE=32G \` with `-e SGX_MEM_SIZE=64G \` in `start-distributed-spark-driver.sh`
+
+```bash
+bash start-spark-local-orca-tf-text.sh
+```
+
+Open another terminal and check the log:
+
+```bash
+sudo docker exec -it spark-local cat test-orca-tf-text.log | egrep "results"
+```
+
+The result should be similar to:
+
+>INFO results: {'loss': 0.6932533979415894, 'acc Top1Accuracy': 0.7544000148773193}
+
 #### 2.3.3 Run Trusted Big Data and ML on Cluster
 
 ##### 2.3.3.1 Configure the Environment
@@ -629,12 +674,12 @@ Pull docker image from Dockerhub
 
 ```bash
 # For Graphene
-docker pull intelanalytics/analytics-zoo-ppml-trusted-realtime-ml-scala-graphene:0.10-SNAPSHOT
+docker pull intelanalytics/analytics-zoo-ppml-trusted-realtime-ml-scala-graphene:0.12.0-SNAPSHOT
 ```
 
 ```bash
 # For Occlum
-docker pull intelanalytics/analytics-zoo-ppml-trusted-realtime-ml-scala-occlum:0.10-SNAPSHOT
+docker pull intelanalytics/analytics-zoo-ppml-trusted-realtime-ml-scala-occlum:0.12.0-SNAPSHOT
 ```
 
 Also, you can build docker image from Dockerfile (this will take some time).

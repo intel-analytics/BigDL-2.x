@@ -51,6 +51,7 @@ Analytics Zoo Documentation
    doc/Orca/QuickStart/orca-pytorch-distributed-quickstart.md
    doc/UseCase/spark-dataframe.md
    doc/UseCase/xshards-pandas.md
+   doc/Chronos/QuickStart/chronos-autotsest-quickstart.md
    doc/Chronos/QuickStart/chronos-autots-quickstart.md
    doc/Chronos/QuickStart/chronos-tsdataset-forecaster-quickstart.md
    doc/Chronos/QuickStart/chronos-anomaly-detector.md
@@ -67,6 +68,7 @@ Analytics Zoo Documentation
    doc/Orca/Overview/orca-context.md
    doc/Orca/Overview/data-parallel-processing.md
    doc/Orca/Overview/distributed-training-inference.md
+   doc/Orca/Overview/distributed-tuning.md
 
 .. toctree::
    :maxdepth: 1

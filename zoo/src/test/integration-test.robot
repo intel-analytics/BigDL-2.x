@@ -5,12 +5,10 @@ Suite Setup      Prepare DataSource And Verticals
 Suite Teardown   Delete All Sessions
 Test template    Zoo Test
 
-*** Variables ***
-@{verticals}  ${spark_210_3_vid}    ${hdfs_264_3_vid}
 
-*** Test Cases ***   SuiteName                             VerticalId
-1                    Spark2.1 Test Suite                   ${spark_210_3_vid}
-2                    Yarn Test Suite                       ${hdfs_264_3_vid}
+*** Test Cases ***   SuiteName                             
+1                    Spark2.1 Test Suite                   
+2                    Yarn Test Suite                       
 
 *** Keywords ***
 Build SparkJar

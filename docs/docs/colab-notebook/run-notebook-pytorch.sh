@@ -4,7 +4,7 @@
 echo "Chronos test start"
 
 dir=${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/chronos
-pytorchFiles=("chronos_nyc_taxi_tsdataset_forecaster" "chronos_minn_traffic_anomaly_detector")
+pytorchFiles=("chronos_nyc_taxi_tsdataset_forecaster" "chronos_minn_traffic_anomaly_detector" "chronos_experimental_autots_nyc_taxi")
 index=1
 
 set -e
@@ -39,6 +39,7 @@ do
 	sed -i 's/version_info/#version_info/g' ${filename}.py
 	sed -i 's/python_version/#python_version/g' ${filename}.py
 	sed -i 's/exit()/#exit()/g' ${filename}.py
+	sed -i 's/plt.show()/#plt.show()/g' ${filename}.py
 
 	python ${filename}.py
 
@@ -76,6 +77,7 @@ do
 	sed -i 's/^[^#].*site-packages*/#&/g' ${filename}.py
 	sed -i 's/version_info/#version_info/g' ${filename}.py
 	sed -i 's/python_version/#python_version/g' ${filename}.py
+	sed -i 's/epochs=30/epochs=1/g' ${filename}.py
 
 	python ${filename}.py
 
@@ -89,10 +91,18 @@ done
 echo "orca examples test start"
 
 dir=${ANALYTICS_ZOO_HOME}/docs/docs/colab-notebook/orca/examples
-pytorchFiles=("fashion_mnist_bigdl")
+pytorchFiles=("fashion_mnist_bigdl" "super_resolution")
 index=1
 
 set -e
+
+if [ ! -f BSDS300-images.tgz ]; then
+  wget $FTP_URI/analytics-zoo-data/BSDS300-images.tgz
+fi
+if [ ! -d sr_dataset/BSDS300/images ]; then
+  mkdir sr_dataset
+  tar -xzf BSDS300-images.tgz -C sr_dataset
+fi
 
 for f in "${pytorchFiles[@]}"
 do
@@ -113,6 +123,8 @@ do
 	sed -i 's/^[^#].*site-packages*/#&/g' ${filename}.py
 	sed -i 's/version_info/#version_info/g' ${filename}.py
 	sed -i 's/python_version/#python_version/g' ${filename}.py
+	sed -i 's/batch_size = 32/batch_size = 320/g' ${filename}.py
+	sed -i 's/epochs = 30/epochs = 1/g' ${filename}.py
 
 	python ${filename}.py
 

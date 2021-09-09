@@ -29,7 +29,7 @@ class ConfigParserSpec extends FlatSpec with Matchers {
     assert(conf.modelParallelism == 10)
     assert(conf.inputAlreadyBatched.isInstanceOf[Boolean])
     assert(conf.inputAlreadyBatched == true)
-    assert(conf.redisSecureStructStorePassword.isInstanceOf[String])
+    assert(conf.redisSecureTrustStorePassword.isInstanceOf[String])
   }
   "load default config" should "work" in {
     val conf = configParser.loadConfig()

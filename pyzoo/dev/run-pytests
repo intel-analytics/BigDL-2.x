@@ -29,7 +29,6 @@ python -m pytest -v --doctest-modules ../zoo \
     --ignore=../zoo/tfpark/text \
     --ignore=../zoo/examples \
     --ignore=../zoo/ray/ \
-    --ignore=../zoo/automl/ \
     --ignore=../zoo/chronos/ \
     --ignore=../test/zoo/pipeline/api/torch/ \
     --ignore=../zoo/orca/ \
@@ -62,7 +61,6 @@ if [[ $py_version == *"Python 2.7"* ]]; then
 
     echo "Running other tests"
     python -m pytest -v ../test --ignore=../test/zoo/pipeline/utils/test_utils.py \
-       --ignore=../test/zoo/automl/ \
        --ignore-../test/zoo/tfpark/ \
        --ignore=../test/zoo/pipeline/api/keras2/ \
        --ignore=../test/zoo/pipeline/autograd/ \
@@ -73,8 +71,7 @@ if [[ $py_version == *"Python 2.7"* ]]; then
        --ignore=../test/zoo/pipeline/api/torch/ \
        --ignore=../test/zoo/orca/ \
        --ignore=../zoo/models/recommendation/txt.py \
-       --ignore=../test/zoo/friesian/ \
-       --ignore=../test/zoo/automl/model/test_xgbregressor.py
+       --ignore=../test/zoo/friesian/
     exit_status_2=$?
     if [ $exit_status_2 -ne 0 ];
     then
@@ -101,7 +98,6 @@ else
 
     echo "Running other tests"
     python -m pytest -v ../test/ --ignore=../test/zoo/pipeline/utils/test_utils.py \
-       --ignore=../test/zoo/automl/ \
        --ignore=../test/zoo/tfpark/ \
        --ignore=../test/zoo/pipeline/api/keras2/ \
        --ignore=../test/zoo/pipeline/autograd/ \
@@ -109,14 +105,13 @@ else
        --ignore=../test/zoo/ray/ \
        --ignore=../test/zoo/chronos/ \
        --ignore=../test/zoo/pipeline/api/torch/ \
-       --ignore=../test/zoo/orca/automl/autoestimator/ \
+       --ignore=../test/zoo/orca/automl/ \
        --ignore=../test/zoo/orca/data \
        --ignore=../test/zoo/orca/learn/spark \
        --ignore=../test/zoo/orca/learn/ray \
        --ignore=../test/zoo/orca/learn/jep \
        --ignore=../test/zoo/friesian/ \
-       --ignore=../zoo/models/recommendation/txt.py \
-       --ignore=../test/zoo/automl/model/test_xgbregressor.py
+       --ignore=../zoo/models/recommendation/txt.py
     exit_status_3=$?
     if [ $exit_status_3 -ne 0 ];
     then

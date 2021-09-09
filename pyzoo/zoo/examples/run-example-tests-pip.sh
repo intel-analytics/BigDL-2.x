@@ -579,7 +579,19 @@ fi
 now=$(date "+%s")
 time18=$((now - start))
 
-echo "#19 start test for orca bigdl attention"
+echo "#19 start test for orca tf inceptionV1"
+start=$(date "+%s")
+python  ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/learn/tf/inception/inception.py -b 8 -f ${ANALYTICS_ZOO_ROOT}/pyzoo/test/zoo/resources/imagenet_to_tfrecord --cluster_mode local --imagenet ./imagenet
+exit_status=$?
+if [ $exit_status -ne 0 ]; then
+  clear_up
+  echo "orca tf inceptionV1 failed"
+  exit $exit_status
+fi
+now=$(date "+%s")
+time19=$((now - start))
+
+echo "#20 start test for orca bigdl attention"
 #timer
 start=$(date "+%s")
 #run the example
@@ -595,9 +607,9 @@ if [ $exit_status -ne 0 ]; then
   exit $exit_status
 fi
 now=$(date "+%s")
-time19=$((now - start))
+time20=$((now - start))
 
-echo "#20 start test for orca bigdl imageInference"
+echo "#21 start test for orca bigdl imageInference"
 #timer
 start=$(date "+%s")
 if [ -f analytics-zoo-models/bigdl_inception-v1_imagenet_0.4.0.model ]; then
@@ -616,7 +628,7 @@ if [ $exit_status -ne 0 ]; then
   exit $exit_status
 fi
 now=$(date "+%s")
-time20=$((now - start))
+time21=$((now - start))
 
 clear_up
 
@@ -637,5 +649,6 @@ echo "#15 orca data time used:$time15 seconds"
 echo "#16 orca tf imagesegmentation time used:$time16 seconds"
 echo "#17 orca tf transfer_learning time used:$time17 seconds"
 echo "#18 orca tf basic_text_classification time used:$time18 seconds"
-echo "#19 orca bigdl attention time used:$time19 seconds"
-echo "#20 orca bigdl imageInference time used:$time20 seconds"
+echo "#19 orca tf inceptionV1 time used:$time19 seconds"
+echo "#20 orca bigdl attention time used:$time20 seconds"
+echo "#21 orca bigdl imageInference time used:$time21 seconds"
