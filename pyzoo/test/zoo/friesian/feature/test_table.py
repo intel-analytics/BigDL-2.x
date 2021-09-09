@@ -557,9 +557,10 @@ class TestTable(TestCase):
             .toDF(["item", "category"]).withColumn("item", col("item").cast("Integer")) \
             .withColumn("category", col("category").cast("Integer"))
         tbl = FeatureTable(df)
+        mapping = dict([(0, 0), (1, 0), (2, 0), (3, 0), (4, 1), (5, 1), (6, 1), (8, 2), (9, 2)])
         tbl2 = tbl.add_neg_hist_seq(9, "item_hist_seq", 4)
         tbl3 = tbl2.add_value_features(["item_hist_seq", "neg_item_hist_seq"],
-                                       FeatureTable(df2), "item", "category")
+                                       mapping, "item", "category")
         assert tbl3.df.select("category_hist_seq").count() == 3
         assert tbl3.df.select("neg_category_hist_seq").count() == 3
         assert tbl3.df.filter("name like '%alice%'").select("neg_category_hist_seq").count() == 1
