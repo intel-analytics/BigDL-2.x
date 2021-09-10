@@ -18,7 +18,6 @@ package com.intel.analytics.zoo.ppml
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.Table
 import com.intel.analytics.zoo.ppml.generated.FLProto
 import com.intel.analytics.zoo.ppml.generated.FLProto.{DownloadResponse, FloatTensor, TableMetaData}
 import org.apache.log4j.Logger
