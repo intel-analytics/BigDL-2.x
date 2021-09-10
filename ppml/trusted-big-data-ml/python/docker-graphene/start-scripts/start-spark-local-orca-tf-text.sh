@@ -1,5 +1,5 @@
 #!/bin/bash
-SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
+graphene-sgx ./bash -c "/opt/jdk8/bin/java -cp \
   '/ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_2.4.6-0.12.0-SNAPSHOT-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*' \
   -Xmx3g \
   org.apache.spark.deploy.SparkSubmit \

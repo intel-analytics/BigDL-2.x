@@ -7,7 +7,7 @@ worker_webui_port=$SPARK_WORKER_WEBUI_PORT
 spark_master=$SPARK_MASTER
 secure_password=`openssl rsautl -inkey /ppml/trusted-big-data-ml/work/password/key.txt -decrypt </ppml/trusted-big-data-ml/work/password/output.bin`
 
-SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
+graphene-sgx ./bash -c "/opt/jdk8/bin/java \
     -cp "/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*" \
     -Dspark.authenticate=true \
     -Dspark.authenticate.secret=$secure_password \
