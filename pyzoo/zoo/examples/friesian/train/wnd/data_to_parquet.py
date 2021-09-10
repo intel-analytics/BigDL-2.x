@@ -4,6 +4,7 @@
 import os
 from time import time
 from argparse import ArgumentParser
+import pandas as pd
 
 from pyspark.sql.types import *
 from zoo.orca import init_orca_context, stop_orca_context, OrcaContext
@@ -22,17 +23,18 @@ conf = {"spark.network.timeout": "10000000",
         "spark.app.name": "recsys-kai",
         "spark.executor.memoryOverhead": "30g"}
 
+
 class RecsysSchema:
     def __init__(self):
         self.string_cols1 = [
             'text_tokens',
             'hashtags',  # Tweet Features
-            'tweet_id',       #
-            'present_media',          #
-            'present_links',          #
-            'present_domains',        #
-            'tweet_type',     #
-            'language',       #
+            'tweet_id',  #
+            'present_media',  #
+            'present_links',  #
+            'present_domains',  #
+            'tweet_type',  #
+            'language',  #
         ]
         self.int_cols1 = [
             'tweet_timestamp',
@@ -42,10 +44,10 @@ class RecsysSchema:
         ]
         self.int_cols2 = [
             'engaged_with_user_follower_count',  # Engaged With User Features
-            'engaged_with_user_following_count',      #
+            'engaged_with_user_following_count',  #
         ]
         self.bool_cols1 = [
-            'engaged_with_user_is_verified',          #
+            'engaged_with_user_is_verified',  #
         ]
         self.int_cols3 = [
             'engaged_with_user_account_creation',
@@ -55,7 +57,7 @@ class RecsysSchema:
         ]
         self.int_cols4 = [
             'enaging_user_follower_count',  # Engaging User Features
-            'enaging_user_following_count',      #
+            'enaging_user_following_count',  #
         ]
         self.bool_cols2 = [
             'enaging_user_is_verified',
@@ -78,10 +80,10 @@ class RecsysSchema:
         self.int_cols6 = [
             'tweet_timestamp',
             'engaged_with_user_follower_count',  # Engaged With User Features
-            'engaged_with_user_following_count',      #
+            'engaged_with_user_following_count',  #
             'engaged_with_user_account_creation',
             'enaging_user_follower_count',  # Engaging User Features
-            'enaging_user_following_count',           #
+            'enaging_user_following_count',  #
             'enaging_user_account_creation',
         ]
 
@@ -126,7 +128,6 @@ class RecsysSchema:
                + float_fields
 
 
-
 def _parse_args():
     parser = ArgumentParser()
 
@@ -152,6 +153,7 @@ def _parse_args():
     args = parser.parse_args()
     return args
 
+
 if __name__ == '__main__':
     args = _parse_args()
     if args.cluster_mode == "local":
@@ -169,10 +171,18 @@ if __name__ == '__main__':
                           conf=conf)
 
     start = time()
-    # train_tbl = FeatureTable.read_csv(os.path.join(args.input_folder,"train"),
-    #                                   delimiter="\x01",
-    #                                   dtype=RecsysSchema().toDtype()
-    #                                   )
+    with pd.read_csv(os.path.join(args.input_folder, "train"),
+                     delimiter="\x01",
+                     chunksize=100000
+                     ) as reader:
+        i = 0
+        for df in reader:
+            df = df.rename(columns={"text_ tokens": "text_tokens"})
+            # This is a typo. Other typos include enaging...
+            df = df.rename(columns={"retweet_timestampe": "retweet_timestamp"})
+            df.to_parquet(os.path.join(args.output_folder, "spark-parquet/%d.parquet" % i))
+            i += 1
+
     # train_tbl = FeatureTable.read_csv(os.path.join(args.input_folder, "train"),
     #                                   delimiter="\x01"
     #                                   )
@@ -189,6 +199,3 @@ if __name__ == '__main__':
     end = time()
     print("Convert to parquet time: ", end - start)
     stop_orca_context()
-
-
-
