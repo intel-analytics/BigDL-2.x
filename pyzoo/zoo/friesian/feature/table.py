@@ -520,7 +520,7 @@ class Table:
         valid_types = ["str", "string", "bool", "boolean", "int",
                        "integer", "long", "short", "float", "double"]
         if not (isinstance(dtype, str) and (dtype in valid_types)) \
-            and not isinstance(dtype, DataType):
+                and not isinstance(dtype, DataType):
             raise ValueError(
                 "dtype should be string, boolean, int, long, short, float, double.")
         transform_dict = {"str": "string", "bool": "boolean", "integer": "int"}
