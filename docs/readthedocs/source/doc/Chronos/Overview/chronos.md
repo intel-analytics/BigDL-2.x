@@ -285,15 +285,22 @@ unscaled_y = tsdata_test.unscale_numpy(y)
 ```
 #### **6.5 Feature generation**
 Other than historical target data and other extra feature provided by users, some additional features can be generated automatically by [`TSDataset`](../../PythonAPI/Chronos/tsdataset.html). [`gen_dt_feature`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.gen_dt_feature) helps users to generate 10 datetime related features(e.g. MONTH, WEEKDAY, ...). [`gen_global_feature`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.gen_global_feature) and [`gen_rolling_feature`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.gen_rolling_feature) are powered by tsfresh to generate aggregated features (e.g. min, max, ...) for each time series or rolling windows respectively.
-#### **6.6 Roll sampling and other transformation**
-Note: You don't need to transform or call rolling related methods in this section on the `TSDataset` to use it in `AutoTSEstimator`.
+#### **6.6 Sampling and exporting**
+A time series dataset needs to be sampling and exporting as numpy ndarray/dataloader to be used in machine learning and deep learning models(e.g. forecasters, anomaly detectors, auto models, etc.).
+```eval_rst
+.. note:: You don't need to transform or call rolling related methods in this section while using `AutoTSEstimator`.
+```
+##### **6.6.1 Roll sampling**
+Roll sampling (or sliding window sampling) is useful when you want to train a RR type supervised deep learning forecasting model. It works as the diagram shows. Please refer to the API doc [`roll`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.roll) for detailed behavior. Users can simply export the sampling result as numpy ndarray by [`to_numpy`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.to_numpy) or pytorch dataloader [`to_torch_data_loader`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.to_torch_data_loader).
 
-Roll sampling (or sliding window sampling) is useful when you want to train a supervised deep learning forecasting model. Please refer to the API doc [`roll`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.roll) for detailed behavior. A typical call of [`roll`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.roll) is as following:
+A typical call of [`roll`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.roll) is as following:
 ```python
 # forecaster
 x, y = tsdata.roll(lookback=..., horizon=...).to_numpy()
 forecaster.fit(x, y)
+```
 
+```python
 # anomaly detector on "target" col
 x = tsdata.to_pandas()["target"].to_numpy()
 anomaly_detector.fit(x)
