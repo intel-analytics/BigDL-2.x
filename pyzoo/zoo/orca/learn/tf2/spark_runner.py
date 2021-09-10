@@ -1,5 +1,6 @@
 import json
 from subprocess import call
+from sys import version
 
 from pyspark import BarrierTaskContext
 from pyspark.context import SparkContext
@@ -24,14 +25,24 @@ def handle_datasets_train(data_creator, validation_data_creator):
         return train_dataset, test_dataset
 
 class SparkRunner:
-    def __init__(self, model_creator, data_creator, validation_data_creator, config=None):
+    def __init__(self, model_creator, data_creator, validation_data_creator, config=None, 
+                epochs=1, batch_size=32, verbose=None, callbacks=None, class_weight=None):
         self.model_creator = model_creator
         self.data_creator = data_creator
         self.validation_data_creator = validation_data_creator
         self.config = {} if config is None else config
 
+        self.epochs = epochs
+        self.batch_size = batch_size
+        self.verbose = verbose
+        self.callbacks = callbacks
+        self.class_weight = class_weight
 
     def disributed_train_func(self, *args):
+        """
+        Sets up TensorFLow distributed environment and initializes the model.
+        Runs a training epoch and updates the model parameters.
+        """
         tc = BarrierTaskContext().get()
         rank = tc.partitionId()
         free_port = find_free_port(tc)
@@ -48,33 +59,30 @@ class SparkRunner:
         ips = set([node.split(":")[0] for node in cluster])
         os.environ["no_proxy"] = ",".join(ips)
 
-        strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
+        self.strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
 
-        with strategy.scope():
-            model = self.model_creator()
-
-        data_creator = self.data_creator
-        validation_data_creator = self.validation_data_creator
-        train_dataset, test_dataset = handle_datasets_train(data_creator, validation_data_creator)
+        with self.strategy.scope():
+            self.model = self.model_creator()
         
-        model.fit(train_dataset, test_dataset, epochs=10, verbose=1)
-
-        return [model.get_weights()]
-    
-    def main(self):
-        import numpy as np
-
-        model_creator = self.model_creator
         data_creator = self.data_creator
         validation_data_creator = self.validation_data_creator
+        epochs = self.epochs
+        verbose = self.verbose
+        callbacks = self.callbacks
 
-        sc = SparkContext()
-        sparkRDD = sc.parallelize(list(range(40)), 4)
-        workerRDD = sparkRDD.repartition(2)
-        spark_func = SparkRunner(model_creator, data_creator, validation_data_creator).disributed_train_func
-        res = workerRDD.barrier().mapPartitions(spark_func).collect()
-        assert np.all(res[0][0] == res[1][0])
-        sc.stop()
+        train_dataset, test_dataset = handle_datasets_train(data_creator, 
+                                                        validation_data_creator)
+        
+        history = self.model.fit(train_dataset, test_dataset, epochs, verbose, callbacks)
 
-        return res
+        if history is None:
+            stats = {}
+        else:
+            stats = {"train_" + k: v[-1] for k, v in history.history.items()}
+        
+        return [stats]
+        #return [model.get_weights()]
+    
+
+
 
