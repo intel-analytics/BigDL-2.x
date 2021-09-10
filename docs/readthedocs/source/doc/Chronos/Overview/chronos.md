@@ -93,7 +93,7 @@ View [Quick Start](https://analytics-zoo.readthedocs.io/en/latest/doc/Chronos/Qu
 ##### **4.2.1 Prepare dataset**
 `AutoTSEstimator` support 2 types of data input. 
 
-You can easily prepare your data in `TSDataset` (recommended). You may refer to [here](#TSDataset) to prepare your `TSDataset` with proper data processing.
+You can easily prepare your data in `TSDataset` (recommended). You may refer to [here](#TSDataset) to prepare your `TSDataset` with proper data processing and feature geration.
 ```python
 tsdata_train, tsdata_val, tsdata_test\
     = TSDataset.from_pandas(df, dt_col="timestamp", target_col="value", with_split=True, val_ratio=0.1, test_ratio=0.1)
@@ -289,11 +289,27 @@ unscaled_y = tsdata_test.unscale_numpy(y)
 Other than historical target data and other extra feature provided by users, some additional features can be generated automatically by [`TSDataset`](../../PythonAPI/Chronos/tsdataset.html). [`gen_dt_feature`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.gen_dt_feature) helps users to generate 10 datetime related features(e.g. MONTH, WEEKDAY, ...). [`gen_global_feature`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.gen_global_feature) and [`gen_rolling_feature`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.gen_rolling_feature) are powered by tsfresh to generate aggregated features (e.g. min, max, ...) for each time series or rolling windows respectively.
 #### **6.6 Sampling and exporting**
 A time series dataset needs to be sampling and exporting as numpy ndarray/dataloader to be used in machine learning and deep learning models(e.g. forecasters, anomaly detectors, auto models, etc.).
-
-``` important:: Its a note! in markdown!
+```eval_rst
+.. warning::
+    You don't need to call any sampling or exporting methods introduced in this section when using `AutoTSEstimator`.
 ```
 ##### **6.6.1 Roll sampling**
 Roll sampling (or sliding window sampling) is useful when you want to train a RR type supervised deep learning forecasting model. It works as the diagram shows. Please refer to the API doc [`roll`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.roll) for detailed behavior. Users can simply export the sampling result as numpy ndarray by [`to_numpy`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.to_numpy) or pytorch dataloader [`to_torch_data_loader`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.to_torch_data_loader).
+
+```eval_rst
+.. note:: 
+    **Difference between `.roll(...)` and `.to_torch_data_loader(roll=True, ...)`**: `.roll(...)` performs the rolling before RR forecasters/auto models training while `.to_torch_data_loader(roll=True, ...)` performs rolling during the training. It is fine to use either of them when you have a relatively small dataset (less than 1G). `.to_torch_data_loader(roll=True, ...)` is recommended when you have a large dataset to save memory usage.
+```
+
+```eval_rst
+.. note:: 
+    **Roll sampling format**: As decribed in RR style forecasting concept, the sampling result will have the following shape requirement.
+
+    x: (sample_num, lookback, input_feature_num)<br>
+    y: (sample_num, horizon, output_feature_num)
+
+    Please follow the same shape if you use customized data creator.
+```
 
 A typical call of [`roll`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.roll) is as following:
 ```python
@@ -302,6 +318,8 @@ x, y = tsdata.roll(lookback=..., horizon=...).to_numpy()
 forecaster.fit(x, y)
 ```
 
+##### **6.6.1 Pandas Exporting**
+Now we support pandas dataframe exporting through `to_pandas()` for users to carry out their own transformation. Here is an example of using only one time series for anomaly detection.
 ```python
 # anomaly detector on "target" col
 x = tsdata.to_pandas()["target"].to_numpy()
