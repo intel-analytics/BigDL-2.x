@@ -23,7 +23,7 @@ import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod}
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil.getParametersFromModel
 import com.intel.analytics.zoo.ppml.FLClient
-import com.intel.analytics.zoo.ppml.Util._
+import com.intel.analytics.zoo.ppml.vfl.utils.ProtoUtils._
 import com.intel.analytics.zoo.ppml.generated.FLProto.{EvaluateResponse, Table, TableMetaData}
 import io.netty.handler.ssl.SslContext
 
@@ -32,10 +32,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 class VflEstimator(model: Module[Float],
-                   optimMethod: OptimMethod[Float],
-                   target: String,
-                   sslConText: Option[SslContext],
-                   modelDir: Option[String]){
+                   optimMethod: OptimMethod[Float]){
   val (weight, grad) = getParametersFromModel(model)
   val flClient = new FLClient();
 
@@ -118,18 +115,8 @@ class VflEstimator(model: Module[Float],
       .setName(s"${model.getName()}_output").setVersion(flVersion).build
 
     // TODO: support table output and table target
-    val output = model.output.toTensor[Float]
-
-    val tensor = toFloatTensor(output)
-
-    val modelData = Table.newBuilder
-      .putTable("output", tensor)
-      .setMetaData(metadata)
-    if (target != null) {
-      val targetTensor = toFloatTensor(target.toTensor[Float])
-      modelData.putTable("target", targetTensor)
-    }
-    client.nnStub.uploadTrain(modelData.build())
+    val tableProto = outputTargetToTableProto(model.output, target, metadata)
+    client.nnStub.uploadTrain(tableProto)
   }
 
   def evaluateOutput(
@@ -142,29 +129,16 @@ class VflEstimator(model: Module[Float],
       .setName(s"${model.getName()}_output").setVersion(flVersion).build
 
     // TODO: support table output and table target
-    val output = model.output.toTensor[Float]
-
-    val tensor = toFloatTensor(output)
-
-    val modelData = Table.newBuilder
-      .putTable("output", tensor)
-      .setMetaData(metadata)
-    if (target != null) {
-      val targetTensor = toFloatTensor(target.toTensor[Float])
-      modelData.putTable("target", targetTensor)
-    }
-    client.nnStub.evaluate(modelData.build(), lastBatch)
+    val tableProto = outputTargetToTableProto(model.output, target, metadata)
+    client.nnStub.evaluate(tableProto, lastBatch)
   }
 
 }
 
 object VflEstimator {
   def apply(model: Module[Float],
-            optimMethod: OptimMethod[Float],
-            target: String,
-            sslConText: Option[SslContext],
-            modelDir: Option[String]): VflEstimator = {
-    new VflEstimator(model, optimMethod, target, sslConText, modelDir)
+            optimMethod: OptimMethod[Float]): VflEstimator = {
+    new VflEstimator(model, optimMethod)
   }
 
 }

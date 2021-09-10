@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.nn.Sequential
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.zoo.ppml.Util.toFloatTensor
+import com.intel.analytics.zoo.ppml.vfl.utils.ProtoUtils.toFloatTensor
 import com.intel.analytics.zoo.ppml.common.{Aggregator, FLPhase, Storage}
 import com.intel.analytics.zoo.ppml.generated.FLProto.TableMetaData
 import com.intel.analytics.zoo.ppml.common.FLPhase._

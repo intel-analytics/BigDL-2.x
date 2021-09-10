@@ -1,38 +1,39 @@
-/*
- * Copyright 2018 Analytics Zoo Authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.intel.analytics.zoo.ppml
+package com.intel.analytics.zoo.ppml.vfl.utils
 
 import com.intel.analytics.bigdl.Module
+import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.ppml.generated.FLProto
-import com.intel.analytics.zoo.ppml.generated.FLProto.{DownloadResponse, FloatTensor, TableMetaData}
-import org.apache.log4j.Logger
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil.getParametersFromModel
+import com.intel.analytics.zoo.ppml.FLClient
+import com.intel.analytics.zoo.ppml.generated.FLProto
+import com.intel.analytics.zoo.ppml.generated.FLProto.{DownloadResponse, FloatTensor, Table, TableMetaData}
+import org.apache.log4j.Logger
 
-import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import scala.util.Random
+import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 
-object Util {
-
+object ProtoUtils {
   private val logger = Logger.getLogger(getClass)
+  def outputTargetToTableProto(output: Activity,
+                               target: Activity,
+                               meta: TableMetaData = null): FLProto.Table = {
+    val tensorProto = toFloatTensor(output.toTensor[Float])
 
+    val builder = Table.newBuilder
+      .putTable("output", tensorProto)
+    if (meta != null) {
+      builder.setMetaData(meta)
+    }
+
+    if (target != null) {
+      val targetTensor = toFloatTensor(target.toTensor[Float])
+      builder.putTable("target", targetTensor)
+    }
+    builder.build()
+  }
   def toFloatTensor(data: Array[Float], shape: Array[Int]): FloatTensor = {
     FloatTensor
       .newBuilder()
