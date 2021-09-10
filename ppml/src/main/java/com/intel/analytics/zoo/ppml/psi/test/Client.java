@@ -34,7 +34,7 @@ public class Client {
     public static void main(String[] args) throws Exception {
 
         int max_wait = 20;
-        // Example code for client
+        // Example code for flClient.psiStub
         int idSize = 11;
         // Quick lookup for the plaintext of hashed ids
         HashMap<String, String> data = TestUtils.genRandomHashSet(idSize);
@@ -48,11 +48,11 @@ public class Client {
         // them until the application shuts down.
         String[] arg = {"-c", BenchmarkClient.class.getClassLoader()
                 .getResource("psi/psi-conf.yaml").getPath()};
-        FLClient client = new FLClient(arg);
+        FLClient flClient = new FLClient(arg);
         try {
-            client.build();
+            flClient.build();
             // Get salt from Server
-            salt = client.getSalt();
+            salt = flClient.psiStub.getSalt();
             logger.debug("Client get Slat=" + salt);
             // Hash(IDs, salt) into hashed IDs
             hashedIdArray = TestUtils.parallelToSHAHexString(ids, salt);
@@ -60,11 +60,11 @@ public class Client {
                 hashedIds.put(hashedIdArray.get(i), ids.get(i));
             }
             logger.debug("HashedIDs Size = " + hashedIds.size());
-            client.uploadSet(hashedIdArray);
+            flClient.psiStub.uploadSet(hashedIdArray);
             List<String> intersection;
 
             while (max_wait > 0) {
-                intersection = client.downloadIntersection();
+                intersection = flClient.psiStub.downloadIntersection();
                 if (intersection == null) {
                     logger.info("Wait 1000ms");
                     Thread.sleep(1000);
@@ -80,7 +80,7 @@ public class Client {
             // ManagedChannels use resources like threads and TCP connections. To prevent leaking these
             // resources the channel should be shut down when it will no longer be used. If it may be used
             // again leave it running.
-            client.getChannel().shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
+            flClient.getChannel().shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
         }
     }
 }

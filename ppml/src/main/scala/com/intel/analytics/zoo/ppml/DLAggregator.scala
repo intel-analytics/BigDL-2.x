@@ -5,8 +5,9 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.ppml.Util.toFloatTensor
+import com.intel.analytics.zoo.ppml.common.{Aggregator, FLPhase, Storage}
 import com.intel.analytics.zoo.ppml.generated.FLProto.TableMetaData
-import com.intel.analytics.zoo.ppml.Aggregator._
+import com.intel.analytics.zoo.ppml.common.FLPhase._
 import com.intel.analytics.zoo.ppml.generated.FLProto
 import org.apache.log4j.Logger
 
@@ -17,7 +18,7 @@ trait DLAggregator extends Aggregator {
   val logger = Logger.getLogger(this.getClass)
   var module: Sequential[Float] = null
   var target: Tensor[Float] = null
-  def getInputTableFromStorage(storageType: Int): Table = {
+  def getInputTableFromStorage(storageType: FLPhase): Table = {
     val storage = getStorage(storageType)
     val aggData = storage.localData.asScala.mapValues(_.getTableMap).values
       .flatMap(_.asScala).groupBy(_._1)
@@ -39,14 +40,13 @@ trait DLAggregator extends Aggregator {
 
     T.seq(outputs.values.head.toSeq)
   }
-  def postProcess(aggType: Int, grad: Activity = null, loss: Activity = null): Unit = {
+  def postProcess(aggType: FLPhase, grad: Activity = null, loss: Activity = null): Unit = {
     def updateStorage(storage: Storage, table: FLProto.Table): Unit = {
       storage.localData.clear()
       storage.serverData = table
       storage.version += 1
       logger.info(s"${trainStorage.version} run aggregate successfully: loss is ${loss}")
     }
-    val storage = aggType
     val gradProto = if (grad != null) {
       toFloatTensor(grad.toTable.apply[Tensor[Float]](1))
     } else null

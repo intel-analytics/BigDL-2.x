@@ -1,36 +1,29 @@
-package com.intel.analytics.zoo.ppml;
+package com.intel.analytics.zoo.ppml.common;
 
 import com.intel.analytics.zoo.ppml.generated.FLProto.Table;
-
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-public class Storage {
-    int version = 0;
-    Table serverData = null;
-    Map<String, Table> localData = new ConcurrentHashMap<>();
-}
-public abstract class Aggregator {
-    static final int TRAIN = 0;
-    static final int EVAL = 1;
-    static final int PREDICT = 2;
-    Map<Integer, Storage> aggTypeMap;
 
-    Aggregator() {
+import static com.intel.analytics.zoo.ppml.common.FLPhase.*;
+
+
+public abstract class Aggregator {
+    public Map<FLPhase, Storage> aggTypeMap;
+
+    public Aggregator() {
         aggTypeMap = new HashMap<>();
         aggTypeMap.put(TRAIN, trainStorage);
         aggTypeMap.put(EVAL, evalStorage);
         aggTypeMap.put(PREDICT, predictStorage);
     }
-    protected Storage trainStorage = new Storage();
-    protected Storage evalStorage = new Storage();
-    protected Storage predictStorage = new Storage();
+    public Storage trainStorage = new Storage();
+    public Storage evalStorage = new Storage();
+    public Storage predictStorage = new Storage();
 
     protected Integer clientNum;
     public abstract void aggregate();
 
-    protected Storage getStorage(int type) {
+    public Storage getStorage(FLPhase type) {
         Storage storage = null;
         switch (type) {
             case TRAIN: storage = trainStorage; break;
@@ -40,7 +33,7 @@ public abstract class Aggregator {
         }
         return storage;
     }
-    public void put(int type, String clientUUID, int version, Table data)
+    public void put(FLPhase type, String clientUUID, int version, Table data)
             throws IllegalArgumentException {
         Storage storage = getStorage(type);
         storage.localData.put(clientUUID, data);

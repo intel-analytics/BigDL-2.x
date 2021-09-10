@@ -51,7 +51,7 @@ public class NetworkCheckClient{
         //logger.info("Accessing service at: " + target);
 
         int max_wait = 2000;
-        // Example code for client
+        // Example code for flClient.psiStub
         int idSize = 150000;
         // Quick lookup for the plaintext of hashed ids
         HashMap<String, String> data = TestUtils.getRandomHashSetOfStringForFiveFixed(idSize);//Utils.genRandomHashSet(idSize);
@@ -72,10 +72,10 @@ public class NetworkCheckClient{
         try {
             String[] arg = {"-c", BenchmarkClient.class.getClassLoader()
                     .getResource("psi/psi-conf.yaml").getPath()};
-            FLClient client = new FLClient(arg);
-            client.build();
+            FLClient flClient = new FLClient(arg);
+            flClient.build();
             // Get salt from Server
-            salt = client.getSalt();
+            salt = flClient.psiStub.getSalt();
             //logger.debug("Client get Slat=" + salt);
             // Hash(IDs, salt) into hashed IDs
             hashedIdArray = TestUtils.parallelToSHAHexString(ids, salt);
@@ -83,11 +83,11 @@ public class NetworkCheckClient{
                 hashedIds.put(hashedIdArray.get(i), ids.get(i));
             }
             //logger.debug("HashedIDs Size = " + hashedIds.size());
-            client.uploadSet(hashedIdArray);
+            flClient.psiStub.uploadSet(hashedIdArray);
             List<String> intersection;
 
             while (max_wait > 0) {
-                intersection = client.downloadIntersection();
+                intersection = flClient.psiStub.downloadIntersection();
                 if (intersection == null) {
                     //logger.info("Wait 1000ms");
                     Thread.sleep(1000);

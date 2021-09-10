@@ -38,6 +38,7 @@ public class ZooGrpcClient extends AbstractZooGrpc{
         clientUUID = UUID.randomUUID().toString();
         this.args = args;
     }
+    public String getClientUUID() { return clientUUID; }
     protected void parseConfig() throws IOException {}
 
     public void loadServices() {}

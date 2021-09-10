@@ -39,6 +39,7 @@ public class FLServer extends ZooGrpcServer {
     FLServer(String[] args) {
         this(args, null);
     }
+    FLServer() { this(null, null); }
 
     @Override
     public void parseConfig() throws IOException {
