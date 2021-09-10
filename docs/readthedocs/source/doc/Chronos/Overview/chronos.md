@@ -288,7 +288,8 @@ Other than historical target data and other extra feature provided by users, som
 #### **6.6 Sampling and exporting**
 A time series dataset needs to be sampling and exporting as numpy ndarray/dataloader to be used in machine learning and deep learning models(e.g. forecasters, anomaly detectors, auto models, etc.).
 ```eval_rst
-.. note:: You don't need to transform or call rolling related methods in this section while using `AutoTSEstimator`.
+.. note::
+    You don't need to transform or call rolling related methods in this section while using `AutoTSEstimator`.
 ```
 ##### **6.6.1 Roll sampling**
 Roll sampling (or sliding window sampling) is useful when you want to train a RR type supervised deep learning forecasting model. It works as the diagram shows. Please refer to the API doc [`roll`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.roll) for detailed behavior. Users can simply export the sampling result as numpy ndarray by [`to_numpy`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.to_numpy) or pytorch dataloader [`to_torch_data_loader`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.to_torch_data_loader).
