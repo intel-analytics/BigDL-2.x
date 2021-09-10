@@ -1,16 +1,16 @@
 # Chronos User Guide
 
-### **1. Overview**
+### **1 Overview**
 _Chronos_ is an application framework for building large-scale time series analysis applications.
 
 You can use _Chronos_ to do:
 
-- Time Series Forecasting (using [Standalone Forecasters](#use-standalone-forecaster-pipeline) or [AutoTS](#use-autots-pipeline-with-automl) (AutoML enabled pipelines))
+- Time Series Forecasting (using [Standalone Forecasters](#use-standalone-forecaster-pipeline) or [AutoTS](#use-autots-pipeline) (AutoML enabled pipelines))
 - Anomaly Detection (using [Anomaly Detectors](#anomaly-detection))
-- Data preprocessing and feature generation (using [TSDataset](#data-processing-and-features))
+- Data preprocessing and feature generation (using [TSDataset](#data-processing-and-feature-engineering))
 
 ---
-### **2. Install**
+### **2 Install**
 
 Install analytics-zoo with target `[automl]` to install the additional dependencies for _Chronos_. 
 
@@ -37,17 +37,17 @@ elif args.cluster_mode == "k8s":
 elif args.cluster_mode == "yarn":
     init_orca_context(cluster_mode="yarn-client", num_nodes=2, cores=2, init_ray_on_spark=True) # run on Hadoop YARN cluster
 ```
-View [Quick Start](../QuickStart/chronos-autots-quickstart.md) for a more detailed example. 
+View [Quick Start](../QuickStart/chronos-autotsest-quickstart.md) for a more detailed example. 
 
 ---
 ### **4 Forecasting** 
 
-_Chronos_ provides both deep learning/machine learning models and traditional statistical models for forecasting. For details, please refer to [here](#supported_forecasting_model).
+_Chronos_ provides both deep learning/machine learning models and traditional statistical models for forecasting.
 
 There're three ways to do forecasting:
-- Use highly integrated **AutoTS pipeline** with auto feature generation, data pre/post-processing, hyperparameter optimization.
-- Use **auto forecasting models** with auto hyperparameter optimization.
-- Use standalone **forecasters**.
+- Use highly integrated [**AutoTS pipeline**](#use-autots-pipeline) with auto feature generation, data pre/post-processing, hyperparameter optimization.
+- Use [**auto forecasting models**](#use-auto-forecasting-model) with auto hyperparameter optimization.
+- Use [**standalone forecasters**](#use-standalone-forecaster-pipeline).
 
 <span id="supported_forecasting_model"></span>
 
@@ -62,7 +62,7 @@ There're three ways to do forecasting:
 | ARIMA   | TS    | ❌             | ✅          | ❌           | ✅          | ❌         | pmdarima |
 
 \* Distributed training/inferencing is only supported by standalone forecasters.<br>
-\*\* TCMF only partially support distributed training.<br>
+\*\* TCMF only partially supports distributed training.<br>
 \*\*\*  Auto tuning of MTNet is only supported in our deprecated AutoTS API.<br>
 
 
@@ -82,6 +82,7 @@ Recent years, common deep learning architectures (e.g. RNN, CNN, Transformer, et
 - `input_feature_num`: The number of variables the model can observe. This number is tunable since we can select a subset of extra feature to use.
 - `output_feature_num`: The number of variables the model to predict. This number is depended on the task definition. If this value larger than 1, then the forecasting task is *Multi-Variate*.
 
+<span id="RR-forecast-image"></span>
 ![](../Image/forecast-RR.png)
 
 #### **4.2 Use AutoTS Pipeline**
@@ -102,7 +103,7 @@ View [Quick Start](https://analytics-zoo.readthedocs.io/en/latest/doc/Chronos/Qu
 ##### **4.2.1 Prepare dataset**
 `AutoTSEstimator` support 2 types of data input. 
 
-You can easily prepare your data in `TSDataset` (recommended). You may refer to [here](#TSDataset) for the detailed information to prepare your `TSDataset` with proper data processing and feature geration. Here is a typical `TSDataset` preparation.
+You can easily prepare your data in `TSDataset` (recommended). You may refer to [here](#TSDataset) for the detailed information to prepare your `TSDataset` with proper data processing and feature generation. Here is a typical `TSDataset` preparation.
 ```python
 from zoo.chronos.data import TSDataset
 from sklearn.preprocessing import StandardScaler
@@ -123,7 +124,7 @@ def training_data_creator(config):
     return Dataloader(..., batch_size=config['batch_size'])
 ```
 ##### **4.2.2 Create an AutoTSEstimator**
-`AutoTSEstimator` depends on the [Distributed Hyper-parameter Tuning](../../Orca/distribute-tuning.html) supported by Project Orca. It also provides time series only functionalities and optimization. Here is a typical initialization process.
+`AutoTSEstimator` depends on the [Distributed Hyper-parameter Tuning](../../Orca/Overview/distribute-tuning.html) supported by Project Orca. It also provides time series only functionalities and optimization. Here is a typical initialization process.
 ```python
 import zoo.orca.automl.hp as hp
 from zoo.chronos.autots.experimental import AutoTSEstimator
@@ -256,6 +257,7 @@ f.predict(...)
 ```
 The input data can be easily get from `TSDataset`. Users can refer to detailed [API doc](../../PythonAPI/Chronos/automodels.html).
 
+---
 ### **5 Anomaly Detection**
 
 Anomaly Detection detects abnormal samples in a given time series. _Chronos_ provides a set of unsupervised anomaly detectors. 
@@ -281,6 +283,7 @@ DBScanDetector uses DBSCAN clustering algortihm for anomaly detection.
 
 View anomaly detection [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb) and [DBScanDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-dbscan-detector) for more details.
 
+---
 <span id="TSDataset"></span>
 ### **6 Data Processing and Feature Engineering**
 
@@ -356,7 +359,7 @@ A time series dataset needs to be sampling and exporting as numpy ndarray/datalo
     You don't need to call any sampling or exporting methods introduced in this section when using `AutoTSEstimator`.
 ```
 ##### **6.6.1 Roll sampling**
-Roll sampling (or sliding window sampling) is useful when you want to train a RR type supervised deep learning forecasting model. It works as the diagram shows. Please refer to the API doc [`roll`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.roll) for detailed behavior. Users can simply export the sampling result as numpy ndarray by [`to_numpy`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.to_numpy) or pytorch dataloader [`to_torch_data_loader`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.to_torch_data_loader).
+Roll sampling (or sliding window sampling) is useful when you want to train a RR type supervised deep learning forecasting model. It works as the [diagram](RR-forecast-image) shows. Please refer to the API doc [`roll`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.roll) for detailed behavior. Users can simply export the sampling result as numpy ndarray by [`to_numpy`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.to_numpy) or pytorch dataloader [`to_torch_data_loader`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.to_torch_data_loader).
 
 ```eval_rst
 .. note:: 
@@ -386,7 +389,7 @@ x, y = tsdata.roll(lookback=..., horizon=...).to_numpy()
 forecaster.fit(x, y)
 ```
 
-##### **6.6.1 Pandas Exporting**
+##### **6.6.2 Pandas Exporting**
 Now we support pandas dataframe exporting through `to_pandas()` for users to carry out their own transformation. Here is an example of using only one time series for anomaly detection.
 ```python
 # anomaly detector on "target" col
@@ -395,6 +398,7 @@ anomaly_detector.fit(x)
 ```
 View [TSDataset API Doc](../../PythonAPI/Chronos/tsdataset.html#) for more details. 
 
+---
 ### **7 Useful Functionalities**
 
 <span id="Visualization"></span>
@@ -480,7 +484,7 @@ f.predict_with_onnx(...)  # onnxruntime only supports single node
 from orca.data.pandas import read_csv
 from zoo.chronos.data.experimental import XShardsTSDataset
 
-shards = read_csv("hdfs:\\...")
+shards = read_csv("hdfs://...")
 data, test_data = XShardsTSDataset.from_xshards(...).roll(...).to_xshards()
 f = Forecaster(..., distributed=True)
 f.fit(data, ...)
