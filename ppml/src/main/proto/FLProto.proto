@@ -27,7 +27,19 @@ service PSIService {
     rpc uploadSet (UploadSetRequest) returns (UploadSetResponse) {}
     rpc downloadIntersection (DownloadIntersectionRequest) returns (DownloadIntersectionResponse) {}
 }
-
+service NNService {
+    rpc UploadTrain(UploadRequest) returns (UploadResponse) {}
+    rpc DownloadTrain(DownloadRequest) returns (DownloadResponse) {}
+    rpc UploadEvaluate(EvaluateRequest) returns (EvaluateResponse) {}
+}
+service GBService {
+    rpc UploadSplitTrain(UploadSplitRequest) returns (UploadResponse) {}
+    rpc DownloadSplitTrain(DownloadSplitRequest) returns (DownloadSplitResponse) {}
+    rpc Register(RegisterRequest) returns (RegisterResponse) {}
+    rpc UploadTreeEval(UploadTreeEvalRequest) returns (UploadResponse) {}
+    rpc UploadTreeLeaves(UploadTreeLeavesRequest) returns (UploadResponse) {}
+    rpc PredictTree(PredictTreeRequest) returns (PredictTreeResponse) {}
+}
 enum SIGNAL {
     SUCCESS = 0;
     WAIT = 1;
@@ -77,21 +89,6 @@ message DownloadIntersectionResponse {
 }
 
 
-// Parameter Server Proto
-service ParameterServerService {
-    // NN
-    rpc UploadTrain(UploadRequest) returns (UploadResponse) {}
-    rpc DownloadTrain(DownloadRequest) returns (DownloadResponse) {}
-    rpc UploadEvaluate(EvaluateRequest) returns (EvaluateResponse) {}
-    // Gradient Boosting Tree
-    rpc UploadSplitTrain(UploadSplitRequest) returns (UploadResponse) {}
-    rpc DownloadSplitTrain(DownloadSplitRequest) returns (DownloadSplitResponse) {}
-    rpc Register(RegisterRequest) returns (RegisterResponse) {}
-    rpc UploadTreeEval(UploadTreeEvalRequest) returns (UploadResponse) {}
-    rpc UploadTreeLeaves(UploadTreeLeavesRequest) returns (UploadResponse) {}
-    rpc PredictTree(PredictTreeRequest) returns (PredictTreeResponse) {}
-}
-//
 message FloatTensor {
     repeated int32 shape = 1;
     repeated float tensor = 2;

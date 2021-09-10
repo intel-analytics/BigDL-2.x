@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.ppml.vfl;
 import com.intel.analytics.zoo.ppml.generated.FLProto;
 import com.intel.analytics.zoo.ppml.generated.PSIServiceGrpc;
 import com.intel.analytics.zoo.ppml.psi.Utils;
+import io.grpc.Channel;
 import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +30,10 @@ import java.util.UUID;
 
 public class PSIStub {
     private static final Logger logger = LoggerFactory.getLogger(PSIStub.class);
-    public static PSIServiceGrpc.PSIServiceBlockingStub stub;
-
+    private PSIServiceGrpc.PSIServiceBlockingStub stub;
+    public PSIStub(Channel channel) {
+        stub = PSIServiceGrpc.newBlockingStub(channel);
+    }
     protected String clientID = UUID.randomUUID().toString();
     protected String salt;
     protected int splitSize = 1000000;

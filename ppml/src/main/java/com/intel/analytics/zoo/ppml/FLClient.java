@@ -17,19 +17,14 @@
 package com.intel.analytics.zoo.ppml;
 
 import com.intel.analytics.zoo.grpc.ZooGrpcClient;
-import com.intel.analytics.zoo.ppml.generated.FLProto.*;
 import com.intel.analytics.zoo.ppml.generated.PSIServiceGrpc;
-import com.intel.analytics.zoo.ppml.generated.ParameterServerServiceGrpc;
-import com.intel.analytics.zoo.ppml.psi.Utils;
 import com.intel.analytics.zoo.ppml.vfl.GBStub;
 import com.intel.analytics.zoo.ppml.vfl.NNStub;
 import com.intel.analytics.zoo.ppml.vfl.PSIStub;
-import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class FLClient extends ZooGrpcClient {
@@ -62,9 +57,11 @@ public class FLClient extends ZooGrpcClient {
     public void loadServices() {
         for (String service : serviceList.split(",")) {
             if (service.equals("psi")) {
-                psiStub.stub = PSIServiceGrpc.newBlockingStub(channel);
-            } else if (service.equals("ps")) {
-                // TODO: algorithms stub add here
+                psiStub = new PSIStub(channel);
+            } else if (service.equals("vflnn")) {
+                nnStub = new NNStub(channel, clientUUID);
+            } else if (service.equals("vlfgb")) {
+                gbStub = new GBStub(channel, clientUUID);
             } else {
                 logger.warn("Type is not supported, skipped. Type: " + service);
             }

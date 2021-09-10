@@ -17,7 +17,8 @@
 package com.intel.analytics.zoo.ppml.vfl;
 
 import com.intel.analytics.zoo.ppml.generated.FLProto;
-import com.intel.analytics.zoo.ppml.generated.ParameterServerServiceGrpc;
+import com.intel.analytics.zoo.ppml.generated.GBServiceGrpc;
+import io.grpc.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,11 +26,13 @@ import java.util.List;
 
 public class GBStub {
     private static final Logger logger = LoggerFactory.getLogger(GBStub.class);
-    GBStub(String clientID) {
+    private GBServiceGrpc.GBServiceBlockingStub stub;
+    public GBStub(Channel channel, String clientID) {
         this.clientID = clientID;
+        stub = GBServiceGrpc.newBlockingStub(channel);
     }
     protected final String clientID;
-    private static ParameterServerServiceGrpc.ParameterServerServiceBlockingStub stub;
+
     public FLProto.UploadResponse uploadSplit(FLProto.DataSplit ds) {
         FLProto.UploadSplitRequest uploadRequest = FLProto.UploadSplitRequest
                 .newBuilder()

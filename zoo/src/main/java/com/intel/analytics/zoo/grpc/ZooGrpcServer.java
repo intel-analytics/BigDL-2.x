@@ -31,7 +31,9 @@ import org.apache.log4j.Logger;
 import javax.net.ssl.SSLException;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -43,7 +45,7 @@ public class ZooGrpcServer extends AbstractZooGrpc{
     protected static final Logger logger = Logger.getLogger(ZooGrpcServer.class.getName());
     protected int port;
     protected Server server;
-    protected LinkedList<BindableService> serverServices;
+    protected Set<BindableService> serverServices;
     // TLS arguments
     String certChainFilePath;
     String privateKeyFilePath;
@@ -59,7 +61,7 @@ public class ZooGrpcServer extends AbstractZooGrpc{
         this(null, service);
     }
     public ZooGrpcServer(String[] args, BindableService service) {
-        serverServices = new LinkedList<>();
+        serverServices = new HashSet<>();
         if (service != null) {
             serverServices.add(service);
         }
@@ -75,7 +77,6 @@ public class ZooGrpcServer extends AbstractZooGrpc{
 
     /** Entrypoint of ZooGrpcServer */
     public void build() throws IOException {
-        parseConfig();
         ServerBuilder builder = ServerBuilder.forPort(port);
         for (BindableService bindableService : serverServices) {
             builder.addService(bindableService);
@@ -84,7 +85,6 @@ public class ZooGrpcServer extends AbstractZooGrpc{
     }
 
     void buildWithTls() throws IOException {
-        parseConfig();
         NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port);
         for (BindableService bindableService : serverServices) {
             serverBuilder.addService(bindableService);

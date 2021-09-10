@@ -18,6 +18,7 @@ package com.intel.analytics.zoo.ppml;
 
 import com.intel.analytics.zoo.grpc.ZooGrpcServer;
 import com.intel.analytics.zoo.ppml.psi.PSIServiceImpl;
+import com.intel.analytics.zoo.ppml.vfl.NNServiceImpl;
 import io.grpc.BindableService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,8 +52,8 @@ public class FLServer extends ZooGrpcServer {
         for (String service : serviceList.split(",")) {
             if (service.equals("psi")) {
                 serverServices.add(new PSIServiceImpl());
-            } else if (service.equals("ps")) {
-                // TODO: add algorithms here
+            } else if (service.equals("vflnn")) {
+                serverServices.add(new NNServiceImpl());
             } else {
                 logger.warn("Type is not supported, skipped. Type: " + service);
             }
@@ -61,6 +62,8 @@ public class FLServer extends ZooGrpcServer {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         FLServer flServer = new FLServer(args);
+        flServer.parseConfig();
+        // Set aggregator here
         flServer.build();
         flServer.start();
         flServer.blockUntilShutdown();

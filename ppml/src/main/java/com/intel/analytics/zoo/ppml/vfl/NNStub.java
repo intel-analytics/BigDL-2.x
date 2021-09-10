@@ -17,16 +17,18 @@
 package com.intel.analytics.zoo.ppml.vfl;
 
 import com.intel.analytics.zoo.ppml.generated.FLProto;
-import com.intel.analytics.zoo.ppml.generated.ParameterServerServiceGrpc;
+import com.intel.analytics.zoo.ppml.generated.NNServiceGrpc;
+import io.grpc.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class NNStub {
     private static final Logger logger = LoggerFactory.getLogger(NNStub.class);
-    private static ParameterServerServiceGrpc.ParameterServerServiceBlockingStub stub;
+    private static NNServiceGrpc.NNServiceBlockingStub stub;
     String clientID;
-    NNStub(String clientID) {
+    public NNStub(Channel channel, String clientID) {
         this.clientID = clientID;
+        stub = NNServiceGrpc.newBlockingStub(channel);
     }
     public FLProto.DownloadResponse downloadTrain(String modelName, int flVersion) {
         logger.info("Download the following data:");

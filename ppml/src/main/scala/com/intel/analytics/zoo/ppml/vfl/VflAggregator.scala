@@ -23,7 +23,6 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.zoo.ppml.DLAggregator
 import org.apache.log4j.Logger
-import com.intel.analytics.zoo.ppml.common.Aggregator._
 import com.intel.analytics.zoo.ppml.common.FLPhase._
 
 class VflNNAggregator(classifier: Module[Float],
