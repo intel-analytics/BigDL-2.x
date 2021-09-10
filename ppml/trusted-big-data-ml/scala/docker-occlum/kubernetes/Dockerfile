@@ -49,6 +49,7 @@ RUN git clone https://github.com/occlum/occlum.git && \
 
 COPY --from=tini /usr/local/bin/tini /sbin/tini
 
+RUN wget https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-data/libhadoop.so -P /lib/
 RUN wget https://archive.apache.org/dist/spark/spark-3.0.0/spark-3.0.0-bin-hadoop2.7.tgz -P /opt/
 RUN wget https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-data/spark-network-common_2.12-3.0.0.jar/download -P /opt/
 RUN tar -xvzf /opt/spark-3.0.0-bin-hadoop2.7.tgz && mv /opt/spark-3.0.0-bin-hadoop2.7 /opt/spark 
