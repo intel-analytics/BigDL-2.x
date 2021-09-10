@@ -9,6 +9,7 @@ You can use _Chronos_ to do:
 - Anomaly Detection (using [Anomaly Detectors](#anomaly-detection))
 - Data preprocessing and feature generation (using [TSDataset](#data-processing-and-features))
 
+---
 ### **2. Install**
 
 Install analytics-zoo with target `[automl]` to install the additional dependencies for _Chronos_. 
@@ -18,7 +19,7 @@ conda create -n my_env python=3.7
 conda activate my_env
 pip install --pre --upgrade analytics-zoo[automl]
 ```
-
+---
 ### **3 Initialization**
 
 _Chronos_ uses [Orca](../../Orca/Overview/orca.md) to enable distributed training and AutoML capabilities. Init orca as below when you want to:
@@ -41,6 +42,30 @@ View [Quick Start](../QuickStart/chronos-autots-quickstart.md) for a more detail
 ---
 ### **4 Forecasting** 
 
+_Chronos_ provides both deep learning/machine learning models and traditional statistical models for forecasting. For details, please refer to [here](#supported_forecasting_model).
+
+There're three ways to do forecasting:
+- Use highly integrated **AutoTS pipeline** with auto feature generation, data pre/post-processing, hyperparameter optimization.
+- Use **auto forecasting models** with auto hyperparameter optimization.
+- Use standalone **forecasters**.
+
+<span id="supported_forecasting_model"></span>
+
+| Model   | Style | Multi-Variate | Multi-Step | Distributed\* | Auto Models | AutoTS | Backend |
+| ----------------- | ----- | ------------- | ---------- | ----------- | ----------- | ----------- | ----------- |
+| LSTM    | RR    | ✅             | ❌          | ✅           | ✅          | ✅         | pytorch  |
+| Seq2Seq     | RR    | ✅             | ✅          | ✅           | ✅          | ✅         | pytorch  |
+| TCN | RR    | ✅             | ✅          | ✅           | ✅          | ✅         | pytorch  |
+| MTNet   | RR    | ✅             | ❌         | ✅           | ❌          | ✳️\*\*\*        | tensorflow |
+| TCMF    | TS    | ✅             | ✅          | ✳️\*\*           | ❌          | ❌         | pytorch  |
+| Prophet | TS    | ❌             | ✅          | ❌           | ✅          | ❌         | prophet  |
+| ARIMA   | TS    | ❌             | ✅          | ❌           | ✅          | ❌         | pmdarima |
+
+\* Distributed training/inferencing is only supported by standalone forecasters.<br>
+\*\* TCMF only partially support distributed training.<br>
+\*\*\*  Auto tuning of MTNet is only supported in our deprecated AutoTS API.<br>
+
+
 #### **4.1 Time Series Forecasting Concepts**
 Time series forecasting is one of the most popular tasks on time series data. **In short, forecasing aims at predicting the future by using the knowledge you can learn from the history.**
 
@@ -59,78 +84,99 @@ Recent years, common deep learning architectures (e.g. RNN, CNN, Transformer, et
 
 ![](../Image/forecast-RR.png)
 
-_Chronos_ provides both deep learning/machine learning models and traditional statistical models for forecasting. For details, please refer to [here](#supported_forecasting_model).
-
-There're three ways to do forecasting:
-- Use highly integrated AutoTS pipeline with auto feature generation, data pre/post-processing, hyperparameter optimization.
-- Use auto forecasting models with auto hyperparameter optimization.
-- Use standalone forecasters.
-
-<span id="supported_forecasting_model"></span>
-
-| Model   | Style | Multi-Variate | Multi-Step | Distributed\* | Auto Models | AutoTS | Backend |
-| ----------------- | ----- | ------------- | ---------- | ----------- | ----------- | ----------- | ----------- |
-| LSTM    | RR    | ✅             | ❌          | ✅           | ✅          | ✅         | pytorch  |
-| Seq2Seq     | RR    | ✅             | ✅          | ✅           | ✅          | ✅         | pytorch  |
-| TCN | RR    | ✅             | ✅          | ✅           | ✅          | ✅         | pytorch  |
-| MTNet   | RR    | ✅             | ❌         | ✅           | ❌          | ✳️\*\*\*        | tensorflow |
-| TCMF    | TS    | ✅             | ✅          | ✳️\*\*           | ❌          | ❌         | pytorch  |
-| Prophet | TS    | ❌             | ✅          | ❌           | ✅          | ❌         | prophet  |
-| ARIMA   | TS    | ❌             | ✅          | ❌           | ✅          | ❌         | pmdarima |
-
-\* Distributed training/inferencing is only supported by standalone forecasters.<br>
-\*\* TCMF only partially support distributed training.<br>
-\*\*\*  Auto tuning of MTNet is only supported in our deprecated AutoTS API.<br>
-
 #### **4.2 Use AutoTS Pipeline**
 For AutoTS Pipeline, we will leverage `AutoTSEstimator`, `TSPipeline` and preferably `TSDataset`. A typical usage of AutoTS pipeline basically contains 3 steps.
 1. Prepare a `TSDataset` or customized data creator.
 2. Init a `AutoTSEstimator` and call `.fit()` on the data.
 3. Use the returned `TSPipeline` for further development.
-
+```eval_rst
+.. warning::
+    `AutoTSTrainer` workflow has been deprecated, no feature updates or performance improvement will be carried out. Users of `AutoTSTrainer` may refer to Chronos API doc.
+```
+```eval_rst
+.. note::
+    `AutoTSEstimator` currently only support pytorch backend.
+```
 View [Quick Start](https://analytics-zoo.readthedocs.io/en/latest/doc/Chronos/QuickStart/chronos-autotsest-quickstart.html) for a more detailed example.
 
 ##### **4.2.1 Prepare dataset**
 `AutoTSEstimator` support 2 types of data input. 
 
-You can easily prepare your data in `TSDataset` (recommended). You may refer to [here](#TSDataset) to prepare your `TSDataset` with proper data processing and feature geration.
+You can easily prepare your data in `TSDataset` (recommended). You may refer to [here](#TSDataset) for the detailed information to prepare your `TSDataset` with proper data processing and feature geration. Here is a typical `TSDataset` preparation.
 ```python
+from zoo.chronos.data import TSDataset
+from sklearn.preprocessing import StandardScaler
+
 tsdata_train, tsdata_val, tsdata_test\
     = TSDataset.from_pandas(df, dt_col="timestamp", target_col="value", with_split=True, val_ratio=0.1, test_ratio=0.1)
+
+standard_scaler = StandardScaler()
+for tsdata in [tsdata_train, tsdata_val, tsdata_test]:
+    tsdata.gen_dt_feature()\
+          .impute(mode="last")\
+          .scale(standard_scaler, fit=(tsdata is tsdata_train))
 ```
-You can also create your own data creator.
+You can also create your own data creator. The data creator takes a dictionary config and returns a pytorch dataloader. Users may define their own customized key and add them to the search space. "batch_size" is the only fixed key.
 ```python
 from torch.utils.data import DataLoader
 def training_data_creator(config):
-    return Dataloader(...)
+    return Dataloader(..., batch_size=config['batch_size'])
 ```
-##### **4.2.2 Fit on AutoTSEstimator**
-
-##### **4.2.3 Development on TSPipeline**
-
-##### **4.2.5 Use TSPipeline**
-
-Use `TSPipeline.predict|evaluate|fit` for prediction, evaluation or (incremental) fitting. **Note**: incremental fitting on TSPipeline just update the model weights the standard way, which does not involve AutoML.
-
+##### **4.2.2 Create an AutoTSEstimator**
+`AutoTSEstimator` depends on the [Distributed Hyper-parameter Tuning](../../Orca/distribute-tuning.html) supported by Project Orca. It also provides time series only functionalities and optimization. Here is a typical initialization process.
 ```python
-ts_pipeline.predict(test_df)
-ts_pipeline.evalute(val_df)
-ts_pipeline.fit(new_train_df, new_val_df, epochs=10)
+import zoo.orca.automl.hp as hp
+from zoo.chronos.autots.experimental import AutoTSEstimator
+auto_estimator = AutoTSEstimator(model='lstm',
+                                 search_space='normal',
+                                 past_seq_len=hp.randint(1, 10),
+                                 future_seq_len=1,
+                                 selected_features="auto") 
 ```
+We prebuild three defualt search space for each build-in model, which you can use the by setting `search_space` to "minimal"，"normal", or "large" or define your own search space in a dictionary. The larger the search space, the better accuracy you will get and the more time will be cost.
 
-Use ```TSPipeline.save|load``` to load or save.
+`past_seq_len` can be set as a hp sample function, the proper range is highly related to your data. A range between 0.5 cycle and 3 cycle is reasonable.
 
+`selected_features` is set to "auto" by default, where the `AutoTSEstimator` will find the best subset of extra features to help the forecasting task.
+##### **4.2.3 Fit on AutoTSEstimator**
+Fitting on `AutoTSEstimator` is fairly easy. A `TSPipeline` will be returned once fitting is completed.
 ```python
-from zoo.chronos.autots.forecast import TSPipeline
-loaded_ppl = TSPipeline.load(file)
-loaded_ppl.save(another_file)
+ts_pipeline = auto_estimator.fit(data=tsdata_train,
+                                 validation_data=tsdata_val,
+                                 batch_size=hp.randint(32, 64),
+                                 epochs=5)
+```
+Detailed information and settings please refer to [AutoTSEstimator API doc](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/autotsestimator.html#id1).
+##### **4.2.4 Development on TSPipeline**
+You may carry out predict, evaluate, incremental training or save/load for further development.
+```python
+# predict with the best trial
+y_pred = ts_pipeline.predict(tsdata_test)
+
+# evaluate the result pipeline
+mse, smape = ts_pipeline.evaluate(tsdata_test, metrics=["mse", "smape"])
+print("Evaluate: the mean square error is", mse)
+print("Evaluate: the smape value is", smape)
+
+# save the pipeline
+my_ppl_file_path = "/tmp/saved_pipeline"
+ts_pipeline.save(my_ppl_file_path)
+
+# restore the pipeline for further deployment
+from zoo.chronos.autots.experimental import TSPipeline
+loaded_ppl = TSPipeline.load(my_ppl_file_path)
+```
+Detailed information please refer to [TSPipeline API doc](../../PythonAPI/Chronos/autotsestimator.html#tspipeline).
+
+```eval_rst
+.. note::
+    `init_orca_context` is not needed if you just use the trained TSPipeline for inference, evaluation or incremental fitting.
+```
+```eval_rst
+.. note::
+    Incremental fitting on TSPipeline just update the model weights the standard way, which does not involve AutoML.
 ```
 
-View [TSPipeline API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots.forecast.TSPipeline) for more details.
-
-**Note**:  `init_orca_context` is not needed if you just use the trained TSPipeline for inference, evaluation or incremental fitting.
-
----
 #### **4.3 Use Standalone Forecaster Pipeline**
 
 _Chronos_ provides a set of standalone time series forecasters without AutoML support, including deep learning models as well as traditional statistical models.
@@ -298,15 +344,21 @@ Roll sampling (or sliding window sampling) is useful when you want to train a RR
 
 ```eval_rst
 .. note:: 
-    **Difference between `.roll(...)` and `.to_torch_data_loader(roll=True, ...)`**: `.roll(...)` performs the rolling before RR forecasters/auto models training while `.to_torch_data_loader(roll=True, ...)` performs rolling during the training. It is fine to use either of them when you have a relatively small dataset (less than 1G). `.to_torch_data_loader(roll=True, ...)` is recommended when you have a large dataset to save memory usage.
+    **Difference between `roll` and `to_torch_data_loader`**:
+    
+    `.roll(...)` performs the rolling before RR forecasters/auto models training while `.to_torch_data_loader(roll=True, ...)` performs rolling during the training.
+    
+    It is fine to use either of them when you have a relatively small dataset (less than 1G). `.to_torch_data_loader(roll=True, ...)` is recommended when you have a large dataset (larger than 1G) to save memory usage.
 ```
 
 ```eval_rst
 .. note:: 
-    **Roll sampling format**: As decribed in RR style forecasting concept, the sampling result will have the following shape requirement.
+    **Roll sampling format**:
+    
+    As decribed in RR style forecasting concept, the sampling result will have the following shape requirement.
 
-    x: (sample_num, lookback, input_feature_num)<br>
-    y: (sample_num, horizon, output_feature_num)
+    | x: (sample_num, lookback, input_feature_num)
+    | y: (sample_num, horizon, output_feature_num)
 
     Please follow the same shape if you use customized data creator.
 ```
@@ -330,7 +382,7 @@ View [TSDataset API Doc](../../PythonAPI/Chronos/tsdataset.html#) for more detai
 ### **7 Other Utilities**
 
 <span id="Visualization"></span>
-##### **4.2.4 Visualization**
+##### **7.1 Visualization**
 
 AutoML visualization provides two kinds of visualization.
 * During the searching process, the visualizations of each trail are shown and updated every 30 seconds. (Monitor view)
