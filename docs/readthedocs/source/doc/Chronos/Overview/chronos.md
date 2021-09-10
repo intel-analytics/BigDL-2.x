@@ -66,6 +66,8 @@ There're three ways to do forecasting:
 - Use auto forecasting models with auto hyperparameter optimization.
 - Use standalone forecasters.
 
+<span id="supported_forecasting_model"></span>
+
 | Model   | Style | Multi-Variate | Multi-Step | Distributed\* | Auto Models | AutoTS | Backend |
 | ----------------- | ----- | ------------- | ---------- | ----------- | ----------- | ----------- | ----------- |
 | LSTM    | RR    | ✅             | ❌          | ✅           | ✅          | ✅         | pytorch  |
@@ -91,7 +93,7 @@ View [Quick Start](https://analytics-zoo.readthedocs.io/en/latest/doc/Chronos/Qu
 ##### **4.2.1 Prepare dataset**
 `AutoTSEstimator` support 2 types of data input. 
 
-You can easily prepare your data in `TSDataset` (recommended).
+You can easily prepare your data in `TSDataset` (recommended). You may refer to [here](#TSDataset) to prepare your `TSDataset` with proper data processing.
 ```python
 tsdata_train, tsdata_val, tsdata_test\
     = TSDataset.from_pandas(df, dt_col="timestamp", target_col="value", with_split=True, val_ratio=0.1, test_ratio=0.1)
@@ -129,7 +131,6 @@ View [TSPipeline API Doc](../../PythonAPI/Chronos/autots.html#zoo.chronos.autots
 **Note**:  `init_orca_context` is not needed if you just use the trained TSPipeline for inference, evaluation or incremental fitting.
 
 ---
-<span id="supported_forecasting_model"></span>
 #### **4.3 Use Standalone Forecaster Pipeline**
 
 _Chronos_ provides a set of standalone time series forecasters without AutoML support, including deep learning models as well as traditional statistical models.
@@ -218,6 +219,7 @@ DBScanDetector uses DBSCAN clustering algortihm for anomaly detection.
 
 View anomaly detection [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb) and [DBScanDetector API Doc](../../PythonAPI/Chronos/anomaly_detectors.html#chronos-model-anomaly-dbscan-detector) for more details.
 
+<span id="TSDataset"></span>
 ### **6 Data Processing and Feature Engineering**
 
 Time series data is a special data formulation with its specific operations. _Chronos_ provides [`TSDataset`](../../PythonAPI/Chronos/tsdataset.html) as a time series dataset abstract for data processing (e.g. impute, deduplicate, resample, scale/unscale, roll sampling) and auto feature engineering (e.g. datetime feature, aggregation feature). Cascade call is supported for most of the methods. [`TSDataset`](../../PythonAPI/Chronos/tsdataset.html) can be initialized from a pandas dataframe and be directly used in `AutoTSEstimator`. It can also be converted to a pandas dataframe or numpy ndarray for Forecasters and Anomaly Detectors.
@@ -287,9 +289,8 @@ unscaled_y = tsdata_test.unscale_numpy(y)
 Other than historical target data and other extra feature provided by users, some additional features can be generated automatically by [`TSDataset`](../../PythonAPI/Chronos/tsdataset.html). [`gen_dt_feature`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.gen_dt_feature) helps users to generate 10 datetime related features(e.g. MONTH, WEEKDAY, ...). [`gen_global_feature`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.gen_global_feature) and [`gen_rolling_feature`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.gen_rolling_feature) are powered by tsfresh to generate aggregated features (e.g. min, max, ...) for each time series or rolling windows respectively.
 #### **6.6 Sampling and exporting**
 A time series dataset needs to be sampling and exporting as numpy ndarray/dataloader to be used in machine learning and deep learning models(e.g. forecasters, anomaly detectors, auto models, etc.).
-```eval_rst
-.. note::
-    You don't need to transform or call rolling related methods in this section while using `AutoTSEstimator`.
+
+``` important:: Its a note! in markdown!
 ```
 ##### **6.6.1 Roll sampling**
 Roll sampling (or sliding window sampling) is useful when you want to train a RR type supervised deep learning forecasting model. It works as the diagram shows. Please refer to the API doc [`roll`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.roll) for detailed behavior. Users can simply export the sampling result as numpy ndarray by [`to_numpy`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.to_numpy) or pytorch dataloader [`to_torch_data_loader`](../../PythonAPI/Chronos/tsdataset.html#zoo.chronos.data.tsdataset.TSDataset.to_torch_data_loader).
