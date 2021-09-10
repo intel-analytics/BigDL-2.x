@@ -185,10 +185,14 @@ View some examples notebooks for [Network Traffic Prediction](https://github.com
 
 The common process of using a Forecaster looks like below. 
 ```python
+# set fixed hyperparameters, loss, metric...
 f = Forecaster(...)
+# input data, batch size, epoch...
 f.fit(...)
+# input test data x, batch size...
 f.predict(...)
 ```
+The input data can be easily get from `TSDataset`.
 View [Quick Start](../QuickStart/chronos-tsdataset-forecaster-quickstart.md) for a more detailed example. Refer to [API docs](../../PythonAPI/Chronos/forecasters.html) of each Forecaster for detailed usage instructions and examples.
 
 <span id="LSTMForecaster"></span>
@@ -239,6 +243,18 @@ View [ARIMAForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-
 ProphetForecaster wraps the Prophet model ([site](https://github.com/facebook/prophet)) which is an additive model where non-linear trends are fit with yearly, weekly, and daily seasonality, plus holiday effects and is suitable for univariate time series forecasting. It works best with time series that have strong seasonal effects and several seasons of historical data and is robust to missing data and shifts in the trend, and typically handles outliers well.
 
 View Stock Prediction [notebook](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/fsi/stock_prediction_prophet.ipynb) and [ProphetForecaster API Doc](../../PythonAPI/Chronos/forecasters.html#chronos-model-forecast-prophet-forecaster) for more details.
+
+#### **4.4 Use Auto forecasting model**
+Auto forecasting models are designed to be used exactly the same as Forecasters. The only difference is that you can set hp search function to the hyperparameters and the `.fit()` method will search the best hyperparameter setting.
+```python
+# set hyperparameters in hp search function, loss, metric...
+f = Forecaster(...)
+# input data, batch size, epoch...
+f.fit(...)
+# input test data x, batch size...
+f.predict(...)
+```
+The input data can be easily get from `TSDataset`. Users can refer to detailed [API doc](../../PythonAPI/Chronos/automodels.html).
 
 ### **5 Anomaly Detection**
 
@@ -379,12 +395,13 @@ anomaly_detector.fit(x)
 ```
 View [TSDataset API Doc](../../PythonAPI/Chronos/tsdataset.html#) for more details. 
 
-### **7 Other Utilities**
+### **7 Useful Functionalities**
 
 <span id="Visualization"></span>
-##### **7.1 Visualization**
 
-AutoML visualization provides two kinds of visualization.
+#### **7.1 AutoML Visualization**
+
+AutoML visualization provides two kinds of visualization. You may use them while fitting on auto models or AutoTS pipeline.
 * During the searching process, the visualizations of each trail are shown and updated every 30 seconds. (Monitor view)
 * After the searching process, a leaderboard of each trail's configs and metrics is shown. (Leaderboard view)
 
@@ -395,10 +412,10 @@ AutoML visualization provides two kinds of visualization.
 Before training, start the tensorboard server through
 
 ```python
-tensorboard --logdir=<logs_dir>/<job_name>
+tensorboard --logdir=<logs_dir>/<name>
 ```
 
-`logs_dir` is the log directory you set for your predictor(e.g. TimeSequencePredictor in Automated Time Series Prediction). It is default to "/home/\<username>/zoo_automl_logs", where `username` is your login username. `job_name` is the name parameter you set for your predictor.
+`logs_dir` is the log directory you set for your predictor(e.g. `AutoTSEstimator`, `AutoTCN`, etc.). `name ` is the name parameter you set for your predictor.
 
 The data in SCALARS tag will be updated every 30 seconds for users to see the training progress.
 
@@ -407,10 +424,10 @@ The data in SCALARS tag will be updated every 30 seconds for users to see the tr
 After training, start the tensorboard server through
 
 ```python
-tensorboard --logdir=<logs_dir>/<job_name>_leaderboard/
+tensorboard --logdir=<logs_dir>/<name>_leaderboard/
 ```
 
-where `logs_dir` and `job_name` are the same as stated in [Monitor view](#monitor_view).
+where `logs_dir` and `name` are the same as stated in [Monitor view](#monitor_view).
 
 A dashboard of each trail's configs and metrics is shown in the SCALARS tag.
 
@@ -427,7 +444,45 @@ You can enable a tensorboard view in jupyter notebook by the following code.
 ```python
 %load_ext tensorboard
 # for scalar view
-%tensorboard --logdir <logs_dir>/<job_name>/
+%tensorboard --logdir <logs_dir>/<name>/
 # for leaderboard view
-%tensorboard --logdir <logs_dir>/<job_name>_leaderboard/
+%tensorboard --logdir <logs_dir>/<name>_leaderboard/
+```
+
+#### **7.2 ONNX/ONNX Runtime support**
+Users may export their trained(w/wo auto tuning) model to ONNX file and deploy it on other service. Chronos also provides an internal onnxruntime inference support for those **users who pursue low latency and higher throughput during inference on a single node**.
+
+LSTM, TCN and Seq2seq has supported onnx in their forecasters, auto models and AutoTS. When users use these built-in models, they may call `predict_with_onnx`/`evaluate_with_onnx` for prediction or evaluation. They may also call `export_onnx_file` to export the onnx model file and `build_onnx` to change the onnxruntime's setting(not necessary).
+
+```python
+f = Forecaster(...)
+f.fit(...)
+f.predict_with_onnx(...)
+```
+#### **7.3 Distributed training**
+LSTM, TCN and Seq2seq users can easily train their forecasters in a distributed fashion to **handle extra large dataset and utilize a cluster**. The functionality is powered by Project Orca.
+```python
+f = Forecaster(..., distributed=True)
+f.fit(...)
+f.predict(...)
+f.to_local()  # collect the forecaster to single node
+f.predict_with_onnx(...)  # onnxruntime only supports single node
+```
+#### **7.4 XShardsTSDataset**
+```eval_rst
+.. warning::
+    `XShardsTSDataset` is still experimental.
+```
+`TSDataset` is a single thread lib with reasonable speed on large datasets(~10G). When you handle an extra large dataset or limited memory on a single node, `XShardsTSDataset` can be involved to handle the exact same functionality and usage as `TSDataset` in a distributed fashion.
+
+```python
+# a fully distributed forecaster pipeline
+from orca.data.pandas import read_csv
+from zoo.chronos.data.experimental import XShardsTSDataset
+
+shards = read_csv("hdfs:\\...")
+data, test_data = XShardsTSDataset.from_xshards(...).roll(...).to_xshards()
+f = Forecaster(..., distributed=True)
+f.fit(data, ...)
+f.predict(test_data, ...)
 ```
