@@ -18,9 +18,7 @@ conf = {"spark.network.timeout": "10000000",
         "spark.task.cpus": "1",
         "spark.executor.heartbeatInterval": "200s",
         "spark.driver.maxResultSize": "40G",
-        "spark.eventLog.enabled": "true",
-        "spark.eventLog.dir": "hdfs://172.16.0.105:8020/sparkHistoryLogs",
-        "spark.app.name": "recsys-kai",
+        "spark.app.name": "recsys-val-parquet",
         "spark.executor.memoryOverhead": "30g"}
 
 
