@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-//package com.intel.analytics.bigdl.dllib.keras.layers
+// package com.intel.analytics.bigdl.dllib.keras.layers
 //
-//import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
-//import com.intel.analytics.bigdl.dllib.utils.SingleShape
-//import com.intel.analytics.bigdl.dllib.keras.{KerasLayer}
-//import com.intel.analytics.bigdl.dllib.tensor.Tensor
-//import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-//import com.intel.analytics.bigdl.dllib.utils.Shape
-////import com.intel.analytics.zoo.models.common.ZooModel
-//import com.intel.analytics.bigdl.dllib.keras.Net
-//import com.intel.analytics.bigdl.dllib.keras.layers.internal.InternalTimeDistributed
-//import com.intel.analytics.bigdl.dllib.keras.layers.utils.KerasUtils
-//import com.intel.analytics.bigdl.dllib.keras.models.KerasNet
+// import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
+// import com.intel.analytics.bigdl.dllib.utils.SingleShape
+// import com.intel.analytics.bigdl.dllib.keras.{KerasLayer}
+// import com.intel.analytics.bigdl.dllib.tensor.Tensor
+// import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
+// import com.intel.analytics.bigdl.dllib.utils.Shape
+// //import com.intel.analytics.zoo.models.common.ZooModel
+// import com.intel.analytics.bigdl.dllib.keras.Net
+// import com.intel.analytics.bigdl.dllib.keras.layers.internal.InternalTimeDistributed
+// import com.intel.analytics.bigdl.dllib.keras.layers.utils.KerasUtils
+// import com.intel.analytics.bigdl.dllib.keras.models.KerasNet
 //
-//import scala.reflect.ClassTag
+// import scala.reflect.ClassTag
 
-///**
+// /**
 // * TimeDistributed wrapper.
 // * Apply a layer to every temporal slice of an input.
 // * The input should be at least 3D, and the dimension of index one
@@ -46,7 +46,7 @@
 // * @param inputShape A Single Shape, does not include the batch dimension.
 // * @tparam T The numeric type of parameter(e.g. weight, bias). Only support float/double now.
 // */
-//class TimeDistributed[T: ClassTag](
+// class TimeDistributed[T: ClassTag](
 //  val layer: KerasLayer[Activity, Tensor[T], T],
 //  val inputShape: Shape = null)(implicit ev: TensorNumeric[T])
 //  extends KerasLayer[Activity, Tensor[T], T](KerasUtils.addBatch(inputShape)) with Net {

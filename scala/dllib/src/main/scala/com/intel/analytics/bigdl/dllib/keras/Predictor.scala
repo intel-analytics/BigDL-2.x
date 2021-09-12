@@ -26,8 +26,8 @@ import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.{DistributedImageFrame, ImageFeature, ImageFrame, LocalImageFrame}
 import com.intel.analytics.bigdl.dllib.utils.{T, Table}
-//import com.intel.analytics.zoo.feature.image.ImageSet
-//import com.intel.analytics.zoo.feature.text._
+// import com.intel.analytics.zoo.feature.image.ImageSet
+// import com.intel.analytics.zoo.feature.text._
 import com.intel.analytics.bigdl.dllib.keras.layers.utils.KerasUtils
 import org.apache.spark.rdd.RDD
 

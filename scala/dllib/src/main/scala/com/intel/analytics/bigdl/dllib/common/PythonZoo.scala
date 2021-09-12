@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.dllib.utils.python.api.{EvaluatedResult, JTenso
 import com.intel.analytics.bigdl.dllib.utils._
 import com.intel.analytics.bigdl.dllib.tensor.{DenseType, SparseType, Tensor}
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
-//import com.intel.analytics.zoo.pipeline.api.Predictable
+// import com.intel.analytics.zoo.pipeline.api.Predictable
 import org.apache.spark.api.java.JavaRDD
 import java.util.{List => JList}
 
@@ -30,9 +30,9 @@ import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.feature.dataset.{MiniBatch}
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.optim.{LocalPredictor, ValidationMethod, _}
-//import com.intel.analytics.zoo.feature.image.ImageSet
-//import com.intel.analytics.zoo.feature.text.TextSet
-//import com.intel.analytics.zoo.pipeline.api.net.TFNet
+// import com.intel.analytics.zoo.feature.image.ImageSet
+// import com.intel.analytics.zoo.feature.text.TextSet
+// import com.intel.analytics.zoo.pipeline.api.net.TFNet
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
