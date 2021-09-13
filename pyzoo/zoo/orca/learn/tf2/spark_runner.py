@@ -1,9 +1,14 @@
 import json
+import logging
+import os
+
+from re import VERBOSE
 from subprocess import call
 from sys import version
 
 from pyspark import BarrierTaskContext
 from pyspark.context import SparkContext
+from example import model_creator
 import tensorflow as tf
 from numpy import array
 from contextlib import closing
@@ -25,8 +30,9 @@ def handle_datasets_train(data_creator, validation_data_creator):
         return train_dataset, test_dataset
 
 class SparkRunner:
-    def __init__(self, model_creator, data_creator, validation_data_creator, config=None, 
-                epochs=1, batch_size=32, verbose=None, callbacks=None, class_weight=None):
+    def __init__(self, model_creator, data_creator, validation_data_creator,
+                config=None, epochs=1, batch_size=32, verbose=None, callbacks=None, 
+                class_weight=None, data_config=None):
         self.model_creator = model_creator
         self.data_creator = data_creator
         self.validation_data_creator = validation_data_creator
@@ -37,16 +43,17 @@ class SparkRunner:
         self.verbose = verbose
         self.callbacks = callbacks
         self.class_weight = class_weight
+        self.data_config = data_config
 
-    def disributed_train_func(self, *args):
+    def distributed_train_func(self, *args):
         """
         Sets up TensorFLow distributed environment and initializes the model.
-        Runs a training epoch and updates the model parameters.
         """
         tc = BarrierTaskContext().get()
         rank = tc.partitionId()
         free_port = find_free_port(tc)
         cluster = tc.allGather(str(free_port))
+        self.cluster = cluster
         print(cluster)
 
         import os
@@ -59,29 +66,65 @@ class SparkRunner:
         ips = set([node.split(":")[0] for node in cluster])
         os.environ["no_proxy"] = ",".join(ips)
 
-        self.strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
+        strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
+        with strategy.scope():
+            model = self.model_creator()
 
-        with self.strategy.scope():
-            self.model = self.model_creator()
+        return model
         
+    def step(self, *args):
+        """
+        Runs a training epoch and updates the model parameters.
+        """
         data_creator = self.data_creator
         validation_data_creator = self.validation_data_creator
         epochs = self.epochs
         verbose = self.verbose
         callbacks = self.callbacks
 
-        train_dataset, test_dataset = handle_datasets_train(data_creator, 
-                                                        validation_data_creator)
-        
-        history = self.model.fit(train_dataset, test_dataset, epochs, verbose, callbacks)
+        model = self.distributed_train_func()
 
-        if history is None:
-            stats = {}
-        else:
-            stats = {"train_" + k: v[-1] for k, v in history.history.items()}
+        train_dataset, test_dataset = handle_datasets_train(data_creator, 
+                                                            validation_data_creator)
         
+        model.fit(train_dataset, test_dataset, epochs, verbose, callbacks)
+        weights = model.get_weights()
+
+        return [weights], model
+    
+    def validate(self, *args):
+        """Evaluates the model on the validation data set."""
+        params = dict(
+            verbose=self.verbose,
+            callbacks=self.callbacks
+        )
+
+        weights, model = self.step()
+
+        data_creator = self.data_creator
+        validation_data_creator = self.validation_data_creator
+        train_dataset, test_dataset = handle_datasets_train(data_creator, validation_data_creator)
+
+        results = model.evaluate(train_dataset, test_dataset, **params)
+
+        if results is None:
+            model_weights = weights[0]
+            local_model = self.model_creator()
+            local_model = local_model.set_weights(model_weights)
+            results = local_model.evaluate(train_dataset, test_dataset, **params)
+        
+        if isinstance(results, list):
+            stats = {
+                "validation_" + k: v
+                for k, v in zip(model.metrics_names, results)
+            }
+        else:
+            stats = {"results": results}
+        
+        stats = {"results": results}
+
         return [stats]
-        #return [model.get_weights()]
+    
     
 
 

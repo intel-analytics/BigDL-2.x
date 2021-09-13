@@ -19,7 +19,6 @@ import itertools
 import numpy as np
 from pyspark.context import SparkContext
 from spark_runner import SparkRunner
-from zoo.ray.utils import resource_to_bytes
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +44,9 @@ class Estimator(object):
                dictionary like {"optimizer": tf.keras.optimizers.SGD(lr), "loss":
                "mean_squared_error", "metrics": ["mean_squared_error"]}
         """
-        return SparkTFEstimator(model_creator=model_creator, config=config,
-                                verbose=verbose, compile_args_creator=compile_args_creator)
+        return SparkTFEstimator(model_creator=model_creator,
+                                config=config, verbose=verbose, 
+                                compile_args_creator=compile_args_creator)
 
 
 def make_data_creator(refs):
@@ -79,7 +79,7 @@ class SparkTFEstimator(Estimator):
         
     
     def fit(self, data, validation_data, epochs=1, batch_size=32, verbose=1,
-            callbacks=None, class_weight=None):
+            callbacks=None, class_weight=None, model_weights=None):
         """
         Train this tensorflow model with train data.
         :param data: train data. It can be XShards, Spark DataFrame or creator function which
@@ -114,11 +114,40 @@ class SparkTFEstimator(Estimator):
         params["validation_data_creator"] = validation_data
 
         workerRDD = sc.parallelize(list(range(40)), 4).repartition(2)
-        spark_func = SparkRunner(**params).disributed_train_func
+        spark_func = SparkRunner(**params).step
         res = workerRDD.barrier().mapPartitions(spark_func).collect()
-        assert np.all(res[0] == res[1])
-        worker_stats = res[0]
+
+        assert np.all(res[0][0] == res[1][0])
+        model_weights = res[0]
 
         sc.stop()
-        return worker_stats
+        return model_weights
+
+    def evaluate(self, data, validation_data, epochs=1, batch_size=32, verbose=1, 
+                callbacks=None, class_weight=None):
+        import numpy as np
+        sc = SparkContext()
+
+        logger.info("Starting validation step.")
+
+        params = dict(
+            epochs=epochs,
+            batch_size=batch_size,
+            verbose=verbose,
+            callbacks=callbacks,
+            class_weight=class_weight
+        )
+
+        params["model_creator"] = self.model_creator
+        params["data_creator"] = data
+        params["validation_data_creator"] = validation_data
+
+        workerRDD = sc.parallelize(list(range(40)), 4).repartition(2)
+        spark_func = SparkRunner(**params).validate
+        res = workerRDD.barrier().mapPartitions(spark_func).collect()
+        
+        stats = res[0]
+
+        sc.stop()
+        return stats
 
