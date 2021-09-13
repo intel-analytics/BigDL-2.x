@@ -116,12 +116,11 @@ class SparkTFEstimator(Estimator):
         workerRDD = sc.parallelize(list(range(40)), 4).repartition(2)
         spark_func = SparkRunner(**params).step
         res = workerRDD.barrier().mapPartitions(spark_func).collect()
-
-        assert np.all(res[0][0] == res[1][0])
         model_weights = res[0]
+        stats = res[1]
 
         sc.stop()
-        return model_weights
+        return model_weights, stats
 
     def evaluate(self, data, validation_data, epochs=1, batch_size=32, verbose=1, 
                 callbacks=None, class_weight=None):
@@ -146,7 +145,7 @@ class SparkTFEstimator(Estimator):
         spark_func = SparkRunner(**params).validate
         res = workerRDD.barrier().mapPartitions(spark_func).collect()
         
-        stats = res[0]
+        stats = res[1]
 
         sc.stop()
         return stats

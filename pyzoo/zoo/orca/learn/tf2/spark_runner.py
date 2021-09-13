@@ -47,7 +47,8 @@ class SparkRunner:
 
     def distributed_train_func(self, *args):
         """
-        Sets up TensorFLow distributed environment and initializes the model.
+        Sets up TensorFLow distributed environment, initializes the model,
+        runs a training epoch and updates the model parameters
         """
         tc = BarrierTaskContext().get()
         rank = tc.partitionId()
@@ -69,37 +70,44 @@ class SparkRunner:
         strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
         with strategy.scope():
             model = self.model_creator()
-
-        return model
         
-    def step(self, *args):
-        """
-        Runs a training epoch and updates the model parameters.
-        """
         data_creator = self.data_creator
         validation_data_creator = self.validation_data_creator
         epochs = self.epochs
         verbose = self.verbose
         callbacks = self.callbacks
 
-        model = self.distributed_train_func()
-
         train_dataset, test_dataset = handle_datasets_train(data_creator, 
                                                             validation_data_creator)
         
-        model.fit(train_dataset, test_dataset, epochs, verbose, callbacks)
+        history = model.fit(train_dataset, test_dataset, epochs, verbose, callbacks)
+
+        if history is None:
+            stats = {}
+        else:
+            stats = {"train_" + k: v[-1] for k, v in history.history.items()}
+        return model, [stats]
+        
+    def step(self, *args):
+        """
+        Get model training results and new model.
+        """
+        model, stats = self.distributed_train_func()
         weights = model.get_weights()
 
-        return [weights], model
+        return [weights], [stats]
     
     def validate(self, *args):
-        """Evaluates the model on the validation data set."""
+        """
+        Evaluates the model on the validation data set.
+        """
         params = dict(
             verbose=self.verbose,
             callbacks=self.callbacks
         )
 
-        weights, model = self.step()
+        model, stats = self.distributed_train_func()
+        weights = model.get_weights()
 
         data_creator = self.data_creator
         validation_data_creator = self.validation_data_creator
@@ -124,6 +132,8 @@ class SparkRunner:
         stats = {"results": results}
 
         return [stats]
+    
+    #def save_model(self)
     
     
 
