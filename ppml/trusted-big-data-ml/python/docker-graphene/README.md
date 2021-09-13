@@ -91,7 +91,7 @@ cd /ppml/trusted-big-data-ml
 Run the example with SGX with the following command in the terminal.
 
 ```bash
-SGX=1 ./pal_loader bash -c "python ./work/examples/helloworld.py" | tee test-helloworld-sgx.log
+graphene-sgx ./bash -c "python ./work/examples/helloworld.py" | tee test-helloworld-sgx.log
 ```
 Then check the output with the following command.
 
@@ -108,7 +108,7 @@ The result should be
 Run the example with SGX with the following command in the terminal.
 
 ```bash
-SGX=1 ./pal_loader bash -c "python ./work/examples/test-numpy.py" | tee test-numpy-sgx.log
+graphene-sgx ./bash -c "python ./work/examples/test-numpy.py" | tee test-numpy-sgx.log
 ```
 
 Then check the output with the following command.
@@ -141,7 +141,7 @@ cd /ppml/trusted-big-data-ml
 Run the example with SGX spark local mode with the following command in the terminal. 
 
 ```bash
-SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
+graphene-sgx ./bash -c "/opt/jdk8/bin/java \
 	-cp '/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*' \
 	-Xmx1g org.apache.spark.deploy.SparkSubmit \
 	--master 'local[4]' \
@@ -164,7 +164,7 @@ The result should be similar to
 Run the example with SGX spark local mode with the following command in the terminal. 
 
 ```bash
-SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
+graphene-sgx ./bash -c "/opt/jdk8/bin/java \
 	-cp '/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*' \
 	-Xmx1g org.apache.spark.deploy.SparkSubmit \
 	--master 'local[4]' \
@@ -191,7 +191,7 @@ Before running the example, make sure that the paths of resource in `/ppml/trust
 Run the example with SGX spark local mode with the following command in the terminal. 
 
 ```bash
-SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java \
+graphene-sgx ./bash -c "/opt/jdk8/bin/java \
 	-cp '/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*' \
 	-Xmx1g org.apache.spark.deploy.SparkSubmit \
 	--master 'local[4]' \
@@ -228,7 +228,7 @@ The result should be similar to
 Run the example with SGX spark local mode with the following command in the terminal. 
 
 ```bash
-SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
+graphene-sgx ./bash -c "/opt/jdk8/bin/java -cp \
   '/ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*' \
   -Xmx8g \
   org.apache.spark.deploy.SparkSubmit \
@@ -269,7 +269,7 @@ The result should be similar to
 Before running the example, make sure that `Boston_Housing.csv` is under `work/data` directory or the same path in the command. Run the example with SGX spark local mode with the following command in the terminal. Replace `your_IP_address` with your IP address and `path_of_boston_housing_csv` with your path of `Boston_Housing.csv`.
 
 ```bash
-SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=your_IP_address && /opt/jdk8/bin/java -cp \
+graphene-sgx ./bash -c "export RABIT_TRACKER_IP=your_IP_address && /opt/jdk8/bin/java -cp \
     '/ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_2.4.6-0.12.0-SNAPSHOT-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*' \
   -Xmx2g \
   org.apache.spark.deploy.SparkSubmit \
@@ -344,7 +344,7 @@ wget https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-di
 After downloading the dataset, make sure that `pima-indians-diabetes.data.csv` is under `work/data` directory or the same path in the command. Run the example with SGX spark local mode with the following command in the terminal. Replace `your_IP_address` with your IP address and `path_of_pima_indians_diabetes_csv` with your path of `pima-indians-diabetes.data.csv`.
 
 ```bash
-SGX=1 ./pal_loader bash -c "export RABIT_TRACKER_IP=your_IP_address && /opt/jdk8/bin/java -cp \
+graphene-sgx ./bash bash -c "export RABIT_TRACKER_IP=your_IP_address && /opt/jdk8/bin/java -cp \
   '/ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_2.4.6-0.12.0-SNAPSHOT-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*' \
   -Xmx2g \
   org.apache.spark.deploy.SparkSubmit \
@@ -395,7 +395,7 @@ wget https://raw.githubusercontent.com/numenta/NAB/master/data/realKnownCause/ny
 After downloading the dataset, make sure that `nyc_taxi.csv` is under `work/data` directory or the same path in the command. Run the example with SGX spark local mode with the following command in the terminal. Replace `path_of_nyc_taxi_csv` with your path of `nyc_taxi.csv`.
 
 ```bash
-SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
+graphene-sgx ./bash bash -c "/opt/jdk8/bin/java -cp \
   '/ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_2.4.6-0.12.0-SNAPSHOT-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*' \
   -Xmx2g \
   org.apache.spark.deploy.SparkSubmit \
@@ -476,7 +476,7 @@ Then the result should contain the similar content as
 Run the example with SGX spark local mode with the following command in the terminal. To run the example in SGX standalone mode, replace `-e SGX_MEM_SIZE=32G \` with `-e SGX_MEM_SIZE=64G \` in `start-distributed-spark-driver.sh`
 
 ```bash
-SGX=1 ./pal_loader bash -c "/opt/jdk8/bin/java -cp \
+graphene-sgx ./bash -c "/opt/jdk8/bin/java -cp \
   '/ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_2.4.6-0.12.0-SNAPSHOT-jar-with-dependencies.jar:/ppml/trusted-big-data-ml/work/spark-2.4.6/conf/:/ppml/trusted-big-data-ml/work/spark-2.4.6/jars/*' \
   -Xmx3g \
   org.apache.spark.deploy.SparkSubmit \
