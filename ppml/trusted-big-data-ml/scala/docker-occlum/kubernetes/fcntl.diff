@@ -1,0 +1,17 @@
+diff --git a/src/libos/src/fs/file_ops/fcntl.rs b/src/libos/src/fs/file_ops/fcntl.rs
+index b1703a4..668ba9f 100644
+--- a/src/libos/src/fs/file_ops/fcntl.rs
++++ b/src/libos/src/fs/file_ops/fcntl.rs
+@@ -46,6 +46,12 @@ impl<'a> FcntlCmd<'a> {
+                 let flock_c = unsafe { &*flock_ptr };
+                 FcntlCmd::SetLk(flock_c)
+             }
++            libc::F_SETLKW => {
++                let flock_ptr = arg as *const flock;
++                from_user::check_ptr(flock_ptr)?;
++                let flock_c = unsafe { &*flock_ptr };
++                FcntlCmd::SetLk(flock_c)
++            }
+             _ => return_errno!(EINVAL, "unsupported command"),
+         })
+     }
