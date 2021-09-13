@@ -13,33 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
+import time
 import argparse
-
 import numpy as np
-import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.chronos.autots.experimental.autotsestimator import AutoTSEstimator
-from zoo.chronos.data import TSDataset
-from zoo.orca.automl.metrics import Evaluator
-
-
-def get_data(args):
-    df = pd.read_csv(args.datadir, parse_dates=['timestamp'])
-    return df
+from zoo.chronos.data.repo_dataset import get_public_dataset
 
 
 def get_tsdata():
-    df = get_data(args)
+    name = 'nyc_taxi'
+    path = '~/.chronos/dataset/'
     tsdata_train, tsdata_val, \
-        tsdata_test = TSDataset.from_pandas(df,
-                                            target_col=['value'],
-                                            dt_col='timestamp',
-                                            with_split=True,
-                                            val_ratio=0.1,
-                                            test_ratio=0.1)
+        tsdata_test = get_public_dataset(name,
+                                         path,
+                                         with_split=True,
+                                         val_ratio=0.1,
+                                         test_ratio=0.1)
     stand = StandardScaler()
     for tsdata in [tsdata_train, tsdata_val, tsdata_test]:
         tsdata.gen_dt_feature(one_hot_features=['HOUR', 'WEEK'])\
@@ -65,10 +57,6 @@ if __name__ == '__main__':
                         help="Max number of epochs to train in each trial.")
     parser.add_argument("--n_sampling", type=int, default=1,
                         help="Number of times to sample from the search_space.")
-    parser.add_argument("--datadir", type=str,
-                        default="https://raw.githubusercontent.com/numenta/NAB/"
-                        "v1.0/data/realKnownCause/nyc_taxi.csv",
-                        help='Specify the address of the file.')
     args = parser.parse_args()
 
     # init_orca_context
@@ -88,43 +76,24 @@ if __name__ == '__main__':
     tsppl = autoest.fit(data=tsdata_train,
                         validation_data=tsdata_val,
                         epochs=args.epochs,
-                        batch_size=128,
                         n_sampling=args.n_sampling)
-    tsppl.save("lstm_tsppl_nyc")
-    best_config = autoest.get_best_config()
-    print(best_config)
-
-    test_x, test_y = tsdata_test.roll(lookback=best_config['past_seq_len'],
-                                      horizon=best_config['future_seq_len']).to_numpy()
-    unscale_test_y = tsdata_test.unscale_numpy(test_y)
-
-    yhat = tsppl.predict(tsdata_test, batch_size=32)
-    mse, smape = [Evaluator.evaluate(m,
-                                     y_pred=yhat[:-1],
-                                     y_true=unscale_test_y,
-                                     multioutput="uniform_average") for m in ['mse', 'smape']]
-    print(f'evaluate mse is: {np.mean(mse)}')
-    print(f'evaluate smape is: {np.mean(smape)}')
 
     mse, smape = tsppl.evaluate(tsdata_test,
-                                metrics=['mse', 'smape'],
-                                multioutput="uniform_average")
+                                metrics=['mse', 'smape'])
     print(f'evaluate mse is: {np.mean(mse)}')
     print(f'evaluate smape is: {np.mean(smape)}')
 
-    my_tsppl = tsppl.load("lstm_tsppl_nyc")
-    yhat_onnx = my_tsppl.predict_with_onnx(tsdata_test)
-
-    mse, smape = [Evaluator.evaluate(m,
-                                     y_pred=yhat_onnx[:-1],
-                                     y_true=unscale_test_y,
-                                     multioutput="uniform_average") for m in ['mse', 'smape']]
+    mse, smape = tsppl.evaluate_with_onnx(tsdata_test, metrics=['mse', 'smape'])
     print(f'evaluate_onnx mse is: {np.mean(mse)}')
     print(f'evaluate_onnx smape is: {np.mean(smape)}')
 
-    mse, smape = my_tsppl.evaluate_with_onnx(tsdata_test, metrics=['mse', 'smape'])
-    print(f'evaluate_onnx mse is: {np.mean(mse)}')
-    print(f'evaluate_onnx smape is: {np.mean(smape)}')
+    start_time = time.time()
+    tsppl.predict(tsdata_test)
+    print(f'inference time is: {(time.time()-start_time):.3f}s')
+
+    start_time = time.time()
+    tsppl.predict_with_onnx(tsdata_test)
+    print(f'inference(onnx) time is: {(time.time()-start_time):.3f}s')
 
     # stop orca
     stop_orca_context()
