@@ -23,10 +23,10 @@ import pandas as pd
 import tempfile
 import os
 
-from zoo.orca.automl.model.abstract import BaseModel, ModelBuilder
-from zoo.orca.automl.metrics import Evaluator
+from bigdl.orca.automl.model.abstract import BaseModel, ModelBuilder
+from bigdl.orca.automl.metrics import Evaluator
 
-from zoo.orca.automl.pytorch_utils import LR_NAME, DEFAULT_LR
+from bigdl.orca.automl.pytorch_utils import LR_NAME, DEFAULT_LR
 
 PYTORCH_REGRESSION_LOSS_MAP = {"mse": "MSELoss",
                                "mae": "L1Loss",
@@ -395,7 +395,7 @@ class PytorchModelBuilder(ModelBuilder):
     def __init__(self, model_creator,
                  optimizer_creator,
                  loss_creator):
-        from zoo.orca.automl.pytorch_utils import validate_pytorch_loss, validate_pytorch_optim
+        from bigdl.orca.automl.pytorch_utils import validate_pytorch_loss, validate_pytorch_optim
         self.model_creator = model_creator
         optimizer = validate_pytorch_optim(optimizer_creator)
         self.optimizer_creator = optimizer

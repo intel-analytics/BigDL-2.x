@@ -14,15 +14,15 @@
 # limitations under the License.
 #
 
-from test.zoo.pipeline.utils.test_utils import ZooTestCase
+from test.bigdl.pipeline.utils.test_utils import ZooTestCase
 
 import numpy as np
 import pandas as pd
 import os
 from numpy.testing import assert_array_almost_equal
 
-from zoo.orca.automl.xgboost.XGBoost import XGBoost, XGBoostModelBuilder
-from zoo.chronos.feature.identity_transformer import IdentityTransformer
+from bigdl.orca.automl.xgboost.XGBoost import XGBoost, XGBoostModelBuilder
+from bigdl.chronos.feature.identity_transformer import IdentityTransformer
 import pytest
 
 

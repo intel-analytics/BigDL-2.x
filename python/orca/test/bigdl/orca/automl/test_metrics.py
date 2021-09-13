@@ -15,10 +15,10 @@
 #
 
 import numpy as np
-from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.orca.automl.metrics import ME, MAE, MSE, RMSE, MSLE, R2
+from test.bigdl.pipeline.utils.test_utils import ZooTestCase
+from bigdl.orca.automl.metrics import ME, MAE, MSE, RMSE, MSLE, R2
 
-from zoo.orca.automl.metrics import MPE, MAPE, MSPE, sMAPE, MDAPE, sMDAPE
+from bigdl.orca.automl.metrics import MPE, MAPE, MSPE, sMAPE, MDAPE, sMDAPE
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 

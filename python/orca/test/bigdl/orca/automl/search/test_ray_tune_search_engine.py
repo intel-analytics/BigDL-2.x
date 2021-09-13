@@ -14,15 +14,15 @@
 # limitations under the License.
 #
 
-from test.zoo.pipeline.utils.test_utils import ZooTestCase
-from zoo.orca.automl.search import SearchEngineFactory
-from zoo.orca.automl.search.ray_tune import RayTuneSearchEngine
-from zoo.orca.automl.model.base_pytorch_model import PytorchModelBuilder
+from test.bigdl.pipeline.utils.test_utils import ZooTestCase
+from bigdl.orca.automl.search import SearchEngineFactory
+from bigdl.orca.automl.search.ray_tune import RayTuneSearchEngine
+from bigdl.orca.automl.model.base_pytorch_model import PytorchModelBuilder
 import torch
 import torch.nn as nn
-from zoo.orca.automl import hp
+from bigdl.orca.automl import hp
 import numpy as np
-from zoo.orca import init_orca_context, stop_orca_context
+from bigdl.orca import init_orca_context, stop_orca_context
 
 
 def create_simple_search_space():

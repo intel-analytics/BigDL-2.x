@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from zoo.orca.automl.search import SearchEngineFactory
+from bigdl.orca.automl.search import SearchEngineFactory
 
 
 class AutoEstimator:
@@ -65,7 +65,7 @@ class AutoEstimator:
         :param model_creator: PyTorch model creator function.
         :param optimizer: PyTorch optimizer creator function or pytorch optimizer name (string).
             Note that you should specify learning rate search space with key as "lr" or LR_NAME
-            (from zoo.orca.automl.pytorch_utils import LR_NAME) if input optimizer name.
+            (from bigdl.orca.automl.pytorch_utils import LR_NAME) if input optimizer name.
             Without learning rate search space specified, the default learning rate value of 1e-3
             will be used for all estimators.
         :param loss: PyTorch loss instance or PyTorch loss creator function
@@ -80,7 +80,7 @@ class AutoEstimator:
 
         :return: an AutoEstimator object.
         """
-        from zoo.orca.automl.model.base_pytorch_model import PytorchModelBuilder
+        from bigdl.orca.automl.model.base_pytorch_model import PytorchModelBuilder
         model_builder = PytorchModelBuilder(model_creator=model_creator,
                                             optimizer_creator=optimizer,
                                             loss_creator=loss)
@@ -113,7 +113,7 @@ class AutoEstimator:
 
         :return: an AutoEstimator object.
         """
-        from zoo.orca.automl.model.base_keras_model import KerasModelBuilder
+        from bigdl.orca.automl.model.base_keras_model import KerasModelBuilder
         model_builder = KerasModelBuilder(model_creator=model_creator)
         return AutoEstimator(model_builder=model_builder,
                              logs_dir=logs_dir,
@@ -157,7 +157,7 @@ class AutoEstimator:
         :param metric_mode: One of ["min", "max"]. "max" means greater metric value is better.
             You have to specify metric_mode if you use a customized metric function.
             You don't have to specify metric_mode if you use the built-in metric in
-            zoo.orca.automl.metrics.Evaluator.
+            bigdl.orca.automl.metrics.Evaluator.
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: Number of times to sample from the search_space. Defaults to 1.
             If hp.grid_search is in search_space, the grid will be repeated n_sampling of times.
@@ -238,7 +238,7 @@ class AutoEstimator:
             if callable(metric):
                 raise ValueError("You must specify `metric_mode` for your metric function")
             try:
-                from zoo.orca.automl.metrics import Evaluator
+                from bigdl.orca.automl.metrics import Evaluator
                 mode = Evaluator.get_metric_mode(metric)
             except ValueError:
                 pass

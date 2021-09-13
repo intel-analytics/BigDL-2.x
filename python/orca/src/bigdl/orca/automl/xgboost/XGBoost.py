@@ -19,8 +19,8 @@ import pandas as pd
 from xgboost.sklearn import XGBRegressor
 
 from xgboost.sklearn import XGBClassifier
-from zoo.orca.automl.metrics import Evaluator
-from zoo.orca.automl.model.abstract import BaseModel, ModelBuilder
+from bigdl.orca.automl.metrics import Evaluator
+from bigdl.orca.automl.model.abstract import BaseModel, ModelBuilder
 import logging
 
 logger = logging.getLogger(__name__)

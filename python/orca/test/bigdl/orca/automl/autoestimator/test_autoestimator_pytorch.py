@@ -22,9 +22,9 @@ import pytest
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
-from zoo.orca.automl.auto_estimator import AutoEstimator
-from zoo.orca.automl.pytorch_utils import LR_NAME
-from zoo.orca.automl import hp
+from bigdl.orca.automl.auto_estimator import AutoEstimator
+from bigdl.orca.automl.pytorch_utils import LR_NAME
+from bigdl.orca.automl import hp
 
 os.environ["KMP_SETTINGS"] = "0"
 
@@ -115,11 +115,11 @@ def create_linear_search_space():
 
 class TestPyTorchAutoEstimator(TestCase):
     def setUp(self) -> None:
-        from zoo.orca import init_orca_context
+        from bigdl.orca import init_orca_context
         init_orca_context(cores=4, init_ray_on_spark=True)
 
     def tearDown(self) -> None:
-        from zoo.orca import stop_orca_context
+        from bigdl.orca import stop_orca_context
         stop_orca_context()
 
     def test_fit(self):

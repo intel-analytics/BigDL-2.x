@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from zoo.orca.automl.model.abstract import BaseModel, ModelBuilder
+from bigdl.orca.automl.model.abstract import BaseModel, ModelBuilder
 import numpy as np
-from zoo.orca.automl.metrics import Evaluator
+from bigdl.orca.automl.metrics import Evaluator
 import pickle
 import tensorflow as tf
 from tensorflow.keras import backend as K

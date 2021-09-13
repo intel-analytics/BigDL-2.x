@@ -17,13 +17,13 @@
 import ray
 from ray import tune
 import os
-from zoo.orca.automl.search.base import SearchEngine, TrialOutput, GoodError
-from zoo.orca.automl.search.parameters import DEFAULT_LOGGER_NAME, DEFAULT_METRIC_NAME
-from zoo.orca.automl.search.ray_tune.utils import convert_bayes_configs
-from zoo.orca.automl.search.utils import get_ckpt_hdfs, put_ckpt_hdfs
-from zoo.orca.automl.search import TensorboardLogger
+from bigdl.orca.automl.search.base import SearchEngine, TrialOutput, GoodError
+from bigdl.orca.automl.search.parameters import DEFAULT_LOGGER_NAME, DEFAULT_METRIC_NAME
+from bigdl.orca.automl.search.ray_tune.utils import convert_bayes_configs
+from bigdl.orca.automl.search.utils import get_ckpt_hdfs, put_ckpt_hdfs
+from bigdl.orca.automl.search import TensorboardLogger
 from ray.tune import Stopper
-from zoo.orca.automl.model.abstract import ModelBuilder
+from bigdl.orca.automl.model.abstract import ModelBuilder
 
 
 class RayTuneSearchEngine(SearchEngine):
@@ -53,8 +53,8 @@ class RayTuneSearchEngine(SearchEngine):
 
     @staticmethod
     def get_default_remote_dir(name):
-        from zoo.ray import RayContext
-        from zoo.orca.automl.search.utils import process
+        from bigdl.ray import RayContext
+        from bigdl.orca.automl.search.utils import process
         ray_ctx = RayContext.get()
         if ray_ctx.is_local:
             return None
@@ -92,7 +92,7 @@ class RayTuneSearchEngine(SearchEngine):
         :param validation_data: validation data
         :param metric: metric name or metric function
         :param metric_mode: mode for metric. "min" or "max". We would infer metric_mode automated
-            if user used our built-in metric in zoo.automl.common.metric.Evaluator.
+            if user used our built-in metric in bigdl.automl.common.metric.Evaluator.
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: number of sampling
         :param search_space: a dictionary of search_space

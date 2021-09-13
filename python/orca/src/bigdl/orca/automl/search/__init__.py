@@ -22,5 +22,5 @@ class SearchEngineFactory:
     @staticmethod
     def create_engine(backend="ray", *args, **kwargs):
         if backend == "ray":
-            from zoo.orca.automl.search.ray_tune import RayTuneSearchEngine
+            from bigdl.orca.automl.search.ray_tune import RayTuneSearchEngine
             return RayTuneSearchEngine(*args, **kwargs)

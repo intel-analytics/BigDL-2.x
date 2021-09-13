@@ -16,7 +16,7 @@
 import tensorflow as tf
 import numpy as np
 from unittest import TestCase
-from zoo.orca.automl.auto_estimator import AutoEstimator
+from bigdl.orca.automl.auto_estimator import AutoEstimator
 import pytest
 
 
@@ -44,7 +44,7 @@ def get_train_val_data():
 
 
 def create_linear_search_space():
-    from zoo.orca.automl import hp
+    from bigdl.orca.automl import hp
     return {
         "hidden_size": hp.choice([5, 10]),
         "lr": hp.choice([0.001, 0.003, 0.01]),
@@ -54,11 +54,11 @@ def create_linear_search_space():
 
 class TestTFKerasAutoEstimator(TestCase):
     def setUp(self) -> None:
-        from zoo.orca import init_orca_context
+        from bigdl.orca import init_orca_context
         init_orca_context(cores=4, init_ray_on_spark=True)
 
     def tearDown(self) -> None:
-        from zoo.orca import stop_orca_context
+        from bigdl.orca import stop_orca_context
         stop_orca_context()
 
     def test_fit(self):
