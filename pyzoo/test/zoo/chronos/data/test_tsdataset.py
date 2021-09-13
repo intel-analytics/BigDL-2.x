@@ -524,6 +524,7 @@ class TestTSDataset(ZooTestCase):
                                                    'IS_WEEKEND',
                                                    'WEEKDAY',
                                                    'MONTH',
+                                                   'YEAR',
                                                    'DAYOFYEAR',
                                                    'WEEKOFYEAR',
                                                    'extra feature',
@@ -534,6 +535,7 @@ class TestTSDataset(ZooTestCase):
                                            'IS_WEEKEND',
                                            'WEEKDAY',
                                            'MONTH',
+                                           'YEAR',
                                            'DAYOFYEAR',
                                            'WEEKOFYEAR',
                                            'extra feature'}
@@ -553,6 +555,7 @@ class TestTSDataset(ZooTestCase):
                                                    'WEEKDAY_5',
                                                    'WEEKDAY_6',
                                                    'MONTH',
+                                                   'YEAR',
                                                    'DAYOFYEAR',
                                                    'WEEKOFYEAR',
                                                    'extra feature',
@@ -569,6 +572,7 @@ class TestTSDataset(ZooTestCase):
                                            'WEEKDAY_5',
                                            'WEEKDAY_6',
                                            'MONTH',
+                                           'YEAR',
                                            'DAYOFYEAR',
                                            'WEEKOFYEAR',
                                            'extra feature'}
@@ -584,6 +588,7 @@ class TestTSDataset(ZooTestCase):
                                                    'IS_WEEKEND',
                                                    'WEEKDAY',
                                                    'MONTH',
+                                                   'YEAR',
                                                    'DAYOFYEAR',
                                                    'WEEKOFYEAR',
                                                    'extra feature',
@@ -594,6 +599,7 @@ class TestTSDataset(ZooTestCase):
                                            'IS_WEEKEND',
                                            'WEEKDAY',
                                            'MONTH',
+                                           'YEAR',
                                            'DAYOFYEAR',
                                            'WEEKOFYEAR',
                                            'extra feature'}
@@ -613,6 +619,7 @@ class TestTSDataset(ZooTestCase):
                                                    'WEEKDAY_5',
                                                    'WEEKDAY_6',
                                                    'MONTH',
+                                                   'YEAR',
                                                    'DAYOFYEAR',
                                                    'WEEKOFYEAR',
                                                    'extra feature',
@@ -629,6 +636,7 @@ class TestTSDataset(ZooTestCase):
                                            'WEEKDAY_5',
                                            'WEEKDAY_6',
                                            'MONTH',
+                                           'YEAR',
                                            'DAYOFYEAR',
                                            'WEEKOFYEAR',
                                            'extra feature'}
@@ -929,3 +937,13 @@ class TestTSDataset(ZooTestCase):
         with pytest.raises(AssertionError):
             tsdata.roll(lookback=5, horizon=2, id_sensitive=True)
         tsdata._check_basic_invariants()
+
+    def test_dt_sorted(self):
+        df = pd.DataFrame({"datetime": np.array(['20000101', '20000102', '20000102', '20000101']),
+                           "value": np.array([1.9, 2.3, 2.4, 2.6]),
+                           "id": np.array(['00', '01', '00', '01'])})
+
+        tsdata = TSDataset.from_pandas(df, target_col='value',
+                                       dt_col='datetime')
+        with pytest.raises(RuntimeError):
+            tsdata._check_basic_invariants(strict_check=True)
