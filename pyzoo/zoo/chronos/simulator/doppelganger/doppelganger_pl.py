@@ -98,6 +98,7 @@ class DoppelGANger_pl(LightningModule):
         # data preparation
         data_feature, data_attribute = batch
         optimizer_d, optimizer_attr_d, optimizer_g = self.optimizers()
+
         # generate noise input
         real_attribute_input_noise = gen_attribute_input_noise(data_feature.shape[0])
         addi_attribute_input_noise = gen_attribute_input_noise(data_feature.shape[0])
@@ -152,6 +153,8 @@ class DoppelGANger_pl(LightningModule):
             self.manual_backward(attr_d_loss)
             optimizer_d.step()
             optimizer_attr_d.step()
+
+            # log tqdm
             self.log("g_loss", g_loss.item(), on_step=True, on_epoch=True, prog_bar=True, logger=True)
             self.log("d_loss", d_loss.item(), on_step=True, on_epoch=True, prog_bar=True, logger=True)
             self.log("attr_d_loss", attr_d_loss.item(), on_step=True, on_epoch=True, prog_bar=True, logger=True)
@@ -173,6 +176,7 @@ class DoppelGANger_pl(LightningModule):
                                      addi_attribute_input_noise,
                                      feature_input_noise,
                                      feature_input_data,
+                                     self.datamodule.gen_flag_dims,
                                      batch_size=batch_size)
         return features, attributes, gen_flags, lengths
         

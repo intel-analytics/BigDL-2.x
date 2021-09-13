@@ -74,20 +74,6 @@ class DoppelGANger(nn.Module):
                                 num_layers=attr_discriminator_num_layers,
                                 num_units=attr_discriminator_num_units)
 
-    def _check_data(self):
-        self.gen_flag_dims = []
-
-        dim = 0
-        for output in self.data_feature_outputs:
-            if output.is_gen_flag:
-                if output.dim != 2:
-                    raise Exception("gen flag output's dim should be 2")
-                self.gen_flag_dims = [dim, dim + 1]
-                break
-            dim += output.dim
-        if len(self.gen_flag_dims) == 0:
-            raise Exception("gen flag not found")
-
     def forward(self,
                 data_feature,
                 real_attribute_input_noise,
@@ -153,48 +139,18 @@ class DoppelGANger(nn.Module):
         '''
         self.data_feature = data_feature
         self.data_attribute = data_attribute
-        # self.data_gen_flag = data_gen_flag
-
-        self._check_data() # temp removed
 
         if self.data_feature[0].shape[1] % self.sample_len != 0:
             raise Exception("length must be a multiple of sample_len")
         self.sample_time = int(self.data_feature[0].shape[1] / self.sample_len)
         self.sample_feature_dim = self.data_feature[0].shape[2]
         self.sample_attribute_dim = self.data_attribute[0].shape[1]
-        self.sample_real_attribute_dim = 0
-        for i in range(len(self.real_attribute_mask)):
-            if self.real_attribute_mask[i]:
-                self.sample_real_attribute_dim += \
-                    self.data_attribute_outputs[i].dim
         
         self.batch_size = self.data_feature[0].shape[0]
-
-        self.real_attribute_mask_tensor = []
-        for i in range(len(self.real_attribute_mask)):
-            if self.real_attribute_mask[i]:
-                sub_mask_tensor = torch.ones(
-                    self.batch_size, self.data_attribute_outputs[i].dim)
-            else:
-                sub_mask_tensor = torch.zeros(
-                    self.batch_size, self.data_attribute_outputs[i].dim)
-            self.real_attribute_mask_tensor.append(sub_mask_tensor)
-        self.real_attribute_mask_tensor = torch.cat(
-            self.real_attribute_mask_tensor,
-            dim=1)
-
-        # if len(self.data_gen_flag.shape) != 2:
-        #     raise Exception("data_gen_flag should be 2 dimension")
-
-        # self.data_gen_flag = np.expand_dims(self.data_gen_flag, 2)
-        # (batch_size, max_length, 1)
 
         # generate training route (fake)
         self.g_output_feature_train_tf_l = []
         self.g_output_attribute_train_tf_l = []
-        # self.g_output_gen_flag_train_tf_l = []
-        # self.g_output_length_train_tf_l = []
-        # self.g_output_argmax_train_tf_l = []
 
         for i in range(self.num_packing):
             (g_output_feature_train_tf, g_output_attribute_train_tf,
@@ -207,12 +163,6 @@ class DoppelGANger(nn.Module):
                 g_output_feature_train_tf)
             self.g_output_attribute_train_tf_l.append(
                 g_output_attribute_train_tf)
-            # self.g_output_gen_flag_train_tf_l.append(
-            #     g_output_gen_flag_train_tf)
-            # self.g_output_length_train_tf_l.append(
-            #     g_output_length_train_tf)
-            # self.g_output_argmax_train_tf_l.append(
-            #     g_output_argmax_train_tf)
 
         self.g_output_feature_train_tf = torch.cat(
             self.g_output_feature_train_tf_l,
@@ -248,8 +198,8 @@ class DoppelGANger(nn.Module):
                     addi_attribute_input_noise,
                     feature_input_noise,
                     feature_input_data,
+                    gen_flag_dims,
                     batch_size=32):
-        self._check_data()
         features = []
         attributes = []
         gen_flags = []
@@ -282,7 +232,7 @@ class DoppelGANger(nn.Module):
         gen_flags = gen_flags.detach().numpy()
         lengths = lengths.detach().numpy()
 
-        features = np.delete(features, self.gen_flag_dims, axis=2)
+        features = np.delete(features, gen_flag_dims, axis=2)
 
         return features, attributes, gen_flags, lengths
 

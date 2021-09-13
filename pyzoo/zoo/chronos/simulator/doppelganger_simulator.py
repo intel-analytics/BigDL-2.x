@@ -136,12 +136,19 @@ class DoppelGANgerSimulator:
                                                   attribute_outputs=attribute_outputs,
                                                   sample_len=self.sample_len,
                                                   batch_size=batch_size)
+        
+        # profiler
+        from pytorch_lightning.profiler.pytorch import PyTorchProfiler
+        self.profiler = PyTorchProfiler(dirpath=".",
+                                        filename="py.log",
+                                        profile_memory=True)
 
         # build the model
         self.model = DoppelGANger_pl(datamodule=self.data_module, **self.params)
         self.trainer = Trainer(logger=False,
                                max_epochs=epoch,
-                               default_root_dir=self.ckpt_dir)
+                               default_root_dir=self.ckpt_dir,
+                               profiler=self.profiler)
 
         # fit!
         self.trainer.fit(self.model, self.data_module)
