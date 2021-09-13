@@ -14,61 +14,61 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.pipeline.estimator
-
-import com.intel.analytics.zoo.pipeline.inference.InferenceSupportive
+package com.intel.analytics.bigdl.dllib.estimator
+// TODO call InferenceSupportive from orca or move local Estimator in orca
+// import com.intel.analytics.bigdl.orca.inference.InferenceSupportive
 import org.slf4j.LoggerFactory
 
 /**
  * EstimateSupportive trait to provide some AOP methods as utils
  *
  */
-trait EstimateSupportive extends InferenceSupportive {
-
-  /**
-   * calculate and log the time and throughput
-   *
-   * @param name    the name of the process
-   * @param batch   the number of the batch
-   * @param f       the process function
-   * @tparam T      the return of the process function
-   * @return        the result of the process function
-   */
-  def throughputing[T](name: String, batch: Int)(f: => T): T = {
-    val begin = System.currentTimeMillis
-    val result = f
-    val end = System.currentTimeMillis
-    val cost = (end - begin)
-    val throughput = batch.toDouble / cost * 1000
-    EstimateSupportive.logger.info(
-      s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms], " +
-        s"throughput: ${throughput} records/second.")
-    result
-  }
-
-  /**
-   * calculate and log the time and throughput and loss
-   *
-   * @param name  the name of the process
-   * @param batch the number of the batch
-   * @param f     the process function
-   * @tparam T    the return of the process function
-   * @return      the result of the process function
-   */
-  def throughputingWithLoss[T](name: String, batch: Int)(f: => T): T = {
-    val begin = System.currentTimeMillis
-    val result = f
-    val end = System.currentTimeMillis
-    val cost = (end - begin)
-    val throughput = batch.toDouble / cost * 1000
-    EstimateSupportive.logger.info(
-      s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms], " +
-        s"throughput: ${throughput} records/second, loss: ${result}.")
-    result
-  }
-
-}
-
-object EstimateSupportive {
-  val logger = LoggerFactory.getLogger(getClass)
-}
+// trait EstimateSupportive extends InferenceSupportive {
+//
+//  /**
+//   * calculate and log the time and throughput
+//   *
+//   * @param name    the name of the process
+//   * @param batch   the number of the batch
+//   * @param f       the process function
+//   * @tparam T      the return of the process function
+//   * @return        the result of the process function
+//   */
+//  def throughputing[T](name: String, batch: Int)(f: => T): T = {
+//    val begin = System.currentTimeMillis
+//    val result = f
+//    val end = System.currentTimeMillis
+//    val cost = (end - begin)
+//    val throughput = batch.toDouble / cost * 1000
+//    EstimateSupportive.logger.info(
+//      s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms], " +
+//        s"throughput: ${throughput} records/second.")
+//    result
+//  }
+//
+//  /**
+//   * calculate and log the time and throughput and loss
+//   *
+//   * @param name  the name of the process
+//   * @param batch the number of the batch
+//   * @param f     the process function
+//   * @tparam T    the return of the process function
+//   * @return      the result of the process function
+//   */
+//  def throughputingWithLoss[T](name: String, batch: Int)(f: => T): T = {
+//    val begin = System.currentTimeMillis
+//    val result = f
+//    val end = System.currentTimeMillis
+//    val cost = (end - begin)
+//    val throughput = batch.toDouble / cost * 1000
+//    EstimateSupportive.logger.info(
+//      s"$name time elapsed [${cost / 1000} s, ${cost % 1000} ms], " +
+//        s"throughput: ${throughput} records/second, loss: ${result}.")
+//    result
+//  }
+//
+// }
+//
+// object EstimateSupportive {
+//  val logger = LoggerFactory.getLogger(getClass)
+// }
