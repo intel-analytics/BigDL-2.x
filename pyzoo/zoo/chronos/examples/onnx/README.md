@@ -1,4 +1,4 @@
-# Speed up predict
+# Use ONNX to speed up predict
 This example will demonstrate the effect of ONNX for predict on forecast and autotest.
 
 ## Prepare the environment
@@ -13,7 +13,7 @@ pip install --pre --upgrade analytics-zoo[automl]
 * `--epoch` Max number of epochs to train in each trial. Default to be 1.
 
 ## Prepare data
-**autotest**: We are using the `nyc taxi` provided by NAB, from 2014-07-01 to 2015-01-31 taxi fare information For more details, please refer to [here](https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv)
+**autotsest**: We are using the `nyc taxi` provided by NAB, from 2014-07-01 to 2015-01-31 taxi fare information For more details, please refer to [here](https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv)
 
 **forecaster**: For demonstration, we use the publicly available `network traffic` data repository maintained by the [WIDE project](http://mawi.wide.ad.jp/mawi/) and in particular, the network traffic traces aggregated every 2 hours (i.e. AverageRate in Mbps/Gbps and Total Bytes) in year 2018 and 2019 at the transit link of WIDE to the upstream ISP ([dataset link](http://mawi.wide.ad.jp/~agurim/dataset/))
 
@@ -31,7 +31,7 @@ for tsdata in [tsdata_train, tsdata_test]:
             .roll(lookback=40, horizon=1)
 ```
 
-## Forecaster
+## Fit on forecaster 
 Create an Seq2SeqForecaster
 ```python
 forecaster = Seq2SeqForecaster(past_seq_len=40,
@@ -40,20 +40,22 @@ forecaster = Seq2SeqForecaster(past_seq_len=40,
                                output_feature_num=2,
                                metrics=['mse', 'smape'],
                                seed=0)
-```
 
-Finally, call `fit` on Forecaster.
-```python
 # input tuple.
 x_train, y_train = tsdata_train.to_numpy()
 forecaster.fit((x_train, y_train), epochs=args.epochs)
 ```
 
+## Inference with onnx
+```python
+x_test, y_test = tsdata_train.to_numpy()
+forecaster.predict(x_test)
+forecaster.evaluate((x_test, y_test))
+```
+
 ## Result
 ONNX will not affect the result of evaluate, and will speed up predict.
 ```python
-x_test, y_test = tsdata_train.to_numpy()
-mse, smape = forecaster.evaluate((x_test,y_test))
 # evaluate mse is: 0.0014
 # evaluate smape is: 9.6629
 mse, smape = forecaster.evaluate_with_onnx((x_test,y_test))
