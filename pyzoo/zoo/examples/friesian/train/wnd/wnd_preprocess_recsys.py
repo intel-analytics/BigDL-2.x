@@ -226,7 +226,7 @@ if __name__ == '__main__':
     cat_sizes_dict['tweet_type'] = len(type_map)
     cat_sizes_dict['language'] = language_idx.size()
     for i in range(len(list_cols)):
-        cat_sizes_dict[list_cols[i]] = indexes[i]
+        cat_sizes_dict[list_cols[i]] = indexes[i].size()
     cat_sizes_dict['engaged_with_user_id'] = user_index.size()
     cat_sizes_dict['enaging_user_id'] = user_index.size()
 
@@ -237,6 +237,7 @@ if __name__ == '__main__':
 
     count_sizes_dict = dict(zip(count_cols, [len(bins)] * len(count_cols)))
     cat_sizes_dict.update(count_sizes_dict)
+    print("cat size dict: ", cat_sizes_dict)
 
     if not exists(os.path.join(args.output_folder, "meta")):
         makedirs(os.path.join(args.output_folder, "meta"))
