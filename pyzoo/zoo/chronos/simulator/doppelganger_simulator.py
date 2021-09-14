@@ -42,6 +42,7 @@ class DoppelGANgerSimulator:
     Doppelganger Simulator for time series generation.
     '''
     def __init__(self,
+                 L_max,
                  sample_len,
                  discriminator_num_layers=5,
                  discriminator_num_units=200,
@@ -92,6 +93,7 @@ class DoppelGANgerSimulator:
             torch.set_num_threads(num_threads)
         self.ckpt_dir = ckpt_dir
         self.sample_len = sample_len
+        self.L_max = L_max
 
         # hparam saving
         self.params = {"discriminator_num_layers": discriminator_num_layers,
@@ -160,7 +162,11 @@ class DoppelGANgerSimulator:
                                                   batch_size=batch_size)
 
         # build the model
-        self.model = DoppelGANger_pl(datamodule=self.data_module, **self.params)
+        self.model = DoppelGANger_pl(data_feature_outputs=self.data_module.data_feature_outputs,
+                                     data_attribute_outputs=self.data_module.data_attribute_outputs,
+                                     L_max=self.L_max,
+                                     sample_len=self.sample_len,
+                                     **self.params)
         self.trainer = Trainer(logger=False,
                                max_epochs=epoch,
                                default_root_dir=self.ckpt_dir)

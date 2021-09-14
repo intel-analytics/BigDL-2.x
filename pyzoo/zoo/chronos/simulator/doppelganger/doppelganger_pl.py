@@ -19,7 +19,10 @@ from .util import gen_attribute_input_noise, gen_feature_input_noise,\
 
 class DoppelGANger_pl(LightningModule):
     def __init__(self,
-                 datamodule,
+                 data_feature_outputs,
+                 data_attribute_outputs,
+                 L_max,
+                 sample_len=10,
                  discriminator_num_layers=5,
                  discriminator_num_units=200,
                  attr_discriminator_num_layers=5,
@@ -59,16 +62,34 @@ class DoppelGANger_pl(LightningModule):
                                   "g_lr",
                                   "g_rounds",
                                   "d_rounds")
-        self.datamodule = datamodule
-        self.length = self.datamodule.length
         self.g_rounds = g_rounds
         self.d_rounds = d_rounds
+        self.sample_len = sample_len
+        self.L_max = L_max
+        self.data_feature_outputs = data_feature_outputs
+        self.data_attribute_outputs = data_attribute_outputs
+
+        self.length = self.L_max // self.sample_len
+        self.real_attribute_mask = ([True] * (len(data_attribute_outputs)-2) +
+                                    [False] * 2) # for (max+-min)/2
+        self.gen_flag_dims = []
+        dim = 0
+        for output in self.data_feature_outputs:
+            if output.is_gen_flag:
+                if output.dim != 2:
+                    raise Exception("gen flag output's dim should be 2")
+                self.gen_flag_dims = [dim, dim + 1]
+                break
+            dim += output.dim
+        if len(self.gen_flag_dims) == 0:
+            raise Exception("gen flag not found")
+
         # model init
-        self.model = DoppelGANger(data_feature_outputs=self.datamodule.data_feature_outputs,
-                                  data_attribute_outputs=self.datamodule.data_attribute_outputs,
-                                  real_attribute_mask=self.datamodule.real_attribute_mask,
-                                  sample_len=self.datamodule.sample_len,
-                                  L_max=self.datamodule.data_feature.shape[1],
+        self.model = DoppelGANger(data_feature_outputs=self.data_feature_outputs,
+                                  data_attribute_outputs=self.data_attribute_outputs,
+                                  real_attribute_mask=self.real_attribute_mask,
+                                  sample_len=self.sample_len,
+                                  L_max=self.L_max,
                                   num_packing=1,  # any num other than 1 will be supported later
                                   discriminator_num_layers=self.hparams.discriminator_num_layers,
                                   discriminator_num_units=self.hparams.discriminator_num_units,
@@ -176,7 +197,7 @@ class DoppelGANger_pl(LightningModule):
                                      addi_attribute_input_noise,
                                      feature_input_noise,
                                      feature_input_data,
-                                     self.datamodule.gen_flag_dims,
+                                     self.gen_flag_dims,
                                      batch_size=batch_size)
         return features, attributes, gen_flags, lengths
         

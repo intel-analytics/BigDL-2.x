@@ -87,22 +87,9 @@ class DoppelGANgerDataModule(LightningDataModule):
         self.data_feature = data_feature
         self.data_attribute = data_attribute
 
-        self.gen_flag_dims = []
-
-        dim = 0
-        for output in self.data_feature_outputs:
-            if output.is_gen_flag:
-                if output.dim != 2:
-                    raise Exception("gen flag output's dim should be 2")
-                self.gen_flag_dims = [dim, dim + 1]
-                break
-            dim += output.dim
-        if len(self.gen_flag_dims) == 0:
-            raise Exception("gen flag not found")
-
     def train_dataloader(self):
-        self.data_feature = torch.from_numpy(data_feature).float()
-        self.data_attribute = torch.from_numpy(data_attribute).float()
+        self.data_feature = torch.from_numpy(self.data_feature).float()
+        self.data_attribute = torch.from_numpy(self.data_attribute).float()
         dataset = CustomizedDataset(self.data_feature,
                                     self.data_attribute)
         return DataLoader(dataset,
@@ -122,8 +109,3 @@ class CustomizedDataset(Dataset):
     def __getitem__(self, index):
         return self.data_feature[index],\
                self.data_attribute[index]
-
-if __name__ == "__main__":
-    dm = DoppelGANgerDataModule(sample_len=10,
-                                data_dir="/home/cpx/junweid/doppelganger-pytorch/data/WWT")
-    print("Done")
