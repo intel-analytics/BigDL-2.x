@@ -1,35 +1,16 @@
-# Use ONNX to improve the speed of predict inference
-This example will demonstrate the effect of ONNX for predict on forecast and autotest, which is expected to be ~5X.
+# Speed up predict
+This example will demonstrate the effect of ONNX for predict on forecast and autotest.
 
 ## Prepare the environment
 We recommend you to use Anaconda to prepare the environment, especially if you want to run on a yarn cluster:
 ```
-conda create -n env python=3.7 # "zoo" is conda environment name, you can use any name you like.
-conda activate env
-pip install analytics-zoo[automl]
-```
-
-## Getting Started with Orca
-First, initialize [Orca Context](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html):
-```python
-num_nodes = 1 if args.cluster_mode == "local" else args.num_workers
-init_orca_context(cluster_mode="yarn", cores=4,
-                  memory="10g", num_nodes=num_nodes, init_ray_on_spark=True)
+conda create -n zoo python=3.7 # "zoo" is conda environment name, you can use any name you like.
+conda activate zoo
+pip install --pre --upgrade analytics-zoo[automl]
 ```
 
 ## Options
-* `--cluster_mode` The mode for the Spark cluster. local or yarn. Default to be `local`. You can refer to OrcaContext documents [here](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html) for details.
 * `--epoch` Max number of epochs to train in each trial. Default to be 1.
-* `--cpus_per_trail` Number of cpus for each trial. Default to be 2.
-* `--n_sampling` Number of times to sample from the search_space. Default to be 1.
-* `--memory` The memory you want to use on each node. Default to be 10g.
-* `--num_workers` The number of workers to be used in the cluster. You can change it depending on your own cluster setting. Default to be 2.
-* `--cores` "The number of cpu cores you want to use on each node. Default to be 4.
-
-## Run on yarn cluster for yarn-client mode after pip install 
-```
-python onnx_nyc_taxi.py/onnx_network_traffic.py --cluster_model yarn
-```
 
 ## Prepare data
 **autotest**: We are using the `nyc taxi` provided by NAB, from 2014-07-01 to 2015-01-31 taxi fare information For more details, please refer to [here](https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv)
@@ -50,7 +31,8 @@ for tsdata in [tsdata_train, tsdata_test]:
             .roll(lookback=40, horizon=1)
 ```
 
-Next, Create an Seq2SeqForecaster
+## Forecaster
+Create an Seq2SeqForecaster
 ```python
 forecaster = Seq2SeqForecaster(past_seq_len=40,
                                future_seq_len=1,
@@ -67,17 +49,19 @@ x_train, y_train = tsdata_train.to_numpy()
 forecaster.fit((x_train, y_train), epochs=args.epochs)
 ```
 
-## Reference
+## Result
 ONNX will not affect the result of evaluate, and will speed up predict.
 ```python
-# evaluate/evaluate_with_onnx
+x_test, y_test = tsdata_train.to_numpy()
+mse, smape = forecaster.evaluate((x_test,y_test))
 # evaluate mse is: 0.0014
 # evaluate smape is: 9.6629
-
+mse, smape = forecaster.evaluate_with_onnx((x_test,y_test))
 # evaluate_onnx mse is: 0.0014
 # evaluate_onnx smape is: 9.6629
 
-# predict/predict_with_onnx:
-# inference time is: 0.136s
-# inference(onnx) time is: 0.030s 
+forecaster.predict(x_test)
+# inference time is: ~0.136s
+forecaster.predict_with_onnx(x_test)
+# inference(onnx) time is: ~0.030s 
 ```
