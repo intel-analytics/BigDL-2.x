@@ -58,6 +58,7 @@ conf = {"spark.network.timeout": "10000000",
         "spark.task.cpus": "1",
         "spark.executor.heartbeatInterval": "200s",
         "spark.driver.maxResultSize": "40G",
+        "spark.app.name": "recsys-train",
         "spark.driver.memoryOverhead": "100G",
         "spark.executor.memoryOverhead": "100G"}
 

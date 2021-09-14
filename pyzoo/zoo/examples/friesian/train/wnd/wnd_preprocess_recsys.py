@@ -10,7 +10,6 @@ from zoo.orca import init_orca_context, stop_orca_context, OrcaContext
 from zoo.orca.data.file import makedirs, write_text, exists
 from zoo.common.utils import put_local_file_to_remote
 from zoo.friesian.feature import FeatureTable
-import time
 
 bool_cols = [
     'engaged_with_user_is_verified',
@@ -84,7 +83,7 @@ conf = {"spark.network.timeout": "10000000",
         "spark.driver.maxResultSize": "40G",
         "spark.eventLog.enabled": "true",
         "spark.eventLog.dir": "hdfs://172.16.0.105:8020/sparkHistoryLogs",
-        "spark.app.name": "recsys-demo",
+        "spark.app.name": "recsys-preprocess",
         "spark.executor.memoryOverhead": "20g"}
 
 def _parse_args():
