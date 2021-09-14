@@ -84,9 +84,8 @@ class DoppelGANgerDataModule(LightningDataModule):
         self.length = int(data_feature.shape[1] / self.sample_len)
 
         # will be used in dataset init
-        self.data_feature = torch.from_numpy(data_feature).float()
-        # self.data_gen_flag = torch.from_numpy(data_gen_flag).float()
-        self.data_attribute = torch.from_numpy(data_attribute).float()
+        self.data_feature = data_feature
+        self.data_attribute = data_attribute
 
         self.gen_flag_dims = []
 
@@ -100,17 +99,13 @@ class DoppelGANgerDataModule(LightningDataModule):
             dim += output.dim
         if len(self.gen_flag_dims) == 0:
             raise Exception("gen flag not found")
-    
-    def prepare_data(self):
-        # no download to be done
-        pass
-
-    def setup(self, stage=None):
-        self.dataset = CustomizedDataset(self.data_feature,
-                                         self.data_attribute)
 
     def train_dataloader(self):
-        return DataLoader(self.dataset,
+        self.data_feature = torch.from_numpy(data_feature).float()
+        self.data_attribute = torch.from_numpy(data_attribute).float()
+        dataset = CustomizedDataset(self.data_feature,
+                                    self.data_attribute)
+        return DataLoader(dataset,
                           batch_size=self.batch_size,
                           shuffle=True)
 

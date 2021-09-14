@@ -117,38 +117,53 @@ class DoppelGANgerSimulator:
         self.model = None  # model will be lazy built during fit since the dim will depend on the data
 
     def fit(self,
-            real_data,
+            data_feature,
+            data_attribute,
+            data_gen_flag,
             feature_outputs,
             attribute_outputs,
             epoch=1,
             batch_size=32):
         '''
-        :param real_data: The real data should be a collection with indexs "data_feature",
-               "data_attribute" and "data_gen_flag".
+        :param data_feature: Training features, in numpy float32 array format.
+               The size is [(number of training samples) x (maximum length)
+               x (total dimension of features)]. Categorical features are stored
+               by one-hot encoding; for example, if a categorical feature has 3
+               possibilities, then it can take values between [1., 0., 0.],
+               [0., 1., 0.], and [0., 0., 1.]. Each continuous feature should be
+               normalized to [0, 1] or [-1, 1]. The array is padded by zeros after
+               the time series ends.
+        :param data_attribute: Training attributes, in numpy float32 array format. The size is
+               [(number of training samples) x (total dimension of attributes)]. Categorical
+               attributes are stored by one-hot encoding; for example, if a categorical
+               attribute has 3 possibilities, then it can take values between [1., 0., 0.],
+               [0., 1., 0.], and [0., 0., 1.]. Each continuous attribute should be normalized
+               to [0, 1] or [-1, 1].
+        :param data_gen_flag: Flags indicating the activation of features, in numpy float32
+               array format. The size is [(number of training samples) x (maximum length)].
+               1 means the time series is activated at this time step, 0 means the time series
+               is inactivated at this timestep.
         :param feature_outputs: A list of Output indicates the meta data of data_feature.
         :param attribute_outputs: A list of Output indicates the meta data of data_attribute.
         :param epoch: training epoch.
         :param batch_size: training batchsize.
         '''
         # data preparation
+        real_data = {}
+        real_data["data_feature"] = data_feature
+        real_data["data_attribute"] = data_attribute
+        real_data["data_gen_flag"] = data_gen_flag
         self.data_module = DoppelGANgerDataModule(real_data=real_data,
                                                   feature_outputs=feature_outputs,
                                                   attribute_outputs=attribute_outputs,
                                                   sample_len=self.sample_len,
                                                   batch_size=batch_size)
-        
-        # profiler
-        from pytorch_lightning.profiler.pytorch import PyTorchProfiler
-        self.profiler = PyTorchProfiler(dirpath=".",
-                                        filename="py.log",
-                                        profile_memory=True)
 
         # build the model
         self.model = DoppelGANger_pl(datamodule=self.data_module, **self.params)
         self.trainer = Trainer(logger=False,
                                max_epochs=epoch,
-                               default_root_dir=self.ckpt_dir,
-                               profiler=self.profiler)
+                               default_root_dir=self.ckpt_dir)
 
         # fit!
         self.trainer.fit(self.model, self.data_module)
