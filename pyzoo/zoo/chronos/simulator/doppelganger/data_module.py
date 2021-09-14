@@ -1,3 +1,19 @@
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import os
 import pickle
 import numpy as np
@@ -59,7 +75,7 @@ class DoppelGANgerDataModule(LightningDataModule):
             real_attribute_mask) = normalize_per_sample(
             data_all, data_attribute, data_feature_outputs,
             data_attribute_outputs)
-        
+
         # add generation flag to features
         # ===================================================================================
         data_feature, data_feature_outputs = add_gen_flag(
@@ -96,16 +112,17 @@ class DoppelGANgerDataModule(LightningDataModule):
                           batch_size=self.batch_size,
                           shuffle=True)
 
+
 class CustomizedDataset(Dataset):
     def __init__(self,
                  data_feature,
                  data_attribute):
         self.data_feature = data_feature
         self.data_attribute = data_attribute
-    
+
     def __len__(self):
         return self.data_feature.shape[0]
-    
+
     def __getitem__(self, index):
         return self.data_feature[index],\
-               self.data_attribute[index]
+            self.data_attribute[index]

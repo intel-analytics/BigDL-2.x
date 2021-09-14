@@ -1,3 +1,19 @@
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import os
 import numpy as np
 import sys
@@ -16,6 +32,7 @@ from .network import RNNInitialStateType
 from .loss import doppelganger_loss
 from .util import gen_attribute_input_noise, gen_feature_input_noise,\
     gen_feature_input_data_free, renormalize_per_sample
+
 
 class DoppelGANger_pl(LightningModule):
     def __init__(self,
@@ -61,7 +78,9 @@ class DoppelGANger_pl(LightningModule):
                                   "attr_d_lr",
                                   "g_lr",
                                   "g_rounds",
-                                  "d_rounds")
+                                  "d_rounds",
+                                  "L_max",
+                                  "sample_len")
         self.g_rounds = g_rounds
         self.d_rounds = d_rounds
         self.sample_len = sample_len
@@ -71,7 +90,7 @@ class DoppelGANger_pl(LightningModule):
 
         self.length = self.L_max // self.sample_len
         self.real_attribute_mask = ([True] * (len(data_attribute_outputs)-2) +
-                                    [False] * 2) # for (max+-min)/2
+                                    [False] * 2)  # for (max+-min)/2
         self.gen_flag_dims = []
         dim = 0
         for output in self.data_feature_outputs:
@@ -85,24 +104,26 @@ class DoppelGANger_pl(LightningModule):
             raise Exception("gen flag not found")
 
         # model init
-        self.model = DoppelGANger(data_feature_outputs=self.data_feature_outputs,
-                                  data_attribute_outputs=self.data_attribute_outputs,
-                                  real_attribute_mask=self.real_attribute_mask,
-                                  sample_len=self.sample_len,
-                                  L_max=self.L_max,
-                                  num_packing=1,  # any num other than 1 will be supported later
-                                  discriminator_num_layers=self.hparams.discriminator_num_layers,
-                                  discriminator_num_units=self.hparams.discriminator_num_units,
-                                  attr_discriminator_num_layers=self.hparams.attr_discriminator_num_layers,
-                                  attr_discriminator_num_units=self.hparams.attr_discriminator_num_units,
-                                  attribute_num_units=self.hparams.attribute_num_units,
-                                  attribute_num_layers=self.hparams.attribute_num_layers,
-                                  feature_num_units=self.hparams.feature_num_units,
-                                  feature_num_layers=self.hparams.feature_num_layers,
-                                  attribute_input_noise_dim=self.hparams.attribute_input_noise_dim,
-                                  addi_attribute_input_noise_dim=self.hparams.addi_attribute_input_noise_dim,
-                                  initial_state=RNNInitialStateType.RANDOM)  # currently we fix this value
-    
+        self.model =\
+            DoppelGANger(
+                data_feature_outputs=self.data_feature_outputs,
+                data_attribute_outputs=self.data_attribute_outputs,
+                real_attribute_mask=self.real_attribute_mask,
+                sample_len=self.sample_len,
+                L_max=self.L_max,
+                num_packing=1,  # any num other than 1 will be supported later
+                discriminator_num_layers=self.hparams.discriminator_num_layers,
+                discriminator_num_units=self.hparams.discriminator_num_units,
+                attr_discriminator_num_layers=self.hparams.attr_discriminator_num_layers,
+                attr_discriminator_num_units=self.hparams.attr_discriminator_num_units,
+                attribute_num_units=self.hparams.attribute_num_units,
+                attribute_num_layers=self.hparams.attribute_num_layers,
+                feature_num_units=self.hparams.feature_num_units,
+                feature_num_layers=self.hparams.feature_num_layers,
+                attribute_input_noise_dim=self.hparams.attribute_input_noise_dim,
+                addi_attribute_input_noise_dim=self.hparams.addi_attribute_input_noise_dim,
+                initial_state=RNNInitialStateType.RANDOM)  # currently we fix this value
+
     def forward(self,
                 data_feature,
                 real_attribute_input_noise,
@@ -114,7 +135,7 @@ class DoppelGANger_pl(LightningModule):
                           [addi_attribute_input_noise],
                           [feature_input_noise],
                           [data_attribute])
-    
+
     def training_step(self, batch, batch_idx):
         # data preparation
         data_feature, data_attribute = batch
@@ -134,11 +155,11 @@ class DoppelGANger_pl(LightningModule):
             p.requires_grad = True
         for i in range(self.g_rounds):
             d_fake, attr_d_fake,\
-                    d_real, attr_d_real = self(data_feature,
-                                               real_attribute_input_noise,
-                                               addi_attribute_input_noise,
-                                               feature_input_noise,
-                                               data_attribute)
+                d_real, attr_d_real = self(data_feature,
+                                           real_attribute_input_noise,
+                                           addi_attribute_input_noise,
+                                           feature_input_noise,
+                                           data_attribute)
             g_loss, _, _ =\
                 doppelganger_loss(d_fake, attr_d_fake, d_real, attr_d_real)
             optimizer_g.zero_grad()
@@ -151,19 +172,19 @@ class DoppelGANger_pl(LightningModule):
             p.requires_grad = False
         for i in range(self.d_rounds):
             d_fake, attr_d_fake,\
-            d_real, attr_d_real = self(data_feature,
-                                        real_attribute_input_noise,
-                                        addi_attribute_input_noise,
-                                        feature_input_noise,
-                                        data_attribute)
+                d_real, attr_d_real = self(data_feature,
+                                           real_attribute_input_noise,
+                                           addi_attribute_input_noise,
+                                           feature_input_noise,
+                                           data_attribute)
             _, d_loss, attr_d_loss =\
                 doppelganger_loss(d_fake, attr_d_fake, d_real, attr_d_real,
                                   g_attr_d_coe=self.hparams.g_attr_d_coe,
                                   gradient_penalty=True,
                                   discriminator=self.model.discriminator,
                                   attr_discriminator=self.model.attr_discriminator,
-                                  g_output_feature_train_tf=self.model.g_output_feature_train_tf,
-                                  g_output_attribute_train_tf=self.model.g_output_attribute_train_tf,
+                                  g_output_feature_train_tf=self.model.g_feature_train,
+                                  g_output_attribute_train_tf=self.model.g_attribute_train,
                                   real_feature_pl=self.model.real_feature_pl,
                                   real_attribute_pl=self.model.real_attribute_pl,
                                   d_gp_coe=self.hparams.d_gp_coe,
@@ -176,14 +197,20 @@ class DoppelGANger_pl(LightningModule):
             optimizer_attr_d.step()
 
             # log tqdm
-            self.log("g_loss", g_loss.item(), on_step=True, on_epoch=True, prog_bar=True, logger=True)
-            self.log("d_loss", d_loss.item(), on_step=True, on_epoch=True, prog_bar=True, logger=True)
-            self.log("attr_d_loss", attr_d_loss.item(), on_step=True, on_epoch=True, prog_bar=True, logger=True)
+            self.log("g_loss", g_loss.item(),
+                     on_step=True, on_epoch=True, prog_bar=True, logger=True)
+            self.log("d_loss", d_loss.item(),
+                     on_step=True, on_epoch=True, prog_bar=True, logger=True)
+            self.log("attr_d_loss", attr_d_loss.item(),
+                     on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
     def configure_optimizers(self):
-        optimizer_d = torch.optim.Adam(self.model.discriminator.parameters(), lr=self.hparams.d_lr, betas=(0.5, 0.999))
-        optimizer_attr_d = torch.optim.Adam(self.model.attr_discriminator.parameters(), lr=self.hparams.attr_d_lr, betas=(0.5, 0.999))
-        optimizer_g = torch.optim.Adam(self.model.generator.parameters(), lr=self.hparams.g_lr, betas=(0.5, 0.999))
+        optimizer_d = torch.optim.Adam(self.model.discriminator.parameters(),
+                                       lr=self.hparams.d_lr, betas=(0.5, 0.999))
+        optimizer_attr_d = torch.optim.Adam(self.model.attr_discriminator.parameters(),
+                                            lr=self.hparams.attr_d_lr, betas=(0.5, 0.999))
+        optimizer_g = torch.optim.Adam(self.model.generator.parameters(),
+                                       lr=self.hparams.g_lr, betas=(0.5, 0.999))
         return optimizer_d, optimizer_attr_d, optimizer_g
 
     def sample_from(self,
@@ -200,25 +227,3 @@ class DoppelGANger_pl(LightningModule):
                                      self.gen_flag_dims,
                                      batch_size=batch_size)
         return features, attributes, gen_flags, lengths
-        
-
-    @staticmethod
-    def add_model_specific_args(parent_parser):
-        parser = parent_parser.add_argument_group("DoppelGANger_pl")
-        parser.add_argument("--discriminator_num_layers", type=int, default=5)
-        parser.add_argument("--discriminator_num_units", type=int, default=200)
-        parser.add_argument("--attr_discriminator_num_layers", type=int, default=5)
-        parser.add_argument("--attr_discriminator_num_units", type=int, default=200)
-        parser.add_argument("--attribute_num_units", type=int, default=100)
-        parser.add_argument("--attribute_num_layers", type=int, default=3)
-        parser.add_argument("--feature_num_units", type=int, default=100)
-        parser.add_argument("--feature_num_layers", type=int, default=1)
-        parser.add_argument("--attribute_input_noise_dim", type=int, default=5)
-        parser.add_argument("--addi_attribute_input_noise_dim", type=int, default=5)
-        parser.add_argument("--d_gp_coe", type=int, default=10)
-        parser.add_argument("--attr_d_gp_coe", type=int, default=10)
-        parser.add_argument("--g_attr_d_coe", type=int, default=1)
-        parser.add_argument("--d_lr", type=float, default=0.001)
-        parser.add_argument("--attr_d_lr", type=float, default=0.001)
-        parser.add_argument("--g_lr", type=float, default=0.001)
-        return parent_parser

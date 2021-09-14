@@ -1,3 +1,48 @@
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# The Clear BSD License
+
+# Copyright (c) 2019 Carnegie Mellon University
+# All rights reserved.
+
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted (subject to the limitations in the disclaimer below) provided that
+# the following conditions are met:
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright notice,
+#       this list of conditions and the following disclaimer in the documentation
+#       and/or other materials provided with the distribution.
+#     * Neither the name of Carnegie Mellon University nor the names of its contributors
+#       may be used to endorse or promote products derived from this software without
+#       specific prior written permission.
+
+# NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS LICENSE.
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER
+# OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+
 import numpy as np
 from tqdm import tqdm
 import datetime
@@ -27,11 +72,11 @@ class DoppelGANger(nn.Module):
                  attribute_input_noise_dim=5, addi_attribute_input_noise_dim=5,
                  initial_state=RNNInitialStateType.RANDOM):
         '''
-        :param data_feature_outputs: A list of Output objects, indicating the 
+        :param data_feature_outputs: A list of Output objects, indicating the
             dimension, type, normalization of each feature
-        :param data_attribute_outputs A list of Output objects, indicating the 
+        :param data_attribute_outputs A list of Output objects, indicating the
             dimension, type, normalization of each attribute
-        :param real_attribute_mask: List of True/False, the length equals the 
+        :param real_attribute_mask: List of True/False, the length equals the
             number of attributes. False if the attribute is (max-min)/2 or
             (max+min)/2, True otherwise
         :param num_packing: Packing degree in PacGAN (a method for solving mode
@@ -49,7 +94,8 @@ class DoppelGANger(nn.Module):
         self.attribute_out_dim = np.sum([t.dim for t in data_attribute_outputs])
 
         self.generator\
-            = DoppelGANgerGenerator(feed_back=False, # feed back mode has not been supported
+            = DoppelGANgerGenerator(feed_back=False,
+                                    # feed back mode has not been supported
                                     noise=True,
                                     feature_outputs=data_feature_outputs,
                                     attribute_outputs=data_attribute_outputs,
@@ -61,12 +107,15 @@ class DoppelGANger(nn.Module):
                                     feature_num_layers=feature_num_layers,
                                     attribute_input_noise_dim=attribute_input_noise_dim,
                                     addi_attribute_input_noise_dim=addi_attribute_input_noise_dim,
-                                    attribute_dim=None, # known attribute feed-in has not been supported
-                                    initial_state=initial_state, # only ZERO and RANDOM are supported
-                                    initial_stddev=0.02 # placehold without any usage
-            )
+                                    attribute_dim=None,
+                                    # known attribute feed-in has not been supported
+                                    initial_state=initial_state,
+                                    # only ZERO and RANDOM are supported
+                                    initial_stddev=0.02)  # placehold without any usage
         self.discriminator\
-            = Discriminator(input_size=(int(self.feature_out_dim*L_max/self.sample_len))*self.num_packing + self.attribute_out_dim,
+            = Discriminator(input_size=(int(self.feature_out_dim*L_max /
+                                            self.sample_len))*self.num_packing +
+                            self.attribute_out_dim,
                             num_layers=discriminator_num_layers,
                             num_units=discriminator_num_units)
         self.attr_discriminator\
@@ -81,62 +130,6 @@ class DoppelGANger(nn.Module):
                 feature_input_noise,
                 data_attribute):
         # since we still not support self.num_packing
-        '''
-        :param data_feature: Training features, in numpy float32 array format.
-            The size is [(number of training samples) x (maximum length) x
-            (total dimension of features)]. The last two dimensions of 
-            features are for indicating whether the time series has already 
-            ended. [1, 0] means the time series does not end at this time
-            step (i.e., the time series is still activated at the next time
-            step). [0, 1] means the time series ends exactly at this time 
-            step or has ended before. The features are padded by zeros 
-            after the last activated batch.
-            For example, 
-            (1) assume maximum length is 6, and sample_len (the time series
-            batch size) is 3:
-            (1.1) If the length of a sample is 1, the last two dimensions
-            of features should be: 
-            [[0, 1],[0, 1],[0, 1],[0, 0],[0, 0],[0, 0]]
-            (1.2) If the length of a sample is 3, the last two dimensions
-            of features should be: 
-            [[1, 0],[1, 0],[0, 1],[0, 0],[0, 0],[0, 0]]
-            (1.3) If the length of a sample is 4, the last two dimensions
-            of features should be:
-            [[1, 0],[1, 0],[1, 0],[0, 1],[0, 1],[0, 1]]
-            (2) assume maximum length is 6, and sample_len (the time series
-            batch size) is 1:
-            (1.1) If the length of a sample is 1, the last two dimensions
-            of features should be: 
-            [[0, 1],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0]]
-            (1.2) If the length of a sample is 3, the last two dimensions
-            of features should be: 
-            [[1, 0],[1, 0],[0, 1],[0, 0],[0, 0],[0, 0]]
-            (1.3) If the length of a sample is 4, the last two dimensions
-            of features should be:
-            [[1, 0],[1, 0],[1, 0],[0, 1],[0, 0],[0, 0]]
-            Actually, you do not need to deal with generating those two
-            dimensions. Function util.add_gen_flag does the job of adding
-            those two dimensions to the original data.
-            Those two dimensions are for enabling DoppelGANger to generate
-            samples with different length
-        :param data_attribute: Training attributes, in numpy float32 array format.
-            The size is [(number of training samples) x (total dimension 
-            of attributes)]
-        :param data_gen_flag: Flags indicating the activation of features, in 
-            numpy float32 array format. The size is [(number of training 
-            samples) x (maximum length)]. 1 means the time series is 
-            activated at this time step, 0 means the time series is 
-            inactivated at this timestep. 
-            For example, 
-            (1) assume maximum length is 6:
-            (1.1) If the length of a sample is 1, the flags should be: 
-            [1, 0, 0, 0, 0, 0]
-            (1.2) If the length of a sample is 3, the flags should be:
-            [1, 1, 1, 0, 0, 0]
-            Different from the last two dimensions of data_feature, the
-            values of data_gen_flag does not influenced by sample_len
-        :param sample_len: The time series batch size
-        '''
         self.data_feature = data_feature
         self.data_attribute = data_attribute
 
@@ -145,7 +138,7 @@ class DoppelGANger(nn.Module):
         self.sample_time = int(self.data_feature[0].shape[1] / self.sample_len)
         self.sample_feature_dim = self.data_feature[0].shape[2]
         self.sample_attribute_dim = self.data_attribute[0].shape[1]
-        
+
         self.batch_size = self.data_feature[0].shape[0]
 
         # generate training route (fake)
@@ -164,18 +157,18 @@ class DoppelGANger(nn.Module):
             self.g_output_attribute_train_tf_l.append(
                 g_output_attribute_train_tf)
 
-        self.g_output_feature_train_tf = torch.cat(
+        self.g_feature_train = torch.cat(
             self.g_output_feature_train_tf_l,
             dim=1)
-        self.g_output_attribute_train_tf = torch.cat(
+        self.g_attribute_train = torch.cat(
             self.g_output_attribute_train_tf_l,
             dim=1)
 
         self.d_fake_train_tf = self.discriminator(
-            self.g_output_feature_train_tf,
-            self.g_output_attribute_train_tf)
+            self.g_feature_train,
+            self.g_attribute_train)
         self.attr_d_fake_train_tf = self.attr_discriminator(
-            self.g_output_attribute_train_tf)
+            self.g_attribute_train)
 
         # generate training route (real)
         self.real_feature_pl = torch.cat(
@@ -191,8 +184,8 @@ class DoppelGANger(nn.Module):
             self.real_attribute_pl)
 
         return self.d_fake_train_tf, self.attr_d_fake_train_tf,\
-               self.d_real_train_tf, self.attr_d_real_train_tf
-    
+            self.d_real_train_tf, self.attr_d_real_train_tf
+
     def sample_from(self,
                     real_attribute_input_noise,
                     addi_attribute_input_noise,
@@ -209,14 +202,14 @@ class DoppelGANger(nn.Module):
         self.generator.eval()
         for i in range(round_):
             (feature, attribute, gen_flag, length, _) = \
-                    self.generator(real_attribute_input_noise[i * batch_size:
-                                                              (i + 1) * batch_size],
-                                   addi_attribute_input_noise[i * batch_size:
-                                                           (i + 1) * batch_size],
-                                   feature_input_noise[i * batch_size:
-                                                       (i + 1) * batch_size],
-                                   feature_input_data[i * batch_size:
-                                                      (i + 1) * batch_size])
+                self.generator(real_attribute_input_noise[i * batch_size:
+                                                          (i + 1) * batch_size],
+                               addi_attribute_input_noise[i * batch_size:
+                                                          (i + 1) * batch_size],
+                               feature_input_noise[i * batch_size:
+                                                   (i + 1) * batch_size],
+                               feature_input_data[i * batch_size:
+                                                  (i + 1) * batch_size])
             features.append(feature)
             attributes.append(attribute)
             gen_flags.append(gen_flag)
@@ -235,4 +228,3 @@ class DoppelGANger(nn.Module):
         features = np.delete(features, gen_flag_dims, axis=2)
 
         return features, attributes, gen_flags, lengths
-

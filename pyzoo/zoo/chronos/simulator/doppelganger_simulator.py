@@ -14,28 +14,22 @@
 # limitations under the License.
 #
 
-# The Clear BSD License
-
-# Copyright (c) 2019 Carnegie Mellon University
-# All rights reserved.
-
-# Redistribution and use in source and binary forms, with or without modification, are permitted (subject to the limitations in the disclaimer below) provided that the following conditions are met:
-#     * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-#     * Neither the name of Carnegie Mellon University nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-    
-# NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
 import numpy as np
+import pickle
+import os
 
 from zoo.chronos.simulator.doppelganger.data_module import DoppelGANgerDataModule
-from zoo.chronos.simulator.doppelganger.util import gen_attribute_input_noise, gen_feature_input_noise,\
-    gen_feature_input_data_free, renormalize_per_sample
+from zoo.chronos.simulator.doppelganger.util import gen_attribute_input_noise,\
+    gen_feature_input_noise, gen_feature_input_data_free, renormalize_per_sample
 from zoo.chronos.simulator.doppelganger.doppelganger_pl import DoppelGANger_pl
 
 import torch
 from pytorch_lightning import Trainer, seed_everything
+
+MODEL_PATH = "doppelganger.ckpt"
+FEATURE_OUTPUT = "feature.output.ckpt"
+ATTRIBUTE_OUTPUT = "attribute.output.ckpt"
+
 
 class DoppelGANgerSimulator:
     '''
@@ -66,6 +60,8 @@ class DoppelGANgerSimulator:
                  num_threads=None,
                  ckpt_dir=None):
         '''
+        :param L_max: the maximum length of your feature.
+        :param sample_len: the sample length to control LSTM length, should be a divider to L_max
         :param discriminator_num_layers: MLP layer num for discriminator.
         :param discriminator_num_units: MLP hidden unit for discriminator.
         :param attr_discriminator_num_layers: MLP layer num for attr discriminator.
@@ -76,8 +72,8 @@ class DoppelGANgerSimulator:
         :param feature_num_layers: LSTM layer num for feature generator.
         :param attribute_input_noise_dim: noise data dim for attr generator.
         :param addi_attribute_input_noise_dim: noise data dim for addi attr generator.
-        :param d_gp_coe: gradient penalty ratio for d loss. 
-        :param attr_d_gp_coe: gradient penalty ratio for attr d loss. 
+        :param d_gp_coe: gradient penalty ratio for d loss.
+        :param attr_d_gp_coe: gradient penalty ratio for attr d loss.
         :param g_attr_d_coe: ratio between feature loss and attr loss for g loss.
         :param d_lr: learning rate for discriminator.
         :param attr_d_lr: learning rate for attr discriminator.
@@ -86,7 +82,7 @@ class DoppelGANgerSimulator:
         :param d_rounds: d rounds.
         :param seed: random seed.
         :param num_threads: num of threads to be used for training.
-        '''    
+        '''
         # additional settings
         seed_everything(seed=seed)
         if num_threads is not None:
@@ -116,7 +112,7 @@ class DoppelGANgerSimulator:
                        "d_rounds": d_rounds}
 
         # model init
-        self.model = None  # model will be lazy built during fit since the dim will depend on the data
+        self.model = None  # model will be lazy built since the dim will depend on the data
 
     def fit(self,
             data_feature,
@@ -206,34 +202,32 @@ class DoppelGANgerSimulator:
 
         # renormalize (max, min)
         features, attributes = renormalize_per_sample(
-                    features, attributes, self.data_module.data_feature_outputs,
-                    self.data_module.data_attribute_outputs, gen_flags,
-                    num_real_attribute=self.data_module.num_real_attribute)
+            features, attributes, self.data_module.data_feature_outputs,
+            self.data_module.data_attribute_outputs, gen_flags,
+            num_real_attribute=self.data_module.num_real_attribute)
 
         return features, attributes, gen_flags, lengths
 
-    def save(self, path):
+    def save(self, path_dir):
         '''
-        :param path: saving path
+        :param path_dir: saving path
         '''
-        self.trainer.save_checkpoint(path)
+        self.trainer.save_checkpoint(os.path.join(path_dir, MODEL_PATH))
+        with open(os.path.join(path_dir, FEATURE_OUTPUT), "wb") as f:
+            pickle.dump(self.data_module.data_feature_outputs, f)
+        with open(os.path.join(path_dir, ATTRIBUTE_OUTPUT), "wb") as f:
+            pickle.dump(self.data_module.data_attribute_outputs, f)
 
     def load(self,
-             path,
-             real_data,
-             feature_outputs,
-             attribute_outputs,
-             batch_size=32):
+             path_dir):
         '''
-        :param path: saving path
-        :param real_data: same as in fit.
-        :param feature_outputs: same as in fit.
-        :param attribute_outputs: same as in fit.
-        :param batch_size: same as in fit.
+        :param path_dir: saving path
         '''
-        self.data_module = DoppelGANgerDataModule(real_data=real_data,
-                                                  feature_outputs=feature_outputs,
-                                                  attribute_outputs=attribute_outputs,
-                                                  sample_len=self.sample_len,
-                                                  batch_size=batch_size)
-        self.model = DoppelGANger_pl.load_from_checkpoint(path, datamodule=self.data_module)
+        with open(os.path.join(path_dir, FEATURE_OUTPUT), "rb") as f:
+            data_feature_outputs = pickle.load(f)
+        with open(os.path.join(path_dir, ATTRIBUTE_OUTPUT), "rb") as f:
+            data_attribute_outputs = pickle.load(f)
+        self.model =\
+            DoppelGANger_pl.load_from_checkpoint(os.path.join(path_dir, MODEL_PATH),
+                                                 data_feature_outputs=data_feature_outputs,
+                                                 data_attribute_outputs=data_attribute_outputs)

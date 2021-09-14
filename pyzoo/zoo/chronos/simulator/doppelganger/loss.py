@@ -1,8 +1,26 @@
+#
+# Copyright 2018 Analytics Zoo Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
 import torch
 import torch.autograd as autograd
 
 
 EPS = 1e-8
+
 
 def doppelganger_loss(d_fake,
                       attr_d_fake,
@@ -31,7 +49,7 @@ def doppelganger_loss(d_fake,
         differences_input_feature = g_output_feature_train_tf - real_feature_pl
         interpolates_input_feature = real_feature_pl + alpha_dim3 * differences_input_feature
         differences_input_attribute = g_output_attribute_train_tf - real_attribute_pl
-        interpolates_input_attribute =  real_attribute_pl + alpha_dim2 * differences_input_attribute
+        interpolates_input_attribute = real_attribute_pl + alpha_dim2 * differences_input_attribute
 
         interpolates_input_feature.requires_grad = True
         interpolates_input_attribute.requires_grad = True
@@ -43,7 +61,7 @@ def doppelganger_loss(d_fake,
                                   create_graph=True,
                                   retain_graph=True,
                                   allow_unused=True)
-        slopes1 = torch.sum(torch.square(gradients[0]), dim=[1,2])
+        slopes1 = torch.sum(torch.square(gradients[0]), dim=[1, 2])
         slopes2 = torch.sum(torch.square(gradients[1]), dim=1)
         slopes = torch.sqrt(slopes1 + slopes2 + EPS)
         d_loss_gp = ((slopes - 1) ** 2).mean()
@@ -57,7 +75,8 @@ def doppelganger_loss(d_fake,
     if gradient_penalty:
         alpha_dim2_attr = torch.rand(batch_size, 1)
         differences_input_attribute = g_output_attribute_train_tf - real_attribute_pl
-        interpolates_input_attribute =  real_attribute_pl + alpha_dim2_attr * differences_input_attribute
+        interpolates_input_attribute = real_attribute_pl +\
+            alpha_dim2_attr * differences_input_attribute
         interpolates_input_attribute.requires_grad = True
         attr_disc_interpolates = attr_discriminator(interpolates_input_attribute)
         gradients_attr = autograd.grad(outputs=attr_disc_interpolates,
