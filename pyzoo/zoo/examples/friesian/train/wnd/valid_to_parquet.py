@@ -169,24 +169,6 @@ if __name__ == '__main__':
                           conf=conf)
 
     start = time()
-    with pd.read_csv(os.path.join(args.input_folder, "train"),
-                     delimiter="\x01",
-                     chunksize=100000
-                     ) as reader:
-        i = 0
-        for df in reader:
-            df = df.rename(columns={"text_ tokens": "text_tokens"})
-            # This is a typo. Other typos include enaging...
-            df = df.rename(columns={"retweet_timestampe": "retweet_timestamp"})
-            df.to_parquet(os.path.join(args.output_folder, "spark-parquet/%d.parquet" % i))
-            i += 1
-
-    # train_tbl = FeatureTable.read_csv(os.path.join(args.input_folder, "train"),
-    #                                   delimiter="\x01"
-    #                                   )
-    # train_tbl.df.printSchema()
-    # train_tbl.write_parquet(os.path.join(args.output_folder, "spark_parquet"))
-
     val_tbl = FeatureTable.read_csv(os.path.join(args.input_folder, "valid"),
                                     delimiter="\x01",
                                     names=RecsysSchema().toColumns(),

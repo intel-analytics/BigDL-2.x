@@ -106,8 +106,6 @@ def _parse_args():
                         help='The driver memory.')
     parser.add_argument('--train_files', type=str, default="000-269", required=True,
                         help="range for preprocessing train files, such as 000-269, 000-001.")
-    parser.add_argument('--test_files', type=str, default="00-63", required=True,
-                        help="range for preprocessing test files, such as 00-63, 00-01.")
     parser.add_argument('--input_folder', type=str, required=True,
                         help="Path to the folder of parquet files.")
     parser.add_argument('--output_folder', type=str, default=".",
@@ -116,8 +114,8 @@ def _parse_args():
                         help='bucket sizes for cross columns', default="600")
 
     args = parser.parse_args()
-    start, end = args.files.split('-')
-    args.files = list(range(int(start), int(end) + 1))
+    start, end = args.train_files.split('-')
+    args.train_files = list(range(int(start), int(end) + 1))
 
     args.cross_sizes = [int(x) for x in args.cross_sizes.split(',')]
 
@@ -181,9 +179,11 @@ if __name__ == '__main__':
                           conf=conf)
 
     start = time()
-    train_paths = [os.path.join(args.input_folder, 'spark_parquet/part-%05d.parquet' % i) for i in args.files]
-    test_paths = [os.path.join(args.input_folder, 'test_spark_parquet/part-%05d.parquet' % i) for i in args.files]
+    train_paths = [os.path.join(args.input_folder, 'spark_parquet/part-%05d.parquet' % i) for i in args.train_files]
+    test_paths = os.path.join(args.input_folder, 'test_spark_parquet')
     train_tbl = FeatureTable.read_parquet(train_paths)
+    train_tbl.df.printSchema()
+
     test_tbl = FeatureTable.read_parquet(test_paths)
 
     train_tbl = preprocess(train_tbl)
