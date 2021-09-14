@@ -104,7 +104,7 @@ def _parse_args():
                         help='The driver core number.')
     parser.add_argument('--driver_memory', type=str, default="36g",
                         help='The driver memory.')
-    parser.add_argument('--train_files', type=str, default="000-269", required=True,
+    parser.add_argument('--train_files', type=str, default="000-269",
                         help="range for preprocessing train files, such as 000-269, 000-001.")
     parser.add_argument('--input_folder', type=str, required=True,
                         help="Path to the folder of parquet files.")
