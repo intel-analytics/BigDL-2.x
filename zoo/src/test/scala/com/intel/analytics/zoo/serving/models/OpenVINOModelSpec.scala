@@ -16,11 +16,6 @@
 
 package com.intel.analytics.zoo.serving.models
 
-import java.io.{BufferedWriter, File, FileWriter}
-import java.nio.file.{Files, Paths}
-
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
 import com.intel.analytics.zoo.serving.engine.ClusterServingInference
@@ -146,35 +141,6 @@ val helper = ClusterServing.helper
       require(result(0)._1.length == 1000, "result length wrong")
       require(result(0)._2.length == 1, "result shape wrong")
     })
-  }
-
-  "OpenVINO Resnet50_openvino2020na" should "work" in {
-    ("wget -O /tmp/openvino2020_resnet50.tar http://10.239.45.10:8081" +
-      "/repository/raw/analytics-zoo-data/openvino2020_resnet50.tar").!
-    "tar -xvf /tmp/openvino2020_resnet50.tar -C /tmp/".!
-    val weightPath = "/tmp/openvino2020_resnet50/resnet_v1_50.bin"
-    val defPath = "/tmp/openvino2020_resnet50/resnet_v1_50.xml"
-    val model = new InferenceModel()
-    model.doLoadOpenVINONg(modelPath = defPath, weightPath = weightPath)
-    Seq("sh", "-c", "rm -rf /tmp/openvino2020_resnet50*").!
-    val t = Tensor[Float](1, 3, 224, 224).rand()
-    val a = t.storage().array().mkString(", ")
-    val file = new File("/home/yina/Documents/analytics-zoo/pyzoo/test/zoo/resources/orca/learn" +
-      "/resnet_input")
-    val bw = new BufferedWriter(new FileWriter(file))
-    bw.write(a)
-    bw.close()
-    println("------------------------------------------aaa")
-    println(a)
-    val result: Tensor[Float] = model.doPredict(t).toTensor
-    val b = result.storage().array()
-    println(b.mkString(", "))
-    val file2 = new File("/home/yina/Documents/analytics-zoo/pyzoo/test/zoo/resources/orca/learn" +
-      "/resnet_output")
-    val bw2 = new BufferedWriter(new FileWriter(file2))
-    bw2.write(b.mkString(", "))
-    bw2.close()
-    result
   }
 
 

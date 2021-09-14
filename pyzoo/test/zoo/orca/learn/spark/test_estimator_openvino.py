@@ -13,17 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import math
 import os
-import tempfile
 import tarfile
+import tempfile
 from unittest import TestCase
 
 import numpy as np
+from bigdl.dataset.base import maybe_download
+
 from zoo import init_nncontext
 from zoo.orca.data import SparkXShards
 from zoo.orca.learn.openvino import Estimator
-from bigdl.dataset.base import maybe_download
 
 property_path = os.path.join(os.path.split(__file__)[0],
                              "../../../../../../zoo/target/classes/app.properties")
