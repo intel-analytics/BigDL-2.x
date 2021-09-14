@@ -31,8 +31,9 @@ import java.util.UUID;
 public class PSIStub {
     private static final Logger logger = LoggerFactory.getLogger(PSIStub.class);
     private PSIServiceGrpc.PSIServiceBlockingStub stub;
-    public PSIStub(Channel channel) {
+    public PSIStub(Channel channel, String taskID) {
         stub = PSIServiceGrpc.newBlockingStub(channel);
+        this.taskID = taskID;
     }
     protected String clientID = UUID.randomUUID().toString();
     protected String salt;

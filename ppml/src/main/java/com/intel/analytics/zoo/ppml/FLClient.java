@@ -17,7 +17,6 @@
 package com.intel.analytics.zoo.ppml;
 
 import com.intel.analytics.zoo.grpc.ZooGrpcClient;
-import com.intel.analytics.zoo.ppml.generated.PSIServiceGrpc;
 import com.intel.analytics.zoo.ppml.vfl.GBStub;
 import com.intel.analytics.zoo.ppml.vfl.NNStub;
 import com.intel.analytics.zoo.ppml.vfl.PSIStub;
@@ -57,7 +56,7 @@ public class FLClient extends ZooGrpcClient {
     public void loadServices() {
         for (String service : serviceList.split(",")) {
             if (service.equals("psi")) {
-                psiStub = new PSIStub(channel);
+                psiStub = new PSIStub(channel, taskID);
             } else if (service.equals("vflnn")) {
                 nnStub = new NNStub(channel, clientUUID);
             } else if (service.equals("vlfgb")) {

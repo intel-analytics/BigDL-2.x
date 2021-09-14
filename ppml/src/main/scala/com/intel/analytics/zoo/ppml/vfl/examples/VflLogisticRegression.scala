@@ -38,12 +38,14 @@ object VflLogisticRegression {
   val flClient = new FLClient()
   protected var hashedKeyPairs: Map[String, String] = null
   def main(args: Array[String]): Unit = {
+    // load args
     val datapath = args(0)
     val worker = args(1).toInt
     val batchSize = args(2).toInt
     val learningRate = args(3).toFloat
     val rowkeyName = args(4)
 
+    // load data from dataset and preprocess
     val sources = Source.fromFile(datapath, "utf-8").getLines()
     val headers = sources.next().split(",").map(_.trim)
     println(headers.mkString(","))
@@ -81,17 +83,17 @@ object VflLogisticRegression {
     val trainDataset = DataSet.array(samples) -> SampleToMiniBatch(batchSize)
     //TODO: Find a better dataset has val dataset.
     val valDataset = DataSet.array(samples) -> SampleToMiniBatch(batchSize)
-
+    // define model
     RNG.setSeed(worker)
     val model = if (worker == 0) {
       Sequential[Float]().add(Linear(featureNum, 1))
     } else {
       Sequential[Float]().add(Linear(featureNum, 1, withBias = false))
     }
-    //    val model = Sequential[Float]().add(Linear(2, 1))
     println(model.getParametersTable())
     val estimator = VflEstimator(model, new Adam(learningRate))
     estimator.train(30, trainDataset.toLocal(), valDataset.toLocal())
+    // check training result
     println(model.getParametersTable())
     estimator.getEvaluateResults().foreach{r =>
       println(r._1 + ":" + r._2.mkString(","))
