@@ -22,7 +22,6 @@ import com.intel.analytics.bigdl.dllib.keras.{KerasLayer}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.utils.Shape
-import com.intel.analytics.bigdl.dllib.models.common.ZooModel
 import com.intel.analytics.bigdl.dllib.keras.Net
 import com.intel.analytics.bigdl.dllib.keras.layers.internal.InternalTimeDistributed
 import com.intel.analytics.bigdl.dllib.keras.layers.utils.KerasUtils
@@ -95,16 +94,6 @@ import scala.reflect.ClassTag
       layer: KerasLayer[Activity, Tensor[T], T],
       inputShape: Shape = null)(implicit ev: TensorNumeric[T]): TimeDistributed[T] = {
     new TimeDistributed[T](layer, inputShape)
-  }
-
-  def apply[@specialized(Float, Double) T: ClassTag](
-      layer: ZooModel[Activity, Activity, T],
-      inputShape: Shape)(implicit ev: TensorNumeric[T]): TimeDistributed[T] = {
-    layer.model match {
-      case keras: KerasNet[T] =>
-        new TimeDistributed[T](keras.asInstanceOf[KerasLayer[Activity, Tensor[T], T]], inputShape)
-      case _ => throw new Exception(s"$layer is not defined in Keras style")
-    }
   }
  }
 
