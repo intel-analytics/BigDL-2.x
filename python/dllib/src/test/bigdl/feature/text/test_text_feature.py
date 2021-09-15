@@ -17,7 +17,7 @@
 import pytest
 
 from bigdl.dllib.feature.text import *
-from test.bigdl.test_zoo_utils import ZooTestCase
+from test.bigdl.utils.test_zoo_utils import ZooTestCase
 
 text = "Hello my friend, please annotate my text"
 

@@ -18,7 +18,7 @@ import pytest
 from bigdl.dllib.nn.layer import *
 from bigdl.dllib.nn.criterion import *
 from bigdl.dllib.optim.optimizer import *
-from test.bigdl.test_zoo_utils import ZooTestCase
+from test.bigdl.utils.test_zoo_utils import ZooTestCase
 from bigdl.dllib.feature.common import *
 from bigdl.dllib.utils.nncontext import init_nncontext, init_spark_conf
 
