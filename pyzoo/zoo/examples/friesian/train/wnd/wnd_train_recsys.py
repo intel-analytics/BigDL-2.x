@@ -230,8 +230,6 @@ if __name__ == "__main__":
                                     )
 
     config = {
-        "class_num": options.class_num,
-        "model_type": options.model_type,
         "lr": options.learning_rate,
         "hidden_units": options.hidden_units,
         "column_info": column_info,
