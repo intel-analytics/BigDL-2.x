@@ -195,6 +195,7 @@ if __name__ == '__main__':
                                            'col_name': 'user_id'})
     train_tbl = encode_user_id(train_tbl)
     test_tbl = encode_user_id(test_tbl)
+    test_tbl = test_tbl.fillna(0, ["engaged_with_user_id", "enaging_user_id"])
 
     indexes = train_tbl.gen_string_idx(list_cols, do_split=True, sep='\t')
     train_tbl = train_tbl.encode_string(list_cols, indexes,
