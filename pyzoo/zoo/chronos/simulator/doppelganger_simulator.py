@@ -62,9 +62,13 @@ class DoppelGANgerSimulator:
                  num_threads=None,
                  ckpt_dir=None):
         '''
+        Initialize a doppelganger simulator.
+
         :param L_max: the maximum length of your feature.
         :param sample_len: the sample length to control LSTM length, should be a divider to L_max
         :param feature_dim: dimention of the feature
+        :param num_real_attribute: the length of you attribute, which should be equal to the
+               len(data_attribute).
         :param discriminator_num_layers: MLP layer num for discriminator.
         :param discriminator_num_units: MLP hidden unit for discriminator.
         :param attr_discriminator_num_layers: MLP layer num for attr discriminator.
@@ -128,6 +132,8 @@ class DoppelGANgerSimulator:
             epoch=1,
             batch_size=32):
         '''
+        Fit on the training data(typically the private data).
+
         :param data_feature: Training features, in numpy float32 array format.
                The size is [(number of training samples) x (maximum length)
                x (total dimension of features)]. Categorical features are stored
@@ -179,6 +185,8 @@ class DoppelGANgerSimulator:
 
     def generate(self, sample_num=1, batch_size=32):
         '''
+        Generate synthetic data with similar distribution as training data.
+
         :param sample_num: How many samples to be generated.
         :param batch_size: batch size to generate.
         '''
@@ -216,6 +224,8 @@ class DoppelGANgerSimulator:
 
     def save(self, path_dir):
         '''
+        Save the simulator.
+
         :param path_dir: saving path
         '''
         self.trainer.save_checkpoint(os.path.join(path_dir, MODEL_PATH))
@@ -227,6 +237,8 @@ class DoppelGANgerSimulator:
     def load(self,
              path_dir):
         '''
+        Load the simulator.
+
         :param path_dir: saving path
         '''
         with open(os.path.join(path_dir, FEATURE_OUTPUT), "rb") as f:

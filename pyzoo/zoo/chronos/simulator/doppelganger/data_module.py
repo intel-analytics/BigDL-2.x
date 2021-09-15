@@ -29,11 +29,7 @@ from .util import add_gen_flag, normalize_per_sample, renormalize_per_sample
 class DoppelGANgerDataModule(LightningDataModule):
     '''
     Note that for now, we will still follow the Dataset format stated in
-    https://github.com/fjxmlzn/DoppelGANger#dataset-format. In other words,
-    the data_dir should be set to a dir with following three files.
-    1. data_feature_output.pkl (change this by setting DATA_FEATURE_OUTPUT_FILENAME)
-    2. data_attribute_output.pkl (change this by setting DATA_ATTRIBUTE_OUTPUT_FILENAME)
-    3. data_train.npz (change this by setting DATA_TRAIN_FILENAME)
+    https://github.com/fjxmlzn/DoppelGANger#dataset-format.
 
     Please notice that this module can not work alone without doppelganger_torch.
     '''
@@ -57,17 +53,6 @@ class DoppelGANgerDataModule(LightningDataModule):
         self.num_real_attribute = len(data_attribute_outputs)
         self.num_feature_dim = len(data_feature_outputs)
 
-        # print loaded data basic status
-        print("------------loaded data-------------")
-        print("====================================")
-        print("data_all type:", type(data_all), "shape:", data_all.shape)
-        print("data_attribute type:", type(data_attribute), "shape:", data_attribute.shape)
-        print("data_gen_flag type:", type(data_gen_flag), "shape:", data_gen_flag.shape)
-        print("data_feature_outputs:", data_feature_outputs)
-        print("data_attribute_outputs:", data_attribute_outputs)
-        print("num_feature_dim:", self.num_feature_dim)
-        print("num_real_attribute:", self.num_real_attribute)
-
         # normalize data (use this only if you want to use additional attribute(max, min))
         # actually, no additional attribute has not been fully tested now
         # ===================================================================================
@@ -80,12 +65,6 @@ class DoppelGANgerDataModule(LightningDataModule):
         # ===================================================================================
         data_feature, data_feature_outputs = add_gen_flag(
             data_feature, data_gen_flag, data_feature_outputs, self.sample_len)
-        print("")
-        print("------------processed data------------")
-        print("======================================")
-        print("data_feature shape(after processing):", data_feature.shape)
-        print("data_attribute shape(after processing):", data_attribute.shape)
-        print("data_gen_flag shape(after processing):", data_gen_flag.shape)
 
         # will be used in model init
         self.data_feature_outputs = data_feature_outputs
