@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-from .doppelganger_simulator import DoppelGANgerSimulator
+from .doppelganger_simulator import DPGANSimulator

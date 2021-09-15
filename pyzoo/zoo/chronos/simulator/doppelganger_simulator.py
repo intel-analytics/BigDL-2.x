@@ -25,15 +25,17 @@ from zoo.chronos.simulator.doppelganger.doppelganger_pl import DoppelGANger_pl
 
 import torch
 from pytorch_lightning import Trainer, seed_everything
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 MODEL_PATH = "doppelganger.ckpt"
 FEATURE_OUTPUT = "feature.output.ckpt"
 ATTRIBUTE_OUTPUT = "attribute.output.ckpt"
 
 
-class DoppelGANgerSimulator:
+class DPGANSimulator:
     '''
     Doppelganger Simulator for time series generation.
+    The codes and algorithm are adapted from https://github.com/fjxmlzn/DoppelGANger.
     '''
     def __init__(self,
                  L_max,
@@ -60,7 +62,8 @@ class DoppelGANgerSimulator:
                  d_rounds=1,
                  seed=0,
                  num_threads=None,
-                 ckpt_dir=None):
+                 ckpt_dir=".",
+                 checkpoint_every_n_epoch=0):
         '''
         Initialize a doppelganger simulator.
 
@@ -89,12 +92,17 @@ class DoppelGANgerSimulator:
         :param d_rounds: d rounds.
         :param seed: random seed.
         :param num_threads: num of threads to be used for training.
+        :param ckpt_dir: The checkpoint location, defaults to the working dir.
+        :param checkpoint_every_n_epoch: checkpoint every n epoch, defaults to 0
+               for no checkpoints.
         '''
         # additional settings
         seed_everything(seed=seed)
         if num_threads is not None:
             torch.set_num_threads(num_threads)
         self.ckpt_dir = ckpt_dir
+        self.ckpt_dir_model = os.path.join(self.ckpt_dir, "model")
+        self.checkpoint_every_n_epoch = checkpoint_every_n_epoch
         self.sample_len = sample_len
         self.L_max = L_max
         self.feature_dim = feature_dim
@@ -168,6 +176,15 @@ class DoppelGANgerSimulator:
                                                   sample_len=self.sample_len,
                                                   batch_size=batch_size)
 
+        checkpoint_callback = ModelCheckpoint(dirpath=self.ckpt_dir_model,
+                                              save_top_k=-1,
+                                              every_n_epochs=self.checkpoint_every_n_epoch)
+        if self.checkpoint_every_n_epoch != 0:
+            with open(os.path.join(self.ckpt_dir, FEATURE_OUTPUT), "wb") as f:
+                pickle.dump(self.data_module.data_feature_outputs, f)
+            with open(os.path.join(self.ckpt_dir, ATTRIBUTE_OUTPUT), "wb") as f:
+                pickle.dump(self.data_module.data_attribute_outputs, f)
+
         # build the model
         self.model = DoppelGANger_pl(data_feature_outputs=self.data_module.data_feature_outputs,
                                      data_attribute_outputs=self.data_module.data_attribute_outputs,
@@ -176,7 +193,7 @@ class DoppelGANgerSimulator:
                                      num_real_attribute=self.num_real_attribute,
                                      **self.params)
         self.trainer = Trainer(logger=False,
-                               checkpoint_callback=False,
+                               callbacks=checkpoint_callback,
                                max_epochs=epoch,
                                default_root_dir=self.ckpt_dir)
 
@@ -228,24 +245,28 @@ class DoppelGANgerSimulator:
 
         :param path_dir: saving path
         '''
-        self.trainer.save_checkpoint(os.path.join(path_dir, MODEL_PATH))
+        path_dir_model = os.path.join(path_dir, "model")
+        self.trainer.save_checkpoint(os.path.join(path_dir_model, MODEL_PATH))
         with open(os.path.join(path_dir, FEATURE_OUTPUT), "wb") as f:
             pickle.dump(self.data_module.data_feature_outputs, f)
         with open(os.path.join(path_dir, ATTRIBUTE_OUTPUT), "wb") as f:
             pickle.dump(self.data_module.data_attribute_outputs, f)
 
     def load(self,
-             path_dir):
+             path_dir,
+             model_version=MODEL_PATH):
         '''
         Load the simulator.
 
         :param path_dir: saving path
+        :param model_version:
         '''
         with open(os.path.join(path_dir, FEATURE_OUTPUT), "rb") as f:
             data_feature_outputs = pickle.load(f)
         with open(os.path.join(path_dir, ATTRIBUTE_OUTPUT), "rb") as f:
             data_attribute_outputs = pickle.load(f)
+        path_dir_model = os.path.join(path_dir, "model")
         self.model =\
-            DoppelGANger_pl.load_from_checkpoint(os.path.join(path_dir, MODEL_PATH),
+            DoppelGANger_pl.load_from_checkpoint(os.path.join(path_dir_model, model_version),
                                                  data_feature_outputs=data_feature_outputs,
                                                  data_attribute_outputs=data_attribute_outputs)
