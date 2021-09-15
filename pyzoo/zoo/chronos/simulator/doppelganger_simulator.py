@@ -259,7 +259,7 @@ class DPGANSimulator:
         Load the simulator.
 
         :param path_dir: saving path
-        :param model_version:
+        :param model_version: model version(filename) you would like to load.
         '''
         with open(os.path.join(path_dir, FEATURE_OUTPUT), "rb") as f:
             data_feature_outputs = pickle.load(f)
