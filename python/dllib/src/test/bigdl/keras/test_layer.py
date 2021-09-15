@@ -18,7 +18,7 @@ import pytest
 
 import numpy as np
 
-from test.bigdl.test_zoo_utils import ZooTestCase
+from test.bigdl.utils.test_zoo_utils import ZooTestCase
 import bigdl.dllib.keras.layers as ZLayer
 from bigdl.dllib.keras.models import Model as ZModel, Sequential as ZSequential
 import keras.layers as KLayer

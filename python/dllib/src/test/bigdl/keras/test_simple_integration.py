@@ -21,7 +21,7 @@ from bigdl.dllib.feature.common import ChainedPreprocessing
 from bigdl.dllib.feature.image import *
 from bigdl.dllib.keras.layers import *
 from bigdl.dllib.keras.models import *
-from test.bigdl.test_zoo_utils import ZooTestCase
+from test.bigdl.utils.test_zoo_utils import ZooTestCase
 
 np.random.seed(1337)  # for reproducibility
 
