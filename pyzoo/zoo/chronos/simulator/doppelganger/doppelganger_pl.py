@@ -39,6 +39,7 @@ class DoppelGANger_pl(LightningModule):
                  data_feature_outputs,
                  data_attribute_outputs,
                  L_max,
+                 num_real_attribute,
                  sample_len=10,
                  discriminator_num_layers=5,
                  discriminator_num_units=200,
@@ -80,7 +81,8 @@ class DoppelGANger_pl(LightningModule):
                                   "g_rounds",
                                   "d_rounds",
                                   "L_max",
-                                  "sample_len")
+                                  "sample_len",
+                                  "num_real_attribute")
         self.g_rounds = g_rounds
         self.d_rounds = d_rounds
         self.sample_len = sample_len
@@ -89,8 +91,8 @@ class DoppelGANger_pl(LightningModule):
         self.data_attribute_outputs = data_attribute_outputs
 
         self.length = self.L_max // self.sample_len
-        self.real_attribute_mask = ([True] * (len(data_attribute_outputs)-2) +
-                                    [False] * 2)  # for (max+-min)/2
+        self.real_attribute_mask = ([True] * num_real_attribute +
+                                    [False] * (len(data_attribute_outputs)-num_real_attribute))
         self.gen_flag_dims = []
         dim = 0
         for output in self.data_feature_outputs:

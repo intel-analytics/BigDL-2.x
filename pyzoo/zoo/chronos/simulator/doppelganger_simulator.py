@@ -38,6 +38,8 @@ class DoppelGANgerSimulator:
     def __init__(self,
                  L_max,
                  sample_len,
+                 feature_dim,
+                 num_real_attribute,
                  discriminator_num_layers=5,
                  discriminator_num_units=200,
                  attr_discriminator_num_layers=5,
@@ -62,6 +64,7 @@ class DoppelGANgerSimulator:
         '''
         :param L_max: the maximum length of your feature.
         :param sample_len: the sample length to control LSTM length, should be a divider to L_max
+        :param feature_dim: dimention of the feature
         :param discriminator_num_layers: MLP layer num for discriminator.
         :param discriminator_num_units: MLP hidden unit for discriminator.
         :param attr_discriminator_num_layers: MLP layer num for attr discriminator.
@@ -90,6 +93,8 @@ class DoppelGANgerSimulator:
         self.ckpt_dir = ckpt_dir
         self.sample_len = sample_len
         self.L_max = L_max
+        self.feature_dim = feature_dim
+        self.num_real_attribute = num_real_attribute
 
         # hparam saving
         self.params = {"discriminator_num_layers": discriminator_num_layers,
@@ -162,8 +167,10 @@ class DoppelGANgerSimulator:
                                      data_attribute_outputs=self.data_module.data_attribute_outputs,
                                      L_max=self.L_max,
                                      sample_len=self.sample_len,
+                                     num_real_attribute=self.num_real_attribute,
                                      **self.params)
         self.trainer = Trainer(logger=False,
+                               checkpoint_callback=False,
                                max_epochs=epoch,
                                default_root_dir=self.ckpt_dir)
 
@@ -180,13 +187,12 @@ class DoppelGANgerSimulator:
         total_generate_num_sample = sample_num
 
         # generate noise and inputs
-        length = self.data_module.length
         real_attribute_input_noise = gen_attribute_input_noise(total_generate_num_sample)
         addi_attribute_input_noise = gen_attribute_input_noise(total_generate_num_sample)
-        feature_input_noise = gen_feature_input_noise(total_generate_num_sample, length)
+        feature_input_noise = gen_feature_input_noise(total_generate_num_sample, self.model.length)
         feature_input_data = gen_feature_input_data_free(total_generate_num_sample,
-                                                         self.data_module.sample_len,
-                                                         self.data_module.data_feature.shape[-1])
+                                                         self.model.sample_len,
+                                                         self.feature_dim)
         real_attribute_input_noise = torch.from_numpy(real_attribute_input_noise).float()
         addi_attribute_input_noise = torch.from_numpy(addi_attribute_input_noise).float()
         feature_input_noise = torch.from_numpy(feature_input_noise).float()
@@ -202,9 +208,9 @@ class DoppelGANgerSimulator:
 
         # renormalize (max, min)
         features, attributes = renormalize_per_sample(
-            features, attributes, self.data_module.data_feature_outputs,
-            self.data_module.data_attribute_outputs, gen_flags,
-            num_real_attribute=self.data_module.num_real_attribute)
+            features, attributes, self.model.data_feature_outputs,
+            self.model.data_attribute_outputs, gen_flags,
+            num_real_attribute=self.num_real_attribute)  # -2 for addi attr
 
         return features, attributes, gen_flags, lengths
 
