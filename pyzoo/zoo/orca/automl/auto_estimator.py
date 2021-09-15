@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from zoo.automl.search import SearchEngineFactory
+from zoo.orca.automl.search import SearchEngineFactory
 
 
 class AutoEstimator:
@@ -56,7 +56,8 @@ class AutoEstimator:
                    loss,
                    logs_dir="/tmp/auto_estimator_logs",
                    resources_per_trial=None,
-                   name=None,
+                   name="auto_pytorch_estimator",
+                   remote_dir=None,
                    ):
         """
         Create an AutoEstimator for torch.
@@ -72,11 +73,14 @@ class AutoEstimator:
         :param logs_dir: Local directory to save logs and results. It defaults to
             "/tmp/auto_estimator_logs"
         :param resources_per_trial: Dict. resources for each trial. e.g. {"cpu": 2}.
-        :param name: Name of the auto estimator.
+        :param name: Name of the auto estimator. It defaults to "auto_pytorch_estimator"
+        :param remote_dir: String. Remote directory to sync training results and checkpoints. It
+            defaults to None and doesn't take effects while running in local. While running in
+            cluster, it defaults to "hdfs:///tmp/{name}".
 
         :return: an AutoEstimator object.
         """
-        from zoo.automl.model.base_pytorch_model import PytorchModelBuilder
+        from zoo.orca.automl.model.base_pytorch_model import PytorchModelBuilder
         model_builder = PytorchModelBuilder(model_creator=model_creator,
                                             optimizer_creator=optimizer,
                                             loss_creator=loss)
@@ -84,6 +88,7 @@ class AutoEstimator:
         return AutoEstimator(model_builder=model_builder,
                              logs_dir=logs_dir,
                              resources_per_trial=resources_per_trial,
+                             remote_dir=remote_dir,
                              name=name)
 
     @staticmethod
@@ -91,7 +96,8 @@ class AutoEstimator:
                    model_creator,
                    logs_dir="/tmp/auto_estimator_logs",
                    resources_per_trial=None,
-                   name=None,
+                   name="auto_keras_estimator",
+                   remote_dir=None,
                    ):
         """
         Create an AutoEstimator for tensorflow keras.
@@ -100,15 +106,19 @@ class AutoEstimator:
         :param logs_dir: Local directory to save logs and results. It defaults to
             "/tmp/auto_estimator_logs"
         :param resources_per_trial: Dict. resources for each trial. e.g. {"cpu": 2}.
-        :param name: Name of the auto estimator.
+        :param name: Name of the auto estimator. It defaults to "auto_keras_estimator"
+        :param remote_dir: String. Remote directory to sync training results and checkpoints. It
+            defaults to None and doesn't take effects while running in local. While running in
+            cluster, it defaults to "hdfs:///tmp/{name}".
 
         :return: an AutoEstimator object.
         """
-        from zoo.automl.model.base_keras_model import KerasModelBuilder
+        from zoo.orca.automl.model.base_keras_model import KerasModelBuilder
         model_builder = KerasModelBuilder(model_creator=model_creator)
         return AutoEstimator(model_builder=model_builder,
                              logs_dir=logs_dir,
                              resources_per_trial=resources_per_trial,
+                             remote_dir=remote_dir,
                              name=name)
 
     def fit(self,
@@ -147,7 +157,7 @@ class AutoEstimator:
         :param metric_mode: One of ["min", "max"]. "max" means greater metric value is better.
             You have to specify metric_mode if you use a customized metric function.
             You don't have to specify metric_mode if you use the built-in metric in
-            zoo.automl.common.metrics.Evaluator.
+            zoo.orca.automl.metrics.Evaluator.
         :param metric_threshold: a trial will be terminated when metric threshold is met
         :param n_sampling: Number of times to sample from the search_space. Defaults to 1.
             If hp.grid_search is in search_space, the grid will be repeated n_sampling of times.
@@ -228,7 +238,7 @@ class AutoEstimator:
             if callable(metric):
                 raise ValueError("You must specify `metric_mode` for your metric function")
             try:
-                from zoo.automl.common.metrics import Evaluator
+                from zoo.orca.automl.metrics import Evaluator
                 mode = Evaluator.get_metric_mode(metric)
             except ValueError:
                 pass

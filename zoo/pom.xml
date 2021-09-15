@@ -79,6 +79,7 @@
                             <target>1.8</target>
                             <excludes>
                                 <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/ppml/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/serving/grpc/**</exclude>
                             </excludes>
                         </configuration>
@@ -91,6 +92,7 @@
                                 <exclude>**/com/intel/analytics/zoo/examples/serving/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/serving/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/ppml/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/pipeline/nnframes/XgboostTrainSpec.scala</exclude>
                                 <exclude>**/com/intel/analytics/zoo/friesian/python/PythonFriesian.scala</exclude>
                                 <exclude>**/com/intel/analytics/zoo/friesian/feature/Utils.scala</exclude>
@@ -128,6 +130,7 @@
                             <target>1.8</target>
                             <excludes>
                                 <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/ppml/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/serving/grpc/**</exclude>
                             </excludes>
                         </configuration>
@@ -138,6 +141,7 @@
                         <configuration>
                             <excludes>
                                 <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/ppml/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/serving/grpc/**</exclude>
                             </excludes>
                         </configuration>
@@ -354,6 +358,7 @@
             <properties>
                 <core.artifactId>zoo-core-dist-linux64</core.artifactId>
                 <core.dependencyType>pom</core.dependencyType>
+                <spark-mllib-scope>provided</spark-mllib-scope>
             </properties>
         </profile>
 
@@ -1090,6 +1095,12 @@
                                     <exclude>org.apache.commons:commons-compress</exclude>
                                     <exclude>org.scala-lang:scala-reflect</exclude>
                                     <exclude>xerces:xercesImpl</exclude>
+				    <exclude>org.scalanlp:*</exclude>
+				    <exclude>net.sf.opencsv:*</exclude>
+				    <exclude>com.github.rwl:*</exclude>
+				    <exclude>org.spire-math:*</exclude>
+				    <exclude>org.typelevel:*</exclude>
+				    <exclude>com.chuusai:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -1127,6 +1138,12 @@
                                     <exclude>org.apache.commons:commons-compress</exclude>
                                     <exclude>org.scala-lang:scala-reflect</exclude>
                                     <exclude>xerces:xercesImpl</exclude>
+				    <exclude>org.scalanlp:*</exclude>
+				    <exclude>net.sf.opencsv:*</exclude>
+				    <exclude>com.github.rwl:*</exclude>
+				    <exclude>org.spire-math:*</exclude>
+				    <exclude>org.typelevel:*</exclude>
+				    <exclude>com.chuusai:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>

@@ -14,14 +14,13 @@
 #
 
 import pickle
-import types
 
 import pandas as pd
 from xgboost.sklearn import XGBRegressor
 
 from xgboost.sklearn import XGBClassifier
-from zoo.automl.common.metrics import Evaluator
-from zoo.automl.model.abstract import BaseModel, ModelBuilder
+from zoo.orca.automl.metrics import Evaluator
+from zoo.orca.automl.model.abstract import BaseModel, ModelBuilder
 import logging
 
 logger = logging.getLogger(__name__)
