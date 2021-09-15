@@ -50,6 +50,9 @@ object ClusterServing {
   def uploadModel(): Unit = {
     streamingEnv = StreamExecutionEnvironment.getExecutionEnvironment
     streamingEnv.registerCachedFile(helper.modelPath, Conventions.SERVING_MODEL_TMP_DIR)
+    if (helper.redisSecureEnabled) {
+      streamingEnv.registerCachedFile(helper.redisSecureTrustStorePath, Conventions.SECURE_TMP_DIR)
+    }
   }
   def executeJob(): Unit = {
     /**
@@ -69,10 +72,10 @@ object ClusterServing {
     val params = ClusterServing.helper
     if (params.redisSecureEnabled) {
       System.setProperty("javax.net.ssl.trustStore", params.redisSecureTrustStorePath)
-      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStoreToken)
+      System.setProperty("javax.net.ssl.trustStorePassword", params.redisSecureTrustStorePassword)
       System.setProperty("javax.net.ssl.keyStoreType", "JKS")
       System.setProperty("javax.net.ssl.keyStore", params.redisSecureTrustStorePath)
-      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStoreToken)
+      System.setProperty("javax.net.ssl.keyStorePassword", params.redisSecureTrustStorePassword)
     }
     if (jedisPool == null) {
       this.synchronized {

@@ -57,7 +57,8 @@ object FrontEndApp extends Supportive with EncryptSupportive {
       val servableManager = new ServableManager
       logger.info("Multi Serving Mode")
       timing("load servable manager")() {
-        try servableManager.load(arguments.servableManagerPath)
+        try servableManager.load(arguments.servableManagerPath, purePredictTimersMap,
+          modelInferenceTimersMap)
         catch {
           case e: ServableLoadException =>
             throw e

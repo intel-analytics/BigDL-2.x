@@ -23,7 +23,6 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from zoo.orca.automl.auto_estimator import AutoEstimator
-from zoo.automl.recipe.base import Recipe
 from zoo.orca.automl.pytorch_utils import LR_NAME
 from zoo.orca.automl import hp
 
