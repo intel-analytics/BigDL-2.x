@@ -752,7 +752,7 @@ class FeatureTable(Table):
         return cls(Table._read_csv(paths, delimiter, header, names, dtype))
 
     def encode_string(self, columns, indices, broadcast=True,
-                      do_split=False, sep='\t', sort_for_array=False, keep_most_frequent=False
+                      do_split=False, sep=',', sort_for_array=False, keep_most_frequent=False
                       ):
         """
         Encode columns with provided list of StringIndex.
@@ -769,7 +769,7 @@ class FeatureTable(Table):
         :param do_split: bool, whether need to split column value to array to encode string.
         Default is False.
         :param sep: str, a string representing a regular expression to split a column value.
-        Default is '\t'
+        Default is ','.
         :param sort_for_array: bool, whether need to sort array columns. Default is False.
         :param keep_most_frequent: bool, whether need to keep most frequent value as the
         column value. Default is False.
@@ -885,7 +885,7 @@ class FeatureTable(Table):
         return cross_hash_df
 
     def category_encode(self, columns, freq_limit=None, order_by_freq=False,
-                        do_split=False, sep='\t', sort_for_array=False, keep_most_frequent=False,
+                        do_split=False, sep=',', sort_for_array=False, keep_most_frequent=False,
                         broadcast=True):
         """
         Category encode the given columns.
@@ -901,7 +901,7 @@ class FeatureTable(Table):
         :param do_split: bool, whether need to split column value to array to encode string.
         Default is False.
         :param sep: str, a string representing a regular expression to split a column value.
-        Default is '\t'
+        Default is ','.
         :param sort_for_array: bool, whether need to sort array columns. Default is False.
         :param keep_most_frequent: bool, whether need to keep most frequent value as the
         column value. Default is False.
