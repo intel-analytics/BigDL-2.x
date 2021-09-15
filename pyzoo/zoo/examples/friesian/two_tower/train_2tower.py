@@ -44,7 +44,7 @@ spark_conf = {"spark.network.timeout": "10000000",
               "spark.executor.memoryOverhead": "120g"}
 
 
-def train(config, train_data, test_data, epochs=1, batch_size=128, model_dir='.'):
+def train(config, train_tbl, test_tbl, epochs=1, batch_size=128, model_dir='.'):
     two_tower = TwoTowerModel(config["user_col_info"], config["item_col_info"])
     def model_creator(config):
         model = two_tower.build_model()
@@ -63,19 +63,19 @@ def train(config, train_data, test_data, epochs=1, batch_size=128, model_dir='.'
     from tensorflow.keras.callbacks import EarlyStopping
     callbacks.append(EarlyStopping(monitor='val_auc', mode='max', verbose=1, patience=5))
 
-    train_count = train_data.count()
-    test_count = test_data.count()
+    train_count, test_count = train_tbl.size(), test_tbl.size()
+    train_df, test_df = train_tbl.df, test_tbl.df
     steps_per_epoch = math.ceil(train_count / batch_size)
     val_steps = math.ceil(test_count / batch_size)
     feature_cols = user_col_info.get_name_list() + item_col_info.get_name_list()
     print("Total number of train records: {}".format(train_count))
     print("Total number of val records: {}".format(test_count))
 
-    estimator.fit(train_data, epochs=epochs, batch_size=batch_size,
+    estimator.fit(train_df, epochs=epochs, batch_size=batch_size,
                   feature_cols=feature_cols,
                   label_cols=['label'],
                   callbacks=callbacks,
-                  validation_data=test_data,
+                  validation_data=test_df,
                   steps_per_epoch=steps_per_epoch,
                   validation_steps=val_steps)
 
@@ -92,31 +92,25 @@ def train(config, train_data, test_data, epochs=1, batch_size=128, model_dir='.'
     print("saved models")
     return estimator
 
-
 def load_data(data_path):
     def gen_label(x):
-        # ts = [int(e) for e in x[:1] if e > 0]
-        ts = [e for e in x[:] if e > 0]
+        ts = [e for e in x[:] if e > 0] # 4 labels
         out = 1 if len(ts) > 0 else 0
         return out
     useful_cols = num_cols + cat_cols + embed_cols + ts_cols
     tbl = FeatureTable.read_parquet(data_path)
-
-    # tbl = tbl.rename({"enaging_user_id": "user_id", "tweet_id": "item_id"})
-    tbl = tbl.rename({"user": "user_id", "item": "item_id"})
-
+    tbl = tbl.rename({"enaging_user_id": "user_id", "tweet_id": "item_id"})
     tbl = tbl.fillna(0, useful_cols)
     tbl = tbl.apply(in_col=ts_cols, out_col='label', func=gen_label, dtype='bigint')
-
     return tbl
 
 def prepare_features(train_tbl, test_tbl, embed_reindex_dicts):
     def add_ratio_features(tbl):
         cal_ratio = (lambda x: x[1] / x[0] if x[0] > 0 else 0.0)
         tbl = tbl.apply(["engaged_with_user_follower_count","engaged_with_user_following_count"],
-                        'engaged_with_user_follower_following_ratio', cal_ratio, "float")\
+                        "engaged_with_user_follower_following_ratio", cal_ratio, "float")\
             .apply(["enaging_user_follower_count","enaging_user_following_count"],
-                    "enaging_user_follower_following_ratio", cal_ratio, "float")
+                   "enaging_user_follower_following_ratio", cal_ratio, "float")
         return tbl
 
     def organize_cols(tbl):
@@ -130,8 +124,11 @@ def prepare_features(train_tbl, test_tbl, embed_reindex_dicts):
         return tbl
 
     print("reindexing embedding cols")
-    train_tbl, embed_in_dims = train_tbl.reindex(embed_cols, embed_reindex_dicts)
-    test_tbl, _ = test_tbl.reindex(embed_cols, embed_reindex_dicts)
+    train_tbl = train_tbl.reindex(embed_cols, embed_reindex_dicts)
+    test_tbl = test_tbl.reindex(embed_cols, embed_reindex_dicts)
+    embed_in_dims = {}
+    for i, c, in enumerate(embed_cols):
+        embed_in_dims[c] = max(embed_reindex_dicts[i].values())
 
     print("add ratio features")
     train_tbl = add_ratio_features(train_tbl)
@@ -145,33 +142,32 @@ def prepare_features(train_tbl, test_tbl, embed_reindex_dicts):
         pickle.dump(min_max_dic, f)
 
     user_col_info = ColumnInfoTower(indicator_cols=["enaging_user_is_verified"],
-                                     indicator_dims=[2],
-                                     embed_cols=["user_id"],
-                                     embed_in_dims=[embed_in_dims["user_id"]],
-                                     embed_out_dims=[16],
-                                     numerical_cols=["user_num"],
-                                     numerical_dims=[3],
-                                     name="user")
+                                    indicator_dims=[2],
+                                    embed_cols=["user_id"],
+                                    embed_in_dims=[embed_in_dims["user_id"]],
+                                    embed_out_dims=[16],
+                                    numerical_cols=["user_num"],
+                                    numerical_dims=[3],
+                                    name="user")
     item_col_info = ColumnInfoTower(indicator_cols=["engaged_with_user_is_verified",
-                                                     "present_media", "tweet_type", "language"],
-                                     indicator_dims=[2, 13, 3, 67],  # max + 1
-                                     embed_cols=["engaged_with_user_id", "hashtags",
-                                                 "present_links", "present_domains"],
-                                     embed_in_dims=[embed_in_dims["engaged_with_user_id"],
-                                                    embed_in_dims["hashtags"],
-                                                    embed_in_dims["present_links"],
-                                                    embed_in_dims["present_domains"]],
-                                     embed_out_dims=[16, 16, 16, 16],
-                                     numerical_cols=["item_num"],
-                                     numerical_dims=[6],
-                                     name="item")
+                                                    "present_media", "tweet_type", "language"],
+                                    indicator_dims=[2, 13, 3, 67],  # max + 1
+                                    embed_cols=["engaged_with_user_id", "hashtags",
+                                                "present_links", "present_domains"],
+                                    embed_in_dims=[embed_in_dims["engaged_with_user_id"],
+                                                   embed_in_dims["hashtags"],
+                                                   embed_in_dims["present_links"],
+                                                   embed_in_dims["present_domains"]],
+                                    embed_out_dims=[16, 16, 16, 16],
+                                    numerical_cols=["item_num"],
+                                    numerical_dims=[6],
+                                    name="item")
 
     print("organize columns and specify user_col_info and item_col_info")
     train_tbl = organize_cols(train_tbl)
     test_tbl = organize_cols(test_tbl)
 
-    return train_tbl.df, test_tbl.df, user_col_info, item_col_info
-
+    return train_tbl, test_tbl, user_col_info, item_col_info
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Two Tower Training/Inference')
@@ -212,7 +208,8 @@ if __name__ == '__main__':
         sc = init_orca_context("yarn-client", cores=args.executor_cores,
                                num_nodes=args.num_executor, memory=args.executor_memory,
                                driver_cores=args.driver_cores, driver_memory=args.driver_memory,
-                               conf=spark_conf, extra_python_lib="two_tower.py", object_store_memory="80g",
+                               conf=spark_conf, extra_python_lib="two_tower.py",
+                               object_store_memory="80g",
                                init_ray_on_spark=True)
     elif args.cluster_mode == "spark-submit":
         sc = init_orca_context("spark-submit")
@@ -229,13 +226,11 @@ if __name__ == '__main__':
                'like_timestamp']
     embed_cols = ["user_id", "engaged_with_user_id", "hashtags", "present_links", "present_domains"]
 
-    #train_tbl, n_uid, n_mid = load_data(args.data_dir + "/saved.parquet")
-    #test_tbl, _, _ = load_data(args.data_dir +"/saved_test.parquet")
     train_tbl = load_data(args.data_dir)
     test_tbl = load_data(args.data_dir)
     full_tbl = train_tbl.concat(test_tbl, "outer")
     embed_reindex_dicts = full_tbl.gen_reindex_mapping(embed_cols, freq_limit=args.frequency_limit)
-    train_df, test_df, user_col_info, item_col_info = prepare_features(train_tbl, test_tbl, embed_reindex_dicts)
+    train_tbl, test_tbl, user_col_info, item_col_info = prepare_features(train_tbl, test_tbl, embed_reindex_dicts)
 
     stats_dir = args.model_dir + "/stats"
     for i, c in enumerate(embed_cols):
@@ -248,5 +243,5 @@ if __name__ == '__main__':
                     "inter_op_parallelism": 4,
                     "intra_op_parallelism": args.executor_cores}
 
-    train(train_config, train_df, test_df, epochs=args.epochs, batch_size=args.batch_size,
+    train(train_config, train_tbl, test_tbl, epochs=args.epochs, batch_size=args.batch_size,
                       model_dir=args.model_dir)
