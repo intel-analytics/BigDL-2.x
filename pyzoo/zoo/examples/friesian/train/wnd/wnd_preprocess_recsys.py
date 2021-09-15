@@ -202,6 +202,7 @@ if __name__ == '__main__':
                                         do_split=True, sep='\t', keep_most_frequent=True)
     test_tbl = test_tbl.encode_string(list_cols, indexes,
                                       do_split=True, sep='\t', keep_most_frequent=True)
+    test_tbl = test_tbl.fillna(0, list_cols)
 
     train_tbl.cache()
 
