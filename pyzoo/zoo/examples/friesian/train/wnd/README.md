@@ -12,24 +12,49 @@ pip install --pre --upgrade analytics-zoo
 
 ## Prepare the data
 You can download the full Twitter dataset from [here](https://recsys-twitter.com/data/show-downloads#), which includes close to 1 billion data points, >40 million each day over 28 days.
- Week 1 - 3 will be used for training and week 4 for evaluation and testing. Each datapoint contains the tweet along with engagement features, user features, and tweet features.which includes data of 24 days (day0 to day23) with 4,373,472,329 records in total.
+ Week 1 - 3 will be used for training and week 4 for evaluation and testing. Each datapoint contains the tweet along with engagement features, user features, and tweet features.
 
-After you download and decompress the files, and convert to 2 parquet directories, named 'spark_parquet' and 'test_spark_parquet'.
-- In 'spark_parquet', there are the first 21 days (day0 to day20) data used for WND training in total.
-The files are with the name "part-00xxx.parquet" (x=000-269).
-- In 'test_spark_parquet', there are the last 7 days (day21 to day27) data used for WND testing.
-The files are with the name "part-000xx.parquet" (x=00-63).
+After you download and decompress the files, there is a train parquet directory and validation csv file.
+* For train data, execute this command to do some conversion:
+```bash
+python convert_train.py \
+    --input_folder /path/to/the/folder/of/train_parquet_folder \
+    --output_foler /path/to/the/folder/to/save/preprocessed
+```
+__Options:__
+* `input_folder`: The path to the folder of train parquet folder.
+* `output_folder`: The path to the folder of save the preprocessed data.
+
+* For validation data, execute this command to change csv to parquet files:
+```bash
+python valid_to_parquet.py \
+    --input_folder /path/to/the/folder/of/valid_csv \
+    --output_foler /path/to/the/folder/to/save/preprocessed
+```
+__Options:__
+* `cluster_mode`: The cluster mode to run the data preprocessing, one of local, yarn or standalone. Default to be local.
+* `master`: The master URL, only used when cluster_mode is standalone.
+* `executor_cores`: The number of cores to use on each node. Default to be 44.
+* `executor_memory`: The amount of memory to allocate on each node. Default to be 30.
+* `num_nodes`: The number of nodes to use in the cluster. Default to be 8.
+* `driver_cores`: The number of cores to use for the driver. Default to be 4.
+* `driver_memory`: The amount of memory to allocate for the driver. Default to be 36g.
+* `input_folder`: The path to the folder of validation csv file.
+* `output_folder`: The path to the folder of save the preprocessed data.
 
 ## Running command
 
 ### Preprocess train and test data for WND training.
-* Spark local, we can use the first several partitions train/test data to have a trial, example command:
+
+In converted train parquet directory, there are the first 21 days (day0 to day20) data used for WND training in total.
+The files are with the name "part-00xxx.parquet" (x=000-269).
+
+* Spark local, we can use the first several partitions train data to have a trial, example command:
 ```bash
 python wnd_preprocessing_recsys.py \
     --executor_cores 36 \
     --executor_memory 50g \
     --train_files 0-1 \
-    --test_files 0-1 \
     --input_folder /path/to/the/folder/of/parquet_files \
     --output_foler /path/to/the/folder/to/save/preprocessed/parquet_files \
     --cross_sizes 600
@@ -44,7 +69,6 @@ python wnd_preprocessing_recsys.py \
     --executor_memory 150g \
     --num_executor 8 \
     --train_files 0-269 \
-    --test_files 0-63 \
     --input_folder /path/to/the/folder/of/parquet_files \
     --output_foler /path/to/the/folder/to/save/preprocessed/parquet_files \
     --cross_sizes 600
@@ -58,7 +82,6 @@ python wnd_preprocessing_recsys.py \
     --executor_memory 150g \
     --num_nodes 8 \
     --train_files 0-269 \
-    --test_files 0-63 \
     --input_folder /path/to/the/folder/of/parquet_files \
     --output_foler /path/to/the/folder/to/save/preprocessed/parquet_files \
     --cross_sizes 600

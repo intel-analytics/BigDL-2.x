@@ -18,8 +18,7 @@ conf = {"spark.network.timeout": "10000000",
         "spark.task.cpus": "1",
         "spark.executor.heartbeatInterval": "200s",
         "spark.driver.maxResultSize": "40G",
-        "spark.app.name": "recsys-val-parquet",
-        "spark.executor.memoryOverhead": "30g"}
+        "spark.app.name": "recsys-val-parquet"}
 
 
 class RecsysSchema:
@@ -135,7 +134,7 @@ def _parse_args():
                         help='The master url, only used when cluster mode is standalone.')
     parser.add_argument('--executor_cores', type=int, default=44,
                         help='The executor core number.')
-    parser.add_argument('--executor_memory', type=str, default="130",
+    parser.add_argument('--executor_memory', type=str, default="30",
                         help='The executor memory.')
     parser.add_argument('--num_executor', type=int, default=8,
                         help='The number of executor.')
