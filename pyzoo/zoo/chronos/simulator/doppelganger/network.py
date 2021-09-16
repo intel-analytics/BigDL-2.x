@@ -293,10 +293,11 @@ class DoppelGANgerGenerator(nn.Module):
                                    num_layers=self.feature_num_layers,
                                    batch_first=True)  # use batch_first to reduce many transpose
 
-        mlp_rnn_list = []
-        for i in range(self.sample_len):
-            mlp_rnn_list.append(linear(self.feature_num_units, self.feature_out_dim))
-        self.mlp_rnn_list = nn.ModuleList(mlp_rnn_list)
+        # mlp_rnn_list = []
+        # for i in range(self.sample_len):
+        #     mlp_rnn_list.append(linear(self.feature_num_units, self.feature_out_dim))
+        # self.mlp_rnn_list = nn.ModuleList(mlp_rnn_list)
+        self.mlp_rnn = linear(self.feature_num_units, self.feature_out_dim)
 
     def _post_process_generated_attribute(self, sub_attribute_output, sub_all_attribute_outputs):
         # real attribute post-process
@@ -462,7 +463,7 @@ class DoppelGANgerGenerator(nn.Module):
             new_output_all = []
             current_idx = 0
             for j in range(self.sample_len):
-                output_feature = self.mlp_rnn_list[j](out_rnn)
+                output_feature = self.mlp_rnn(out_rnn)
                 for k in range(len(self.feature_outputs)):
                     output = self.feature_outputs[k]
                     sub_output = output_feature[:, current_idx:current_idx+output.dim]
