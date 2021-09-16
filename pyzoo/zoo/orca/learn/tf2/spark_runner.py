@@ -14,6 +14,7 @@ from numpy import array
 from contextlib import closing
 import socket
 
+
 def find_free_port(tc):
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
         s.bind(("", 0))
@@ -28,6 +29,7 @@ def handle_datasets_train(data_creator, validation_data_creator):
         else:
             test_dataset = None
         return train_dataset, test_dataset
+
 
 class SparkRunner:
     def __init__(self, model_creator, data_creator, validation_data_creator,
@@ -45,6 +47,9 @@ class SparkRunner:
         self.class_weight = class_weight
         self.data_config = data_config
 
+        self.rank = None
+        self.model = None
+
     def distributed_train_func(self, *args):
         """
         Sets up TensorFLow distributed environment, initializes the model,
@@ -55,6 +60,7 @@ class SparkRunner:
         free_port = find_free_port(tc)
         cluster = tc.allGather(str(free_port))
         self.cluster = cluster
+        self.rank = rank
         print(cluster)
 
         import os
@@ -82,20 +88,23 @@ class SparkRunner:
         
         history = model.fit(train_dataset, test_dataset, epochs, verbose, callbacks)
 
-        if history is None:
-            stats = {}
-        else:
-            stats = {"train_" + k: v[-1] for k, v in history.history.items()}
-        return model, [stats]
+        return (model, history)
         
     def step(self, *args):
         """
         Get model training results and new model.
         """
-        model, stats = self.distributed_train_func()
+        model, history = self.distributed_train_func()
+        self.model = model
         weights = model.get_weights()
-
-        return [weights], [stats]
+        if history is None:
+            stats = {}
+        else:
+            stats = {"train_" + k: v[-1] for k, v in history.history.items()}
+        if self.rank == 0:
+            return ([weights, stats])
+        else:
+            return []
     
     def validate(self, *args):
         """
@@ -129,11 +138,40 @@ class SparkRunner:
         else:
             stats = {"results": results}
         
-        stats = {"results": results}
-
-        return [stats]
+        if self.rank == 0:
+            return [stats]
+        else:
+            return []
     
-    #def save_model(self)
+    def save_keras_model(self, *args):
+        """
+        Save tensorflow keras model in this estimator.
+
+        :param path: keras model save path.
+        :param overwrite: Whether to silently overwrite any existing file at the target location.
+        """
+        model_path = self.model_path
+        overwrite = self.overwrite
+        self.model.save_model(model_path, overwrite=overwrite)
+        
+    
+    def save_model_weights(self, *args):
+        """
+        Save tensorflow keras model weights in this estimator.
+
+        :param filepath: keras model weights save path.
+        :param overwrite: Whether to silently overwrite any existing file at the target location.
+        :param save_format: Either 'tf' or 'h5'. A `filepath` ending in '.h5' or
+               '.keras' will default to HDF5 if `save_format` is `None`. Otherwise
+               `None` defaults to 'tf'.
+        """
+        filepath = self.filepath
+        overwrite = self.overwrite
+        save_format = self.save_format
+        self.model.save_weights(filepath, overwrite, save_format)
+
+    
+    
     
     
 

@@ -20,6 +20,8 @@ import numpy as np
 from pyspark.context import SparkContext
 from spark_runner import SparkRunner
 
+from zoo.orca import OrcaContext
+
 logger = logging.getLogger(__name__)
 
 class Estimator(object):
@@ -73,13 +75,18 @@ class SparkTFEstimator(Estimator):
         self.config = {} if config is None else config
         self.verbose = verbose
 
+        sc = OrcaContext.get_spark_context()
+        self.worker_nums = sc.getConf().get("spark.executor.instances")
+        self.part_nums = self.worker_nums * 2
+
         if "batch_size" in self.config:
             raise Exception("Please do not specify batch_size in config. Input batch_size in the"
                             " fit/evaluate function of the estimator instead.")
+        sc.stop()
         
     
     def fit(self, data, validation_data, epochs=1, batch_size=32, verbose=1,
-            callbacks=None, class_weight=None, model_weights=None):
+            partition_len=32, callbacks=None, class_weight=None):
         """
         Train this tensorflow model with train data.
         :param data: train data. It can be XShards, Spark DataFrame or creator function which
@@ -99,7 +106,7 @@ class SparkTFEstimator(Estimator):
         :return:
         """
         import numpy as np
-        sc = SparkContext()
+        sc = OrcaContext.get_spark_context()
 
         params = dict(
             epochs=epochs,
@@ -113,19 +120,44 @@ class SparkTFEstimator(Estimator):
         params["data_creator"] = data
         params["validation_data_creator"] = validation_data
 
-        workerRDD = sc.parallelize(list(range(40)), 4).repartition(2)
+        worker_nums = self.worker_nums
+        part_nums = self.part_nums
+        workerRDD = sc.parallelize(list(range(partition_len)), part_nums).repartition(worker_nums)
         spark_func = SparkRunner(**params).step
         res = workerRDD.barrier().mapPartitions(spark_func).collect()
-        model_weights = res[0]
-        stats = res[1]
 
         sc.stop()
-        return model_weights, stats
+        return res
 
     def evaluate(self, data, validation_data, epochs=1, batch_size=32, verbose=1, 
-                callbacks=None, class_weight=None):
+                partition_len=32, callbacks=None, class_weight=None):
+        """
+        Evaluates the model on the validation data set.
+        :param data: evaluate data. It can be XShards, Spark DataFrame or creator function which
+               returns Iter or DataLoader.
+               If data is XShards, each partition can be a Pandas DataFrame or a dictionary of
+               {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
+               numpy arrays.
+        :param batch_size: Batch size used for evaluation. Default: 32.
+        :param num_steps: Total number of steps (batches of samples) before declaring the evaluation
+               round finished. Ignored with the default value of `None`.
+        :param verbose: Prints output of one model if true.
+        :param sample_weight: Optional Numpy array of weights for the training samples, used for
+               weighting the loss function. You can either pass a flat (1D) Numpy array with the
+               same length as the input samples (1:1 mapping between weights and samples), or in
+               the case of temporal data, you can pass a 2D array with shape (samples,
+               sequence_length), to apply a different weight to every timestep of every sample.
+        :param callbacks: List of Keras compatible callbacks to apply during evaluation.
+        :param data_config: An optional dictionary that can be passed to data creator function.
+        :param feature_cols: Feature column name(s) of data. Only used when data is a Spark
+               DataFrame or an XShards of Pandas DataFrame. Default: None.
+        :param label_cols: Label column name(s) of data. Only used when data is a Spark DataFrame or
+               an XShards of Pandas DataFrame.
+               Default: None.
+        :return: validation result
+        """
         import numpy as np
-        sc = SparkContext()
+        sc = OrcaContext.get_spark_context()
 
         logger.info("Starting validation step.")
 
@@ -141,12 +173,13 @@ class SparkTFEstimator(Estimator):
         params["data_creator"] = data
         params["validation_data_creator"] = validation_data
 
-        workerRDD = sc.parallelize(list(range(40)), 4).repartition(2)
+        worker_nums = self.worker_nums
+        part_nums = self.part_nums
+        workerRDD = sc.parallelize(list(range(partition_len)), part_nums).repartition(worker_nums)
         spark_func = SparkRunner(**params).validate
         res = workerRDD.barrier().mapPartitions(spark_func).collect()
         
-        stats = res[1]
-
         sc.stop()
-        return stats
+        return res
+    
 
