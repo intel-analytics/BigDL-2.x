@@ -494,15 +494,17 @@ class SparkTFEstimator(Estimator):
                If data is XShards, each partition can be a Pandas DataFrame or a dictionary of
                {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
                numpy arrays.
+        :param validation_data: validation data. Validation data type should be the same
+               as train data.
         :param epochs: Number of epochs to train the model. Default: 1.
         :param batch_size: Batch size used for training. Default: 32.
         :param verbose: Prints output of one model if true.
+        :param partition_len: Random length of an list array for RDD partition.
         :param callbacks: List of Keras compatible callbacks to apply during training.
-        :param validation_data: validation data. Validation data type should be the same
-               as train data.
         :param class_weight: Optional dictionary mapping class indices (integers) to a weight
                (float) value, used for weighting the loss function. This can be useful to tell
                the model to "pay more attention" to samples from an under-represented class.
+        :model_dir: (str) Path to the target checkpoint file.
         :return:
         """
         import numpy as np
@@ -543,6 +545,7 @@ class SparkTFEstimator(Estimator):
                as train data.
         :param batch_size: Batch size used for evaluation. Default: 32.
         :param verbose: Prints output of one model if true.
+        :param partition_len: Random length of an list array for RDD partition.
         :param callbacks: List of Keras compatible callbacks to apply during evaluation.
         :param class_weight: Optional dictionary mapping class indices (integers) to a weight
                (float) value, used for weighting the loss function. This can be useful to tell
