@@ -140,22 +140,3 @@ class SparkRunner:
             return [stats]
         else:
             return []
-
-    def save_model_weights(self, *args):
-        """
-        Save tensorflow keras model weights in this estimator.
-
-        :param filepath: keras model weights save path.
-        :param overwrite: Whether to silently overwrite any existing file at the target location.
-        :param save_format: Either 'tf' or 'h5'. A `filepath` ending in '.h5' or
-               '.keras' will default to HDF5 if `save_format` is `None`. Otherwise
-               `None` defaults to 'tf'.
-        """
-        model, stats = self.distributed_train_func()
-
-        filepath = self.filepath
-        overwrite = self.overwrite
-        save_format = self.save_format
-
-        return {"weights": model.get_weights()}
-
