@@ -1,4 +1,4 @@
-# Spark on Occlum
+# Spark Local on Occlum
 
 ## Spark 2.4.6 local test
 
