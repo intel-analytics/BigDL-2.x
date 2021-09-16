@@ -142,8 +142,3 @@ class SparkRunner:
             return [stats]
         else:
             return []
-
-    
-
-
-
