@@ -15,6 +15,7 @@
 #
 import logging
 import itertools
+import pickle
 
 import numpy as np
 from pyspark.context import SparkContext
@@ -74,6 +75,8 @@ class SparkTFEstimator(Estimator):
         self.compile_args_creator = compile_args_creator
         self.config = {} if config is None else config
         self.verbose = verbose
+        
+        self.weight = None
 
         sc = OrcaContext.get_spark_context()
         self.worker_nums = sc.getConf().get("spark.executor.instances")
@@ -86,7 +89,7 @@ class SparkTFEstimator(Estimator):
         
     
     def fit(self, data, validation_data, epochs=1, batch_size=32, verbose=1,
-            partition_len=32, callbacks=None, class_weight=None):
+            partition_len=32, callbacks=None, class_weight=None, checkpoint=None):
         """
         Train this tensorflow model with train data.
         :param data: train data. It can be XShards, Spark DataFrame or creator function which
@@ -124,7 +127,12 @@ class SparkTFEstimator(Estimator):
         part_nums = self.part_nums
         workerRDD = sc.parallelize(list(range(partition_len)), part_nums).repartition(worker_nums)
         spark_func = SparkRunner(**params).step
-        res = workerRDD.barrier().mapPartitions(spark_func).collect()
+        res = workerRDD.barrier().mapPartitions(spark_func).collect()        
+        state = res[0]
+
+        if checkpoint is not None:
+            with open(checkpoint, "wb") as f:
+                pickle.dump(state, f)
 
         sc.stop()
         return res
@@ -139,26 +147,16 @@ class SparkTFEstimator(Estimator):
                {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
                numpy arrays.
         :param batch_size: Batch size used for evaluation. Default: 32.
-        :param num_steps: Total number of steps (batches of samples) before declaring the evaluation
-               round finished. Ignored with the default value of `None`.
         :param verbose: Prints output of one model if true.
-        :param sample_weight: Optional Numpy array of weights for the training samples, used for
-               weighting the loss function. You can either pass a flat (1D) Numpy array with the
-               same length as the input samples (1:1 mapping between weights and samples), or in
-               the case of temporal data, you can pass a 2D array with shape (samples,
-               sequence_length), to apply a different weight to every timestep of every sample.
+        :param class_weight: Optional dictionary mapping class indices (integers) to a weight
+               (float) value, used for weighting the loss function. This can be useful to tell
+               the model to "pay more attention" to samples from an under-represented class.
         :param callbacks: List of Keras compatible callbacks to apply during evaluation.
         :param data_config: An optional dictionary that can be passed to data creator function.
-        :param feature_cols: Feature column name(s) of data. Only used when data is a Spark
-               DataFrame or an XShards of Pandas DataFrame. Default: None.
-        :param label_cols: Label column name(s) of data. Only used when data is a Spark DataFrame or
-               an XShards of Pandas DataFrame.
-               Default: None.
         :return: validation result
         """
         import numpy as np
         sc = OrcaContext.get_spark_context()
-
         logger.info("Starting validation step.")
 
         params = dict(
@@ -180,6 +178,4 @@ class SparkTFEstimator(Estimator):
         res = workerRDD.barrier().mapPartitions(spark_func).collect()
         
         sc.stop()
-        return res
-    
-
+        return res       

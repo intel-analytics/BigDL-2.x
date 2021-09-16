@@ -46,9 +46,7 @@ class SparkRunner:
         self.callbacks = callbacks
         self.class_weight = class_weight
         self.data_config = data_config
-
         self.rank = None
-        self.model = None
 
     def distributed_train_func(self, *args):
         """
@@ -122,7 +120,7 @@ class SparkRunner:
         validation_data_creator = self.validation_data_creator
         train_dataset, test_dataset = handle_datasets_train(data_creator, validation_data_creator)
 
-        results = model.evaluate(train_dataset, test_dataset, **params)
+        results = self.model.evaluate(train_dataset, test_dataset, **params)
 
         if results is None:
             model_weights = weights[0]
@@ -142,3 +140,22 @@ class SparkRunner:
             return [stats]
         else:
             return []
+
+    def save_model_weights(self, *args):
+        """
+        Save tensorflow keras model weights in this estimator.
+
+        :param filepath: keras model weights save path.
+        :param overwrite: Whether to silently overwrite any existing file at the target location.
+        :param save_format: Either 'tf' or 'h5'. A `filepath` ending in '.h5' or
+               '.keras' will default to HDF5 if `save_format` is `None`. Otherwise
+               `None` defaults to 'tf'.
+        """
+        model, stats = self.distributed_train_func()
+
+        filepath = self.filepath
+        overwrite = self.overwrite
+        save_format = self.save_format
+
+        return {"weights": model.get_weights()}
+
