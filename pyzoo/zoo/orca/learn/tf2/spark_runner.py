@@ -34,7 +34,7 @@ def handle_datasets_train(data_creator, validation_data_creator):
 class SparkRunner:
     def __init__(self, model_creator, data_creator, validation_data_creator,
                 config=None, epochs=1, batch_size=32, verbose=None, callbacks=None, 
-                class_weight=None, data_config=None):
+                class_weight=None, data_config=None, model_dir=None):
         self.model_creator = model_creator
         self.data_creator = data_creator
         self.validation_data_creator = validation_data_creator
@@ -47,6 +47,7 @@ class SparkRunner:
         self.class_weight = class_weight
         self.data_config = data_config
         self.rank = None
+        self.model_dir = model_dir
 
     def distributed_train_func(self, *args):
         """
@@ -93,13 +94,15 @@ class SparkRunner:
         Get model training results and new model.
         """
         model, history = self.distributed_train_func()
-        self.model = model
+        model_dir = self.model_dir
         weights = model.get_weights()
         if history is None:
             stats = {}
         else:
             stats = {"train_" + k: v[-1] for k, v in history.history.items()}
         if self.rank == 0:
+            if model_dir is not None:
+                model.save_weights(model_dir)
             return ([weights, stats])
         else:
             return []

@@ -21,6 +21,7 @@ import numpy as np
 import ray
 from zoo.common.utils import enable_multi_fs_load, enable_multi_fs_save
 
+from pyspark.context import SparkContext
 from spark_runner import SparkRunner
 from zoo.orca import OrcaContext
 from zoo.orca.data.ray_xshards import RayXShards
@@ -485,7 +486,7 @@ class SparkTFEstimator(Estimator):
         
     
     def fit(self, data, validation_data, epochs=1, batch_size=32, verbose=1,
-            partition_len=32, callbacks=None, class_weight=None):
+            partition_len=32, callbacks=None, class_weight=None, model_dir=None):
         """
         Train this tensorflow model with train data.
         :param data: train data. It can be XShards, Spark DataFrame or creator function which
@@ -518,6 +519,7 @@ class SparkTFEstimator(Estimator):
         params["model_creator"] = self.model_creator
         params["data_creator"] = data
         params["validation_data_creator"] = validation_data
+        params["model_dir"] = model_dir
 
         worker_nums = self.worker_nums
         part_nums = self.part_nums
@@ -528,7 +530,7 @@ class SparkTFEstimator(Estimator):
         sc.stop()
         return res
 
-    def evaluate(self, data, validation_data, epochs=1, batch_size=32, verbose=1, 
+    def evaluate(self, data, validation_data, batch_size=32, verbose=1, 
                 partition_len=32, callbacks=None, class_weight=None):
         """
         Evaluates the model on the validation data set.
@@ -537,22 +539,21 @@ class SparkTFEstimator(Estimator):
                If data is XShards, each partition can be a Pandas DataFrame or a dictionary of
                {'x': feature, 'y': label}, where feature(label) is a numpy array or a tuple of
                numpy arrays.
+        :param validation_data: validation data. Validation data type should be the same
+               as train data.
         :param batch_size: Batch size used for evaluation. Default: 32.
         :param verbose: Prints output of one model if true.
+        :param callbacks: List of Keras compatible callbacks to apply during evaluation.
         :param class_weight: Optional dictionary mapping class indices (integers) to a weight
                (float) value, used for weighting the loss function. This can be useful to tell
                the model to "pay more attention" to samples from an under-represented class.
-        :param callbacks: List of Keras compatible callbacks to apply during evaluation.
-        :param data_config: An optional dictionary that can be passed to data creator function.
         :return: validation result
         """
         import numpy as np
         sc = OrcaContext.get_spark_context()
-
         logger.info("Starting validation step.")
 
         params = dict(
-            epochs=epochs,
             batch_size=batch_size,
             verbose=verbose,
             callbacks=callbacks,
@@ -568,8 +569,7 @@ class SparkTFEstimator(Estimator):
         workerRDD = sc.parallelize(list(range(partition_len)), part_nums).repartition(worker_nums)
         spark_func = SparkRunner(**params).validate
         res = workerRDD.barrier().mapPartitions(spark_func).collect()
-
+        
         sc.stop()
-        return res
+        return res     
     
-
