@@ -33,7 +33,7 @@ export PYTHON_EXECUTABLE=$p
 export PYSPARK_PYTHON=$p
 export PYSPARK_DRIVER_PYTHON=$p
 
-$p -m pytest -v  ../../test/bigdl/keras
+$p -m pytest -v  ../bigdl/nn/keras
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
