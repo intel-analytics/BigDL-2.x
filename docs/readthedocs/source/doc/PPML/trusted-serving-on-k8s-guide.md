@@ -19,6 +19,7 @@ Prior to deploying PPML Cluster Serving, please make sure the following is setup
 	```
 3. Generate secure keys and passwords, and deploy as secrets (Refer [here](https://github.com/intel-analytics/analytics-zoo/blob/master/ppml/trusted-realtime-ml/scala/docker-graphene/kubernetes/README.md#secure-keys-and-password) for details)
 	1. Generate keys and passwords
+		
 		Note: Make sure to add `${JAVA_HOME}/bin` to `$PATH` to avoid `keytool: command not found` error.
 		```
 		$ sudo ../../../../scripts/generate-keys.sh
@@ -61,7 +62,6 @@ In `templates/flink-configuration-configmap.yaml`, configure `sgx.mode` to `sgx`
         sgx.intel.com/enclave: "1"
         sgx.intel.com/epc: 16Gi
 	...
-
 	```
 	
 2.  Configure Taskmanager resource allocation
@@ -71,7 +71,8 @@ In `templates/flink-configuration-configmap.yaml`, configure `sgx.mode` to `sgx`
 	    taskmanager.memory.task.heap.size: 5gb
 	    xmx.size: 5g
 	 	```
-	- Pod resource allocation 	
+	- Pod resource allocation
+		
 		Use `taskmanager-deployment.yaml` instead of `taskmanager-statefulset.yaml` for functionality test
 		```
 		$ mv templates/taskmanager-statefulset.yaml ./
@@ -110,7 +111,8 @@ In `templates/flink-configuration-configmap.yaml`, configure `sgx.mode` to `sgx`
 		...
 		```
    - Pod resource allocation in `templates/master-deployment.yaml`
-		 Note: Mount `benchmark` directory included in the test kit by adding volumes, make sure to replace `/path/to/benchmark/directory/` with path of `benchmark` directory on host.
+		 
+		Note: Mount `benchmark` directory included in the test kit by adding volumes, make sure to replace `/path/to/benchmark/directory/` with path of `benchmark` directory on host.
 		```
 		...
 		env:
