@@ -16,9 +16,9 @@
 package com.intel.analytics.bigdl.keras.nn
 
 import com.intel.analytics.bigdl.dataset.Sample
-import com.intel.analytics.bigdl.nn.MSECriterion
-import com.intel.analytics.bigdl.nn.keras._
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.nn.MSECriterion
+import com.intel.analytics.bigdl.dllib.nn.keras._
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{Engine, Shape}
 import com.intel.analytics.bigdl.optim.{DummyDataSet, SGD, Top1Accuracy}
 import org.apache.spark.SparkContext

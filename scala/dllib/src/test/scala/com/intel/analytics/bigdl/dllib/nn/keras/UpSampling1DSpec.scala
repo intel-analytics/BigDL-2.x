@@ -16,7 +16,7 @@
 
 package com.intel.analytics.bigdl.keras
 
-import com.intel.analytics.bigdl.nn._
+import com.intel.analytics.bigdl.dllib.nn._
 import com.intel.analytics.bigdl.utils.{Shape, TestUtils}
 
 class UpSampling1DSpec extends KerasBaseSpec {

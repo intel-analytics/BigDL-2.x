@@ -16,8 +16,8 @@
 
 package com.intel.analytics.bigdl.keras
 
-import com.intel.analytics.bigdl.models.lenet.LeNet5
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.models.lenet.LeNet5
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import org.scalatest.{FlatSpec, Matchers}
 
 class LeNetSpec extends FlatSpec with Matchers {

@@ -16,8 +16,8 @@
 
 package com.intel.analytics.bigdl.keras
 
-import com.intel.analytics.bigdl.nn.{Cropping2D, _}
-import com.intel.analytics.bigdl.nn.abstractnn.DataFormat
+import com.intel.analytics.bigdl.dllib.nn.{Cropping2D, _}
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.DataFormat
 import com.intel.analytics.bigdl.utils.{Shape, TestUtils}
 
 class Cropping3DSpec extends KerasBaseSpec {

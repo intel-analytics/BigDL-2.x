@@ -16,9 +16,9 @@
 
 package com.intel.analytics.bigdl.keras.nn
 
-import com.intel.analytics.bigdl.nn.keras.Merge.merge
-import com.intel.analytics.bigdl.nn.keras._
-import com.intel.analytics.bigdl.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.nn.keras.Merge.merge
+import com.intel.analytics.bigdl.dllib.nn.keras._
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.utils.{BigDLSpecHelper, Shape}
 import com.intel.analytics.bigdl.utils.serializer.ModuleSerializationTest
 import com.intel.analytics.bigdl.numeric.NumericFloat
