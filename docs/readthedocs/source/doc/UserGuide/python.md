@@ -147,4 +147,4 @@ Traceback (most recent call last):
     raise CalledProcessError(retcode, cmd)
 subprocess.CalledProcessError: Command '['/root/anaconda3/bin/python', '-m', 'pip', '--disable-pip-version-check', 'wheel', '--no-deps', '-w', '/tmp/tmprefr87ue', '--quiet', 'pypandoc']' returned non-zero exit status 1.
 ```
-This is actually caused by `pip install pyspark` in your Python environment. You can fix it by `pip install pypandoc` first followed by `pip install analytics-zoo`.
+This is actually caused by `pip install pyspark` in your Python environment. You can fix it by running `pip install pypandoc` first and then `pip install analytics-zoo`.
