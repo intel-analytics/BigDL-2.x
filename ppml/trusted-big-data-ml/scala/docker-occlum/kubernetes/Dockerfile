@@ -1,4 +1,3 @@
-
 FROM krallin/ubuntu-tini AS tini
 FROM occlum/occlum:0.24.0-ubuntu18.04 AS occlum
 
