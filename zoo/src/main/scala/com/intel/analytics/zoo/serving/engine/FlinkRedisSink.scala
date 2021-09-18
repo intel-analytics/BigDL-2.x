@@ -36,8 +36,13 @@ class FlinkRedisSink(helperSer: ClusterServingHelper)
     logger = Logger.getLogger(getClass)
     // Sink is first initialized among Source, Map, Sink, so initialize static variable in sink.
     ClusterServing.helper = helperSer
+    if (ClusterServing.helper.redisSecureEnabled) {
+      ClusterServing.helper.redisSecureTrustStorePath = getRuntimeContext.getDistributedCache
+        .getFile(Conventions.SECURE_TMP_DIR).getPath
+    }
+
     helper = ClusterServing.helper
-    RedisUtils.initializeRedis()
+    ClusterServing.initializeRedis()
     jedis = RedisUtils.getRedisClient(ClusterServing.jedisPool)
   }
 

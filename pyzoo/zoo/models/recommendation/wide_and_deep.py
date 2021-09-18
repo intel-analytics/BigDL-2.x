@@ -90,6 +90,15 @@ class ColumnFeatureInfo(object):
                   self.embed_cols, self.embed_cols, self.embed_in_dims,
                   self.embed_out_dims, self.continuous_cols, self.label)
 
+    @property
+    def feature_cols(self):
+        return self.wide_base_cols + self.wide_cross_cols +\
+            self.indicator_cols + self.embed_cols + self.continuous_cols
+
+    @property
+    def label_cols(self):
+        return [self.label]
+
 
 class WideAndDeep(Recommender):
     """

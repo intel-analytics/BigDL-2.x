@@ -641,6 +641,7 @@ else
 fi
 
 sed -i '/get_ipython()/d; /plot[.]/d; /plt[.]/d; /axs[.]/d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.py
+sed -i 's/epochs=2/epochs=1/g;' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.py
 cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/
 
 python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.py
@@ -675,7 +676,7 @@ else
 fi
 
 sed -i '/get_ipython()/d; /plot[.]/d; /plt[.]/d; /axs[.]/d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.py
-sed -i "s/epochs=20/epochs=2/g; s/epochs=10/epochs=2/g; s/epochs=50/epochs=2/g" ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.py
+sed -i "s/epochs=20/epochs=1/g; s/epochs=10/epochs=1/g; s/epochs=50/epochs=1/g" ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.py
 cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/
 
 python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.py
@@ -701,6 +702,7 @@ chmod +x ${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 ${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
 
 sed -i '/get_ipython()/d;' ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset.py
+sed -i 's/epoch_num=5/epoch_num=1/g;' ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset.py
 
 python ${ANALYTICS_ZOO_HOME}/apps/automl/nyc_taxi_dataset.py
 
@@ -788,41 +790,7 @@ now=$(date "+%s")
 time21=$((now-start))
 echo "#21 chronos-anomaly-detect-unsupervised time used:$time21 seconds"
 
-echo "#22 start app test for chronos-network-traffic-impute"
-#timer
-start=$(date "+%s")
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_impute
-
-FILENAME="${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/data/data.csv"
-if [ -f "$FILENAME" ]
-then
-   echo "$FILENAME already exists."
-else
-   echo "Downloading network traffic data"
-
-   wget $FTP_URI/analytics-zoo-data/network-traffic/data/data.csv -P ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/data
-
-   echo "Finished downloading network traffic data"
-fi
-
-sed -i '/get_ipython()/d; /plot[.]/d; /plt[.]/d; /axs[.]/d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_impute.py
-cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/
-
-python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_impute.py
-cd -
-
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "chronos-network-traffic-impute failed"
-    exit $exit_status
-fi
-now=$(date "+%s")
-time22=$((now-start))
-echo "#22 chronos-network-traffic-impute time used:$time22 seconds"
-
-echo "#23 start app test for chronos-stock-prediction"
+echo "#22 start app test for chronos-stock-prediction"
 #timer
 start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/fsi/stock_prediction
@@ -862,10 +830,10 @@ then
     exit $exit_status
 fi
 now=$(date "+%s")
-time23=$((now-start))
-echo "#23 chronos-stock-prediction time used:$time23 seconds"
+time22=$((now-start))
+echo "#22 chronos-stock-prediction time used:$time22 seconds"
 
-echo "#24 start app test for chronos-network-traffic-multivarite-multistep-tcnforecaster"
+echo "#23 start app test for chronos-network-traffic-multivarite-multistep-tcnforecaster"
 #timer
 start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster
@@ -883,7 +851,7 @@ else
 fi
 
 sed -i '/get_ipython()/d; /plot[.]/d; /plt[.]/d; /axs[.]/d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster.py
-sed -i "s/epochs=20/epochs=2/g" ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster.py
+sed -i "s/epochs=10/epochs=1/g" ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster.py
 cd ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/
 
 python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster.py
@@ -898,10 +866,10 @@ then
 fi
 
 now=$(date "+%s")
-time24=$((now-start))
-echo "#24 chronos-network-traffic-multivarite-multistep-tcnforecaster time used:$time24 seconds"
+time23=$((now-start))
+echo "#23 chronos-network-traffic-multivarite-multistep-tcnforecaster time used:$time23 seconds"
 
-echo "#25 start app test for chronos-stock-prediction-prophet"
+echo "#24 start app test for chronos-stock-prediction-prophet"
 #timer
 start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/fsi/stock_prediction_prophet
@@ -941,10 +909,10 @@ then
     exit $exit_status
 fi
 now=$(date "+%s")
-time25=$((now-start))
-echo "#25 chronos-stock-prediction-prophet time used:$time25 seconds"
+time24=$((now-start))
+echo "#24 chronos-stock-prediction-prophet time used:$time24 seconds"
 
-echo "#26 start app test for chronos-network-traffic-autots-forecasting-experimental"
+echo "#25 start app test for chronos-network-traffic-autots-forecasting-experimental"
 #timer
 start=$(date "+%s")
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting_experimental
@@ -976,8 +944,8 @@ then
     exit $exit_status
 fi
 now=$(date "+%s")
-time26=$((now-start))
-echo "#26 chronos-network-traffic-autots-forecasting-experimental time used:$time26 seconds"
+time25=$((now-start))
+echo "#25 chronos-network-traffic-autots-forecasting-experimental time used:$time25 seconds"
 
 fi
 

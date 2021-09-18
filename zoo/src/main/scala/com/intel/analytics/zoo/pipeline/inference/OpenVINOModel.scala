@@ -77,6 +77,9 @@ class OpenVINOModel(var modelHolder: OpenVINOModelHolder,
     nativeRef
   }
 
+  override def predictNg(input: JList[JTensor]): JList[JTensor] = {
+    throw new Exception("Not implemented")
+  }
   override def predict(inputs: JList[JList[JTensor]]): JList[JList[JTensor]] = {
     val outputs = new ArrayList[JList[JTensor]]()
     inputs.asScala.map(input => {

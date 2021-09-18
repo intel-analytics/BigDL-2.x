@@ -17,7 +17,6 @@ import tensorflow as tf
 import numpy as np
 from unittest import TestCase
 from zoo.orca.automl.auto_estimator import AutoEstimator
-from zoo.automl.recipe.base import Recipe
 import pytest
 
 

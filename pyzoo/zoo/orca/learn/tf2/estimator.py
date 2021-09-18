@@ -43,7 +43,7 @@ class Estimator(object):
                    workers_per_node=1,
                    compile_args_creator=None,
                    backend="tf2",
-                   cpu_binding=True,
+                   cpu_binding=False,
                    ):
         """
         Create an Estimator for tensorflow 2.
@@ -61,7 +61,7 @@ class Estimator(object):
                dictionary like {"optimizer": tf.keras.optimizers.SGD(lr), "loss":
                "mean_squared_error", "metrics": ["mean_squared_error"]}
         :param backend: (string) You can choose "horovod" or "tf2" as backend. Default: `tf2`.
-        :param cpu_binding: (bool) Whether to binds threads to specific CPUs. Default: True
+        :param cpu_binding: (bool) Whether to binds threads to specific CPUs. Default: False
         """
         return TensorFlow2Estimator(model_creator=model_creator, config=config,
                                     verbose=verbose, workers_per_node=workers_per_node,
@@ -92,7 +92,7 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                  verbose=False,
                  backend="tf2",
                  workers_per_node=1,
-                 cpu_binding=True):
+                 cpu_binding=False):
         self.model_creator = model_creator
         self.compile_args_creator = compile_args_creator
         self.config = {} if config is None else config
@@ -221,7 +221,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
         data, validation_data = maybe_dataframe_to_xshards(data, validation_data,
                                                            feature_cols, label_cols,
                                                            mode="fit",
-                                                           num_workers=self.num_workers)
+                                                           num_workers=self.num_workers,
+                                                           accept_str_col=True)
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
@@ -305,7 +306,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                                              feature_cols=feature_cols,
                                              label_cols=label_cols,
                                              mode="evaluate",
-                                             num_workers=self.num_workers)
+                                             num_workers=self.num_workers,
+                                             accept_str_col=True)
 
         if isinstance(data, SparkXShards):
             if data._get_class_name() == 'pandas.core.frame.DataFrame':
@@ -380,7 +382,8 @@ class TensorFlow2Estimator(OrcaRayEstimator):
                                               validation_data=None,
                                               feature_cols=feature_cols,
                                               label_cols=None,
-                                              mode="predict")
+                                              mode="predict",
+                                              accept_str_col=True)
             pred_shards = self._predict_spark_xshards(xshards, params)
             result = convert_predict_xshards_to_dataframe(data, pred_shards)
         elif isinstance(data, SparkXShards):

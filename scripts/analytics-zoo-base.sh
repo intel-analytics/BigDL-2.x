@@ -23,7 +23,7 @@ fi
 
 ${SPARK_HOME}/bin/${SPARK_CMD} \
     --properties-file ${ANALYTICS_ZOO_CONF} \
-    --jars ${ANALYTICS_ZOO_JAR} \
+    --jars local://${ANALYTICS_ZOO_JAR} \
     --conf spark.driver.extraClassPath=${ANALYTICS_ZOO_JAR} \
     --conf spark.executor.extraClassPath=${ANALYTICS_ZOO_JAR} \
     "$@"

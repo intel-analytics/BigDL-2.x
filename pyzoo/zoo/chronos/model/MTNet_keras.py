@@ -45,9 +45,8 @@ from tensorflow.keras.initializers import TruncatedNormal, Constant
 import tensorflow.keras.backend as K
 
 import tensorflow as tf
-from zoo.automl.common.metrics import Evaluator
-from zoo.automl.model.abstract import BaseModel
-from zoo.automl.common.util import save_config
+from zoo.orca.automl.metrics import Evaluator
+from zoo.orca.automl.model.abstract import BaseModel
 
 
 class AttentionRNNWrapper(Wrapper):
