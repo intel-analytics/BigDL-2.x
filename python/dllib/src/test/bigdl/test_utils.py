@@ -329,7 +329,7 @@ class BigDLTestCase(TestCase):
         kmodel = KSequential()
         kmodel.add(klayer)
         koutput = kmodel.predict(input_data)
-        from bigdl.dllib.keras.layers.layer import BatchNormalization
+        from bigdl.dllib.nn.keras.layers.layer import BatchNormalization
         if isinstance(blayer, BatchNormalization):
             k_running_mean = K.eval(klayer.running_mean)
             k_running_std = K.eval(klayer.running_std)
