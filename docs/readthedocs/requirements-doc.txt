@@ -27,4 +27,4 @@ prophet
 pmdarima
 sphinx_markdown_tables
 numpy==1.21.2
-pytorch_lightning=0.8.5
+pytorch_lightning==0.8.5
