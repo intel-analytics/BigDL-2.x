@@ -462,8 +462,8 @@ class DoppelGANgerGenerator(nn.Module):
             # output_feature.shape = (batch_size, feature_out_dim)
             new_output_all = []
             current_idx = 0
+            output_feature = self.mlp_rnn(out_rnn)
             for j in range(self.sample_len):
-                output_feature = self.mlp_rnn(out_rnn)
                 for k in range(len(self.feature_outputs)):
                     output = self.feature_outputs[k]
                     sub_output = output_feature[:, current_idx:current_idx+output.dim]
