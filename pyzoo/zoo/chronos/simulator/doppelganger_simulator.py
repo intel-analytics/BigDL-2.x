@@ -18,7 +18,6 @@ import numpy as np
 import pickle
 import os
 
-from zoo.chronos.simulator.doppelganger.data_module import DoppelGANgerDataModule
 from zoo.chronos.simulator.doppelganger.util import gen_attribute_input_noise,\
     gen_feature_input_noise, gen_feature_input_data_free, renormalize_per_sample
 from zoo.chronos.simulator.doppelganger.doppelganger_pl import DoppelGANger_pl
@@ -172,6 +171,7 @@ class DPGANSimulator:
         real_data["data_feature"] = data_feature
         real_data["data_attribute"] = data_attribute
         real_data["data_gen_flag"] = data_gen_flag
+        from zoo.chronos.simulator.doppelganger.data_module import DoppelGANgerDataModule
         self.data_module = DoppelGANgerDataModule(real_data=real_data,
                                                   feature_outputs=feature_outputs,
                                                   attribute_outputs=attribute_outputs,
