@@ -14,5 +14,28 @@
 # limitations under the License.
 #
 
-from .autotsestimator import AutoTSEstimator
-from .tspipeline import TSPipeline
+import numpy as np
+import pandas as pd
+import sklearn.metrics as metrics
+
+from zoo.chronos.autots.deprecated.preprocessing.impute.abstract import BaseImpute
+
+
+class LastFill(BaseImpute):
+    """
+    Impute missing data with last seen value
+    """
+    def __init__(self):
+        """
+        Construct model for last filling method
+        """
+        pass
+
+    def impute(self, df):
+        """
+        impute data
+        :params df: input dataframe
+        :return: imputed dataframe
+        """
+        df.iloc[0] = df.iloc[0].fillna(0)
+        return df.fillna(method='pad')
