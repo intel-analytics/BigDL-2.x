@@ -23,7 +23,6 @@ from zoo.chronos.autots.deprecated.pipeline.parameters import DEFAULT_CONFIG_DIR
 from zoo.chronos.utils import deprecated
 
 
-@deprecated('Please use `zoo.chronos.autots.TSPipeline` instead.')
 class TimeSequencePipeline(Pipeline):
 
     def __init__(self, model=None, name=None):
@@ -122,6 +121,7 @@ class TimeSequencePipeline(Pipeline):
         return config_file
 
 
+@deprecated('Please use `zoo.chronos.autots.TSPipeline` instead.')
 def load_ts_pipeline(file):
     model = TimeSequenceModel()
     model.restore(file)

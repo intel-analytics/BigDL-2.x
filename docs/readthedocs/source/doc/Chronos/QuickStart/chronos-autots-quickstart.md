@@ -37,7 +37,7 @@ This is the only place where you need to specify local or distributed mode. View
 You can then Create an `AutoTSTrainer`.
 
 ```python
-from zoo.chronos.autots.forecast import AutoTSTrainer
+from zoo.chronos.autots.deprecated.forecast import AutoTSTrainer
 
 trainer = AutoTSTrainer(dt_col="timestamp",  
                         target_col="value",  
@@ -50,7 +50,7 @@ trainer = AutoTSTrainer(dt_col="timestamp",
 You can then train on the input data using `AutoTSTrainer.fit` with a recipe to specify search space.
 
 ```python
-from zoo.chronos.config.recipe import LSTMGridRandomRecipe
+from zoo.chronos.autots.deprecated.config.recipe import LSTMGridRandomRecipe
 
 ts_pipeline = trainer.fit(train_df, val_df,
                           recipe=LSTMGridRandomRecipe(
@@ -80,7 +80,7 @@ You can also save and restore the pipeline for further deployment.
 my_ppl_file_path = ts_pipeline.save("/tmp/saved_pipeline/nyc_taxi.ppl")
 
 # restore the pipeline for further deployment
-from zoo.chronos.autots.forecast import TSPipeline
+from zoo.chrono.autots.deprecated.forecast import TSPipeline
 loaded_ppl = TSPipeline.load(my_ppl_file_path)
 ```
 That's it, the same code can run seamlessly in your local laptop and the distribute K8s or Hadoop cluster.

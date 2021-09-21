@@ -93,7 +93,6 @@ class AutoTSTrainer:
         return ppl
 
 
-@deprecated('Please use `zoo.chronos.autots.TSPipeline` instead.')
 class TSPipeline:
     """
     A pipeline for time series forecasting.
@@ -118,6 +117,7 @@ class TSPipeline:
         return self.internal.save(pipeline_file)
 
     @staticmethod
+    @deprecated('Please use `zoo.chronos.autots.TSPipeline` instead.')
     def load(pipeline_file):
         """
         Load pipeline from a file

@@ -38,7 +38,6 @@ MODEL_MAP = {"LSTM": VanillaLSTM,
              }
 
 
-@deprecated('Please use `zoo.chronos.forecast` or `zoo.chronos.autots` instead.')
 class TSModelBuilder(ModelBuilder):
     def __init__(self,
                  dt_col,
@@ -62,7 +61,6 @@ class TSModelBuilder(ModelBuilder):
         return model
 
 
-@deprecated('Please use `zoo.chronos.forecast` or `zoo.chronos.autots` instead.')
 class TimeSequenceModel(BaseModel):
     """
     Time Sequence Model integrates feature transformation model selection for time series

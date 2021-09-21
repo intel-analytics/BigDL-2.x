@@ -67,7 +67,7 @@ df = df.reset_index()
 
 init_orca_context(cores=4, memory="4g", init_ray_on_spark=True)
 
-from zoo.chronos.autots.forecast import AutoTSTrainer
+from zoo.chronos.autots.deprecated.forecast import AutoTSTrainer
 from zoo.chronos.autots.deprecated.config.recipe import *
 
 trainer = AutoTSTrainer(dt_col="datetime",

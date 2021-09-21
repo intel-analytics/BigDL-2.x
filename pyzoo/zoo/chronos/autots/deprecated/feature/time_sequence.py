@@ -29,7 +29,6 @@ TIME_FEATURE = ("MINUTE", "DAY", "DAYOFYEAR", "HOUR", "WEEKDAY", "WEEKOFYEAR", "
 ADDITIONAL_TIME_FEATURE = ("IS_AWAKE", "IS_BUSY_HOURS", "IS_WEEKEND")
 
 
-@deprecated('Please use `zoo.chronos.data.TSDataset` instead.')
 class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
     """
     TimeSequence feature engineering

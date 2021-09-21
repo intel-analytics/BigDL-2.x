@@ -91,7 +91,6 @@ class TCNSmokeRecipe(Recipe):
         }
 
 
-@deprecated('Please use `zoo.orca.automl.hp` instead.')
 class PastSeqParamHandler(object):
     """
     Utility to handle PastSeq Param
@@ -101,6 +100,7 @@ class PastSeqParamHandler(object):
         pass
 
     @staticmethod
+    @deprecated('Please use `zoo.orca.automl.hp` instead.')
     def get_past_seq_config(look_back):
         """
         Generate pass sequence config based on look_back.
