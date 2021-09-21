@@ -68,7 +68,7 @@ df = df.reset_index()
 init_orca_context(cores=4, memory="4g", init_ray_on_spark=True)
 
 from zoo.chronos.autots.forecast import AutoTSTrainer
-from zoo.chronos.config.recipe import *
+from zoo.chronos.autots.deprecated.config.recipe import *
 
 trainer = AutoTSTrainer(dt_col="datetime",
                         target_col=["AvgRate", "total"],
@@ -76,7 +76,7 @@ trainer = AutoTSTrainer(dt_col="datetime",
                         extra_features_col=None)
 
 look_back = (36, 84)
-from zoo.chronos.preprocessing.utils import train_val_test_split
+from zoo.chronos.autots.deprecated.preprocessing.utils import train_val_test_split
 
 train_df, val_df, test_df = train_val_test_split(df,
                                                  val_ratio=0.1,
