@@ -16,8 +16,10 @@
 
 from zoo.chronos.autots.deprecated.config.base import Recipe
 from zoo.orca.automl import hp
+from zoo.chronos.utils import deprecated
 
 
+@deprecated('Please use `zoo.orca.automl.hp` instead.')
 class SmokeRecipe(Recipe):
     """
     A very simple Recipe for smoke test that runs one epoch and one iteration
@@ -41,6 +43,7 @@ class SmokeRecipe(Recipe):
         }
 
 
+@deprecated('Please use `zoo.orca.automl.hp` instead.')
 class MTNetSmokeRecipe(Recipe):
     """
     A very simple Recipe for smoke test that runs one epoch and one iteration
@@ -67,6 +70,7 @@ class MTNetSmokeRecipe(Recipe):
         }
 
 
+@deprecated('Please use `zoo.orca.automl.hp` instead.')
 class TCNSmokeRecipe(Recipe):
     """
     A very simple Recipe for smoke test that runs one epoch and one iteration
@@ -87,6 +91,7 @@ class TCNSmokeRecipe(Recipe):
         }
 
 
+@deprecated('Please use `zoo.orca.automl.hp` instead.')
 class PastSeqParamHandler(object):
     """
     Utility to handle PastSeq Param
@@ -133,6 +138,7 @@ class PastSeqParamHandler(object):
         return past_seq_config
 
 
+@deprecated('Please use `zoo.orca.automl.hp` instead.')
 class GridRandomRecipe(Recipe):
     """
     A recipe involves both grid search and random search.
@@ -183,6 +189,7 @@ class GridRandomRecipe(Recipe):
         }
 
 
+@deprecated('Please use `zoo.orca.automl.hp` instead.')
 class LSTMSeq2SeqRandomRecipe(Recipe):
     """
     A recipe involves both grid search and random search, only for Seq2SeqPytorch.
@@ -279,6 +286,7 @@ class LSTMSeq2SeqRandomRecipe(Recipe):
         }
 
 
+@deprecated('Please use `zoo.orca.automl.hp` instead.')
 class LSTMGridRandomRecipe(Recipe):
     """
     A recipe involves both grid search and random search, only for LSTM.
@@ -341,6 +349,7 @@ class LSTMGridRandomRecipe(Recipe):
         }
 
 
+@deprecated('Please use `zoo.orca.automl.hp` instead.')
 class Seq2SeqRandomRecipe(Recipe):
     """
     A recipe involves both grid search and random search, only for LSTM.
@@ -397,6 +406,7 @@ class Seq2SeqRandomRecipe(Recipe):
         }
 
 
+@deprecated('Please use `zoo.orca.automl.hp` instead.')
 class MTNetGridRandomRecipe(Recipe):
     """
     Grid+Random Recipe for MTNet
@@ -464,12 +474,12 @@ class MTNetGridRandomRecipe(Recipe):
         }
 
 
+@deprecated('Please use `zoo.orca.automl.hp` instead.')
 class TCNGridRandomRecipe(Recipe):
     """
     Grid+Random Recipe for TCN
     """
     # TODO: use some more generalized exp hyperparameters
-
     def __init__(self,
                  num_rand_samples=1,
                  training_iteration=40,
@@ -518,6 +528,7 @@ class TCNGridRandomRecipe(Recipe):
         }
 
 
+@deprecated('Please use `zoo.orca.automl.hp` instead.')
 class RandomRecipe(Recipe):
     """
     Pure random sample Recipe. Often used as baseline.
@@ -570,6 +581,7 @@ class RandomRecipe(Recipe):
         }
 
 
+@deprecated('Please use `zoo.orca.automl.hp` instead.')
 class BayesRecipe(Recipe):
     """
     A Bayes search Recipe. (Experimental)

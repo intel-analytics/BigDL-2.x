@@ -18,9 +18,11 @@ import numpy as np
 import pandas as pd
 import sklearn.metrics as metrics
 
+from zoo.chronos.utils import deprecated
 from zoo.chronos.autots.deprecated.preprocessing.impute.abstract import BaseImpute
 
 
+@deprecated('Please use `zoo.chronos.data.TSDataset` instead.')
 class LastFill(BaseImpute):
     """
     Impute missing data with last seen value

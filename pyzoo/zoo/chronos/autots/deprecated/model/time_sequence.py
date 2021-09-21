@@ -22,6 +22,7 @@ from zoo.chronos.model.MTNet_keras import MTNetKeras
 from zoo.chronos.autots.deprecated.feature.utils import save_config
 from zoo.chronos.autots.deprecated.feature.time_sequence import TimeSequenceFeatureTransformer
 from zoo.chronos.autots.deprecated.preprocessing.impute import LastFillImpute, FillZeroImpute
+from zoo.chronos.utils import deprecated
 from zoo.orca.automl.metrics import Evaluator
 
 import pandas as pd
@@ -37,6 +38,7 @@ MODEL_MAP = {"LSTM": VanillaLSTM,
              }
 
 
+@deprecated('Please use `zoo.chronos.forecast` or `zoo.chronos.autots` instead.')
 class TSModelBuilder(ModelBuilder):
     def __init__(self,
                  dt_col,
@@ -60,6 +62,7 @@ class TSModelBuilder(ModelBuilder):
         return model
 
 
+@deprecated('Please use `zoo.chronos.forecast` or `zoo.chronos.autots` instead.')
 class TimeSequenceModel(BaseModel):
     """
     Time Sequence Model integrates feature transformation model selection for time series

@@ -17,13 +17,14 @@
 from zoo.chronos.autots.deprecated.regression.time_sequence_predictor import TimeSequencePredictor
 from zoo.chronos.autots.deprecated.config.recipe import *
 from zoo.chronos.autots.deprecated.pipeline.time_sequence import load_ts_pipeline
+from zoo.chronos.utils import deprecated
 
 
+@deprecated('Please use `zoo.chronos.autots.AutoTSEstimator` instead.')
 class AutoTSTrainer:
     """
     The Automated Time Series Forecast Trainer
     """
-
     def __init__(self,
                  horizon=1,
                  dt_col="datetime",
@@ -92,6 +93,7 @@ class AutoTSTrainer:
         return ppl
 
 
+@deprecated('Please use `zoo.chronos.autots.TSPipeline` instead.')
 class TSPipeline:
     """
     A pipeline for time series forecasting.

@@ -15,8 +15,10 @@
 # limitations under the License.
 #
 from zoo.chronos.autots.deprecated.regression.base_predictor import BasePredictor
+from zoo.chronos.utils import deprecated
 
 
+@deprecated('Please use `zoo.chronos.autots.AutoTSEstimator` instead.')
 class TimeSequencePredictor(BasePredictor):
     """
     Trains a model that predicts future time sequence from past sequence.

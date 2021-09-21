@@ -16,8 +16,10 @@
 
 from zoo.chronos.autots.deprecated.preprocessing.impute.abstract import BaseImputation
 from zoo.chronos.autots.deprecated.preprocessing.impute.LastFill import LastFill
+from zoo.chronos.utils import deprecated
 
 
+@deprecated('Please use `zoo.chronos.data.TSDataset` instead.')
 class LastFillImpute(BaseImputation):
     """
     LastFill imputation
@@ -35,6 +37,7 @@ class LastFillImpute(BaseImputation):
         self.imputer = LastFill()
 
 
+@deprecated('Please use `zoo.chronos.data.TSDataset` instead.')
 class FillZeroImpute(BaseImputation):
     """
     FillZero imputation
@@ -45,6 +48,7 @@ class FillZeroImpute(BaseImputation):
         return df
 
 
+@deprecated('Please use `zoo.chronos.data.TSDataset` instead.')
 class TimeMergeImputor(BaseImputation):
     """
     Merge rows whose timestamp are seconds apart

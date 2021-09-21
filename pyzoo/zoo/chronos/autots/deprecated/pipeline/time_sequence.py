@@ -13,15 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
 import time
 
 from zoo.chronos.autots.deprecated.feature.utils import save_config
 from zoo.chronos.autots.deprecated.pipeline.base import Pipeline
 from zoo.chronos.autots.deprecated.model.time_sequence import TimeSequenceModel
 from zoo.chronos.autots.deprecated.pipeline.parameters import DEFAULT_CONFIG_DIR, DEFAULT_PPL_DIR
-import os
+from zoo.chronos.utils import deprecated
 
 
+@deprecated('Please use `zoo.chronos.autots.TSPipeline` instead.')
 class TimeSequencePipeline(Pipeline):
 
     def __init__(self, model=None, name=None):

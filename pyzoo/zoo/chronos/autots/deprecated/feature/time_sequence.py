@@ -16,6 +16,7 @@
 
 from zoo.chronos.autots.deprecated.feature.utils import save_config
 from zoo.chronos.autots.deprecated.feature.abstract import BaseFeatureTransformer
+from zoo.chronos.utils import deprecated
 
 import sklearn
 from sklearn.preprocessing import StandardScaler
@@ -28,6 +29,7 @@ TIME_FEATURE = ("MINUTE", "DAY", "DAYOFYEAR", "HOUR", "WEEKDAY", "WEEKOFYEAR", "
 ADDITIONAL_TIME_FEATURE = ("IS_AWAKE", "IS_BUSY_HOURS", "IS_WEEKEND")
 
 
+@deprecated('Please use `zoo.chronos.data.TSDataset` instead.')
 class TimeSequenceFeatureTransformer(BaseFeatureTransformer):
     """
     TimeSequence feature engineering
