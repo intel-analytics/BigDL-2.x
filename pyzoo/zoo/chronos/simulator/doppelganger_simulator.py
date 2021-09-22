@@ -14,19 +14,17 @@
 # limitations under the License.
 #
 
-import numpy as np
 import pickle
 import os
+import numpy as np
+import torch
 
 from zoo.chronos.simulator.doppelganger.util import gen_attribute_input_noise,\
     gen_feature_input_noise, gen_feature_input_data_free, renormalize_per_sample
-from zoo.chronos.simulator.doppelganger.doppelganger_pl import DoppelGANger_pl
 from zoo.chronos.simulator.doppelganger.output import OutputType
 
 import torch
 import torch.nn.functional as F
-from pytorch_lightning import Trainer, seed_everything
-from pytorch_lightning.callbacks import ModelCheckpoint
 
 MODEL_PATH = "doppelganger.ckpt"
 FEATURE_OUTPUT = "feature.output.ckpt"
@@ -98,6 +96,7 @@ class DPGANSimulator:
                for no checkpoints.
         '''
         # additional settings
+        from pytorch_lightning import seed_everything
         seed_everything(seed=seed)
         if num_threads is not None:
             torch.set_num_threads(num_threads)
@@ -178,6 +177,7 @@ class DPGANSimulator:
                                                   sample_len=self.sample_len,
                                                   batch_size=batch_size)
 
+        from pytorch_lightning.callbacks import ModelCheckpoint
         checkpoint_callback = ModelCheckpoint(dirpath=self.ckpt_dir_model,
                                               save_top_k=-1,
                                               every_n_epochs=self.checkpoint_every_n_epoch)
@@ -188,12 +188,14 @@ class DPGANSimulator:
                 pickle.dump(self.data_module.data_attribute_outputs, f)
 
         # build the model
+        from zoo.chronos.simulator.doppelganger.doppelganger_pl import DoppelGANger_pl
         self.model = DoppelGANger_pl(data_feature_outputs=self.data_module.data_feature_outputs,
                                      data_attribute_outputs=self.data_module.data_attribute_outputs,
                                      L_max=self.L_max,
                                      sample_len=self.sample_len,
                                      num_real_attribute=self.num_real_attribute,
                                      **self.params)
+        from pytorch_lightning import Trainer
         self.trainer = Trainer(logger=False,
                                callbacks=checkpoint_callback,
                                max_epochs=epoch,
@@ -282,6 +284,7 @@ class DPGANSimulator:
         with open(os.path.join(path_dir, ATTRIBUTE_OUTPUT), "rb") as f:
             data_attribute_outputs = pickle.load(f)
         path_dir_model = os.path.join(path_dir, "model")
+        from zoo.chronos.simulator.doppelganger.doppelganger_pl import DoppelGANger_pl
         self.model =\
             DoppelGANger_pl.load_from_checkpoint(os.path.join(path_dir_model, model_version),
                                                  data_feature_outputs=data_feature_outputs,
