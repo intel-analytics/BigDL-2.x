@@ -87,7 +87,7 @@ if __name__ == "__main__":
     parser.add_argument('--epoch', type=int, default=25,
                         help="Max number of epochs to train in each trial.")
     parser.add_argument('--datadir', type=str,
-                        help="Use local csv file by default.")
+                        help="Use local npz file by default.")
     parser.add_argument('--plot_figures', type=bool, default=True,
                         help="Plot Figure 1, 6, 19 in the http://arxiv.org/abs/1909.13403")
     parser.add_argument('--batch_size', type=int, default=100,
