@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.dllib.keras.autograd
 
 import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity, InferShape}
-import com.intel.analytics.bigdl.dllib.keras.KerasLayer
+import com.intel.analytics.bigdl.dllib.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.utils._
@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.dllib.{nn => bnn}
 import com.intel.analytics.bigdl.dllib.keras.layers._
 import com.intel.analytics.bigdl.dllib.keras.layers.internal._
 import com.intel.analytics.bigdl.dllib.keras.models._
-// import com.intel.analytics.bigdl.dllib.keras.layers.TimeDistributed
+import com.intel.analytics.bigdl.dllib.keras.layers.TimeDistributed
 
 import scala.reflect.ClassTag
 
@@ -303,11 +303,9 @@ object AutoGrad {
     val mm = InternalMM[T](transA = transposeX,
       transB = transposeY)
     val kmm = new KerasLayerWrapper[T](mm.asInstanceOf[AbstractModule[Activity, Activity, T]])
-// uncomment untill TimeDistributed ready
-//    if (xShape.length > 3 || yShape.length > 3) {
-//      TimeDistributed(kmm.asInstanceOf[KerasLayer[Activity, Tensor[T], T]]).from(xx, yy)
-//    } else kmm.from(xx, yy)
-    kmm.from(xx, yy)
+    if (xShape.length > 3 || yShape.length > 3) {
+      TimeDistributed(kmm.asInstanceOf[KerasLayer[Activity, Tensor[T], T]]).from(xx, yy)
+    } else kmm.from(xx, yy)
   }
 
   /**
