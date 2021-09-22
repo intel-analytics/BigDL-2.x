@@ -223,6 +223,7 @@ class LSTMSeq2SeqRandomRecipe(Recipe):
             dropout=(0, 0.25),
             teacher_forcing=[True, False]):
         """
+        __init__()
         Constructor.
         set the param to a list for grid search.
         set the param to a tuple with length = 2 for random search.
@@ -313,6 +314,7 @@ class LSTMGridRandomRecipe(Recipe):
             lstm_2_units=[16, 32, 64],
             batch_size=[32, 64]):
         """
+        __init__()
         Constructor.
 
         :param lstm_1_units: random search candidates for num of lstm_1_units
@@ -375,6 +377,7 @@ class Seq2SeqRandomRecipe(Recipe):
             latent_dim=[32, 64, 128, 256],
             batch_size=[32, 64]):
         """
+        __init__()
         Constructor.
 
         :param lstm_1_units: random search candidates for num of lstm_1_units
@@ -434,6 +437,7 @@ class MTNetGridRandomRecipe(Recipe):
                  ar_size=[2, 3],
                  batch_size=[32, 64]):
         """
+        __init__()
         Constructor.
 
         :param num_rand_samples: number of hyper-param configurations sampled randomly
@@ -502,6 +506,7 @@ class TCNGridRandomRecipe(Recipe):
                  lr=[0.001, 0.003]
                  ):
         """
+        __init__()
         Constructor.
 
         :param num_rand_samples: number of hyper-param configurations sampled randomly
@@ -553,6 +558,7 @@ class RandomRecipe(Recipe):
             reward_metric=-0.05,
             training_iteration=10):
         """
+        __init__()
         Constructor.
 
         :param num_rand_samples: number of hyper-param configurations sampled randomly
@@ -606,6 +612,7 @@ class BayesRecipe(Recipe):
             reward_metric=-0.05,
             training_iteration=5):
         """
+        __init__()
         Constructor.
 
         :param num_samples: number of hyper-param configurations sampled

@@ -24,7 +24,7 @@ A pipeline for time series forecasting.
     :show-inheritance:
 
 
-chronos.config.recipe
+Recipe
 ----------------------------------------
 
 Recipe is used for search configuration for AutoTSTrainer.
@@ -42,5 +42,45 @@ Recipe is used for search configuration for AutoTSTrainer.
     :show-inheritance:
 
 .. autoclass:: zoo.chronos.autots.deprecated.config.recipe.PastSeqParamHandler
+    :members:
+    :show-inheritance:
+
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.GridRandomRecipe
+    :members:
+    :show-inheritance:
+
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.LSTMSeq2SeqRandomRecipe
+    :members:
+    :show-inheritance:
+
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.LSTMGridRandomRecipe
+    :members:
+    :show-inheritance:
+
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.Seq2SeqRandomRecipe
+    :members:
+    :show-inheritance:
+
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.MTNetGridRandomRecipe
+    :members:
+    :show-inheritance:
+
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.TCNGridRandomRecipe
+    :members:
+    :show-inheritance:
+
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.RandomRecipe
+    :members:
+    :show-inheritance:
+
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.BayesRecipe
+    :members:
+    :show-inheritance:
+
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.XgbRegressorGridRandomRecipe
+    :members:
+    :show-inheritance:
+
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.XgbRegressorSkOptRecipe
     :members:
     :show-inheritance:
