@@ -38,6 +38,7 @@ class AutoTSTrainer:
                  name="automl"
                  ):
         """
+        __init__()
         Initialize the AutoTS Trainer.
 
         :param horizon: steps to look forward
@@ -70,6 +71,7 @@ class AutoTSTrainer:
             upload_dir=None,
             ):
         """
+        fit()
         Fit a time series forecasting pipeline w/ automl
 
         :param train_df: the input dataframe (as pandas.dataframe)

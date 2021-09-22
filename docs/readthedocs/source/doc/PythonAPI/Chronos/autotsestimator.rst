@@ -1,8 +1,5 @@
-AutoTSEstimator (experimental)
+AutoTS
 =====================
-
-.. warning::
-    The API in this page is still experimental.
 
 AutoTSEstimator
 -------------------------------------------

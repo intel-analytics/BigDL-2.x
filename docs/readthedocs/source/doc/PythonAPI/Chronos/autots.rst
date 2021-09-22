@@ -1,4 +1,4 @@
-AutoTS
+AutoTS (deprecated)
 =====================
 
 .. warning::
