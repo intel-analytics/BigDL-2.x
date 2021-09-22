@@ -3,6 +3,7 @@ sphinx-version-warning
 sphinx-click
 sphinx-jsonschema
 sphinxemoji
+celery
 click
 tensorflow==1.15.2
 bigdl==0.12.0
