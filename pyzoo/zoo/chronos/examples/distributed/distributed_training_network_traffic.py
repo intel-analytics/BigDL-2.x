@@ -14,8 +14,10 @@
 # limitations under the License.
 #
 import argparse
-
+import numpy as np
 from sklearn.preprocessing import MinMaxScaler
+
+from zoo.orca.automl.metrics import Evaluator
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.chronos.forecast.seq2seq_forecaster import Seq2SeqForecaster
 from zoo.chronos.data.repo_dataset import get_public_dataset
@@ -49,7 +51,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--epochs', type=int, default=2,
                         help="Max number of epochs to train in each trial.")
-    parser.add_argument('--workers_per_node', type=int, default=2,
+    parser.add_argument('--workers_per_node', type=int, default=1,
                         help="the number of worker you want to use."
                         "The value defaults to 1. The param is only effective"
                         "when distributed is set to True.")
@@ -68,8 +70,8 @@ if __name__ == '__main__':
             .scale(minmax, fit=tsdata is tsdata_train)\
             .roll(lookback=100, horizon=10)
 
-    x_train, y_train = tsdata_train.unscale().to_numpy()
-    unscale_x_test, unscale_y_test = tsdata_test.unscale().to_numpy()
+    x_train, y_train = tsdata_train.to_numpy()
+    x_test, y_test = tsdata_test.to_numpy()
 
     forecaster = Seq2SeqForecaster(past_seq_len=100,
                                    future_seq_len=10,
@@ -82,7 +84,14 @@ if __name__ == '__main__':
 
     forecaster.fit((x_train, y_train), epochs=args.epochs,
                    batch_size=512//(1 if not forecaster.distributed else args.workers_per_node))
-    mse = forecaster.evaluate((unscale_x_test, unscale_y_test))
-    print(f'evaluate is: {mse.get("MSE").numpy():.4f}')
+
+    yhat = forecaster.predict(x_test)
+    unscale_yhat = tsdata_test.unscale_numpy(yhat)
+    unscale_y_test = tsdata_test.unscale_numpy(y_test)
+    rmse, smape = [Evaluator.evaluate(m, y_true=unscale_y_test,
+                                      y_pred=unscale_yhat,
+                                      multioutput='raw_values') for m in ['rmse', 'smape']]
+    print(f'rmse is: {np.mean(rmse)}')
+    print(f'smape is: {np.mean(smape):.4f}')
 
     stop_orca_context()

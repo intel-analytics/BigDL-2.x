@@ -1,4 +1,4 @@
-# Run forecaster example on orca distributed
+# Use Chronos forecasters in a distributed fashion
 LSTM, TCN and Seq2seq users can easily train their forecasters in a distributed fashion to handle extra large dataset and utilize a cluster. The functionality is powered by Project Orca.
 
 ## Prepare the environment
@@ -26,7 +26,8 @@ for tsdata in [tsdata_train, tsdata_test]:
             .roll(lookback=40, horizon=1)
 ```
 
-## Initiation forecaster and fit
+## Initialize forecaster and fit
+Initialize a forecaster and set `distributed=True` and optionally `workers_per_node`.
 ```python
 x_train, y_train = tsdata_train.to_numpy()
 forecaster = Seq2SeqForecaster(past_seq_len=100,
@@ -38,15 +39,18 @@ forecaster = Seq2SeqForecaster(past_seq_len=100,
                                workers_per_node=args.workers_per_node,
                                seed=0)
 
-# batch_size // worker_per_node: distribute data to all nodes. 
 forecaster.fit((x_train, y_train), epochs=args.epochs,
                batch_size=512//(1 if not forecaster.distributed else args.workers_per_node))
 ```
 
 ## Evaluate
+Use the same API as non-distributed version forecaster for evalution/prediction.
 ```python
-mse = forecaster.evaluate((unscale_x_test, unscale_y_test))
-print(f'evaluate is: {mse.get("MSE").numpy():.4f}')
+rmse, smape = [Evaluator.evaluate(m, y_true=unscale_y_test,
+                                  y_pred=unscale_yhat,
+                                  multioutput='raw_values') for m in ['rmse', 'smape']]
+print(f'rmse is: {np.mean(rmse)}')
+print(f'smape is: {np.mean(smape):.4f}')
 ```
 
 ## Options
@@ -55,3 +59,4 @@ print(f'evaluate is: {mse.get("MSE").numpy():.4f}')
 * `--cores` The number of cpu cores you want to use on each node. You can change it depending on your own cluster setting.
 * `--epochs` Max number of epochs to train in each trial. Default to be 2.
 * `--workers_per_node` the number of worker you want to use.The value defaults to 1. The param is only effective when distributed is set to True.
+* `--num_workers` The number of workers to be used in the cluster. You can change it depending on your own cluster setting. Default to be 1.
