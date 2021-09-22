@@ -2,7 +2,7 @@ AutoTS (deprecated)
 =====================
 
 .. warning::
-    The API in this page will be deprecated soon.
+    The API in this page will be deprecated soon. Please refer to our new AutoTS API.
 
 AutoTSTrainer
 ----------------------------------------
