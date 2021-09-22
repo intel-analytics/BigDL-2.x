@@ -35,7 +35,7 @@ trait DLAggregator extends Aggregator {
   var module: Sequential[Float] = null
   var target: Tensor[Float] = null
   def getInputTableFromStorage(storageType: FLPhase): Table = {
-    val storage = getStorage(storageType)
+    val storage = getServerData(storageType)
     val aggData = storage.localData.asScala.mapValues(_.getTableMap).values
       .flatMap(_.asScala).groupBy(_._1)
       .map{data =>

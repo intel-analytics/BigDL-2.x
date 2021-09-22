@@ -17,7 +17,7 @@ public class NNServiceImpl extends NNServiceGrpc.NNServiceImplBase {
     public void downloadTrain(
             DownloadRequest request, StreamObserver<DownloadResponse> responseObserver) {
         int version = request.getMetaData().getVersion();
-        Table data = aggregator.getStorage(TRAIN).serverData;
+        Table data = aggregator.getServerData(TRAIN).serverData;
         if (data == null) {
             String response = "Your required data doesn't exist";
             responseObserver.onNext(DownloadResponse.newBuilder().setResponse(response).setCode(0).build());
@@ -40,7 +40,7 @@ public class NNServiceImpl extends NNServiceGrpc.NNServiceImplBase {
         int version = data.getMetaData().getVersion();
 
         try {
-            aggregator.put(TRAIN, clientUUID, version, data);
+            aggregator.putClientData(TRAIN, clientUUID, version, data);
             UploadResponse response = UploadResponse.newBuilder().setResponse("Data received").setCode(0).build();
             responseObserver.onNext(response);
             responseObserver.onCompleted();

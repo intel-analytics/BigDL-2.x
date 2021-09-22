@@ -39,7 +39,7 @@ public abstract class Aggregator {
     protected Integer clientNum;
     public abstract void aggregate();
 
-    public Storage getStorage(FLPhase type) {
+    public Storage getServerData(FLPhase type) {
         Storage storage = null;
         switch (type) {
             case TRAIN: storage = trainStorage; break;
@@ -49,16 +49,17 @@ public abstract class Aggregator {
         }
         return storage;
     }
-    public void put(FLPhase type, String clientUUID, int version, Table data)
+    public void putClientData(FLPhase type, String clientUUID, int version, Table data)
             throws IllegalArgumentException {
-        Storage storage = getStorage(type);
-        storage.localData.put(clientUUID, data);
+        Storage storage = getServerData(type);
+        storage.put(clientUUID, data);
 
         // Aggregate when buffer is full
-        if (storage.localData.size() >= clientNum) {
+        if (storage.size() >= clientNum) {
             aggregate();
         }
-
     }
+
+
 
 }

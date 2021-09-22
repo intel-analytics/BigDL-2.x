@@ -29,4 +29,20 @@ public class Storage {
         version = 0;
         localData = new ConcurrentHashMap<>();
     }
+    /**
+     *
+     * @return The size of data collection of each local node
+     */
+    public int size() {
+        return localData.size();
+    }
+
+    /**
+     * Put the local data into this storage
+     * @param key data key
+     * @param value data value
+     */
+    public void put(String key, FLProto.Table value) {
+        localData.put(key, value);
+    }
 }
