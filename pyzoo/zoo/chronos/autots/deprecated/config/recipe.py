@@ -22,12 +22,14 @@ from zoo.chronos.utils import deprecated
 @deprecated('Please use `zoo.orca.automl.hp` instead.')
 class SmokeRecipe(Recipe):
     """
-    SmokeRecipe()
     A very simple Recipe for smoke test that runs one epoch and one iteration
     with only 1 random sample.
     """
 
     def __init__(self):
+        '''
+        __init__()
+        '''
         super(self.__class__, self).__init__()
 
     def search_space(self):
@@ -53,6 +55,9 @@ class MTNetSmokeRecipe(Recipe):
     """
 
     def __init__(self):
+        '''
+        __init__()
+        '''
         super(self.__class__, self).__init__()
 
     def search_space(self):
@@ -143,7 +148,6 @@ class PastSeqParamHandler(object):
 @deprecated('Please use `zoo.orca.automl.hp` instead.')
 class GridRandomRecipe(Recipe):
     """
-    GridRandomRecipe()
     A recipe involves both grid search and random search.
     """
 
