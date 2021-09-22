@@ -122,6 +122,7 @@ class TSPipeline:
     @deprecated('Please use `zoo.chronos.autots.TSPipeline` instead.')
     def load(pipeline_file):
         """
+        load(pipeline_file)
         Load pipeline from a file
 
         :param pipeline_file: the pipeline file

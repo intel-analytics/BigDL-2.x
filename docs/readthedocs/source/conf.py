@@ -79,8 +79,7 @@ extensions = [
     'sphinx_copybutton',
     'sphinx.ext.mathjax',
     'recommonmark',
-    'sphinx_markdown_tables',
-    'celery.contrib.sphinx'
+    'sphinx_markdown_tables'
 ]
 
 

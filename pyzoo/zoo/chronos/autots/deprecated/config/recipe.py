@@ -22,6 +22,7 @@ from zoo.chronos.utils import deprecated
 @deprecated('Please use `zoo.orca.automl.hp` instead.')
 class SmokeRecipe(Recipe):
     """
+    SmokeRecipe()
     A very simple Recipe for smoke test that runs one epoch and one iteration
     with only 1 random sample.
     """
@@ -46,6 +47,7 @@ class SmokeRecipe(Recipe):
 @deprecated('Please use `zoo.orca.automl.hp` instead.')
 class MTNetSmokeRecipe(Recipe):
     """
+    MTNetSmokeRecipe()
     A very simple Recipe for smoke test that runs one epoch and one iteration
     with only 1 random sample.
     """
@@ -141,6 +143,7 @@ class PastSeqParamHandler(object):
 @deprecated('Please use `zoo.orca.automl.hp` instead.')
 class GridRandomRecipe(Recipe):
     """
+    GridRandomRecipe()
     A recipe involves both grid search and random search.
     """
 
@@ -151,6 +154,7 @@ class GridRandomRecipe(Recipe):
             epochs=5,
             training_iteration=10):
         """
+        __init__()
         Constructor.
         :param num_rand_samples: number of hyper-param configurations sampled randomly
         :param look_back: the length to look back, either a tuple with 2 int values,
