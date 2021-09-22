@@ -1,5 +1,5 @@
-# Use ONNX to speed up predict
-This example will demonstrate the effect of ONNX for predict on forecast and autotest.
+# Use ONNX to speed up inferencing
+This example will demonstrate how to use ONNX to speed up the inferencing(prediction/evalution) on forecasters and `AutoTSEstimator`.
 
 ## Prepare the environment
 We recommend you to use Anaconda to prepare the environment, especially if you want to run on a yarn cluster:
@@ -8,9 +8,6 @@ conda create -n zoo python=3.7 # "zoo" is conda environment name, you can use an
 conda activate zoo
 pip install --pre --upgrade analytics-zoo[automl]
 ```
-
-## Options
-* `--epoch` Max number of epochs to train in each trial. Default to be 1.
 
 ## Prepare data
 **autotsest**: We are using the `nyc taxi` provided by NAB, from 2014-07-01 to 2015-01-31 taxi fare information For more details, please refer to [here](https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv)
@@ -31,26 +28,20 @@ for tsdata in [tsdata_train, tsdata_test]:
             .roll(lookback=40, horizon=1)
 ```
 
-## Fit on forecaster 
-Create an Seq2SeqForecaster
-```python
-forecaster = Seq2SeqForecaster(past_seq_len=40,
-                               future_seq_len=1,
-                               input_feature_num=32,
-                               output_feature_num=2,
-                               metrics=['mse', 'smape'],
-                               seed=0)
-
-# input tuple.
-x_train, y_train = tsdata_train.to_numpy()
-forecaster.fit((x_train, y_train), epochs=args.epochs)
-```
+## Fit on forecaster/AutoTSEstimator
+Create and fit on the forecaster/AutoTSEstimator. Please refer to [API doc](placeholder) for detail.
 
 ## Inference with onnx
+All methods involve inferencing supports onnx as backend. You can call `predict_with_onnx` or `evaluate_with_onnx` to use it.
 ```python
+# forecaster
 x_test, y_test = tsdata_train.to_numpy()
-forecaster.predict(x_test)
-forecaster.evaluate((x_test, y_test))
+forecaster.predict_with_onnx(x_test)
+forecaster.evaluate_with_onnx((x_test, y_test))
+
+# AutoTSEstimator
+autotsestimator.predict_with_onnx(tsdata_test)
+autotsestimator.evaluate_with_onnx(tsdata_test)
 ```
 
 ## Result
@@ -63,7 +54,16 @@ mse, smape = forecaster.evaluate_with_onnx((x_test,y_test))
 # evaluate_onnx smape is: 9.6629
 
 forecaster.predict(x_test)
-# inference time is: ~0.136s
+# inference time is: 0.136s
 forecaster.predict_with_onnx(x_test)
-# inference(onnx) time is: ~0.030s 
+# inference(onnx) time is: 0.030s 
 ```
+
+## Options
+* `--epochs` Max number of epochs to train in each trial. Default to be 1.
+* `--n_sampling` Number of times to sample from the search_space. Default to be 1.
+* `--cpus_per_trail` Number of cpus for each trial. Default to be 2.
+* `--memory` The memory you want to use on each node. Default to be 10g.
+* `--cluster_mode` The mode for the Spark cluster. local or yarn. Default to be `local`. You can refer to OrcaContext documents [here](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html) for details.
+* `--cores` "The number of cpu cores you want to use on each node. Default to be 4.
+* `--num_workers` The number of workers to be used in the cluster. You can change it depending on your own cluster setting. Default to be 2.
