@@ -17,9 +17,8 @@
 package com.intel.analytics.zoo.ppml;
 
 import com.intel.analytics.zoo.grpc.ZooGrpcClient;
-import com.intel.analytics.zoo.ppml.vfl.GBStub;
 import com.intel.analytics.zoo.ppml.vfl.NNStub;
-import com.intel.analytics.zoo.ppml.vfl.PSIStub;
+import com.intel.analytics.zoo.ppml.psi.PSIStub;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

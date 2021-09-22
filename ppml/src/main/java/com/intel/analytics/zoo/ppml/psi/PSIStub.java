@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.ppml.vfl;
+package com.intel.analytics.zoo.ppml.psi;
 
 import com.intel.analytics.zoo.ppml.generated.FLProto;
 import com.intel.analytics.zoo.ppml.generated.PSIServiceGrpc;
-import com.intel.analytics.zoo.ppml.psi.Utils;
 import io.grpc.Channel;
 import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
