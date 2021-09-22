@@ -20,7 +20,7 @@
 # after building, compiling the model and before the training.
 #     model = with_bigdl_backend(model)
 
-from bigdl.dllib.keras.backend import *
+from bigdl.dllib.nn.keras.backend import *
 from bigdl.dllib.examples.keras.imdb_cnn_lstm import *
 
 X_train, y_train, X_test, y_test = load_imdb()
