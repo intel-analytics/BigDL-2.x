@@ -49,7 +49,6 @@ class SmokeRecipe(Recipe):
 @deprecated('Please use `zoo.orca.automl.hp` instead.')
 class MTNetSmokeRecipe(Recipe):
     """
-    MTNetSmokeRecipe()
     A very simple Recipe for smoke test that runs one epoch and one iteration
     with only 1 random sample.
     """
@@ -85,6 +84,9 @@ class TCNSmokeRecipe(Recipe):
     """
 
     def __init__(self):
+        '''
+        __init__()
+        '''
         super(self.__class__, self).__init__()
 
     def search_space(self):
@@ -110,6 +112,7 @@ class PastSeqParamHandler(object):
     @deprecated('Please use `zoo.orca.automl.hp` instead.')
     def get_past_seq_config(look_back):
         """
+        get_past_seq_config(look_back)
         Generate pass sequence config based on look_back.
 
         :param look_back: look_back configuration

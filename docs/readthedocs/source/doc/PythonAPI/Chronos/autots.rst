@@ -29,6 +29,18 @@ chronos.config.recipe
 
 Recipe is used for search configuration for AutoTSTrainer.
 
-.. automodule:: zoo.chronos.autots.deprecated.config.recipe
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.SmokeRecipe
+    :members:
+    :show-inheritance:
+
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.MTNetSmokeRecipe
+    :members:
+    :show-inheritance:
+
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.TCNSmokeRecipe
+    :members:
+    :show-inheritance:
+
+.. autoclass:: zoo.chronos.autots.deprecated.config.recipe.PastSeqParamHandler
     :members:
     :show-inheritance:
