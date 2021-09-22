@@ -24,13 +24,17 @@ import static com.intel.analytics.zoo.ppml.common.FLPhase.*;
 
 
 public abstract class Aggregator {
-    public Map<FLPhase, Storage> aggTypeMap;
+    /**
+     * aggregateTypeMap is a map to map to simplify the operations of the storage
+     * it maps the enum type: TRAIN, EVAL, PREDICT to corresponded storage
+     */
+    public Map<FLPhase, Storage> aggregateTypeMap;
 
     public Aggregator() {
-        aggTypeMap = new HashMap<>();
-        aggTypeMap.put(TRAIN, trainStorage);
-        aggTypeMap.put(EVAL, evalStorage);
-        aggTypeMap.put(PREDICT, predictStorage);
+        aggregateTypeMap = new HashMap<>();
+        aggregateTypeMap.put(TRAIN, trainStorage);
+        aggregateTypeMap.put(EVAL, evalStorage);
+        aggregateTypeMap.put(PREDICT, predictStorage);
     }
     public Storage trainStorage = new Storage();
     public Storage evalStorage = new Storage();

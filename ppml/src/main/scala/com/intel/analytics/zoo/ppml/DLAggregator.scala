@@ -34,9 +34,9 @@ trait DLAggregator extends Aggregator {
   val logger = Logger.getLogger(this.getClass)
   var module: Sequential[Float] = null
   var target: Tensor[Float] = null
-  def getInputTableFromStorage(storageType: FLPhase): Table = {
-    val storage = getServerData(storageType)
-    val aggData = storage.localData.asScala.mapValues(_.getTableMap).values
+  def protoTableMapToTensorIterableMap(inputMap: java.util.Map[String, FLProto.Table]):
+    Map[String, Iterable[Tensor[Float]]] = {
+    inputMap.asScala.mapValues(_.getTableMap).values
       .flatMap(_.asScala).groupBy(_._1)
       .map{data =>
         (data._1, data._2.map {v =>
@@ -45,6 +45,10 @@ trait DLAggregator extends Aggregator {
           Tensor[Float](data, shape)
         })
       }
+  }
+  def getInputTableFromStorage(storageType: FLPhase): Table = {
+    val storage = getServerData(storageType)
+    val aggData = protoTableMapToTensorIterableMap(storage.localData)
     target = Tensor[Float]()
     if (aggData.contains("target")) {
       val t = aggData("target").head
@@ -86,6 +90,6 @@ trait DLAggregator extends Aggregator {
     } else if (aggType == PREDICT) {
       val meta = metaBuilder.setName("predictResult").setVersion(predictStorage.version).build()
     }
-    updateStorage(aggTypeMap.get(aggType), aggregatedTable);
+    updateStorage(aggregateTypeMap.get(aggType), aggregatedTable);
   }
 }
