@@ -36,7 +36,6 @@ export BIGDL_CLASSPATH=$(find $BIGDL_HOME/dist/lib/ -name "bigdl-orca*with-depen
 export BIGDL_CLASSPATH=$(find $BIGDL_HOME/dist/lib/ -name "bigdl-dllib*with-dependencies.jar" | head -n 1):$BIGDL_CLASSPATH
 echo "BIGDL_CLASSPATH": $BIGDL_CLASSPATH
 
-
 if [[ ($SPARK_HOME == *"2.2.0"*) || ($SPARK_HOME == *"2.1.1"*) || ($SPARK_HOME == *"1.6.4"*) ]]; then
     export PYTHON_EXECUTABLES=("python2.7" "python3.5" "python3.6")
 else
