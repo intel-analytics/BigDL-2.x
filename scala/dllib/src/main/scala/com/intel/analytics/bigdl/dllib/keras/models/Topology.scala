@@ -1495,13 +1495,11 @@ private[bigdl] class InternalDistriOptimizer[T: ClassTag] (
 
     val coresPerNode = EngineRef.getCoreNumber()
     val _subModelNumber = EngineRef.getEngineType() match {
-// uncoment when migrating TorchModel
-//      case MklBlas => if (TorchModel.isTorch(_model)) {
-//        1
-//      } else {
-//        coresPerNode
-//      }
-      case MklBlas => coresPerNode // replace this line when migrating TorchModel
+      case MklBlas => if (_model.isSingleModel()) {
+        1
+      } else {
+        coresPerNode
+      }
       case MklDnn => 1
       case _ => throw new IllegalArgumentException
     }

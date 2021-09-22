@@ -86,6 +86,10 @@ class TFTrainingHelperV2(graphRunner: GraphRunner,
     if (this.isTraining()) shouldUpdateParameter = true
   }
 
+  override def beforeGetModel(): Unit = {
+    moveWeightsOutOfTF()
+  }
+
   def moveWeightsOutOfTF(): Unit = {
     if (!weightsRestored) {
       return
