@@ -22,7 +22,6 @@ import os
 from numpy.testing import assert_array_almost_equal
 
 from bigdl.orca.automl.xgboost.XGBoost import XGBoost, XGBoostModelBuilder
-from bigdl.chronos.feature.identity_transformer import IdentityTransformer
 import pytest
 
 
@@ -39,10 +38,8 @@ class TestXgbregressor(ZooTestCase):
                                "f2": np.random.randn(5),
                                "t": np.random.randint(5)})
 
-        ft = IdentityTransformer(feature_cols=feature_cols, target_col=target_col)
-
-        self.x, self.y = ft.transform(train_df)
-        self.val_x, self.val_y = ft.transform(val_df)
+        self.x, self.y = train_df[feature_cols], train_df[[target_col]]
+        self.val_x, self.val_y = val_df[feature_cols], val_df[[target_col]]
 
     def teardown_method(self, method):
         pass
