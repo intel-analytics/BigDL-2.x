@@ -34,7 +34,6 @@ public class FLClient extends ZooGrpcClient {
      */
     public PSIStub psiStub;
     public NNStub nnStub;
-    public GBStub gbStub;
     public FLClient() { this(null); }
     public FLClient(String[] args) {
         super(args);
@@ -53,17 +52,8 @@ public class FLClient extends ZooGrpcClient {
 
     @Override
     public void loadServices() {
-        for (String service : serviceList.split(",")) {
-            if (service.equals("psi")) {
-                psiStub = new PSIStub(channel, taskID);
-            } else if (service.equals("vflnn")) {
-                nnStub = new NNStub(channel, clientUUID);
-            } else if (service.equals("vlfgb")) {
-                gbStub = new GBStub(channel, clientUUID);
-            } else {
-                logger.warn("Type is not supported, skipped. Type: " + service);
-            }
-        }
+        psiStub = new PSIStub(channel, taskID);
+        nnStub = new NNStub(channel, clientUUID);
     }
 
     public void shutdown() {

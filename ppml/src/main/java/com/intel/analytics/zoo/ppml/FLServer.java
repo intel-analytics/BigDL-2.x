@@ -50,13 +50,8 @@ public class FLServer extends ZooGrpcServer {
             port = flHelper.serverPort;
         }
         for (String service : serviceList.split(",")) {
-            if (service.equals("psi")) {
-                serverServices.add(new PSIServiceImpl());
-            } else if (service.equals("vflnn")) {
-                serverServices.add(new NNServiceImpl());
-            } else {
-                logger.warn("Type is not supported, skipped. Type: " + service);
-            }
+            serverServices.add(new PSIServiceImpl());
+            serverServices.add(new NNServiceImpl());
         }
     }
 
