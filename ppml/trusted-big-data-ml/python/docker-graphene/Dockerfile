@@ -63,6 +63,7 @@ RUN cd /opt && \
     tar -zxvf spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     mv spark-${SPARK_VERSION}-bin-hadoop2.7 spark-${SPARK_VERSION} && \
     rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
+    cp spark-${SPARK_VERSION}/conf/log4j.properties.template spark-${SPARK_VERSION}/conf/log4j.properties \
     echo -e "\nlog4j.logger.io.netty=ERROR" >> spark-${SPARK_VERSION}/conf/log4j.properties \
     wget -O spark-network-common_2.11-${SPARK_VERSION}.jar https://master.dl.sourceforge.net/project/analytics-zoo/analytics-zoo-data/spark-network-common_2.11-${SPARK_VERSION}.jar && \
     mv spark-network-common_2.11-${SPARK_VERSION}.jar spark-${SPARK_VERSION}/jars && \
