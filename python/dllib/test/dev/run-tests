@@ -39,9 +39,9 @@ do
     --ignore=../../../dllib/src/bigdl/dllib/examples/ \
     --ignore=../../../dllib/src/bigdl/dllib/models/ && \
     $p -m pytest -v --junitxml result_test_${p}.xml  ../../../../python/dllib/test/ \
-    --ignore=../../../dllib/src/test/bigdl/caffe/ \
-    --ignore=../../../dllib/src/test/bigdl/test_utils.py \
-    --ignore=../../../dllib/src/test/bigdl/test_zoo_util.py
+    --ignore=../../../dllib/test/bigdl/caffe/ \
+    --ignore=../../../dllib/test/bigdl/test_utils.py \
+    --ignore=../../../dllib/test/bigdl/test_zoo_util.py
 
     exit_status=$?
     if [ $exit_status -ne 0 ];
