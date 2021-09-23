@@ -22,7 +22,7 @@ from shutil import copyfile, copytree, rmtree
 
 from setuptools import setup
 
-TEMP_PATH = "bigdl/dllib/share"
+TEMP_PATH = "bigdl/share/dllib"
 bigdl_home = os.path.abspath(__file__ + "/../../../..")
 
 try:
