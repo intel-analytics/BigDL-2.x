@@ -105,11 +105,11 @@ time10=$?
 execute_ray_test autoecastimator-pytorch "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoestimator/autoestimator_pytorch.py --trials 5 --epochs 2"
 time11=$?
 
-if [ ! -f {ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/nyc_taxi.csv ]; then
-  wget -nv $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/
+if [ ! -f ~/.chronos/dataset/nyc_taxi/nyc_taxi.csv ]; then
+  wget -nv $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ~/.chronos/dataset/nyc_taxi/
 fi
 
-execute_ray_test autolstm_nyc_taxi "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/autolstm_nyc_taxi.py --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/nyc_taxi.csv"
+execute_ray_test autolstm_nyc_taxi "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/autolstm_nyc_taxi.py"
 time12=$?
 
 if [ ! -f {ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/nyc_taxi.csv ]; then

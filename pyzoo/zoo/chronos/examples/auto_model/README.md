@@ -25,6 +25,7 @@ python autoprophet_nyc_taxi.py
 
 ## Options
 * `--cluster_mode` The mode for the Spark cluster. local or yarn. Default to be `local`. You can refer to OrcaContext documents [here](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html) for details.
-* `--epoch` Max number of epochs to train in each trial. Default to be 1.
-* `--cpus_per_trail` Number of cpus for each trial. Default to be 2.
-* `--n_sampling` Number of times to sample from the search_space. Default to be 1.
+* `--num_workers` The number of workers to be used in the cluster. You can change it depending on your own cluster setting. Default to be 2.
+* `--cores` "The number of cpu cores you want to use on each node. Default to be 4.
+* `--memory` The memory you want to use on each node. Default to be 10g
+* `--epochs` Max number of epochs to train in each trial. Default to be 1.
