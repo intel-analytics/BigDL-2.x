@@ -81,6 +81,10 @@ class TFTrainingHelperV2(graphRunner: GraphRunner,
     }
   }
 
+  override def isTensorFlow(): Boolean = {
+    true
+  }
+
   override def afterRunGradient(): Unit = {
     super.afterRunGradient()
     if (this.isTraining()) shouldUpdateParameter = true

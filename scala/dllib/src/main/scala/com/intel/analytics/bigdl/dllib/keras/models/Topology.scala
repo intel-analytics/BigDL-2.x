@@ -1181,28 +1181,25 @@ private[bigdl] class InternalDistriOptimizer[T: ClassTag] (
     state("isLayerwiseScaled") = com.intel.analytics.bigdl.dllib.nn.Utils.isLayerwiseScaled(_model)
 
     val nodeNumber = EngineRef.getNodeNumber()
-    // uncomment when migrating TFNet/TorchNet
-//
-//    /**
-//     * The best practice of torch's training is single model in each executor.
-//     * And use multi OMP threads to speedup the single model's training.
-//     * Currently, we only provide single model + multi OMP threads for torch model.
-//     * TODO: support tfnet.
-//     */
-//    logger.info(s"${model} isTorch is ${TorchModel.isTorch(model)}")
-//    val torchOptimize = TorchModel.isTorch(model)
-//    val modelPerExecutor = if (torchOptimize) {
-//      require(EngineRef.getEngineType() != MklDnn, "torch model shouldn't use MKLDNN engine.")
-//      val numOmpThread = distDataset.originRDD().sparkContext
-//        .getConf.get("spark.executorEnv.OMP_NUM_THREADS").toInt
-//      logger.info(s"torch model will use ${numOmpThread} OMP threads.")
-//      1
-//    } else {
-//      EngineRef.getCoreNumber()
-//    }
-//
-    val modelPerExecutor = EngineRef.getCoreNumber() // replace this line with
-    // above when migrating TorchNet
+
+    /**
+     * The best practice of torch's training is single model in each executor.
+     * And use multi OMP threads to speedup the single model's training.
+     * Currently, we only provide single model + multi OMP threads for torch model.
+     * TODO: support tfnet.
+     */
+    logger.info(s"${model} isTorch is ${model.isPyTorch()}")
+    val torchOptimize = model.isPyTorch()
+    val modelPerExecutor = if (torchOptimize) {
+      require(EngineRef.getEngineType() != MklDnn, "torch model shouldn't use MKLDNN engine.")
+      val numOmpThread = distDataset.originRDD().sparkContext
+        .getConf.get("spark.executorEnv.OMP_NUM_THREADS").toInt
+      logger.info(s"torch model will use ${numOmpThread} OMP threads.")
+      1
+    } else {
+      EngineRef.getCoreNumber()
+    }
+
     val partitionNum = distDataset.originRDD().partitions.length
     val modelParameters = InternalOptimizerUtil.getParametersFromModel(trainingModel)
 
@@ -1495,7 +1492,7 @@ private[bigdl] class InternalDistriOptimizer[T: ClassTag] (
 
     val coresPerNode = EngineRef.getCoreNumber()
     val _subModelNumber = EngineRef.getEngineType() match {
-      case MklBlas => if (_model.isSingleModel()) {
+      case MklBlas => if (_model.isPyTorch()) {
         1
       } else {
         coresPerNode

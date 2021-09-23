@@ -483,10 +483,18 @@ abstract class AbstractModule[A <: Activity: ClassTag, B <: Activity: ClassTag, 
   }
 
   /**
-   * Check if the model is single model (cores per node)
+   * Check if the model is PyTorch model
    * @return
    */
-  def isSingleModel(): Boolean = {
+  def isPyTorch(): Boolean = {
+    false
+  }
+
+  /**
+   * Check if the model is TensorFlow model
+   * @return
+   */
+  def isTensorFlow(): Boolean = {
     false
   }
 

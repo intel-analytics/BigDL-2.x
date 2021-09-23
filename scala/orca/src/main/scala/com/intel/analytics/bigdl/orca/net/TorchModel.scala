@@ -82,7 +82,7 @@ class TorchModel (
     (Array(weights), Array(gradients))
   }
 
-  override def isSingleModel(): Boolean = {
+  override def isPyTorch(): Boolean = {
     true
   }
 
