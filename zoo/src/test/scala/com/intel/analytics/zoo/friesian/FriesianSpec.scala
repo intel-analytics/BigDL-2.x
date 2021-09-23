@@ -355,7 +355,6 @@ class FriesianSpec extends ZooSpecHelper {
 
     val dft = friesian.addHistSeq(df, Array("item", "other").toList.asJava, "name",
       "ts", 1, 4, true)
-    
     assert(dft.count() == 2)
     assert(dft.filter(df("name") === "alice").count() == 1)
     assert(dft.filter(df("name") === "jack").count() == 1)
