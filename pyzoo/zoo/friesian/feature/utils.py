@@ -70,6 +70,7 @@ def add_hist_seq(df, cols, user_col, sort_col, min_len, max_len, last_only):
     return callZooFunc("float", "addHistSeq", df, cols, user_col, sort_col, min_len, max_len,
                        last_only)
 
+
 def add_neg_hist_seq(df, item_size, item_history_col, neg_num):
     return callZooFunc("float", "addNegHisSeq", df, item_size, item_history_col, neg_num)
 
