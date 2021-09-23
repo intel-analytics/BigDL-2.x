@@ -1,1 +1,1 @@
-recursive-include bigdl/dllib/share *
+recursive-include bigdl/share/dllib *
