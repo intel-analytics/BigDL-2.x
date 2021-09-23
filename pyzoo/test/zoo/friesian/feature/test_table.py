@@ -514,9 +514,15 @@ class TestTable(TestCase):
         df = df.withColumn("ts", col("time").cast("timestamp").cast("long"))
         tbl = FeatureTable(df.select("name", "item", "ts")) \
             .add_hist_seq(["item"], "name", "ts", 1, 4)
+        tbl2 = FeatureTable(df.select("name", "item", "ts")) \
+            .add_hist_seq(["item"], "name", "ts", 1, 4, True)
         assert tbl.size() == 8
         assert tbl.df.filter(col("name") == "alice").count() == 2
         assert tbl.df.filter("name like '%jack'").count() == 6
+        assert "item_hist_seq" in tbl.df.columns
+        assert tbl2.size() == 2
+        assert tbl.df.filter(col("name") == "alice").count() == 1
+        assert tbl.df.filter("name like '%jack'").count() == 1
         assert "item_hist_seq" in tbl.df.columns
 
     def test_gen_neg_hist_seq(self):
