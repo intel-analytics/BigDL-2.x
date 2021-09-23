@@ -19,14 +19,14 @@ package com.intel.analytics.zoo.friesian.python
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.friesian.feature.Utils
-
 import java.util.{List => JList}
 
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.types.{ArrayType, IntegerType, DoubleType, StringType, LongType, StructField, StructType}
+import org.apache.spark.sql.types.{ArrayType, DoubleType, IntegerType, LongType, StringType, StructField, StructType}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.functions.{col, row_number, spark_partition_id, udf, log => sqllog, rand}
+import org.apache.spark.sql.functions.{col, rand, row_number, spark_partition_id, udf, log => sqllog}
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConverters._
@@ -286,6 +286,47 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
     df.groupBy(userCol).agg(collect_list(struct(allColumns: _*)).as("friesian_his_collect"))
       .withColumn("friesian_history", explode(genHisUDF(col("friesian_his_collect"))))
       .select(userCol, "friesian_history.*")
+  }
+
+  def addValueFeatures(df: DataFrame, cols: JList[String], dictDF: DataFrame,
+                       key: String, value: String): DataFrame = {
+
+    val mapScala = dictDF.rdd.map(r => (r.getInt(0), r.getInt(1))).collect().toMap
+    val sc = df.sparkSession.sparkContext
+    val mapBr: Broadcast[Map[Int, Int]] = sc.broadcast(mapScala)
+
+    var tmpDF = df
+    for(col <- cols.asScala.toList) {
+      tmpDF = addValueSingleCol(tmpDF, col, mapBr, key, value)
+    }
+
+    tmpDF
+  }
+
+  def addValueSingleCol(df: DataFrame, colName: String, mapBr: Broadcast[Map[Int, Int]],
+                        key: String, value: String): DataFrame = {
+
+    val colTypes = df.schema.fields.filter(x => x.name.equalsIgnoreCase(colName))
+    val lookup = mapBr.value
+    if(colTypes.length > 0) {
+      val colType = colTypes(0)
+      val replaceUdf = colType.dataType match {
+        case IntegerType => udf((x: Int) => lookup.getOrElse(x, 0))
+        case ArrayType(IntegerType, _) =>
+          udf((arr: WrappedArray[Int]) => arr.map(x => lookup.getOrElse(x, 0)))
+        case ArrayType(ArrayType(IntegerType, _), _) =>
+          udf((mat: WrappedArray[WrappedArray[Int]]) =>
+            mat.map(arr => arr.map(x => lookup.getOrElse(x, 0))))
+        case _ => throw new IllegalArgumentException(
+          s"Unsupported data type ${colType.dataType.typeName} " +
+            s"of column ${colType.name} in addValueFeatures")
+      }
+
+      df.withColumn(colName.replace(key, value), replaceUdf(col(colName)))
+
+    } else {
+      df
+    }
   }
 
   def mask(df: DataFrame, cols: JList[String], maxLength: Int): DataFrame = {
