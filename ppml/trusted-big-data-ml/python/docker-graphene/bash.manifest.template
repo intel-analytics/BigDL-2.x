@@ -2,8 +2,8 @@ loader.preload = "file:{{ graphene.libos }}"
 libos.entrypoint = "{{ execdir }}/bash"
 
 
-#loader.log_level = "debug"
-loader.log_level = "error"
+loader.log_level = "debug"
+#loader.log_level = "error"
 #loader.log_level = "all"
 
 loader.pal_internal_mem_size = "512M"

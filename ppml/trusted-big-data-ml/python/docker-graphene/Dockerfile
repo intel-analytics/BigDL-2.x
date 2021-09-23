@@ -68,6 +68,8 @@ RUN cd /opt && \
     tar -zxvf spark-${SPARK_VERSION}-bin-hadoop3.2.tgz && \
     mv spark-${SPARK_VERSION}-bin-hadoop3.2 spark-${SPARK_VERSION} && \
     rm spark-${SPARK_VERSION}-bin-hadoop3.2.tgz && \
+    cp spark-${SPARK_VERSION}/conf/log4j.properties.template spark-${SPARK_VERSION}/conf/log4j.properties && \
+    echo -e "\nlog4j.logger.io.netty=ERROR" >> spark-${SPARK_VERSION}/conf/log4j.properties && \
     wget -O spark-network-common_2.12-${SPARK_VERSION}.jar https://master.dl.sourceforge.net/project/analytics-zoo/analytics-zoo-data/spark-network-common_2.12-${SPARK_VERSION}.jar && \
     mv spark-network-common_2.12-${SPARK_VERSION}.jar spark-${SPARK_VERSION}/jars && \
     mv spark-${SPARK_VERSION}/python/lib/pyspark.zip spark-${SPARK_VERSION}/python/lib/pyspark.zip.bac && \
@@ -137,6 +139,7 @@ RUN apt-get update --fix-missing && \
 RUN git clone https://github.com/intel-analytics/BigDL.git && \
     cd BigDL && \
     git apply /bigdl.lenet.training.patch && \
+    echo -e "\nlog4j.logger.io.netty=ERROR" >> ./spark/dl/src/main/resources/log4j.properties \
     git status && \
     export MAVEN_OPTS="-Xmx2g -XX:ReservedCodeCacheSize=512m \
         -Dhttp.proxyHost=$HTTP_PROXY_HOST \
@@ -165,7 +168,8 @@ RUN ./download-analytics-zoo.sh && \
     cd /opt && git clone --depth 1 https://github.com/intel-analytics/analytics-zoo.git
 RUN patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/data/spark_pandas.py /opt/orca.data.patch && \
     patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/learn/tf/basic_text_classification/basic_text_classification.py /opt/orca.learn.tf.text.patch && \
-    patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/learn/tf/transfer_learning/transfer_learning.py /opt/orca.learn.tf.transfer.patch
+    patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/learn/tf/transfer_learning/transfer_learning.py /opt/orca.learn.tf.transfer.patch && \
+    echo -e "\nlog4j.logger.io.netty=ERROR" >> /opt/analytics-zoo/zoo/src/main/resources/log4j.properties
 
 # stage.5 az ppml
 FROM ubuntu:18.04
@@ -227,7 +231,7 @@ COPY --from=spark /opt/spark-${SPARK_VERSION} /ppml/trusted-big-data-ml/work/spa
 COPY --from=spark /opt/spark/core/target/spark-core_2.12-$SPARK_VERSION.jar /opt/spark-core_2.12-$SPARK_VERSION.jar
 COPY --from=spark /opt/hadoop/hadoop-common-project/hadoop-common/target/hadoop-common-3.2.0.jar /opt/hadoop-common-3.2.0.jar
 COPY --from=bigdl /BigDL/dist/lib/bigdl-*-jar-with-dependencies.jar /ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar
-COPY --from=bigdl /BigDL/dist/lib/bigdl-*-python-api.zip /ppml/trusted-big-data-ml/work/bigd-python-api.zip
+COPY --from=bigdl /BigDL/dist/lib/bigdl-*-python-api.zip /ppml/trusted-big-data-ml/work/bigdl-python-api.zip
 COPY --from=bigdl /BigDL/pyspark/bigdl/examples /ppml/trusted-big-data-ml/work/examples/bigdl
 COPY --from=analytics-zoo /analytics-zoo-${ANALYTICS_ZOO_VERSION} /ppml/trusted-big-data-ml/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
 COPY --from=analytics-zoo /opt/analytics-zoo/pyzoo/zoo/examples /ppml/trusted-big-data-ml/work/examples/pyzoo
@@ -255,6 +259,7 @@ RUN apt-get install -y python3-minimal && \
     pip install --no-cache-dir tensorflow_datasets==3.2.0 h5py==2.10.0 && \
     pip install --no-cache-dir pyarrow && \
     pip install --no-cache-dir ninja meson && \
+    pip install --no-cache-dir psutil && \
     python3 -m pip install toml==0.10.2 click jinja2 && \
     python3 -m ipykernel.kernelspec
 
