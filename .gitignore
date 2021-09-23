@@ -4,3 +4,5 @@ __pycache__
 *.egg-info
 target
 *.log
+build
+dist
