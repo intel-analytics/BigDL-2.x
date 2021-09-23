@@ -1273,7 +1273,8 @@ class FeatureTable(Table):
         df = add_negative_samples(self.df, item_size, item_col, label_col, neg_num)
         return FeatureTable(df)
 
-    def add_hist_seq(self, cols, user_col, sort_col='time', min_len=1, max_len=100):
+    def add_hist_seq(self, cols, user_col, sort_col='time',
+                     min_len=1, max_len=100, last_only=False):
         """
         Generate a list of item visits in history
 
@@ -1282,10 +1283,11 @@ class FeatureTable(Table):
         :param sort_col: str, sort by sort_col
         :param min_len: int, minimal length of a history list
         :param max_len: int, maximal length of a history list
+        :param last_only: boolean, if true keep last seq of histories else keep all seqs
 
         :return: FeatureTable
         """
-        df = add_hist_seq(self.df, cols, user_col, sort_col, min_len, max_len)
+        df = add_hist_seq(self.df, cols, user_col, sort_col, min_len, max_len, last_only)
         return FeatureTable(df)
 
     def add_neg_hist_seq(self, item_size, item_history_col, neg_num):
