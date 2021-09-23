@@ -1,2 +1,6 @@
 *.so
 .idea
+__pycache__
+*.egg-info
+target
+*.log
