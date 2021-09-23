@@ -63,6 +63,7 @@ RUN cd /opt && \
     tar -zxvf spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     mv spark-${SPARK_VERSION}-bin-hadoop2.7 spark-${SPARK_VERSION} && \
     rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
+    echo -e "\nlog4j.logger.io.netty=ERROR" >> spark-${SPARK_VERSION}/conf/log4j.properties \
     wget -O spark-network-common_2.11-${SPARK_VERSION}.jar https://master.dl.sourceforge.net/project/analytics-zoo/analytics-zoo-data/spark-network-common_2.11-${SPARK_VERSION}.jar && \
     mv spark-network-common_2.11-${SPARK_VERSION}.jar spark-${SPARK_VERSION}/jars && \
     mv spark-${SPARK_VERSION}/python/lib/pyspark.zip spark-${SPARK_VERSION}/python/lib/pyspark.zip.bac && \
@@ -131,6 +132,7 @@ RUN apt-get update --fix-missing && \
 RUN git clone https://github.com/intel-analytics/BigDL.git && \
     cd BigDL && \
     git apply /bigdl.lenet.training.patch && \
+    echo -e "\nlog4j.logger.io.netty=ERROR" >> ./spark/dl/src/main/resources/log4j.properties \
     git status && \
     export MAVEN_OPTS="-Xmx2g -XX:ReservedCodeCacheSize=512m \
         -Dhttp.proxyHost=$HTTP_PROXY_HOST \
@@ -159,7 +161,8 @@ RUN ./download-analytics-zoo.sh && \
     cd /opt && git clone --depth 1 https://github.com/intel-analytics/analytics-zoo.git
 RUN patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/data/spark_pandas.py /opt/orca.data.patch && \
     patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/learn/tf/basic_text_classification/basic_text_classification.py /opt/orca.learn.tf.text.patch && \
-    patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/learn/tf/transfer_learning/transfer_learning.py /opt/orca.learn.tf.transfer.patch
+    patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/learn/tf/transfer_learning/transfer_learning.py /opt/orca.learn.tf.transfer.patch \
+    echo -e "\nlog4j.logger.io.netty=ERROR" >> ./zoo/src/main/resources/log4j.properties
 
 # stage.5 az ppml
 FROM ubuntu:18.04
