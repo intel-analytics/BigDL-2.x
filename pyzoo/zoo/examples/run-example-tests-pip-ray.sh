@@ -127,7 +127,7 @@ execute_ray_test autots_nyc_taxi "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/exampl
 time14=$?
 
 if [ ! -f {ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/data_train_small.npz ]; then
-  wget -nv $FTP_URI/analytics-zoo-data/apps/doppelGANger/data_train_small.npz -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/
+  wget -nv $FTP_URI/analytics-zoo-data/apps/doppelGANger_data/data_train_small.npz -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/
 fi
 
 execute_ray_test dpgansimulator_wwt "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/dpgansimulator_wwt.py --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/data_train_small.npz --epoch 1 --plot_figures False"

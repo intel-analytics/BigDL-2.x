@@ -212,7 +212,7 @@ if [ -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/data_train_sm
 then
     echo "data_train_small.npz already exists"
 else
-    wget -nv $FTP_URI/analytics-zoo-data/apps/doppelGANger/data_train_small.npz -P \
+    wget -nv $FTP_URI/analytics-zoo-data/apps/doppelGANger_data/data_train_small.npz -P \
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/
 fi
 
