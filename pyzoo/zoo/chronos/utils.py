@@ -23,7 +23,8 @@ def deprecated(message=""):
         @wraps(function)
         def wrapped(*args, **kwargs):
             warnings.simplefilter('always', DeprecationWarning)
-            warnings.warn("{} will be deprecated in future release. {}".format(function.__name__, message),
+            warnings.warn("{} will be deprecated in future release. {}"
+                          .format(function.__name__, message),
                           category=DeprecationWarning)
             warnings.simplefilter('default', DeprecationWarning)
             return function(*args, **kwargs)
