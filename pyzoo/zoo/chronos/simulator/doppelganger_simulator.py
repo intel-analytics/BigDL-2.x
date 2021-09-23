@@ -245,9 +245,10 @@ class DPGANSimulator:
         for i in range(len(self.model.data_attribute_outputs)):
             output_it = self.model.data_attribute_outputs[i]
             if output_it.type_ == OutputType.DISCRETE:
-                sub_output = F.softmax(torch.from_numpy(attributes[:, current_idx:\
+                sub_output = F.softmax(torch.from_numpy(attributes[:, current_idx:
                                                                    current_idx+output_it.dim]))
-                sub_output_discrete = F.one_hot(torch.argmax(sub_output, dim=1), num_classes=output_it.dim)
+                sub_output_discrete = F.one_hot(torch.argmax(sub_output, dim=1),
+                                                num_classes=output_it.dim)
                 output_list.append(sub_output_discrete)
             current_idx += output_it.dim
         attributes = torch.cat(output_list, dim=1).numpy()

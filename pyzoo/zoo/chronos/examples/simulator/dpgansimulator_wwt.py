@@ -102,7 +102,8 @@ if __name__ == "__main__":
     real_data = np.load(args.datadir)
 
     # feature outputs
-    feature_outputs = [Output(type_=OutputType.CONTINUOUS, dim=1, normalization=Normalization.MINUSONE_ONE)]
+    feature_outputs = [Output(type_=OutputType.CONTINUOUS, dim=1,
+                       normalization=Normalization.MINUSONE_ONE)]
 
     # attribute outputs
     attribute_outputs = [Output(type_=OutputType.DISCRETE, dim=9),
@@ -134,7 +135,8 @@ if __name__ == "__main__":
 
     # generate synthetic dataset
     print("generating data")
-    features, attributes, gen_flags, lengths = doppelganger.generate(sample_num=50000)
+    features, attributes, gen_flags, lengths =\
+        doppelganger.generate(sample_num=real_data["data_feature"].shape[0])
     print("data generated")
 
     # evaluation(plot figure 1, 6, 19 on http://arxiv.org/abs/1909.13403)
@@ -143,22 +145,25 @@ if __name__ == "__main__":
         # evalation(figure 1)
         autocorr_ori = get_autocorr(real_data["data_feature"]).numpy()
         autocorr_gen = get_autocorr(features).numpy()
-        plt.figure(figsize=(10,5))
+        plt.figure(figsize=(10, 5))
         plt.plot(autocorr_ori)
         plt.plot(autocorr_gen)
         plt.legend(["real", "doppelganger"])
         plt.savefig("figure_1.png", format="png")
 
         # evaluation(figure 6)
-        plt.figure(figsize=(10,5))
-        a = plt.hist((np.max(real_data["data_feature"], axis=(1,2)) + np.min(real_data["data_feature"], axis=(1,2)))/2, bins=100, alpha=0.7)
-        plt.hist((np.max(features, axis=(1,2))+np.min(features, axis=(1,2)))/2, bins=a[1], alpha=0.7)
+        plt.figure(figsize=(10, 5))
+        a = plt.hist((np.max(real_data["data_feature"], axis=(1, 2))
+                     + np.min(real_data["data_feature"], axis=(1, 2)))/2, bins=100, alpha=0.7)
+        plt.hist((np.max(features, axis=(1, 2)) +
+                 np.min(features, axis=(1, 2)))/2, bins=a[1], alpha=0.7)
         plt.legend(["real", "doppelganger"])
         plt.savefig("figure_6.png", format="png")
 
         # evaluation(figure 19)
-        plt.figure(figsize=(10,5))
-        plt.bar(np.array(range(9)), np.sum(real_data["data_attribute"][:, 0:9], axis=0), width=0.5, alpha=0.7)
+        plt.figure(figsize=(10, 5))
+        plt.bar(np.array(range(9)), np.sum(real_data["data_attribute"][:, 0:9],
+                axis=0), width=0.5, alpha=0.7)
         plt.bar(range(9), np.sum(attributes[:, 0:9], axis=0), width=0.5, alpha=0.7)
         plt.legend(["real", "doppelganger"])
         plt.savefig("figure_19.png", format="png")
