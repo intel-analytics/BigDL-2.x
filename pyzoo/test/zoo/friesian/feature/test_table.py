@@ -521,9 +521,9 @@ class TestTable(TestCase):
         assert tbl.df.filter("name like '%jack'").count() == 6
         assert "item_hist_seq" in tbl.df.columns
         assert tbl2.size() == 2
-        assert tbl.df.filter(col("name") == "alice").count() == 1
-        assert tbl.df.filter("name like '%jack'").count() == 1
-        assert "item_hist_seq" in tbl.df.columns
+        assert tbl2.df.filter(col("name") == "alice").count() == 1
+        assert tbl2.df.filter("name like '%jack'").count() == 1
+        assert "item_hist_seq" in tbl2.df.columns
 
     def test_gen_neg_hist_seq(self):
         spark = OrcaContext.get_spark_session()
