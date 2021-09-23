@@ -22,7 +22,7 @@ from shutil import copyfile, copytree, rmtree
 
 from setuptools import setup
 
-TEMP_PATH = "bigdl/share/dllib"
+TEMP_PATH = "bigdl/dllib/share"
 bigdl_home = os.path.abspath(__file__ + "/../../../..")
 
 try:
@@ -56,32 +56,20 @@ def init_env():
     if build_from_source():
         print("Start to build distributed package")
         print("HOME OF BIGDL: " + bigdl_home)
-        dist_source = os.path.join(bigdl_home, "dist")
+        dist_source = bigdl_home + "/dist"
         if not os.path.exists(dist_source):
             print(building_error_msg)
             sys.exit(-1)
         if os.path.exists(TEMP_PATH):
             rmtree(TEMP_PATH)
-        conf_dir = os.path.join(dist_source, "conf")
-        conf_dest_dir = os.path.join(TEMP_PATH, "conf")
-        copytree(conf_dir, conf_dest_dir)
-        version_parts = VERSION.split(".")
-        if len(version_parts) == 4 and version_parts[3].startswith("dev"):
-            jar_version = ".".join(version_parts[:3]) + "-SNAPSHOT"
-        else:
-            jar_version = VERSION
-        jar_file_name = f"bigdl-dllib-{jar_version}-jar-with-dependencies.jar"
-        jar_file_path = os.path.join(dist_source, "lib", jar_file_name)
-        dest_jar_file = os.path.join(TEMP_PATH, "lib", jar_file_name)
-        os.mkdir(os.path.join(TEMP_PATH, "lib"))
-        copyfile(jar_file_path, dest_jar_file)
+        copytree(dist_source, TEMP_PATH)
+        copyfile(bigdl_home + "/python/dllib/src/bigdl/dllib/nn/__init__.py", TEMP_PATH + "/__init__.py")
     else:
         print("Do nothing for release installation")
 
 def get_bigdl_packages():
     bigdl_python_home = os.path.abspath(__file__)[:-8]
-    # bigdl_packages = ['bigdl.share']
-    bigdl_packages = []
+    bigdl_packages = ['bigdl.share.dllib']
     for dirpath, dirs, files in os.walk(bigdl_python_home + "bigdl"):
         package = dirpath.split(bigdl_python_home)[1].replace('/', '.')
         if "__pycache__" not in package:
@@ -104,7 +92,7 @@ def setup_package():
         install_requires=['numpy>=1.7', 'pyspark==2.4.6', 'six>=1.10.0'],
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,
-        package_data={"bigdl.share.dllib": ['bigdl/share/dllib']},
+        package_data={"bigdl.share.dllib": ['lib/bigdl-dllib*.jar', 'conf/*']},
         classifiers=[
             'License :: OSI Approved :: Apache Software License',
             'Programming Language :: Python :: 2.7',
@@ -126,6 +114,5 @@ if __name__ == '__main__':
         raise e
     finally:
         if build_from_source() and os.path.exists(TEMP_PATH):
-            pass
-            # rmtree(TEMP_PATH)
+             rmtree(TEMP_PATH)
 
