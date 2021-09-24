@@ -3,7 +3,7 @@ This example will demonstrate how to use ONNX to speed up the inferencing(predic
 
 ## Prepare the environment
 We recommend you to use Anaconda to prepare the environment, especially if you want to run on a yarn cluster:
-```
+```bash
 conda create -n zoo python=3.7 # "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
 pip install --pre --upgrade analytics-zoo[automl]
@@ -19,13 +19,13 @@ First, `get_public_dataset` automatically download the specified data set and re
 # Just specify the name and path, (e.g. network_traffic)
 name = 'network_traffic'
 path = '~/.chronos/dataset/'
-tsdata, _, tsdata_test = get_public_dataset(name, path, with_split=True, val_ratio=0.1)
+tsdata_train, _, tsdata_test = get_public_dataset(name, path, with_split=True, test_ratio=0.1)
 minmax = MinMaxScaler()
 for tsdata in [tsdata_train, tsdata_test]:
     tsdata.gen_dt_feature(one_hot_features=["HOUR", "WEEK"])\
-            .impute("last")\
-            .scale(minmax, fit=tsdata is tsdata_train)
-            .roll(lookback=40, horizon=1)
+          .impute("last")\
+          .scale(minmax, fit=tsdata is tsdata_train)\
+          .roll(lookback=100, horizon=10)
 ```
 
 ## Fit on forecaster/AutoTSEstimator
@@ -47,6 +47,7 @@ autotsestimator.evaluate_with_onnx(tsdata_test)
 ## Result
 ONNX will not affect the result of evaluate, and will speed up predict.
 ```python
+mse, smape = forecaster.evaluate((x_test,y_test))
 # evaluate mse is: 0.0014
 # evaluate smape is: 9.6629
 mse, smape = forecaster.evaluate_with_onnx((x_test,y_test))
@@ -60,7 +61,7 @@ forecaster.predict_with_onnx(x_test)
 ```
 
 ## Options
-* `--epochs` Max number of epochs to train in each trial. Default to be 1.
+* `--epochs` Max number of epochs to train in each trial. Default to be 2.
 * `--n_sampling` Number of times to sample from the search_space. Default to be 1.
 * `--cpus_per_trail` Number of cpus for each trial. Default to be 2.
 * `--memory` The memory you want to use on each node. Default to be 10g.

@@ -48,15 +48,15 @@ if __name__ == '__main__':
 
     tsdata_train, tsdata_test = get_tsdata()
 
-    forecaster = Seq2SeqForecaster(past_seq_len=40,
-                                   future_seq_len=1,
+    forecaster = Seq2SeqForecaster(past_seq_len=100,
+                                   future_seq_len=10,
                                    input_feature_num=33,
                                    output_feature_num=2,
                                    metrics=['mse', 'smape'],
                                    seed=0)
 
-    x_train, y_train = tsdata_train.roll(lookback=40, horizon=1).to_numpy()
-    x_test, y_test = tsdata_test.roll(lookback=40, horizon=1).to_numpy()
+    x_train, y_train = tsdata_train.roll(lookback=100, horizon=10).to_numpy()
+    x_test, y_test = tsdata_test.roll(lookback=100, horizon=10).to_numpy()
     forecaster.fit((x_train, y_train), epochs=args.epochs)
 
     mse, smape = forecaster.evaluate((x_test, y_test))

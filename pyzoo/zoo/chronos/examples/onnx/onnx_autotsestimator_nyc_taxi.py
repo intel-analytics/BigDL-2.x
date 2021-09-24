@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     autoest = AutoTSEstimator(model='lstm',
                               search_space="normal",
-                              past_seq_len=120,
+                              past_seq_len=40,
                               future_seq_len=1,
                               cpus_per_trial=2,
                               metric='mse',
