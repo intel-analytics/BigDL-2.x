@@ -22,7 +22,7 @@ import os
 from numpy.testing import assert_array_almost_equal
 
 from zoo.orca.automl.xgboost.XGBoost import XGBoost, XGBoostModelBuilder
-from zoo.chronos.feature.identity_transformer import IdentityTransformer
+from zoo.chronos.autots.deprecated.feature.identity_transformer import IdentityTransformer
 import pytest
 
 

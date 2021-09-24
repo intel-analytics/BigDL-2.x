@@ -22,7 +22,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray import RayContext
-from zoo.chronos.config.recipe import XgbRegressorSkOptRecipe, XgbRegressorGridRandomRecipe
+from zoo.chronos.autots.deprecated.config.recipe import\
+    XgbRegressorSkOptRecipe, XgbRegressorGridRandomRecipe
 from zoo.orca.automl.xgboost import AutoXGBClassifier
 
 
