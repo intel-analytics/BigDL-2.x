@@ -88,9 +88,9 @@ if __name__ == '__main__':
     unscale_y_test = tsdata_test.unscale_numpy(y_test)
     unscale_yhat = tsdata_test.unscale_numpy(yhat)
 
-    result = [Evaluator.evaluate(m, y_true=unscale_y_test,
-                                 y_pred=unscale_yhat) for m in ['rmse', 'smape']]
-    print(f'rmse is {np.mean(result[0])}')
-    print(f'sampe is {np.mean(result[1])}')
+    rmse, smape = [Evaluator.evaluate(m, y_true=unscale_y_test,
+                                      y_pred=unscale_yhat) for m in ['rmse', 'smape']]
+    print(f'rmse is {np.mean(rmse)}')
+    print(f'sampe is {np.mean(smape)}')
 
     stop_orca_context()
