@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.postprocessing
+package com.intel.analytics.bigdl.serving.postprocessing
 
 import java.util.Base64
 
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.serving.serialization.ArrowSerializer
-import com.intel.analytics.zoo.serving.utils.TensorUtils
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.serving.serialization.ArrowSerializer
+import com.intel.analytics.bigdl.serving.utils.TensorUtils
 
 
 /**

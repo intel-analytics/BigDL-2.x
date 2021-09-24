@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.models
+package com.intel.analytics.bigdl.serving.models
 
-import com.intel.analytics.zoo.serving.ClusterServing
-import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
-import com.intel.analytics.zoo.serving.engine.ClusterServingInference
-import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
+import com.intel.analytics.bigdl.serving.ClusterServing
+import com.intel.analytics.bigdl.serving.engine.ClusterServingInference
+import com.intel.analytics.bigdl.serving.serialization.ArrowDeserializer
+import com.intel.analytics.bigdl.serving.utils.ClusterServingHelper
 import org.scalatest.{FlatSpec, Matchers}
 
-import sys.process._
+import scala.sys.process._
 
 class OpenVINOModelSpec extends FlatSpec with Matchers {
   ClusterServing.helper = new ClusterServingHelper()

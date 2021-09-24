@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.http
+package com.intel.analytics.bigdl.serving.http
 
 import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory

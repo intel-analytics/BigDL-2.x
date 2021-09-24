@@ -15,7 +15,7 @@
  */
 
 
-package com.intel.analytics.zoo.serving.http
+package com.intel.analytics.bigdl.serving.http
 
 import java.util.concurrent.TimeUnit
 

@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving
+package com.intel.analytics.bigdl.serving
 
 import java.util
 import java.util.AbstractMap.SimpleEntry
 
-import scala.collection.JavaConverters._
-import com.intel.analytics.zoo.serving.http.{PredictionInputMessage, _}
-import com.intel.analytics.zoo.serving.utils.Conventions
+import com.intel.analytics.bigdl.serving.pipeline.{RedisEmbeddedReImpl, RedisUtils}
+import com.intel.analytics.bigdl.serving.http.Supportive
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
-import redis.clients.jedis.{Jedis, ScanParams, ScanResult, StreamEntryID}
-import com.intel.analytics.zoo.serving.pipeline.{RedisEmbeddedReImpl, RedisUtils}
+import redis.clients.jedis.{Jedis, ScanParams, StreamEntryID}
 import redis.embedded.RedisExecProvider
 import redis.embedded.util.OS
 import scopt.OptionParser
+
+import scala.collection.JavaConverters._
 
 class RedisIOSpec(path : String) extends FlatSpec
   with Matchers with BeforeAndAfter with Supportive {

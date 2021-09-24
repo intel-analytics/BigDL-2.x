@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.utils
+package com.intel.analytics.bigdl.serving.utils
 
 import org.apache.log4j.Logger
 

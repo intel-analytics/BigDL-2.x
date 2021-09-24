@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.serialization
+package com.intel.analytics.bigdl.serving.serialization
 
 import java.io.ByteArrayInputStream
 import java.util.Base64

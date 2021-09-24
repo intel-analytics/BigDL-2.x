@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.pipeline
+package com.intel.analytics.bigdl.serving.pipeline
 
-import com.intel.analytics.zoo.serving.utils.Conventions
+import com.intel.analytics.bigdl.serving.utils.Conventions
 
 import scala.collection.JavaConverters._
 import redis.clients.jedis.exceptions.JedisConnectionException

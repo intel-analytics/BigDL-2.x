@@ -15,11 +15,10 @@
  */
 
 
-package com.intel.analytics.zoo.serving.http
+package com.intel.analytics.bigdl.serving.http
 
 import com.codahale.metrics.{MetricRegistry, Timer}
 import org.scalatest.{FlatSpec, Matchers}
-
 
 
 class MockMultipleServingHttpSpec extends FlatSpec with Matchers with Supportive {

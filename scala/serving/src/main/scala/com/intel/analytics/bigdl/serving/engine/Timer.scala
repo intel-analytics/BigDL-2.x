@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.engine
+package com.intel.analytics.bigdl.serving.engine
 
 import java.util.PriorityQueue
 

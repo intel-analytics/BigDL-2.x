@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.preprocessing
+package com.intel.analytics.bigdl.serving.preprocessing
 
-
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
-import com.intel.analytics.zoo.feature.image.OpenCVMethod
+import com.intel.analytics.bigdl.dllib.feature.image.OpenCVMethod
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.OpenCVMat
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.utils.T
 import org.opencv.imgcodecs.Imgcodecs
 import org.apache.log4j.Logger
 
 import scala.collection.mutable.ArrayBuffer
-import com.intel.analytics.bigdl.utils.{T, Table}
-import com.intel.analytics.zoo.pipeline.inference.{EncryptSupportive, InferenceSupportive}
-import com.intel.analytics.zoo.serving.ClusterServing
-import com.intel.analytics.zoo.serving.http.Instances
-import com.intel.analytics.zoo.serving.pipeline.RedisUtils
-import com.intel.analytics.zoo.serving.serialization.{JsonInputDeserializer, StreamSerializer}
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
+import com.intel.analytics.bigdl.orca.inference.{EncryptSupportive, InferenceSupportive}
+import com.intel.analytics.bigdl.serving.ClusterServing
+import com.intel.analytics.bigdl.serving.http.Instances
+import com.intel.analytics.bigdl.serving.pipeline.RedisUtils
+import com.intel.analytics.bigdl.serving.serialization.{JsonInputDeserializer, StreamSerializer}
+import com.intel.analytics.bigdl.serving.utils.{ClusterServingHelper, Conventions}
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
+
 import scala.collection.JavaConverters._
 import redis.clients.jedis.Jedis
 

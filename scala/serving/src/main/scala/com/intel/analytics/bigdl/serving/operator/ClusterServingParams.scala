@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.operator
+package com.intel.analytics.bigdl.serving.operator
 
 class ClusterServingParams(modelConcurrent: Int = 1,
                            inferenceMode: String = "single",

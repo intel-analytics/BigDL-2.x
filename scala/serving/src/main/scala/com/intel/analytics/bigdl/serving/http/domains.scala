@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.http
+package com.intel.analytics.bigdl.serving.http
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.util
@@ -27,7 +27,7 @@ import java.nio.file.{Files, Paths}
 import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import com.codahale.metrics.Timer
-import com.intel.analytics.zoo.serving.utils.Conventions
+import com.intel.analytics.bigdl.serving.utils.Conventions
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.complex._
 import org.apache.arrow.vector.dictionary.DictionaryProvider
@@ -47,17 +47,17 @@ import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode, TextNode}
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer, JsonNode, ObjectMapper}
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.RateLimiter
-import com.intel.analytics.zoo.serving.http.FrontEndApp.{handleResponseTimer, makeActivityTimer, metrics, overallRequestTimer, system, timeout, timing, waitRedisTimer}
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.pipeline.inference.InferenceModel
+import com.intel.analytics.bigdl.dllib.feature.image.OpenCVMethod
+import com.intel.analytics.bigdl.dllib.feature.transform.vision.image.opencv.OpenCVMat
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.utils.T
+import com.intel.analytics.bigdl.serving.http.FrontEndApp._
+import com.intel.analytics.bigdl.orca.inference.InferenceModel
 import org.opencv.imgcodecs.Imgcodecs
-import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
-import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.feature.image.OpenCVMethod
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import redis.clients.jedis.JedisPoolConfig
-// import com.intel.analytics.zoo.serving.ClusterServing
-import com.intel.analytics.zoo.serving.serialization.StreamSerializer
+// import com.intel.analytics.bigdl.serving.ClusterServing
+import com.intel.analytics.bigdl.serving.serialization.StreamSerializer
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.JedisPool
 
@@ -842,7 +842,7 @@ class ServableManager {
           + ", Model Version: " + modelInfo.getModelVersion, null)
       }
       modelInferenceTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
-        metrics.timer("zoo.serving.inference." + modelInfo.getModelName + "."
+        metrics.timer("bigdl.serving.inference." + modelInfo.getModelName + "."
           + modelInfo.getModelVersion)
       purePredictTimersMap(modelInfo.getModelName)(modelInfo.getModelVersion) =
         metrics.timer("zoo.pure.predict." + modelInfo.getModelName + "."
@@ -946,7 +946,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData,
   def predict(input: String): Seq[PredictionOutput[String]] = {
     logger.info(s"inference model predict as string")
     val activities = timing("activity make")(makeActivityTimer) {
-      JsonInputDeserializer.deserialize(input)
+      JsonInputDomainDeser.deserialize(input)
     }
     activities.map(
       activity => {
@@ -970,7 +970,7 @@ class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData,
   private def tensorToString(tensor: Tensor[Float]): String = {
     val outputShape = tensor.size()
     // Share Tensor Storage
-    val jTensor = new com.intel.analytics.zoo.pipeline.inference.JTensor(tensor.storage().array(),
+    val jTensor = new com.intel.analytics.bigdl.orca.inference.JTensor(tensor.storage().array(),
       outputShape, false)
     """{ "data":""" + jTensor.getData.mkString(",") + """, "shape":""" +
       jTensor.getShape.mkString(",") + "}"
@@ -1172,7 +1172,7 @@ case class ServableLoadException(message: String = null, cause: Throwable = null
 }
 
 
-class JsonInputDeserializer extends JsonDeserializer[Seq[Activity]]{
+class JsonInputDomainDeser extends JsonDeserializer[Seq[Activity]]{
   var intBuffer: ArrayBuffer[Int] = null
   var floatBuffer: ArrayBuffer[Float] = null
   var stringBuffer: ArrayBuffer[String] = null
@@ -1230,11 +1230,11 @@ class JsonInputDeserializer extends JsonDeserializer[Seq[Activity]]{
 
 }
 
-object JsonInputDeserializer {
+object JsonInputDomainDeser {
   def deserialize(str: String): Seq[Activity] = {
     val mapper = new ObjectMapper()
     val module = new SimpleModule()
-    module.addDeserializer(classOf[Seq[Activity]], new JsonInputDeserializer())
+    module.addDeserializer(classOf[Seq[Activity]], new JsonInputDomainDeser())
     mapper.registerModule(module)
     mapper.readValue(str, classOf[Seq[Activity]])
   }

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.engine
+package com.intel.analytics.bigdl.serving.engine
 
 import java.util.AbstractMap.SimpleEntry
 import java.util.UUID
 
-import com.intel.analytics.zoo.serving.ClusterServing
-import com.intel.analytics.zoo.serving.pipeline.RedisUtils
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions, FileUtils}
+import com.intel.analytics.bigdl.serving.ClusterServing
+import com.intel.analytics.bigdl.serving.pipeline.RedisUtils
+import com.intel.analytics.bigdl.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, RichSourceFunction, SourceFunction}
 import org.apache.log4j.Logger

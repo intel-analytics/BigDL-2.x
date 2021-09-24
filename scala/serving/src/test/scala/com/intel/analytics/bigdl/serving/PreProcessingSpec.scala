@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving
+package com.intel.analytics.bigdl.serving
 
-import com.intel.analytics.zoo.serving.http.{Instances, JsonUtil}
-import com.intel.analytics.zoo.serving.preprocessing.PreProcessing
+import com.intel.analytics.bigdl.serving.http.{Instances, JsonUtil}
+import com.intel.analytics.bigdl.serving.preprocessing.PreProcessing
 import org.scalatest.{FlatSpec, Matchers}
-import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 class PreProcessingSpec extends FlatSpec with Matchers {

@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.engine
+package com.intel.analytics.bigdl.serving.engine
 
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import com.intel.analytics.zoo.serving.ClusterServing
-import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
-import com.intel.analytics.zoo.serving.preprocessing.PreProcessing
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
+
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.utils.T
+import com.intel.analytics.bigdl.orca.inference.InferenceModel
+import com.intel.analytics.bigdl.serving.ClusterServing
+import com.intel.analytics.bigdl.serving.postprocessing.PostProcessing
+import com.intel.analytics.bigdl.serving.preprocessing.PreProcessing
+import com.intel.analytics.bigdl.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.log4j.Logger
 
 /**

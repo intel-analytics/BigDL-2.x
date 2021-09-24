@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving
+package com.intel.analytics.bigdl.serving
 
-import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
-import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
+import com.intel.analytics.bigdl.dllib.tensor.{Storage, Tensor}
+import com.intel.analytics.bigdl.serving.postprocessing.PostProcessing
 import org.scalatest.{FlatSpec, Matchers}
 
 class PostProcessingSpec extends FlatSpec with Matchers {

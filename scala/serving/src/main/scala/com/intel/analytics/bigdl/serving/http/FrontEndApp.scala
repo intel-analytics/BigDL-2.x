@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.http
+package com.intel.analytics.bigdl.serving.http
 
 import java.io.File
 import java.security.{KeyStore, SecureRandom}
@@ -28,8 +28,8 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.codahale.metrics.{MetricRegistry, Timer}
-import com.intel.analytics.zoo.pipeline.inference.EncryptSupportive
-import com.intel.analytics.zoo.serving.utils.Conventions
+import com.intel.analytics.bigdl.orca.inference.EncryptSupportive
+import com.intel.analytics.bigdl.serving.utils.Conventions
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
@@ -299,19 +299,19 @@ object FrontEndApp extends Supportive with EncryptSupportive {
 
 
   val metrics = new MetricRegistry
-  val overallRequestTimer = metrics.timer("zoo.serving.request.overall")
-  val predictRequestTimer = metrics.timer("zoo.serving.request.predict")
-  val servableRetriveTimer = metrics.timer("zoo.serving.retrive.servable")
-  val servablesRetriveTimer = metrics.timer("zoo.serving.retrive.servables")
-  val backendInferenceTimer = metrics.timer("zoo.serving.backend.inference")
-  val putRedisTimer = metrics.timer("zoo.serving.redis.put")
-  val getRedisTimer = metrics.timer("zoo.serving.redis.get")
-  val waitRedisTimer = metrics.timer("zoo.serving.redis.wait")
-  val metricsRequestTimer = metrics.timer("zoo.serving.request.metrics")
+  val overallRequestTimer = metrics.timer("bigdl.serving.request.overall")
+  val predictRequestTimer = metrics.timer("bigdl.serving.request.predict")
+  val servableRetriveTimer = metrics.timer("bigdl.serving.retrive.servable")
+  val servablesRetriveTimer = metrics.timer("bigdl.serving.retrive.servables")
+  val backendInferenceTimer = metrics.timer("bigdl.serving.backend.inference")
+  val putRedisTimer = metrics.timer("bigdl.serving.redis.put")
+  val getRedisTimer = metrics.timer("bigdl.serving.redis.get")
+  val waitRedisTimer = metrics.timer("bigdl.serving.redis.wait")
+  val metricsRequestTimer = metrics.timer("bigdl.serving.request.metrics")
   val modelInferenceTimersMap = new mutable.HashMap[String, mutable.HashMap[String, Timer]]
   val purePredictTimersMap = new mutable.HashMap[String, mutable.HashMap[String, Timer]]
-  val makeActivityTimer = metrics.timer("zoo.serving.activity.make")
-  val handleResponseTimer = metrics.timer("zoo.serving.response.handling")
+  val makeActivityTimer = metrics.timer("bigdl.serving.activity.make")
+  val handleResponseTimer = metrics.timer("bigdl.serving.response.handling")
 
   val jacksonJsonSerializer = new JacksonJsonSerializer()
 

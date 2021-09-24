@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.operator
+package com.intel.analytics.bigdl.serving.operator
 
 import java.nio.file.Files
 
-import com.intel.analytics.zoo.serving.ClusterServing
-import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
-import com.intel.analytics.zoo.serving.engine.ClusterServingInference
-import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
+import com.intel.analytics.bigdl.serving.ClusterServing
+import com.intel.analytics.bigdl.serving.serialization.ArrowDeserializer
+import com.intel.analytics.bigdl.serving.engine.ClusterServingInference
+import com.intel.analytics.bigdl.serving.utils.ClusterServingHelper
 import org.apache.flink.core.fs.Path
 import org.apache.flink.table.functions.{FunctionContext, ScalarFunction}
 import org.apache.flink.util.FileUtils

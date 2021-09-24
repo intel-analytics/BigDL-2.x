@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.serialization
+package com.intel.analytics.bigdl.serving.serialization
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.zoo.serving.utils.{Conventions, TensorUtils}
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.serving.utils.{Conventions, TensorUtils}
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.complex.{BaseRepeatedValueVector, ListVector}
 import org.apache.arrow.vector.ipc.{ArrowStreamReader, ArrowStreamWriter}

@@ -15,12 +15,11 @@
  */
 
 
-package com.intel.analytics.zoo.serving.utils
-
+package com.intel.analytics.bigdl.serving.utils
 
 import java.nio.file.{Files, Path, Paths}
-import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import com.intel.analytics.zoo.serving.ClusterServing
+import com.intel.analytics.bigdl.orca.inference.InferenceModel
+import com.intel.analytics.bigdl.serving.ClusterServing
 import redis.clients.jedis.Jedis
 import scala.beans.BeanProperty
 
@@ -176,10 +175,8 @@ class ClusterServingHelper
     val localModelPath = if (scheme == "file" || location.split(":").length <= 1) {
       location.split("file://").last
     } else {
-      val path = Files.createTempDirectory("model")
-      val dstPath = path.getParent + "/" + path.getFileName
-      FileUtils.copyToLocal(location, dstPath)
-      dstPath
+      // hdfs and s3 are supported by Flink natively
+      null
     }
 
     /**

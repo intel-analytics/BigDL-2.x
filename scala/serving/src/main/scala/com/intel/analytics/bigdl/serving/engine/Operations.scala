@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.engine
+package com.intel.analytics.bigdl.serving.engine
 
-import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import com.intel.analytics.zoo.serving.serialization.JsonInputDeserializer
-import com.intel.analytics.zoo.serving.http.Supportive
-import com.intel.analytics.zoo.serving.http.JsonUtil
-import com.intel.analytics.zoo.serving.http.ServingTimerMetrics
+import com.intel.analytics.bigdl.orca.inference.InferenceModel
+import com.intel.analytics.bigdl.serving.serialization.JsonInputDeserializer
+import com.intel.analytics.bigdl.serving.http.Supportive
+import com.intel.analytics.bigdl.serving.http.JsonUtil
+import com.intel.analytics.bigdl.serving.http.ServingTimerMetrics
 import org.apache.log4j.Logger
 import com.codahale.metrics.MetricRegistry
 import scopt.OptionParser

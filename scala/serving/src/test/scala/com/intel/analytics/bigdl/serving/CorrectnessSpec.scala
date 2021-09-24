@@ -14,39 +14,29 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving
+package com.intel.analytics.bigdl.serving
 
-import java.io.{ByteArrayOutputStream, File, PrintWriter}
-import java.util.Base64
-
-import org.apache.log4j.Logger
-import org.scalatest.{FlatSpec, Matchers}
-
-import sys.process._
-import redis.clients.jedis.{Jedis, StreamEntryID}
-
-import scala.io.Source
-import scala.collection.JavaConverters._
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-import com.intel.analytics.bigdl.opencv.OpenCV
-import javax.imageio.ImageIO
 import java.awt._
 import java.awt.image.BufferedImage
+import java.io.{ByteArrayOutputStream, File}
+import java.util.Base64
 
-import scala.util.Random
+import com.intel.analytics.bigdl.dllib.feature.image.OpenCVMethod
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.serving.engine.ClusterServingInference
+import com.intel.analytics.bigdl.serving.http.{Instances, JsonUtil}
+import com.intel.analytics.bigdl.serving.postprocessing.PostProcessing
+import com.intel.analytics.bigdl.serving.utils.{ClusterServingHelper, DeprecatedUtils}
+import javax.imageio.ImageIO
+import org.apache.commons.io.FileUtils
+import org.apache.log4j.Logger
+import org.opencv.core._
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
-import org.opencv.core._
-import org.apache.commons.io.FileUtils
-import com.intel.analytics.zoo.feature.image._
-import com.intel.analytics.zoo.serving.engine.ClusterServingInference
-import com.intel.analytics.zoo.serving.http.{Instances, JsonUtil}
-import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, DeprecatedUtils}
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
+import org.scalatest.{FlatSpec, Matchers}
 
-import sys.env
+import scala.io.Source
+import scala.sys.process._
 
 class CorrectnessSpec extends FlatSpec with Matchers {
   val configPath = "/tmp/config.yaml"

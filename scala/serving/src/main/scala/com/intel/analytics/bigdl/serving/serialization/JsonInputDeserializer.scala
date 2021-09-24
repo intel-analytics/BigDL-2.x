@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.serialization
+package com.intel.analytics.bigdl.serving.serialization
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.node.{ArrayNode, IntNode, ObjectNode, TextNode}
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer, JsonNode, ObjectMapper}
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.tensor.Tensor
-import com.intel.analytics.bigdl.utils.T
-import com.intel.analytics.zoo.serving.http.Instances
-import com.intel.analytics.zoo.serving.preprocessing.PreProcessing
+import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
+import com.intel.analytics.bigdl.dllib.tensor.Tensor
+import com.intel.analytics.bigdl.dllib.utils.T
+import com.intel.analytics.bigdl.serving.preprocessing.PreProcessing
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

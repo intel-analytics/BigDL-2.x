@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.preprocessing
+package com.intel.analytics.bigdl.serving.preprocessing
 
 object DataType extends Enumeration{
   val IMAGE = value("IMAGE", 0)

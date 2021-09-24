@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.pipeline
+package com.intel.analytics.bigdl.serving.pipeline
 
 import java.io.{BufferedReader, File, IOException, InputStreamReader}
 import java.util

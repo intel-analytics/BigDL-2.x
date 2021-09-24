@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.serialization
+package com.intel.analytics.bigdl.serving.serialization
 
-
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectOutputStream}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.util.Base64
-import java.nio.charset.StandardCharsets
 
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.ipc.{ArrowStreamReader, ArrowStreamWriter}
+import org.apache.arrow.vector.{FieldVector, Float4Vector, IntVector, VectorSchemaRoot}
 import org.scalatest.{FlatSpec, Matchers}
-import org.apache.arrow.vector.{BitVector, FieldVector, Float4Vector, IntVector, VarCharVector, VectorSchemaRoot}
-import java.nio.charset.StandardCharsets
-
-import com.intel.analytics.zoo.serving.serialization.ArrowSerializer.getSchema
-import org.apache.arrow.vector.dictionary.DictionaryProvider
-
+import com.intel.analytics.bigdl.serving.serialization.ArrowSerializer.getSchema
 import scala.collection.JavaConverters._
-import org.apache.arrow.vector.types.pojo.Field
 
 class ArrowSerializerSpec extends FlatSpec with Matchers {
   "Arrow Serialization raw data" should "work" in {

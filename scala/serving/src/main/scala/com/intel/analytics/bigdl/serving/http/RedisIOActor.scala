@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.http
+package com.intel.analytics.bigdl.serving.http
 
 import java.util
 import java.util.{HashMap, UUID}
 
 import akka.actor.{Actor, ActorRef}
-import com.intel.analytics.zoo.serving.pipeline.RedisUtils
-import com.intel.analytics.zoo.serving.utils.Conventions
+import com.intel.analytics.bigdl.serving.pipeline.RedisUtils
+import com.intel.analytics.bigdl.serving.utils.Conventions
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.JedisPool
 

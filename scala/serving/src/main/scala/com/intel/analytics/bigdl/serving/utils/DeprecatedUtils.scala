@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.utils
+package com.intel.analytics.bigdl.serving.utils
 
 import java.io.{File, FileInputStream}
 import java.util.LinkedHashMap
 
-import com.intel.analytics.zoo.serving.ClusterServing
+import com.intel.analytics.bigdl.serving.ClusterServing
 import org.yaml.snakeyaml.Yaml
 
 object DeprecatedUtils {

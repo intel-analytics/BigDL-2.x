@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving.http
+package com.intel.analytics.bigdl.serving.http
 
-import akka.actor.ActorRef
-import com.intel.analytics.bigdl.nn.abstractnn.Activity
 
 import scala.collection.mutable
 

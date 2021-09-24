@@ -15,15 +15,14 @@
  */
 
 
-package com.intel.analytics.zoo.serving
+package com.intel.analytics.bigdl.serving
 
-
-import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
-import com.intel.analytics.zoo.serving.pipeline.RedisUtils
-import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Conventions, DeprecatedUtils}
+import com.intel.analytics.bigdl.orca.inference.InferenceModel
+import com.intel.analytics.bigdl.serving.engine.{FlinkInference, FlinkRedisSink, FlinkRedisSource}
+import com.intel.analytics.bigdl.serving.pipeline.RedisUtils
+import com.intel.analytics.bigdl.serving.utils.{ClusterServingHelper, ConfigParser, Conventions}
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
-import org.apache.log4j.{Level, Logger}
+import org.apache.log4j.Logger
 import redis.clients.jedis.{JedisPool, JedisPoolConfig}
 import scopt.OptionParser
 
