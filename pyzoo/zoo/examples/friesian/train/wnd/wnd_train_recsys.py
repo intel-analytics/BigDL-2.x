@@ -21,7 +21,6 @@ import os
 import math
 from optparse import OptionParser
 from time import time
-import subprocess
 import tempfile
 import pickle
 
@@ -29,7 +28,6 @@ import tensorflow as tf
 
 from zoo.orca import init_orca_context, stop_orca_context
 from zoo.models.recommendation.wide_and_deep import ColumnFeatureInfo
-from zoo.orca import OrcaContext
 from zoo.orca.learn.tf2.estimator import Estimator
 from zoo.orca.data.file import exists, makedirs
 from zoo.friesian.feature import FeatureTable
@@ -114,26 +112,30 @@ def build_model(column_info, hidden_units=[100, 50, 25]):
     wide_base_layers = []
     for i in range(len(column_info.wide_base_cols)):
         wide_base_input_layers.append(tf.keras.layers.Input(shape=[], dtype="int32"))
-        wide_base_layers.append(tf.keras.backend.one_hot(wide_base_input_layers[i], column_info.wide_base_dims[i] + 1))
+        wide_base_layers.append(tf.keras.backend.one_hot(wide_base_input_layers[i],
+                                                         column_info.wide_base_dims[i] + 1))
 
     wide_cross_input_layers = []
     wide_cross_layers = []
     for i in range(len(column_info.wide_cross_cols)):
         wide_cross_input_layers.append(tf.keras.layers.Input(shape=[], dtype="int32"))
-        wide_cross_layers.append(tf.keras.backend.one_hot(wide_cross_input_layers[i], column_info.wide_cross_dims[i]))
+        wide_cross_layers.append(tf.keras.backend.one_hot(wide_cross_input_layers[i],
+                                                          column_info.wide_cross_dims[i]))
 
     indicator_input_layers = []
     indicator_layers = []
     for i in range(len(column_info.indicator_cols)):
         indicator_input_layers.append(tf.keras.layers.Input(shape=[], dtype="int32"))
-        indicator_layers.append(tf.keras.backend.one_hot(indicator_input_layers[i], column_info.indicator_dims[i] + 1))
+        indicator_layers.append(tf.keras.backend.one_hot(indicator_input_layers[i],
+                                                         column_info.indicator_dims[i] + 1))
 
     embed_input_layers = []
     embed_layers = []
     for i in range(len(column_info.embed_in_dims)):
         embed_input_layers.append(tf.keras.layers.Input(shape=[], dtype="int32"))
         iembed = tf.keras.layers.Embedding(column_info.embed_in_dims[i] + 1,
-                                           output_dim=column_info.embed_out_dims[i])(embed_input_layers[i])
+                                           output_dim=column_info.embed_out_dims[i])\
+            (embed_input_layers[i])
         flat_embed = tf.keras.layers.Flatten()(iembed)
         embed_layers.append(flat_embed)
 
@@ -141,7 +143,8 @@ def build_model(column_info, hidden_units=[100, 50, 25]):
     continuous_layers = []
     for i in range(len(column_info.continuous_cols)):
         continuous_input_layers.append(tf.keras.layers.Input(shape=[]))
-        continuous_layers.append(tf.keras.layers.Reshape(target_shape=(1,))(continuous_input_layers[i]))
+        continuous_layers.append(
+            tf.keras.layers.Reshape(target_shape=(1,))(continuous_input_layers[i]))
 
     if len(wide_base_layers + wide_cross_layers) > 1:
         wide_input = tf.keras.layers.concatenate(wide_base_layers + wide_cross_layers, axis=1)
@@ -219,7 +222,8 @@ if __name__ == "__main__":
         init_orca_context("standalone", master=options.master,
                           cores=options.executor_cores, num_nodes=options.num_executor,
                           memory=options.executor_memory,
-                          driver_cores=options.driver_cores, driver_memory=options.driver_memory, conf=conf,
+                          driver_cores=options.driver_cores, driver_memory=options.driver_memory,
+                          conf=conf,
                           init_ray_on_spark=True)
     elif options.cluster_mode == "yarn":
         init_orca_context("yarn-client", cores=options.executor_cores,
@@ -276,7 +280,8 @@ if __name__ == "__main__":
     if earlystopping:
         from tensorflow.keras.callbacks import EarlyStopping
 
-        callbacks.append(EarlyStopping(monitor='val_auc', mode='max', verbose=1, patience=earlystopping))
+        callbacks.append(EarlyStopping(monitor='val_auc', mode='max',
+                                       verbose=1, patience=earlystopping))
 
     start = time()
     est.fit(data=train_tbl.df,

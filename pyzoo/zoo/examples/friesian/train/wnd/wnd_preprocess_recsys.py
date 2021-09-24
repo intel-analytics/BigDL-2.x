@@ -20,7 +20,6 @@ from argparse import ArgumentParser
 import tempfile
 import pickle
 from time import time
-from functools import reduce
 
 from zoo.orca import init_orca_context, stop_orca_context, OrcaContext
 from zoo.orca.data.file import makedirs, write_text, exists
@@ -102,6 +101,7 @@ conf = {"spark.network.timeout": "10000000",
         "spark.app.name": "recsys-preprocess",
         "spark.executor.memoryOverhead": "20g"}
 
+
 def _parse_args():
     parser = ArgumentParser()
 
@@ -154,6 +154,7 @@ def preprocess(tbl):
 
     return tbl
 
+
 def encode_user_id(tbl):
     tbl = tbl.rename({"engaged_with_user_id": "user_id"}) \
         .encode_string("user_id", user_index, broadcast=False) \
@@ -163,6 +164,7 @@ def encode_user_id(tbl):
         .rename({"user_id": "enaging_user_id"})
     return tbl
 
+
 def generate_features(tbl, bins, cross_sizes):
     tbl = tbl.cut_bins(columns=count_cols,
                        bins=bins,
@@ -170,6 +172,7 @@ def generate_features(tbl, bins, cross_sizes):
 
     tbl = tbl.cross_columns(cross_cols, cross_sizes)
     return tbl
+
 
 def transform_label(tbl):
     gen_label = lambda x: 1 if max(x) > 0 else 0
@@ -194,7 +197,8 @@ if __name__ == '__main__':
                           conf=conf)
 
     start = time()
-    train_paths = [os.path.join(args.input_folder, 'spark_parquet/part-%05d.parquet' % i) for i in args.train_files]
+    train_paths = [os.path.join(args.input_folder, 'spark_parquet/part-%05d.parquet' % i)
+                   for i in args.train_files]
     test_paths = os.path.join(args.input_folder, 'test_spark_parquet')
     train_tbl = FeatureTable.read_parquet(train_paths)
     train_tbl.df.printSchema()
@@ -249,7 +253,7 @@ if __name__ == '__main__':
     cat_sizes_dict['enaging_user_id'] = user_index.size()
 
     cross_sizes_dict = dict(zip(["_".join(cross_names) for cross_names in cross_cols],
-                               args.cross_sizes))
+                                args.cross_sizes))
 
     cat_sizes_dict.update(cross_sizes_dict)
 

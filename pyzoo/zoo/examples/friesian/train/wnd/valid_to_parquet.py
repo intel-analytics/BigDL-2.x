@@ -14,16 +14,11 @@
 # limitations under the License.
 #
 
-#!/usr/bin/env python
-# coding: utf-8
-
 import os
 from time import time
 from argparse import ArgumentParser
-import pandas as pd
 
-from pyspark.sql.types import *
-from zoo.orca import init_orca_context, stop_orca_context, OrcaContext
+from zoo.orca import init_orca_context, stop_orca_context
 from zoo.friesian.feature import FeatureTable
 
 conf = {"spark.network.timeout": "10000000",
