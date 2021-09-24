@@ -19,7 +19,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 from zoo.orca import init_orca_context, stop_orca_context
-from zoo.chronos.autots.experimental.autotsestimator import AutoTSEstimator
+from zoo.chronos.autots.autotsestimator import AutoTSEstimator
 from zoo.chronos.data.repo_dataset import get_public_dataset
 
 
