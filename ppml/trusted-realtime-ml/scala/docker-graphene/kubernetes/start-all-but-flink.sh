@@ -40,4 +40,4 @@ done
 echo "cluster-serving-job started"
 
 
-bash /ppml/trusted-realtime-ml/check-status.sh
+bash /ppml/trusted-realtime-ml/check-status.sh redis frontend serving
