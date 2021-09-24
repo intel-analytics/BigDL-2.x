@@ -73,7 +73,8 @@ def init_env():
 def get_bigdl_packages():
     bigdl_python_home = os.path.abspath(__file__ + "/..")
     bigdl_packages = ['bigdl.share.orca']
-    for dirpath, dirs, files in os.walk(bigdl_python_home + "bigdl"):
+    source_dir = os.path.join(bigdl_python_home, "bigdl")
+    for dirpath, dirs, files in os.walk(source_dir):
         package = dirpath.split(bigdl_python_home)[1].replace('/', '.')
         if any(fnmatch.fnmatchcase(package, pat=pattern)
                 for pattern in exclude_patterns):
@@ -106,7 +107,7 @@ def setup_package():
                                    'tsfresh==0.17.0']},
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,
-        package_data={"bigdl.share.orca": ['lib/bigdl-orca*.jar', 'conf/*']},
+        package_data={"bigdl.share.orca": ['lib/bigdl-orca*.jar']},
         classifiers=[
             'License :: OSI Approved :: Apache Software License',
             'Programming Language :: Python :: 3',
