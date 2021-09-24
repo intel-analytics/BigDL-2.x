@@ -1,5 +1,6 @@
 # Use ONNX to speed up inferencing
-This example will demonstrate how to use ONNX to speed up the inferencing(prediction/evalution) on forecasters and `AutoTSEstimator`.
+This example will demonstrate how to use ONNX to speed up the inferencing(prediction/evalution) on forecasters and `AutoTSEstimator`, `TSPipeline`. 
+In this example, onnx speed up the inferencing for ~4X.
 
 ## Prepare the environment
 We recommend you to use Anaconda to prepare the environment, especially if you want to run on a yarn cluster:
@@ -28,8 +29,8 @@ for tsdata in [tsdata_train, tsdata_test]:
           .roll(lookback=100, horizon=10)
 ```
 
-## Fit on forecaster/AutoTSEstimator
-Create and fit on the forecaster/AutoTSEstimator. Please refer to [API doc](placeholder) for detail.
+## Fit on forecaster/AutoTSEstimator/TSpipeline
+Create and fit on the forecaster/AutoTSEstimator/TSpipeline. Please refer to [API doc](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/index.html) for detail.
 
 ## Inference with onnx
 All methods involve inferencing supports onnx as backend. You can call `predict_with_onnx` or `evaluate_with_onnx` to use it.
@@ -42,6 +43,10 @@ forecaster.evaluate_with_onnx((x_test, y_test))
 # AutoTSEstimator
 autotsestimator.predict_with_onnx(tsdata_test)
 autotsestimator.evaluate_with_onnx(tsdata_test)
+
+# TSpipeline
+tspipeline.predict_with_onnx(tsdata_test)
+tspipeline.evaluate_with_onnx(tsdata_test)
 ```
 
 ## Result
