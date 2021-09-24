@@ -216,7 +216,6 @@ else
     ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/
 fi
 
-
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/dpgansimulator_wwt.py \
     --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/data_train_small.npz\
     --epoch 1 --plot_figures False
@@ -231,7 +230,6 @@ python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/distributed/distributed_
 
 now=$(date "+%s")
 time16=$((now-start))
-
 
 echo "Ray example tests finished"
 echo "#1 orca rl_pong time used:$time1 seconds"
