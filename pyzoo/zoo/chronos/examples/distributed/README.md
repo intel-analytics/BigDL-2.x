@@ -1,5 +1,5 @@
 # Use Chronos forecasters in a distributed fashion
-LSTM, TCN and Seq2seq users can easily train their forecasters in a distributed fashion to handle extra large dataset and utilize a cluster. The functionality is powered by Project Orca.
+LSTM, TCN and Seq2seq users can easily train their forecasters in a distributed fashion to handle extra large dataset and speed up the process (especially the training) by utilizing a cluster or pseudo-distribution on a single node. The functionality is powered by Project Orca.
 
 ## Prepare the environment
 We recommend you to use Anaconda to prepare the environment, especially if you want to run on a yarn cluster:

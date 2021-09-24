@@ -31,6 +31,12 @@ def get_tsdata():
                                          redownload=False,
                                          with_split=True,
                                          test_ratio=0.1)
+    minmax = MinMaxScaler()
+    for tsdata in [tsdata_train, tsdata_test]:
+        tsdata.gen_dt_feature(one_hot_features=['HOUR', 'WEEK'])\
+              .impute("last")\
+              .scale(minmax, fit=tsdata is tsdata_train)\
+              .roll(lookback=100, horizon=10)
     return tsdata_train, tsdata_test
 
 
@@ -62,14 +68,6 @@ if __name__ == '__main__':
                       memory=args.memory, num_nodes=num_nodes)
 
     tsdata_train, tsdata_test = get_tsdata()
-
-    minmax = MinMaxScaler()
-    for tsdata in [tsdata_train, tsdata_test]:
-        tsdata.gen_dt_feature(one_hot_features=['HOUR', 'WEEK'])\
-            .impute("last")\
-            .scale(minmax, fit=tsdata is tsdata_train)\
-            .roll(lookback=100, horizon=10)
-
     x_train, y_train = tsdata_train.to_numpy()
     x_test, y_test = tsdata_test.to_numpy()
 
