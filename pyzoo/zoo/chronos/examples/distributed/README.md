@@ -3,7 +3,7 @@ LSTM, TCN and Seq2seq users can easily train their forecasters in a distributed 
 
 ## Prepare the environment
 We recommend you to use Anaconda to prepare the environment, especially if you want to run on a yarn cluster:
-```
+```bash
 conda create -n zoo python=3.7 # "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
 pip install --pre --upgrade analytics-zoo[automl]
@@ -17,13 +17,16 @@ we use the publicly available `network traffic` data repository maintained by th
 # Just specify the name and path, (e.g. network_traffic)
 name = 'network_traffic'
 path = '~/.chronos/dataset/'
-tsdata, _, tsdata_test = get_public_dataset(name, path, with_split=True, val_ratio=0.1)
+tsdata_train, _, tsdata_test = get_public_dataset(name, path,
+                                                  redownload=False,
+                                                  with_split=True,
+                                                  test_ratio=0.1)
 minmax = MinMaxScaler()
 for tsdata in [tsdata_train, tsdata_test]:
     tsdata.gen_dt_feature(one_hot_features=["HOUR", "WEEK"])\
-            .impute("last")\
-            .scale(minmax, fit=tsdata is tsdata_train)
-            .roll(lookback=40, horizon=1)
+          .impute("last")\
+          .scale(minmax, fit=tsdata is tsdata_train)\
+          .roll(lookback=100, horizon=10)
 ```
 
 ## Initialize forecaster and fit
@@ -55,8 +58,8 @@ print(f'smape is: {np.mean(smape):.4f}')
 
 ## Options
 * `--cluster_mode` The mode for the Spark cluster. local or yarn. Default to be `local`. You can refer to OrcaContext documents [here](https://analytics-zoo.readthedocs.io/en/latest/doc/Orca/Overview/orca-context.html) for details.
-* `--memory` The memory you want to use on each node. You can change it depending on your own cluster setting.
-* `--cores` The number of cpu cores you want to use on each node. You can change it depending on your own cluster setting.
+* `--memory` The memory you want to use on each node. You can change it depending on your own cluster setting. Default to be 32g.
+* `--cores` The number of cpu cores you want to use on each node. You can change it depending on your own cluster setting. Default to be 4.
 * `--epochs` Max number of epochs to train in each trial. Default to be 2.
 * `--workers_per_node` the number of worker you want to use.The value defaults to 1. The param is only effective when distributed is set to True.
 * `--num_workers` The number of workers to be used in the cluster. You can change it depending on your own cluster setting. Default to be 1.
