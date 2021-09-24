@@ -19,6 +19,7 @@ from os import listdir
 from argparse import ArgumentParser
 import pandas as pd
 
+
 def _parse_args():
     parser = ArgumentParser()
 
