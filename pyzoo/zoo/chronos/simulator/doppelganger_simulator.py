@@ -17,7 +17,6 @@
 import pickle
 import os
 import numpy as np
-import torch
 
 from zoo.chronos.simulator.doppelganger.util import gen_attribute_input_noise,\
     gen_feature_input_noise, gen_feature_input_data_free, renormalize_per_sample
