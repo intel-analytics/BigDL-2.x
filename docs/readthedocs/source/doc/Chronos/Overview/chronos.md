@@ -5,10 +5,10 @@ _Chronos_ is an application framework for building large-scale time series analy
 
 You can use _Chronos_ to do:
 
-- Data pre/post-processing and feature generation (using [TSDataset](#data-processing-and-feature-engineering))
-- Time Series Forecasting (using [Standalone Forecasters](#use-standalone-forecaster-pipeline), [Auto Models](#use-auto-forecasting-model) (with HPO) or [AutoTS](#use-autots-pipeline) (full AutoML enabled pipelines))
-- Anomaly Detection (using [Anomaly Detectors](#anomaly-detection))
-- Synthetic Data Generation (using [Simulators](#generate-synthetic-data))
+- **Data pre/post-processing and feature generation** (using [TSDataset](#data-processing-and-feature-engineering))
+- **Time Series Forecasting** (using [Standalone Forecasters](#use-standalone-forecaster-pipeline), [Auto Models](#use-auto-forecasting-model) (with HPO) or [AutoTS](#use-autots-pipeline) (full AutoML enabled pipelines))
+- **Anomaly Detection** (using [Anomaly Detectors](#anomaly-detection))
+- **Synthetic Data Generation** (using [Simulators](#generate-synthetic-data))
 
 ---
 ### **2 Install**
