@@ -90,7 +90,7 @@ def to_bigdl_optim_method(koptim_method):
     # koptim_method is always an object
     import tensorflow.keras.backend as K
     import tensorflow.keras.optimizers as koptimizers
-    import bigdl.optim.optimizer as boptimizer
+    import bigdl.dllib.optim.optimizer as boptimizer
     import tensorflow.train as tftrain
     import tensorflow as tf
     from tensorflow.python.keras.optimizers import TFOptimizer
