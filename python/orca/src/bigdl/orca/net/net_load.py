@@ -20,7 +20,7 @@ import sys
 
 from bigdl.dllib.utils.file_utils import callZooFunc
 from bigdl.dllib.nn.layer import Model as BModel
-from bigdl.dllib.net.graph_net import GraphNet
+from bigdl.orca.net.graph_net import GraphNet
 
 if sys.version >= '3':
     long = int
