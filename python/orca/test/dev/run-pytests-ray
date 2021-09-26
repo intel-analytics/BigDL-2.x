@@ -51,14 +51,18 @@ ray stop -f
 #ray stop -f
 #
 echo "Running orca automl tests"
-python -m pytest -v ../bigdl/orca/automl
+cd ../..
+python -m pytest -v test/bigdl/orca/automl
 exit_status_3=$?
 if [ $exit_status_3 -ne 0 ];
 then
     exit $exit_status_3
 fi
 
+cd "`dirname $0`"
+
 ray stop -f
+
 #
 #echo "Running chronos tests"
 #python -m pytest -v ../test/zoo/chronos \
