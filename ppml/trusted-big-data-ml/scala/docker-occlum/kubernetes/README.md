@@ -11,7 +11,7 @@ Pull from Dockerhub
 docker pull intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-scala-occlum-k8s:0.11-SNAPSHOT
 ```
 
-If Dockerhub is not accessable, we can build docker image with Dockerfile
+If Dockerhub is not accessable, we can build docker image with Dockerfile and modify the path in the build-docker-image.sh firstly.
 
 ``` bash
 bash build-docker-image.sh
