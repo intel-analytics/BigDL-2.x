@@ -297,6 +297,9 @@ Config with example:
  # Default: null, open a port for prometheus monitoring tool, if set, user can check the
  # performance using prometheus
  monitorPort: 1237
+
+ # default: null, must be provided, item column name
+ itemIDColumn: tweet_id
  
 # default: null, must be provided, column names for inference, order related.
 inferenceColumns: present_media_language, present_media, tweet_type, language, hashtags, present_links, present_domains, tweet_id_engaged_with_user_id, engaged_with_user_follower_count, engaged_with_user_following_count, enaging_user_follower_count, enaging_user_following_count, len_hashtags, len_domains, len_links

@@ -63,6 +63,7 @@ public class RankingServer extends ZooGrpcServer {
     @Override
     public void parseConfig() throws IOException {
         Utils.helper_$eq(getConfigFromYaml(gRPCHelper.class, configPath));
+        Utils.helper().parseConfigStrings();
         if (Utils.helper() != null) {
             port = Utils.helper().getServicePort();
         }
