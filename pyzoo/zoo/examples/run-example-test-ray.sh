@@ -240,13 +240,27 @@ time16=$((now-start))
 echo "#17 start example for chronos onnx_autotsestimator_nyc_taxi"
 start=$(date "+%s")
 
+if [ ! -f ~/.chronos/dataset/nyc_taxi/nyc_taxi_data.csv ]
+then
+    wget $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ~/.chronos/dataset/nyc_taxi/
+    mv ~/.chronos/dataset/nyc_taxi/nyc_taxi.csv ~/.chronos/dataset/nyc_taxi/nyc_taxi_data.csv
+else
+    "nyc_taxi_data.csv exists."
+
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py
 
 now=$(date "+%s")
 time17=$((now-start))
 
-echo "#18 start example for chronos onnx_forecaster_network_traffic"
+echo "#18 start example for chronos onnx_autotsestimator_nyc_taxi"
 start=$(date "+%s")
+
+if [ ! -f ~/.chronos/dataset/network_traffic/network_traffic_data.csv ]
+then
+    wget $FTP_URI/analytics-zoo-data/network_traffic/data/data.csv -P ~/.chronos/dataset/network_traffic/
+    mv ~/.chronos/dataset/network_traffic/data.csv ~/.chronos/dataset/network_traffic/nyc_taxi_data.csv
+else
+    "network_traffic_data.csv exists."
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py
 
