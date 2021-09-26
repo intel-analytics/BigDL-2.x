@@ -43,8 +43,7 @@ RUN apt-get update --fix-missing && \
     apt-get install -y apt-utils wget unzip patch zip git maven
 ADD pyspark.rdd.patch /opt/rdd.patch
 ADD pyspark.shuffle.patch /opt/shuffle.patch
-ADD spark-core-utils.patch /opt/spark-core-utils.patch
-ADD spark.internal.config.package.patch /opt/spark.internal.config.package.patch
+ADD spark-3.1.2.patch /opt/spark-3.1.2.patch
 ADD hadoop-common-shell.patch /opt/hadoop-common-shell.patch
 
 # java
@@ -69,7 +68,7 @@ RUN cd /opt && \
     mv spark-${SPARK_VERSION}-bin-hadoop3.2 spark-${SPARK_VERSION} && \
     rm spark-${SPARK_VERSION}-bin-hadoop3.2.tgz && \
     cp spark-${SPARK_VERSION}/conf/log4j.properties.template spark-${SPARK_VERSION}/conf/log4j.properties && \
-    echo -e "\nlog4j.logger.io.netty=ERROR" >> spark-${SPARK_VERSION}/conf/log4j.properties && \
+    echo "log4j.logger.io.netty=ERROR" >> spark-${SPARK_VERSION}/conf/log4j.properties && \
     wget -O spark-network-common_2.12-${SPARK_VERSION}.jar https://master.dl.sourceforge.net/project/analytics-zoo/analytics-zoo-data/spark-network-common_2.12-${SPARK_VERSION}.jar && \
     mv spark-network-common_2.12-${SPARK_VERSION}.jar spark-${SPARK_VERSION}/jars && \
     mv spark-${SPARK_VERSION}/python/lib/pyspark.zip spark-${SPARK_VERSION}/python/lib/pyspark.zip.bac && \
@@ -77,22 +76,24 @@ RUN cd /opt && \
     patch spark-${SPARK_VERSION}/python/pyspark/shuffle.py /opt/shuffle.patch && \
     cd spark-${SPARK_VERSION}/python && \
     zip -r lib/pyspark.zip pyspark
-# spark core modification
+# spark modification
 # org.apache.spark.util.Utils to disable chmod fork
 RUN cd /opt && \
     git clone https://github.com/apache/spark.git && \
     cd spark && \
     git checkout tags/v3.1.2 -b branch-3.1.2 && \
-    cd core && \
-    patch src/main/scala/org/apache/spark/util/Utils.scala /opt/spark-core-utils.patch && \
-    patch src/main/scala/org/apache/spark/internal/config/package.scala /opt/spark.internal.config.package.patch && \
+    git apply /opt/spark-3.1.2.patch && \
+    git status && \
     export MAVEN_OPTS="-Xmx2g -XX:ReservedCodeCacheSize=512m \
         -Dhttp.proxyHost=$HTTP_PROXY_HOST \
         -Dhttp.proxyPort=$HTTP_PROXY_PORT \
         -Dhttps.proxyHost=$HTTPS_PROXY_HOST \
         -Dhttps.proxyPort=$HTTPS_PROXY_PORT" && \
+    /opt/apache-maven-3.6.3/bin/mvn -T 16 -DskipTests=true clean install -pl core && \
+    cd resource-managers/kubernetes/core && \
     /opt/apache-maven-3.6.3/bin/mvn -T 16 -DskipTests=true clean package && \
-    ls /opt/spark/core/target/spark-core_2.12-$SPARK_VERSION.jar
+    ls /opt/spark/core/target/spark-core_2.12-$SPARK_VERSION.jar && \
+    ls /opt/spark/resource-managers/kubernetes/core/target/spark-kubernetes_2.12-3.1.2.jar
 # hadoop
 # org.apache.hadoop.util.Shell.java to disable setsid
 RUN cd /opt && \
@@ -139,7 +140,7 @@ RUN apt-get update --fix-missing && \
 RUN git clone https://github.com/intel-analytics/BigDL.git && \
     cd BigDL && \
     git apply /bigdl.lenet.training.patch && \
-    echo -e "\nlog4j.logger.io.netty=ERROR" >> ./spark/dl/src/main/resources/log4j.properties \
+    echo "log4j.logger.io.netty=ERROR" >> ./spark/dl/src/main/resources/log4j.properties && \
     git status && \
     export MAVEN_OPTS="-Xmx2g -XX:ReservedCodeCacheSize=512m \
         -Dhttp.proxyHost=$HTTP_PROXY_HOST \
@@ -168,8 +169,7 @@ RUN ./download-analytics-zoo.sh && \
     cd /opt && git clone --depth 1 https://github.com/intel-analytics/analytics-zoo.git
 RUN patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/data/spark_pandas.py /opt/orca.data.patch && \
     patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/learn/tf/basic_text_classification/basic_text_classification.py /opt/orca.learn.tf.text.patch && \
-    patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/learn/tf/transfer_learning/transfer_learning.py /opt/orca.learn.tf.transfer.patch && \
-    echo -e "\nlog4j.logger.io.netty=ERROR" >> /opt/analytics-zoo/zoo/src/main/resources/log4j.properties
+    patch /opt/analytics-zoo/pyzoo/zoo/examples/orca/learn/tf/transfer_learning/transfer_learning.py /opt/orca.learn.tf.transfer.patch
 
 # stage.5 az ppml
 FROM ubuntu:18.04
@@ -229,6 +229,7 @@ COPY --from=spark /opt/jdk  /opt/jdk8
 COPY --from=spark /opt/scala-2.11.8  /opt/scala-2.11.8
 COPY --from=spark /opt/spark-${SPARK_VERSION} /ppml/trusted-big-data-ml/work/spark-${SPARK_VERSION}
 COPY --from=spark /opt/spark/core/target/spark-core_2.12-$SPARK_VERSION.jar /opt/spark-core_2.12-$SPARK_VERSION.jar
+COPY --from=spark /opt/spark/resource-managers/kubernetes/core/target/spark-kubernetes_2.12-$SPARK_VERSION.jar /opt/spark-kubernetes_2.12-$SPARK_VERSION.jar
 COPY --from=spark /opt/hadoop/hadoop-common-project/hadoop-common/target/hadoop-common-3.2.0.jar /opt/hadoop-common-3.2.0.jar
 COPY --from=bigdl /BigDL/dist/lib/bigdl-*-jar-with-dependencies.jar /ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar
 COPY --from=bigdl /BigDL/dist/lib/bigdl-*-python-api.zip /ppml/trusted-big-data-ml/work/bigdl-python-api.zip
@@ -237,7 +238,7 @@ COPY --from=analytics-zoo /analytics-zoo-${ANALYTICS_ZOO_VERSION} /ppml/trusted-
 COPY --from=analytics-zoo /opt/analytics-zoo/pyzoo/zoo/examples /ppml/trusted-big-data-ml/work/examples/pyzoo
 
 RUN apt-get update --fix-missing && \
-    apt-get install -y apt-utils vim curl nano wget unzip maven git tree && \
+    apt-get install -y apt-utils vim curl nano wget unzip maven git tree zip && \
     apt-get install -y libsm6 make build-essential && \
     apt-get install -y autoconf gawk bison libcurl4-openssl-dev python3-protobuf libprotobuf-c-dev protobuf-c-compiler && \
     apt-get install -y netcat net-tools
@@ -279,7 +280,10 @@ ADD ./start-scripts /ppml/trusted-big-data-ml/work/start-scripts
 ADD ./_dill.py.patch ./_dill.py.patch
 ADD ./python-uuid.patch ./python-uuid.patch
 
-RUN jar -uf /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_$SPARK_VERSION-0.12.0-SNAPSHOT-jar-with-dependencies.jar ./tracker.py && \
+RUN zip -u /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_$SPARK_VERSION-0.12.0-SNAPSHOT-jar-with-dependencies.jar ./tracker.py && \
+    unzip /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_$SPARK_VERSION-0.12.0-SNAPSHOT-jar-with-dependencies.jar log4j.properties && \
+    echo "log4j.logger.io.netty=ERROR" >> log4j.properties && \
+    zip -u /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_$SPARK_VERSION-0.12.0-SNAPSHOT-jar-with-dependencies.jar log4j.properties && \
     patch /usr/local/lib/python3.6/dist-packages/dill/_dill.py ./_dill.py.patch && \
     patch /usr/lib/python3.6/uuid.py ./python-uuid.patch && \
     #rm $SPARK_HOME/jars/flatbuffers*.jar && \
@@ -289,8 +293,10 @@ RUN jar -uf /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/ana
     #wget -P $SPARK_HOME/jars https://repo1.maven.org/maven2/org/apache/arrow/arrow-memory/0.11.0/arrow-memory-0.11.0.jar && \
     #wget -P $SPARK_HOME/jars https://repo1.maven.org/maven2/org/apache/arrow/arrow-vector/0.11.0/arrow-vector-0.11.0.jar && \
     rm $SPARK_HOME/jars/spark-core_2.12-$SPARK_VERSION.jar && \
+    rm $SPARK_HOME/jars/spark-kubernetes_2.12-$SPARK_VERSION.jar && \
     rm $SPARK_HOME/jars/hadoop-common-3.2.0.jar && \
     mv /opt/spark-core_2.12-$SPARK_VERSION.jar $SPARK_HOME/jars/spark-core_2.11-$SPARK_VERSION.jar && \
+    mv /opt/spark-kubernetes_2.12-$SPARK_VERSION.jar $SPARK_HOME/jars/spark-kubernetes_2.12-$SPARK_VERSION.jar && \
     mv /opt/hadoop-common-3.2.0.jar $SPARK_HOME/jars/hadoop-common-3.2.0.jar && \
     wget -P /ppml/trusted-big-data-ml/work/lib https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-data/libhadoop.so && \
     chmod a+x /ppml/trusted-big-data-ml/init.sh && \

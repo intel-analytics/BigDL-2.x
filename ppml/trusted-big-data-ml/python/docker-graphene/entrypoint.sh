@@ -110,18 +110,35 @@ case "$SPARK_K8S_CMD" in
     )
     ;;
   executor)
-    ./init.sh && \
-    graphene-sgx ./bash -c "/opt/jdk8/bin/java \
-      -Xms16g \
-      -Xmx16g \
-      -cp "$SPARK_CLASSPATH" \
-      org.apache.spark.executor.CoarseGrainedExecutorBackend \
-      --driver-url $SPARK_DRIVER_URL \
-      --executor-id $SPARK_EXECUTOR_ID \
-      --cores $SPARK_EXECUTOR_CORES \
-      --app-id $SPARK_APPLICATION_ID \
-      --hostname $SPARK_EXECUTOR_POD_IP \
-      --resourceProfileId $SPARK_RESOURCE_PROFILE_ID"
+    echo $SGX_ENABLED && \
+    echo $SGX_MEM_SIZE && \
+    echo $SGX_JVM_MEM_SIZE && \
+    if [ "$SGX_ENABLED" == "false" ]; then
+      /opt/jdk8/bin/java \
+        -Xms16g \
+        -Xmx16g \
+        -cp "$SPARK_CLASSPATH" \
+        org.apache.spark.executor.CoarseGrainedExecutorBackend \
+        --driver-url $SPARK_DRIVER_URL \
+        --executor-id $SPARK_EXECUTOR_ID \
+        --cores $SPARK_EXECUTOR_CORES \
+        --app-id $SPARK_APPLICATION_ID \
+        --hostname $SPARK_EXECUTOR_POD_IP \
+        --resourceProfileId $SPARK_RESOURCE_PROFILE_ID
+    elif [ "$SGX_ENABLED" == "true" ]; then
+      ./init.sh && \
+      graphene-sgx ./bash -c "/opt/jdk8/bin/java \
+        -Xms$SGX_JVM_MEM_SIZE \
+        -Xmx$SGX_JVM_MEM_SIZE \
+        -cp "$SPARK_CLASSPATH" \
+        org.apache.spark.executor.CoarseGrainedExecutorBackend \
+        --driver-url $SPARK_DRIVER_URL \
+        --executor-id $SPARK_EXECUTOR_ID \
+        --cores $SPARK_EXECUTOR_CORES \
+        --app-id $SPARK_APPLICATION_ID \
+        --hostname $SPARK_EXECUTOR_POD_IP \
+        --resourceProfileId $SPARK_RESOURCE_PROFILE_ID"
+    fi
     ;;
 
   *)
