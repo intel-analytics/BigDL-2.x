@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Analytics Zoo Authors.
+ * Copyright 2016 The BigDL Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import java.util.{ArrayList, List => JList}
 
 import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
-import com.intel.analytics.bigdl.dllib.keras.KerasLayer
+import com.intel.analytics.bigdl.dllib.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.dllib.utils.python.api.JTensor
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.common.PythonZoo

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Analytics Zoo Authors.
+ * Copyright 2016 The BigDL Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 package com.intel.analytics.bigdl.dllib.keras.autograd
 
 import com.intel.analytics.bigdl.dllib.nn.abstractnn._
-import com.intel.analytics.bigdl.dllib.keras.KerasLayer
+import com.intel.analytics.bigdl.dllib.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.dllib.nn.tf.InternalWithoutInput
 import com.intel.analytics.bigdl.dllib.nn.{InitializationMethod, RandomUniform, VariableFormat}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor

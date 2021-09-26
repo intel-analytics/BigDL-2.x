@@ -3,15 +3,6 @@
 *.class
 *.crc
 *.o
-target/
-/dist/
-pyzoo/.pytest_cache/
-pyzoo/ray_poc.zip
-
-# External Python packages
-python_packages/
-/zoo/src/main/resources/pytorch/lib
-/zoo/src/main/java/com/intel/analytics/zoo/pipeline/api/net/native/build
 
 # SBT, Maven specific
 .cache
@@ -43,8 +34,6 @@ nohup.out
 *.un~
 *.idx
 .ipynb_checkpoints/
-pyspark/dist/
-pyspark/build/
 .project
 .settings/
 */.cache-main
@@ -52,3 +41,9 @@ pyspark/build/
 */.classpath
 */.project
 */.settings/
+*.so
+__pycache__
+*.egg-info
+target
+build
+dist

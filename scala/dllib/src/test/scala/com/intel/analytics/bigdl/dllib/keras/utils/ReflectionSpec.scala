@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Analytics Zoo Authors.
+ * Copyright 2016 The BigDL Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.intel.analytics.bigdl.dllib.keras.utils
 
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.Activity
-import com.intel.analytics.bigdl.dllib.keras.{Input, KerasLayer, Model}
+import com.intel.analytics.bigdl.dllib.nn.keras.{Input, KerasLayer, Model}
 import com.intel.analytics.bigdl.dllib.nn.{Graph, Linear}
 import com.intel.analytics.bigdl.dllib.utils.{Engine, Shape}
 import com.intel.analytics.bigdl.dllib.common.NNContext

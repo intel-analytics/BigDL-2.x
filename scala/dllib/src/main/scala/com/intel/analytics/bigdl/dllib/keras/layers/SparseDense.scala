@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Analytics Zoo Authors.
+ * Copyright 2016 The BigDL Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.intel.analytics.bigdl.dllib.keras.layers
 
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
-import com.intel.analytics.bigdl.dllib.keras.KerasLayer
+import com.intel.analytics.bigdl.dllib.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.dllib.nn.{InferReshape, InitializationMethod, SparseLinear, Xavier, Zeros, Sequential => TSequential}
 import com.intel.analytics.bigdl.dllib.optim.Regularizer
 import com.intel.analytics.bigdl.dllib.tensor.Tensor

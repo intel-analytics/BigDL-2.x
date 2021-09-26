@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Analytics Zoo Authors.
+ * Copyright 2016 The BigDL Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class Dropout[T: ClassTag](
   override val p: Double,
   override val inputShape: Shape = null)
   (implicit ev: TensorNumeric[T])
-  extends com.intel.analytics.bigdl.dllib.keras.Dropout[T](p, inputShape) with Net {
+  extends com.intel.analytics.bigdl.dllib.nn.keras.Dropout[T](p, inputShape) with Net {
 
   override private[bigdl] def toKeras2(): String = {
     val params = Net.inputShapeToString(inputShape) ++

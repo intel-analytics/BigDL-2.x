@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Analytics Zoo Authors.
+ * Copyright 2016 The BigDL Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.intel.analytics.bigdl.dllib.keras.layers.utils
 import com.intel.analytics.bigdl.Criterion
 import com.intel.analytics.bigdl.dllib.nn.Graph.ModuleNode
 import com.intel.analytics.bigdl.dllib.nn._
-import com.intel.analytics.bigdl.dllib.keras.{KerasIdentityWrapper, KerasLayer, KerasLayerWrapper, Sequential => KSequential, SoftMax => KSoftMax}
+import com.intel.analytics.bigdl.dllib.nn.keras.{KerasIdentityWrapper, KerasLayer, KerasLayerWrapper, Sequential => KSequential, SoftMax => KSoftMax}
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity, DataFormat, TensorModule}
 import com.intel.analytics.bigdl.dllib.optim._
 import com.intel.analytics.bigdl.dllib.tensor.Tensor

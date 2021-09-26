@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Analytics Zoo Authors.
+ * Copyright 2016 The BigDL Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intel.analytics.bigdl.dllib.keras.layers
 
-import com.intel.analytics.bigdl.dllib.keras.KerasLayer
+import com.intel.analytics.bigdl.dllib.nn.keras.KerasLayer
 import com.intel.analytics.bigdl.dllib.nn.{InitializationMethod, Xavier}
 import com.intel.analytics.bigdl.dllib.optim.Regularizer
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
@@ -64,7 +64,7 @@ class Convolution1D[T: ClassTag](
   override val bias: Boolean = true,
   override val inputShape: Shape = null)
   (implicit ev: TensorNumeric[T])
-  extends com.intel.analytics.bigdl.dllib.keras.Convolution1D[T](nbFilter, filterLength, init,
+  extends com.intel.analytics.bigdl.dllib.nn.keras.Convolution1D[T](nbFilter, filterLength, init,
     activation, borderMode, subsampleLength, wRegularizer,
     bRegularizer, bias, inputShape) with Net {}
 

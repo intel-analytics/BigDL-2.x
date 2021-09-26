@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Analytics Zoo Authors.
+ * Copyright 2016 The BigDL Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.dllib.nn.{SpatialAveragePooling, Sequential => 
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.AbstractModule
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.DataFormat
-import com.intel.analytics.bigdl.dllib.keras.GlobalPooling2D
+import com.intel.analytics.bigdl.dllib.nn.keras.GlobalPooling2D
 import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.utils.Shape
 import com.intel.analytics.bigdl.dllib.keras.Net
