@@ -246,6 +246,7 @@ then
     mv ~/.chronos/dataset/nyc_taxi/nyc_taxi.csv ~/.chronos/dataset/nyc_taxi/nyc_taxi_data.csv
 else
     "nyc_taxi_data.csv exists."
+fi
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py
 
@@ -261,6 +262,7 @@ then
     mv ~/.chronos/dataset/network_traffic/data.csv ~/.chronos/dataset/network_traffic/nyc_taxi_data.csv
 else
     "network_traffic_data.csv exists."
+fi
 
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py
 
