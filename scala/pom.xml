@@ -185,6 +185,7 @@
         <module>orca</module>
         <module>friesian.serving</module>
         <module>grpc</module>
+        <module>serving</module>
     </modules>
 
     <distributionManagement>
