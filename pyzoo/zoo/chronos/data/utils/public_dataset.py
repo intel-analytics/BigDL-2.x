@@ -73,7 +73,7 @@ class PublicDataset:
 
         # check local file exists.
         if not os.path.exists(self.final_file_path) and \
-            not set(DATASET_NAME[self.name]).issubset(set(os.listdir(self.dir_path))):
+                not set(DATASET_NAME[self.name]).issubset(set(os.listdir(self.dir_path))):
             if isinstance(BASE_URL[self.name], list):
                 for val in self.url:
                     download(val, self.dir_path, chunk_size)
