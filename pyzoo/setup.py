@@ -122,7 +122,8 @@ def init_env():
 
 
 def setup_package():
-    script_names = os.listdir(SCRIPTS_TARGET)
+    script_names = [f for f in os.listdir(SCRIPTS_TARGET) if
+                    os.path.isfile(os.path.join(SCRIPTS_TARGET, f))]
     scripts = list(map(lambda script: os.path.join(
         SCRIPTS_TARGET, script), script_names))
 
