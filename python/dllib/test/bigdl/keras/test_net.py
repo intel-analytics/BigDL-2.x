@@ -32,7 +32,7 @@ np.random.seed(1337)  # for reproducibility
 class TestLayer(ZooTestCase):
 
     def test_load_bigdl_model(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
         model_path = os.path.join(resource_path, "models/bigdl/bigdl_lenet.model")
         model = Net.load_bigdl(model_path)
         model2 = model.new_graph(["reshape2"])
@@ -44,7 +44,7 @@ class TestLayer(ZooTestCase):
         assert output.shape == (1, 192)
 
     def test_load_caffe_model(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
         model_path = os.path.join(resource_path, "models/caffe/test_persist.caffemodel")
         def_path = os.path.join(resource_path, "models/caffe/test_persist.prototxt")
         model = Net.load_caffe(def_path, model_path)
@@ -112,13 +112,13 @@ class TestLayer(ZooTestCase):
         assert isinstance(zmodel2, Sequential)
 
     def test_layers_method(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
         model_path = os.path.join(resource_path, "models/bigdl/bigdl_lenet.model")
         model = Net.load_bigdl(model_path)
         assert len(model.layers) == 12
 
     def test_flatten_layers_method(self):
-        resource_path = os.path.join(os.path.split(__file__)[0], "../../resources")
+        resource_path = os.path.join(os.path.split(__file__)[0], "../resources")
         model_path = os.path.join(resource_path, "models/bigdl/bigdl_lenet.model")
         model = Net.load_bigdl(model_path)
 
