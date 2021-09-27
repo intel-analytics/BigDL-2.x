@@ -13,7 +13,7 @@ monitorPort: 1235
 serviceType: kv
 
 # default: false, if need to load initial data to redis, set true
-loadInitialData: false
+loadInitialData: true
 
 # default: "", prefix for redis key
 redisKeyPrefix:
