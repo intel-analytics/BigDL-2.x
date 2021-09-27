@@ -41,7 +41,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
 import tempfile
 import numpy as np
 import pytest
@@ -51,7 +50,14 @@ from zoo.chronos.simulator.doppelganger.output import Output, OutputType, Normal
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
 def get_train_data():
-    df = np.load('/home/liangs/data/data_train_small.npz')
+    import shutil, io, os
+    import urllib.request as req
+    dfp = f'{os.getenv("FTP_URI")}/analytics-zoo-data/apps/doppelGANger_data/data_train_small.npz'
+    fi = io.BytesIO()
+    with req.urlopen(dfp) as dp:
+        shutil.copyfileobj(dp, fi)
+        fi.seek(0)
+        df = np.load(fi)
     return df
 
 class TestDoppelganer(ZooTestCase):
@@ -103,7 +109,8 @@ class TestDoppelganer(ZooTestCase):
         with tempfile.TemporaryDirectory() as tf:
             doppelganger.save(tf)
             doppelganger.load(tf)
-
+        df.close()
+        
         # illegal input
         df = get_train_data()
         feature_outputs = [Output(type_=OutputType.CONTINUOUS,
@@ -125,3 +132,4 @@ class TestDoppelganer(ZooTestCase):
                              data_gen_flag=df['data_gen_flag'],
                              feature_outputs=feature_outputs,
                              attribute_outputs=attribute_outputs)
+        df.close()
