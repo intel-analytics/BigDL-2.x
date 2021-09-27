@@ -23,8 +23,8 @@ import bigdl.dllib.keras.layers as ZLayer
 from bigdl.dllib.keras.models import Model as ZModel, Sequential as ZSequential
 from bigdl.dllib.net import Net
 from bigdl.dllib.nn.layer import Linear, Sigmoid, SoftMax, Model as BModel
-from bigdl.util.common import *
-from bigdl.nn.layer import Sequential
+from bigdl.dllib.util.common import *
+from bigdl.dllib.nn.layer import Sequential
 
 np.random.seed(1337)  # for reproducibility
 
