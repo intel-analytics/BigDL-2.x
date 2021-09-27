@@ -226,6 +226,14 @@ time15=$((now-start))
 echo "#16 start example for chronos distributed_training_network_traffic"
 start=$(date "+%s")
 
+if [ -f ~/.chronos/dataset/network_traffic/network_traffic_data.csv ]
+then
+    echo "network_traffic_data.csv already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/network-traffic/data/data.csv -P ~/.chronos/dataset/network_traffic/
+    mv ~/.chronos/dataset/network_traffic/data.csv ~/.chronos/dataset/network_traffic/network_traffic_data.csv
+fi
+
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/distributed/distributed_training_network_traffic.py
 
 now=$(date "+%s")
