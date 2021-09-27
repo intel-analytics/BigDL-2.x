@@ -61,8 +61,8 @@ class JavaToPython:
             raise Exception("Not supported type: {}".format(jclass_name))
 
     def _load_ppackage_by_jpackage(self, jpackage_name):
-        if "com.intel.analytics.zoo.pipeline.api.keras.models":
-            return importlib.import_module('zoo.pipeline.api.keras.models')
+        if "com.intel.analytics.bigdl.dllib.keras.models":
+            return importlib.import_module('dllib.keras.models')
         raise Exception("Not supported package: {}".format(jpackage_name))
 
 
