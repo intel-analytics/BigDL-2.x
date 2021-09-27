@@ -242,7 +242,7 @@ def training_data_creator(config):
 `AutoTSEstimator` depends on the [Distributed Hyper-parameter Tuning](../../Orca/Overview/distribute-tuning.html) supported by Project Orca. It also provides time series only functionalities and optimization. Here is a typical initialization process.
 ```python
 import zoo.orca.automl.hp as hp
-from zoo.chronos.autots.experimental import AutoTSEstimator
+from zoo.chronos.autots import AutoTSEstimator
 auto_estimator = AutoTSEstimator(model='lstm',
                                  search_space='normal',
                                  past_seq_len=hp.randint(1, 10),
@@ -279,7 +279,7 @@ my_ppl_file_path = "/tmp/saved_pipeline"
 ts_pipeline.save(my_ppl_file_path)
 
 # restore the pipeline for further deployment
-from zoo.chronos.autots.experimental import TSPipeline
+from zoo.chronos.autots import TSPipeline
 loaded_ppl = TSPipeline.load(my_ppl_file_path)
 ```
 Detailed information please refer to [TSPipeline API doc](../../PythonAPI/Chronos/autotsestimator.html#tspipeline).
@@ -493,3 +493,22 @@ f = Forecaster(..., distributed=True)
 f.fit(tsdata_xshards, ...)
 f.predict(test_tsdata_xshards, ...)
 ```
+
+### **8 Examples and Demos**
+- Quickstarts
+    - [Use AutoTSEstimator for Time-Series Forecasting](https://analytics-zoo.readthedocs.io/en/latest/doc/Chronos/QuickStart/chronos-autotsest-quickstart.html)
+    - [Use TSDataset and Forecaster for Time-Series Forecasting](https://analytics-zoo.readthedocs.io/en/latest/doc/Chronos/QuickStart/chronos-tsdataset-forecaster-quickstart.html)
+    - [Use Anomaly Detector for Unsupervised Anomaly Detection](https://analytics-zoo.readthedocs.io/en/latest/doc/Chronos/QuickStart/chronos-anomaly-detector.html)
+- Examples
+    - [Use AutoLSTM on nyc taxi dataset](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/auto_model/autolstm_nyc_taxi.py)
+    - [Use AutoProphet on nyc taxi dataset](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/auto_model/autoprophet_nyc_taxi.py)
+    - [High dimension time series forecasting with Chronos TCMFForecaster](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/tcmf/run_electricity.py)
+    - [Generate synthetic data with DPGANSimulator in a data-driven fashion](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/simulator)
+- Use cases
+    - [Unsupervised Anomaly Detection](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb)
+    - [Unsupervised Anomaly Detection based on Forecasts](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised_forecast_based.ipynb)
+    - [Stock Price Prediction with LSTM](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/fsi/stock_prediction.ipynb)
+    - [Stock Price Prediction with ProphetForecaster and AutoProphet](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/fsi/stock_prediction_prophet.ipynb)
+    - [Network Traffic Forecasting with AutoTSEstimator](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting_experimental.ipynb)
+    - [Network Traffic Forecasting (using multivariate time series data)](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.ipynb)
+    - [Network Traffic Forecasting (using multistep time series data)](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster.ipynb)
