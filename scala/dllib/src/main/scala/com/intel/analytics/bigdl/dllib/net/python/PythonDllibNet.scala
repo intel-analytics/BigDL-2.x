@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.bigdl.orca.net.python
+package com.intel.analytics.bigdl.dllib.net.python
 
 import java.util.{ArrayList, List => JList}
 
