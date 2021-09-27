@@ -173,7 +173,7 @@ echo "#13 autoprophet_nyc_taxi time used:$time13 seconds"
 echo "#14 autots_nyc_taxi time used:$time14 seconds"
 echo "#15 dpgansimulator_wwt time used:$time15 seconds"
 echo "#16 distributed_training_network_traffic time used:$time16 seconds"
-echo "#16 onnx_autotsestimator time used:$time17 seconds"
-echo "#17 onnx_forecaster_network_traffic used:$time18 seconds"
+echo "#17 onnx_autotsestimator time used:$time17 seconds"
+echo "#18 onnx_forecaster_network_traffic used:$time18 seconds"
 
 clear_up

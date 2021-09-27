@@ -18,7 +18,7 @@ import argparse
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-from zoo.chronos.forecast.seq2seq_forecaster import Seq2SeqForecaster
+from zoo.chronos.forecaster.seq2seq_forecaster import Seq2SeqForecaster
 from zoo.chronos.data.repo_dataset import get_public_dataset
 
 
