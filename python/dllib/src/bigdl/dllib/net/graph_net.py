@@ -16,13 +16,13 @@
 
 import sys
 
-from bigdl.nn.layer import Model as BModel
-from zoo.feature.image import ImageSet
-from zoo.feature.text import TextSet
-from zoo.pipeline.api.keras.base import ZooKerasLayer
-from zoo.pipeline.api.keras.utils import *
-from bigdl.nn.layer import Layer
-from zoo.common.utils import callZooFunc
+from bigdl.dllib.nn.layer import Model as BModel
+from bigdl.dllib.feature.image import ImageSet
+from bigdl.dllib.feature.text import TextSet
+from bigdl.dllib.keras.base import ZooKerasLayer
+from bigdl.dllib.keras.utils import *
+from bigdl.dllib.nn.layer import Layer
+from bigdl.dllib.utils.file_utils import callZooFunc
 
 if sys.version >= '3':
     long = int

@@ -18,9 +18,9 @@ import importlib
 import os
 import sys
 
-from zoo.common.utils import callZooFunc
-from bigdl.nn.layer import Model as BModel
-from zoo.pipeline.api.net.graph_net import GraphNet
+from bigdl.dllib.utils.file_utils import callZooFunc
+from bigdl.dllib.nn.layer import Model as BModel
+from bigdl.dllib.net.graph_net import GraphNet
 
 if sys.version >= '3':
     long = int
