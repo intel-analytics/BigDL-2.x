@@ -146,6 +146,9 @@ if [ ! -f ~/.chronos/dataset/nyc_taxi/nyc_taxi_data.csv ]; then
   mv ~/.chronos/dataset/nyc_taxi/nyc_taxi.csv ~/.chronos/dataset/nyc_taxi/nyc_taxi_data.csv
 fi
 
+sed -i '86,89d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py
+sed -i '94,97d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py
+
 execute_ray_test onnx_autotsestimator_nyc_taxi "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py"
 time17=$?
 
@@ -153,6 +156,9 @@ if [ ! -f ~/.chronos/dataset/network_traffic/network_traffic_data.csv ]; then
   wget -nv $FTP_URI/analytics-zoo-data/network-traffic/data/data.csv -P ~/.chronos/dataset/network_traffic/
   mv ~/.chronos/dataset/network_traffic/data.csv ~/.chronos/dataset/network_traffic/network_traffic_data.csv
 fi
+
+sed -i '65,67d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py
+sed -i '73,76d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py
 
 execute_ray_test onnx_forecaster_network_traffic "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py"
 time18=$?
