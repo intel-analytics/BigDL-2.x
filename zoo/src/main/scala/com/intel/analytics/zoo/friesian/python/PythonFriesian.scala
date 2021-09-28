@@ -265,6 +265,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         })
       }
 
+
       val result: Seq[Row] = couples.takeRight(nunSeqs).map(x => {
         val rowValue: Array[Any] = colsWithType.flatMap(col => {
           if (colNames.contains(col.name)) {
@@ -317,7 +318,8 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     val maskUdf = udf(Utils.maskArr)
 
-    cols.asScala.toList.foreach(c => {maskDF = maskDF.withColumn(c + "_mask", maskUdf(lit(maxLength), col(c)))
+    cols.asScala.toList.foreach(c => {
+      maskDF = maskDF.withColumn(c + "_mask", maskUdf(lit(maxLength), col(c)))
     })
 
     maskDF
