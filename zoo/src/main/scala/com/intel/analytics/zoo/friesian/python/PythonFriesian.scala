@@ -236,7 +236,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
                  timeCol: String,
                  minLength: Int,
                  maxLength: Int,
-                 lastOnly: Boolean = false): DataFrame = {
+                 nunSeqs: Int = Int.MaxValue): DataFrame = {
 
     df.sparkSession.conf.set("spark.sql.legacy.allowUntypedScalaUDF", "true")
     val colNames: Array[String] = cols.asScala.toArray
@@ -254,14 +254,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
       val full_rows: Array[Row] = his_collect.sortBy(x => x.getAs[Long](timeCol)).toArray
       val n = full_rows.length
 
-      val couples: Seq[(Int, Int)] = if (lastOnly) {
-        val c = if (n <= maxLength) {
-          (0, n-1)
-        } else {
-          (n - maxLength - 1, n-1)
-        }
-        Seq(c)
-      } else {
+      val couples: Seq[(Int, Int)] = {
         (minLength to n - 1).map(i => {
           val lowerBound = if (i < maxLength) {
             0
@@ -272,7 +265,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
         })
       }
 
-      val result: Seq[Row] = couples.map(x => {
+      val result: Seq[Row] = couples.takeRight(nunSeqs).map(x => {
         val rowValue: Array[Any] = colsWithType.flatMap(col => {
           if (colNames.contains(col.name)) {
             col.dataType.typeName match {
@@ -324,8 +317,7 @@ class PythonFriesian[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZ
 
     val maskUdf = udf(Utils.maskArr)
 
-    cols.asScala.toList.foreach(c => {
-      maskDF = maskDF.withColumn(c + "_mask", maskUdf(lit(maxLength), col(c)))
+    cols.asScala.toList.foreach(c => {maskDF = maskDF.withColumn(c + "_mask", maskUdf(lit(maxLength), col(c)))
     })
 
     maskDF

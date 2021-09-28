@@ -514,7 +514,7 @@ class TestTable(TestCase):
         tbl = FeatureTable(df.select("name", "item", "ts")) \
             .add_hist_seq(["item"], "name", "ts", 1, 4)
         tbl2 = FeatureTable(df.select("name", "item", "ts")) \
-            .add_hist_seq(["item"], "name", "ts", 1, 4, True)
+            .add_hist_seq(["item"], "name", "ts", 1, 4, 1)
         assert tbl.size() == 8
         assert tbl.df.filter(col("name") == "alice").count() == 2
         assert tbl.df.filter("name like '%jack'").count() == 6

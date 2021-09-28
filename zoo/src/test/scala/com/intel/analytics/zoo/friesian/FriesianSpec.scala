@@ -329,7 +329,7 @@ class FriesianSpec extends ZooSpecHelper {
     assert(dft.columns.contains("other_hist_seq"))
   }
 
-  "addHisSeq last Only" should "work properly" in {
+  "addHisSeq numSeqs" should "work properly" in {
     val data = sc.parallelize(Seq(
       Row("rose", "A", 1, 2.0f, "2019-07-01 12:01:19.000"),
       Row("jack", "B", 1, 2.0f, "2019-07-01 12:01:19.000"),
@@ -353,7 +353,7 @@ class FriesianSpec extends ZooSpecHelper {
       .withColumn("ts", col("time").cast("timestamp").cast("long"))
 
     val dft = friesian.addHistSeq(df, Array("item", "other").toList.asJava, "name",
-      "ts", 1, 4, true)
+      "ts", 1, 4, 1)
     assert(dft.count() == 2)
     assert(dft.filter(df("name") === "alice").count() == 1)
     assert(dft.filter(df("name") === "jack").count() == 1)
