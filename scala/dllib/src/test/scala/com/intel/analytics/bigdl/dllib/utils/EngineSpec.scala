@@ -128,13 +128,15 @@
     nExecutor should be(1)
   }
 
-  ignore should "readConf be right" in {
+  "readConf" should "be right" in {
     val conf = Engine.readConf
     val target = Map(
       "spark.shuffle.reduceLocality.enabled" -> "false",
       "spark.shuffle.blockTransferService" -> "nio",
       "spark.scheduler.minRegisteredResourcesRatio" -> "1.0",
-      "spark.speculation" -> "false"
+      "spark.speculation" -> "false",
+      "spark.serializer" -> "org.apache.spark.serializer.JavaSerializer",
+      "spark.scheduler.maxRegisteredResourcesWaitingTime" -> "3600s"
     )
     conf.length should be(target.keys.size)
     conf.foreach(s => {
