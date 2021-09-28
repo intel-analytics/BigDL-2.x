@@ -17,7 +17,7 @@
 
 import numpy as np
 import base64
-from zoo.serving.client import InputQueue, OutputQueue, http_json_to_ndarray
+from bigdl.serving.client import InputQueue, OutputQueue, http_json_to_ndarray
 import os
 
 
@@ -32,7 +32,7 @@ class TestSerialization:
         byte = base64.b64decode(b64)
 
     def test_http_response_to_ndarray(self):
-        with open(os.path.join(resource_path, "serving/http_response")) as f:
+        with open(os.path.join(resource_path, "http_response")) as f:
             data = f.read()
             arr = http_json_to_ndarray(data)
             assert isinstance(arr, np.ndarray)

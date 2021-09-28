@@ -16,7 +16,7 @@
 
 import redis
 import time
-from zoo.serving.schema import *
+from bigdl.serving.schema import *
 import httpx
 import json
 import uuid

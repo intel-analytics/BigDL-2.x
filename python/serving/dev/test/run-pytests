@@ -16,11 +16,14 @@
 # limitations under the License.
 #
 
+set -ex
+export PYTHONPATH=$PYTHONPATH:`pwd`/../../src
+
 cd "`dirname $0`"
 
 echo "Running Serving tests"
-set -ex
+
 
 cd ../../
 
-for f in $(find test -name '*.py'); do python -m pytest -v f; done
+for f in $(find test -name '*.py'); do python -m pytest -v $f; done

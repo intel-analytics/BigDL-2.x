@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from zoo.serving.client import InputQueue, OutputQueue
+from bigdl.serving.client import InputQueue, OutputQueue
 
 
 class TestClient:
