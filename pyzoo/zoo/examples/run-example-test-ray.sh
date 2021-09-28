@@ -245,7 +245,7 @@ then
     wget $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ~/.chronos/dataset/nyc_taxi/
     mv ~/.chronos/dataset/nyc_taxi/nyc_taxi.csv ~/.chronos/dataset/nyc_taxi/nyc_taxi_data.csv
 else
-    "nyc_taxi_data.csv exists."
+    echo "nyc_taxi_data.csv exists."
 fi
 
 # When the thread of onnxruntime is None, "pthread_setaffinity_np failed" may appear.
@@ -264,7 +264,7 @@ then
     wget $FTP_URI/analytics-zoo-data/network_traffic/data/data.csv -P ~/.chronos/dataset/network_traffic/
     mv ~/.chronos/dataset/network_traffic/data.csv ~/.chronos/dataset/network_traffic/nyc_taxi_data.csv
 else
-    "network_traffic_data.csv exists."
+    echo "network_traffic_data.csv exists."
 fi
 
 # When the thread of onnxruntime is None, "pthread_setaffinity_np failed" may appear.
