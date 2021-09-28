@@ -1284,8 +1284,8 @@ class FeatureTable(Table):
         :param sort_col: str, sort by sort_col
         :param min_len: int, minimal length of a history seq
         :param max_len: int, maximal length of a history seq
-        :param num_seqs: int, to keep last num_seqs in the data, default is 2147483647
-        max 4bite integer, it means to to keep all seqs; it only keeps last one if num_seqs=1.
+        :param num_seqs: int, default is 2147483647, max 4bite integer,
+         it means to to keep all seqs; it only keeps last one if num_seqs=1.
 
         :return: FeatureTable
         """
