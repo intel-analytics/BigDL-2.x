@@ -248,8 +248,9 @@ else
     "nyc_taxi_data.csv exists."
 fi
 
-sed -i '86,89d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py
-sed -i '94,97d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py
+# When the thread of onnxruntime is None, "pthread_setaffinity_np failed" may appear.
+sed -i '/onnx/d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py
+
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py
 
 now=$(date "+%s")
@@ -266,8 +267,9 @@ else
     "network_traffic_data.csv exists."
 fi
 
-sed -i '65,67d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py
-sed -i '73,76d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py
+# When the thread of onnxruntime is None, "pthread_setaffinity_np failed" may appear.
+sed -i '/onnx/d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py
+
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py
 
 now=$(date "+%s")

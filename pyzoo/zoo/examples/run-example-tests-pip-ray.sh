@@ -146,8 +146,8 @@ if [ ! -f ~/.chronos/dataset/nyc_taxi/nyc_taxi_data.csv ]; then
   mv ~/.chronos/dataset/nyc_taxi/nyc_taxi.csv ~/.chronos/dataset/nyc_taxi/nyc_taxi_data.csv
 fi
 
-sed -i '86,89d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py
-sed -i '94,97d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py
+# When the thread of onnxruntime is None, "pthread_setaffinity_np failed" may appear.
+sed -i '/onnx/d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py
 
 execute_ray_test onnx_autotsestimator_nyc_taxi "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py"
 time17=$?
@@ -157,8 +157,8 @@ if [ ! -f ~/.chronos/dataset/network_traffic/network_traffic_data.csv ]; then
   mv ~/.chronos/dataset/network_traffic/data.csv ~/.chronos/dataset/network_traffic/network_traffic_data.csv
 fi
 
-sed -i '65,67d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py
-sed -i '73,76d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py
+# When the thread of onnxruntime is None, "pthread_setaffinity_np failed" may appear.
+sed -i '/onnx/d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py
 
 execute_ray_test onnx_forecaster_network_traffic "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py"
 time18=$?
@@ -179,7 +179,7 @@ echo "#13 autoprophet_nyc_taxi time used:$time13 seconds"
 echo "#14 autots_nyc_taxi time used:$time14 seconds"
 echo "#15 dpgansimulator_wwt time used:$time15 seconds"
 echo "#16 distributed_training_network_traffic time used:$time16 seconds"
-echo "#17 onnx_autotsestimator time used:$time17 seconds"
+echo "#17 onnx_autotsestimator_nyc_taxi time used:$time17 seconds"
 echo "#18 onnx_forecaster_network_traffic used:$time18 seconds"
 
 clear_up
