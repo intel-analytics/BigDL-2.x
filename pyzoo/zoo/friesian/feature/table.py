@@ -15,6 +15,7 @@
 #
 
 import os
+import sys
 import hashlib
 import numpy as np
 from functools import reduce
@@ -25,7 +26,7 @@ from pyspark.sql import Row, Window
 from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, DecimalType, \
     DoubleType, ArrayType, DataType, StructType, StringType, StructField
 from pyspark.sql.functions import col as pyspark_col, concat, udf, array, broadcast, \
-    lit, rank, monotonically_increasing_id
+    lit, rank, monotonically_increasing_id, row_number, desc
 
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler, VectorAssembler, Bucketizer
@@ -751,9 +752,9 @@ class FeatureTable(Table):
         """
         return cls(Table._read_csv(paths, delimiter, header, names, dtype))
 
-    def encode_string(self, columns, indices,
-                      do_split=False, sep='\t', sort_for_array=False, keep_most_frequent=False,
-                      broadcast=True):
+    def encode_string(self, columns, indices, broadcast=True,
+                      do_split=False, sep=',', sort_for_array=False, keep_most_frequent=False
+                      ):
         """
         Encode columns with provided list of StringIndex.
 
@@ -764,15 +765,15 @@ class FeatureTable(Table):
                Or it can be a dict or a list of dicts. In this case,
                the keys of the dict should be within the categorical column
                and the values are the target ids to be encoded.
+        :param broadcast: bool, whether need to broadcast index when encode string.
+        Default is True.
         :param do_split: bool, whether need to split column value to array to encode string.
         Default is False.
         :param sep: str, a string representing a regular expression to split a column value.
-        Default is '\t'
+        Default is ','.
         :param sort_for_array: bool, whether need to sort array columns. Default is False.
         :param keep_most_frequent: bool, whether need to keep most frequent value as the
         column value. Default is False.
-        :param broadcast: bool, whether need to broadcast index when encode string.
-        Default is True.
 
         :return: A new FeatureTable which transforms categorical features into unique integer
                  values with provided StringIndexes.
@@ -885,7 +886,7 @@ class FeatureTable(Table):
         return cross_hash_df
 
     def category_encode(self, columns, freq_limit=None, order_by_freq=False,
-                        do_split=False, sep='\t', sort_for_array=False, keep_most_frequent=False,
+                        do_split=False, sep=',', sort_for_array=False, keep_most_frequent=False,
                         broadcast=True):
         """
         Category encode the given columns.
@@ -898,6 +899,15 @@ class FeatureTable(Table):
         :param order_by_freq: boolean, whether the result StringIndex will assign smaller indices
                to values with more frequencies. Default is False and in this case frequency order
                may not be preserved when assigning indices.
+        :param do_split: bool, whether need to split column value to array to encode string.
+        Default is False.
+        :param sep: str, a string representing a regular expression to split a column value.
+        Default is ','.
+        :param sort_for_array: bool, whether need to sort array columns. Default is False.
+        :param keep_most_frequent: bool, whether need to keep most frequent value as the
+        column value. Default is False.
+        :param broadcast: bool, whether need to broadcast index when encode string.
+        Default is True.
 
         :return: A tuple of a new FeatureTable which transforms categorical features into unique
                  integer values, and a list of StringIndex for the mapping.
@@ -1000,8 +1010,8 @@ class FeatureTable(Table):
         data_df = data_df.drop("friesian_onehot")
         return FeatureTable(data_df)
 
-    def gen_string_idx(self, columns, do_split=False, sep=',',
-                       freq_limit=None, order_by_freq=False):
+    def gen_string_idx(self, columns, freq_limit=None, order_by_freq=False,
+                       do_split=False, sep=','):
         """
         Generate unique index value of categorical features. The resulting index would
         start from 1 with 0 reserved for unknown features.
@@ -1010,8 +1020,6 @@ class FeatureTable(Table):
          dict is a mapping of source column names -> target column name if needs to combine multiple
          source columns to generate index.
          For example: {'src_cols':['a_user', 'b_user'], 'col_name':'user'}.
-        :param do_split: bool, whether need to split column value to array to generate index.
-        :param sep: str, a string representing a regular expression to split a column value.
         :param freq_limit: int, dict or None. Categories with a count/frequency below freq_limit
                will be omitted from the encoding. Can be represented as either an integer,
                dict. For instance, 15, {'col_4': 10, 'col_5': 2} etc. Default is None,
@@ -1019,6 +1027,10 @@ class FeatureTable(Table):
         :param order_by_freq: boolean, whether the result StringIndex will assign smaller indices
                to values with more frequencies. Default is False and in this case frequency order
                may not be preserved when assigning indices.
+        :param do_split: bool, whether need to split column value to array to generate index.
+        Default is False.
+        :param sep: str, a string representing a regular expression to split a column value.
+         Default is ','.
 
         :return: A StringIndex or a list of StringIndex.
         """
@@ -1262,19 +1274,22 @@ class FeatureTable(Table):
         df = add_negative_samples(self.df, item_size, item_col, label_col, neg_num)
         return FeatureTable(df)
 
-    def add_hist_seq(self, cols, user_col, sort_col='time', min_len=1, max_len=100):
+    def add_hist_seq(self, cols, user_col, sort_col='time',
+                     min_len=1, max_len=100, num_seqs=2147483647):
         """
-        Generate a list of item visits in history
+        Add a column of history visits into table.
 
         :param cols: a list of str, columns need to be aggregated
         :param user_col: str, user column.
         :param sort_col: str, sort by sort_col
-        :param min_len: int, minimal length of a history list
-        :param max_len: int, maximal length of a history list
+        :param min_len: int, minimal length of a history seq
+        :param max_len: int, maximal length of a history seq
+        :param num_seqs: int, default is 2147483647, max 4bite integer,
+         it means to to keep all seqs; it only keeps last one if num_seqs=1.
 
         :return: FeatureTable
         """
-        df = add_hist_seq(self.df, cols, user_col, sort_col, min_len, max_len)
+        df = add_hist_seq(self.df, cols, user_col, sort_col, min_len, max_len, num_seqs)
         return FeatureTable(df)
 
     def add_neg_hist_seq(self, item_size, item_history_col, neg_num):
@@ -1368,68 +1383,46 @@ class FeatureTable(Table):
         joined_df = self.df.join(table.df, on=on, how=how)
         return FeatureTable(joined_df)
 
-    def add_value_features(self, columns, mapping, key, value):
+    def add_value_features(self, columns, dict_tbl, key, value):
         """
          Add features based on key_cols and another key value table,
-         for each col in columns, it adds a value_col using key-value pairs from mapping
+         for each col in columns, it adds a value_col using key-value pairs from dict_tbl
 
-         :param columns: a list of str
-         :param mapping: Key value mapping
+         :param columns: str or a list of str
+         :param dict_tbl: key value mapping table
          :param key: str, name of key column in tbl
          :param value: str, name of value column in tbl
 
          :return: FeatureTable
          """
-        columns = str_to_list(columns, "columns")
-
-        spark = OrcaContext.get_spark_session()
-        keyvalue_bc = spark.sparkContext.broadcast(mapping)
-        keyvalue_map = keyvalue_bc.value
-
-        def gen_values(items):
-            getvalue = lambda item: keyvalue_map.get(item, 0)
-            if isinstance(items, int) or items is None:
-                values = getvalue(items)
-            elif isinstance(items, list) and isinstance(items[0], int):
-                values = [getvalue(item) for item in items]
-            elif isinstance(items, list) and isinstance(items[0], list) and isinstance(items[0][0],
-                                                                                       int):
-                values = []
-                for line in items:
-                    line_cats = [getvalue(item) for item in line]
-                    values.append(line_cats)
-            else:
-                raise ValueError('only int, list[int], and list[list[int]] are supported.')
-            return values
-
-        df = self.df
-        for c in columns:
-            col_type = df.schema[c].dataType
-            cat_udf = udf(gen_values, col_type)
-            df = df.withColumn(c.replace(key, value), cat_udf(pyspark_col(c)))
+        if isinstance(columns, str):
+            columns = [columns]
+        assert isinstance(columns, list), \
+            "columns should be str or a list of str, but get a " + type(columns)
+        df = add_value_features(self.df, columns, dict_tbl.df, key, value)
         return FeatureTable(df)
 
-    def reindex(self, columns=[], index_dicts=[]):
+    def reindex(self, columns=[], index_tbls=[]):
         """
         Replace the value using index_dicts for each col in columns, set 0 for default
 
         :param columns: str of a list of str
-        :param index_dicts: dict or list of dicts from int to int
+        :param dict_tbls: table or list of tables, each one has a mapping from old index to new one
 
         :return: FeatureTable
          """
         columns = str_to_list(columns, "columns")
 
-        if isinstance(index_dicts, dict):
-            index_dicts = [index_dicts]
-        assert isinstance(index_dicts, list), \
-            "index_dicts should be dict or a list of dict, but get a " + type(index_dicts)
-        assert len(columns) == len(index_dicts), \
+        if isinstance(index_tbls, dict):
+            index_tbls = [index_tbls]
+        assert isinstance(index_tbls, list), \
+            "index_dicts should be table or a list of table, but get a " + type(index_tbls)
+        assert len(columns) == len(index_tbls), \
             "each column of columns should have one corresponding index_dict"
 
         tbl = FeatureTable(self.df)
         for i, c in enumerate(columns):
-            tbl = tbl.add_value_features(c, index_dicts[i], key=c, value=c)
+            tbl = tbl.add_value_features(c, index_tbls[i], key=c, value=c)
         return tbl
 
     def gen_reindex_mapping(self, columns=[], freq_limit=10):
@@ -1440,7 +1433,7 @@ class FeatureTable(Table):
                will be omitted. Can be represented as either an integer or dict.
                For instance, 15, {'col_4': 10, 'col_5': 2} etc. Default is 10,
 
-        :return: a dictionary of list of dictionaries, a mapping from old index to new index
+        :return: a list of FeatureTables, each table has a mapping from old index to new index
                 new index starts from 1, save 0 for default
          """
         str_to_list(columns, "columns")
@@ -1448,21 +1441,19 @@ class FeatureTable(Table):
             freq_limit = {col: freq_limit for col in columns}
         assert isinstance(freq_limit, dict), \
             "freq_limit should be int or dict, but get a " + type(freq_limit)
-        index_dicts = []
+        index_tbls = []
         for c in columns:
             c_count = self.select(c).group_by(c, agg={c: "count"}).rename(
                 {"count(" + c + ")": "count"})
-            c_count = c_count.filter(pyspark_col("count") >= freq_limit[c]) \
-                .order_by("count", ascending=False)
-            c_count_pd = c_count.to_pandas()
-            c_count_pd.reindex()
-            c_count_pd[c + "_new"] = c_count_pd.index + 1
-            index_dict = dict(zip(c_count_pd[c], c_count_pd[c + "_new"]))
-            index_dicts.append(index_dict)
+            c_count = c_count.filter(pyspark_col("count") >= freq_limit[c])
+            w = Window.orderBy(desc("count"))
+            index_df = c_count.df.withColumn(c + "_new", row_number().over(w))
+            index_tbl = FeatureTable(index_df).select([c, c + "_new"])
+            index_tbls.append(index_tbl)
         if isinstance(columns, str):
-            index_dicts = index_dicts[0]
+            index_tbls = index_tbls[0]
 
-        return index_dicts
+        return index_tbls
 
     def group_by(self, columns=[], agg="count", join=False):
         """

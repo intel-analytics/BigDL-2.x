@@ -23,11 +23,10 @@ import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.friesian.python.PythonFriesian
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.types._
+import org.apache.spark.sql.types.{StructField, _}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.sql.functions._
-
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -330,6 +329,38 @@ class FriesianSpec extends ZooSpecHelper {
     assert(dft.columns.contains("other_hist_seq"))
   }
 
+  "addHisSeq numSeqs" should "work properly" in {
+    val data = sc.parallelize(Seq(
+      Row("rose", "A", 1, 2.0f, "2019-07-01 12:01:19.000"),
+      Row("jack", "B", 1, 2.0f, "2019-07-01 12:01:19.000"),
+      Row("jack", "A", 2, 2.0f, "2019-08-01 12:01:19.000"),
+      Row("jack", "C", 3, 2.0f, "2019-09-01 12:01:19.000"),
+      Row("jack", "D", 4, 1.0f, "2019-10-01 12:01:19.000"),
+      Row("jack", "A", 5, 1.0f, "2019-11-01 12:01:19.000"),
+      Row("jack", "E", 6, 1.0f, "2019-12-01 12:01:19.000"),
+      Row("jack", "F", 7, 0.0f, "2019-12-02 12:01:19.000"),
+      Row("alice", "G", 4, 0.0f, "2019-09-01 12:01:19.000"),
+      Row("alice", "H", 5, 1.0f, "2019-10-01 12:01:19.000"),
+      Row("alice", "I", 6, 0.0f, "2019-11-01 12:01:19.000")))
+    val schema = StructType(Array(
+      StructField("name", StringType, true),
+      StructField("category", StringType, true),
+      StructField("item", IntegerType, true),
+      StructField("other", FloatType, true),
+      StructField("time", StringType, true)
+    ))
+    val df = sqlContext.createDataFrame(data, schema)
+      .withColumn("ts", col("time").cast("timestamp").cast("long"))
+
+    val dft = friesian.addHistSeq(df, Array("item", "other").toList.asJava, "name",
+      "ts", 1, 4, 1)
+    assert(dft.count() == 2)
+    assert(dft.filter(df("name") === "alice").count() == 1)
+    assert(dft.filter(df("name") === "jack").count() == 1)
+    assert(dft.columns.contains("item_hist_seq"))
+    assert(dft.columns.contains("other_hist_seq"))
+  }
+
   "addNegSamples" should "work properly" in {
     val data = sc.parallelize(Seq(
       Row("jack", 1, "2019-07-01 12:01:19.000"),
@@ -364,6 +395,38 @@ class FriesianSpec extends ZooSpecHelper {
     assert(dft.select("neg_history").collect().length == 3)
     assert(dft.select("neg_history").rdd.map(r =>
       r.getAs[mutable.WrappedArray[mutable.WrappedArray[Int]]](0)).collect()(0).length == 5)
+  }
+
+  "addValueFeatures" should "work properly" in {
+
+    val data: RDD[Row] = sc.parallelize(Seq(
+      Row("jack", 2, Seq(1, 2, 3, 4, 5), Seq(Seq(1, 2, 3, 4, 5))),
+      Row("alice", 3, Seq(4, 5, 6, 7, 8), Seq(Seq(1, 2, 3, 4, 5))),
+      Row("rose", 4, Seq(1, 2), Seq(Seq(1, 2, 3, 4, 5)))))
+
+    val schema: StructType = StructType(Array(
+      StructField("name", StringType, true),
+      StructField("item", IntegerType, true),
+      StructField("item_hist_seq", ArrayType(IntegerType), true),
+      StructField("nclk_item_hist_seq", ArrayType(ArrayType(IntegerType)), true)))
+
+    val df = sqlContext.createDataFrame(data, schema)
+
+    val mapping = Map(0 -> 0, 1 -> 0, 2 -> 0, 3 -> 0, 4 -> 1, 5 -> 1, 6 -> 1, 8 -> 2, 9 -> 2)
+      .map(x => Row(x._1, x._2)).toArray
+
+    val dictSchema: StructType = StructType(Array(
+      StructField("key", IntegerType, true),
+      StructField("value", IntegerType, true)))
+    val dictDF = sqlContext.createDataFrame(sc.parallelize(mapping), dictSchema)
+
+    val df1 = friesian.addValueFeatures(df,
+      Array("item", "item_hist_seq", "nclk_item_hist_seq").toList.asJava,
+      dictDF, "item", "category")
+
+    assert(df1.select("category").count == 3)
+    assert(df1.select("category_hist_seq").count == 3)
+    assert(df1.select("nclk_category_hist_seq").count == 3)
   }
 
   "Fill median" should "work properly" in {

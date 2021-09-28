@@ -28,17 +28,19 @@ spec:
             bash start-flink-jobmanager.sh | tee ../jobmanager.log; 
             tail -f /dev/null
 #        args: ["tail -f /dev/null"]
-        env: 
+        env:
+          - name: SGX_MEM_SIZE
+            value: "16G" 
           - name: FLINK_JOB_MANAGER_IP
             valueFrom:
               configMapKeyRef:
                 name: flink-config
                 key: flink.jobmanager.ip
-          - name: XMX_SIZE
-            valueFrom:
-              configMapKeyRef:
-                name: flink-config
-                key: xmx.size
+                #          - name: XMX_SIZE
+                #            valueFrom:
+                #              configMapKeyRef:
+                #                name: flink-config
+                #                key: xmx.size
           - name: SGX_MODE
             valueFrom:
               configMapKeyRef:

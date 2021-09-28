@@ -105,19 +105,41 @@ time10=$?
 execute_ray_test autoecastimator-pytorch "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/orca/automl/autoestimator/autoestimator_pytorch.py --trials 5 --epochs 2"
 time11=$?
 
-if [ ! -f {ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/nyc_taxi.csv ]; then
-  wget -nv $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/
+if [ ! -f ~/.chronos/dataset/nyc_taxi/nyc_taxi.csv ]; then
+  wget -nv $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ~/.chronos/dataset/nyc_taxi/
 fi
 
-execute_ray_test autolstm_nyc_taxi "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/autolstm_nyc_taxi.py --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/lstm/nyc_taxi.csv"
+execute_ray_test autolstm_nyc_taxi "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/autolstm_nyc_taxi.py"
 time12=$?
+
+if [ ! -f {ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/nyc_taxi.csv ]; then
+  wget -nv $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/
+fi
+
+execute_ray_test autoprophet_nyc_taxi "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/autoprophet_nyc_taxi.py --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/nyc_taxi.csv"
+time13=$?
 
 if [ ! -f {ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/nyc_taxi.csv ]; then
   wget -nv $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/
 fi
 
 execute_ray_test autots_nyc_taxi "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/autots_nyc_taxi.py --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/quickstart/nyc_taxi.csv"
-time13=$?
+time14=$?
+
+if [ ! -f {ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/data_train_small.npz ]; then
+  wget -nv $FTP_URI/analytics-zoo-data/apps/doppelGANger_data/data_train_small.npz -P ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/
+fi
+
+execute_ray_test dpgansimulator_wwt "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/dpgansimulator_wwt.py --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/data_train_small.npz --epoch 1 --plot_figures False"
+time15=$?
+
+if [ ! -f ~/.chronos/dataset/network_traffic/network_traffic_data.csv ]; then
+  wget -nv $FTP_URI/analytics-zoo-data/network-traffic/data/data.csv -P ~/.chronos/dataset/network_traffic/
+  mv ~/.chronos/dataset/network_traffic/data.csv ~/.chronos/dataset/network_traffic/network_traffic_data.csv
+fi
+
+execute_ray_test distributed_training_network_traffic "${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/distributed/distributed_training_network_traffic.py"
+time16=$?
 
 echo "#1 rl_pong time used:$time1 seconds"
 echo "#2 sync_parameter_server time used:$time2 seconds"
@@ -131,6 +153,9 @@ echo "#9 auto-xgboost-classifier time used:$time9 seconds"
 echo "#10 auto-xgboost-regressor time used:$time10 seconds"
 echo "#11 autoecastimator-pytorch time used:$time11 seconds"
 echo "#12 autolstm_nyc_taxi time used:$time12 seconds"
-echo "#13 autots_nyc_taxi time used:$time13 seconds"
+echo "#13 autoprophet_nyc_taxi time used:$time13 seconds"
+echo "#14 autots_nyc_taxi time used:$time14 seconds"
+echo "#15 dpgansimulator_wwt time used:$time15 seconds"
+echo "#16 distributed_training_network_traffic time used:$time16 seconds"
 
 clear_up
