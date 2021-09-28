@@ -30,8 +30,7 @@ from html.parser import HTMLParser
 
 exclude_patterns = ["*__pycache__*", "lightning_logs", "recipe", "setup.py"]
 nano_home = os.path.abspath(__file__ + "/../src/")
-bigdl_home = bigdl_home = os.path.abspath(__file__ + "/../../../")
-VERSION = open(os.path.join(bigdl_home, 'python/version.txt'), 'r').read().strip()
+
 
 def get_nano_packages():
     nano_packages = []
@@ -141,7 +140,7 @@ def setup_package():
 
     metadata = dict(
         name='bigdl-nano',
-        version=VERSION,
+        version='0.14.0.dev0',
         description='',
         author='',
         author_email='',
