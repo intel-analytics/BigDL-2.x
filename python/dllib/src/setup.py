@@ -22,16 +22,10 @@ from shutil import copyfile, copytree, rmtree
 
 from setuptools import setup
 
-TEMP_PATH = "bigdl/dllib/share"
+TEMP_PATH = "bigdl/share/dllib"
 bigdl_home = os.path.abspath(__file__ + "/../../../..")
 
-try:
-    exec(open('bigdl/version.py').read())
-except IOError:
-    print("Failed to load Bigdl version file for packaging. You must be in Bigdl's python dir.")
-    sys.exit(-1)
-
-VERSION = __version__
+VERSION = open(os.path.join(bigdl_home, 'python/version.txt'), 'r').read().strip()
 
 building_error_msg = """
 If you are packing python API from BigDL source, you must build BigDL first
@@ -69,7 +63,7 @@ def init_env():
 
 def get_bigdl_packages():
     bigdl_python_home = os.path.abspath(__file__)[:-8]
-    bigdl_packages = ['bigdl.dllib.share']
+    bigdl_packages = ['bigdl.share.dllib']
     for dirpath, dirs, files in os.walk(bigdl_python_home + "bigdl"):
         package = dirpath.split(bigdl_python_home)[1].replace('/', '.')
         if "__pycache__" not in package:
@@ -81,7 +75,7 @@ def get_bigdl_packages():
 
 def setup_package():
     metadata = dict(
-        name='BigDL-dllib',
+        name='bigdl-dllib',
         version=VERSION,
         description='Distributed Deep Learning Library for Apache Spark',
         author='BigDL Authors',
@@ -92,8 +86,7 @@ def setup_package():
         install_requires=['numpy>=1.7', 'pyspark==2.4.6', 'six>=1.10.0'],
         dependency_links=['https://d3kbcqa49mib13.cloudfront.net/spark-2.0.0-bin-hadoop2.7.tgz'],
         include_package_data=True,
-        # package_data={"bigdl.share": ['bigdl/share/lib', 'bigdl/share/conf', 'bigdl/share/bin']},
-        package_data={"bigdl.dllib.share": ['bigdl/dllib/share/lib']},
+        package_data={"bigdl.share.dllib": ['lib/bigdl-dllib*.jar', 'conf/*']},
         classifiers=[
             'License :: OSI Approved :: Apache Software License',
             'Programming Language :: Python :: 2.7',

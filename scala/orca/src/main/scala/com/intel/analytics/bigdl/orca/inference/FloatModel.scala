@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Analytics Zoo Authors.
+ * Copyright 2016 The BigDL Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,9 @@ package com.intel.analytics.bigdl.orca.inference
 import java.io._
 import java.util.{List => JList}
 
-import com.intel.analytics.bigdl.Module
 import com.intel.analytics.bigdl.dllib.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.dllib.tensor.Tensor
-import com.intel.analytics.bigdl.dllib.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.dllib.utils.Table
-
-import scala.collection.mutable.ArrayBuffer
-import scala.reflect.ClassTag
 
 class FloatModel(var model: AbstractModule[Activity, Activity, Float],
                  var metaModel: AbstractModule[Activity, Activity, Float],

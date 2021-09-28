@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Analytics Zoo Authors.
+ * Copyright 2016 The BigDL Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class TorchOptim[@specialized(Float, Double) T: ClassTag](
          |from torch.optim.optimizer import *
          |from torch.optim.lr_scheduler import _LRScheduler
          |from torch.optim.lr_scheduler import *
-         |from zoo.pipeline.api.torch import zoo_pickle_module
+         |from bigdl.orca.torch import zoo_pickle_module
          |
          |optim_by = bytes(b % 256 for b in optim_bytes)
          |$name = torch.load(io.BytesIO(optim_by), pickle_module=zoo_pickle_module)

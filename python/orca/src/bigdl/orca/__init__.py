@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Analytics Zoo Authors.
+# Copyright 2016 The BigDL Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 from bigdl.dllib.utils.nncontext import *
 from bigdl.dllib.utils.zoo_engine import prepare_env, is_spark_below_ver
+from .common import OrcaContext, init_orca_context, stop_orca_context
 
 prepare_env()
 creator_classes = JavaCreator.get_creator_class()[:]
@@ -33,6 +34,7 @@ JavaCreator.set_creator_class([])
 JavaCreator.add_creator_class("com.intel.analytics.bigdl.orca.tfpark.python.PythonTFPark")
 JavaCreator.add_creator_class("com.intel.analytics.bigdl.orca.net.python.PythonZooNet")
 JavaCreator.add_creator_class("com.intel.analytics.bigdl.orca.python.PythonOrca")
+JavaCreator.add_creator_class("com.intel.analytics.bigdl.orca.inference.PythonInferenceModel")
 #if not is_spark_below_ver("2.4"):
 #    JavaCreator.add_creator_class("com.intel.analytics.zoo.friesian.python.PythonFriesian")
 for clz in creator_classes:

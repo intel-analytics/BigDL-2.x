@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Analytics Zoo Authors.
+# Copyright 2016 The BigDL Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 #
 
 import re
-import psutil
 
 
 def to_list(input):
@@ -59,5 +58,6 @@ def is_local(sc):
 
 
 def get_parent_pid(pid):
+    import psutil
     cur_proc = psutil.Process(pid)
     return cur_proc.ppid()

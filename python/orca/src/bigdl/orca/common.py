@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Analytics Zoo Authors.
+# Copyright 2016 The BigDL Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -215,7 +215,7 @@ def init_orca_context(cluster_mode="local", cores=2, memory="2g", num_nodes=1,
                 "Directory path to hadoop conf not found for yarn-client mode. Please either " \
                 "specify argument hadoop_conf or set the environment variable HADOOP_CONF_DIR"
             hadoop_conf = kwargs["hadoop_conf"]
-        from zoo.util.utils import detect_conda_env_name
+        from bigdl.dllib.utils.utils import detect_conda_env_name
         conda_env_name = detect_conda_env_name()
         for key in ["driver_cores", "driver_memory", "extra_executor_memory_for_ray",
                     "extra_python_lib", "penv_archive", "additional_archive",
