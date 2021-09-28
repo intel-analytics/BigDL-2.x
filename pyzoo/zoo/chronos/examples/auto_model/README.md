@@ -28,4 +28,8 @@ python autoprophet_nyc_taxi.py
 * `--num_workers` The number of workers to be used in the cluster. You can change it depending on your own cluster setting. Default to be 2.
 * `--cores` "The number of cpu cores you want to use on each node. Default to be 4.
 * `--memory` The memory you want to use on each node. Default to be 10g
-* `--epochs` Max number of epochs to train in each trial. Default to be 1.
+* `--epochs` Max number of epochs to train in each trial. Default to be 1. (autolstm)
+* `--cpus_per_trial` Int. Number of cpus for each trial. (autoprophet)
+* `--n_sampling` Number of times to sample from the search_space. (autoprophet)
+* `--datadir` Use local csv file by default. (autoprophet)
+* `--url` Url link: https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv. (autoprophet)
