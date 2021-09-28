@@ -1,5 +1,5 @@
 # Auto model examples on nyc_taxi dataset
-This example collection will demonstrate Chronos auto models (i.e. autotcn & autoprophet) perform automatic time series forecasting on nyc_taxi dataset. The auto model will search the best hyperparameters automatically.
+This example collection will demonstrate Chronos auto models (i.e. autolstm & autoprophet) perform automatic time series forecasting on nyc_taxi dataset. The auto model will search the best hyperparameters automatically.
 
 ## Prepare the environment
 We recommend you to use Anaconda to prepare the environment, especially if you want to run on a yarn cluster:
