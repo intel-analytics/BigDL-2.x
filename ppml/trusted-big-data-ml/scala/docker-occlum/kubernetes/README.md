@@ -24,5 +24,6 @@ bash build-docker-image.sh
 3. Modify `executor.yaml`
 
 ```
+kubectl apply -f executor.yaml
 ./run_pi.sh
 ```
