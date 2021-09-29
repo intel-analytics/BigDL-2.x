@@ -18,6 +18,7 @@ from zoo.pipeline.api.keras.layers import *
 from tensorflow.keras.layers import Input, Embedding, Dense, Flatten, concatenate, Lambda
 import tensorflow as tf
 
+
 class ColumnInfoTower(object):
     """
     The same data information shared by the Tower model and its feature generation part.
@@ -112,8 +113,9 @@ class TwoTowerModel(object):
 
             numerical_input_layers = []
             for i in range(len(col_info.numerical_cols)):
-                numerical_input_layers.append(Input(shape=(col_info.numerical_dims[i]),
-                                                    name=col_info.name + col_info.numerical_cols[i]))
+                numerical_input_layers.append(
+                    Input(shape=(col_info.numerical_dims[i]),
+                          name=col_info.name + col_info.numerical_cols[i]))
 
             cocated = indicator_layers + embed_layers + numerical_input_layers
             concated = cocated[0] if len(cocated) == 1 else concatenate(cocated, axis=1)
@@ -141,6 +143,7 @@ class TwoTowerModel(object):
 
         model = tf.keras.Model(user_input + item_input, out)
         return model
+
 
 def get_1tower_model(model, column_info):
     """

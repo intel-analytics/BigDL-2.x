@@ -15,13 +15,11 @@
 #
 
 import pickle
-from pyspark import StorageLevel
 import argparse
 
-from pyspark.sql.functions import col, array
+from pyspark.sql.functions import array
 
 from zoo.orca import init_orca_context
-from zoo.orca import OrcaContext
 from zoo.orca.learn.tf2.estimator import Estimator
 from zoo.friesian.feature import FeatureTable
 from model import *
@@ -39,20 +37,20 @@ spark_conf = {"spark.network.timeout": "10000000",
               "spark.executor.heartbeatInterval": "200s",
               "spark.driver.maxResultSize": "40G",
               "spark.eventLog.enabled": "true",
-              "spark.eventLog.dir": "hdfs://172.16.0.105:8020/sparkHistoryLogs",
               "spark.app.name": "recsys-2tower",
               "spark.executor.memoryOverhead": "120g"}
 
 
 def train(config, train_tbl, test_tbl, epochs=1, batch_size=128, model_dir='.'):
     two_tower = TwoTowerModel(config["user_col_info"], config["item_col_info"])
+
     def model_creator(config):
         model = two_tower.build_model()
         print(model.summary())
         optimizer = tf.keras.optimizers.Adam(config["lr"])
         model.compile(optimizer=optimizer,
-                  loss='binary_crossentropy',
-                  metrics=['binary_accuracy', 'Recall', 'AUC'])
+                      loss='binary_crossentropy',
+                      metrics=['binary_accuracy', 'Recall', 'AUC'])
         return model
 
     estimator = Estimator.from_keras(model_creator=model_creator,
@@ -67,7 +65,7 @@ def train(config, train_tbl, test_tbl, epochs=1, batch_size=128, model_dir='.'):
     train_df, test_df = train_tbl.df, test_tbl.df
     steps_per_epoch = math.ceil(train_count / batch_size)
     val_steps = math.ceil(test_count / batch_size)
-    feature_cols = user_col_info.get_name_list() + item_col_info.get_name_list()
+    feature_cols = config["user_col_info"].get_name_list() + config["item_col_info"].get_name_list()
     print("Total number of train records: {}".format(train_count))
     print("Total number of val records: {}".format(test_count))
 
@@ -85,50 +83,51 @@ def train(config, train_tbl, test_tbl, epochs=1, batch_size=128, model_dir='.'):
     tf.saved_model.save(model, os.path.join(model_dir, "twotower-model"))
     tf.saved_model.save(user_model, os.path.join(model_dir, "user-model"))
     tf.saved_model.save(item_model, os.path.join(model_dir, "item-model"))
-    model.save(model_dir + "/twotower_model.h5")
-    user_model.save(model_dir + "/user_model.h5")
-    item_model.save(model_dir + "/item_model.h5")
     estimator.save(os.path.join(model_dir, "twotower_model.ckpt"))
     print("saved models")
     return estimator
 
+
 def load_data(data_path):
     def gen_label(x):
-        ts = [e for e in x[:] if e > 0] # 4 labels
+        ts = [e for e in x[:] if e > 0]  # 4 labels
         out = 1 if len(ts) > 0 else 0
         return out
     useful_cols = num_cols + cat_cols + embed_cols + ts_cols
     tbl = FeatureTable.read_parquet(data_path)
     tbl = tbl.rename({"enaging_user_id": "user_id", "tweet_id": "item_id"})
+    tbl.df.printSchema()
     tbl = tbl.fillna(0, useful_cols)
     tbl = tbl.apply(in_col=ts_cols, out_col='label', func=gen_label, dtype='bigint')
     return tbl
 
-def prepare_features(train_tbl, test_tbl, embed_reindex_dicts):
+
+def prepare_features(train_tbl, test_tbl, reindex_tbls):
+
     def add_ratio_features(tbl):
         cal_ratio = (lambda x: x[1] / x[0] if x[0] > 0 else 0.0)
-        tbl = tbl.apply(["engaged_with_user_follower_count","engaged_with_user_following_count"],
+        tbl = tbl.apply(["engaged_with_user_follower_count", "engaged_with_user_following_count"],
                         "engaged_with_user_follower_following_ratio", cal_ratio, "float")\
-            .apply(["enaging_user_follower_count","enaging_user_following_count"],
+            .apply(["enaging_user_follower_count", "enaging_user_following_count"],
                    "enaging_user_follower_following_ratio", cal_ratio, "float")
         return tbl
 
     def organize_cols(tbl):
         tbl = tbl.select(array("enaging_user_follower_count", "enaging_user_following_count",
-                             "enaging_user_follower_following_ratio").alias("user_num"),
-                       array("len_hashtags", "len_domains", "len_links",
-                             "engaged_with_user_follower_count",
-                             "engaged_with_user_following_count",
-                             "engaged_with_user_follower_following_ratio").alias("item_num"),
-                       *cat_cols, *embed_cols, "label")
+                               "enaging_user_follower_following_ratio").alias("user_num"),
+                         array("len_hashtags", "len_domains", "len_links",
+                               "engaged_with_user_follower_count",
+                               "engaged_with_user_following_count",
+                               "engaged_with_user_follower_following_ratio").alias("item_num"),
+                         *cat_cols, *embed_cols, "label")
         return tbl
 
     print("reindexing embedding cols")
-    train_tbl = train_tbl.reindex(embed_cols, embed_reindex_dicts)
-    test_tbl = test_tbl.reindex(embed_cols, embed_reindex_dicts)
+    train_tbl = train_tbl.reindex(embed_cols, reindex_tbls)
+    test_tbl = test_tbl.reindex(embed_cols, reindex_tbls)
     embed_in_dims = {}
     for i, c, in enumerate(embed_cols):
-        embed_in_dims[c] = max(embed_reindex_dicts[i].values())
+        embed_in_dims[c] = max(reindex_tbls[i].df.agg({c+"_new": "max"}).collect()[0])
 
     print("add ratio features")
     train_tbl = add_ratio_features(train_tbl)
@@ -191,7 +190,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_dir', default='snapshot', type=str,
                         help='snapshot directory name (default: snapshot)')
     parser.add_argument('--data_dir', type=str, help='data directory')
-    parser.add_argument('--frequency_limit', type=int, default = 25, help='frequency limit')
+    parser.add_argument('--frequency_limit', type=int, default=25, help='frequency limit')
 
     args = parser.parse_args()
 
@@ -229,19 +228,18 @@ if __name__ == '__main__':
     train_tbl = load_data(args.data_dir)
     test_tbl = load_data(args.data_dir)
     full_tbl = train_tbl.concat(test_tbl, "outer")
-    embed_reindex_dicts = full_tbl.gen_reindex_mapping(embed_cols, freq_limit=args.frequency_limit)
-    train_tbl, test_tbl, user_col_info, item_col_info = prepare_features(train_tbl, test_tbl, embed_reindex_dicts)
+    reindex_tbls = full_tbl.gen_reindex_mapping(embed_cols, freq_limit=args.frequency_limit)
+    train_tbl, test_tbl, user_info, item_info = prepare_features(train_tbl, test_tbl, reindex_tbls)
 
-    stats_dir = args.model_dir + "/stats"
+    output_dir = args.data_dir + "/embed_reindex"
     for i, c in enumerate(embed_cols):
-        with open(os.path.join(stats_dir, c + "_index_dict"), 'wb') as f:
-            pickle.dump(embed_reindex_dicts[i], f)
+        reindex_tbls[i].write_parquet(output_dir + "_c")
 
     train_config = {"lr": 1e-3,
-                    "user_col_info": user_col_info,
-                    "item_col_info": item_col_info,
+                    "user_col_info": user_info,
+                    "item_col_info": item_info,
                     "inter_op_parallelism": 4,
                     "intra_op_parallelism": args.executor_cores}
 
     train(train_config, train_tbl, test_tbl, epochs=args.epochs, batch_size=args.batch_size,
-                      model_dir=args.model_dir)
+          model_dir=args.model_dir)

@@ -1,5 +1,5 @@
 # Train a two tower model using recsys data
-This example demonstrates how to use Analytics Zoo Friesian to train a two tower model
+This example demonstrates how to use Analytics Zoo Friesian to train a two tower model using tweetter data.
 
 ## Prepare the environment
 We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environments, especially if you want to run on a yarn cluster (yarn-client mode only).
@@ -49,5 +49,5 @@ __Options:__
 * `num_nodes`: The number of nodes to use in the cluster. Default to be 8.
 * `driver_cores`: The number of cores to use for the driver. Default to be 4.
 * `driver_memory`: The amount of memory to allocate for the driver. Default to be 36g.
-* `data_dir`: The input data 
+* `data_dir`: The input data directory as well as output of embedding reindex tables.
 * `model_dir`: The output, including model for trained models and stats to stroage reindex dicts and min_max.pkl
