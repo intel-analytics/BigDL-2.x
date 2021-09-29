@@ -49,8 +49,11 @@ from zoo.chronos.simulator import DPGANSimulator
 from zoo.chronos.simulator.doppelganger.output import Output, OutputType, Normalization
 from test.zoo.pipeline.utils.test_utils import ZooTestCase
 
+
 def get_train_data():
-    import shutil, io, os
+    import os
+    import io
+    import shutil
     import urllib.request as req
     dfp = f'{os.getenv("FTP_URI")}/analytics-zoo-data/apps/doppelGANger_data/data_train_small.npz'
     fi = io.BytesIO()
@@ -59,6 +62,7 @@ def get_train_data():
         fi.seek(0)
         df = np.load(fi)
     return df
+
 
 class TestDoppelganer(ZooTestCase):
     def setup_method(self, method):
@@ -71,7 +75,7 @@ class TestDoppelganer(ZooTestCase):
         attribute_outputs = [Output(type_=OutputType.DISCRETE, dim=2),
                              Output(type_=OutputType.CONTINUOUS, dim=1,
                                     normalization=Normalization.MINUSONE_ONE)]
-        assert set([val.type_.value for val in attribute_outputs])==\
+        assert set([val.type_.value for val in attribute_outputs]) == \
             set([val.type_.name for val in attribute_outputs])
 
         # illegal input.
@@ -103,19 +107,19 @@ class TestDoppelganer(ZooTestCase):
         feature, attribute, gen_flags, lengths = doppelganger.generate()
         assert feature.shape == (1, doppelganger.L_max, 1)
         assert attribute.shape == (1, df['data_attribute'].shape[-1])
-        assert gen_flags.shape == (1, doppelganger.L_max) and (gen_flags[0, :]==1).all()
+        assert gen_flags.shape == (1, doppelganger.L_max) and (gen_flags[0, :] == 1).all()
         assert lengths[0] == doppelganger.L_max
 
         with tempfile.TemporaryDirectory() as tf:
             doppelganger.save(tf)
             doppelganger.load(tf)
         df.close()
-        
+
         # illegal input
         df = get_train_data()
         feature_outputs = [Output(type_=OutputType.CONTINUOUS,
-                          dim=1,
-                          normalization=Normalization.MINUSONE_ONE)]
+                           dim=1,
+                           normalization=Normalization.MINUSONE_ONE)]
         attribute_outputs = [Output(type_=OutputType.DISCRETE, dim=9),
                              Output(type_=OutputType.DISCRETE, dim=3),
                              Output(type_=OutputType.DISCRETE, dim=2)]
