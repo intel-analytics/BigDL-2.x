@@ -82,7 +82,6 @@ class SparkTFEstimator(Estimator):
         if "batch_size" in self.config:
             raise Exception("Please do not specify batch_size in config. Input batch_size in the"
                             " fit/evaluate function of the estimator instead.")
-        sc.stop()
         
     
     def fit(self, data, validation_data, epochs=1, batch_size=32, verbose=1,
@@ -120,6 +119,7 @@ class SparkTFEstimator(Estimator):
         params["data_creator"] = data
         params["validation_data_creator"] = validation_data
         params["model_dir"] = model_dir
+        params["config"] = self.config
 
         worker_nums = self.worker_nums
         part_nums = self.part_nums
@@ -127,7 +127,6 @@ class SparkTFEstimator(Estimator):
         spark_func = SparkRunner(**params).step
         res = workerRDD.barrier().mapPartitions(spark_func).collect()        
 
-        sc.stop()
         return res
 
     def evaluate(self, data, validation_data, batch_size=32, verbose=1, 
@@ -163,6 +162,7 @@ class SparkTFEstimator(Estimator):
         params["model_creator"] = self.model_creator
         params["data_creator"] = data
         params["validation_data_creator"] = validation_data
+        params["config"] = self.config
 
         worker_nums = self.worker_nums
         part_nums = self.part_nums
@@ -170,5 +170,4 @@ class SparkTFEstimator(Estimator):
         spark_func = SparkRunner(**params).validate
         res = workerRDD.barrier().mapPartitions(spark_func).collect()
         
-        sc.stop()
         return res       
