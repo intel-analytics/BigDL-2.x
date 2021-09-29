@@ -68,7 +68,7 @@ RUN cd /opt && \
     mv spark-${SPARK_VERSION}-bin-hadoop3.2 spark-${SPARK_VERSION} && \
     rm spark-${SPARK_VERSION}-bin-hadoop3.2.tgz && \
     cp spark-${SPARK_VERSION}/conf/log4j.properties.template spark-${SPARK_VERSION}/conf/log4j.properties && \
-    echo "log4j.logger.io.netty=ERROR" >> spark-${SPARK_VERSION}/conf/log4j.properties && \
+    echo $'\nlog4j.logger.io.netty=ERROR' >> spark-${SPARK_VERSION}/conf/log4j.properties && \
     wget -O spark-network-common_2.12-${SPARK_VERSION}.jar https://master.dl.sourceforge.net/project/analytics-zoo/analytics-zoo-data/spark-network-common_2.12-${SPARK_VERSION}.jar && \
     mv spark-network-common_2.12-${SPARK_VERSION}.jar spark-${SPARK_VERSION}/jars && \
     mv spark-${SPARK_VERSION}/python/lib/pyspark.zip spark-${SPARK_VERSION}/python/lib/pyspark.zip.bac && \
@@ -131,6 +131,7 @@ ENV JAVA_HOME           /opt/jdk8
 ENV PATH                ${JAVA_HOME}/bin:${PATH}
 
 ADD bigdl.lenet.training.patch /bigdl.lenet.training.patch
+ADD bigdl.serde.patch /bigdl.serde.patch
 COPY --from=spark /opt/jdk  /opt/jdk8
 
 RUN apt-get update --fix-missing && \
@@ -140,7 +141,8 @@ RUN apt-get update --fix-missing && \
 RUN git clone https://github.com/intel-analytics/BigDL.git && \
     cd BigDL && \
     git apply /bigdl.lenet.training.patch && \
-    echo "log4j.logger.io.netty=ERROR" >> ./spark/dl/src/main/resources/log4j.properties && \
+    git apply /bigdl.serde.patch && \
+    echo $'\nlog4j.logger.io.netty=ERROR' >> ./spark/dl/src/main/resources/log4j.properties && \
     git status && \
     export MAVEN_OPTS="-Xmx2g -XX:ReservedCodeCacheSize=512m \
         -Dhttp.proxyHost=$HTTP_PROXY_HOST \
@@ -282,7 +284,7 @@ ADD ./python-uuid.patch ./python-uuid.patch
 
 RUN zip -u /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_$SPARK_VERSION-0.12.0-SNAPSHOT-jar-with-dependencies.jar ./tracker.py && \
     unzip /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_$SPARK_VERSION-0.12.0-SNAPSHOT-jar-with-dependencies.jar log4j.properties && \
-    echo "log4j.logger.io.netty=ERROR" >> log4j.properties && \
+    echo $'\nlog4j.logger.io.netty=ERROR' >> log4j.properties && \
     zip -u /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_$SPARK_VERSION-0.12.0-SNAPSHOT-jar-with-dependencies.jar log4j.properties && \
     patch /usr/local/lib/python3.6/dist-packages/dill/_dill.py ./_dill.py.patch && \
     patch /usr/lib/python3.6/uuid.py ./python-uuid.patch && \
@@ -299,6 +301,7 @@ RUN zip -u /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/anal
     mv /opt/spark-kubernetes_2.12-$SPARK_VERSION.jar $SPARK_HOME/jars/spark-kubernetes_2.12-$SPARK_VERSION.jar && \
     mv /opt/hadoop-common-3.2.0.jar $SPARK_HOME/jars/hadoop-common-3.2.0.jar && \
     wget -P /ppml/trusted-big-data-ml/work/lib https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-data/libhadoop.so && \
+    cp /usr/lib/x86_64-linux-gnu/libpython3.6m.so /usr/lib/libpython3.6m.so && \
     chmod a+x /ppml/trusted-big-data-ml/init.sh && \
     chmod a+x /ppml/trusted-big-data-ml/clean.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-local-train-sgx.sh && \
