@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 import os
+import shutil
 import tarfile
 import tempfile
 from unittest import TestCase
@@ -29,6 +30,7 @@ property_path = os.path.join(os.path.split(__file__)[0],
                              "../../../../../../zoo/target/classes/app.properties")
 data_url = "http://10.239.45.10:8081/repository/raw"
 resource_path = os.path.join(os.path.split(__file__)[0], "../../../resources")
+local_path = "/tmp/tmpyhny717gopenvino"
 
 with open(property_path) as f:
     for _ in range(2):  # skip the first two lines
@@ -55,15 +57,18 @@ class TestEstimatorForOpenVINO(TestCase):
         self.input = np.array(self.input).reshape([3, 224, 224])
         self.output = np.array(self.output).reshape([4, 1000])[:1]
 
-        with tempfile.TemporaryDirectory() as local_path:
-            model_url = data_url + "/analytics-zoo-data/openvino2020_resnet50.tar"
-            model_path = maybe_download("openvino2020_resnet50.tar",
-                                        local_path, model_url)
-            tar = tarfile.open(model_path)
-            tar.extractall(path=local_path)
-            tar.close()
-            model_path = os.path.join(local_path, "openvino2020_resnet50/resnet_v1_50.xml")
-            self.est = Estimator.from_openvino(model_path=model_path)
+        os.makedirs(local_path, exist_ok=True)
+        model_url = data_url + "/analytics-zoo-data/openvino2020_resnet50.tar"
+        model_path = maybe_download("openvino2020_resnet50.tar",
+                                    local_path, model_url)
+        tar = tarfile.open(model_path)
+        tar.extractall(path=local_path)
+        tar.close()
+        model_path = os.path.join(local_path, "openvino2020_resnet50/resnet_v1_50.xml")
+        self.est = Estimator.from_openvino(model_path=model_path)
+
+    def tearDown(self):
+        shutil.rmtree(local_path)
 
     def check_result(self, result, length=0):
         if length == 0:
@@ -71,7 +76,7 @@ class TestEstimatorForOpenVINO(TestCase):
         return np.all(list(map(lambda i: np.allclose(result[i], self.output), range(0, length))))
 
     def test_openvino_predict_ndarray(self):
-        input_data = np.array([self.input] * 22)
+        input_data = np.array([self.input] * 3)
         result = self.est.predict(input_data)
         assert isinstance(result, np.ndarray)
         assert result.shape == (22, 1000)
