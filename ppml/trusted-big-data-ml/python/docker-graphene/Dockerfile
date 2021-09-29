@@ -141,7 +141,6 @@ RUN apt-get update --fix-missing && \
 RUN git clone https://github.com/intel-analytics/BigDL.git && \
     cd BigDL && \
     git apply /bigdl.lenet.training.patch && \
-    git apply /bigdl.serde.patch && \
     echo $'\nlog4j.logger.io.netty=ERROR' >> ./spark/dl/src/main/resources/log4j.properties && \
     git status && \
     export MAVEN_OPTS="-Xmx2g -XX:ReservedCodeCacheSize=512m \
