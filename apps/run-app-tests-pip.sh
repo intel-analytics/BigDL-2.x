@@ -61,7 +61,7 @@ python ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/tmp_test.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
-then
+hen
     clear_up
     echo "anomaly-detection failed"
     exit $exit_status
@@ -947,14 +947,13 @@ now=$(date "+%s")
 time25=$((now-start))
 echo "#25 chronos-network-traffic-autots-forecasting time used:$time25 seconds"
 
-fi
-
-echo "#26 start app test for chronos-network-traffic-autotsest-custom-model"
+echo "#26 start app test for chronos-network-traffic-autots-customized-model"
 #timer
 time26=$(date "+%s")
-${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autotsest_custom_model
+${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_customized_model
 
-sed -i 's/epochs=5/epochs=1' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autotsest_custom_model.py
+sed -i '/get_ipython()/d; /plot[.]/d; /plt[.]/d; /axs[.]/d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_customized_model.py
+sed -i 's/epochs=5/epochs=1/g' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_customized_model.py
 FILENAME = "~/.chronos/dataset/network_traffic/network_traffic_data.csv"
 if [ -f FILENAME ]
 then
@@ -970,18 +969,20 @@ else
 
 cd -
 
-python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autotsest_custom_model.py
+python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_customized_model.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
 then
     clear_up
-    echo "chronos network_traffic_autotsest_custom_model failed."
+    echo "chronos network_traffic_autots_customized_model failed."
     exit $exit_status
 fi
 now=$(date "+%s")
 time26=$((now-start))
-echo "#26 network_traffic_autotsest_custom_model time used:$time26 seconds"
+echo "#26 network_traffic_autots_customized_model time used:$time26 seconds"
+
+fi
 
 # This should be done at the very end after all tests finish.
 clear_up
