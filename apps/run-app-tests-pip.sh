@@ -61,7 +61,7 @@ python ${ANALYTICS_ZOO_HOME}/apps/anomaly-detection/tmp_test.py
 
 exit_status=$?
 if [ $exit_status -ne 0 ];
-hen
+then
     clear_up
     echo "anomaly-detection failed"
     exit $exit_status
@@ -966,7 +966,7 @@ else
     cd ~/.chronos/dataset/network_traffic/
     mv data.csv network_traffic_data.csv
 
-    echo "network_traffic_data.csv exists."
+    echo "Finished downloading network_traffic_data.csv"
 
     cd -
 fi
