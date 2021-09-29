@@ -954,8 +954,8 @@ ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chrono
 
 sed -i '/get_ipython()/d; /plot[.]/d; /plt[.]/d; /axs[.]/d' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_customized_model.py
 sed -i 's/epochs=5/epochs=1/g' ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_customized_model.py
-FILENAME = "~/.chronos/dataset/network_traffic/network_traffic_data.csv"
-if [ -f "$FILENAME" ]
+
+if [ -f ~/.chronos/dataset/network_traffic/network_traffic_data.csv ]
 then
     echo "network_traffic_data.csv exists."
 else
