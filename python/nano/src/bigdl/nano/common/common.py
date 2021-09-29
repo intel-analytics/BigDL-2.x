@@ -164,7 +164,7 @@ def init_nano(use_malloc: str = "tc", use_openmp: bool = True,
     if use_malloc is not "je":
         env_copy.pop("MALLOC_CONF")
         ld_preload = [lib for lib in ld_preload if "libjemalloc.so" not in lib]
-    
+
     if use_malloc is not "tc":
         ld_preload = [lib for lib in ld_preload if "libtcmalloc.so" not in lib]
 
