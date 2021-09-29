@@ -959,7 +959,8 @@ if [ -f FILENAME ]
 then
     echo "network_traffic_data.csv exists."
 else
-    
+
+    echo "Download network traffic data."    
     wget $FTP_URI/analytics-zoo-data/network-traffic/data/data.csv -P ~/.chronos/dataset/network_traffic/
 
     cd ~/.chronos/dataset/network_traffic/
@@ -967,7 +968,8 @@ else
 
     echo "network_traffic_data.csv exists."
 
-cd -
+    cd -
+fi
 
 python ${ANALYTICS_ZOO_HOME}/../pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_customized_model.py
 
