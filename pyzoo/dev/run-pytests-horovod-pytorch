@@ -34,7 +34,7 @@ then
 fi
 
 echo "Running chronos tcmf distributed test"
-python -m pytest -v ../test/zoo/chronos/model/forecast/test_tcmf_forecaster.py::TestChronosModelTCMFForecaster::test_forecast_tcmf_distributed
+python -m pytest -v ../test/zoo/chronos/forecaster/test_tcmf_forecaster.py::TestChronosModelTCMFForecaster::test_forecast_tcmf_distributed
 exit_status_2=$?
 if [ $exit_status_2 -ne 0 ];
 then

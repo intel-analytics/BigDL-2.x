@@ -17,35 +17,20 @@
 
 import os
 import re
+import subprocess
+import time
+import uuid
 import random
-import signal
 import warnings
+import tempfile
+import filelock
 import multiprocessing
+from packaging import version
 
 from zoo.ray.process import session_execute, ProcessMonitor
 from zoo.ray.utils import is_local
 from zoo.ray.utils import resource_to_bytes
-
-
-class JVMGuard:
-    """
-    The registered pids would be put into the killing list of Spark Executor.
-    """
-    @staticmethod
-    def register_pids(pids):
-        import traceback
-        try:
-            from zoo.common.utils import callZooFunc
-            import zoo
-            callZooFunc("float",
-                        "jvmGuardRegisterPids",
-                        pids)
-        except Exception as err:
-            print(traceback.format_exc())
-            print("Cannot successfully register pid into JVMGuard")
-            for pid in pids:
-                os.kill(pid, signal.SIGKILL)
-            raise err
+from zoo.ray.utils import get_parent_pid
 
 
 def kill_redundant_log_monitors(redis_address):
@@ -143,6 +128,12 @@ class RayServiceFuncGenerator(object):
         self.labels = \
             """--resources '{"_mxnet_worker": %s, "_mxnet_server": %s, "_reserved": %s}'""" \
             % (1, 1, 2)
+        # Add a unique id so that different Ray programs won't affect each other even if
+        # the flags and locks are not removed.
+        tag = uuid.uuid4().hex
+        self.ray_master_flag = "ray_master_{}".format(tag)
+        self.ray_master_lock = "ray_master_start_{}.lock".format(tag)
+        self.raylet_lock = "raylet_start_{}.lock".format(tag)
 
     def gen_stop(self):
         def _stop(iter):
@@ -191,11 +182,31 @@ class RayServiceFuncGenerator(object):
                                                        object_store_memory=object_store_memory,
                                                        extra_params=extra_params)
 
+    @staticmethod
+    def _get_spark_executor_pid():
+        # TODO: This might not work on OS other than Linux
+        this_pid = os.getpid()
+        pyspark_daemon_pid = get_parent_pid(this_pid)
+        spark_executor_pid = get_parent_pid(pyspark_daemon_pid)
+        return spark_executor_pid
+
+    @staticmethod
+    def start_ray_daemon(python_loc, pid_to_watch, pgid_to_kill):
+        daemon_path = os.path.join(os.path.dirname(__file__), "ray_daemon.py")
+        start_daemon_command = ['nohup', python_loc, daemon_path, str(pid_to_watch),
+                                str(pgid_to_kill)]
+        # put ray daemon process in its children's process group to avoid being killed by spark.
+        subprocess.Popen(start_daemon_command, preexec_fn=os.setpgrp)
+        time.sleep(1)
+
     def _start_ray_node(self, command, tag):
         modified_env = self._prepare_env()
         print("Starting {} by running: {}".format(tag, command))
         process_info = session_execute(command=command, env=modified_env, tag=tag)
-        JVMGuard.register_pids(process_info.pids)
+        spark_executor_pid = RayServiceFuncGenerator._get_spark_executor_pid()
+        RayServiceFuncGenerator.start_ray_daemon(self.python_loc,
+                                                 pid_to_watch=spark_executor_pid,
+                                                 pgid_to_kill=process_info.pgid)
         import ray._private.services as rservices
         process_info.node_ip = rservices.get_node_ip_address()
         return process_info
@@ -204,8 +215,60 @@ class RayServiceFuncGenerator(object):
         if "envs" in self.python_loc:  # conda environment
             python_bin_dir = "/".join(self.python_loc.split("/")[:-1])
             return "{}/python {}/ray".format(python_bin_dir, python_bin_dir)
+        elif self.python_loc == "python_env/bin/python":  # conda yarn archive on the executor
+            return "python_env/bin/python python_env/bin/ray"
         else:  # system environment with ray installed; for example: /usr/local/bin/ray
             return "ray"
+
+    def gen_ray_master_start(self):
+        def _start_ray_master(index, iter):
+            from zoo.util.utils import get_node_ip
+            process_info = None
+            if index == 0:
+                print("partition id is : {}".format(index))
+                current_ip = get_node_ip()
+                print("master address {}".format(current_ip))
+                redis_address = "{}:{}".format(current_ip, self.redis_port)
+                process_info = self._start_ray_node(command=self._gen_master_command(),
+                                                    tag="ray-master")
+                process_info.master_addr = redis_address
+            yield process_info
+        return _start_ray_master
+
+    def gen_raylet_start(self, redis_address):
+        def _start_raylets(iter):
+            from zoo.util.utils import get_node_ip
+            current_ip = get_node_ip()
+            master_ip = redis_address.split(":")[0]
+            do_start = True
+            process_info = None
+            base_path = tempfile.gettempdir()
+            ray_master_flag_path = os.path.join(base_path, self.ray_master_flag)
+            # If there is already a ray master on this node, we need to start one less raylet.
+            if current_ip == master_ip:
+                ray_master_lock_path = os.path.join(base_path, self.ray_master_lock)
+                with filelock.FileLock(ray_master_lock_path):
+                    if not os.path.exists(ray_master_flag_path):
+                        os.mknod(ray_master_flag_path)
+                        do_start = False
+            if do_start:
+                raylet_lock_path = os.path.join(base_path, self.raylet_lock)
+                with filelock.FileLock(raylet_lock_path):
+                    process_info = self._start_ray_node(
+                        command=RayServiceFuncGenerator._get_raylet_command(
+                            redis_address=redis_address,
+                            ray_exec=self.ray_exec,
+                            password=self.password,
+                            ray_node_cpu_cores=self.ray_node_cpu_cores,
+                            labels=self.labels,
+                            object_store_memory=self.object_store_memory,
+                            extra_params=self.extra_params),
+                        tag="raylet")
+                    kill_redundant_log_monitors(redis_address=redis_address)
+            # Cannot remove ray_master_flag at the end of this task since no barrier is guaranteed.
+
+            yield process_info
+        return _start_raylets
 
     def gen_ray_start(self, master_ip):
         def _start_ray_services(iter):
@@ -217,29 +280,29 @@ class RayServiceFuncGenerator(object):
             print("master address {}".format(master_ip))
             redis_address = "{}:{}".format(master_ip, self.redis_port)
             process_info = None
-            import tempfile
-            import filelock
             base_path = tempfile.gettempdir()
-            master_flag_path = os.path.join(base_path, "ray_master_initialized")
+            ray_master_flag_path = os.path.join(base_path, self.ray_master_flag)
             if current_ip == master_ip:  # Start the ray master.
-                lock_path = os.path.join(base_path, "ray_master_start.lock")
                 # It is possible that multiple executors are on one node. In this case,
                 # the first executor that gets the lock would be the master and it would
                 # create a flag to indicate the master has initialized.
                 # The flag file is removed when ray start processes finish so that this
                 # won't affect other programs.
-                with filelock.FileLock(lock_path):
-                    if not os.path.exists(master_flag_path):
+                ray_master_lock_path = os.path.join(base_path, self.ray_master_lock)
+                with filelock.FileLock(ray_master_lock_path):
+                    if not os.path.exists(ray_master_flag_path):
                         print("partition id is : {}".format(tc.partitionId()))
                         process_info = self._start_ray_node(command=self._gen_master_command(),
                                                             tag="ray-master")
                         process_info.master_addr = redis_address
-                        os.mknod(master_flag_path)
+                        os.mknod(ray_master_flag_path)
 
             tc.barrier()
             if not process_info:  # Start raylets.
-                lock_path = os.path.join(base_path, "raylet_start.lock")
-                with filelock.FileLock(lock_path):
+                # Add a lock to avoid starting multiple raylets on one node at the same time.
+                # See this issue: https://github.com/ray-project/ray/issues/10154
+                raylet_lock_path = os.path.join(base_path, self.raylet_lock)
+                with filelock.FileLock(raylet_lock_path):
                     print("partition id is : {}".format(tc.partitionId()))
                     process_info = self._start_ray_node(
                         command=RayServiceFuncGenerator._get_raylet_command(
@@ -252,9 +315,9 @@ class RayServiceFuncGenerator(object):
                             extra_params=self.extra_params),
                         tag="raylet")
                     kill_redundant_log_monitors(redis_address=redis_address)
-            if os.path.exists(master_flag_path):
-                os.remove(master_flag_path)
 
+            if os.path.exists(ray_master_flag_path):
+                os.remove(ray_master_flag_path)
             yield process_info
         return _start_ray_services
 
@@ -381,6 +444,7 @@ class RayContext(object):
                 include_webui=self.include_webui,
                 extra_params=self.extra_params)
         RayContext._active_ray_context = self
+        self.total_cores = self.num_ray_nodes * self.ray_node_cpu_cores
 
     @classmethod
     def get(cls, initialize=True):
@@ -401,8 +465,9 @@ class RayContext(object):
             from zoo.util.utils import get_node_ip
             yield get_node_ip()
 
-        ips = self.sc.range(0, self.num_ray_nodes,
-                            numSlices=self.num_ray_nodes).barrier().mapPartitions(info_fn).collect()
+        ips = self.sc.range(0, self.total_cores,
+                            numSlices=self.total_cores).mapPartitions(info_fn).collect()
+        ips = list(set(ips))
         return ips
 
     def stop(self):
@@ -411,11 +476,6 @@ class RayContext(object):
             return
         import ray
         ray.shutdown()
-        if not self.is_local:
-            if not self.ray_processesMonitor:
-                print("Please start the runner first before closing it")
-            else:
-                self.ray_processesMonitor.clean_fn()
         self.initialized = False
 
     def purge(self):
@@ -429,9 +489,8 @@ class RayContext(object):
             import ray
             ray.shutdown()
         else:
-            self.sc.range(0,
-                          self.num_ray_nodes,
-                          numSlices=self.num_ray_nodes).barrier().mapPartitions(
+            self.sc.range(0, self.total_cores,
+                          numSlices=self.total_cores).mapPartitions(
                 self.ray_service.gen_stop()).collect()
         self.initialized = False
 
@@ -465,17 +524,19 @@ class RayContext(object):
                     for k, v in self.extra_params.items():
                         kw = k.replace("-", "_")
                         kwargs[kw] = v
-                self._address_info = ray.init(num_cpus=self.ray_node_cpu_cores,
-                                              _redis_password=self.redis_password,
-                                              object_store_memory=self.object_store_memory,
-                                              include_dashboard=self.include_webui,
-                                              dashboard_host="0.0.0.0",
-                                              *kwargs)
+                init_params = dict(
+                    num_cpus=self.ray_node_cpu_cores,
+                    _redis_password=self.redis_password,
+                    object_store_memory=self.object_store_memory,
+                    include_dashboard=self.include_webui,
+                    dashboard_host="0.0.0.0",
+                )
+                init_params.update(kwargs)
+                if version.parse(ray.__version__) >= version.parse("1.4.0"):
+                    init_params["namespace"] = "az"
+                self._address_info = ray.init(**init_params)
             else:
                 self.cluster_ips = self._gather_cluster_ips()
-                from bigdl.util.common import init_executor_gateway
-                init_executor_gateway(self.sc)
-                print("JavaGatewayServer has been successfully launched on executors")
                 redis_address = self._start_cluster()
                 self._address_info = self._start_driver(num_cores=driver_cores,
                                                         redis_address=redis_address)
@@ -497,12 +558,31 @@ class RayContext(object):
         return self.address_info["redis_address"]
 
     def _start_cluster(self):
-        print("Start to launch ray on cluster")
         ray_rdd = self.sc.range(0, self.num_ray_nodes,
                                 numSlices=self.num_ray_nodes)
-        # The first ip would be used to launch ray master.
-        process_infos = ray_rdd.barrier().mapPartitions(
-            self.ray_service.gen_ray_start(self.cluster_ips[0])).collect()
+        from zoo import ZooContext
+        if ZooContext.barrier_mode:
+            print("Launching Ray on cluster with Spark barrier mode")
+            # The first ip would be used to launch ray master.
+            process_infos = ray_rdd.barrier().mapPartitions(
+                self.ray_service.gen_ray_start(self.cluster_ips[0])).collect()
+        else:
+            print("Launching Ray on cluster without Spark barrier mode")
+            master_process_infos = ray_rdd.mapPartitionsWithIndex(
+                self.ray_service.gen_ray_master_start()).collect()
+            master_process_infos = [process for process in master_process_infos if process]
+            assert len(master_process_infos) == 1, \
+                "There should be only one ray master launched, but got {}"\
+                .format(len(master_process_infos))
+            master_process_info = master_process_infos[0]
+            redis_address = master_process_info.master_addr
+            raylet_process_infos = ray_rdd.mapPartitions(
+                self.ray_service.gen_raylet_start(redis_address)).collect()
+            raylet_process_infos = [process for process in raylet_process_infos if process]
+            assert len(raylet_process_infos) == self.num_ray_nodes - 1, \
+                "There should be {} raylets launched across the cluster, but got {}"\
+                .format(self.num_ray_nodes - 1, len(raylet_process_infos))
+            process_infos = master_process_infos + raylet_process_infos
 
         self.ray_processesMonitor = ProcessMonitor(process_infos, self.sc, ray_rdd, self,
                                                    verbose=self.verbose)
@@ -523,7 +603,9 @@ class RayContext(object):
         print("Executing command: {}".format(command))
         process_info = session_execute(command=command, env=modified_env,
                                        tag="raylet", fail_fast=True)
-        ProcessMonitor.register_shutdown_hook(pgid=process_info.pgid)
+        RayServiceFuncGenerator.start_ray_daemon("python",
+                                                 pid_to_watch=os.getpid(),
+                                                 pgid_to_kill=process_info.pgid)
 
     def _start_driver(self, num_cores, redis_address):
         print("Start to launch ray driver on local")
@@ -533,6 +615,11 @@ class RayContext(object):
                                       node_ip_address=node_ip,
                                       redis_address=redis_address)
         ray.shutdown()
-        return ray.init(address=redis_address,
-                        _redis_password=self.ray_service.password,
-                        _node_ip_address=node_ip)
+        init_params = dict(
+            address=redis_address,
+            _redis_password=self.ray_service.password,
+            _node_ip_address=node_ip
+        )
+        if version.parse(ray.__version__) >= version.parse("1.4.0"):
+            init_params["namespace"] = "az"
+        return ray.init(**init_params)

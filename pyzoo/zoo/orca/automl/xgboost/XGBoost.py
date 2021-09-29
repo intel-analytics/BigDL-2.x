@@ -14,12 +14,13 @@
 #
 
 import pickle
+
 import pandas as pd
 from xgboost.sklearn import XGBRegressor
 
 from xgboost.sklearn import XGBClassifier
-from zoo.automl.common.metrics import Evaluator
-from zoo.automl.model.abstract import BaseModel, ModelBuilder
+from zoo.orca.automl.metrics import Evaluator
+from zoo.orca.automl.model.abstract import BaseModel, ModelBuilder
 import logging
 
 logger = logging.getLogger(__name__)
@@ -64,6 +65,7 @@ class XGBoost(BaseModel):
         self.metric = config.get('metric')
         self.model = None
         self.model_init = False
+        self.config = config
 
     def set_params(self, **config):
         self.n_estimators = config.get('n_estimators', self.n_estimators)
@@ -81,6 +83,7 @@ class XGBoost(BaseModel):
         self.reg_alpha = config.get('reg_alpha', self.reg_alpha)
         self.reg_lambda = config.get('reg_lambda', self.reg_lambda)
         self.verbosity = config.get('verbosity', self.verbosity)
+        self.config.update(config)
 
     def _build(self, **config):
         """
@@ -115,7 +118,7 @@ class XGBoost(BaseModel):
 
         self.model_init = True
 
-    def fit_eval(self, data, validation_data=None, metric=None, **config):
+    def fit_eval(self, data, validation_data=None, metric=None, metric_func=None, **config):
         """
         Fit on the training data from scratch.
         Since the rolling process is very customized in this model,
@@ -123,37 +126,65 @@ class XGBoost(BaseModel):
         :param verbose:
         :return: the evaluation metric value
         """
-        x, y = data[0], data[1]
         if not self.model_init:
             self._build(**config)
-        if validation_data is not None and type(validation_data) is not list:
-            eval_set = [validation_data]
-        else:
-            eval_set = validation_data
 
-        self.metric = metric or self.metric
-        valid_metric_names = XGB_METRIC_NAME | Evaluator.metrics_func.keys()
-        default_metric = 'rmse' if self.model_type == 'regressor' else 'logloss'
-
-        if not self.metric:
-            self.metric = default_metric
-        elif self.metric not in valid_metric_names:
-            raise ValueError(f"Got invalid metric name of {self.metric} for XGBoost. Valid metrics "
-                             f"are {valid_metric_names}")
-
-        if self.metric in XGB_METRIC_NAME:
-            self.model.fit(x, y, eval_set=eval_set, eval_metric=self.metric)
-            vals = self.model.evals_result_.get("validation_0").get(self.metric)
-            return vals[-1]
-        else:
+        data = self._validate_data(data, "data")
+        x, y = data[0], data[1]
+        if validation_data is not None:
             if isinstance(validation_data, list):
                 validation_data = validation_data[0]
+            validation_data = self._validate_data(validation_data, "validation_data")
+            eval_set = [validation_data]
+        else:
+            eval_set = None
+
+        valid_metric_names = XGB_METRIC_NAME | Evaluator.metrics_func.keys()
+        default_metric = 'rmse' if self.model_type == 'regressor' else 'logloss'
+        if not metric and metric_func:
+            metric_name = metric_func.__name__
+        else:
+            metric_name = metric or self.metric or default_metric
+
+        if not metric_func and metric_name not in valid_metric_names:
+            raise ValueError(f"Got invalid metric name of {metric_name} for XGBoost. Valid metrics "
+                             f"are {valid_metric_names}")
+
+        if metric_name in XGB_METRIC_NAME and not metric_func:
+            self.model.fit(x, y, eval_set=eval_set, eval_metric=metric_name)
+            vals = self.model.evals_result_.get("validation_0").get(metric_name)
+            return {metric_name: vals[-1]}
+        else:
             self.model.fit(x, y, eval_set=eval_set, eval_metric=default_metric)
             eval_result = self.evaluate(
                 validation_data[0],
                 validation_data[1],
-                metrics=[self.metric])[0]
-            return eval_result
+                metrics=[metric_func or metric_name])[0]
+            return {metric_name: eval_result}
+
+    def _validate_data(self, data, name):
+        if callable(data):
+            data = data(self.config)
+            if not isinstance(data, tuple) or isinstance(data, list):
+                raise ValueError(
+                    f"You must input a data create function which returns a tuple or a list of "
+                    f"(x, y) for {name} in XGBoost. "
+                    f"Your function returns a {data.__class__.__name__} instead")
+            if len(data) != 2:
+                raise ValueError(
+                    f"You must input a data create function which returns a tuple or a list "
+                    f"containing two elements of (x, y) for {name} in XGBoost. "
+                    f"Your data create function returns {len(data)} elements instead")
+
+        if not (isinstance(data, tuple) or isinstance(data, list)):
+            raise ValueError(
+                f"You must input a tuple or a list of (x, y) for {name} in XGBoost. "
+                f"Got {data.__class__.__name__}")
+        if len(data) != 2:
+            raise ValueError(
+                f"You must input a tuple or a list containing two elements of (x, y). "
+                f"Got {len(data)} elements for {name} in XGBoost")
+        return data
 
     def predict(self, x):
         """
@@ -193,7 +224,14 @@ class XGBoost(BaseModel):
             y = y.values
         self.model.n_jobs = self.n_jobs
         y_pred = self.predict(x)
-        return [Evaluator.evaluate(m, y, y_pred) for m in metrics]
+
+        result_list = []
+        for metric in metrics:
+            if callable(metric):
+                result_list.append(metric(y, y_pred))
+            else:
+                result_list.append(Evaluator.evaluate(metric, y, y_pred))
+        return result_list
 
     def save(self, checkpoint):
         pickle.dump(self.model, open(checkpoint, "wb"))

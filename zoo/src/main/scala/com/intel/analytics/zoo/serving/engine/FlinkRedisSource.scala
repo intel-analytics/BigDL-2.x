@@ -29,25 +29,25 @@ import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 import scala.collection.JavaConverters._
 
-class FlinkRedisSource(params: ClusterServingHelper)
+class FlinkRedisSource()
   extends RichParallelSourceFunction[List[(String, String, String)]] {
   @volatile var isRunning = true
   var jedis: Jedis = null
   var logger: Logger = null
-
+  var helper: ClusterServingHelper = null
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
-
-    RedisUtils.initializeRedis()
+    helper = ClusterServing.helper
+    ClusterServing.initializeRedis()
     jedis = RedisUtils.getRedisClient(ClusterServing.jedisPool)
-    RedisUtils.createRedisGroupIfNotExist(jedis, params.jobName)
+    RedisUtils.createRedisGroupIfNotExist(jedis, helper.jobName)
   }
 
   override def run(sourceContext: SourceFunction
     .SourceContext[List[(String, String, String)]]): Unit = while (isRunning) {
     val groupName = "serving"
     val consumerName = "consumer-" + UUID.randomUUID().toString
-    val readNumPerTime = if (params.modelType == "openvino") params.threadPerModel else 1
+    val readNumPerTime = if (helper.modelType == "openvino") helper.threadPerModel else 1
 
     val response = jedis.xreadGroup(
       groupName,
@@ -55,7 +55,7 @@ class FlinkRedisSource(params: ClusterServingHelper)
       readNumPerTime,
       1,
       false,
-      new SimpleEntry(params.jobName, StreamEntryID.UNRECEIVED_ENTRY))
+      new SimpleEntry(helper.jobName, StreamEntryID.UNRECEIVED_ENTRY))
     if (response != null) {
       for (streamMessages <- response.asScala) {
         val key = streamMessages.getKey

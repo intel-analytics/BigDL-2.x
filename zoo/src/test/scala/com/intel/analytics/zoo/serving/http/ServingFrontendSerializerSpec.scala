@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.serving.TestUtils
-import com.intel.analytics.zoo.serving.serialization.JsonInputDeserializer
+import com.intel.analytics.zoo.serving.serialization
 import com.intel.analytics.zoo.serving.utils.ConfigParser
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -31,7 +31,7 @@ class JsonInputDeserializerSpec extends FlatSpec with Matchers with Supportive {
   "read json string" should "work" in {
     val mapper = new ObjectMapper()
     val module = new SimpleModule()
-    module.addDeserializer(classOf[Activity], new JsonInputDeserializer())
+    module.addDeserializer(classOf[Activity], new serialization.JsonInputDeserializer())
     mapper.registerModule(module)
 
     val jsonStr = """{
@@ -69,7 +69,7 @@ class JsonInputDeserializerSpec extends FlatSpec with Matchers with Supportive {
   "read dien string" should "work" in {
     val mapper = new ObjectMapper()
     val module = new SimpleModule()
-    module.addDeserializer(classOf[Activity], new JsonInputDeserializer())
+    module.addDeserializer(classOf[Activity], new serialization.JsonInputDeserializer())
     mapper.registerModule(module)
     val jsonStr = TestUtils.getStrFromResourceFile("dien_json_str.json")
     val a = mapper.readValue(jsonStr, classOf[Activity])

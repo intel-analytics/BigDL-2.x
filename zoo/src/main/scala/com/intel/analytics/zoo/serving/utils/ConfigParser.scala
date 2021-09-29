@@ -35,6 +35,14 @@ class ConfigParser(configPath: String) {
       mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
       val helper = mapper.readValue[ClusterServingHelper](configStr, classOf[ClusterServingHelper])
       helper.parseConfigStrings()
+      try {
+        // if no modelPath is set, just skip, this would be ok in some tests
+        // if not set in runtime, error would be raised in model loading process
+        helper.parseModelType(helper.modelPath)
+      } catch {
+        case e: Error =>
+      }
+
       helper
     }
     catch {

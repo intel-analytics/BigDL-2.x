@@ -10,7 +10,7 @@ You can download Analytics Zoo prebuilt release and nightly build package from [
 
 ## Data Preparation
 __QA Dataset:__
-- For convenience, you are __recommended to directly download__ our processed WikiQA dataset from [here](https://s3.amazonaws.com/analytics-zoo-data/WikiQAProcessed.zip) and unzip it.
+- For convenience, you are __recommended to directly download__ our processed WikiQA dataset from [here](https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-data/WikiQAProcessed.zip) and unzip it.
 - [WikiQA](https://www.microsoft.com/en-us/download/details.aspx?id=52419) is a new publicly available set of question and sentence pairs.
 - Instead of using original WikiQA dataset format directly, we refer to [MatchZoo](https://github.com/NTMC-Community/MatchZoo) to process raw data into corpus and relations.
 Thus this example expects the following input files put under the same directory, which ought to applicable for general question answering tasks:

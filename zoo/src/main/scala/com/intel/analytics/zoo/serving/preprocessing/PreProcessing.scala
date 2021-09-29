@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intel.analytics.zoo.serving
+package com.intel.analytics.zoo.serving.preprocessing
 
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
@@ -27,11 +27,14 @@ import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
 import com.intel.analytics.zoo.pipeline.inference.{EncryptSupportive, InferenceSupportive}
+import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.http.Instances
+import com.intel.analytics.zoo.serving.pipeline.RedisUtils
 import com.intel.analytics.zoo.serving.serialization.{JsonInputDeserializer, StreamSerializer}
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
+import scala.collection.JavaConverters._
 import redis.clients.jedis.Jedis
 
 class PreProcessing()
@@ -69,7 +72,7 @@ class PreProcessing()
     try {
 
       val instance = if (serde == "stream") {
-        Seq(JsonInputDeserializer.deserialize(s))
+        Seq(JsonInputDeserializer.deserialize(s, this))
 
       } else {
         byteBuffer = java.util.Base64.getDecoder.decode(s)
@@ -83,6 +86,12 @@ class PreProcessing()
       case e: Exception =>
         logger.error(s"Preprocessing error, msg ${e.getMessage}")
         logger.error(s"Error stack trace ${e.getStackTrace.mkString("\n")}")
+        val tmpJedis = RedisUtils.getRedisClient(ClusterServing.jedisPool)
+        val hKey = Conventions.RESULT_PREFIX + ClusterServing.helper.jobName + ":" + key
+
+        val hValue = Map[String, String]("value" -> "NaN").asJava
+        tmpJedis.hset(hKey, hValue)
+        tmpJedis.close()
         null
     }
   }

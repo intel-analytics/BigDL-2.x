@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from zoo.automl.model.base_keras_model import KerasBaseModel
+from zoo.orca.automl.model.base_keras_model import KerasBaseModel
 from collections.abc import Iterable
 import numpy as np
 
@@ -44,7 +44,7 @@ def model_creator(config):
     model.compile(loss=config.get("loss", "mse"),
                   optimizer=getattr(tf.keras.optimizers, config.get("optim", "Adam"))
                   (learning_rate=config.get("lr", 0.001)),
-                  metrics=[config["metric"]])
+                  metrics=[config.get("metric", "mse")])
     return model
 
 

@@ -153,6 +153,111 @@ now=$(date "+%s")
 time11=$((now-start))
 
 
+echo "#12 start example for chronos autolstm_nyc_taxi"
+start=$(date "+%s")
+
+if [ -f ~/.chronos/dataset/nyc_taxi/nyc_taxi.csv ]
+then
+    echo "nyc_taxi.csv already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ~/.chronos/dataset/nyc_taxi/
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/autolstm_nyc_taxi.py
+
+now=$(date "+%s")
+time12=$((now-start))
+
+echo "#13 start example for chronos autoprophet_nyc_taxi"
+start=$(date "+%s")
+
+if [ -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/nyc_taxi.csv ]
+then
+    echo "nyc_taxi.csv already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/autoprophet_nyc_taxi.py \
+    --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/auto_model/nyc_taxi.csv \
+    --n_sampling 2
+
+now=$(date "+%s")
+time13=$((now-start))
+
+echo "#14 start example for chronos simulator-dpgansimulator-wwt"
+start=$(date "+%s")
+
+if [ -f ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/data_train_small.npz ]
+then
+    echo "data_train_small.npz already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/apps/doppelGANger_data/data_train_small.npz -P \
+    ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/dpgansimulator_wwt.py \
+    --datadir ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/simulator/data_train_small.npz\
+    --epoch 1 --plot_figures False
+
+now=$(date "+%s")
+time14=$((now-start))
+
+echo "#15 start example for chronos distributed_training_network_traffic"
+start=$(date "+%s")
+
+if [ -f ~/.chronos/dataset/network_traffic/network_traffic_data.csv ]
+then
+    echo "network_traffic_data.csv already exists"
+else
+    wget -nv $FTP_URI/analytics-zoo-data/network-traffic/data/data.csv -P ~/.chronos/dataset/network_traffic/
+    mv ~/.chronos/dataset/network_traffic/data.csv ~/.chronos/dataset/network_traffic/network_traffic_data.csv
+fi
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/distributed/distributed_training_network_traffic.py
+
+now=$(date "+%s")
+time15=$((now-start))
+
+echo "#16 start example for chronos onnx_autotsestimator_nyc_taxi"
+start=$(date "+%s")
+
+if [ ! -f ~/.chronos/dataset/nyc_taxi/nyc_taxi_data.csv ]
+then
+    wget $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ~/.chronos/dataset/nyc_taxi/
+    mv ~/.chronos/dataset/nyc_taxi/nyc_taxi.csv ~/.chronos/dataset/nyc_taxi/nyc_taxi_data.csv
+else
+    echo "nyc_taxi_data.csv exists."
+fi
+
+# When the thread of onnxruntime is None, "pthread_setaffinity_np failed" may appear.
+sed -i '/onnx/d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py
+
+now=$(date "+%s")
+time16=$((now-start))
+
+echo "#17 start example for chronos onnx_autotsestimator_nyc_taxi"
+start=$(date "+%s")
+
+if [ ! -f ~/.chronos/dataset/network_traffic/network_traffic_data.csv ]
+then
+    wget $FTP_URI/analytics-zoo-data/network_traffic/data/data.csv -P ~/.chronos/dataset/network_traffic/
+    mv ~/.chronos/dataset/network_traffic/data.csv ~/.chronos/dataset/network_traffic/nyc_taxi_data.csv
+else
+    echo "network_traffic_data.csv exists."
+fi
+
+# When the thread of onnxruntime is None, "pthread_setaffinity_np failed" may appear.
+sed -i '/onnx/d' ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py
+
+python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py
+
+now=$(date "+%s")
+time17=$((now-start))
+
 echo "Ray example tests finished"
 echo "#1 orca rl_pong time used:$time1 seconds"
 echo "#2 orca async_parameter_server time used:$time2 seconds"
@@ -164,4 +269,10 @@ echo "#7 orca super-resolution example time used:$time7 seconds"
 echo "#8 orca cifar10 example time used:$time8 seconds"
 echo "#9 orca auto-xgboost-classifier time used:$time9 seconds"
 echo "#10 orca auto-xgboost-regressor time used:$time10 seconds"
-echo "#11 orca autoestimator-pytorch time used:$time11 second"
+echo "#11 orca autoestimator-pytorch time used:$time11 seconds"
+echo "#12 chronos autolstm_nyc_taxi time used:$time12 seconds"
+echo "#13 chronos autoprophet_nyc_taxi time used:$time13 seconds"
+echo "#14 chronos simulator-dpgansimulator-wwt time used:$time14 seconds"
+echo "#15 chronos distributed_training_network_traffic time used:$time15 seconds"
+echo "#16 chronos onnx_autotsestimator_nyc_taxi time used:$time16 seconds"
+echo "#17 chronos onnx_forecaster_network_traffic time used:$time17 seconds"

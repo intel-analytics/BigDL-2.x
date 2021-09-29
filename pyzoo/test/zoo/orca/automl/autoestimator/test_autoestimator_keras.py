@@ -17,7 +17,6 @@ import tensorflow as tf
 import numpy as np
 from unittest import TestCase
 from zoo.orca.automl.auto_estimator import AutoEstimator
-from zoo.automl.recipe.base import Recipe
 import pytest
 
 
@@ -56,7 +55,7 @@ def create_linear_search_space():
 class TestTFKerasAutoEstimator(TestCase):
     def setUp(self) -> None:
         from zoo.orca import init_orca_context
-        init_orca_context(cores=8, init_ray_on_spark=True)
+        init_orca_context(cores=4, init_ray_on_spark=True)
 
     def tearDown(self) -> None:
         from zoo.orca import stop_orca_context
@@ -72,12 +71,12 @@ class TestTFKerasAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="mse")
-        best_model = auto_est.get_best_model()
-        assert "hidden_size" in best_model.config
+        assert auto_est.get_best_model()
         best_config = auto_est.get_best_config()
+        assert "hidden_size" in best_config
         assert all(k in best_config.keys() for k in create_linear_search_space().keys())
 
     def test_fit_multiple_times(self):
@@ -90,16 +89,46 @@ class TestTFKerasAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="mse")
         with pytest.raises(RuntimeError):
             auto_est.fit(data=data,
                          validation_data=validation_data,
                          search_space=create_linear_search_space(),
-                         n_sampling=4,
+                         n_sampling=2,
                          epochs=1,
                          metric="mse")
+
+    def test_fit_metric_func(self):
+        auto_est = AutoEstimator.from_keras(model_creator=model_creator,
+                                            logs_dir="/tmp/zoo_automl_logs",
+                                            resources_per_trial={"cpu": 2},
+                                            name="test_fit")
+
+        data, validation_data = get_train_val_data()
+
+        def pyrmsle(y_true, y_pred):
+            y_pred[y_pred < -1] = -1 + 1e-6
+            elements = np.power(np.log1p(y_true) - np.log1p(y_pred), 2)
+            return float(np.sqrt(np.sum(elements) / len(y_true)))
+
+        with pytest.raises(ValueError) as exeinfo:
+            auto_est.fit(data=data,
+                         validation_data=validation_data,
+                         search_space=create_linear_search_space(),
+                         n_sampling=2,
+                         epochs=1,
+                         metric=pyrmsle)
+        assert "metric_mode" in str(exeinfo)
+
+        auto_est.fit(data=data,
+                     validation_data=validation_data,
+                     search_space=create_linear_search_space(),
+                     n_sampling=2,
+                     epochs=1,
+                     metric=pyrmsle,
+                     metric_mode="min")
 
 
 if __name__ == "__main__":

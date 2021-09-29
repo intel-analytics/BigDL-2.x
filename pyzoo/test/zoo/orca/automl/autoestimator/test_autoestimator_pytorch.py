@@ -23,7 +23,6 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from zoo.orca.automl.auto_estimator import AutoEstimator
-from zoo.automl.recipe.base import Recipe
 from zoo.orca.automl.pytorch_utils import LR_NAME
 from zoo.orca.automl import hp
 
@@ -117,7 +116,7 @@ def create_linear_search_space():
 class TestPyTorchAutoEstimator(TestCase):
     def setUp(self) -> None:
         from zoo.orca import init_orca_context
-        init_orca_context(cores=8, init_ray_on_spark=True)
+        init_orca_context(cores=4, init_ray_on_spark=True)
 
     def tearDown(self) -> None:
         from zoo.orca import stop_orca_context
@@ -135,12 +134,10 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="accuracy")
-        best_model = auto_est.get_best_model()
-        assert best_model.optimizer.__class__.__name__ == "SGD"
-        assert isinstance(best_model.loss_creator, nn.BCELoss)
+        assert auto_est.get_best_model()
         best_config = auto_est.get_best_config()
         assert all(k in best_config.keys() for k in create_linear_search_space().keys())
 
@@ -156,12 +153,10 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data=train_dataloader_creator,
                      validation_data=valid_dataloader_creator,
                      search_space=search_space,
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="accuracy")
-        best_model = auto_est.get_best_model()
-        assert best_model.optimizer.__class__.__name__ == "SGD"
-        assert isinstance(best_model.loss_creator, nn.BCELoss)
+        assert auto_est.get_best_model()
         best_config = auto_est.get_best_config()
         assert all(k in best_config.keys() for k in search_space.keys())
 
@@ -177,11 +172,10 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="accuracy")
-        best_model = auto_est.get_best_model()
-        assert isinstance(best_model.loss_creator, nn.BCELoss)
+        assert auto_est.get_best_model()
 
     def test_fit_optimizer_name(self):
         auto_est = AutoEstimator.from_torch(model_creator=model_creator,
@@ -195,11 +189,10 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="accuracy")
-        best_model = auto_est.get_best_model()
-        assert best_model.optimizer.__class__.__name__ == "SGD"
+        assert auto_est.get_best_model()
 
     def test_fit_invalid_optimizer_name(self):
         invalid_optimizer_name = "ADAM"
@@ -235,16 +228,56 @@ class TestPyTorchAutoEstimator(TestCase):
         auto_est.fit(data=data,
                      validation_data=validation_data,
                      search_space=create_linear_search_space(),
-                     n_sampling=4,
+                     n_sampling=2,
                      epochs=1,
                      metric="accuracy")
         with pytest.raises(RuntimeError):
             auto_est.fit(data=data,
                          validation_data=validation_data,
                          search_space=create_linear_search_space(),
-                         n_sampling=4,
+                         n_sampling=2,
                          epochs=1,
                          metric="accuracy")
+
+    def test_fit_metric(self):
+        auto_est = AutoEstimator.from_torch(model_creator=model_creator,
+                                            optimizer=get_optimizer,
+                                            loss="BCELoss",
+                                            logs_dir="/tmp/zoo_automl_logs",
+                                            resources_per_trial={"cpu": 2},
+                                            name="test_fit")
+
+        data, validation_data = get_train_val_data()
+
+        def f075(y_true, y_pred):
+            from sklearn.metrics import fbeta_score
+            y_true = np.squeeze(y_true)
+            y_pred = np.squeeze(y_pred)
+            if np.any(y_pred != y_pred.astype(int)):
+                # y_pred is probability
+                if y_pred.ndim == 1:
+                    y_pred = np.where(y_pred > 0.5, 1, 0)
+                else:
+                    y_pred = np.argmax(y_pred, axis=1)
+            return fbeta_score(y_true, y_pred, beta=0.75)
+
+        with pytest.raises(ValueError) as exeinfo:
+            auto_est.fit(data=data,
+                         validation_data=validation_data,
+                         search_space=create_linear_search_space(),
+                         n_sampling=2,
+                         epochs=1,
+                         metric=f075)
+        assert "metric_mode" in str(exeinfo)
+
+        auto_est.fit(data=data,
+                     validation_data=validation_data,
+                     search_space=create_linear_search_space(),
+                     n_sampling=2,
+                     epochs=1,
+                     metric=f075,
+                     metric_mode="max")
+        assert auto_est.get_best_model()
 
 
 if __name__ == "__main__":

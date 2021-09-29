@@ -15,8 +15,8 @@
 from abc import ABCMeta, abstractmethod
 
 from zoo.chronos.model.tcmf import DeepGLO
-from zoo.automl.common.metrics import Evaluator
-from zoo.automl.model.abstract import BaseModel
+from zoo.orca.automl.metrics import Evaluator
+from zoo.orca.automl.model.abstract import BaseModel
 from zoo.orca.data import SparkXShards, XShards
 import pickle
 import numpy as np
@@ -96,7 +96,7 @@ class TCMF(BaseModel):
                                                max_TCN_epoch=config.get("max_TCN_epoch", 300),
                                                num_workers=num_workers,
                                                )
-        return val_loss
+        return {"val_loss": val_loss}
 
     def fit_incremental(self, x, covariates_new=None, dti_new=None):
         """

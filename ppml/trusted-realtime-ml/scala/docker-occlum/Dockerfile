@@ -1,5 +1,5 @@
 # stage.1 Redis
-FROM occlum/occlum:0.21.0-ubuntu18.04 as redis-tls
+FROM occlum/occlum:0.23.7-ubuntu18.04 as redis-tls
 
 WORKDIR /opt
 
@@ -25,11 +25,11 @@ RUN git clone https://github.com/redis/redis.git && \
 # stage. 2 Flink & analytics-zoo
 FROM ubuntu:18.04 as analytics-zoo
 
-ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.2
-ARG SPARK_VERSION=2.4.3
+ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
+ARG BIGDL_VERSION=0.13.0
+ARG SPARK_VERSION=2.4.6
 ARG SPARK_MAJOR_VERSION=2.4
-ARG FLINK_VERSION=1.10.1
+ARG FLINK_VERSION=1.11.3
 ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
 ENV JAVA_HOME				/usr/lib/jvm/java-8-openjdk-amd64
 ENV FLINK_VERSION			${FLINK_VERSION}
@@ -51,7 +51,7 @@ RUN cd /opt && \
     rm flink-${FLINK_VERSION}-bin-scala_2.11.tgz
 
 # analytics-zoo
-RUN cd /opt && git clone https://github.com/intel-analytics/analytics-zoo.git && \
+RUN cd /opt && git clone --single-branch --branch master https://github.com/intel-analytics/analytics-zoo.git && \
     cd analytics-zoo/zoo && \
     export MAVEN_OPTS="-XX:ReservedCodeCacheSize=512m -XX:MaxPermSize=3G \
         -Dhttp.proxyHost=$HTTP_PROXY_HOST \
@@ -71,17 +71,17 @@ RUN cd /opt && \
 # stage.3 az ppml occlum
 FROM ubuntu:18.04 as ppml
 
-ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
-ARG BIGDL_VERSION=0.12.2
-ARG SPARK_VERSION=2.4.3
-ARG FLINK_VERSION=1.10.1
+ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
+ARG BIGDL_VERSION=0.13.0
+ARG SPARK_VERSION=2.4.6
+ARG FLINK_VERSION=1.11.3
 ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
 ENV SPARK_VERSION			${SPARK_VERSION}
 ENV BIGDL_VERSION			${BIGDL_VERSION}
 ENV JAVA_HOME				/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH				${JAVA_HOME}/bin:${PATH}
 ENV LOCAL_IP				127.0.0.1
-ENV SGX_MEM_SIZE			64G
+ENV SGX_MEM_SIZE			32G
 ENV REDIS_PORT				6379
 ENV FLINK_VERSION			${FLINK_VERSION}
 ENV FLINK_HOME				/opt/flink-${FLINK_VERSION}
@@ -126,10 +126,7 @@ RUN apt-get update && \
         occlum && \
     apt-get clean
 
-RUN echo "source /etc/profile" >> $HOME/.bashrc && \
-    sed -i "s|pgrep \"|if [ -S /var/run/aesmd/aesm.socket ]; then\n            return\n        else\n            pgrep \"|g" /opt/occlum/build/bin/occlum && \
-    sed -i "/pgrep \"/a \ \ \ \ \ \ \ \ fi" /opt/occlum/build/bin/occlum
-# Hotfix for occlum mount aesm
+RUN echo "source /etc/profile" >> $HOME/.bashrc 
 
 
 # Cluster Serving config

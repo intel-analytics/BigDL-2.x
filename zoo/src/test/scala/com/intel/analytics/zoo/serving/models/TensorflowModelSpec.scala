@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.serving.models
 
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
+import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.serialization.ArrowDeserializer
 import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
@@ -34,7 +34,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     "mkdir /tmp/tensorflow_inception_v1/".!
     "tar -xvf /tmp/tensorflow_inception_v1.tar -C /tmp/tensorflow_inception_v1/".!
     val resource = getClass().getClassLoader().getResource("serving")
-    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val dataPath = resource.getPath + "/image-3_224_224-arrow-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     val helper = ClusterServing.helper
@@ -62,7 +62,7 @@ class TensorflowModelSpec extends FlatSpec with Matchers {
     "mkdir /tmp/tensorflow_mobilenet_v1/".!
     "tar -xvf /tmp/tensorflow_mobilenet_v1.tar -C /tmp/tensorflow_mobilenet_v1".!
     val resource = getClass().getClassLoader().getResource("serving")
-    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val dataPath = resource.getPath + "/image-3_224_224-arrow-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     ClusterServing.helper = new ClusterServingHelper()
@@ -92,7 +92,7 @@ val helper = ClusterServing.helper
     "mkdir /tmp/tensorflow_mobilenet_v2/".!
     "tar -xvf /tmp/tensorflow_mobilenet_v2.tar -C /tmp/tensorflow_mobilenet_v2".!
     val resource = getClass().getClassLoader().getResource("serving")
-    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val dataPath = resource.getPath + "/image-3_224_224-arrow-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     ClusterServing.helper = new ClusterServingHelper()
@@ -122,7 +122,7 @@ val helper = ClusterServing.helper
     "mkdir /tmp/tensorflow_resnet50/".!
     "tar -xvf /tmp/tensorflow_resnet50.tar -C /tmp/tensorflow_resnet50".!
     val resource = getClass().getClassLoader().getResource("serving")
-    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val dataPath = resource.getPath + "/image-3_224_224-arrow-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     ClusterServing.helper = new ClusterServingHelper()
@@ -180,7 +180,7 @@ val helper = ClusterServing.helper
     "mkdir /tmp/tensorflow_vgg16/".!
     "tar -xvf /tmp/tensorflow_vgg16.tar -C /tmp/tensorflow_vgg16".!
     val resource = getClass().getClassLoader().getResource("serving")
-    val dataPath = resource.getPath + "/image-3_224_224-base64"
+    val dataPath = resource.getPath + "/image-3_224_224-arrow-base64"
     val b64string = scala.io.Source.fromFile(dataPath).mkString
 
     ClusterServing.helper = new ClusterServingHelper()

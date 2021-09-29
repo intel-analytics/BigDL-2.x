@@ -17,7 +17,7 @@
 package com.intel.analytics.zoo.serving.operator
 
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
-import com.intel.analytics.zoo.serving.{ClusterServing, PreProcessing}
+import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.engine.ClusterServingInference
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.api.common.functions.RichMapFunction

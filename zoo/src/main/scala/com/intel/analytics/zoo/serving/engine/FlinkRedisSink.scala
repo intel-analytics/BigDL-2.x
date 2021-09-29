@@ -26,15 +26,23 @@ import org.apache.log4j.Logger
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 
-class FlinkRedisSink(params: ClusterServingHelper)
+
+class FlinkRedisSink(helperSer: ClusterServingHelper)
   extends RichSinkFunction[List[(String, String)]] {
   var jedis: Jedis = null
   var logger: Logger = null
-
+  var helper: ClusterServingHelper = null
   override def open(parameters: Configuration): Unit = {
     logger = Logger.getLogger(getClass)
-    ClusterServing.helper = params
-    RedisUtils.initializeRedis()
+    // Sink is first initialized among Source, Map, Sink, so initialize static variable in sink.
+    ClusterServing.helper = helperSer
+    if (ClusterServing.helper.redisSecureEnabled) {
+      ClusterServing.helper.redisSecureTrustStorePath = getRuntimeContext.getDistributedCache
+        .getFile(Conventions.SECURE_TMP_DIR).getPath
+    }
+
+    helper = ClusterServing.helper
+    ClusterServing.initializeRedis()
     jedis = RedisUtils.getRedisClient(ClusterServing.jedisPool)
   }
 
@@ -48,7 +56,7 @@ class FlinkRedisSink(params: ClusterServingHelper)
     val ppl = jedis.pipelined()
     var cnt = 0
     value.foreach(v => {
-      RedisUtils.writeHashMap(ppl, v._1, v._2, params.jobName)
+      RedisUtils.writeHashMap(ppl, v._1, v._2, helper.jobName)
       if (v._2 != "NaN") {
         cnt += 1
       }
@@ -59,12 +67,13 @@ class FlinkRedisSink(params: ClusterServingHelper)
 
 }
 
-class FlinkRedisXStreamSink(params: ClusterServingHelper) extends FlinkRedisSink(params) {
+
+class FlinkRedisXStreamSink(helper: ClusterServingHelper) extends FlinkRedisSink(helper) {
   override def invoke(value: List[(String, String)], context: SinkFunction.Context[_]): Unit = {
     val ppl = jedis.pipelined()
     var cnt = 0
     value.foreach(v => {
-      RedisUtils.writeXstream(ppl, v._1, v._2, params.jobName)
+      RedisUtils.writeXstream(ppl, v._1, v._2, helper.jobName)
       if (v._2 != "NaN") {
         cnt += 1
       }
