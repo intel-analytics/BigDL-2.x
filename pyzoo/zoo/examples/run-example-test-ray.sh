@@ -226,7 +226,7 @@ start=$(date "+%s")
 if [ ! -f ~/.chronos/dataset/nyc_taxi/nyc_taxi_data.csv ]
 then
     wget $FTP_URI/analytics-zoo-data/apps/nyc-taxi/nyc_taxi.csv -P ~/.chronos/dataset/nyc_taxi/
-    mv ~/chronos/dataset/nyc_taxi/nyc_taxi.csv ~/.chronos/dataset/nyc_taxi/nyc_taxi_data.csv
+    mv ~/.chronos/dataset/nyc_taxi/nyc_taxi.csv ~/.chronos/dataset/nyc_taxi/nyc_taxi_data.csv
 else
     echo "nyc_taxi_data.csv exists."
 fi
@@ -276,5 +276,3 @@ echo "#14 chronos simulator-dpgansimulator-wwt time used:$time14 seconds"
 echo "#15 chronos distributed_training_network_traffic time used:$time15 seconds"
 echo "#16 chronos onnx_autotsestimator_nyc_taxi time used:$time16 seconds"
 echo "#17 chronos onnx_forecaster_network_traffic time used:$time17 seconds"
-
-
