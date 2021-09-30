@@ -52,19 +52,6 @@ class OpenvinoEstimator(SparkEstimator):
         with open(model_path[:model_path.rindex(".")] + ".bin", 'rb') as file:
             self.weight_bytes = file.read()
 
-        # ie = IECore()
-        # self.net = ie.read_network(model=model_bytes,
-        #                            weights=weight_bytes,
-        #                            init_from_buffer=True)
-        # self.model = ie.load_network(network=self.net, device_name="CPU",
-        #                              num_requests=5)
-        # inputs = self.model.requests[0].input_blobs
-        # inputs
-        # self.model = InferenceModel(supported_concurrent_num=self.core_num)
-        # self.model.load_openvino_ng(model_path=model_path,
-        #                             weight_path=model_path[:model_path.rindex(".")] + ".bin",
-        #                             batch_size=self.batch_size)
-
     def fit(self, data, epochs, batch_size=32, feature_cols=None, label_cols=None,
             validation_data=None, checkpoint_trigger=None):
         """
@@ -203,8 +190,6 @@ class OpenvinoEstimator(SparkEstimator):
 
                 data_to_be_rdd = [nest.pack_sequence_as(data, shard) for shard in data_to_be_rdd]
                 data_rdd = sc.parallelize(data_to_be_rdd, numSlices=num_slices)
-                c = data_rdd.collect()
-                c
 
             result_rdd = data_rdd.mapPartitions(lambda iter: partition_inference(iter))
             result_arr_list = result_rdd.collect()
