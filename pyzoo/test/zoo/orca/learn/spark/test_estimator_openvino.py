@@ -50,6 +50,17 @@ def read_file_and_cast(file_path):
 
 class TestEstimatorForOpenVINO(TestCase):
     def setUp(self):
+        pass
+
+    def tearDown(self):
+        shutil.rmtree(local_path)
+
+    def check_result(self, result, length=0):
+        if length == 0:
+            length = len(result)
+        return np.all(list(map(lambda i: np.allclose(result[i], self.output), range(0, length))))
+
+    def load_resnet(self):
         input_file_path = os.path.join(resource_path, "orca/learn/resnet_input")
         output_file_path = os.path.join(resource_path, "orca/learn/resnet_output")
         self.input = read_file_and_cast(input_file_path)
@@ -67,23 +78,32 @@ class TestEstimatorForOpenVINO(TestCase):
         model_path = os.path.join(local_path, "openvino2020_resnet50/resnet_v1_50.xml")
         self.est = Estimator.from_openvino(model_path=model_path)
 
-    def tearDown(self):
-        shutil.rmtree(local_path)
-
-    def check_result(self, result, length=0):
-        if length == 0:
-            length = len(result)
-        return np.all(list(map(lambda i: np.allclose(result[i], self.output), range(0, length))))
+    def load_roberta(self):
+        model_path = "/home/yina/Documents/model/roberta/model.xml"
+        self.est = Estimator.from_openvino(model_path=model_path)
 
     def test_openvino_predict_ndarray(self):
-        input_data = np.array([self.input] * 3)
-        result = self.est.predict(input_data)
+        self.load_resnet()
+        input_data = np.array([self.input] * 22)
+        input_data = np.concatenate([input_data, np.zeros([1, 3, 224, 224])])
+        result = self.est.predict(input_data, batch_size=4)
         assert isinstance(result, np.ndarray)
-        assert result.shape == (22, 1000)
+        assert result.shape == (23, 1000)
         assert self.check_result(result, 22)
+        assert not self.check_result(result[22:], 1)
+
+    def test_openvino_predict_ndarray_multi_input(self):
+        self.load_roberta()
+        input_data = [np.zeros([32, 128])] * 3
+        result = self.est.predict(input_data, batch_size=5)
+        assert isinstance(result, np.ndarray)
+        assert result.shape == (32, 2)
 
     def test_openvino_predict_xshards(self):
-        input_data_list = [np.array([self.input] * 4), np.array([self.input] * 2)]
+        self.load_resnet()
+        input_data_list = [np.array([self.input] * 4),
+                           np.concatenate([np.array([self.input] * 2),
+                                           np.zeros([1, 3, 224, 224])])]
         sc = init_nncontext()
         rdd = sc.parallelize(input_data_list, numSlices=2)
         shards = SparkXShards(rdd)
@@ -96,13 +116,15 @@ class TestEstimatorForOpenVINO(TestCase):
         result_c = result.collect()
         assert isinstance(result, SparkXShards)
         assert result_c[0]["prediction"].shape == (4, 1000)
-        assert result_c[1]["prediction"].shape == (2, 1000)
+        assert result_c[1]["prediction"].shape == (3, 1000)
         assert self.check_result(result_c[0]["prediction"], 4)
         assert self.check_result(result_c[1]["prediction"], 2)
+        assert not self.check_result(result_c[1]["prediction"][2:], 1)
 
     def test_openvino_predict_spark_df(self):
         from pyspark.sql import SparkSession
 
+        self.load_resnet()
         sc = init_nncontext()
         spark = SparkSession(sc)
         input_list = self.input.tolist()

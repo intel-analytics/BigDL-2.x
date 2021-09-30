@@ -16,6 +16,8 @@
 import math
 import os.path
 
+from pyspark.sql import DataFrame
+
 from zoo.pipeline.inference import InferenceModel
 from zoo.orca.data import SparkXShards
 from zoo.orca.learn.spark_estimator import Estimator as SparkEstimator
@@ -29,44 +31,35 @@ import numpy as np
 
 class Estimator(object):
     @staticmethod
-    def from_openvino(*, model_path, batch_size=0):
+    def from_openvino(*, model_path):
         """
         Load an openVINO Estimator.
 
         :param model_path: String. The file path to the OpenVINO IR xml file.
         :param batch_size: Int. Set batch Size, default is 0 (use default batch size).
         """
-        return OpenvinoEstimator(model_path=model_path, batch_size=batch_size)
+        return OpenvinoEstimator(model_path=model_path)
 
 
 class OpenvinoEstimator(SparkEstimator):
     def __init__(self,
                  *,
-                 model_path,
-                 batch_size=0):
+                 model_path):
         self.node_num, self.core_num = get_node_and_core_number()
-        # if batch_size != 0:
-        #     self.batch_size = batch_size
-        # else:
-        #     import xml.etree.ElementTree as ET
-        #     tree = ET.parse(model_path)
-        #     root = tree.getroot()
-        #     shape_item = root.find('./layers/layer/output/port/dim[1]')
-        #     if shape_item is None:
-        #         raise ValueError("Invalid openVINO IR xml file, please check your model_path")
-        #     self.batch_size = int(shape_item.text)
+        with open(model_path, 'rb') as file:
+            self.model_bytes = file.read()
 
-        self.model_path = model_path
+        with open(model_path[:model_path.rindex(".")] + ".bin", 'rb') as file:
+            self.weight_bytes = file.read()
 
-        with
-
-        ie = IECore()
-        self.net = ie.read_network(model=model_path,
-                                   weights=model_path[:model_path.rindex(".")] + ".bin")
-        self.model = ie.load_network(network=self.net, device_name="CPU",
-                                     num_requests=5)
-        inputs = self.model.requests[0].input_blobs
-        inputs
+        # ie = IECore()
+        # self.net = ie.read_network(model=model_bytes,
+        #                            weights=weight_bytes,
+        #                            init_from_buffer=True)
+        # self.model = ie.load_network(network=self.net, device_name="CPU",
+        #                              num_requests=5)
+        # inputs = self.model.requests[0].input_blobs
+        # inputs
         # self.model = InferenceModel(supported_concurrent_num=self.core_num)
         # self.model.load_openvino_ng(model_path=model_path,
         #                             weight_path=model_path[:model_path.rindex(".")] + ".bin",
@@ -96,128 +89,130 @@ class OpenvinoEstimator(SparkEstimator):
                  a numpy array or a list of numpy arrays.
         """
         sc = init_nncontext()
-        split_num = math.ceil(len(data)/batch_size)
-        arrays = np.array_split(data, split_num)
-        data_length_list = list(map(lambda arr: len(arr), arrays))
-        data_rdd = sc.parallelize(arrays, numSlices=split_num)
-        num_partitions = data_rdd.getNumPartitions()
+        model_bytes_broadcast = sc.broadcast(self.model_bytes)
+        weight_bytes_broadcast = sc.broadcast(self.weight_bytes)
 
-        def partition_inference(partition, model_path, batchsize):
+        def partition_inference(partition):
+            model_bytes = model_bytes_broadcast.value
+            weight_bytes = weight_bytes_broadcast.value
+            partition = list(partition)
+            data_num = len(partition)
             ie = IECore()
-            net = ie.read_network(model=model_path,
-                                  weights=model_path[:model_path.rindex(".")] + ".bin")
-            ie.set_config({'CPU_THROUGHPUT_STREAMS': str(5)}, 'CPU')
+            net = ie.read_network(model=model_bytes,
+                                  weights=weight_bytes, init_from_buffer=True)
+            net.batch_size = batch_size
             local_model = ie.load_network(network=net, device_name="CPU",
-                                          num_requests=5)
+                                          num_requests=data_num)
             inputs = list(iter(local_model.requests[0].input_blobs))
             outputs = list(iter(local_model.requests[0].output_blobs))
+            assert len(outputs) != 0, "The number of model outputs should not be 0."
+
+            def add_elem(d):
+                d_len = len(d)
+                if d_len < batch_size:
+                    rep_time = [1] * (d_len - 1)
+                    rep_time.append(batch_size - d_len + 1)
+                    return np.repeat(d, rep_time, axis=0), d_len
+                else:
+                    return d, d_len
+
             results = []
             for idx, batch_data in enumerate(partition):
                 infer_request = local_model.requests[idx]
                 input_dict = dict()
-                if isinstance(data, list):
-                    pass
+                elem_num = 0
+                if isinstance(batch_data, list):
+                    for i, input in enumerate(inputs):
+                        input_dict[input], elem_num = add_elem(batch_data[i])
                 else:
-                    input_dict[inputs[0]] = batch_data
+                    input_dict[inputs[0]], elem_num = add_elem(batch_data)
                 infer_request.infer(input_dict)
-                # TODO
-                results.append(infer_request.output_blobs[outputs[0]].buffer)
+                if len(outputs) == 1:
+                    results.append(infer_request.output_blobs[outputs[0]].buffer[:elem_num])
+                else:
+                    results.append(list(map(lambda output:
+                                            infer_request.output_blobs[output].buffer[:elem_num],
+                                            outputs)))
+
             return results
 
-        path = self.model_path
-        print("-----------------------", os.path.exists(path))
-        a = data_rdd.mapPartitions(lambda iter: partition_inference(iter, path, batch_size))
-        c = a.collect()
-        c
+        def predict_transform(dict_data, batch_size):
+            assert isinstance(dict_data, dict), "each shard should be an dict"
+            assert "x" in dict_data, "key x should in each shard"
+            feature_data = dict_data["x"]
+            if isinstance(feature_data, np.ndarray):
+                assert feature_data.shape[0] <= batch_size, \
+                    "The batch size of input data (the second dim) should be less than the model " \
+                    "batch size, otherwise some inputs will be ignored."
+            elif isinstance(feature_data, list):
+                for elem in feature_data:
+                    assert isinstance(elem, np.ndarray), "Each element in the x list should be " \
+                                                         "a ndarray, but get " + \
+                                                         elem.__class__.__name__
+                    assert elem.shape[0] <= batch_size, "The batch size of each input data (the " \
+                                                        "second dim) should be less than the " \
+                                                        "model batch size, otherwise some inputs " \
+                                                        "will be ignored."
+            else:
+                raise ValueError("x in each shard should be a ndarray or a list of ndarray.")
+            return feature_data
 
-        # from pyspark.sql import DataFrame
-        #
-        # def predict_transform(dict_data, batch_size):
-        #     assert isinstance(dict_data, dict), "each shard should be an dict"
-        #     assert "x" in dict_data, "key x should in each shard"
-        #     feature_data = dict_data["x"]
-        #     if isinstance(feature_data, np.ndarray):
-        #         assert feature_data.shape[0] <= batch_size, \
-        #             "The batch size of input data (the second dim) should be less than the model " \
-        #             "batch size, otherwise some inputs will be ignored."
-        #     elif isinstance(feature_data, list):
-        #         for elem in feature_data:
-        #             assert isinstance(elem, np.ndarray), "Each element in the x list should be " \
-        #                                                  "a ndarray, but get " + \
-        #                                                  elem.__class__.__name__
-        #             assert elem.shape[0] <= batch_size, "The batch size of each input data (the " \
-        #                                                 "second dim) should be less than the " \
-        #                                                 "model batch size, otherwise some inputs " \
-        #                                                 "will be ignored."
-        #     else:
-        #         raise ValueError("x in each shard should be a ndarray or a list of ndarray.")
-        #     return feature_data
-        #
-        # sc = init_nncontext()
-        #
-        # if isinstance(data, DataFrame):
-        #     from zoo.orca.learn.utils import dataframe_to_xshards, convert_predict_rdd_to_dataframe
-        #     xshards, _ = dataframe_to_xshards(data,
-        #                                       validation_data=None,
-        #                                       feature_cols=feature_cols,
-        #                                       label_cols=None,
-        #                                       mode="predict")
-        #     transformed_data = xshards.transform_shard(predict_transform, self.batch_size)
-        #     result_rdd = self.model.distributed_predict(transformed_data.rdd, sc)
-        #
-        #     def delete_useless_result(data):
-        #         shard, y = data
-        #         data_length = len(shard["x"])
-        #         return y[: data_length]
-        #     result_rdd = xshards.rdd.zip(result_rdd).map(delete_useless_result)
-        #     return convert_predict_rdd_to_dataframe(data, result_rdd.flatMap(lambda data: data))
-        # elif isinstance(data, SparkXShards):
-        #     transformed_data = data.transform_shard(predict_transform, self.batch_size)
-        #     result_rdd = self.model.distributed_predict(transformed_data.rdd, sc)
-        #
-        #     def update_shard(data):
-        #         shard, y = data
-        #         data_length = len(shard["x"])
-        #         shard["prediction"] = y[: data_length]
-        #         return shard
-        #     return SparkXShards(data.rdd.zip(result_rdd).map(update_shard))
-        # elif isinstance(data, (np.ndarray, list)):
-        #     if isinstance(data, np.ndarray):
-        #         split_num = math.ceil(len(data)/self.batch_size)
-        #         arrays = np.array_split(data, split_num)
-        #         data_length_list = list(map(lambda arr: len(arr), arrays))
-        #         data_rdd = sc.parallelize(arrays, numSlices=split_num)
-        #     elif isinstance(data, list):
-        #         flattened = nest.flatten(data)
-        #         data_length = len(flattened[0])
-        #         data_to_be_rdd = []
-        #         split_num = math.ceil(flattened[0].shape[0]/self.batch_size)
-        #         for i in range(split_num):
-        #             data_to_be_rdd.append([])
-        #         for x in flattened:
-        #             assert isinstance(x, np.ndarray), "the data in the data list should be " \
-        #                                               "ndarrays, but get " + \
-        #                                               x.__class__.__name__
-        #             assert len(x) == data_length, \
-        #                 "the ndarrays in data must all have the same size in first dimension" \
-        #                 ", got first ndarray of size {} and another {}".format(data_length, len(x))
-        #             x_parts = np.array_split(x, split_num)
-        #             for idx, x_part in enumerate(x_parts):
-        #                 data_to_be_rdd[idx].append(x_part)
-        #                 data_length_list = list(map(lambda arr: len(arr), x_part))
-        #
-        #         data_to_be_rdd = [nest.pack_sequence_as(data, shard) for shard in data_to_be_rdd]
-        #         data_rdd = sc.parallelize(data_to_be_rdd, numSlices=split_num)
-        #
-        #     result_rdd = self.model.distributed_predict(data_rdd, sc)
-        #     result_arr_list = result_rdd.collect()
-        #     for i in range(0, len(result_arr_list)):
-        #         result_arr_list[i] = result_arr_list[i][:data_length_list[i]]
-        #     result_arr = np.concatenate(result_arr_list, axis=0)
-        #     return result_arr
-        # else:
-        #     raise ValueError("Only XShards, Spark DataFrame, a numpy array and a list of numpy arr"
-        #                      "ays are supported as input data, but get " + data.__class__.__name__)
+        if isinstance(data, DataFrame):
+            from zoo.orca.learn.utils import dataframe_to_xshards, convert_predict_rdd_to_dataframe
+            xshards, _ = dataframe_to_xshards(data,
+                                              validation_data=None,
+                                              feature_cols=feature_cols,
+                                              label_cols=None,
+                                              mode="predict")
+            transformed_data = xshards.transform_shard(predict_transform, batch_size)
+            result_rdd = transformed_data.rdd.mapPartitions(lambda iter: partition_inference(iter))
+            return convert_predict_rdd_to_dataframe(data, result_rdd.flatMap(lambda data: data))
+        elif isinstance(data, SparkXShards):
+            transformed_data = data.transform_shard(predict_transform, batch_size)
+            result_rdd = transformed_data.rdd.mapPartitions(lambda iter: partition_inference(iter))
+
+            def update_result_shard(data):
+                shard, y = data
+                shard["prediction"] = y
+                return shard
+            return SparkXShards(data.rdd.zip(result_rdd).map(update_result_shard))
+        elif isinstance(data, (np.ndarray, list)):
+            if isinstance(data, np.ndarray):
+                split_num = math.ceil(len(data)/batch_size)
+                arrays = np.array_split(data, split_num)
+                num_slices = min(split_num, self.node_num * self.core_num)
+                data_rdd = sc.parallelize(arrays, numSlices=num_slices)
+            elif isinstance(data, list):
+                flattened = nest.flatten(data)
+                data_length = len(flattened[0])
+                data_to_be_rdd = []
+                split_num = math.ceil(flattened[0].shape[0]/batch_size)
+                num_slices = min(split_num, self.node_num * self.core_num)
+                for i in range(split_num):
+                    data_to_be_rdd.append([])
+                for x in flattened:
+                    assert isinstance(x, np.ndarray), "the data in the data list should be " \
+                                                      "ndarrays, but get " + \
+                                                      x.__class__.__name__
+                    assert len(x) == data_length, \
+                        "the ndarrays in data must all have the same size in first dimension" \
+                        ", got first ndarray of size {} and another {}".format(data_length, len(x))
+                    x_parts = np.array_split(x, split_num)
+                    for idx, x_part in enumerate(x_parts):
+                        data_to_be_rdd[idx].append(x_part)
+
+                data_to_be_rdd = [nest.pack_sequence_as(data, shard) for shard in data_to_be_rdd]
+                data_rdd = sc.parallelize(data_to_be_rdd, numSlices=num_slices)
+                c = data_rdd.collect()
+                c
+
+            result_rdd = data_rdd.mapPartitions(lambda iter: partition_inference(iter))
+            result_arr_list = result_rdd.collect()
+            result_arr = np.concatenate(result_arr_list, axis=0)
+            return result_arr
+        else:
+            raise ValueError("Only XShards, Spark DataFrame, a numpy array and a list of numpy arr"
+                             "ays are supported as input data, but get " + data.__class__.__name__)
 
     def evaluate(self, data, batch_size=32, feature_cols=None, label_cols=None):
         """
