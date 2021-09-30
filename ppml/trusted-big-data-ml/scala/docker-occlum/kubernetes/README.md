@@ -23,7 +23,6 @@ bash build-docker-image.sh
 2. Modify `${kubernetes_master_url}` to your k8s master url in the `run_pi.sh `
 3. Modify `executor.yaml`
 
-```
-kubectl apply -f executor.yaml
-./run_pi.sh
+```bash
+./run_spark_pi.sh
 ```
