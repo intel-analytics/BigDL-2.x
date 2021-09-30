@@ -19,7 +19,7 @@ bash build-docker-image.sh
 
 ## Run Spark executor in Occlum:
 
-1. Download [Spark 3.0.0](https://archive.apache.org/dist/spark/spark-3.0.0/spark-3.0.0-bin-hadoop2.7.tgz), and setup `SPARK_HOME`.
+1. Download [Spark 3.0.0](https://archive.apache.org/dist/spark/spark-3.0.0/spark-3.0.0-bin-hadoop2.7.tgz), and setup `SPARK_HOME`. Or set `SPARK_HOME` in `run_spark_pi.sh`.
 2. Modify `${kubernetes_master_url}` to your k8s master url in the `run_spark_pi.sh `
 3. Modify `executor.yaml` for your need
 
