@@ -167,11 +167,21 @@ if __name__ == '__main__':
     time_train = time.time()
     print(f"perf training time: {(time_train - time_start):.2f}")
 
-    # result = estimator.evaluate(test_data, args.batch_size, feature_cols=feature_cols,
-    #                             label_cols=['label'])
-    #
-    # time_end = time.time()
-    # print('evaluation result:', result)
-    # print(f"perf evaluation time: {(time_end - time_train):.2f}")
+    result = estimator.evaluate(test_data, args.batch_size, feature_cols=feature_cols,
+                                label_cols=['label'])
+
+    evaluator = BinaryClassificationEvaluator(rawPredictionCol="prediction",
+                                              labelCol="label_t",
+                                              metricName="areaUnderROC")
+    prediction_df = estimator.predict(test_data, feature_cols=feature_cols)
+    prediction_df.cache()
+    transform_label = udf(lambda x: int(x[1]), "int")
+    prediction_df = prediction_df.withColumn('label_t', transform_label(col('label')))
+    auc = evaluator.evaluate(prediction_df)
+
+    time_end = time.time()
+    print('evaluation result:', result)
+    print("evaluation AUC score is: ", auc)
+    print(f"perf evaluation time: {(time_end - time_train):.2f}")
 
     stop_orca_context()
