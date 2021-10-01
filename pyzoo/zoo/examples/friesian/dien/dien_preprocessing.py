@@ -14,14 +14,9 @@
 # limitations under the License.
 #
 
-import sys
-import os
 import time
-from pyspark import StorageLevel
 from zoo.orca import init_orca_context, stop_orca_context
-from pyspark.sql.functions import udf, col
 from zoo.friesian.feature import FeatureTable
-from pyspark.sql.types import StringType, ArrayType, FloatType
 from argparse import ArgumentParser
 
 conf = {"spark.network.timeout": "10000000",
@@ -59,7 +54,7 @@ def _parse_args():
                         help="transaction files.")
     parser.add_argument('--input_meta', type=str,
                         help="item metadata file")
-    parser.add_argument('--output', default=".")
+    parser.add_argument('--output', default="./preprocessed")
     parser.add_argument(
         '--write_mode',
         choices=['overwrite', 'errorifexists'],
@@ -67,6 +62,7 @@ def _parse_args():
 
     args = parser.parse_args()
     return args
+
 
 if __name__ == "__main__":
     args = _parse_args()
@@ -107,9 +103,9 @@ if __name__ == "__main__":
     full_tbl = transaction_tbl\
         .encode_string(['user', 'item'], [user_index, item_cat_indices[0]])\
         .add_hist_seq(cols=['item'], user_col="user",
-                      sort_col='time', min_len=1, max_len=100, num_seqs=1)\
+                      sort_col='time', min_len=1, max_len=100)\
         .add_neg_hist_seq(item_size, 'item_hist_seq', neg_num=5)\
-        .add_negative_samples(item_size, item_col='item', neg_num=1)\
+        .add_negative_samples(item_size, item_col='item')\
         .add_value_features(columns=["item", "item_hist_seq", "neg_item_hist_seq"],
                             dict_tbl=item_tbl, key="item", value="category")\
         .pad(cols=['item_hist_seq', 'category_hist_seq',
