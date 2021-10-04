@@ -1,5 +1,5 @@
 # Train a two tower model using recsys data
-This example demonstrates how to use Analytics Zoo Friesian to train a two tower model using tweetter data.
+This example demonstrates how to use Analytics Zoo Friesian to train a two tower model using [Twitter Recsys Challenge 2021 data](https://recsys-twitter.com/data/show-downloads#).
 
 ## Prepare the environment
 We recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the environments, especially if you want to run on a yarn cluster (yarn-client mode only).
@@ -8,8 +8,10 @@ conda create -n zoo python=3.7  # "zoo" is the conda environment name, you can u
 conda activate zoo
 pip install --pre --upgrade analytics-zoo
 ```
+## Preprocess data
+You can download the full Twitter dataset from [here](https://recsys-twitter.com/data/show-downloads#) and then follow the [WideAndDeep Preprocessing] to preprocess the orginal data.
 
-## Running command
+## Training 2 tower model
 * Spark local, we can use some sample data to have a trial, example command:
 ```bash
 python train_2tower.py \
@@ -21,7 +23,7 @@ python train_2tower.py \
 
 * Spark standalone, example command to run on the full Criteo dataset:
 ```bash
-python dien_preprocessing.py \
+python train_2tower.py \
     --cluster_mode standalone \
     --master spark://master-url:port \
     --executor_cores 56 \

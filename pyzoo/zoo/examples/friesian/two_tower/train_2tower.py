@@ -88,20 +88,6 @@ def train(config, train_tbl, test_tbl, epochs=1, batch_size=128, model_dir='.'):
     return estimator
 
 
-def load_data(data_path):
-    def gen_label(x):
-        ts = [e for e in x[:] if e > 0]  # 4 labels
-        out = 1 if len(ts) > 0 else 0
-        return out
-    useful_cols = num_cols + cat_cols + embed_cols + ts_cols
-    tbl = FeatureTable.read_parquet(data_path)
-    tbl = tbl.rename({"enaging_user_id": "user_id", "tweet_id": "item_id"})
-    tbl.df.printSchema()
-    tbl = tbl.fillna(0, useful_cols)
-    tbl = tbl.apply(in_col=ts_cols, out_col='label', func=gen_label, dtype='bigint')
-    return tbl
-
-
 def prepare_features(train_tbl, test_tbl, reindex_tbls):
 
     def add_ratio_features(tbl):
@@ -142,8 +128,8 @@ def prepare_features(train_tbl, test_tbl, reindex_tbls):
 
     user_col_info = ColumnInfoTower(indicator_cols=["enaging_user_is_verified"],
                                     indicator_dims=[2],
-                                    embed_cols=["user_id"],
-                                    embed_in_dims=[embed_in_dims["user_id"]],
+                                    embed_cols=["enaging_user_id"],
+                                    embed_in_dims=[embed_in_dims["enaging_user_id"]],
                                     embed_out_dims=[16],
                                     numerical_cols=["user_num"],
                                     numerical_dims=[3],
@@ -221,12 +207,11 @@ if __name__ == '__main__':
                 "present_media", "tweet_type", "language"]
     ratio_cols = ["engaged_with_user_follower_following_ratio",
                   "enaging_user_follower_following_ratio"]
-    ts_cols = ['reply_timestamp', 'retweet_timestamp', 'retweet_with_comment_timestamp',
-               'like_timestamp']
-    embed_cols = ["user_id", "engaged_with_user_id", "hashtags", "present_links", "present_domains"]
-
-    train_tbl = load_data(args.data_dir)
-    test_tbl = load_data(args.data_dir)
+    embed_cols = ["enaging_user_id", "engaged_with_user_id", "hashtags", "present_links",
+                  "present_domains"]
+    useful_cols = num_cols + cat_cols + embed_cols
+    train_tbl = FeatureTable.read_parquet(args.data_dir + "/train_parquet")
+    test_tbl = FeatureTable.read_parquet(args.data_dir + "/test_parquet")
     full_tbl = train_tbl.concat(test_tbl, "outer")
     reindex_tbls = full_tbl.gen_reindex_mapping(embed_cols, freq_limit=args.frequency_limit)
     train_tbl, test_tbl, user_info, item_info = prepare_features(train_tbl, test_tbl, reindex_tbls)
