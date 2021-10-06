@@ -73,6 +73,30 @@ def get_int_target_df():
     return train_df
 
 
+def get_non_dt():
+    df = pd.DataFrame({"datetime": np.arange(100),
+                       "id": np.array(['00']*100),
+                       "value": np.random.randn(100),
+                       "extra feature": np.random.randn(100)})
+    return df
+
+
+def get_not_aligned_df():
+    df_val = pd.DataFrame({"id": np.array(['00']*20+['01']*30+['02']*50),
+                           "value": np.random.randn(100),
+                           "extra feature": np.random.randn(100)})
+    data_sec = pd.DataFrame({"datetime": pd.date_range(
+        start='1/1/2019 00:00:00', periods=20, freq='S')})
+    data_min = pd.DataFrame({"datetime": pd.date_range(
+        start='1/2/2019 00:00:00', periods=30, freq='H')})
+    data_hou = pd.DataFrame({"datetime": pd.date_range(
+        start='1/3/2019 00:00:00', periods=50, freq='D')})
+    dt_val = pd.concat([data_sec, data_min, data_hou],
+                       axis=0, ignore_index=True)
+    df = pd.merge(left=dt_val, right=df_val, left_index=True, right_index=True)
+    return df
+
+
 class TestTSDataset(ZooTestCase):
     def setup_method(self, method):
         pass
@@ -500,6 +524,7 @@ class TestTSDataset(ZooTestCase):
                                                    'IS_WEEKEND',
                                                    'WEEKDAY',
                                                    'MONTH',
+                                                   'YEAR',
                                                    'DAYOFYEAR',
                                                    'WEEKOFYEAR',
                                                    'extra feature',
@@ -510,6 +535,7 @@ class TestTSDataset(ZooTestCase):
                                            'IS_WEEKEND',
                                            'WEEKDAY',
                                            'MONTH',
+                                           'YEAR',
                                            'DAYOFYEAR',
                                            'WEEKOFYEAR',
                                            'extra feature'}
@@ -529,6 +555,7 @@ class TestTSDataset(ZooTestCase):
                                                    'WEEKDAY_5',
                                                    'WEEKDAY_6',
                                                    'MONTH',
+                                                   'YEAR',
                                                    'DAYOFYEAR',
                                                    'WEEKOFYEAR',
                                                    'extra feature',
@@ -545,6 +572,7 @@ class TestTSDataset(ZooTestCase):
                                            'WEEKDAY_5',
                                            'WEEKDAY_6',
                                            'MONTH',
+                                           'YEAR',
                                            'DAYOFYEAR',
                                            'WEEKOFYEAR',
                                            'extra feature'}
@@ -560,6 +588,7 @@ class TestTSDataset(ZooTestCase):
                                                    'IS_WEEKEND',
                                                    'WEEKDAY',
                                                    'MONTH',
+                                                   'YEAR',
                                                    'DAYOFYEAR',
                                                    'WEEKOFYEAR',
                                                    'extra feature',
@@ -570,6 +599,7 @@ class TestTSDataset(ZooTestCase):
                                            'IS_WEEKEND',
                                            'WEEKDAY',
                                            'MONTH',
+                                           'YEAR',
                                            'DAYOFYEAR',
                                            'WEEKOFYEAR',
                                            'extra feature'}
@@ -589,6 +619,7 @@ class TestTSDataset(ZooTestCase):
                                                    'WEEKDAY_5',
                                                    'WEEKDAY_6',
                                                    'MONTH',
+                                                   'YEAR',
                                                    'DAYOFYEAR',
                                                    'WEEKOFYEAR',
                                                    'extra feature',
@@ -605,6 +636,7 @@ class TestTSDataset(ZooTestCase):
                                            'WEEKDAY_5',
                                            'WEEKDAY_6',
                                            'MONTH',
+                                           'YEAR',
                                            'DAYOFYEAR',
                                            'WEEKOFYEAR',
                                            'extra feature'}
@@ -690,6 +722,29 @@ class TestTSDataset(ZooTestCase):
         assert len(tsdata.to_pandas()) == (df.shape[0] + 1) // 2
         tsdata._check_basic_invariants()
 
+        # target_col\extra_feature_col dtype is object(str).
+        sample_num = np.random.randint(100, 200)
+        df = pd.DataFrame({"datetime": pd.date_range('1/1/2019', periods=sample_num),
+                           "value": np.array(['test_value']*sample_num),
+                           "id": np.array(['00']*sample_num),
+                           "extra feature": np.array(['test_extra_feature']*sample_num)})
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                       extra_feature_col=["extra feature"], id_col="id")
+        with pytest.raises(RuntimeError):
+            tsdata.resample('2S', df.datetime[0], df.datetime[df.shape[0]-1])
+        tsdata._check_basic_invariants()
+
+        # target_col\extra_feature_col dtype is object(numeric).
+        df = get_ts_df()
+        df.value = df.value.astype(np.object)
+        df['extra feature'] = df['extra feature'].astype(np.object)
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                       extra_feature_col=["extra feature"], id_col="id")
+        before_sampling = tsdata.df.columns
+        tsdata.resample('2S', df.datetime[0], df.datetime[df.shape[0]-1])
+        assert set(before_sampling) == set(tsdata.df.columns)
+        tsdata._check_basic_invariants()
+
     def test_tsdataset_resample_multiple(self):
         df = get_multi_id_ts_df()
         tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
@@ -701,6 +756,29 @@ class TestTSDataset(ZooTestCase):
                                        extra_feature_col=["extra feature"], id_col="id")
         tsdata.resample('2D')
         assert len(tsdata.to_pandas()) == 50
+        tsdata._check_basic_invariants()
+
+        # target_col\extra_feature_col dtype is object(str).
+        df = pd.DataFrame({"value": np.array(['test_value']*100),
+                           "id": np.array(['00']*50 + ['01']*50),
+                           "extra feature": np.array(['test_extra_feature']*100)})
+        df["datetime"] = pd.date_range('1/1/2019', periods=100)
+        df.loc[50:100, "datetime"] = pd.date_range('1/1/2019', periods=50)
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                       extra_feature_col=["extra feature"], id_col="id")
+        with pytest.raises(RuntimeError):
+            tsdata.resample('2S', df.datetime[0], df.datetime[df.shape[0]-1])
+        tsdata._check_basic_invariants()
+
+        # target_col/extra_feature_col dtype is object(numeric).
+        df = get_multi_id_ts_df()
+        df.value = df.value.astype(np.object)
+        df['extra feature'] = df['extra feature'].astype(np.object)
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime", target_col="value",
+                                       extra_feature_col=["extra feature"], id_col="id")
+        before_sampling = tsdata.df.columns
+        tsdata.resample('2S', df.datetime[0], df.datetime[df.shape[0]-1])
+        assert set(before_sampling) == set(tsdata.df.columns)
         tsdata._check_basic_invariants()
 
     def test_tsdataset_split(self):
@@ -833,3 +911,39 @@ class TestTSDataset(ZooTestCase):
         # with pytest.raises(AssertionError):
         #     tsdata.gen_global_feature(settings="minimal")\
         #           .gen_rolling_feature(settings="minimal", window_size=5)
+
+    def test_non_pd_datetime(self):
+        df = get_non_dt()
+        tsdata = TSDataset.from_pandas(df, dt_col="datetime",
+                                       target_col="value",
+                                       extra_feature_col="extra feature",
+                                       id_col="id")
+
+        with pytest.raises(AssertionError):
+            tsdata.resample('2D')
+        with pytest.raises(AssertionError):
+            tsdata.gen_dt_feature()
+        with pytest.raises(AssertionError):
+            tsdata.gen_rolling_feature(settings="minimal", window_size=1000)
+
+        tsdata._check_basic_invariants()
+
+    def test_not_aligned(self):
+        df = get_not_aligned_df()
+        tsdata = TSDataset.from_pandas(df, target_col="value",
+                                       dt_col="datetime",
+                                       extra_feature_col="extra feature",
+                                       id_col="id")
+        with pytest.raises(AssertionError):
+            tsdata.roll(lookback=5, horizon=2, id_sensitive=True)
+        tsdata._check_basic_invariants()
+
+    def test_dt_sorted(self):
+        df = pd.DataFrame({"datetime": np.array(['20000101', '20000102', '20000102', '20000101']),
+                           "value": np.array([1.9, 2.3, 2.4, 2.6]),
+                           "id": np.array(['00', '01', '00', '01'])})
+
+        tsdata = TSDataset.from_pandas(df, target_col='value',
+                                       dt_col='datetime')
+        with pytest.raises(RuntimeError):
+            tsdata._check_basic_invariants(strict_check=True)

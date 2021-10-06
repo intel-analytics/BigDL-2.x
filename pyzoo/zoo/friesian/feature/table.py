@@ -15,6 +15,7 @@
 #
 
 import os
+import sys
 import hashlib
 import numpy as np
 from functools import reduce
@@ -25,14 +26,13 @@ from pyspark.sql import Row, Window
 from pyspark.sql.types import IntegerType, ShortType, LongType, FloatType, DecimalType, \
     DoubleType, ArrayType, DataType, StructType, StringType, StructField
 from pyspark.sql.functions import col as pyspark_col, concat, udf, array, broadcast, \
-    lit, rank, monotonically_increasing_id
+    lit, rank, monotonically_increasing_id, row_number, desc
 
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import MinMaxScaler, VectorAssembler, Bucketizer
 
 from zoo.orca import OrcaContext
 from zoo.friesian.feature.utils import *
-
 
 JAVA_INT_MIN = -2147483648
 JAVA_INT_MAX = 2147483647
@@ -568,6 +568,7 @@ class Table:
             for col in col_names_2.difference(col_names_1):
                 self = self.withColumn(col, lit(None).cast(df2.schema[col].dataType))
             return self.unionByName(df2)
+
         if join == "outer":
             return concat_outer
         else:
@@ -622,16 +623,16 @@ class Table:
         if sort_cols is None:
             return self._clone(self.df.dropDuplicates(subset=subset))
         if not isinstance(sort_cols, list):
-                sort_cols = [sort_cols]
+            sort_cols = [sort_cols]
         check_col_exists(self.df, sort_cols)
         if keep == "min":
             window = Window.partitionBy(subset).orderBy(*sort_cols, 'id')
         elif keep == "max":
             window = Window.partitionBy(subset).orderBy(*[self.df[sort_col].desc()
-                                                        for sort_col in sort_cols], 'id')
+                                                          for sort_col in sort_cols], 'id')
         else:
             raise ValueError("keep should be either min or max, but got {}.".format(keep))
-        df = self.df.withColumn('id', monotonically_increasing_id())\
+        df = self.df.withColumn('id', monotonically_increasing_id()) \
             .withColumn('rank', rank().over(window))
         df = df.filter(pyspark_col('rank') == 1).drop('rank', 'id')
         return self._clone(df)
@@ -751,7 +752,9 @@ class FeatureTable(Table):
         """
         return cls(Table._read_csv(paths, delimiter, header, names, dtype))
 
-    def encode_string(self, columns, indices, broadcast=True):
+    def encode_string(self, columns, indices, broadcast=True,
+                      do_split=False, sep=',', sort_for_array=False, keep_most_frequent=False
+                      ):
         """
         Encode columns with provided list of StringIndex.
 
@@ -762,6 +765,15 @@ class FeatureTable(Table):
                Or it can be a dict or a list of dicts. In this case,
                the keys of the dict should be within the categorical column
                and the values are the target ids to be encoded.
+        :param broadcast: bool, whether need to broadcast index when encode string.
+        Default is True.
+        :param do_split: bool, whether need to split column value to array to encode string.
+        Default is False.
+        :param sep: str, a string representing a regular expression to split a column value.
+        Default is ','.
+        :param sort_for_array: bool, whether need to sort array columns. Default is False.
+        :param keep_most_frequent: bool, whether need to keep most frequent value as the
+        column value. Default is False.
 
         :return: A new FeatureTable which transforms categorical features into unique integer
                  values with provided StringIndexes.
@@ -780,8 +792,29 @@ class FeatureTable(Table):
             col_name = columns[i]
             if broadcast:
                 index_tbl.broadcast()
-            data_df = data_df.join(index_tbl.df, col_name, how="left") \
-                .drop(col_name).withColumnRenamed("id", col_name)
+            if not do_split:
+                data_df = data_df.join(index_tbl.df, col_name, how="left") \
+                    .drop(col_name).withColumnRenamed("id", col_name)
+            else:
+                data_df = data_df.withColumn('row_id', F.monotonically_increasing_id())
+                tmp_df = data_df.select('row_id', col_name) \
+                    .withColumn(col_name, F.explode(F.split(F.col(col_name), sep)))
+                tmp_df = tmp_df.join(index_tbl.df, col_name, how="left") \
+                    .filter(F.col("id").isNotNull())
+                tmp_df = tmp_df.select('row_id', F.col("id"))
+                if keep_most_frequent:
+                    tmp_df = tmp_df.groupby('row_id') \
+                        .agg(F.array_sort(F.collect_list(F.col("id")))
+                             .getItem(0).alias("id"))
+                elif sort_for_array:
+                    tmp_df = tmp_df.groupby('row_id') \
+                        .agg(F.array_sort(F.collect_list(F.col("id"))).alias("id"))
+                else:
+                    tmp_df = tmp_df.groupby('row_id') \
+                        .agg(F.collect_list(F.col("id")).alias("id"))
+                data_df = data_df.join(tmp_df, 'row_id', 'left') \
+                    .drop('row_id').drop(col_name).withColumnRenamed("id", col_name)
+
         return FeatureTable(data_df)
 
     def filter_by_frequency(self, columns, min_freq=2):
@@ -852,7 +885,9 @@ class FeatureTable(Table):
         cross_hash_df = FeatureTable(cross_hash_df).hash_encode([cross_col_name], bins, method)
         return cross_hash_df
 
-    def category_encode(self, columns, freq_limit=None, order_by_freq=False):
+    def category_encode(self, columns, freq_limit=None, order_by_freq=False,
+                        do_split=False, sep=',', sort_for_array=False, keep_most_frequent=False,
+                        broadcast=True):
         """
         Category encode the given columns.
 
@@ -864,12 +899,25 @@ class FeatureTable(Table):
         :param order_by_freq: boolean, whether the result StringIndex will assign smaller indices
                to values with more frequencies. Default is False and in this case frequency order
                may not be preserved when assigning indices.
+        :param do_split: bool, whether need to split column value to array to encode string.
+        Default is False.
+        :param sep: str, a string representing a regular expression to split a column value.
+        Default is ','.
+        :param sort_for_array: bool, whether need to sort array columns. Default is False.
+        :param keep_most_frequent: bool, whether need to keep most frequent value as the
+        column value. Default is False.
+        :param broadcast: bool, whether need to broadcast index when encode string.
+        Default is True.
 
         :return: A tuple of a new FeatureTable which transforms categorical features into unique
                  integer values, and a list of StringIndex for the mapping.
         """
-        indices = self.gen_string_idx(columns, freq_limit, order_by_freq)
-        return self.encode_string(columns, indices), indices
+        indices = self.gen_string_idx(columns, freq_limit=freq_limit, order_by_freq=order_by_freq,
+                                      do_split=do_split, sep=sep)
+        return self.encode_string(columns, indices, do_split=do_split, sep=sep,
+                                  sort_for_array=sort_for_array,
+                                  keep_most_frequent=keep_most_frequent,
+                                  broadcast=broadcast), indices
 
     def one_hot_encode(self, columns, sizes=None, prefix=None, keep_original_columns=False):
         """
@@ -962,7 +1010,8 @@ class FeatureTable(Table):
         data_df = data_df.drop("friesian_onehot")
         return FeatureTable(data_df)
 
-    def gen_string_idx(self, columns, freq_limit=None, order_by_freq=False):
+    def gen_string_idx(self, columns, freq_limit=None, order_by_freq=False,
+                       do_split=False, sep=','):
         """
         Generate unique index value of categorical features. The resulting index would
         start from 1 with 0 reserved for unknown features.
@@ -978,6 +1027,10 @@ class FeatureTable(Table):
         :param order_by_freq: boolean, whether the result StringIndex will assign smaller indices
                to values with more frequencies. Default is False and in this case frequency order
                may not be preserved when assigning indices.
+        :param do_split: bool, whether need to split column value to array to generate index.
+        Default is False.
+        :param sep: str, a string representing a regular expression to split a column value.
+         Default is ','.
 
         :return: A StringIndex or a list of StringIndex.
         """
@@ -1007,6 +1060,7 @@ class FeatureTable(Table):
         simple_columns = []
         df_id_list = []
         for c in columns:
+            # union column
             if isinstance(c, dict):
                 if 'src_cols' in c:
                     src_cols = c['src_cols']
@@ -1032,9 +1086,17 @@ class FeatureTable(Table):
                                                     freq_limit, order_by_freq)
                 df_id_list.extend(union_id_list)
                 out_columns.append(col_name)
+            # single column
             else:
-                simple_columns.append(c)
-                out_columns.append(c)
+                if do_split:
+                    dict_df = self.df.select(F.col(c))
+                    dict_df = dict_df.withColumn(c, F.explode(F.split(c, sep)))
+                    split_id_list = generate_string_idx(dict_df, [c], freq_limit, order_by_freq)
+                    df_id_list.extend(split_id_list)
+                    out_columns.append(c)
+                else:
+                    simple_columns.append(c)
+                    out_columns.append(c)
         if simple_columns:
             simple_df_id_list = generate_string_idx(self.df, simple_columns,
                                                     freq_limit, order_by_freq)
@@ -1171,11 +1233,13 @@ class FeatureTable(Table):
                 np_max = np.array(c_max)
                 normalized = (np_x - np_min) / (np_max - np_min)
                 return normalized.tolist()
+
             return normalize
 
         def normalize_scalar_vector(c_min, c_max):
             def normalize(x):
                 return (x - c_min) / (c_max - c_min)
+
             return normalize
 
         for column in scalar_cols:
@@ -1210,19 +1274,22 @@ class FeatureTable(Table):
         df = add_negative_samples(self.df, item_size, item_col, label_col, neg_num)
         return FeatureTable(df)
 
-    def add_hist_seq(self, cols, user_col, sort_col='time', min_len=1, max_len=100):
+    def add_hist_seq(self, cols, user_col, sort_col='time',
+                     min_len=1, max_len=100, num_seqs=2147483647):
         """
-        Generate a list of item visits in history
+        Add a column of history visits into table.
 
         :param cols: a list of str, columns need to be aggregated
         :param user_col: str, user column.
         :param sort_col: str, sort by sort_col
-        :param min_len: int, minimal length of a history list
-        :param max_len: int, maximal length of a history list
+        :param min_len: int, minimal length of a history seq
+        :param max_len: int, maximal length of a history seq
+        :param num_seqs: int, default is 2147483647, max 4bite integer,
+         it means to to keep all seqs; it only keeps last one if num_seqs=1.
 
         :return: FeatureTable
         """
-        df = add_hist_seq(self.df, cols, user_col, sort_col, min_len, max_len)
+        df = add_hist_seq(self.df, cols, user_col, sort_col, min_len, max_len, num_seqs)
         return FeatureTable(df)
 
     def add_neg_hist_seq(self, item_size, item_history_col, neg_num):
@@ -1283,7 +1350,7 @@ class FeatureTable(Table):
         if isinstance(in_col, str):
             df = self.df.withColumn(out_col, udf_func(pyspark_col(in_col)))
         else:
-            assert isinstance(in_col, list),\
+            assert isinstance(in_col, list), \
                 "in_col must be a single column of a list of columns"
             df = self.df.withColumn(out_col, udf_func(array(in_col)))
         return FeatureTable(df)
@@ -1316,46 +1383,77 @@ class FeatureTable(Table):
         joined_df = self.df.join(table.df, on=on, how=how)
         return FeatureTable(joined_df)
 
-    def add_value_features(self, key_cols, tbl, key, value):
+    def add_value_features(self, columns, dict_tbl, key, value):
         """
          Add features based on key_cols and another key value table,
-         for each col in key_cols, it adds a value_col using key-value pairs from tbl
+         for each col in columns, it adds a value_col using key-value pairs from dict_tbl
 
-         :param key_cols: a list of str
-         :param tbl: Table with only two columns [key, value]
+         :param columns: str or a list of str
+         :param dict_tbl: key value mapping table
          :param key: str, name of key column in tbl
          :param value: str, name of value column in tbl
 
          :return: FeatureTable
          """
-        spark = OrcaContext.get_spark_session()
-        keyvalue_bc = spark.sparkContext.broadcast(dict(tbl.df.distinct().rdd.map(
-            lambda row: (row[0], row[1])).collect()))
-
-        keyvalue_map = keyvalue_bc.value
-
-        def gen_values(items):
-            getvalue = lambda item: keyvalue_map.get(item)
-            if isinstance(items, int):
-                values = getvalue(items)
-            elif isinstance(items, list) and isinstance(items[0], int):
-                values = [getvalue(item) for item in items]
-            elif isinstance(items, list) and isinstance(items[0], list) and isinstance(items[0][0],
-                                                                                       int):
-                values = []
-                for line in items:
-                    line_cats = [getvalue(item) for item in line]
-                    values.append(line_cats)
-            else:
-                raise ValueError('only int, list[int], and list[list[int]] are supported.')
-            return values
-
-        df = self.df
-        for c in key_cols:
-            col_type = df.schema[c].dataType
-            cat_udf = udf(gen_values, col_type)
-            df = df.withColumn(c.replace("item", "category"), cat_udf(pyspark_col(c)))
+        if isinstance(columns, str):
+            columns = [columns]
+        assert isinstance(columns, list), \
+            "columns should be str or a list of str, but get a " + type(columns)
+        df = add_value_features(self.df, columns, dict_tbl.df, key, value)
         return FeatureTable(df)
+
+    def reindex(self, columns=[], index_tbls=[]):
+        """
+        Replace the value using index_dicts for each col in columns, set 0 for default
+
+        :param columns: str of a list of str
+        :param dict_tbls: table or list of tables, each one has a mapping from old index to new one
+
+        :return: FeatureTable
+         """
+        columns = str_to_list(columns, "columns")
+
+        if isinstance(index_tbls, dict):
+            index_tbls = [index_tbls]
+        assert isinstance(index_tbls, list), \
+            "index_dicts should be table or a list of table, but get a " + type(index_tbls)
+        assert len(columns) == len(index_tbls), \
+            "each column of columns should have one corresponding index_dict"
+
+        tbl = FeatureTable(self.df)
+        for i, c in enumerate(columns):
+            tbl = tbl.add_value_features(c, index_tbls[i], key=c, value=c)
+        return tbl
+
+    def gen_reindex_mapping(self, columns=[], freq_limit=10):
+        """
+        Generate a mapping from old index to new one based on popularity count on descending order
+         :param columns: str or a list of str
+         :param freq_limit: int, dict or None. Indices with a count below freq_limit
+               will be omitted. Can be represented as either an integer or dict.
+               For instance, 15, {'col_4': 10, 'col_5': 2} etc. Default is 10,
+
+        :return: a list of FeatureTables, each table has a mapping from old index to new index
+                new index starts from 1, save 0 for default
+         """
+        str_to_list(columns, "columns")
+        if isinstance(freq_limit, int):
+            freq_limit = {col: freq_limit for col in columns}
+        assert isinstance(freq_limit, dict), \
+            "freq_limit should be int or dict, but get a " + type(freq_limit)
+        index_tbls = []
+        for c in columns:
+            c_count = self.select(c).group_by(c, agg={c: "count"}).rename(
+                {"count(" + c + ")": "count"})
+            c_count = c_count.filter(pyspark_col("count") >= freq_limit[c])
+            w = Window.orderBy(desc("count"))
+            index_df = c_count.df.withColumn(c + "_new", row_number().over(w))
+            index_tbl = FeatureTable(index_df).select([c, c + "_new"])
+            index_tbls.append(index_tbl)
+        if isinstance(columns, str):
+            index_tbls = index_tbls[0]
+
+        return index_tbls
 
     def group_by(self, columns=[], agg="count", join=False):
         """
@@ -1798,7 +1896,7 @@ class FeatureTable(Table):
             if isinstance(bin, int):
                 col_max = self.get_stats(column, "max")[column]
                 col_min = self.get_stats(column, "min")[column]
-                bin = np.linspace(col_min, col_max, bin+1, endpoint=True).tolist()
+                bin = np.linspace(col_min, col_max, bin + 1, endpoint=True).tolist()
             elif not isinstance(bin, list):
                 raise ValueError("bins should int, a list of int or dict with column name "
                                  "as the key and int or a list of int as the value")
@@ -1809,7 +1907,7 @@ class FeatureTable(Table):
             # The output of Buckerizer is float, cast to int.
             df_buck = df_buck.withColumn(temp_out_col, pyspark_col(temp_out_col).cast("int"))
             if label is not None:
-                assert isinstance(label, list),\
+                assert isinstance(label, list), \
                     "labels should be a list of str or a dict with column name as the " \
                     "key and a list of str as the value"
                 assert len(label) == len(bin) - 1, \

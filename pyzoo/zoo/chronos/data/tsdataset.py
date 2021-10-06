@@ -26,7 +26,7 @@ from zoo.chronos.data.utils.scale import unscale_timeseries_numpy
 from zoo.chronos.data.utils.resample import resample_timeseries_dataframe
 from zoo.chronos.data.utils.split import split_timeseries_dataframe
 from zoo.chronos.data.utils.utils import _to_list, _check_type,\
-    _check_col_within, _check_col_no_na
+    _check_col_within, _check_col_no_na, _check_is_aligned, _check_dt_is_sorted
 
 from tsfresh.utilities.dataframe_functions import roll_time_series
 from tsfresh.utilities.dataframe_functions import impute as impute_tsfresh
@@ -92,7 +92,8 @@ class TSDataset:
 
         :param df: a pandas dataframe for your raw time series data.
         :param dt_col: a str indicates the col name of datetime
-               column in the input data frame.
+               column in the input data frame, the dt_col must be sorted
+               from past to latest respectively for each id.
         :param target_col: a str or list indicates the col name of target column
                in the input data frame.
         :param id_col: (optional) a str indicates the col name of dataframe id. If
@@ -285,7 +286,18 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
-
+        assert self._is_pd_datetime,\
+            "The time series data does not have a Pandas datetime format\
+            (you can use pandas.to_datetime to convert a string into a datetime format)."
+        from pandas.api.types import is_numeric_dtype
+        type_error_list = [val for val in self.target_col + self.feature_col
+                           if not is_numeric_dtype(self.df[val])]
+        try:
+            for val in type_error_list:
+                self.df[val] = self.df[val].astype(np.float32)
+        except Exception:
+            raise RuntimeError("All the columns of target_col"
+                               "and extra_feature_col should be of numeric type.")
         self.df = self.df.groupby([self.id_col]) \
             .apply(lambda df: resample_timeseries_dataframe(df=df,
                                                             dt_col=self.dt_col,
@@ -321,6 +333,7 @@ class TSDataset:
         | "WEEKDAY": The day of the week of the time stamp, Monday=0, Sunday=6.
         | "WEEKOFYEAR": The ordinal week of the year of the time stamp.
         | "MONTH": The month of the time stamp.
+        | "YEAR": The year of the time stamp.
         | "IS_AWAKE": Bool value indicating whether it belongs to awake hours for the time stamp,
         | True for hours between 6A.M. and 1A.M.
         | "IS_BUSY_HOURS": Bool value indicating whether it belongs to busy hours for the time
@@ -330,6 +343,8 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
+        assert self._is_pd_datetime, "The time series data does not have a Pandas datetime format\
+                    (you can use pandas.to_datetime to convert a string into a datetime format.)"
         features_generated = []
         self.df = generate_dt_features(input_df=self.df,
                                        dt_col=self.dt_col,
@@ -344,6 +359,7 @@ class TSDataset:
         '''
         Generate per-time-series feature for each time series.
         This method will be implemented by tsfresh.
+        Make sure that the specified column name does not contain '__'.
 
         TODO: relationship with scale should be figured out.
 
@@ -397,6 +413,7 @@ class TSDataset:
         '''
         Generate aggregation feature for each sample.
         This method will be implemented by tsfresh.
+        Make sure that the specified column name does not contain '__'.
 
         TODO: relationship with scale should be figured out.
 
@@ -420,6 +437,8 @@ class TSDataset:
         else:
             default_fc_parameters = settings
 
+        assert window_size < self.df.groupby(self.id_col).size().min() + 1, "gen_rolling_feature \
+            should have a window_size smaller than shortest time series length."
         df_rolled = roll_time_series(self.df,
                                      column_id=self.id_col,
                                      column_sort=self.dt_col,
@@ -508,6 +527,9 @@ class TSDataset:
         >>> print(x.shape, y.shape) # x.shape = (1, 1, 6) y.shape = (1, 1, 2)
 
         '''
+        if id_sensitive and not _check_is_aligned(self.df, self.id_col, self.dt_col):
+            raise AssertionError("The time series data should be\
+                 aligned if id_sensitive is set to True.")
         feature_col = _to_list(feature_col, "feature_col") if feature_col is not None \
             else self.feature_col
         target_col = _to_list(target_col, "target_col") if target_col is not None \
@@ -751,7 +773,7 @@ class TSDataset:
         '''
         return unscale_timeseries_numpy(data, self.scaler, self.scaler_index)
 
-    def _check_basic_invariants(self):
+    def _check_basic_invariants(self, strict_check=False):
         '''
         This function contains a bunch of assertions to make sure strict rules(the invariants)
         for the internal dataframe(self.df) must stands. If not, clear and user-friendly error
@@ -778,3 +800,7 @@ class TSDataset:
         # check no n/a in critical col
         _check_col_no_na(self.df, self.dt_col)
         _check_col_no_na(self.df, self.id_col)
+
+        # check dt sorted
+        if strict_check:
+            _check_dt_is_sorted(self.df, self.dt_col)

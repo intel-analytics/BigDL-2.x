@@ -22,7 +22,7 @@ import multiprocessing
 
 logger = logging.getLogger(__name__)
 
-
+from bigdl.util.common import get_node_and_core_number
 from zoo.orca import OrcaContext
 # from zoo.orca.learn.ray_estimator import Estimator as OrcaRayEstimator
 from zoo.common.utils import enable_multi_fs_load, enable_multi_fs_save
@@ -44,7 +44,7 @@ class Estimator(object):
                    workers_per_node=1,
                    compile_args_creator=None,
                    backend="tf2",
-                   cpu_binding=True
+                   cpu_binding=False
                    ):
         """
         Create an Estimator for tensorflow 2.
@@ -61,7 +61,7 @@ class Estimator(object):
                dictionary like {"optimizer": tf.keras.optimizers.SGD(lr), "loss":
                "mean_squared_error", "metrics": ["mean_squared_error"]}
         :param backend: (string) You can choose "horovod" or "tf2" as backend. Default: `tf2`.
-        :param cpu_binding: (bool) Whether to binds threads to specific CPUs. Default: True
+        :param cpu_binding: (bool) Whether to binds threads to specific CPUs. Default: False
         """
         if backend in {"tf2", "horovod"}:
             from zoo.orca.learn.tf2.ray_estimator import TensorFlow2Estimator
@@ -476,16 +476,9 @@ class SparkTFEstimator():
         self.verbose = verbose
 
         sc = OrcaContext.get_spark_context()
-        if re.match(r"local\[(.*)\]", sc.master):
-            local_symbol = re.match(r"local\[(.*)\]", sc.master).group(1)
-            if local_symbol == "*":
-                local_cores = multiprocessing.cpu_count()
-            else:
-                local_cores = int(local_symbol)
-            self.num_workers = local_cores // workers_per_node
-        else:
-            self.num_workers = int(sc.getConf().get("spark.executor.instances")) * workers_per_node
-        self.part_nums = self.num_workers * 2
+
+        num_node, _ = get_node_and_core_number()
+        self.num_workers = num_node * workers_per_node
         self.model_weights = None
 
         if "batch_size" in self.config:

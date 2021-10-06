@@ -1,19 +1,19 @@
 #!/bin/bash
 set -x
-export FLINK_JOB_MANAGER_IP=flink-jobmanager
+
 cd /ppml/trusted-realtime-ml/redis
 export SGX_MEM_SIZE=16G
-./init-redis.sh
+test "$SGX_MODE" = sgx && ./init.sh
 echo "redis initiated"
 
 
 cd /ppml/trusted-realtime-ml/java
 export SGX_MEM_SIZE=32G
-./init-java.sh
+test "$SGX_MODE" = sgx && ./init.sh
 echo "java initiated"
 
 
-export REDIS_HOST=$LOCAL_IP
+export REDIS_HOST=redis-service
 ./init-cluster-serving.sh
 echo "cluster serving initiated"
 
@@ -36,8 +36,8 @@ echo "http-frontend started"
 while ! nc -z $LOCAL_IP 10020; do
   sleep 1
 done
-./start-cluster-serving-job.sh &
+./start-cluster-serving-job.sh
 echo "cluster-serving-job started"
 
 
-bash /ppml/trusted-realtime-ml/check-status.sh
+bash /ppml/trusted-realtime-ml/check-status.sh redis frontend serving

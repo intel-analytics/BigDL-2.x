@@ -1,31 +1,51 @@
 # stage.1 graphene
 FROM ubuntu:18.04 AS graphene
-
+ARG GRAPHENE_BRANCH=branch-210913
 RUN env DEBIAN_FRONTEND=noninteractive apt-get update && \
-    env DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf bison build-essential coreutils gawk git libcurl4-openssl-dev libprotobuf-c-dev protobuf-c-compiler python3-protobuf wget
+    env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        autoconf bison build-essential coreutils gawk git wget \
+        python3 python3-pip libcurl4-openssl-dev \
+        libprotobuf-c-dev protobuf-c-compiler python3-protobuf wget
 RUN git clone https://github.com/analytics-zoo/graphene.git /graphene
 RUN cd /graphene && \
-    git fetch origin branch-0.3 && \
-    git checkout branch-0.3
+    git fetch origin $GRAPHENE_BRANCH && \
+    git checkout $GRAPHENE_BRANCH
+RUN pip3 install ninja meson && \
+    python3 -m pip install toml==0.10.2 click jinja2
 RUN cd /graphene/Pal/src/host/Linux-SGX && \
     git clone https://github.com/intel/SGXDataCenterAttestationPrimitives.git linux-sgx-driver && \
     cd linux-sgx-driver && \
     git checkout DCAP_1.7 && \
     cp -r driver/linux/* .
 RUN cd /graphene && \
-    ISGX_DRIVER_PATH=/graphene/Pal/src/host/Linux-SGX/linux-sgx-driver make -s -j4 SGX=1 WERROR=1 && true
+    make && \
+    ISGX_DRIVER_PATH=/graphene/Pal/src/host/Linux-SGX/linux-sgx-driver make -s -j4 SGX=1 && \
+    meson setup build/ --prefix="/graphene/meson_build_output" \ 
+    --buildtype=release -Ddirect=enabled -Dsgx=enabled  && \
+    ninja -C build/ && \
+    ninja -C build/ install
 RUN for f in $(find /graphene/Runtime -type l); do cp --remove-destination $(realpath $f) $f; done
 
-# stage.2 jdk & scala & spark
+# stage.2 jdk & scala & spark & hadoop
 FROM ubuntu:18.04 as spark
+ARG HTTP_PROXY_HOST
+ARG HTTP_PROXY_PORT
+ARG HTTPS_PROXY_HOST
+ARG HTTPS_PROXY_PORT
 ARG SPARK_VERSION=2.4.6
 ARG JDK_VERSION=8u192
 ARG JDK_URL=your_jdk_url
 ENV SPARK_VERSION	${SPARK_VERSION}
+ENV JAVA_HOME           /opt/jdk$JDK_VERSION
+ENV PATH                ${JAVA_HOME}/bin:${PATH}
+
 RUN apt-get update --fix-missing && \
-    apt-get install -y apt-utils wget unzip patch zip
+    apt-get install -y apt-utils wget unzip patch zip git maven
 ADD rdd.patch /opt/rdd.patch
 ADD shuffle.patch /opt/shuffle.patch
+ADD spark-core-utils.patch /opt/spark-core-utils.patch
+ADD hadoop-common-shell.patch /opt/hadoop-common-shell.patch
+
 # java
 RUN wget $JDK_URL && \
     gunzip jdk-$JDK_VERSION-linux-x64.tar.gz && \
@@ -50,6 +70,47 @@ RUN cd /opt && \
     patch spark-${SPARK_VERSION}/python/pyspark/shuffle.py /opt/shuffle.patch && \
     cd spark-${SPARK_VERSION}/python && \
     zip -r lib/pyspark.zip pyspark
+# spark core modification
+# org.apache.spark.util.Utils to disable chmod fork
+RUN cd /opt && \
+    git clone https://github.com/apache/spark.git && \
+    cd spark && \
+    git checkout tags/v2.4.6 -b branch-2.4.6 && \
+    cd core && \
+    patch src/main/scala/org/apache/spark/util/Utils.scala /opt/spark-core-utils.patch && \
+    export MAVEN_OPTS="-Xmx2g -XX:ReservedCodeCacheSize=512m \
+        -Dhttp.proxyHost=$HTTP_PROXY_HOST \
+        -Dhttp.proxyPort=$HTTP_PROXY_PORT \
+        -Dhttps.proxyHost=$HTTPS_PROXY_HOST \
+        -Dhttps.proxyPort=$HTTPS_PROXY_PORT" && \
+    mvn -DskipTests=true clean package && \
+    ls /opt/spark/core/target/spark-core_2.11-2.4.6.jar
+# hadoop
+# org.apache.hadoop.util.Shell.java to disable setsid
+RUN cd /opt && \
+    apt-get install -y build-essential && \
+    wget https://github.com/protocolbuffers/protobuf/releases/download/v2.5.0/protobuf-2.5.0.tar.bz2 && \
+    tar jxvf protobuf-2.5.0.tar.bz2 && \
+    cd protobuf-2.5.0 && \
+    ./configure && \
+    make && \
+    make check && \
+    export LD_LIBRARY_PATH=/usr/local/lib && \
+    make install && \
+    protoc --version && \
+    cd /opt && \
+    git clone https://github.com/apache/hadoop.git && \
+    cd hadoop && \
+    git checkout tags/release-2.7.3-RC2 -b branch-2.7.3-RC2 && \
+    cd hadoop-common-project/hadoop-common && \
+    patch src/main/java/org/apache/hadoop/util/Shell.java /opt/hadoop-common-shell.patch && \
+    export MAVEN_OPTS="-Xmx2g -XX:ReservedCodeCacheSize=512m \
+        -Dhttp.proxyHost=$HTTP_PROXY_HOST \
+        -Dhttp.proxyPort=$HTTP_PROXY_PORT \
+        -Dhttps.proxyHost=$HTTPS_PROXY_HOST \
+        -Dhttps.proxyPort=$HTTPS_PROXY_PORT" && \
+    mvn -DskipTests=true clean package && \
+    ls /opt/hadoop/hadoop-common-project/hadoop-common/target/hadoop-common-2.7.3.jar
 
 # stage.3 bigdl
 FROM ubuntu:18.04 AS bigdl
@@ -109,7 +170,7 @@ ENV SPARK_VERSION			${SPARK_VERSION}
 ENV SPARK_HOME				/ppml/trusted-big-data-ml/work/spark-${SPARK_VERSION}
 ENV ANALYTICS_ZOO_HOME			/ppml/trusted-big-data-ml/work/analytics-zoo-${ANALYTICS_ZOO_VERSION}
 ENV JAVA_HOME				/opt/jdk8
-ENV PATH				${JAVA_HOME}/bin:${PATH}
+ENV PATH				/graphene/meson_build_output/bin:${JAVA_HOME}/bin:${PATH}
 ENV LOCAL_IP				127.0.0.1
 ENV SGX_MEM_SIZE			64G
 ENV SPARK_MASTER_IP			127.0.0.1
@@ -128,7 +189,9 @@ RUN mkdir -p /graphene && \
     mkdir -p /graphene/python && \
     mkdir -p /graphene/Tools && \
     mkdir -p /graphene/Pal/src && \
+    mkdir -p /graphene/meson_build_output && \
     mkdir -p /ppml/trusted-big-data-ml/work && \
+    mkdir -p /ppml/trusted-big-data-ml/work/lib && \
     mkdir -p /ppml/trusted-big-data-ml/work/keys && \
     mkdir -p /ppml/trusted-big-data-ml/work/password && \
     mkdir -p /ppml/trusted-big-data-ml/work/data && \
@@ -145,11 +208,13 @@ COPY --from=graphene /graphene/Runtime/ /graphene/Runtime
 COPY --from=graphene /graphene/python /graphene/python
 COPY --from=graphene /graphene/Pal /graphene/Pal
 COPY --from=graphene /graphene/Pal/src/host/Linux-SGX/generated_offsets.py /graphene/python/
-COPY --from=graphene /graphene/Examples/common_tools/get_deps.sh /graphene/get_deps.sh
 COPY --from=graphene /graphene/Tools/argv_serializer /graphene/Tools
+COPY --from=graphene /graphene/meson_build_output /graphene/meson_build_output
 COPY --from=spark /opt/jdk  /opt/jdk8
 COPY --from=spark /opt/scala-2.11.8  /opt/scala-2.11.8
 COPY --from=spark /opt/spark-${SPARK_VERSION} /ppml/trusted-big-data-ml/work/spark-${SPARK_VERSION}
+COPY --from=spark /opt/spark/core/target/spark-core_2.11-2.4.6.jar /opt/spark-core_2.11-2.4.6.jar
+COPY --from=spark /opt/hadoop/hadoop-common-project/hadoop-common/target/hadoop-common-2.7.3.jar /opt/hadoop-common-2.7.3.jar
 COPY --from=bigdl /BigDL/dist/lib/bigdl-*-jar-with-dependencies.jar /ppml/trusted-big-data-ml/work/bigdl-jar-with-dependencies.jar
 COPY --from=bigdl /BigDL/dist/lib/bigdl-*-python-api.zip /ppml/trusted-big-data-ml/work/bigd-python-api.zip
 COPY --from=bigdl /BigDL/pyspark/bigdl/examples /ppml/trusted-big-data-ml/work/examples/bigdl
@@ -178,6 +243,8 @@ RUN apt-get install -y python3-minimal && \
     pip install --no-cache-dir filelock && \
     pip install --no-cache-dir tensorflow_datasets==3.2.0 h5py==2.10.0 && \
     pip install --no-cache-dir pyarrow && \
+    pip install --no-cache-dir ninja meson && \
+    python3 -m pip install toml==0.10.2 click jinja2 && \
     python3 -m ipykernel.kernelspec
 
 ADD ./bash.manifest.template /ppml/trusted-big-data-ml/bash.manifest.template
@@ -194,15 +261,22 @@ ADD ./check-status.sh /ppml/trusted-big-data-ml/check-status.sh
 ADD ./tracker.py ./tracker.py
 ADD ./start-scripts /ppml/trusted-big-data-ml/work/start-scripts
 ADD ./_dill.py.patch ./_dill.py.patch
+ADD ./python-uuid.patch ./python-uuid.patch
 
 RUN jar -uf /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/analytics-zoo-bigdl_0.13.0-spark_2.4.6-0.12.0-SNAPSHOT-jar-with-dependencies.jar ./tracker.py && \
     patch /usr/local/lib/python3.6/dist-packages/dill/_dill.py ./_dill.py.patch && \
+    patch /usr/lib/python3.6/uuid.py ./python-uuid.patch && \
     rm $SPARK_HOME/jars/flatbuffers*.jar && \
     wget -P $SPARK_HOME/jars https://repo1.maven.org/maven2/com/google/flatbuffers/flatbuffers-java/1.9.0/flatbuffers-java-1.9.0.jar && \
     rm $SPARK_HOME/jars/arrow*.jar &&\
     wget -P $SPARK_HOME/jars https://repo1.maven.org/maven2/org/apache/arrow/arrow-format/0.11.0/arrow-format-0.11.0.jar && \
     wget -P $SPARK_HOME/jars https://repo1.maven.org/maven2/org/apache/arrow/arrow-memory/0.11.0/arrow-memory-0.11.0.jar && \
     wget -P $SPARK_HOME/jars https://repo1.maven.org/maven2/org/apache/arrow/arrow-vector/0.11.0/arrow-vector-0.11.0.jar && \
+    rm $SPARK_HOME/jars/spark-core_2.11-2.4.6.jar && \
+    rm $SPARK_HOME/jars/hadoop-common-2.7.3.jar && \
+    mv /opt/spark-core_2.11-2.4.6.jar $SPARK_HOME/jars/spark-core_2.11-2.4.6.jar && \
+    mv /opt/hadoop-common-2.7.3.jar $SPARK_HOME/jars/hadoop-common-2.7.3.jar && \
+    wget -P /ppml/trusted-big-data-ml/work/lib https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-data/libhadoop.so && \
     chmod a+x /ppml/trusted-big-data-ml/init.sh && \
     chmod a+x /ppml/trusted-big-data-ml/clean.sh && \
     chmod a+x /ppml/trusted-big-data-ml/start-spark-local-train-sgx.sh && \
@@ -222,5 +296,6 @@ RUN jar -uf /ppml/trusted-big-data-ml/work/analytics-zoo-0.12.0-SNAPSHOT/lib/ana
     chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-spark-local-orca-data-sgx.sh && \
     chmod a+x /ppml/trusted-big-data-ml/work/start-scripts/start-spark-local-orca-tf-text.sh 
 
-    
-
+ENV PYTHONPATH	${PYTHONPATH}:/graphene/meson_build_output/lib/python3.6/site-packages
+ENV LC_ALL	C.UTF-8
+ENV LANG	C.UTF-8

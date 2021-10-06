@@ -343,8 +343,8 @@ class TestTFEstimator(TestCase):
             backend="spark")
 
         res = trainer.fit(df, epochs=5, batch_size=4, steps_per_epoch=25,
-                    feature_cols=["feature"],
-                    label_cols=["label"],
+                          feature_cols=["feature"],
+                          label_cols=["label"],
                           validation_data=df,
                           validation_steps=1)
         print("start saving")
@@ -369,11 +369,11 @@ class TestTFEstimator(TestCase):
     #     spark = OrcaContext.get_spark_session()
     #     from pyspark.ml.linalg import DenseVector
     #     df = rdd_with_empty.map(lambda x: (DenseVector(np.random.randn(1,).astype(np.float)),
-    #                                        int(np.random.randint(0, 1, size=()))))\
+    #                                        int(np.random.randint(0, 2, size=()))))\
     #         .toDF(["feature", "label"])
     #
     #     config = {
-    #         "lr": 0.8
+    #         "lr": 0.2
     #     }
     #     trainer = Estimator.from_keras(
     #         model_creator=model_creator,
@@ -386,8 +386,8 @@ class TestTFEstimator(TestCase):
     #     trainer.fit(df, epochs=1, batch_size=4, steps_per_epoch=25,
     #                 feature_cols=["feature"],
     #                 label_cols=["label"])
-    #     # trainer.evaluate(df, batch_size=4, num_steps=25, feature_cols=["feature"],
-    #     #                  label_cols=["label"])
+    #     trainer.evaluate(df, batch_size=4, num_steps=25, feature_cols=["feature"],
+    #                      label_cols=["label"])
     #     trainer.predict(df, feature_cols=["feature"]).collect()
 
     # def test_pandas_dataframe(self):

@@ -72,7 +72,7 @@ result = est.evaluate(data=df, batch_size=8, num_steps=2,
 
 print("result: ", result)
 
-pred_df = est.predict(data=df, batch_size=8)
+pred_df = est.predict(data=df, batch_size=8, feature_cols=['user', 'item'])
 
 pred_df.show()
 

@@ -199,9 +199,9 @@ class SparkRunner:
         self.backend = backend
         if self.backend == "tf-distributed":
             if mode == "fit" or mode == "evaluate":
-                self.setup_distributed(size)
+                self.setup_distributed(self.mode)
 
-    def setup_distributed(self, size):
+    def setup_distributed(self, mode):
         """Sets up TensorFLow distributed environment and initializes the model.
         Args:
             urls (str): the URLs that each node uses to connect.
@@ -227,10 +227,16 @@ class SparkRunner:
         os.environ["no_proxy"] = ",".join(ips)
 
         from tensorflow.python.distribute import distribution_strategy_context as ds_context
-        self.strategy = ds_context.get_strategy()
-        print("stragety: ", self.strategy)
-        if not self.strategy:
+        # self.strategy = ds_context.get_strategy()
+        # print("stragety: ", self.strategy)
+        # if not self.strategy:
+        #     self.strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
+        if mode == "fit":
             self.strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
+        else:
+            from tensorflow.python.distribute import distribution_strategy_context as ds_context
+            self.strategy = ds_context.get_strategy()
+
         # with self.strategy.scope():
         #     model = self.model_creator(self.config)
 

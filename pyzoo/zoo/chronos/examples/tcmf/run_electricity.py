@@ -16,7 +16,7 @@
 import argparse
 from zoo.orca import init_orca_context, stop_orca_context
 import numpy as np
-from zoo.chronos.model.forecast.tcmf_forecaster import TCMFForecaster
+from zoo.chronos.forecaster.tcmf_forecaster import TCMFForecaster
 import tempfile
 import logging
 import sys
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     target_value = dict({"y": target_data})
 
     # evaluate with prediction results
-    from zoo.automl.common.metrics import Evaluator
+    from zoo.orca.automl.metrics import Evaluator
     evaluate_mse = Evaluator.evaluate("mse", target_data, yhat)
 
     # You can also evaluate directly without prediction results.
