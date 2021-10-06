@@ -75,5 +75,3 @@ print("result: ", result)
 pred_df = est.predict(data=df, batch_size=8, feature_cols=['user', 'item'])
 
 pred_df.show()
-
-est.save_keras_model(path="hdfs://172.16.0.105:8020/user/root/jwang/test.model")
