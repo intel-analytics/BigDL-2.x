@@ -477,8 +477,14 @@ class SparkTFEstimator():
 
         sc = OrcaContext.get_spark_context()
 
-        num_node, _ = get_node_and_core_number()
+        num_node, num_core = get_node_and_core_number()
         self.num_workers = num_node * workers_per_node
+
+        if not "inter_op_parallelism"  in self.config:
+            self.config["inter_op_parallelism"] = 1
+        if not "intra_op_parallelism" in self.config:
+            self.config["intra_op_parallelism"] = num_core // workers_per_node
+        
         self.model_weights = None
 
         if "batch_size" in self.config:

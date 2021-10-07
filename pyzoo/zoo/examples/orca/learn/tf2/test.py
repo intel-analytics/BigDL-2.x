@@ -33,7 +33,7 @@ def create_model(config):
     return model
 
 
-model = create_model()
+# model = create_model()
 sc = init_orca_context(cluster_mode="yarn",
                        cores=2,
                        num_nodes=2,

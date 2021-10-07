@@ -197,9 +197,18 @@ class SparkRunner:
         self.size = size
         self.mode = mode
         self.backend = backend
+        self.setup()
         if self.backend == "tf-distributed":
             if mode == "fit" or mode == "evaluate":
                 self.setup_distributed(self.mode)
+
+    def setup(self):
+        import tensorflow as tf
+        tf.config.threading.set_inter_op_parallelism_threads(self.inter_op_parallelism)
+        tf.config.threading.set_intra_op_parallelism_threads(self.intra_op_parallelism)
+        os.environ["KMP_BLOCKING_TIME"] = self.config.get("KMP_BLOCKING_TIME",
+                                                          os.environ.get("KMP_BLOCKING_TIME", "0"))
+
 
     def setup_distributed(self, mode):
         """Sets up TensorFLow distributed environment and initializes the model.
