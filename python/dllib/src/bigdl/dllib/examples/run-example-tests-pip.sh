@@ -9,6 +9,12 @@ clear_up() {
 echo "#1 start example test for keras mnist_cnn"
 start=$(date "+%s")
 
+rm -f /tmp/mnist/*
+wget -nv $FTP_URI/analytics-zoo-data/mnist/train-labels-idx1-ubyte.gz -P /tmp/mnist
+wget -nv $FTP_URI/analytics-zoo-data/mnist/train-images-idx3-ubyte.gz -P /tmp/mnist
+wget -nv $FTP_URI/analytics-zoo-data/mnist/t10k-labels-idx1-ubyte.gz -P /tmp/mnist
+wget -nv $FTP_URI/analytics-zoo-data/mnist/t10k-images-idx3-ubyte.gz -P /tmp/mnist
+
 # Run the example
 export SPARK_DRIVER_MEMORY=2g
 python ${BIGDL_ROOT}/python/dllib/src/bigdl/dllib/examples/keras/mnist_cnn.py
