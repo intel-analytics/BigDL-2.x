@@ -23,9 +23,15 @@ class LSTMModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, layer_num, dropout, output_dim):
         super(LSTMModel, self).__init__()
         self.hidden_dim = hidden_dim
+        if isinstance(self.hidden_dim, int):
+            self.hidden_dim = [self.hidden_dim]*layer_num
         self.layer_num = layer_num
-        self.lstm = nn.LSTM(input_dim, hidden_dim, layer_num, dropout=dropout, batch_first=True)
-        self.fc = nn.Linear(hidden_dim, output_dim)
+        lstm_list = []
+        for layer in range(self.layer_num):
+            lstm_list.append(nn.LSTM(input_dim, self.hidden_dim[layer], 1, dropout=dropout, batch_first=True))
+            input_dim = self.hidden_dim[layer]
+        self.lstm = nn.ModuleList(lstm_list)
+        self.fc = nn.Linear(self.hidden_dim[-1], output_dim)
         self.init_weights()
 
     def init_weights(self):
@@ -38,10 +44,9 @@ class LSTMModel(nn.Module):
                 nn.init.orthogonal_(param)
 
     def forward(self, input_seq):
-        lstm_out, hidden = self.lstm(input_seq)
-        # reshaping the outputs to feed in fully connected layer
-        # out = lstm_out[-1].contiguous().view(-1, self.hidden_dim)
-        # out = self.linear(out, len(input_seq), -1)
+        lstm_out = input_seq
+        for layer in range(self.layer_num):
+            lstm_out, _ = self.lstm[layer](lstm_out)
         out = self.fc(lstm_out[:, -1, :])
         out = out.view(out.shape[0], 1, out.shape[1])
         return out
