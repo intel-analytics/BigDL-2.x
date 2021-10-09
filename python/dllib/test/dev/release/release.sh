@@ -32,7 +32,7 @@ if (( $# < 1)); then
 fi
 
 platform=$1
-profiles=${*:1}
+profiles=${*:2}
 
 bigdl_version=$(cat $BIGDL_DIR/python/version.txt | head -1)
 
