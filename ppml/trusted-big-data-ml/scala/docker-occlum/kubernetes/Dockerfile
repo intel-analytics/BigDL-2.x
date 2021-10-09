@@ -23,7 +23,7 @@ RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SP
     mv /opt/spark-${SPARK_VERSION}-bin-hadoop2.7 /opt/spark && \
     rm /opt/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     cp -r /opt/spark/examples /bin/examples && \
-    cp -r /opt/spark/kubernetes/tests /opt/spark/tests && \
+    cp -r /opt/spark/kubernetes/tests /opt/spark/tests
 
 # Remove fork with libhadoop.so and spark-network-common_2.12-3.0.0.jar
 RUN wget https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-data/libhadoop.so -P /lib/ && \
