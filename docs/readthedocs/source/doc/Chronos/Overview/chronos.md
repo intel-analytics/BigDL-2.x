@@ -155,6 +155,25 @@ anomaly_detector.fit(x)
 ```
 View [TSDataset API Doc](../../PythonAPI/Chronos/tsdataset.html#) for more details. 
 
+##### **4.7 Built-in Dataset**
+
+`Built-in Dataset` supports the function of data downloading, preprocessing, and returning to the tsdata object of the public data set.
+
+```eval_rst
+.. note::
+    Currently we support `nyc_taxi <https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv>`__, `fsi <https://github.com/CNuge/kaggle-code/raw/master/stock_data/individual_stocks_5yr.zip>`__, `network_traffic <http://mawi.wide.ad.jp/~agurim/dataset/>`__, `AIOps <http://clusterdata2018pubcn.oss-cn-beijing.aliyuncs.com/machine_usage.tar.gz>`__.
+```
+```python
+from zoo.chronos.data.repo_dataset import get_public_dataset
+
+name = 'nyc_taxi'
+tsdata_train, tsdata_val ,\
+    tsdata_test = get_public_dataset(name=name,
+                                     with_split=True,
+                                     val_ratio=0.1,
+                                     test_ratio=0.1)
+```
+
 ---
 ### **5 Forecasting** 
 
@@ -518,12 +537,16 @@ f.predict(test_tsdata_xshards, ...)
     - [Use AutoLSTM on nyc taxi dataset](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/auto_model/autolstm_nyc_taxi.py)
     - [Use AutoProphet on nyc taxi dataset](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/auto_model/autoprophet_nyc_taxi.py)
     - [High dimension time series forecasting with Chronos TCMFForecaster](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/tcmf/run_electricity.py)
+    - [Use distributed training with Chronos Seq2Seq Forecaster](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/distributed/distributed_training_network_traffic.py)
+    - [Use ONNXRuntime to accelerate the inference of AutoTSEstimator](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/onnx/onnx_autotsestimator_nyc_taxi.py)
+    - [Use ONNXRuntime to accelerate the inference of Seq2SeqForecaster](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/onnx/onnx_forecaster_network_traffic.py)
     - [Generate synthetic data with DPGANSimulator in a data-driven fashion](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/examples/simulator)
 - Use cases
     - [Unsupervised Anomaly Detection](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised.ipynb)
     - [Unsupervised Anomaly Detection based on Forecasts](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/AIOps/AIOps_anomaly_detect_unsupervised_forecast_based.ipynb)
     - [Stock Price Prediction with LSTM](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/fsi/stock_prediction.ipynb)
     - [Stock Price Prediction with ProphetForecaster and AutoProphet](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/fsi/stock_prediction_prophet.ipynb)
-    - [Network Traffic Forecasting with AutoTSEstimator](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting_experimental.ipynb)
+    - [Network Traffic Forecasting with AutoTSEstimator](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.ipynb)
     - [Network Traffic Forecasting (using multivariate time series data)](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.ipynb)
     - [Network Traffic Forecasting (using multistep time series data)](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster.ipynb)
+    - [Network Traffic Forecasting with customized model](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_customized_model.ipynb)

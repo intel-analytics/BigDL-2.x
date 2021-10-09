@@ -28,9 +28,5 @@ built-in dataset
 
 The built-in data set has data download and preprocessing functions. Just specify the name and path, and the processed tsdata will be returned. 
 
-
-.. note::
-    Currently we support `nyc_taxi <https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv>`__, `fsi <https://github.com/CNuge/kaggle-code/raw/master/stock_data/individual_stocks_5yr.zip>`__, `network_traffic <http://mawi.wide.ad.jp/~agurim/dataset/>`__, `AIOps <http://clusterdata2018pubcn.oss-cn-beijing.aliyuncs.com/machine_usage.tar.gz>`__.
-
 .. automodule:: zoo.chronos.data.repo_dataset
     :members:
