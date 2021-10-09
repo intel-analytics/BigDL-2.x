@@ -28,9 +28,6 @@ RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SP
     echo $'\nlog4j.logger.io.netty=ERROR' >> /opt/spark/conf/log4j.properties
 
 # Remove fork with libhadoop.so and spark-network-common_2.12-3.0.0.jar
-RUN wget -O /opt/spark/jars/spark-network-common_2.12-${SPARK_VERSION}.jar https://master.dl.sourceforge.net/project/analytics-zoo/analytics-zoo-data/spark-network-common_2.12-${SPARK_VERSION}.jar && \
-    mv /opt/spark/jars/spark-network-common_2.12-${SPARK_VERSION}.jar /opt/spark/jars/spark-${SPARK_VERSION}/jars
-
 RUN wget https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-data/libhadoop.so -P /lib/ && \
     rm -f /opt/spark/jars/spark-network-common_2.12-${SPARK_VERSION}.jar && \
     wget -O /opt/spark/jars/spark-network-common_2.12-${SPARK_VERSION}.jar https://master.dl.sourceforge.net/project/analytics-zoo/analytics-zoo-data/spark-network-common_2.12-${SPARK_VERSION}.jar
