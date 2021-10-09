@@ -51,6 +51,10 @@ fi
 
 bigdl_build_command="bash make-dist.sh ${dist_profile}"
 
+echo "Dist BigDL: $bigdl_build_command"
+cd ${BIGDL_DIR}/scala
+$bigdl_build_command
+
 cd $BIGDL_PYTHON_DIR
 sdist_command="python setup.py sdist"
 echo "packing source code: ${sdist_command}"
