@@ -18,14 +18,12 @@ ENV SPARK_VERSION	${SPARK_VERSION}
 
 # Download & prepare Spark 3.0.0
 WORKDIR /opt
-RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.2.tgz -P /opt/ && \
-    tar -zxvf /opt/spark-${SPARK_VERSION}-bin-hadoop3.2.tgz && \
-    mv /opt/spark-${SPARK_VERSION}-bin-hadoop3.2 /opt/spark && \
-    rm /opt/spark-${SPARK_VERSION}-bin-hadoop3.2.tgz && \
+RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz -P /opt/ && \
+    tar -zxvf /opt/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
+    mv /opt/spark-${SPARK_VERSION}-bin-hadoop2.7 /opt/spark && \
+    rm /opt/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     cp -r /opt/spark/examples /bin/examples && \
     cp -r /opt/spark/kubernetes/tests /opt/spark/tests && \
-    cp /opt/spark/conf/log4j.properties.template /opt/spark/conf/log4j.properties && \
-    echo $'\nlog4j.logger.io.netty=ERROR' >> /opt/spark/conf/log4j.properties
 
 # Remove fork with libhadoop.so and spark-network-common_2.12-3.0.0.jar
 RUN wget https://sourceforge.net/projects/analytics-zoo/files/analytics-zoo-data/libhadoop.so -P /lib/ && \
