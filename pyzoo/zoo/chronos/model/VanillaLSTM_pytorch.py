@@ -23,12 +23,16 @@ class LSTMModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, layer_num, dropout, output_dim):
         super(LSTMModel, self).__init__()
         self.hidden_dim = hidden_dim
+        self.dropout = dropout
         if isinstance(self.hidden_dim, int):
             self.hidden_dim = [self.hidden_dim]*layer_num
+        if isinstance(self.dropout, (float, int)):
+            self.dropout = [self.dropout]*layer_num
         self.layer_num = layer_num
         lstm_list = []
         for layer in range(self.layer_num):
-            lstm_list.append(nn.LSTM(input_dim, self.hidden_dim[layer], 1, dropout=dropout, batch_first=True))
+            lstm_list.append(nn.LSTM(input_dim, self.hidden_dim[layer], 
+                                     1, dropout=self.dropout[layer], batch_first=True))
             input_dim = self.hidden_dim[layer]
         self.lstm = nn.ModuleList(lstm_list)
         self.fc = nn.Linear(self.hidden_dim[-1], output_dim)
