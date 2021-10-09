@@ -27,7 +27,7 @@ class LSTMModel(nn.Module):
         self.layer_num = layer_num
         lstm_list = []
         for layer in range(self.layer_num):
-            lstm_list.append(nn.LSTM(input_dim, self.hidden_dim[layer], 
+            lstm_list.append(nn.LSTM(input_dim, self.hidden_dim[layer],
                                      1, dropout=self.dropout[layer], batch_first=True))
             input_dim = self.hidden_dim[layer]
         self.lstm = nn.ModuleList(lstm_list)
@@ -53,9 +53,9 @@ class LSTMModel(nn.Module):
 
 
 def model_creator(config):
-    hidden_dim=config.get("hidden_dim", 32)
-    dropout=config.get("dropout", 0.2)
-    layer_num=config.get("layer_num", 2)
+    hidden_dim = config.get("hidden_dim", 32)
+    dropout = config.get("dropout", 0.2)
+    layer_num = config.get("layer_num", 2)
     if isinstance(hidden_dim, list):
         assert len(hidden_dim) == layer_num, \
             "length of hidden_dim should be equal to layer_num"
