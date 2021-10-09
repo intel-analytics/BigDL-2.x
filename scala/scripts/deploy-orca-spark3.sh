@@ -51,7 +51,7 @@ fi
 
 # Append Spark platform variable to bigdl artifact name and spark-version artifact name
 mv orca/pom.xml orca/pom.xml.origin
-cat orca/pom.xml.origin | sed 's/<artifactId>bigdl-orca<\/artifactId>/<artifactId>bigdl-orca-${SPARK_PLATFORM}<\/artifactId>/'
+cat orca/pom.xml.origin | sed 's/<artifactId>bigdl-orca<\/artifactId>/<artifactId>bigdl-orca-${SPARK_PLATFORM}<\/artifactId>/' > orca/pom.xml
 function deploy {
     mvn clean install -DskipTests -P sign -Dspark.version=$1 -DSPARK_PLATFORM=$2 $3
     cd orca && mvn deploy -DskipTests -P sign -Dspark.version=$1 -DSPARK_PLATFORM=$2 $3 && cd ..
