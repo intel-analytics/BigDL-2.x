@@ -155,7 +155,7 @@ anomaly_detector.fit(x)
 ```
 View [TSDataset API Doc](../../PythonAPI/Chronos/tsdataset.html#) for more details. 
 
-##### **4.7 Built-in Dataset**
+#### **4.7 Built-in Dataset**
 
 `Built-in Dataset` supports the function of data downloading, preprocessing, and returning to the tsdata object of the public data set.
 
@@ -549,4 +549,4 @@ f.predict(test_tsdata_xshards, ...)
     - [Network Traffic Forecasting with AutoTSEstimator](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_forecasting.ipynb)
     - [Network Traffic Forecasting (using multivariate time series data)](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_model_forecasting.ipynb)
     - [Network Traffic Forecasting (using multistep time series data)](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_multivariate_multistep_tcnforecaster.ipynb)
-    - [Network Traffic Forecasting with customized model](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_customized_model.ipynb)
+    - [Network Traffic Forecasting with Customized Model](https://github.com/intel-analytics/analytics-zoo/blob/master/pyzoo/zoo/chronos/use-case/network_traffic/network_traffic_autots_customized_model.ipynb)
