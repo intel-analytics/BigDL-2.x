@@ -24,10 +24,6 @@ class LSTMModel(nn.Module):
         super(LSTMModel, self).__init__()
         self.hidden_dim = hidden_dim
         self.dropout = dropout
-        if isinstance(self.hidden_dim, int):
-            self.hidden_dim = [self.hidden_dim]*layer_num
-        if isinstance(self.dropout, (float, int)):
-            self.dropout = [self.dropout]*layer_num
         self.layer_num = layer_num
         lstm_list = []
         for layer in range(self.layer_num):
@@ -57,10 +53,23 @@ class LSTMModel(nn.Module):
 
 
 def model_creator(config):
+    hidden_dim=config.get("hidden_dim", 32)
+    dropout=config.get("dropout", 0.2)
+    layer_num=config.get("layer_num", 2)
+    if isinstance(hidden_dim, list):
+        assert len(hidden_dim) == layer_num, \
+            "length of hidden_dim should be equal to layer_num"
+    if isinstance(dropout, list):
+        assert len(dropout) == layer_num, \
+            "length of dropout should be equal to layer_num"
+    if isinstance(hidden_dim, int):
+        hidden_dim = [hidden_dim]*layer_num
+    if isinstance(dropout, (float, int)):
+        dropout = [dropout]*layer_num
     return LSTMModel(input_dim=config["input_feature_num"],
-                     hidden_dim=config.get("hidden_dim", 32),
-                     layer_num=config.get("layer_num", 2),
-                     dropout=config.get("dropout", 0.2),
+                     hidden_dim=hidden_dim,
+                     layer_num=layer_num,
+                     dropout=dropout,
                      output_dim=config["output_feature_num"],)
 
 
