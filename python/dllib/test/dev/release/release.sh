@@ -24,7 +24,7 @@ echo $BIGDL_DIR
 BIGDL_PYTHON_DIR="$(cd ${BIGDL_DIR}/python/dllib/src; pwd)"
 echo $BIGDL_PYTHON_DIR
 
-if (( $# < 1)); then
+if (( $# < 2)); then
   echo "Usage: release.sh platform mvn_parameters"
   echo "Usage example: bash release.sh linux false"
   echo "Usage example: bash release.sh linux true"
