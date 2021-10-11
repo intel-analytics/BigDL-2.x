@@ -97,8 +97,8 @@ class RecsysSchema:
 
     def toColumns(self):
         return self.string_cols1 + self.int_cols1 + self.string_cols2 + self.int_cols2 + \
-               self.bool_cols1 + self.int_cols3 + self.string_cols3 + self.int_cols4 + \
-               self.bool_cols2 + self.int_cols5 + self.bool_cols3 + self.float_cols
+            self.bool_cols1 + self.int_cols3 + self.string_cols3 + self.int_cols4 + \
+            self.bool_cols2 + self.int_cols5 + self.bool_cols3 + self.float_cols
 
     def toDtype(self):
         str_fields1 = ["str" for i in self.string_cols1]
@@ -114,8 +114,8 @@ class RecsysSchema:
         bool_fields3 = ["bool" for i in self.bool_cols3]
         float_fields = ["float" for i in self.float_cols]
         return str_fields1 + int_fields1 + str_fields2 + int_fields2 + bool_fields1 + \
-               int_fields3 + str_fields3 + int_fields4 + bool_fields2 + int_fields5 + \
-               bool_fields3 + float_fields
+            int_fields3 + str_fields3 + int_fields4 + bool_fields2 + int_fields5 + \
+            bool_fields3 + float_fields
 
 
 def _parse_args():
