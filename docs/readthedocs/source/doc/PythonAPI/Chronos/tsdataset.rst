@@ -23,10 +23,11 @@ XShardsTSDataset can be initialized from xshards of pandas dataframe and be conv
     :undoc-members:
     :show-inheritance:
 
-built-in dataset
+Built-in dataset
 --------------------------------------------
 
-The built-in data set has data download and preprocessing functions. Just specify the name and path, and the processed tsdata will be returned. 
+Built-in dataset can be downloaded and preprocessed by this function. Train, validation and test split is also supported.
+**kwargs – extra arguments passed to initialize the TSDataset, including with_split, val_ratio and test_ratio.
 
 .. automodule:: zoo.chronos.data.repo_dataset
     :members:
