@@ -133,9 +133,9 @@ def build_model(column_info, hidden_units=[100, 50, 25]):
     embed_layers = []
     for i in range(len(column_info.embed_in_dims)):
         embed_input_layers.append(tf.keras.layers.Input(shape=[], dtype="int32"))
-        iembed = tf.keras.layers.Embedding(column_info.embed_in_dims[i] + 1,
-                                           output_dim=column_info.embed_out_dims[i])\
-            (embed_input_layers[i])
+        embedding_layer = tf.keras.layers.Embedding(column_info.embed_in_dims[i] + 1,
+                                                    output_dim=column_info.embed_out_dims[i])
+        iembed = embedding_layer(embed_input_layers[i])
         flat_embed = tf.keras.layers.Flatten()(iembed)
         embed_layers.append(flat_embed)
 
