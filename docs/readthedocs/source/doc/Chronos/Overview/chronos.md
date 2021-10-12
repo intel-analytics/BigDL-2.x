@@ -161,10 +161,10 @@ View [TSDataset API Doc](../../PythonAPI/Chronos/tsdataset.html#) for more detai
 
 |Dataset name|Task|Time Series Length|Time Series Number|Information Page|Download Link|
 |---|---|---|---|---|---|
-|network_traffic|forecasting|2|8760|[network traffic](http://mawi.wide.ad.jp/~agurim/)|[network traffic](http://mawi.wide.ad.jp/~agurim/dataset/)|
-|nyc_taxi|forecasting|1|10320|[nyc taxi](https://github.com/numenta/NAB/blob/master/data/README.md)|[nyc taxi](https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv)|
-|fsi|forecasting|1|1259|[fsi](https://github.com/CNuge/kaggle-code/tree/master/stock_data)|[fsi](https://github.com/CNuge/kaggle-code/raw/master/stock_data/individual_stocks_5yr.zip)|
-|AIOps|anomaly_detect|1|61570|[AIOps](https://github.com/alibaba/clusterdata/blob/master/cluster-trace-v2018/trace_2018.md#21-about)|[AIOps](http://clusterdata2018pubcn.oss-cn-beijing.aliyuncs.com/machine_usage.tar.gz)|
+|network_traffic|forecasting|8760|2|[network traffic](http://mawi.wide.ad.jp/~agurim/)|[network traffic](http://mawi.wide.ad.jp/~agurim/dataset/)|
+|nyc_taxi|forecasting|10320|1|[nyc taxi](https://github.com/numenta/NAB/blob/master/data/README.md)|[nyc taxi](https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv)|
+|fsi|forecasting|1259|1|[fsi](https://github.com/CNuge/kaggle-code/tree/master/stock_data)|[fsi](https://github.com/CNuge/kaggle-code/raw/master/stock_data/individual_stocks_5yr.zip)|
+|AIOps|anomaly_detect|61570|1|[AIOps](https://github.com/alibaba/clusterdata/blob/master/cluster-trace-v2018/trace_2018.md#21-about)|[AIOps](http://clusterdata2018pubcn.oss-cn-beijing.aliyuncs.com/machine_usage.tar.gz)|
 
 Just specify the `name`, the file will be saved in the default `path` ~/.chronos/dataset. If you want to change the storage location, specify the path.
 `redownload` can help you re-download the files you need, but please set `redownload`=False when you use it for the first time, otherwise it will cause OSError.
@@ -278,7 +278,7 @@ def training_data_creator(config):
     return Dataloader(..., batch_size=config['batch_size'])
 ```
 ##### **5.2.2 Create an AutoTSEstimator**
-`AutoTSEstimator` depends on the [Distributed Hyper-parameter Tuning](../../Orca/Overview/distribute-tuning.html) supported by Project Orca. It also provides time series only functionalities and optimization. Here is a typical initialization process.
+`AutoTSEstimator` depends on the [Distributed Hyper-parameter Tuning](../../Orca/Overview/distributed-tuning.html) supported by Project Orca. It also provides time series only functionalities and optimization. Here is a typical initialization process.
 ```python
 import zoo.orca.automl.hp as hp
 from zoo.chronos.autots import AutoTSEstimator
