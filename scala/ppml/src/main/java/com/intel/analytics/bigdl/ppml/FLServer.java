@@ -16,7 +16,7 @@
 
 package com.intel.analytics.bigdl.ppml;
 
-import com.intel.analytics.bigdl.grpc.GrpcBaseServerBase;
+import com.intel.analytics.bigdl.grpc.GrpcServerBase;
 import com.intel.analytics.bigdl.ppml.psi.PSIServiceImpl;
 import com.intel.analytics.bigdl.ppml.vfl.NNServiceImpl;
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ import java.io.IOException;
  * User could also call main method and parse server type to start gRPC service
  * Supported types: PSI
  */
-public class FLServer extends GrpcBaseServerBase {
+public class FLServer extends GrpcServerBase {
     private static final Logger logger = LoggerFactory.getLogger(FLServer.class);
 
     FLServer(String[] args) {

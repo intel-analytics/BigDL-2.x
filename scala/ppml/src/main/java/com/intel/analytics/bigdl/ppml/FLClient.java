@@ -16,7 +16,7 @@
 
 package com.intel.analytics.bigdl.ppml;
 
-import com.intel.analytics.bigdl.grpc.GrpcBaseClientBase;
+import com.intel.analytics.bigdl.grpc.GrpcClientBase;
 import com.intel.analytics.bigdl.ppml.generated.FLProto;
 import com.intel.analytics.bigdl.ppml.vfl.NNStub;
 import com.intel.analytics.bigdl.ppml.psi.PSIStub;
@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class FLClient extends GrpcBaseClientBase {
+public class FLClient extends GrpcClientBase {
     private static final Logger logger = LoggerFactory.getLogger(FLClient.class);
     protected String taskID;
     /**

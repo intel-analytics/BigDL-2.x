@@ -31,13 +31,13 @@ import java.util.function.Function;
  * To implement specific gRPC client, overwrite parseConfig() and loadServices() method
  */
 
-public class GrpcBaseClientBase extends AbstractGrpcBase {
-    protected static final Logger logger = Logger.getLogger(GrpcBaseClientBase.class.getName());
+public class GrpcClientBase extends AbstractGrpcBase {
+    protected static final Logger logger = Logger.getLogger(GrpcClientBase.class.getName());
     protected String target;
     protected final String clientUUID;
     protected ManagedChannel channel;
 
-    public GrpcBaseClientBase(String[] args) {
+    public GrpcClientBase(String[] args) {
         clientUUID = UUID.randomUUID().toString();
         this.args = args;
         this.channel = null;
