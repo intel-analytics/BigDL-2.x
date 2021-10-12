@@ -176,7 +176,9 @@
         <breeze.version>0.13.2</breeze.version>
         <spark-scope>provided</spark-scope>
 
-        <bigdl-core-all-scope>compile</bigdl-core-all-scope>
+	<bigdl-core-all-scope>compile</bigdl-core-all-scope>
+        <data-store-url>http://download.tensorflow.org</data-store-url>
+
     </properties>
 
     <modules>
