@@ -19,24 +19,32 @@
 set -e
 RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
 echo $RUN_SCRIPT_DIR
-BIGDL_DIR="$(cd ${RUN_SCRIPT_DIR}/../../..; pwd)"
+BIGDL_DIR="$(cd ${RUN_SCRIPT_DIR}/../../../..; pwd)"
 echo $BIGDL_DIR
 BIGDL_PYTHON_DIR="$(cd ${BIGDL_DIR}/python/friesian/src; pwd)"
 echo $BIGDL_PYTHON_DIR
 
-if (( $# < 2)); then
-  echo "Usage: release.sh platform mvn_parameters"
-  echo "Usage example: bash release.sh linux false"
-  echo "Usage example: bash release.sh linux true"
-  echo "you can also add other profiles such as: -Dspark.version=2.4.6 -P spark_2.x"
+if (( $# < 4)); then
+  echo "Usage: release.sh platform version quick_build upload mvn_parameters"
+  echo "Usage example: bash release.sh linux default false true"
+  echo "Usage example: bash release.sh linux 0.14.0.dev1 true true"
+  echo "If needed, you can also add other profiles such as: -Dspark.version=2.4.6 -P spark_2.x"
   exit -1
 fi
 
 platform=$1
-quick=$2
-profiles=${*:3}
+version=$2
+quick=$3  # Whether to rebuild the jar; quick=true means not rebuilding the jar
+upload=$4  # Whether to upload the whl to pypi
+profiles=${*:5}
+
+if [ "${version}" != "default" ]; then
+    echo "User specified version: ${version}"
+    echo $version > $BIGDL_DIR/python/version.txt
+fi
 
 bigdl_version=$(cat $BIGDL_DIR/python/version.txt | head -1)
+echo "The effective version is: ${bigdl_version}"
 
 cd ${BIGDL_DIR}/scala
 if [ "$platform" ==  "mac" ]; then
@@ -48,7 +56,7 @@ elif [ "$platform" == "linux" ]; then
     dist_profile="-P linux $profiles"
     verbose_pname="manylinux1_x86_64"
 else
-    echo "unsupport platform"
+    echo "Unsupported platform"
 fi
 
 bigdl_build_command="bash make-dist.sh ${dist_profile}"
@@ -77,7 +85,8 @@ wheel_command="python setup.py bdist_wheel --plat-name ${verbose_pname}"
 echo "Packing python distribution:   $wheel_command"
 ${wheel_command}
 
-upload_command="twine upload python/friesian/src/dist/bigdl_friesian-${bigdl_version}-py3-none-${verbose_pname}.whl"
-echo "Please manually upload with this command:  $upload_command"
-
-#$upload_command
+if [ ${upload} == true ]; then
+    upload_command="twine upload python/friesian/src/dist/bigdl_friesian-${bigdl_version}-py3-none-${verbose_pname}.whl"
+    echo "Please manually upload with this command:  $upload_command"
+    $upload_command
+fi

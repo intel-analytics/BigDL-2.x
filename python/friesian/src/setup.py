@@ -82,7 +82,7 @@ def setup_package():
     metadata = dict(
         name='bigdl-friesian',
         version=VERSION,
-        description='Large-scale Recommendation Solution on Big Data',
+        description='Large-scale End-to-End Recommendation Solution on Big Data',
         author='BigDL Authors',
         author_email='bigdl-user-group@googlegroups.com',
         license='Apache License, Version 2.0',
