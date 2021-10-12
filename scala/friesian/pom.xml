@@ -241,6 +241,22 @@
               </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <id>spark_2.x</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>net.alchim31.maven</groupId>
+                        <artifactId>scala-maven-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/com/intel/analytics/bigdl/friesian/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
 
         <profile>
             <id>parallel-tests</id>
