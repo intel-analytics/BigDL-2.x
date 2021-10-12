@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 from bigdl.dllib.keras.layers import *
 from tensorflow.keras.layers import Input, Embedding, Dense, Flatten, concatenate, Lambda
 import tensorflow as tf
