@@ -1,5 +1,5 @@
 # Train the Twitter Recsys Challenge 2021 dataset for WideAndDeep Model
-This example demonstrates how to use Analytics Zoo Friesian to train [WideAndDeep](https://arxiv.org/abs/1606.07792) model with the
+This example demonstrates how to use BigDL Friesian to train [WideAndDeep](https://arxiv.org/abs/1606.07792) model with the
 [Twitter Recsys Challenge 2021](https://recsys-twitter.com/data/show-downloads#) dataset.
 
 ## Prepare the environment
