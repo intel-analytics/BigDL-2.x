@@ -21,7 +21,7 @@ python train_2tower.py \
     --model_dir /path/to/the/folder/to/save/trained_model 
 ```
 
-* Spark standalone, example command to run on the full Criteo dataset:
+* Spark standalone, example command:
 ```bash
 python train_2tower.py \
     --cluster_mode standalone \
@@ -33,7 +33,7 @@ python train_2tower.py \
     --model_dir /path/to/the/folder/to/save/trained_model 
 ```
 
-* Spark yarn client mode, example command to run on the full Criteo dataset:
+* Spark yarn client mode, example command:
 ```bash
 python train_2tower.py \
     --cluster_mode yarn \
