@@ -38,8 +38,8 @@ import java.util.concurrent.TimeUnit;
  * To implement specific gRPC server, overwrite parseConfig() method
  * This class could also be directly used for start a single service
  */
-public abstract class ZooGrpcServer extends AbstractZooGrpc {
-    protected static final Logger logger = Logger.getLogger(ZooGrpcServer.class.getName());
+public abstract class GrpcBaseServerBase extends AbstractGrpcBase {
+    protected static final Logger logger = Logger.getLogger(GrpcBaseServerBase.class.getName());
     protected int port;
     protected Server server;
     protected LinkedList<BindableService> serverServices = new LinkedList<BindableService>();
@@ -56,7 +56,7 @@ public abstract class ZooGrpcServer extends AbstractZooGrpc {
      * One Server could support multiple services.
      * @param args
      */
-    public ZooGrpcServer(String[] args) {
+    public GrpcBaseServerBase(String[] args) {
         this.args = args;
     }
 
@@ -112,7 +112,7 @@ public abstract class ZooGrpcServer extends AbstractZooGrpc {
                 // Use stderr here since the logger may have been reset by its JVM shutdown hook.
                 System.err.println("*** shutting down gRPC server since JVM is shutting down");
                 try {
-                    ZooGrpcServer.this.stop();
+                    GrpcBaseServerBase.this.stop();
                 } catch (InterruptedException e) {
                     e.printStackTrace(System.err);
                 }
