@@ -157,28 +157,22 @@ View [TSDataset API Doc](../../PythonAPI/Chronos/tsdataset.html#) for more detai
 
 #### **4.7 Built-in Dataset**
 
-`Built-in Dataset` supports the function of data downloading, preprocessing, and returning to the tsdata object of the public data set.
+`Built-in Dataset` supports the function of data downloading, preprocessing, and returning to the `TSDataset` object of the public data set.
 
-|Dataset name|Task|Time Series Length|Time Series Number|Information Page|Download Link|
+|Dataset name|Task|Time Series Length|Feature Number|Information Page|Download Link|
 |---|---|---|---|---|---|
-|network_traffic|forecasting|8760|2|[network traffic](http://mawi.wide.ad.jp/~agurim/)|[network traffic](http://mawi.wide.ad.jp/~agurim/dataset/)|
-|nyc_taxi|forecasting|10320|1|[nyc taxi](https://github.com/numenta/NAB/blob/master/data/README.md)|[nyc taxi](https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv)|
+|network_traffic|forecasting|8760|2|[network_traffic](http://mawi.wide.ad.jp/~agurim/about.html)|[network_traffic](http://mawi.wide.ad.jp/~agurim/dataset/)|
+|nyc_taxi|forecasting|10320|1|[nyc_taxi](https://github.com/numenta/NAB/blob/master/data/README.md)|[nyc_taxi](https://raw.githubusercontent.com/numenta/NAB/v1.0/data/realKnownCause/nyc_taxi.csv)|
 |fsi|forecasting|1259|1|[fsi](https://github.com/CNuge/kaggle-code/tree/master/stock_data)|[fsi](https://github.com/CNuge/kaggle-code/raw/master/stock_data/individual_stocks_5yr.zip)|
-|AIOps|anomaly_detect|61570|1|[AIOps](https://github.com/alibaba/clusterdata/blob/master/cluster-trace-v2018/trace_2018.md#21-about)|[AIOps](http://clusterdata2018pubcn.oss-cn-beijing.aliyuncs.com/machine_usage.tar.gz)|
+|AIOps|anomaly_detect|61570|1|[AIOps](https://github.com/alibaba/clusterdata)|[AIOps](http://clusterdata2018pubcn.oss-cn-beijing.aliyuncs.com/machine_usage.tar.gz)|
 
-Just specify the `name`, the file will be saved in the default `path` ~/.chronos/dataset. If you want to change the storage location, specify the path.
-`redownload` can help you re-download the files you need, but please set `redownload`=False when you use it for the first time, otherwise it will cause OSError.
+Specify the `name`, the raw data file will be saved in the specified `path` (defaults to ~/.chronos/dataset). `redownload` can help you re-download the files you need.
+
+When `with_split` is set to True, the length of the data set will be divided according to the specified `val_ratio` and `test_ratio`, and three `TSDataset` will be returned. `with_split` defaults to False, that is, only one `TSDataset` is returned.
+About `TSDataset`, more details, please refer to [here](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/tsdataset.html).
 
 ```python
 from zoo.chronos.data.repo_dataset import get_public_dataset
-name = 'nyc_taxi'
-tsdata = get_public_dataset(name=name, path=path, redownload=False)
-```
-
-`with split` divides the length of the data set according to the specified `val_ratio` and `test_ratio`. This will return three tsdata, but will only take effect when set to True. `with_split` defaults to False, that is, only one tsdata is returned.
-About tsdata, more details, please refer to [here](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/tsdataset.html).
-
-```python
 from sklearn.preprocessing import StandardScaler
 tsdata_train, tsdata_val, \
     tsdata_test = get_public_dataset(name='nyc_taxi',
@@ -187,10 +181,14 @@ tsdata_train, tsdata_val, \
                                      test_ratio=0.1
                                      )
 stand = StandardScaler()
-for tsdata in [tsdata_train, tsdata_val, tsdata]:
+for tsdata in [tsdata_train, tsdata_val, tsdata_test]:
     tsdata.gen_dt_feature(one_hot_features=['HOUR'])\
           .impute()\
           .scale(stand, fit=tsdata is tsdata_train)
+
+print(tsdata_train.df.shape)
+print(tsdata_val.df.shape)
+print(tsdata_test.df.shape)
 ```
 
 ---
