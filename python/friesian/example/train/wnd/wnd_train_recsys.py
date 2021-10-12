@@ -27,7 +27,6 @@ import pickle
 import tensorflow as tf
 
 from bigdl.orca import init_orca_context, stop_orca_context
-from bigdl.models.recommendation.wide_and_deep import ColumnFeatureInfo
 from bigdl.orca.learn.tf2.estimator import Estimator
 from bigdl.orca.data.file import exists, makedirs
 from bigdl.friesian.feature import FeatureTable
@@ -185,6 +184,80 @@ def model_creator(config):
                   loss='binary_crossentropy',
                   metrics=['binary_accuracy', 'binary_crossentropy', 'AUC', 'Precision', 'Recall'])
     return model
+
+
+class ColumnFeatureInfo(object):
+    """
+    The same data information shared by the WideAndDeep model and its feature generation part.
+
+    Each instance could contain the following fields:
+    wide_base_cols: Data of wide_base_cols together with wide_cross_cols will be fed
+                    into the wide model. List of String. Default is an empty list.
+    wide_base_dims: Dimensions of wide_base_cols. The dimensions of the data in
+                    wide_base_cols should be within the range of wide_base_dims.
+                    List of int. Default is an empty list.
+    wide_cross_cols: Data of wide_cross_cols will be fed into the wide model.
+                     List of String. Default is an empty list.
+    wide_cross_dims: Dimensions of wide_cross_cols. The dimensions of the data in
+                     wide_cross_cols should be within the range of wide_cross_dims.
+                     List of int. Default is an empty list.
+    indicator_cols: Data of indicator_cols will be fed into the deep model as multi-hot vectors.
+                    List of String. Default is an empty list.
+    indicator_dims: Dimensions of indicator_cols. The dimensions of the data in
+                    indicator_cols should be within the range of indicator_dims.
+                    List of int. Default is an empty list.
+    embed_cols: Data of embed_cols will be fed into the deep model as embeddings.
+                List of String. Default is an empty list.
+    embed_in_dims: Input dimension of the data in embed_cols. The dimensions of the data in
+                   embed_cols should be within the range of embed_in_dims.
+                   List of int. Default is an empty list.
+    embed_out_dims: The dimensions of embeddings. List of int. Default is an empty list.
+    continuous_cols: Data of continuous_cols will be treated as continuous values for
+                     the deep model. List of String. Default is an empty list.
+    label: The name of the 'label' column. String. Default is 'label'.
+    """
+
+    def __init__(self, wide_base_cols=None, wide_base_dims=None, wide_cross_cols=None,
+                 wide_cross_dims=None, indicator_cols=None, indicator_dims=None,
+                 embed_cols=None, embed_in_dims=None, embed_out_dims=None,
+                 continuous_cols=None, label="label", bigdl_type="float"):
+        self.wide_base_cols = [] if not wide_base_cols else wide_base_cols
+        self.wide_base_dims = [] if not wide_base_dims else [int(d) for d in wide_base_dims]
+        self.wide_cross_cols = [] if not wide_cross_cols else wide_cross_cols
+        self.wide_cross_dims = [] if not wide_cross_dims else [int(d) for d in wide_cross_dims]
+        self.indicator_cols = [] if not indicator_cols else indicator_cols
+        self.indicator_dims = [] if not indicator_dims else [int(d) for d in indicator_dims]
+        self.embed_cols = [] if not embed_cols else embed_cols
+        self.embed_in_dims = [] if not embed_in_dims else [int(d) for d in embed_in_dims]
+        self.embed_out_dims = [] if not embed_out_dims else [int(d) for d in embed_out_dims]
+        self.continuous_cols = [] if not continuous_cols else continuous_cols
+        self.label = label
+        self.bigdl_type = bigdl_type
+
+    def __reduce__(self):
+        return ColumnFeatureInfo, (self.wide_base_cols, self.wide_base_dims, self.wide_cross_cols,
+                                   self.wide_cross_dims, self.indicator_cols, self.indicator_dims,
+                                   self.embed_cols, self.embed_in_dims, self.embed_out_dims,
+                                   self.continuous_cols, self.label)
+
+    def __str__(self):
+        return "ColumnFeatureInfo {wide_base_cols: %s, wide_base_dims: %s, wide_cross_cols: %s, " \
+               "wide_cross_dims: %s, indicator_cols: %s, indicator_dims: %s, embed_cols: %s, " \
+               "embed_cols: %s, embed_in_dims: %s, embed_out_dims: %s, continuous_cols: %s, " \
+               "label: '%s'}" \
+               % (self.wide_base_cols, self.wide_base_dims, self.wide_cross_cols,
+                  self.wide_cross_dims, self.indicator_cols, self.indicator_dims,
+                  self.embed_cols, self.embed_cols, self.embed_in_dims,
+                  self.embed_out_dims, self.continuous_cols, self.label)
+
+    @property
+    def feature_cols(self):
+        return self.wide_base_cols + self.wide_cross_cols +\
+            self.indicator_cols + self.embed_cols + self.continuous_cols
+
+    @property
+    def label_cols(self):
+        return [self.label]
 
 
 if __name__ == "__main__":
