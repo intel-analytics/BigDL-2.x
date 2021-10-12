@@ -172,6 +172,7 @@ When `with_split` is set to True, the length of the data set will be divided acc
 About `TSDataset`, more details, please refer to [here](https://analytics-zoo.readthedocs.io/en/latest/doc/PythonAPI/Chronos/tsdataset.html).
 
 ```python
+# load built-in dataset
 from zoo.chronos.data.repo_dataset import get_public_dataset
 from sklearn.preprocessing import StandardScaler
 tsdata_train, tsdata_val, \
@@ -180,15 +181,13 @@ tsdata_train, tsdata_val, \
                                      val_ratio=0.1,
                                      test_ratio=0.1
                                      )
+
+# carry out additional customized preprocessing on the dataset.
 stand = StandardScaler()
 for tsdata in [tsdata_train, tsdata_val, tsdata_test]:
     tsdata.gen_dt_feature(one_hot_features=['HOUR'])\
           .impute()\
           .scale(stand, fit=tsdata is tsdata_train)
-
-print(tsdata_train.df.shape)
-print(tsdata_val.df.shape)
-print(tsdata_test.df.shape)
 ```
 
 ---
