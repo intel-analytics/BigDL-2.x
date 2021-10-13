@@ -29,7 +29,8 @@ try:
     from intel_pytorch_extension.ops.save import *
 except ImportError:
     warning("IPEXAccelerator requires intel_pytorch_extension installed, \
-    please run `pip install torch_ipex -f https://software.intel.com/ipex-whl-stable` to get IPEX ready.")
+    please run `pip install torch_ipex -f https://software.intel.com/ipex-whl-stable` \
+    to get IPEX ready.")
     # process needs to stop here
     raise ImportError
 
