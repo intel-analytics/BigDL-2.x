@@ -18,14 +18,13 @@ import os.path
 
 from pyspark.sql import DataFrame
 
-from zoo.pipeline.inference import InferenceModel
 from zoo.orca.data import SparkXShards
 from zoo.orca.learn.spark_estimator import Estimator as SparkEstimator
 from zoo import get_node_and_core_number
 from zoo.util import nest
 from zoo.common.nncontext import init_nncontext
 
-from openvino.inference_engine import IENetwork, IECore
+from openvino.inference_engine import IECore
 import numpy as np
 
 
@@ -36,7 +35,6 @@ class Estimator(object):
         Load an openVINO Estimator.
 
         :param model_path: String. The file path to the OpenVINO IR xml file.
-        :param batch_size: Int. Set batch Size, default is 0 (use default batch size).
         """
         return OpenvinoEstimator(model_path=model_path)
 
@@ -45,12 +43,7 @@ class OpenvinoEstimator(SparkEstimator):
     def __init__(self,
                  *,
                  model_path):
-        self.node_num, self.core_num = get_node_and_core_number()
-        with open(model_path, 'rb') as file:
-            self.model_bytes = file.read()
-
-        with open(model_path[:model_path.rindex(".")] + ".bin", 'rb') as file:
-            self.weight_bytes = file.read()
+        self.load(model_path)
 
     def fit(self, data, epochs, batch_size=32, feature_cols=None, label_cols=None,
             validation_data=None, checkpoint_trigger=None):
@@ -63,6 +56,7 @@ class OpenvinoEstimator(SparkEstimator):
         """
         Predict input data
 
+        :param batch_size: Int. Set batch Size, default is 4.
         :param data: data to be predicted. XShards, Spark DataFrame, numpy array and list of numpy
                arrays are supported. If data is XShards, each partition is a dictionary of  {'x':
                feature}, where feature(label) is a numpy array or a list of numpy arrays.
@@ -85,6 +79,8 @@ class OpenvinoEstimator(SparkEstimator):
             partition = list(partition)
             data_num = len(partition)
             ie = IECore()
+            config = {'CPU_THREADS_NUM': str(self.core_num)}
+            ie.set_config(config, 'CPU')
             net = ie.read_network(model=model_bytes,
                                   weights=weight_bytes, init_from_buffer=True)
             net.batch_size = batch_size
@@ -167,14 +163,14 @@ class OpenvinoEstimator(SparkEstimator):
             if isinstance(data, np.ndarray):
                 split_num = math.ceil(len(data)/batch_size)
                 arrays = np.array_split(data, split_num)
-                num_slices = min(split_num, self.node_num * self.core_num)
+                num_slices = min(split_num, self.node_num)
                 data_rdd = sc.parallelize(arrays, numSlices=num_slices)
             elif isinstance(data, list):
                 flattened = nest.flatten(data)
                 data_length = len(flattened[0])
                 data_to_be_rdd = []
                 split_num = math.ceil(flattened[0].shape[0]/batch_size)
-                num_slices = min(split_num, self.node_num * self.core_num)
+                num_slices = min(split_num, self.node_num)
                 for i in range(split_num):
                     data_to_be_rdd.append([])
                 for x in flattened:
@@ -191,9 +187,15 @@ class OpenvinoEstimator(SparkEstimator):
                 data_to_be_rdd = [nest.pack_sequence_as(data, shard) for shard in data_to_be_rdd]
                 data_rdd = sc.parallelize(data_to_be_rdd, numSlices=num_slices)
 
+            print("Partition number: ", data_rdd.getNumPartitions())
             result_rdd = data_rdd.mapPartitions(lambda iter: partition_inference(iter))
             result_arr_list = result_rdd.collect()
-            result_arr = np.concatenate(result_arr_list, axis=0)
+            result_arr = None
+            if isinstance(result_arr_list[0], list):
+                result_arr = [np.concatenate([r[i] for r in result_arr_list], axis=0)
+                              for i in range(len(result_arr_list[0]))]
+            elif isinstance(result_arr_list[0], np.ndarray):
+                result_arr = np.concatenate(result_arr_list, axis=0)
             return result_arr
         else:
             raise ValueError("Only XShards, Spark DataFrame, a numpy array and a list of numpy arr"
@@ -217,30 +219,21 @@ class OpenvinoEstimator(SparkEstimator):
         """
         raise NotImplementedError
 
-    def load(self, model_path, batch_size=0):
+    def load(self, model_path):
         """
         Load an openVINO model.
 
         :param model_path: String. The file path to the OpenVINO IR xml file.
-        :param batch_size: Int. Set batch Size, default is 0 (use default batch size).
         :return:
         """
         self.node_num, self.core_num = get_node_and_core_number()
-        self.path = model_path
-        if batch_size != 0:
-            self.batch_size = batch_size
-        else:
-            import xml.etree.ElementTree as ET
-            tree = ET.parse(model_path)
-            root = tree.getroot()
-            shape_item = root.find('./layers/layer/output/port/dim[1]')
-            if shape_item is None:
-                raise ValueError("Invalid openVINO IR xml file, please check your model_path")
-            self.batch_size = int(shape_item.text)
-        self.model = InferenceModel(supported_concurrent_num=self.core_num)
-        self.model.load_openvino(model_path=model_path,
-                                 weight_path=model_path[:model_path.rindex(".")] + ".bin",
-                                 batch_size=batch_size)
+        assert isinstance(model_path, str), "The model_path should be string."
+        assert os.path.exists(model_path), "The model_path should be exist."
+        with open(model_path, 'rb') as file:
+            self.model_bytes = file.read()
+
+        with open(model_path[:model_path.rindex(".")] + ".bin", 'rb') as file:
+            self.weight_bytes = file.read()
 
     def set_tensorboard(self, log_dir, app_name):
         """

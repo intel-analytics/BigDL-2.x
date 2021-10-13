@@ -79,7 +79,14 @@ class TestEstimatorForOpenVINO(TestCase):
         self.est = Estimator.from_openvino(model_path=model_path)
 
     def load_roberta(self):
-        model_path = "/home/yina/Documents/model/roberta/model.xml"
+        os.makedirs(local_path, exist_ok=True)
+        model_url = data_url + "/analytics-zoo-data/roberta/roberta.tar"
+        model_path = maybe_download("roberta.tar",
+                                    local_path, model_url)
+        tar = tarfile.open(model_path)
+        tar.extractall(path=local_path)
+        tar.close()
+        model_path = os.path.join(local_path, "roberta/model.xml")
         self.est = Estimator.from_openvino(model_path=model_path)
 
     def test_openvino_predict_ndarray(self):
