@@ -45,6 +45,7 @@ For source code and more information, please visit our GitHub page:
 '''
 
 bigdl_home = os.path.abspath(__file__ + "/../../../")
+VERSION = open(os.path.join(bigdl_home, 'python/version.txt'), 'r').read().strip()
 SCRIPTS_TARGET = os.path.join(bigdl_home, "scala/serving/scripts/")
 TMP_PATH = "bigdl/conf"
 if os.path.exists(TMP_PATH):

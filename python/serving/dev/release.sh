@@ -13,10 +13,7 @@ if [ -d "${BASE}/zoo/serving/bigdl_serving.egg-info" ]; then
    rm -r ${BASE}/zoo/serving/bigdl_serving.egg-info
 fi
 
-if [ ${upload} == true ]; then
-    serving_whl=dist/bigdl_serving-*.whl
-    serving_upload_command="twine upload ${serving_whl}"
-    echo "Command for uploading to pypi: $serving_upload_command"
-    $serving_upload_command
-fi
-cd ${BASE}
+
+serving_whl=dist/bigdl_serving-*.whl
+serving_upload_command="twine upload ${serving_whl}"
+echo "Command for uploading to pypi: $serving_upload_command, upload manually with this command"
