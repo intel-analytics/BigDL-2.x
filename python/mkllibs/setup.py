@@ -38,7 +38,7 @@ def setup_package():
         author_email='',
         packages=["bigdl.share.tflibs"],
         url='https://github.com/intel-analytics/analytics-zoo/tree/bigdl-2.0',
-        package_data={"bigdl.share.tflibs": ["*.so"]},
+        package_data={"bigdl.share.tflibs": ["linux-x86_64/*.so"]]},
         package_dir={'': 'src'},
     )
 
