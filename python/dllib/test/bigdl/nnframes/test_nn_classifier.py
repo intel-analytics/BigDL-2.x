@@ -768,27 +768,27 @@ class TestNNClassifer():
                     raise  # re-raise exception
 
     def test_NNModel_NNClassifier_pipeline_save_load(self):
-        if self.sc.version.startswith("2.3") or self.sc.version.startswith("2.4"):
-            from pyspark.ml.feature import MinMaxScaler
-            from pyspark.ml.linalg import Vectors
+#        if self.sc.version.startswith("2.3") or self.sc.version.startswith("2.4"):
+#            from pyspark.ml.feature import MinMaxScaler
+#            from pyspark.ml.linalg import Vectors
+#
+#            df = self.sqlContext.createDataFrame(
+#                [(Vectors.dense([2.0, 1.0]), 1.0),
+#                 (Vectors.dense([1.0, 2.0]), 2.0),
+#                 (Vectors.dense([2.0, 1.0]), 1.0),
+#                 (Vectors.dense([1.0, 2.0]), 2.0),
+#                 ], ["features", "label"])
 
-            df = self.sqlContext.createDataFrame(
-                [(Vectors.dense([2.0, 1.0]), 1.0),
-                 (Vectors.dense([1.0, 2.0]), 2.0),
-                 (Vectors.dense([2.0, 1.0]), 1.0),
-                 (Vectors.dense([1.0, 2.0]), 2.0),
-                 ], ["features", "label"])
-
-            scaler = MinMaxScaler().setInputCol("features").setOutputCol("scaled")
-            model = Sequential().add(Linear(2, 2))
-            criterion = ClassNLLCriterion()
-            classifier = NNClassifier(model, criterion) \
-                .setBatchSize(4) \
-                .setLearningRate(0.01).setMaxEpoch(1).setFeaturesCol("scaled")
-
-            pipeline = Pipeline(stages=[scaler, classifier])
-
-            pipeline_model = pipeline.fit(df)
+#            scaler = MinMaxScaler().setInputCol("features").setOutputCol("scaled")
+#            model = Sequential().add(Linear(2, 2))
+#            criterion = ClassNLLCriterion()
+#            classifier = NNClassifier(model, criterion) \
+#                .setBatchSize(4) \
+#                .setLearningRate(0.01).setMaxEpoch(1).setFeaturesCol("scaled")
+#
+#            pipeline = Pipeline(stages=[scaler, classifier])
+#
+#            pipeline_model = pipeline.fit(df)
 
             try:
                 tmp_dir = tempfile.mkdtemp()
