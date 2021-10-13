@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.dllib.feature.transform.vision.image._
 import com.intel.analytics.bigdl.dllib.utils.Table
 import com.intel.analytics.bigdl.dllib.common.PythonZoo
 import com.intel.analytics.bigdl.dllib.feature.FeatureSet
-import com.intel.analytics.bigdl.dllib.feature.pmem.MemoryType
+import com.intel.analytics.bigdl.dllib.feature.MemoryType
 import com.intel.analytics.bigdl.dllib.utils.Engine
 import org.apache.spark.SparkContext
 import org.apache.spark.api.java.JavaRDD
