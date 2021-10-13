@@ -1080,7 +1080,7 @@ class TestTable(TestCase):
     def test_append_column(self):
         file_path = os.path.join(self.resource_path, "data.csv")
         tbl = FeatureTable.read_csv(file_path, header=True)
-        tbl = tbl.append_column(lit("z"), 0)
+        tbl = tbl.append_column("z", lit(0))
         assert tbl.select("z").size() == 4
         assert tbl.filter("z == 0").size() == 4
         tbl = tbl.append_column("str", lit("a"))
