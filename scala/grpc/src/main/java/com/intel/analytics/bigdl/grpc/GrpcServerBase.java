@@ -34,7 +34,7 @@ import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
 /**
- * All Analytics Zoo gRPC servers are based on ZooGrpcServer
+ * All Analytics Zoo gRPC servers are based on GrpcServerBase
  * To implement specific gRPC server, overwrite parseConfig() method
  * This class could also be directly used for start a single service
  */
@@ -62,7 +62,7 @@ public abstract class GrpcServerBase extends AbstractGrpcBase {
 
     public void parseConfig() throws Exception {}
 
-    /** Entrypoint of ZooGrpcServer */
+    /** Entrypoint of GrpcServerBase */
     public void build() throws Exception {
         parseConfig();
         ServerBuilder builder = ServerBuilder.forPort(port);
