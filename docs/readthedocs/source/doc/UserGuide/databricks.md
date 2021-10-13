@@ -2,29 +2,38 @@
 
 ---
 
-You can run Analytics Zoo program on the [Databricks](https://databricks.com/) cluster as follows.
+You can run BigDL 2.0 program on the [Databricks](https://databricks.com/) cluster as follows.
 ### **1. Create a Databricks Cluster**
 
 - Create either [AWS Databricks](https://docs.databricks.com/getting-started/try-databricks.html) workspace or [Azure Databricks](https://docs.microsoft.com/en-us/azure/azure-databricks/) workspace. 
-- Create a Databricks [clusters](https://docs.databricks.com/clusters/create.html) using the UI. Choose Databricks runtime version. This guide is tested on Runtime 7.5 (includes Apache Spark 3.0.1, Scala 2.12).
+- Create a Databricks [clusters](https://docs.databricks.com/clusters/create.html) using the UI. Choose Databricks runtime version. This guide is tested on Runtime 7.3 (includes Apache Spark 3.0.1, Scala 2.12).
 
-### **2. Installing Analytics Zoo libraries**
+### **2. Installing BigDL core libraries**
 
 In the left pane, click **Clusters** and select your cluster.
 
-![](images/Databricks1.PNG)
+![](images/cluster.png)
 
-Install Analytics Zoo python environment using prebuilt release Wheel package. Click **Libraries > Install New > Upload > Python Whl**. Download Analytics Zoo prebuilt Wheel [here](https://sourceforge.net/projects/analytics-zoo/files/zoo-py). Choose a wheel with timestamp for the same Spark version and platform as Databricks runtime. Download and drop it on Databricks.
+Install BigDL 2.0 dllib python environment using prebuilt release Wheel package. Click **Libraries > Install New > Upload > Python Whl**. Download BigDL 2.0 dllib prebuilt Wheel [here](https://sourceforge.net/projects/analytics-zoo/files/dllib-py). Choose a wheel with timestamp for the same Spark version and platform as Databricks runtime. Download and drop it on Databricks.
 
-![](images/Databricks2.PNG)
+![](images/dllib-whl.png)
 
-Install Analytics Zoo prebuilt jar package. Click **Libraries > Install New > Upload > Jar**. Download Analytics Zoo prebuilt package from [Release Page](../release.md). Please note that you should choose the same spark version of package as your Databricks runtime version. Find jar named "analytics-zoo-bigdl_*-spark_*-jar-with-dependencies.jar" in the lib directory. Drop the jar on Databricks.
+Install BigDL 2.0 orca python environment using prebuilt release Wheel package. Click **Libraries > Install New > Upload > Python Whl**. Download Bigdl 2.0 orca prebuilt Wheel [here](https://sourceforge.net/projects/analytics-zoo/files/dllib-py). Choose a wheel with timestamp for the same Spark version and platform as Databricks runtime. Download and drop it on Databricks.
 
-![](images/Databricks3.PNG)
+![](images/orca-whl.png)
 
-Make sure the jar file and analytics-zoo (whl) are installed on all clusters. In **Libraries** tab of your cluster, check installed libraries and click “Install automatically on all clusters” option in **Admin Settings**.
 
-![](images/Databricks4.PNG)
+Install BigDL 2.0 dllib prebuilt jar package. Click **Libraries > Install New > Upload > Jar**. Download BigDL 2.0 dllib prebuilt package from [Release Page](../release.md). Please note that you should choose the same spark version of package as your Databricks runtime version. Find jar named "bigdl-dllib-spark_*-jar-with-dependencies.jar" in the lib directory. Drop the jar on Databricks.
+
+![](images/dllib-jar.png)
+
+Install BigDL 2.0 orca prebuilt jar package. Click **Libraries > Install New > Upload > Jar**. Download BigDL 2.0 orca prebuilt package from [Release Page](../release.md). Please note that you should choose the same spark version of package as your Databricks runtime version. Find jar named "bigdl-orca-spark_*-jar-with-dependencies.jar" in the lib directory. Drop the jar on Databricks.
+
+![](images/orca-jar.png)
+
+Make sure the jar files and whl files are installed on all clusters. In **Libraries** tab of your cluster, check installed libraries and click “Install automatically on all clusters” option in **Admin Settings**.
+
+![](images/apply-all.png)
 
 ### **3. Setting Spark configuration**
 
@@ -32,7 +41,7 @@ On the cluster configuration page, click the **Advanced Options** toggle. Click 
 
 ![](images/Databricks5.PNG)
 
-See below for an example of Spark config setting needed by Analytics Zoo. Here it sets 2 core per executor. Note that "spark.cores.max" needs to be properly set below.
+See below for an example of Spark config setting needed by BigDL 2.0. Here it sets 2 core per executor. Note that "spark.cores.max" needs to be properly set below.
 
 ```
 spark.shuffle.reduceLocality.enabled false
@@ -42,18 +51,28 @@ spark.databricks.delta.preview.enabled true
 spark.executor.cores 2
 spark.speculation false
 spark.scheduler.minRegisteredResourcesRatio 1.0
+spark.scheduler.maxRegisteredResourcesWaitingTime 3600s
 spark.cores.max 4
 ```
 
-### **4. Running Analytics Zoo on Databricks**
+### **4. Running BigDL on Databricks**
 
 Open a new notebook, and call `init_orca_context` at the beginning of your code (with `cluster_mode` set to "spark-submit").
 
 ```python
-from zoo.orca import init_orca_context, stop_orca_context
+from bigdl.orca import init_orca_context, stop_orca_context
 init_orca_context(cluster_mode="spark-submit")
 ```
 
 Output on Databricks:
 
-![](images/Databricks6.PNG)
+![](images/spark-context.png)
+
+### **5. Install other BigDL libraries on Databricks if necessary**
+
+If you want to use other BigDL libraries (friesian, chronos, nano, serving, etc.), install corresponding whl and jar files in the similar ways as installing BigDL core libraries in step 2.
+
+
+### **6. Install other third-party libraries on Databricks if necessary**
+
+If you want to use other third-party libraries, check related Databricks documentation of [libraries for AWS Databricks](https://docs.databricks.com/libraries/index.html) and [libraries for Azure Databricks](https://docs.microsoft.com/en-us/azure/databricks/libraries/)
