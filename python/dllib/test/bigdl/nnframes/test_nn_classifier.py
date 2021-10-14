@@ -767,10 +767,9 @@ class TestNNClassifer():
                 if exc.errno != errno.ENOENT:  # ENOENT - no such file or directory
                     raise  # re-raise exception
 
-    @pytest.mark.skipif(self.sc.version.startswith("2.3") or self.sc.version.startswith("2.4"),
-            reason="not work on spark2.3/2.4")
     def test_NNModel_NNClassifier_pipeline_save_load(self):
         if self.sc.version.startswith("2.3") or self.sc.version.startswith("2.4"):
+            pytest.skip("unsupported on spark2.3/2.4")
             from pyspark.ml.feature import MinMaxScaler
             from pyspark.ml.linalg import Vectors
 
