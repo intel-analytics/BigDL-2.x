@@ -16,8 +16,8 @@ We highly recommend you to use [Anaconda](https://www.anaconda.com/distribution/
 ```
 conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
 conda activate zoo
-pip install analytics-zoo
-pip install jep==3.9.0 cloudpickle==1.6.0
+pip install orca dllib
+pip install jep==3.9.1 cloudpickle==1.6.0
 conda install pytorch torchvision cpuonly -c pytorch #command for linux
 conda install pytorch torchvision -c pytorch #command for macOS
 ```
