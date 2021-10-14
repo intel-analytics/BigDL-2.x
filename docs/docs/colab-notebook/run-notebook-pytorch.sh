@@ -10,14 +10,14 @@ index=1
 set -e
 
 
-if [[ ! -z "${DATA_STORE_URI}" ]]; then
+if [[ ! -z "${FTP_URI}" ]]; then
     if [[ -d /tmp/datasets/ ]]; then
         rm -rf /tmp/datasets/MNIST/
     fi
-    wget  $DATA_STORE_URI/analytics-zoo-data/mnist/train-labels-idx1-ubyte.gz -P /tmp/datasets/MNIST/raw
-    wget  $DATA_STORE_URI/analytics-zoo-data/mnist/train-images-idx3-ubyte.gz -P /tmp/datasets/MNIST/raw
-    wget  $DATA_STORE_URI/analytics-zoo-data/mnist/t10k-labels-idx1-ubyte.gz -P /tmp/datasets/MNIST/raw
-    wget  $DATA_STORE_URI/analytics-zoo-data/mnist/t10k-images-idx3-ubyte.gz -P /tmp/datasets/MNIST/raw
+    wget  $FTP_URI/analytics-zoo-data/mnist/train-labels-idx1-ubyte.gz -P /tmp/datasets/MNIST/raw
+    wget  $FTP_URI/analytics-zoo-data/mnist/train-images-idx3-ubyte.gz -P /tmp/datasets/MNIST/raw
+    wget  $FTP_URI/analytics-zoo-data/mnist/t10k-labels-idx1-ubyte.gz -P /tmp/datasets/MNIST/raw
+    wget  $FTP_URI/analytics-zoo-data/mnist/t10k-images-idx3-ubyte.gz -P /tmp/datasets/MNIST/raw
 fi
 
 
