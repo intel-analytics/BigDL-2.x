@@ -75,6 +75,7 @@ python ../example/wnd/wnd_preprocessing.py \
 now=$(date "+%s")
 time3=$((now - start))
 
+
 rm -rf data
 rm -rf result
 
