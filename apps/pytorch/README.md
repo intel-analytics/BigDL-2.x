@@ -7,7 +7,7 @@ This example is migrated from [PROGRESSIVE GROWING OF GANS](https://pytorch.org/
 * torch 1.5.0 or above
 * torchvision 0.6.0 or above
 * Apache Spark 2.4.6(pyspark)
-* jep 3.9.0
+* jep 3.9.1
 * cloudpickle 1.6.0
 * Java 1.8
 
