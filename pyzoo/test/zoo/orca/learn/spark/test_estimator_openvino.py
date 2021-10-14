@@ -16,7 +16,6 @@
 import os
 import shutil
 import tarfile
-import tempfile
 from unittest import TestCase
 
 import numpy as np
