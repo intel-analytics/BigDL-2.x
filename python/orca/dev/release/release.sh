@@ -24,10 +24,10 @@ echo $BIGDL_DIR
 BIGDL_PYTHON_DIR="$(cd ${BIGDL_DIR}/python/orca/src; pwd)"
 echo $BIGDL_PYTHON_DIR
 
-if (( $# < 4)); then
+if (( $# < 3)); then
   echo "Usage: release.sh platform version quick_build upload mvn_parameters"
-  echo "Usage example: bash release.sh linux default false true"
-  echo "Usage example: bash release.sh linux 0.14.0.dev1 true true"
+  echo "Usage example: bash release.sh linux default false"
+  echo "Usage example: bash release.sh linux 0.14.0.dev1 true"
   echo "you can also add other profiles such as: -Dspark.version=2.4.6 -P spark_2.x"
   exit -1
 fi
@@ -35,8 +35,7 @@ fi
 platform=$1
 version=$2
 quick=$3 # Whether to rebuild the jar; quick=true means not rebuilding the jar
-upload=$4  # Whether to upload the whl to pypi
-profiles=${*:5}
+profiles=${*:4}
 
 if [ "${version}" != "default" ]; then
     echo "User specified version: ${version}"
@@ -83,9 +82,3 @@ fi
 wheel_command="python setup.py bdist_wheel --plat-name ${verbose_pname}"
 echo "Packing python distribution:   $wheel_command"
 ${wheel_command}
-
-if [ ${upload} == true ]; then
-    upload_command="twine upload python/orca/src/dist/bigdl_orca-${bigdl_version}-py3-none-${verbose_pname}.whl"
-    echo "Please manually upload with this command:  $upload_command"
-    $upload_command
-fi
