@@ -17,7 +17,7 @@ We recommend you to use Anaconda to prepare the environment, especially if you w
 conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
 conda activate zoo
 pip install filelock packaging psutil opencv-python
-pip install --pre --upgrade analytics-zoo  # download and install latest nightly-build Analytics Zoo.
+pip install --pre --upgrade bigdl-dllib bigdl-orca # download and install latest nightly-build bigdl-dllib and bigdl-orca.
 ```
 
 Then install OpenVINO from Anaconda. See [here](https://docs.openvinotoolkit.org/latest/openvino_docs_install_guides_installing_openvino_conda.html)
