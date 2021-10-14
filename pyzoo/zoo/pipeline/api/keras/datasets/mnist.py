@@ -20,7 +20,7 @@ import numpy
 from bigdl.dataset import base
 
 
-SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
+SOURCE_URL = '$FTP_URI/analytics-zoo-data/mnist'
 
 TRAIN_MEAN = 0.13066047740239506 * 255
 TRAIN_STD = 0.3081078 * 255
