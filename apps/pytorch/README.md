@@ -14,8 +14,8 @@ This example is migrated from [PROGRESSIVE GROWING OF GANS](https://pytorch.org/
 ## Prepare environments
 We highly recommend you to use [Anaconda](https://www.anaconda.com/distribution/#linux) to prepare the enviroments, especially if you want to run on a yarn cluster(yarn-client mode only). 
 ```
-conda create -n zoo python=3.7 #zoo is conda enviroment name, you can set another name you like.
-conda activate zoo
+conda create -n bigdl python=3.7 #bigdl is conda enviroment name, you can set another name you like.
+conda activate bigdl
 pip install orca dllib
 pip install jep==3.9.1 cloudpickle==1.6.0
 conda install pytorch torchvision cpuonly -c pytorch #command for linux
