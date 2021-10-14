@@ -9,11 +9,9 @@ We recommend you to use Anaconda to prepare the environment, especially if you w
 
     Ubuntu 18.04 LTS (64 bit)
     Ubuntu 20.04 LTS (64 bit) preview support
-    Windows 10 (64 bit)
     CentOS 7 (64 bit)
     Red Hat* Enterprise Linux* 8 (64 bit)
     macOS 10.15 (64 bit)
-    Yocto Project* Poky Zeus v3.0.x (64 bit)
 
 ```
 conda create -n zoo python=3.7  # "zoo" is conda environment name, you can use any name you like.
