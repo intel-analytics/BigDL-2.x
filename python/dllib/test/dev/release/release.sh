@@ -25,7 +25,7 @@ BIGDL_PYTHON_DIR="$(cd ${BIGDL_DIR}/python/dllib/src; pwd)"
 echo $BIGDL_PYTHON_DIR
 
 if (( $# < 3)); then
-  echo "Usage: release.sh platform version quick_build upload mvn_parameters"
+  echo "Usage: release.sh platform version quick_build mvn_parameters"
   echo "Usage example: bash release.sh linux default false"
   echo "Usage example: bash release.sh linux 0.14.0.dev1 true"
   echo "you can also add other profiles such as: -Dspark.version=2.4.6 -P spark_2.x"
