@@ -117,7 +117,7 @@ if __name__ == "__main__":
     idx_list = tbl.gen_string_idx(CAT_COLS, freq_limit=args.frequency_limit)
 
     if args.days == 24:  # Full Criteo dataset
-        # Exclude day_23.parquet since the first half od day_23 is separated for test.
+        # Exclude the last path day_23.parquet since the first half of day_23 is separated for test.
         train_data = FeatureTable.read_parquet(paths[:-1])
         train_preprocessed = preprocess_and_save(train_data, idx_list, "train", args.output_folder)
         test_data = FeatureTable.read_parquet(
