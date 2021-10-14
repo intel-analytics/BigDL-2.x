@@ -25,23 +25,27 @@ BIGDL_PYTHON_DIR="$(cd ${BIGDL_DIR}/python/dllib/src; pwd)"
 echo $BIGDL_PYTHON_DIR
 
 if (( $# < 2)); then
-  echo "Bad parameters. Usage: release.sh mac spark_2.x"
+  echo "Usage: release.sh platform mvn_parameters"
+  echo "Usage example: bash release.sh linux false"
+  echo "Usage example: bash release.sh linux true"
+  echo "you can also add other profiles such as: -Dspark.version=2.4.6 -P spark_2.x"
   exit -1
 fi
 
 platform=$1
-spark_profile=$2
-quick=$3
+quick=$2
+profiles=${*:3}
+
 bigdl_version=$(cat $BIGDL_DIR/python/version.txt | head -1)
 
 cd ${BIGDL_DIR}/scala
 if [ "$platform" ==  "mac" ]; then
     echo "Building bigdl for mac system"
-    dist_profile="-P mac -P $spark_profile"
+    dist_profile="-P mac $profiles"
     verbose_pname="macosx_10_11_x86_64"
 elif [ "$platform" == "linux" ]; then
     echo "Building bigdl for linux system"
-    dist_profile="-P linux -P $spark_profile"
+    dist_profile="-P linux $profiles"
     verbose_pname="manylinux1_x86_64"
 else
     echo "unsupport platform"
