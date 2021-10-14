@@ -27,7 +27,7 @@ export PYSPARK_DRIVER_PYTHON=python
 ray stop -f
 
 echo "Running chronos tests"
-python -m pytest -v test/bigdl/chronos \
+python -m pytest --durations=0 -v test/bigdl/chronos \
        -k "not test_forecast_tcmf_distributed"
 exit_status_0=$?
 if [ $exit_status_0 -ne 0 ];
