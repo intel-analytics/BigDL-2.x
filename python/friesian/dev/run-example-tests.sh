@@ -36,17 +36,11 @@ else
   wget -nv $FTP_URI/analytics-zoo-data/day0.tar.gz -P data
   tar -xvzf data/day0.tar.gz -C data
 fi
-if [ -d data/day_1.parquet ]; then
-  echo "data/day_1.parquet already exists"
-else
-  wget -nv $FTP_URI/analytics-zoo-data/day1.tar.gz -P data
-  tar -xvzf data/day1.tar.gz -C data
-fi
 
 python ../example/dlrm/dlrm_preprocessing.py \
     --cores 6 \
     --memory 50g \
-    --days 0-1 \
+    --days 0-0 \
     --input_folder ./data \
     --output_folder ./result \
     --frequency_limit 15
@@ -56,11 +50,16 @@ time2=$((now - start))
 echo "#3 start example test for wnd preprocessing"
 #timer
 start=$(date "+%s")
-
+if [ -d data/day_1.parquet ]; then
+  echo "data/day_1.parquet already exists"
+else
+  wget -nv $FTP_URI/analytics-zoo-data/day1.tar.gz -P data
+  tar -xvzf data/day1.tar.gz -C data
+fi
 python ../example/wnd/wnd_preprocessing.py \
     --executor_cores 6 \
     --executor_memory 50g \
-    --days 0-1 \
+    --days 1-1 \
     --input_folder ./data \
     --output_folder ./result \
     --frequency_limit 15 \
