@@ -31,6 +31,7 @@ Before running the following command, please modify the paths in `build-docker-i
   ```bash
   sudo ../../../scripts/generate-keys.sh
   ```
+  #################################################################################################finds the paths 
 
   You also need to generate your enclave key using the command below, and keep it safely for future remote attestations and to start SGX enclaves more securely.
 
@@ -47,6 +48,7 @@ Before running the following command, please modify the paths in `build-docker-i
   ```bash
   sudo bash ../../../scripts/generate-password.sh used_password_when_generate_keys
   ```
+  #################################################################################################finds the paths 
 
 ## Run Your Pyspark Program
 
