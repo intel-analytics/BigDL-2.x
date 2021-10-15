@@ -17,7 +17,7 @@ else
   wget -nv $FTP_URI/analytics-zoo-data/test -P data
 fi
 
-python ../example/dien/dien_preprocessing.py \
+python ../../example/dien/dien_preprocessing.py \
     --executor_cores 6 \
     --executor_memory 50g \
     --input_meta ./data/test \
@@ -37,7 +37,7 @@ else
   tar -xvzf data/day0.tar.gz -C data
 fi
 
-python ../example/dlrm/dlrm_preprocessing.py \
+python ../../example/dlrm/dlrm_preprocessing.py \
     --cores 6 \
     --memory 50g \
     --days 0-0 \
@@ -56,7 +56,7 @@ else
   wget -nv $FTP_URI/analytics-zoo-data/day1.tar.gz -P data
   tar -xvzf data/day1.tar.gz -C data
 fi
-python ../example/wnd/wnd_preprocessing.py \
+python ../../example/wnd/wnd_preprocessing.py \
     --executor_cores 6 \
     --executor_memory 50g \
     --days 0-1 \
