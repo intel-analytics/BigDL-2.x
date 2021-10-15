@@ -147,9 +147,11 @@ def get_zoo_bigdl_classpath_on_driver():
     from bigdl.dllib.utils.zoo_engine import get_analytics_zoo_classpath
     bigdl_classpath = get_bigdl_classpath()
     assert bigdl_classpath, "Cannot find BigDL classpath, please check your installation"
-    zoo_classpath = get_analytics_zoo_classpath()
-    assert zoo_classpath, "Cannot find Analytics-Zoo classpath, please check your installation"
-    return zoo_classpath, bigdl_classpath
+    # zoo_classpath = get_analytics_zoo_classpath()
+    # assert zoo_classpath, "Cannot find Analytics-Zoo classpath, please check your installation"
+    # return zoo_classpath, bigdl_classpath
+    print("dingding test")
+    return bigdl_classpath, bigdl_classpath
 
 
 def set_python_home():
