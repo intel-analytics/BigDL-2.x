@@ -1,6 +1,6 @@
 # Trusted Big Data ML with Python
 
-SGX-based Trusted Big Data ML allows the user to run end-to-end big data analytics application and Intel Analytics Zoo and BigDL model training with spark local and distributed cluster on Graphene-SGX.
+SGX-based Trusted Big Data ML allows the user to run end-to-end big data analytics application and Intel BigDL model training with spark local and distributed cluster on Graphene-SGX.
 
 *Please mind the IP and file path settings. They should be changed to the IP/path of your own sgx server on which you are running the programs.*
 
