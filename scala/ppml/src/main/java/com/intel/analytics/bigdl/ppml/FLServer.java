@@ -46,7 +46,7 @@ public class FLServer extends GrpcServerBase {
         }
         // start all services without providing service list
         serverServices.add(new PSIServiceImpl());
-        serverServices.add(new NNServiceImpl());
+//        serverServices.add(new NNServiceImpl());
     }
 
     public static void main(String[] args) throws Exception {
