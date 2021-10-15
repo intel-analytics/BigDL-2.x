@@ -246,6 +246,16 @@ else
   export PYTHONPATH=$PYTHONPATH:$(pwd)/analytics-zoo-models/model/research:$(pwd)/analytics-zoo-models/model/research/slim
 fi
 
+if [[ ! -z "${FTP_URI}" ]]; then
+    if [[ -d /tmp/mnist/ ]]; then
+        rm -rf /tmp/mnist/
+    fi
+    wget  $FTP_URI/analytics-zoo-data/mnist/train-labels-idx1-ubyte.gz -P /tmp/mnist
+    wget  $FTP_URI/analytics-zoo-data/mnist/train-images-idx3-ubyte.gz -P /tmp/mnist
+    wget  $FTP_URI/analytics-zoo-data/mnist/t10k-labels-idx1-ubyte.gz -P /tmp/mnist
+    wget  $FTP_URI/analytics-zoo-data/mnist/t10k-images-idx3-ubyte.gz -P /tmp/mnist
+fi
+
 export SPARK_DRIVER_MEMORY=20g
 python ${ANALYTICS_ZOO_ROOT}/pyzoo/zoo/examples/tensorflow/tfpark/tf_optimizer/train.py
 exit_status=$?
