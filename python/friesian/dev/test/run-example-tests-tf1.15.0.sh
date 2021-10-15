@@ -13,7 +13,7 @@ else
   tar -xvzf data/input_dien_train.tar.gz -C data
 fi
 
-python ../example/dien/dien_train.py \
+python ../../example/dien/dien_train.py \
     --executor_cores 4 \
     --executor_memory 50g \
     --batch_size 128 \
