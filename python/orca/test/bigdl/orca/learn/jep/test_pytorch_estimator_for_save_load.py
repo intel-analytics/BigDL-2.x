@@ -68,7 +68,7 @@ class TestEstimatorForSaveAndLoad(TestCase):
         batch_size = 320
 
         images = torch.randn(1000 * 28 * 28, dtype=torch.float32).view(1000, 1, 28, 28)
-        labels = torch.randint(1000, dtype=torch.long).view(1000)
+        labels = torch.randint(0, 10, (1000,), dtype=torch.long)
 
         dataset = torch.utils.data.TensorDataset(images, labels)
         train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
