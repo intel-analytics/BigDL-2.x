@@ -189,7 +189,7 @@
         <module>friesian.serving</module>
         <module>grpc</module>
         <module>serving</module>
-        <module>ppml</module>
+	<!-- <module>ppml</module> segmentation fault on jenkins-->
         <module>assembly</module>
     </modules>
 
