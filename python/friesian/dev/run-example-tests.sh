@@ -3,7 +3,7 @@ export FTP_URI=$FTP_URI
 
 set -e
 mkdir -p result
-echo "#1 start example test for dien"
+echo "#1 start example test for dien preprocessing"
 #timer
 start=$(date "+%s")
 if [ -f data/test.json ]; then
@@ -27,7 +27,7 @@ python ../example/dien/dien_preprocessing.py \
 now=$(date "+%s")
 time1=$((now - start))
 
-echo "#2 start example test for dlrm"
+echo "#2 start example test for dlrm preprocessing"
 #timer
 start=$(date "+%s")
 if [ -d data/day_0.parquet ]; then
@@ -53,7 +53,7 @@ python ../example/dlrm/dlrm_preprocessing.py \
 now=$(date "+%s")
 time2=$((now - start))
 
-echo "#3 start example test for wnd"
+echo "#3 start example test for wnd preprocessing"
 #timer
 start=$(date "+%s")
 
@@ -72,6 +72,6 @@ time3=$((now - start))
 rm -rf data
 rm -rf result
 
-echo "#1 dien time used: $time1 seconds"
-echo "#2 dlrm time used: $time2 seconds"
-echo "#3 wnd time used: $time3 seconds"
+echo "#1 dien preprocessing time used: $time1 seconds"
+echo "#2 dlrm preprocessing time used: $time2 seconds"
+echo "#3 wnd preprocessing time used: $time3 seconds"
