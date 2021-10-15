@@ -6,6 +6,7 @@ export KEYS_PATH=YOUR_LOCAL_KEYS_PATH
 export LOCAL_IP=YOUR_LOCAL_IP
 
 sudo docker pull 10.239.45.10/arda/intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-python-graphene:0.11-SNAPSHOT
+###########################################################################################################################change name of image
 
 
 sudo docker run -itd \
@@ -24,3 +25,4 @@ sudo docker run -itd \
     -e LOCAL_IP=$LOCAL_IP \
     -e SGX_MEM_SIZE=64G \
     10.239.45.10/arda/intelanalytics/analytics-zoo-ppml-trusted-big-data-ml-python-graphene:0.11-SNAPSHOT bash
+    ###########################################################################################################################change name of image
