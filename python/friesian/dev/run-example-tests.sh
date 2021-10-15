@@ -59,7 +59,7 @@ fi
 python ../example/wnd/wnd_preprocessing.py \
     --executor_cores 6 \
     --executor_memory 50g \
-    --days 1-1 \
+    --days 0-1 \
     --input_folder ./data \
     --output_folder ./result \
     --frequency_limit 15 \
