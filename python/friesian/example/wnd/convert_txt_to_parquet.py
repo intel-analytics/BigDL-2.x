@@ -4,6 +4,8 @@ from pyspark.sql.types import *
 
 import os
 
+from argparse import ArgumentParser
+
 
 
 LABEL_COL = 0
@@ -16,11 +18,19 @@ CAT_COLS = list(range(14, 40))
 
 if __name__ == '__main__':
 
+   parser = ArgumentParser()
+
+   parser.add_argument('--input_files_path', type=str, required=True, help="Path to the txt file/files to be processed.")
+
+   parser.add_argument('--output_folder_path', type=str, default=".", help="The path of the folder to save the parquet data.")
+
+   args = parser.parse_args()
+
    spark = SparkSession.builder.getOrCreate()
 
-   base_path = "/home/kai/Downloads/dac_sample/"
+   input_files_path = args.input_files_path.split(',')
 
-   out_path = "/home/kai/Downloads/dac_sample/dac_sample.parquet"
+   output_folder_path = args.output_folder_path
 
 
 
@@ -36,12 +46,15 @@ if __name__ == '__main__':
 
    # paths = [os.path.join(folder, 'day_%d' % i) for i in day_range]
 
-   for file in ["dac_sample.txt"]:
+   for file in input_files_path:
 
-       path = os.path.join(base_path, file)
 
-       df = spark.read.schema(schema).option('sep', '\t').csv(path)
+       df = spark.read.schema(schema).option('sep', '\t').csv(file)
 
-       # path = os.path.join(out_path, '{}.parquet'.format(file))
+       file_name = file.split('/')[-1].split('.')[0]
 
-       df.write.parquet(out_path, mode="overwrite")
+
+       output_file_path = os.path.join(output_folder_path, '{}.parquet'.format(file_name)).lstrip(".txt")
+
+
+       df.write.parquet(output_file_path, mode="overwrite")

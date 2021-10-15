@@ -13,11 +13,24 @@ pip install --pre --upgrade analytics-zoo
 ## Prepare the data
 You can download the full __1TB__ Click Logs dataset from [here](https://ailab.criteo.com/download-criteo-1tb-click-logs-dataset/), which includes data of 24 days (day0 to day23) with 4,373,472,329 records in total.
 
-After you download the files, convert them to parquet files with the name `day_x.parquet` (x=0-23), and put all parquet files in one folder. The convert from txt to parquet can be made by using the script `convert_txt_to_parquet.py` with some modification. It is written for a sample data file and you can modify it to be suitable for the others.
+After you download the files, convert them to parquet files with the name `day_x.parquet` (x=0-23), and put all parquet files in one folder. The convert from txt to parquet can be made by using the script `convert_txt_to_parquet.py`. Run it by the command below:
+```
+python convert_txt_to_parquet.py \
+    --input_files_path /path_to_txt_data/day_0.txt \
+    --output_folder_path /parquet/output/folder/path
+```
+
+You can also process many txt files by split them with comma in the `input_files_path`:
+```
+python convert_txt_to_parquet.py \
+    --input_files_path /path_to_txt_data/day_0.txt,/path_to_txt_data/day_1.txt \
+    --output_folder_path /parquet/output/folder/path
+```
+
 - The first 23 days (day0 to day22) are used for WND training with 4,195,197,692 records in total.
 - The first half (89,137,319 records in total) of the last day (day23) is used for test. To prepare the test dataset, you need to split the first half of day23 into a new file (e.g. using command `head -n 89137319 day_23 > day_23_test`) and finally convert to parquet files with the name `day_23_test.parquet` under the same folder with the train parquet files.
 
-If you want to use some sample data for test, you can download `dac_sample` from [here](https://labs.criteo.com/2014/02/download-dataset/), unzip and rename it to day0 and convert to a parquet file, which can be achieved by running the script `convert_txt_to_parquet.py` and please pay attention to the file paths in the script. Then use the running commands in below sections with argument `days` set to `0-0`.
+If you want to use some sample data for test, you can download `dac_sample` from [here](https://labs.criteo.com/2014/02/download-dataset/), unzip and rename it to day0 and convert to a parquet file. Then use the running commands in below sections with argument `days` set to `0-0`.
 
 ## Running command
 
