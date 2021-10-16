@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.ppml;
 
 import com.intel.analytics.bigdl.grpc.GrpcClientBase;
 import com.intel.analytics.bigdl.ppml.generated.FLProto;
-//import com.intel.analytics.bigdl.ppml.vfl.NNStub;
+// import com.intel.analytics.bigdl.ppml.vfl.NNStub;
 import com.intel.analytics.bigdl.ppml.psi.PSIStub;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

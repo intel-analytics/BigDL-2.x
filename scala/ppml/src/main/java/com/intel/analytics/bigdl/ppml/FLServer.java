@@ -18,7 +18,7 @@ package com.intel.analytics.bigdl.ppml;
 
 import com.intel.analytics.bigdl.grpc.GrpcServerBase;
 import com.intel.analytics.bigdl.ppml.psi.PSIServiceImpl;
-//import com.intel.analytics.bigdl.ppml.vfl.NNServiceImpl;
+// import com.intel.analytics.bigdl.ppml.vfl.NNServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
