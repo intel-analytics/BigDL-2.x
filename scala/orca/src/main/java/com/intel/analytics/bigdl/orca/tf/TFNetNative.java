@@ -260,4 +260,3 @@ public class TFNetNative {
         return (arch.equals("amd64")) ? "x86_64" : arch;
     }
 }
-
