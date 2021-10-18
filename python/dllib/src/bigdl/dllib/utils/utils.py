@@ -132,24 +132,24 @@ def get_conda_python_path():
 
 
 def get_executor_conda_zoo_classpath(conda_path):
-    orca_classpath, bigdl_classpath = get_zoo_bigdl_classpath_on_driver()
-    orca_jar_name = orca_classpath.split("/")[-1]
-    bigdl_jar_name = bigdl_classpath.split("/")[-1]
+    from bigdl.dllib.utils.engine import get_bigdl_jars
+    bigdl_jars = get_bigdl_jars()
     python_interpreter_name = get_conda_python_path().split("/")[-1]  # Python version
     prefix = "{}/lib/{}/site-packages/"\
         .format(conda_path, python_interpreter_name)
-    return ["{}/bigdl/share/orca/lib/{}".format(prefix, orca_jar_name),
-            "{}/bigdl/share/dllib/lib/{}".format(prefix, bigdl_jar_name)]
-
+    executor_classpath=[]
+    for jar_path in list(bigdl_jars):
+        print("!!!!!!!!!!!!!!jar_path is " + jar_path)
+        postfix = "/".join(jar_path.split("/")[-5:])
+        executor_classpath.append("{}/{}".format(prefix, postfix))
+        print("!!!!!!!!!!!!!!" + "{}/{}".format(prefix, postfix))
+    return executor_classpath
 
 def get_zoo_bigdl_classpath_on_driver():
     from bigdl.dllib.utils.engine import get_bigdl_classpath
-    from bigdl.dllib.utils.zoo_engine import get_analytics_zoo_classpath
     bigdl_classpath = get_bigdl_classpath()
     assert bigdl_classpath, "Cannot find BigDL classpath, please check your installation"
-    zoo_classpath = get_analytics_zoo_classpath()
-    assert zoo_classpath, "Cannot find Analytics-Zoo classpath, please check your installation"
-    return zoo_classpath, bigdl_classpath
+    return bigdl_classpath
 
 
 def set_python_home():
