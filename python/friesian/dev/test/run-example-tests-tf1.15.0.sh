@@ -27,4 +27,3 @@ rm -rf data
 rm -rf result
 
 echo "#1 dien train time used: $time1 seconds"
-
