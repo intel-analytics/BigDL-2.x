@@ -349,7 +349,5 @@ now=$(date "+%s")
 time10=$((now-start))
 echo "#10 network_traffic_autots_customized_model time used:$time10 seconds"
 
-fi
-
 # This should be done at the very end after all tests finish.
 clear_up
