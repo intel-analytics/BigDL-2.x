@@ -24,4 +24,4 @@ python ../../example/two_tower/train_2tower.py \
 now=$(date "+%s")
 time1=$((now - start))
 
-echo "#1 dien train time used: $time1 seconds"
+echo "#1 two tower train time used: $time1 seconds"
