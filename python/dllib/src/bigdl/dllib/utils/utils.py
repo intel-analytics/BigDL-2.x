@@ -139,10 +139,8 @@ def get_executor_conda_zoo_classpath(conda_path):
         .format(conda_path, python_interpreter_name)
     executor_classpath=[]
     for jar_path in list(bigdl_jars):
-        print("!!!!!!!!!!!!!!jar_path is " + jar_path)
         postfix = "/".join(jar_path.split("/")[-5:])
         executor_classpath.append("{}/{}".format(prefix, postfix))
-        print("!!!!!!!!!!!!!!" + "{}/{}".format(prefix, postfix))
     return executor_classpath
 
 def get_zoo_bigdl_classpath_on_driver():
