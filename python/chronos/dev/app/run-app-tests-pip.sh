@@ -82,30 +82,6 @@ now=$(date "+%s")
 time2=$((now-start))
 echo "#2 chronos-network-traffic-model-forecasting time used:$time2 seconds"
 
-echo "#3 start app test for automl-nyc-taxi"
-#timer
-start=$(date "+%s")
-${BIGDL_ROOT}/python/chronos/dev/app/ipynb2py.sh ${BIGDL_ROOT}/python/chronos/dev/app/automl/nyc_taxi_dataset
-
-chmod +x ${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
-${ANALYTICS_ZOO_HOME}/bin/data/NAB/nyc_taxi/get_nyc_taxi.sh
-
-sed -i '/get_ipython()/d;' ${BIGDL_ROOT}/python/chronos/dev/app/automl/nyc_taxi_dataset.py
-sed -i 's/epochs=2/epochs=1/g;s/epoch_num=5/epoch_num=1/g' ${BIGDL_ROOT}/python/chronos/dev/app/automl/nyc_taxi_dataset.py
-
-python ${BIGDL_ROOT}/python/chronos/dev/app/automl/nyc_taxi_dataset.py
-
-exit_status=$?
-if [ $exit_status -ne 0 ];
-then
-    clear_up
-    echo "automl nyc-taxi failed"
-    exit $exit_status
-fi
-now=$(date "+%s")
-time3=$((now-start))
-echo "#3 automl-nyc-taxi time used:$time3 seconds"
-
 echo "#4 start app test for chronos-anomaly-detect-unsupervised-forecast-based"
 #timer
 start=$(date "+%s")
