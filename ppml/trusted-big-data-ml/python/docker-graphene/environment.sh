@@ -14,4 +14,4 @@ export AZ_PPML_PATH=/opt/analytics-zoo-ppml
 export ENCLAVE_KEY_PATH=$AZ_PPML_PATH/enclave-key.pem
 export KEYS_PATH=$AZ_PPML_PATH/keys
 export SECURE_PASSWORD_PATH=$AZ_PPML_PATH/password
-export DATA_PATH=$AZ_PPML_PATH/data
+export DATA_PATH=$AZ_PPML_PATH/data 
