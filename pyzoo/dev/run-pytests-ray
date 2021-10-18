@@ -48,7 +48,7 @@ ray stop -f
 #ray stop -f
 
 echo "Running chronos tests"
-python -m pytest --durations=0 -v ../test/zoo/chronos \
+python -m pytest --durations=0 -v ../test/zoo/chronos/model/test_Seq2Seq_pytorch.py \
        -k "not test_forecast_tcmf_distributed"
 exit_status_4=$?
 if [ $exit_status_4 -ne 0 ];
