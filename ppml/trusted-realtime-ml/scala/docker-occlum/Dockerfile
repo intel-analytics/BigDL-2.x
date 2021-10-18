@@ -92,7 +92,7 @@ COPY --from=redis-tls /opt/occlum/glibc /opt/occlum/glibc
 
 COPY --from=bigdl /opt/flink-${FLINK_VERSION} /opt/flink-${FLINK_VERSION}
 COPY --from=bigdl /opt/resnet50 /opt/resnet50
-COPY --from=bigdl /opt/bigdl-${BIGDL_VERSION}/jars/bigdl-friesian-serving-spark_3.1.2-0.14.0-SNAPSHOT.jar ${BIGDL_HOME}/bigdl-serving-jar-with-dependencies.jar
+COPY --from=bigdl /opt/bigdl-${BIGDL_VERSION}/jars/bigdl-serving*-jar-with-dependencies.jar ${BIGDL_HOME}/bigdl-serving-jar-with-dependencies.jar
 
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
