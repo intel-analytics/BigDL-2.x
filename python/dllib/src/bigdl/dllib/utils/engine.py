@@ -110,7 +110,7 @@ def get_bigdl_classpath():
     if os.getenv("BIGDL_CLASSPATH"):
         return os.environ["BIGDL_CLASSPATH"]
     jar_dir = os.path.abspath(__file__ + "/../../../")
-    jar_paths = glob.glob(os.path.join(jar_dir, "share/*/lib/*.jar"))
+    jar_paths = glob.glob(os.path.join(jar_dir, "share/dllib/lib/*.jar"))
     return ":".join(jar_paths)
 
 
