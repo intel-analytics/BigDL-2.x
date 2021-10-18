@@ -27,15 +27,18 @@ import sys
 import re
 from html.parser import HTMLParser
 
+bigdl_home = os.path.abspath(__file__ + "/../../..")
+VERSION = open(os.path.join(bigdl_home, 'python/version.txt'), 'r').read().strip()
 
 def setup_package():
 
     metadata = dict(
         name='bigdl-tf',
         version='0.14.0.dev0',
-        description='',
-        author='',
-        author_email='',
+        description='Seamlessly scale out TensorFlow and PyTorch for Big Data (using Spark & Ray)',
+        author='BigDL Authors',
+        author_email='bigdl-user-group@googlegroups.com',
+        license='Apache License, Version 2.0',
         packages=["bigdl.share.tflibs"],
         url='https://github.com/intel-analytics/analytics-zoo/tree/bigdl-2.0',
         package_data={"bigdl.share.tflibs": ["libtensorflow_framework.so",

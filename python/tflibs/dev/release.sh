@@ -17,15 +17,15 @@
 
 RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
 echo $RUN_SCRIPT_DIR
-MKL_DIR="$(cd ${RUN_SCRIPT_DIR}/../; pwd)"
-echo $MKL_DIR
-cd $MKL_DIR
+TF_DIR="$(cd ${RUN_SCRIPT_DIR}/../; pwd)"
+echo $TF_DIR
+cd $TF_DIR
 
 wheel_command="python setup.py bdist_wheel --plat-name manylinux2010_x86_64"
 echo "Packing python distribution:   $wheel_command"
 ${wheel_command}
 
-upload_command="twine upload dist/bigdl_tf-0.14.0.dev0-py3-none-manylinux2010_x86_64.whl"
+upload_command="twine upload dist/bigdl_tf-${DEV_VERSION}-py3-none-manylinux2010_x86_64.whl"
 echo "Please manually upload with this command:  $upload_command"
 
 # $upload_command
