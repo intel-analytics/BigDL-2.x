@@ -30,11 +30,15 @@ echo "##1.1 LenetEstimator testing"
 #timer
 start=$(date "+%s")
 
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+${submit} \
 --master ${MASTER} \
+--conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" \
 --driver-memory 20g \
 --executor-memory 20g \
+--executor-cores 1
+--total-executor-cores 4
 --class com.intel.analytics.bigdl.dllib.examples.localEstimator.LenetLocalEstimator \
+${ANALYTICS_ZOO_JAR}
 -d analytics-zoo-data/data/mnist -b 128 -e 1 -t 4
 
 now=$(date "+%s")
@@ -48,9 +52,13 @@ start=$(date "+%s")
 
 ${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
 --master ${MASTER} \
+--conf "spark.serializer=org.apache.spark.serializer.JavaSerializer"
 --driver-memory 20g \
 --executor-memory 20g \
+--executor-cores 1
+--total-executor-cores 4
 --class com.intel.analytics.bigdl.dllib.examples.localEstimator.ResnetLocalEstimator \
+${ANALYTICS_ZOO_JAR}
 -d analytics-zoo-data/data/cifar10 -b 128 -e 1 -t 4
 
 now=$(date "+%s")
