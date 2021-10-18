@@ -29,13 +29,16 @@ RUN git clone https://github.com/redis/redis.git && \
 # stage. 2 Flink & bigdl
 FROM ubuntu:18.04 as bigdl
 ENV JAVA_HOME				/usr/lib/jvm/java-8-openjdk-amd64
-ENV FLINK_VERSION			${FLINK_VERSION}
+ARG FLINK_VERSION=1.11.3
+ENV FLINK_VERSION ${FLINK_VERSION}
 ENV FLINK_HOME				/opt/flink-${FLINK_VERSION}
+ARG BIGDL_VERSION=0.14.0-SNAPSHOT
+ARG SPARK_VERSION=3.1.2
 ENV BIGDL_HOME		        /opt/bigdl-${BIGDL_VERSION}
 
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
-        git build-essential coreutils ca-certificates openjdk-8-jdk wget unzip apt-utils curl maven && \
+        ca-certificates wget unzip apt-utils curl && \
     apt-get clean
 
 # Download flink
@@ -59,6 +62,10 @@ RUN cd /opt && \
 
 # stage.3 az ppml occlum
 FROM ubuntu:18.04 as ppml
+
+ARG FLINK_VERSION=1.11.3
+ARG BIGDL_VERSION=0.14.0-SNAPSHOT
+
 
 ENV JAVA_HOME				/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH                    ${JAVA_HOME}/bin:${PATH}
@@ -85,7 +92,7 @@ COPY --from=redis-tls /opt/occlum/glibc /opt/occlum/glibc
 
 COPY --from=bigdl /opt/flink-${FLINK_VERSION} /opt/flink-${FLINK_VERSION}
 COPY --from=bigdl /opt/resnet50 /opt/resnet50
-COPY --from=bigdl /opt/bigdl-${BIGDL_VERSION}/jars/bigdl-serving*-jar-with-dependencies.jar ${BIGDL_HOME}/bigdl-serving-jar-with-dependencies.jar
+COPY --from=bigdl /opt/bigdl-${BIGDL_VERSION}/jars/bigdl-friesian-serving-spark_3.1.2-0.14.0-SNAPSHOT.jar ${BIGDL_HOME}/bigdl-serving-jar-with-dependencies.jar
 
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
