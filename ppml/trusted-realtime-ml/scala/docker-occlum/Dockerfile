@@ -1,3 +1,7 @@
+ARG BIGDL_VERSION=0.14.0-SNAPSHOT
+ARG SPARK_VERSION=3.1.2
+ARG FLINK_VERSION=1.11.3
+
 # stage.1 Redis
 FROM occlum/occlum:0.23.7-ubuntu18.04 as redis-tls
 
@@ -22,15 +26,9 @@ RUN git clone https://github.com/redis/redis.git && \
     git checkout 6.0.6 && \
     make -j `getconf _NPROCESSORS_ONLN` BUILD_TLS=yes && make PREFIX=/opt/redis install
 
-# stage. 2 Flink & analytics-zoo
-FROM ubuntu:18.04 as analytics-zoo
-
-ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
-ARG BIGDL_VERSION=0.13.0
-ARG SPARK_VERSION=2.4.6
-ARG SPARK_MAJOR_VERSION=2.4
+# stage. 2 Flink & bigdl
+FROM ubuntu:18.04 as bigdl
 ARG FLINK_VERSION=1.11.3
-ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
 ENV JAVA_HOME				/usr/lib/jvm/java-8-openjdk-amd64
 ENV FLINK_VERSION			${FLINK_VERSION}
 ENV FLINK_HOME				/opt/flink-${FLINK_VERSION}
@@ -50,16 +48,11 @@ RUN cd /opt && \
     tar -zxvf flink-${FLINK_VERSION}-bin-scala_2.11.tgz && \
     rm flink-${FLINK_VERSION}-bin-scala_2.11.tgz
 
-# analytics-zoo
-RUN cd /opt && git clone --single-branch --branch master https://github.com/intel-analytics/analytics-zoo.git && \
-    cd analytics-zoo/zoo && \
-    export MAVEN_OPTS="-XX:ReservedCodeCacheSize=512m -XX:MaxPermSize=3G \
-        -Dhttp.proxyHost=$HTTP_PROXY_HOST \
-        -Dhttp.proxyPort=$HTTP_PROXY_PORT \
-        -Dhttps.proxyHost=$HTTPS_PROXY_HOST \
-        -Dhttps.proxyPort=$HTTPS_PROXY_PORT" && \
-    mvn clean package -DskipTests -Dspark.version=${SPARK_VERSION} \
-        -Dbigdl.artifactId=bigdl-SPARK_$SPARK_MAJOR_VERSION -P spark_2.4+ -Dbigdl.version=${BIGDL_VERSION}
+# Download bigdl
+RUN wget https://raw.githubusercontent.com/intel-analytics/analytics-zoo/bigdl-2.0/docker/hyperzoo/download-bigdl.sh && \
+    chmod a+x ./download-bigdl.sh
+RUN ./download-bigdl.sh && \
+    rm bigdl*.zip
 
 # models
 RUN cd /opt && \
@@ -74,10 +67,7 @@ FROM ubuntu:18.04 as ppml
 ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
 ARG BIGDL_VERSION=0.13.0
 ARG SPARK_VERSION=2.4.6
-ARG FLINK_VERSION=1.11.3
-ENV ANALYTICS_ZOO_VERSION		${ANALYTICS_ZOO_VERSION}
-ENV SPARK_VERSION			${SPARK_VERSION}
-ENV BIGDL_VERSION			${BIGDL_VERSION}
+
 ENV JAVA_HOME				/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH				${JAVA_HOME}/bin:${PATH}
 ENV LOCAL_IP				127.0.0.1
