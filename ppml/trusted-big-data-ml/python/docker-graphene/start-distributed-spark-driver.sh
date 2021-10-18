@@ -2,8 +2,8 @@
 set -x
 
 source ./environment.sh
-export ZOO_PATH=~/zesheng/analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene/zoo
-export PYZOO_PATH=~/zesheng/analytics-zoo/ppml/trusted-big-data-ml/scala/docker-graphene/pyzoo
+export ZOO_PATH=~/zesheng/bigdl/ppml/trusted-big-data-ml/scala/docker-graphene/zoo
+export PYZOO_PATH=~/zesheng/bigdl/ppml/trusted-big-data-ml/scala/docker-graphene/pyzoo
 
 echo ">>> $MASTER, start spark-driver"
 ssh root@$MASTER "docker run -itd \
