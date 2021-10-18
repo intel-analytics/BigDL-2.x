@@ -28,14 +28,10 @@ RUN git clone https://github.com/redis/redis.git && \
 
 # stage. 2 Flink & bigdl
 FROM ubuntu:18.04 as bigdl
-ARG FLINK_VERSION=1.11.3
 ENV JAVA_HOME				/usr/lib/jvm/java-8-openjdk-amd64
 ENV FLINK_VERSION			${FLINK_VERSION}
 ENV FLINK_HOME				/opt/flink-${FLINK_VERSION}
-ARG HTTP_PROXY_HOST
-ARG HTTP_PROXY_PORT
-ARG HTTPS_PROXY_HOST
-ARG HTTPS_PROXY_PORT
+ENV BIGDL_HOME		        /opt/bigdl-${BIGDL_VERSION}
 
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
@@ -64,17 +60,14 @@ RUN cd /opt && \
 # stage.3 az ppml occlum
 FROM ubuntu:18.04 as ppml
 
-ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
-ARG BIGDL_VERSION=0.13.0
-ARG SPARK_VERSION=2.4.6
-
 ENV JAVA_HOME				/usr/lib/jvm/java-11-openjdk-amd64
-ENV PATH				${JAVA_HOME}/bin:${PATH}
+ENV PATH                    ${JAVA_HOME}/bin:${PATH}
 ENV LOCAL_IP				127.0.0.1
 ENV SGX_MEM_SIZE			32G
 ENV REDIS_PORT				6379
 ENV FLINK_VERSION			${FLINK_VERSION}
 ENV FLINK_HOME				/opt/flink-${FLINK_VERSION}
+ENV BIGDL_HOME		        /opt/bigdl-${BIGDL_VERSION}
 ENV FLINK_JOB_MANAGER_IP		127.0.0.1
 ENV FLINK_JOB_MANAGER_REST_PORT		8081
 ENV FLINK_JOB_MANAGER_RPC_PORT		6123
@@ -84,16 +77,15 @@ ENV FLINK_TASK_MANAGER_RPC_PORT		6125
 ENV FLINK_TASK_MANAGER_TASKSLOTS_NUM	1
 ENV CORE_NUM                            2
 
-RUN mkdir -p /opt/analytics-zoo
+RUN mkdir -p ${BIGDL_HOME}
 
 COPY --from=redis-tls /opt/ssl /opt/ssl
 COPY --from=redis-tls /opt/redis /opt/redis
 COPY --from=redis-tls /opt/occlum/glibc /opt/occlum/glibc
 
-COPY --from=analytics-zoo /opt/flink-${FLINK_VERSION} /opt/flink-${FLINK_VERSION}
-COPY --from=analytics-zoo /opt/resnet50 /opt/resnet50
-COPY --from=analytics-zoo /opt/analytics-zoo/zoo/target/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar /opt/analytics-zoo/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-serving.jar
-COPY --from=analytics-zoo /opt/analytics-zoo/zoo/target/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-http.jar /opt/analytics-zoo/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-http.jar
+COPY --from=bigdl /opt/flink-${FLINK_VERSION} /opt/flink-${FLINK_VERSION}
+COPY --from=bigdl /opt/resnet50 /opt/resnet50
+COPY --from=bigdl /opt/bigdl-${BIGDL_VERSION}/jars/bigdl-serving*-jar-with-dependencies.jar ${BIGDL_HOME}/bigdl-serving-jar-with-dependencies.jar
 
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
@@ -136,3 +128,15 @@ ADD ./start-all.sh /opt/start-all.sh
 ADD ./start-local-cluster-serving.sh /opt/start-local-cluster-serving.sh
 ADD ./start-distributed-cluster-serving.sh /opt/start-distributed-cluster-serving.sh
 ADD ./stop-distributed-cluster-serving.sh /opt/stop-distributed-cluster-serving.sh
+
+
+RUN chmod a+x /opt/init-occlum-taskmanager.sh && \
+    chmod a+x /opt/start-redis.sh && \
+    chmod a+x /opt/check-status.sh && \
+    chmod a+x /opt/start-flink-jobmanager.sh && \
+    chmod a+x /opt/start-flink-taskmanager.sh && \
+    chmod a+x /opt/start-cluster-serving-job.sh && \
+    chmod a+x /opt/start-http-frontend.sh && \
+    chmod a+x /opt/start-local-cluster-serving.sh && \
+    chmod a+x /opt/start-distributed-cluster-serving.sh && \
+    chmod a+x /opt/stop-distributed-cluster-serving.sh
