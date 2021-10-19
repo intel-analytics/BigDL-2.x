@@ -21,6 +21,9 @@ from bigdl.dllib.nn.layer import *
 from bigdl.dllib.nn.criterion import *
 from bigdl.dllib.optim.optimizer import *
 from bigdl.dllib.utils.common import *
+from bigdl.dllib.utils.nncontext import *
+from bigdl.dllib.utils.utils import detect_conda_env_name
+import os
 
 
 def build_model(class_num):
@@ -61,13 +64,18 @@ if __name__ == "__main__":
     parser.add_option("-n", "--endTriggerNum", type=int, dest="endTriggerNum", default="20")
     parser.add_option("-d", "--dataPath", dest="dataPath", default="/tmp/mnist")
     parser.add_option("--optimizerVersion", dest="optimizerVersion", default="optimizerV1")
+    parser.add_option("-y", "--onYarn", action="store_true",  dest="onYarn", default=False)
 
     (options, args) = parser.parse_args(sys.argv)
 
-    sc = SparkContext(appName="lenet5", conf=create_spark_conf())
-    redire_spark_logs()
-    show_bigdl_info_logs()
-    init_engine()
+    if options.onYarn:
+        hadoop_conf = os.environ.get("HADOOP_CONF_DIR")
+        assert hadoop_conf, "Directory path to hadoop conf not found for yarn-client mode. Please " \
+                "set the environment variable HADOOP_CONF_DIR"
+        conda_env_name = detect_conda_env_name()
+        sc = init_spark_on_yarn(hadoop_conf="/opt/hadoop/latest/etc/hadoop", conda_name=conda_env_name, num_executors=2, executor_cores=2)
+    else:
+        sc = init_spark_on_local(cores=4)
 
     set_optimizer_version(options.optimizerVersion)
 
