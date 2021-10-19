@@ -50,7 +50,7 @@ echo "##1.2 ResnetEstimator testing"
 #timer
 start=$(date "+%s")
 
-${ANALYTICS_ZOO_HOME}/bin/spark-shell-with-zoo.sh \
+${submit} \
 --master ${MASTER} \
 --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer"
 --driver-memory 20g \
