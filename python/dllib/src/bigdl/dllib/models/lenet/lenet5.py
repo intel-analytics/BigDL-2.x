@@ -64,18 +64,30 @@ if __name__ == "__main__":
     parser.add_option("-n", "--endTriggerNum", type=int, dest="endTriggerNum", default="20")
     parser.add_option("-d", "--dataPath", dest="dataPath", default="/tmp/mnist")
     parser.add_option("--optimizerVersion", dest="optimizerVersion", default="optimizerV1")
-    parser.add_option("-y", "--onYarn", action="store_true",  dest="onYarn", default=False)
+    parser.add_option("--on-yarn", action="store_true",  dest="onYarn", default=False)
+    parser.add_option("--mkl-dnn", action="store_true", dest="mklDnn", default=False, help="if enable mkldnn")
 
     (options, args) = parser.parse_args(sys.argv)
 
+    conf={}
+    if options.mklDnn:
+        conf["spark.driver.extraJavaOptions"] = "-Dbigdl.engineType=mkldnn"
+        conf["spark.executor.extraJavaOptions"] = "-Dbigdl.engineType=mkldnn"
     if options.onYarn:
         hadoop_conf = os.environ.get("HADOOP_CONF_DIR")
         assert hadoop_conf, "Directory path to hadoop conf not found for yarn-client mode. Please " \
                 "set the environment variable HADOOP_CONF_DIR"
         conda_env_name = detect_conda_env_name()
-        sc = init_spark_on_yarn(hadoop_conf=hadoop_conf, conda_name=conda_env_name, num_executors=2, executor_cores=2)
+        sc = init_spark_on_yarn(hadoop_conf=hadoop_conf,
+                conda_name=conda_env_name,
+                num_executors=2,
+                executor_cores=2,
+                executor_memory="5g",
+                driver_memory="2g",
+                conf=conf)
     else:
-        sc = init_spark_on_local(cores=4)
+        conf["spark.driver.memory"] = "10g"
+        sc = init_spark_on_local(cores=4, conf=conf)
 
     set_optimizer_version(options.optimizerVersion)
 
