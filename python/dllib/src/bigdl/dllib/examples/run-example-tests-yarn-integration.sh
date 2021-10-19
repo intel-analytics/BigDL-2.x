@@ -11,7 +11,7 @@ echo "#1 start test for orca tf transfer_learning"
 start=$(date "+%s")
 #run the example
 export SPARK_DRIVER_MEMORY=3g
-hadoop fs -get ${HDFS_URI}/mnist /tmp/mnist
+${HADOOP_HOME}/bin/hadoop fs -get ${HDFS_URI}/mnist /tmp/mnist
 python ${BIGDL_ROOT}/python/dllib/src/bigdl/dllib/models/lenet/lenet5.py --on-yarn
 exit_status=$?
 if [ $exit_status -ne 0 ]; then
