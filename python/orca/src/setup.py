@@ -27,7 +27,8 @@ bigdl_home = os.path.abspath(__file__ + "/../../../..")
 exclude_patterns = ["*__pycache__*", "*ipynb_checkpoints*"]
 
 VERSION = open(os.path.join(bigdl_home, 'python/version.txt'), 'r').read().strip()
-bigdllib_version = '.'.join(VERSION.split('.')[:-1])
+# bigdllib_version = '.'.join(VERSION.split('.')[:-1])
+bigdllib_version = ""
 
 building_error_msg = """
 If you are packing python API from BigDL source, you must build BigDL first
