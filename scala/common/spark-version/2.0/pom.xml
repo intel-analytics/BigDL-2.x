@@ -14,7 +14,7 @@
     <packaging>jar</packaging>
 
     <dependencies>
-	    <dependency>
+        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
             <version>2.7.3</version>
@@ -48,7 +48,7 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
-	        <scope>provided</scope>
+            <scope>provided</scope>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.spark</groupId>

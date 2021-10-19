@@ -48,7 +48,7 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_2.12</artifactId>
             <version>${spark.version}</version>
-	        <scope>provided</scope>
+            <scope>provided</scope>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.spark</groupId>
