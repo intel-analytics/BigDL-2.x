@@ -158,10 +158,12 @@ def preprocess(tbl):
 def encode_user_id(tbl):
     tbl = tbl.rename({"engaged_with_user_id": "user_id"}) \
         .encode_string("user_id", user_index, broadcast=False) \
-        .rename({"user_id": "engaged_with_user_id"})
+        .rename({"user_id": "engaged_with_user_id"})\
+        .fillna(0, "engaged_with_user_id")
     tbl = tbl.rename({"enaging_user_id": "user_id"}) \
         .encode_string("user_id", user_index, broadcast=False) \
-        .rename({"user_id": "enaging_user_id"})
+        .rename({"user_id": "enaging_user_id"})\
+        .fillna(0, "enaging_user_id")
     return tbl
 
 
