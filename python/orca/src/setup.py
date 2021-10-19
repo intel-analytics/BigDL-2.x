@@ -27,6 +27,7 @@ bigdl_home = os.path.abspath(__file__ + "/../../../..")
 exclude_patterns = ["*__pycache__*", "*ipynb_checkpoints*"]
 
 VERSION = open(os.path.join(bigdl_home, 'python/version.txt'), 'r').read().strip()
+bigdllib_version = '.'.join(VERSION.split('.')[:-1])
 
 building_error_msg = """
 If you are packing python API from BigDL source, you must build BigDL first
@@ -90,7 +91,8 @@ def setup_package():
         url='https://github.com/intel-analytics/analytics-zoo',
         packages=get_bigdl_packages(),
         install_requires=['pyspark==2.4.6', 'conda-pack==0.3.1',
-                          'packaging', 'filelock', 'bigdl-tf~='+VERSION, 'bigdl-math~='+VERSION, 'bigdl-dllib~='+VERSION],
+                          'packaging', 'filelock', 'bigdl-tf~='+bigdllib_version,
+                          'bigdl-math~='+bigdllib_version, 'bigdl-dllib~='+bigdllib_version],
         extras_require={'ray': ['ray==1.2.0', 'psutil', 'aiohttp==3.7.0', 'aioredis==1.1.0',
                                 'setproctitle', 'hiredis==1.1.0', 'async-timeout==3.0.1'],
                         'automl': ['tensorflow>=1.15.0,<2.0.0', 'h5py==2.10.0',
