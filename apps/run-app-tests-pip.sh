@@ -56,6 +56,18 @@ echo "#2 start app test for using_variational_autoencoder_to_generate_digital_nu
 #timer
 start=$(date "+%s")
 
+# get mnist
+if [[ ! -z "${FTP_URI}" ]]; then
+    if [[ -d /tmp/datasets/ ]]; then
+        rm -rf /tmp/datasets/MNIST/
+    fi
+    wget  $FTP_URI/analytics-zoo-data/mnist/train-labels-idx1-ubyte.gz -P /tmp/dataset/MNIST/raw
+    wget  $FTP_URI/analytics-zoo-data/mnist/train-images-idx3-ubyte.gz -P /tmp/dataset/MNIST/raw
+    wget  $FTP_URI/analytics-zoo-data/mnist/t10k-labels-idx1-ubyte.gz -P /tmp/dataset/MNIST/raw
+    wget  $FTP_URI/analytics-zoo-data/mnist/t10k-images-idx3-ubyte.gz -P /tmp/dataset/MNIST/raw
+fi
+
+
 ${ANALYTICS_ZOO_HOME}/apps/ipynb2py.sh ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers
 
 sed "s/nb_epoch = 6/nb_epoch=2/g; s/batch_size=batch_size/batch_size=1008/g" ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/using_variational_autoencoder_to_generate_digital_numbers.py > ${ANALYTICS_ZOO_HOME}/apps/variational-autoencoder/tmp_test.py
