@@ -93,8 +93,3 @@ INFO  DistriOptimizer$:247 - [Epoch 1 0/60000][Iteration 1][Wall Clock 0.0s] Tra
 INFO  DistriOptimizer$:522 - Top1Accuracy is Accuracy(correct: 9572, count: 10000, accuracy: 0.9572)
 
 ```
-
-Or you can train a LeNet model directly in shell after installing BigDL from pip:
-```
-python ${BigDL_HOME}/pyspark/bigdl/models/lenet/lenet5.py
-```
