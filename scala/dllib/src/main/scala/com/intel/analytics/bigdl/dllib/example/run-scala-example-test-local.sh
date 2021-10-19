@@ -6,6 +6,7 @@ export FTP_URI=$FTP_URI
 export ANALYTICS_ZOO_ROOT=$ANALYTICS_ZOO_ROOT
 export ANALYTICS_ZOO_HOME=$ANALYTICS_ZOO_ROOT/dist
 export ANALYTICS_ZOO_JAR=`find ${ANALYTICS_ZOO_HOME}/lib -type f -name "bigdl-dllib*jar-with-dependencies.jar"`
+export submit=${submit}
 set -e
 
 echo "#1 start example test for LocalEstimator"
