@@ -73,7 +73,7 @@ if __name__ == "__main__":
         assert hadoop_conf, "Directory path to hadoop conf not found for yarn-client mode. Please " \
                 "set the environment variable HADOOP_CONF_DIR"
         conda_env_name = detect_conda_env_name()
-        sc = init_spark_on_yarn(hadoop_conf="/opt/hadoop/latest/etc/hadoop", conda_name=conda_env_name, num_executors=2, executor_cores=2)
+        sc = init_spark_on_yarn(hadoop_conf=hadoop_conf, conda_name=conda_env_name, num_executors=2, executor_cores=2)
     else:
         sc = init_spark_on_local(cores=4)
 
