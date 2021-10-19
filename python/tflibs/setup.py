@@ -40,7 +40,7 @@ def setup_package():
         author_email='bigdl-user-group@googlegroups.com',
         license='Apache License, Version 2.0',
         packages=["bigdl.share.tflibs"],
-        url='https://github.com/intel-analytics/analytics-zoo/tree/bigdl-2.0',
+        url='https://github.com/intel-analytics/BigDL',
         package_data={"bigdl.share.tflibs": ["libtensorflow_framework.so",
                                              "libtensorflow_jni.so"]},
         package_dir={'': 'src'},

@@ -35,11 +35,11 @@ def setup_package():
     metadata = dict(
         name='bigdl-math',
         version=VERSION,
-        description='Seamlessly scale out TensorFlow and PyTorch for Big Data (using Spark & Ray)',
+        description='Dependent Libraries for bigdl-orca(math)',
         author='BigDL Authors',
         author_email='bigdl-user-group@googlegroups.com',
         license='Apache License, Version 2.0',
-        url='https://github.com/intel-analytics/analytics-zoo/tree/bigdl-2.0',
+        url='https://github.com/intel-analytics/BigDL',
         packages=["bigdl.share.mathlibs"],
         package_data={"bigdl.share.mathlibs": ["libiomp5.so", "libmklml_intel.so"]},
         package_dir={'': 'src'},
