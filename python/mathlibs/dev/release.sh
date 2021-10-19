@@ -15,23 +15,6 @@
 # limitations under the License.
 #
 
-# RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
-# echo $RUN_SCRIPT_DIR
-# MATH_DIR="$(cd ${RUN_SCRIPT_DIR}/../; pwd)"
-# echo $MATH_DIR
-# cd $MATH_DIR
-
-# wheel_command="python setup.py bdist_wheel --plat-name manylinux2010_x86_64"
-# echo "Packing python distribution:   $wheel_command"
-# ${wheel_command}
-
-# DEV_VERSION=$(cat ../../python/version.txt)
-
-# upload_command="twine upload dist/bigdl_math-${DEV_VERSION}-py3-none-manylinux2010_x86_64.whl"
-# echo "Please manually upload with this command:  $upload_command"
-
-# # $upload_command
-
 set -e
 RUN_SCRIPT_DIR=$(cd $(dirname $0) ; pwd)
 echo $RUN_SCRIPT_DIR
