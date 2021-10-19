@@ -14,18 +14,18 @@
     <packaging>jar</packaging>
 
     <dependencies>
-	<dependency>
+	    <dependency>
             <groupId>org.apache.hadoop</groupId>
-	    <artifactId>hadoop-client</artifactId>
-	    <version>2.7.3</version>
-	    <scope>provided</scope>
+            <artifactId>hadoop-client</artifactId>
+            <version>2.7.3</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
-	    <scope>provided</scope>
-	    <exclusions>
+	        <scope>provided</scope>
+	        <exclusions>
                 <exclusion>
                     <groupId>com.fasterxml.jackson.core</groupId>
                     <artifactId>jackson-databind</artifactId>
@@ -48,12 +48,12 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
-	    <scope>provided</scope>
-	    <exclusions>
+	        <scope>provided</scope>
+            <exclusions>
                 <exclusion>
-	            <groupId>org.apache.spark</groupId>
-		    <artifactId>spark-core_${scala.major.version}</artifactId>
-	        </exclusion>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-core_${scala.major.version}</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
     </dependencies>
