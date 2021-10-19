@@ -34,8 +34,8 @@ def setup_package():
 
     metadata = dict(
         name='bigdl-tf',
-        version='0.14.0.dev0',
-        description='Seamlessly scale out TensorFlow and PyTorch for Big Data (using Spark & Ray)',
+        version=VERSION,
+        description='Dependent Libraries for bigdl-orca(tf)',
         author='BigDL Authors',
         author_email='bigdl-user-group@googlegroups.com',
         license='Apache License, Version 2.0',

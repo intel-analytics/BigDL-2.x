@@ -61,6 +61,8 @@ else
 fi
 
 cd ${BIGDL_DIR}
+apt-get install -y zip
+ls dist/lib/
 zip -d dist/lib/bigdl-orca-0.14.0-SNAPSHOT-jar-with-dependencies.jar linux-x86_64/libtensorflow*.so
 zip -d dist/lib/bigdl-orca-0.14.0-SNAPSHOT-jar-with-dependencies.jar linux-x86_64/libiomp5.so
 zip -d dist/lib/bigdl-orca-0.14.0-SNAPSHOT-jar-with-dependencies.jar linux-x86_64/libmklml_intel.so
