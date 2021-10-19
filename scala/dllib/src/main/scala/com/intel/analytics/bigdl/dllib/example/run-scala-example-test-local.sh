@@ -36,10 +36,10 @@ ${submit} \
 --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer" \
 --driver-memory 20g \
 --executor-memory 20g \
---executor-cores 1
---total-executor-cores 4
+--executor-cores 1 \
+--total-executor-cores 4 \
 --class com.intel.analytics.bigdl.dllib.examples.localEstimator.LenetLocalEstimator \
-${ANALYTICS_ZOO_JAR}
+${ANALYTICS_ZOO_JAR} \
 -d analytics-zoo-data/data/mnist -b 128 -e 1 -t 4
 
 now=$(date "+%s")
@@ -56,10 +56,10 @@ ${submit} \
 --conf "spark.serializer=org.apache.spark.serializer.JavaSerializer"
 --driver-memory 20g \
 --executor-memory 20g \
---executor-cores 1
---total-executor-cores 4
+--executor-cores 1 \
+--total-executor-cores 4 \
 --class com.intel.analytics.bigdl.dllib.examples.localEstimator.ResnetLocalEstimator \
-${ANALYTICS_ZOO_JAR}
+${ANALYTICS_ZOO_JAR} \
 -d analytics-zoo-data/data/cifar10 -b 128 -e 1 -t 4
 
 now=$(date "+%s")
