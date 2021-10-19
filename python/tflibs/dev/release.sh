@@ -69,5 +69,3 @@ if [ ${upload} == true ]; then
     echo "Please manually upload with this command:  $upload_command"
     $upload_command
 fi
-
-# $upload_command
