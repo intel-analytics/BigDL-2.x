@@ -67,13 +67,13 @@ else
 fi
 
 cd ${BIGDL_DIR}
-apt-get install -y zip
-ls dist/lib/
-du -h dist/lib/bigdl-orca-*-jar-with-dependencies.jar
-zipinfo bigdl-orca-*-jar-with-dependencies.jar|grep lib
-zip -d dist/lib/bigdl-orca-*-jar-with-dependencies.jar linux-x86_64/libtensorflow*.so
-zip -d dist/lib/bigdl-orca-*-jar-with-dependencies.jar linux-x86_64/libiomp5.so
-zip -d dist/lib/bigdl-orca-*-jar-with-dependencies.jar linux-x86_64/libmklml_intel.so
+# apt-get install -y zip
+# ls dist/lib/
+# du -h dist/lib/bigdl-orca-*-jar-with-dependencies.jar
+# zipinfo bigdl-orca-*-jar-with-dependencies.jar|grep lib
+# zip -d dist/lib/bigdl-orca-*-jar-with-dependencies.jar linux-x86_64/libtensorflow*.so
+# zip -d dist/lib/bigdl-orca-*-jar-with-dependencies.jar linux-x86_64/libiomp5.so
+# zip -d dist/lib/bigdl-orca-*-jar-with-dependencies.jar linux-x86_64/libmklml_intel.so
 
 cd $BIGDL_PYTHON_DIR
 sdist_command="python setup.py sdist"
