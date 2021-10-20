@@ -11,6 +11,7 @@ start=$(date "+%s")
 #run the example
 rm -rf /tmp/mnist
 ${HADOOP_HOME}/bin/hadoop fs -get ${HDFS_URI}/mnist /tmp/mnist -e 1
+ls /tmp/mnist
 python ${BIGDL_ROOT}/python/dllib/src/bigdl/dllib/models/lenet/lenet5.py --on-yarn
 exit_status=$?
 if [ $exit_status -ne 0 ]; then
