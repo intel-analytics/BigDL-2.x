@@ -4,6 +4,18 @@ clear_up() {
   pip uninstall -y bigdl-dllib
 }
 
+
+"#3 start test for dllib textclassifier"
+"start test for dllib rnn"
+"start test for dllib custom"
+"start test for dllib custom loss"
+"start test for dllib imageframe inception validation"
+"start test for dllib keras imdb bigdl backend"
+"start test for dllib keras imdb cnn lstm"
+"start test for dllib keras mnist cnn"
+"start test for dllib nnframes image transfer learning"
+"start test for dllib nnframes image inference"
+
 echo "#1 start test for dllib lenet5"
 
 #timer
@@ -12,7 +24,7 @@ start=$(date "+%s")
 rm -rf /tmp/mnist
 ${HADOOP_HOME}/bin/hadoop fs -get ${HDFS_URI}/mnist /tmp/mnist
 ls /tmp/mnist
-python ${BIGDL_ROOT}/python/dllib/src/bigdl/dllib/models/lenet/lenet5.py --on-yarn -e 1
+python ${BIGDL_ROOT}/python/dllib/src/bigdl/dllib/models/lenet/lenet5.py --on-yarn -n 1
 exit_status=$?
 if [ $exit_status -ne 0 ]; then
   clear_up
@@ -22,7 +34,7 @@ fi
 now=$(date "+%s")
 time1=$((now - start))
 
-echo "#1 start test for dllib inception"
+echo "#2 start test for dllib inception"
 
 #timer
 start=$(date "+%s")
