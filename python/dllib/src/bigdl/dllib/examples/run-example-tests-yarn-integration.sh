@@ -10,9 +10,9 @@ echo "#1 start test for dllib lenet5"
 start=$(date "+%s")
 #run the example
 rm -rf /tmp/mnist
-${HADOOP_HOME}/bin/hadoop fs -get ${HDFS_URI}/mnist /tmp/mnist -e 1
+${HADOOP_HOME}/bin/hadoop fs -get ${HDFS_URI}/mnist /tmp/mnist
 ls /tmp/mnist
-python ${BIGDL_ROOT}/python/dllib/src/bigdl/dllib/models/lenet/lenet5.py --on-yarn
+python ${BIGDL_ROOT}/python/dllib/src/bigdl/dllib/models/lenet/lenet5.py --on-yarn -e 1
 exit_status=$?
 if [ $exit_status -ne 0 ]; then
   clear_up
