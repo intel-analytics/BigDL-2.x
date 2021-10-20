@@ -33,6 +33,8 @@ private[bigdl] class RecordWriter(file: Path, fs: FileSystem) {
     // FSDataOutputStream couldn't flush data to localFileSystem in time. So reading summaries
     // will throw exception.
     fs.create(file, true, 1024)
+  } else if (file.toString.startsWith("dbfs:/")) {
+    new FileOutputStream(new File(file.toString.replace("dbfs:/", "/dbfs/")))
   } else {
     // Using FileOutputStream when write to local.
     new FileOutputStream(new File(file.toString))

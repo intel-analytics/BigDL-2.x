@@ -19,9 +19,10 @@ package com.intel.analytics.bigdl.dllib.visualization.tensorboard
 import java.net.InetAddress
 import java.util.concurrent.{LinkedBlockingDeque, TimeUnit}
 
+import com.intel.analytics.bigdl
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.tensorflow.util.Event
-
+import com.intel.analytics.bigdl.dllib.common.zooUtils.putLocalFileToRemote
 /**
  * Event writer, write event protocol buffers to file.
  *
@@ -69,5 +70,9 @@ private[bigdl] class EventWriter(logDir: String,
     }
     flush()
     recordWriter.close()
+    if (logDir.startsWith("dbfs:/")){
+      putLocalFileToRemote(outputFile.toString.replace("dbfs:/", "/dbfs/"), outputFile.toString,
+        isOverwrite = true)
+    }
   }
 }
