@@ -9,6 +9,7 @@ echo "#1 start test for dllib lenet5"
 #timer
 start=$(date "+%s")
 #run the example
+rm -rf /tmp/mnist
 ${HADOOP_HOME}/bin/hadoop fs -get ${HDFS_URI}/mnist /tmp/mnist -e 1
 python ${BIGDL_ROOT}/python/dllib/src/bigdl/dllib/models/lenet/lenet5.py --on-yarn
 exit_status=$?
