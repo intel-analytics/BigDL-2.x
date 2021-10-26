@@ -25,12 +25,15 @@ from zoo.chronos.data.utils.roll import roll_timeseries_dataframe
 from zoo.chronos.data.utils.scale import unscale_timeseries_numpy
 from zoo.chronos.data.utils.resample import resample_timeseries_dataframe
 from zoo.chronos.data.utils.split import split_timeseries_dataframe
+from zoo.chronos.data.utils.utils import _to_list, _check_type,\
+    _check_col_within, _check_col_no_na, _check_is_aligned, _check_dt_is_sorted
 
 from tsfresh.utilities.dataframe_functions import roll_time_series
 from tsfresh.utilities.dataframe_functions import impute as impute_tsfresh
 from tsfresh import extract_features
-from tsfresh.feature_extraction import ComprehensiveFCParameters,\
+from tsfresh.feature_extraction import ComprehensiveFCParameters, \
     MinimalFCParameters, EfficientFCParameters
+
 DEFAULT_PARAMS = {"comprehensive": ComprehensiveFCParameters(),
                   "minimal": MinimalFCParameters(),
                   "efficient": EfficientFCParameters()}
@@ -56,14 +59,22 @@ class TSDataset:
         self.roll_feature = None
         self.roll_target = None
         self.roll_feature_df = None
-        self.roll_addional_feature = None
+        self.roll_additional_feature = None
         self.scaler = None
+        self.scaler_index = [i for i in range(len(self.target_col))]
         self.id_sensitive = None
-
+        self._has_generate_agg_feature = False
         self._check_basic_invariants()
 
         self._id_list = list(np.unique(self.df[self.id_col]))
+        self._freq_certainty = False
+        self._freq = None
         self._is_pd_datetime = pd.api.types.is_datetime64_any_dtype(self.df[self.dt_col].dtypes)
+        if self._is_pd_datetime:
+            if len(self.df[self.dt_col]) < 2:
+                self._freq = None
+            else:
+                self._freq = self.df[self.dt_col].iloc[1] - self.df[self.dt_col].iloc[0]
 
     @staticmethod
     def from_pandas(df,
@@ -81,7 +92,8 @@ class TSDataset:
 
         :param df: a pandas dataframe for your raw time series data.
         :param dt_col: a str indicates the col name of datetime
-               column in the input data frame.
+               column in the input data frame, the dt_col must be sorted
+               from past to latest respectively for each id.
         :param target_col: a str or list indicates the col name of target column
                in the input data frame.
         :param id_col: (optional) a str indicates the col name of dataframe id. If
@@ -147,6 +159,83 @@ class TSDataset:
                          target_col=target_col,
                          feature_col=feature_col)
 
+    @staticmethod
+    def from_parquet(path,
+                     dt_col,
+                     target_col,
+                     id_col=None,
+                     extra_feature_col=None,
+                     with_split=False,
+                     val_ratio=0,
+                     test_ratio=0.1,
+                     largest_look_back=0,
+                     largest_horizon=1,
+                     **kwargs):
+        """
+        Initialize tsdataset(s) from path of parquet file.
+
+        :param path: A string path to parquet file. The string could be a URL.
+               Valid URL schemes include hdfs, http, ftp, s3, gs, and file. For file URLs, a host
+               is expected. A local file could be: file://localhost/path/to/table.parquet.
+               A file URL can also be a path to a directory that contains multiple partitioned
+               parquet files.
+        :param dt_col: a str indicates the col name of datetime
+               column in the input data frame.
+        :param target_col: a str or list indicates the col name of target column
+               in the input data frame.
+        :param id_col: (optional) a str indicates the col name of dataframe id. If
+               it is not explicitly stated, then the data is interpreted as only
+               containing a single id.
+        :param extra_feature_col: (optional) a str or list indicates the col name
+               of extra feature columns that needs to predict the target column.
+        :param with_split: (optional) bool, states if we need to split the dataframe
+               to train, validation and test set. The value defaults to False.
+        :param val_ratio: (optional) float, validation ratio. Only effective when
+               with_split is set to True. The value defaults to 0.
+        :param test_ratio: (optional) float, test ratio. Only effective when with_split
+               is set to True. The value defaults to 0.1.
+        :param largest_look_back: (optional) int, the largest length to look back.
+               Only effective when with_split is set to True. The value defaults to 0.
+        :param largest_horizon: (optional) int, the largest num of steps to look
+               forward. Only effective when with_split is set to True. The value defaults
+               to 1.
+        :param kwargs: Any additional kwargs are passed to the pd.read_parquet
+               and pyarrow.parquet.read_table.
+
+        :return: a TSDataset instance when with_split is set to False,
+                 three TSDataset instances when with_split is set to True.
+
+        Create a tsdataset instance by:
+
+        >>> # Here is a df example:
+        >>> # id        datetime      value   "extra feature 1"   "extra feature 2"
+        >>> # 00        2019-01-01    1.9     1                   2
+        >>> # 01        2019-01-01    2.3     0                   9
+        >>> # 00        2019-01-02    2.4     3                   4
+        >>> # 01        2019-01-02    2.6     0                   2
+        >>> tsdataset = TSDataset.from_parquet("hdfs://path/to/table.parquet", dt_col="datetime",
+        >>>                                   target_col="value", id_col="id",
+        >>>                                   extra_feature_col=["extra feature 1",
+        >>>                                                      "extra feature 2"])
+        """
+        from zoo.chronos.data.utils.file import parquet2pd
+        columns = _to_list(dt_col, name="dt_col") + \
+            _to_list(target_col, name="target_col") + \
+            _to_list(id_col, name="id_col") + \
+            _to_list(extra_feature_col, name="extra_feature_col")
+        df = parquet2pd(path, columns=columns, **kwargs)
+        return TSDataset.from_pandas(df,
+                                     dt_col=dt_col,
+                                     target_col=target_col,
+                                     id_col=id_col,
+                                     extra_feature_col=extra_feature_col,
+                                     with_split=with_split,
+                                     val_ratio=val_ratio,
+                                     test_ratio=test_ratio,
+                                     largest_look_back=largest_look_back,
+                                     largest_horizon=largest_horizon,
+                                     )
+
     def impute(self, mode="last", const_num=0):
         '''
         Impute the tsdataset by imputing each univariate time series
@@ -165,12 +254,12 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
-        df_list = [impute_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
-                                               dt_col=self.dt_col,
-                                               mode=mode,
-                                               const_num=const_num)
-                   for id_name in self._id_list]
-        self.df = pd.concat(df_list)
+        self.df = self.df.groupby([self.id_col]) \
+            .apply(lambda df: impute_timeseries_dataframe(df=df,
+                                                          dt_col=self.dt_col,
+                                                          mode=mode,
+                                                          const_num=const_num))
+        self.df.reset_index(drop=True, inplace=True)
         return self
 
     def deduplicate(self):
@@ -180,13 +269,10 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
-        df_list = [deduplicate_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
-                                                    dt_col=self.dt_col)
-                   for id_name in self._id_list]
-        self.df = pd.concat(df_list)
+        self.df = deduplicate_timeseries_dataframe(df=self.df, dt_col=self.dt_col)
         return self
 
-    def resample(self, interval, start_time, end_time, merge_mode="mean"):
+    def resample(self, interval, start_time=None, end_time=None, merge_mode="mean"):
         '''
         Resample on a new interval for each univariate time series distinguished
         by id_col and feature_col.
@@ -200,23 +286,46 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
-        df_list = []
-        for id_name in self._id_list:
-            df_id = resample_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name]
-                                                  .drop(self.id_col, axis=1),
-                                                  dt_col=self.dt_col,
-                                                  interval=interval,
-                                                  start_time=start_time,
-                                                  end_time=end_time,
-                                                  merge_mode=merge_mode)
-            df_id[self.id_col] = id_name
-            df_list.append(df_id.copy())
-        self.df = pd.concat(df_list)
+        assert self._is_pd_datetime,\
+            "The time series data does not have a Pandas datetime format\
+            (you can use pandas.to_datetime to convert a string into a datetime format)."
+        from pandas.api.types import is_numeric_dtype
+        type_error_list = [val for val in self.target_col + self.feature_col
+                           if not is_numeric_dtype(self.df[val])]
+        try:
+            for val in type_error_list:
+                self.df[val] = self.df[val].astype(np.float32)
+        except Exception:
+            raise RuntimeError("All the columns of target_col"
+                               "and extra_feature_col should be of numeric type.")
+        self.df = self.df.groupby([self.id_col]) \
+            .apply(lambda df: resample_timeseries_dataframe(df=df,
+                                                            dt_col=self.dt_col,
+                                                            interval=interval,
+                                                            start_time=start_time,
+                                                            end_time=end_time,
+                                                            id_col=self.id_col,
+                                                            merge_mode=merge_mode))
+        self._freq = pd.Timedelta(interval)
+        self._freq_certainty = True
+        self.df.reset_index(drop=True, inplace=True)
         return self
 
-    def gen_dt_feature(self):
+    def gen_dt_feature(self, features="auto", one_hot_features=None):
         '''
-        | Generate datetime feature for each row. Currently we generate following features:
+        Generate datetime feature(s) for each record.
+
+        :param features: str or list, states which feature(s) will be generated. If the value
+               is set to be a str, it should be one of "auto" or "all". For "auto", a subset
+               of datetime features will be generated under the consideration of the sampling
+               frequency of your data. For "all", the whole set of datetime features will be
+               generated. If the value is set to be a list, the list should contain the features
+               you want to generate. A table of all datatime features and their description is
+               listed below. The value defaults to "auto".
+        :param one_hot_features: list, states which feature(s) will be generated as one-hot-encoded
+               feature. The value defaults to None, which means no features will be generated with\
+               one-hot-encoded.
+
         | "MINUTE": The minute of the time stamp.
         | "DAY": The day of the time stamp.
         | "DAYOFYEAR": The ordinal day of the year of the time stamp.
@@ -224,6 +333,7 @@ class TSDataset:
         | "WEEKDAY": The day of the week of the time stamp, Monday=0, Sunday=6.
         | "WEEKOFYEAR": The ordinal week of the year of the time stamp.
         | "MONTH": The month of the time stamp.
+        | "YEAR": The year of the time stamp.
         | "IS_AWAKE": Bool value indicating whether it belongs to awake hours for the time stamp,
         | True for hours between 6A.M. and 1A.M.
         | "IS_BUSY_HOURS": Bool value indicating whether it belongs to busy hours for the time
@@ -233,22 +343,23 @@ class TSDataset:
 
         :return: the tsdataset instance.
         '''
-        df_list = [generate_dt_features(input_df=self.df[self.df[self.id_col] == id_name],
-                                        dt_col=self.dt_col)
-                   for id_name in self._id_list]
-        self.df = pd.concat(df_list)
-        from zoo.chronos.data.utils.feature import TIME_FEATURE, \
-            ADDITIONAL_TIME_FEATURE_HOUR, ADDITIONAL_TIME_FEATURE_WEEKDAY
-        increased_attrbutes = list(TIME_FEATURE) +\
-            list(ADDITIONAL_TIME_FEATURE_HOUR) +\
-            list(ADDITIONAL_TIME_FEATURE_WEEKDAY)
-        self.feature_col += [attr + "({})".format(self.dt_col) for attr in increased_attrbutes]
+        assert self._is_pd_datetime, "The time series data does not have a Pandas datetime format\
+                    (you can use pandas.to_datetime to convert a string into a datetime format.)"
+        features_generated = []
+        self.df = generate_dt_features(input_df=self.df,
+                                       dt_col=self.dt_col,
+                                       features=features,
+                                       one_hot_features=one_hot_features,
+                                       freq=self._freq,
+                                       features_generated=features_generated)
+        self.feature_col += features_generated
         return self
 
-    def gen_global_feature(self, settings="comprehensive", full_settings=None):
+    def gen_global_feature(self, settings="comprehensive", full_settings=None, n_jobs=1):
         '''
         Generate per-time-series feature for each time series.
         This method will be implemented by tsfresh.
+        Make sure that the specified column name does not contain '__'.
 
         TODO: relationship with scale should be figured out.
 
@@ -257,17 +368,20 @@ class TSDataset:
                for default_fc_parameters in tsfresh. The value is defaulted to "comprehensive".
         :param full_settings: dict. It should follow the instruction for kind_to_fc_parameters in
                tsfresh. The value is defaulted to None.
+        :param n_jobs: int. The number of processes to use for parallelization.
 
         :return: the tsdataset instance.
-
         '''
+        assert not self._has_generate_agg_feature, \
+            "Only one of gen_global_feature and gen_rolling_feature should be called."
         if full_settings is not None:
             self.df,\
                 addtional_feature =\
                 generate_global_features(input_df=self.df,
                                          column_id=self.id_col,
                                          column_sort=self.dt_col,
-                                         kind_to_fc_parameters=full_settings)
+                                         kind_to_fc_parameters=full_settings,
+                                         n_jobs=n_jobs)
             self.feature_col += addtional_feature
             return self
 
@@ -284,19 +398,22 @@ class TSDataset:
             generate_global_features(input_df=self.df,
                                      column_id=self.id_col,
                                      column_sort=self.dt_col,
-                                     default_fc_parameters=default_fc_parameters)
+                                     default_fc_parameters=default_fc_parameters,
+                                     n_jobs=n_jobs)
 
         self.feature_col += addtional_feature
-
+        self._has_generate_agg_feature = True
         return self
 
     def gen_rolling_feature(self,
                             window_size,
                             settings="comprehensive",
-                            full_settings=None):
+                            full_settings=None,
+                            n_jobs=1):
         '''
         Generate aggregation feature for each sample.
         This method will be implemented by tsfresh.
+        Make sure that the specified column name does not contain '__'.
 
         TODO: relationship with scale should be figured out.
 
@@ -306,9 +423,12 @@ class TSDataset:
                for default_fc_parameters in tsfresh. The value is defaulted to "comprehensive".
         :param full_settings: dict. It should follow the instruction for kind_to_fc_parameters in
                tsfresh. The value is defaulted to None.
+        :param n_jobs: int. The number of processes to use for parallelization.
 
         :return: the tsdataset instance.
         '''
+        assert not self._has_generate_agg_feature,\
+            "Only one of gen_global_feature and gen_rolling_feature should be called."
         if isinstance(settings, str):
             assert settings in ["comprehensive", "minimal", "efficient"], \
                 f"settings str should be one of \"comprehensive\", \"minimal\", \"efficient\"\
@@ -317,26 +437,31 @@ class TSDataset:
         else:
             default_fc_parameters = settings
 
+        assert window_size < self.df.groupby(self.id_col).size().min() + 1, "gen_rolling_feature \
+            should have a window_size smaller than shortest time series length."
         df_rolled = roll_time_series(self.df,
                                      column_id=self.id_col,
                                      column_sort=self.dt_col,
-                                     max_timeshift=window_size-1,
-                                     min_timeshift=window_size-1)
+                                     max_timeshift=window_size - 1,
+                                     min_timeshift=window_size - 1,
+                                     n_jobs=n_jobs)
         if not full_settings:
             self.roll_feature_df = extract_features(df_rolled,
                                                     column_id=self.id_col,
                                                     column_sort=self.dt_col,
-                                                    default_fc_parameters=default_fc_parameters)
+                                                    default_fc_parameters=default_fc_parameters,
+                                                    n_jobs=n_jobs)
         else:
             self.roll_feature_df = extract_features(df_rolled,
                                                     column_id=self.id_col,
                                                     column_sort=self.dt_col,
-                                                    kind_to_fc_parameters=full_settings)
+                                                    kind_to_fc_parameters=full_settings,
+                                                    n_jobs=n_jobs)
         impute_tsfresh(self.roll_feature_df)
 
         self.feature_col += list(self.roll_feature_df.columns)
-        self.roll_addional_feature = list(self.roll_feature_df.columns)
-
+        self.roll_additional_feature = list(self.roll_feature_df.columns)
+        self._has_generate_agg_feature = True
         return self
 
     def roll(self,
@@ -402,15 +527,18 @@ class TSDataset:
         >>> print(x.shape, y.shape) # x.shape = (1, 1, 6) y.shape = (1, 1, 2)
 
         '''
+        if id_sensitive and not _check_is_aligned(self.df, self.id_col, self.dt_col):
+            raise AssertionError("The time series data should be\
+                 aligned if id_sensitive is set to True.")
         feature_col = _to_list(feature_col, "feature_col") if feature_col is not None \
             else self.feature_col
         target_col = _to_list(target_col, "target_col") if target_col is not None \
             else self.target_col
-        if self.roll_addional_feature:
+        if self.roll_additional_feature:
             additional_feature_col =\
-                list(set(feature_col).intersection(set(self.roll_addional_feature)))
+                list(set(feature_col).intersection(set(self.roll_additional_feature)))
             feature_col =\
-                list(set(feature_col) - set(self.roll_addional_feature))
+                list(set(feature_col) - set(self.roll_additional_feature))
             self.roll_feature = feature_col + additional_feature_col
         else:
             additional_feature_col = None
@@ -424,45 +552,144 @@ class TSDataset:
         roll_feature_df = None if self.roll_feature_df is None \
             else self.roll_feature_df[additional_feature_col]
 
-        # get rolling result for each sub dataframe
-        rolling_result = [roll_timeseries_dataframe(df=self.df[self.df[self.id_col] == id_name],
-                                                    roll_feature_df=roll_feature_df,
-                                                    lookback=lookback,
-                                                    horizon=horizon,
-                                                    feature_col=feature_col,
-                                                    target_col=target_col)
-                          for id_name in self._id_list]
+        rolling_result = \
+            self.df.groupby([self.id_col]) \
+                .apply(lambda df: roll_timeseries_dataframe(df=df,
+                                                            roll_feature_df=roll_feature_df,
+                                                            lookback=lookback,
+                                                            horizon=horizon,
+                                                            feature_col=feature_col,
+                                                            target_col=target_col))
 
         # concat the result on required axis
         concat_axis = 2 if id_sensitive else 0
         self.numpy_x = np.concatenate([rolling_result[i][0]
-                                       for i in range(num_id)],
-                                      axis=concat_axis).astype(np.float64)
+                                       for i in self._id_list],
+                                      axis=concat_axis).astype(np.float32)
         if horizon != 0:
             self.numpy_y = np.concatenate([rolling_result[i][1]
-                                           for i in range(num_id)],
-                                          axis=concat_axis).astype(np.float64)
+                                           for i in self._id_list],
+                                          axis=concat_axis).astype(np.float32)
         else:
             self.numpy_y = None
 
         # target first
         if self.id_sensitive:
-            feature_start_idx = num_target_col*num_id
-            reindex_list = [list(range(i*num_target_col, (i+1)*num_target_col)) +
-                            list(range(feature_start_idx+i*num_feature_col,
-                                       feature_start_idx+(i+1)*num_feature_col))
+            feature_start_idx = num_target_col * num_id
+            reindex_list = [list(range(i * num_target_col, (i + 1) * num_target_col)) +
+                            list(range(feature_start_idx + i * num_feature_col,
+                                       feature_start_idx + (i + 1) * num_feature_col))
                             for i in range(num_id)]
-            reindex_list = functools.reduce(lambda a, b: a+b, reindex_list)
-            self.numpy_x = self.numpy_x[:, :, reindex_list]
+            reindex_list = functools.reduce(lambda a, b: a + b, reindex_list)
+            sorted_index = sorted(range(len(reindex_list)), key=reindex_list.__getitem__)
+            self.numpy_x = self.numpy_x[:, :, sorted_index]
+
+        # scaler index
+        num_roll_target = len(self.roll_target)
+        repeat_factor = len(self._id_list) if self.id_sensitive else 1
+        scaler_index = [self.target_col.index(self.roll_target[i])
+                        for i in range(num_roll_target)] * repeat_factor
+        self.scaler_index = scaler_index
 
         return self
+
+    def to_torch_data_loader(self,
+                             batch_size=32,
+                             roll=False,
+                             lookback=None,
+                             horizon=None,
+                             feature_col=None,
+                             target_col=None, ):
+        """
+        Convert TSDataset to a PyTorch DataLoader with or without rolling. We recommend to use
+        to_torch_data_loader(roll=True) if you don't need to output the rolled numpy array. It is
+        much more efficient than rolling separately, especially when the dataframe or lookback
+        is large.
+
+        :param batch_size: int, the batch_size for a Pytorch DataLoader. It defaults to 32.
+        :param roll: Boolean. Whether to roll the dataframe before converting to DataLoader.
+               If True, you must also specify lookback and horizon for rolling. If False, you must
+               have called tsdataset.roll() before calling to_torch_data_loader(). Default to False.
+        :param lookback: int, lookback value.
+        :param horizon: int or list,
+               if `horizon` is an int, we will sample `horizon` step
+               continuously after the forecasting point.
+               if `horizon` is a list, we will sample discretely according
+               to the input list.
+               specially, when `horizon` is set to 0, ground truth will be generated as None.
+        :param feature_col: str or list, indicates the feature col name. Default to None,
+               where we will take all available feature in rolling.
+        :param target_col: str or list, indicates the target col name. Default to None,
+               where we will take all target in rolling. it should be a subset of target_col
+               you used to initialize the tsdataset.
+
+        :return: A pytorch DataLoader instance.
+
+        to_torch_data_loader() can be called by:
+
+        >>> # Here is a df example:
+        >>> # id        datetime      value   "extra feature 1"   "extra feature 2"
+        >>> # 00        2019-01-01    1.9     1                   2
+        >>> # 01        2019-01-01    2.3     0                   9
+        >>> # 00        2019-01-02    2.4     3                   4
+        >>> # 01        2019-01-02    2.6     0                   2
+        >>> tsdataset = TSDataset.from_pandas(df, dt_col="datetime",
+        >>>                                   target_col="value", id_col="id",
+        >>>                                   extra_feature_col=["extra feature 1",
+        >>>                                                      "extra feature 2"])
+        >>> horizon, lookback = 1, 1
+        >>> data_loader = tsdataset.to_torch_data_loader(batch_size=32,
+        >>>                                              roll=True,
+        >>>                                              lookback=lookback,
+        >>>                                              horizon=horizon)
+        >>> # or roll outside. That might be less efficient than the way above.
+        >>> tsdataset.roll(lookback=lookback, horizon=horizon, id_sensitive=False)
+        >>> x, y = tsdataset.to_numpy()
+        >>> print(x, y) # x = [[[1.9, 1, 2 ]], [[2.3, 0, 9 ]]] y = [[[ 2.4 ]], [[ 2.6 ]]]
+        >>> data_loader = tsdataset.to_torch_data_loader(batch_size=32)
+
+        """
+        from torch.utils.data import TensorDataset, DataLoader
+        import torch
+        if roll:
+            if lookback is None:
+                raise ValueError("You must input lookback if roll is True")
+            if horizon is None:
+                raise ValueError("You must input horizon if roll is True")
+            from zoo.chronos.data.utils.roll_dataset import RollDataset
+            feature_col = _to_list(feature_col, "feature_col") if feature_col is not None \
+                else self.feature_col
+            target_col = _to_list(target_col, "target_col") if target_col is not None \
+                else self.target_col
+
+            # set scaler index for unscale_numpy
+            self.scaler_index = [self.target_col.index(t) for t in target_col]
+
+            torch_dataset = RollDataset(self.df,
+                                        lookback=lookback,
+                                        horizon=horizon,
+                                        feature_col=feature_col,
+                                        target_col=target_col,
+                                        id_col=self.id_col)
+            return DataLoader(torch_dataset,
+                              batch_size=batch_size,
+                              shuffle=True)
+        else:
+            if self.numpy_x is None:
+                raise RuntimeError("Please call \"roll\" method before transforming a TSDataset to "
+                                   "torch DataLoader without rolling (default roll=False)!")
+            x, y = self.to_numpy()
+            return DataLoader(TensorDataset(torch.from_numpy(x).float(),
+                                            torch.from_numpy(y).float()),
+                              batch_size=batch_size,
+                              shuffle=True)
 
     def to_numpy(self):
         '''
         Export rolling result in form of a tuple of numpy ndarray (x, y).
 
         :return: a 2-dim tuple. each item is a 3d numpy ndarray. The ndarray
-                 is casted to float64.
+                 is casted to float32.
         '''
         if self.numpy_x is None:
             raise RuntimeError("Please call \"roll\" method\
@@ -499,15 +726,21 @@ class TSDataset:
         >>> tsdata_test.scale(scaler, fit=False)
         '''
         feature_col = self.feature_col
-        if self.roll_addional_feature:
+        if self.roll_additional_feature:
             feature_col = []
             for feature in self.feature_col:
-                if feature not in self.roll_addional_feature:
+                if feature not in self.roll_additional_feature:
                     feature_col.append(feature)
         if fit:
             self.df[self.target_col + feature_col] = \
                 scaler.fit_transform(self.df[self.target_col + feature_col])
         else:
+            from sklearn.utils.validation import check_is_fitted
+            try:
+                assert not check_is_fitted(scaler)
+            except Exception:
+                raise AssertionError("When calling scale for the first time, \
+                    you need to set fit=True.")
             self.df[self.target_col + feature_col] = \
                 scaler.transform(self.df[self.target_col + feature_col])
         self.scaler = scaler
@@ -520,16 +753,16 @@ class TSDataset:
         :return: the tsdataset instance.
         '''
         feature_col = self.feature_col
-        if self.roll_addional_feature:
+        if self.roll_additional_feature:
             feature_col = []
             for feature in self.feature_col:
-                if feature not in self.roll_addional_feature:
+                if feature not in self.roll_additional_feature:
                     feature_col.append(feature)
         self.df[self.target_col + feature_col] = \
             self.scaler.inverse_transform(self.df[self.target_col + feature_col])
         return self
 
-    def _unscale_numpy(self, data):
+    def unscale_numpy(self, data):
         '''
         Unscale the time series forecaster's numpy prediction result/ground truth.
 
@@ -538,13 +771,9 @@ class TSDataset:
 
         :return: the unscaled numpy ndarray.
         '''
-        num_roll_target = len(self.roll_target)
-        repeat_factor = len(self._id_list) if self.id_sensitive else 1
-        scaler_index = [self.target_col.index(self.roll_target[i])
-                        for i in range(num_roll_target)] * repeat_factor
-        return unscale_timeseries_numpy(data, self.scaler, scaler_index)
+        return unscale_timeseries_numpy(data, self.scaler, self.scaler_index)
 
-    def _check_basic_invariants(self):
+    def _check_basic_invariants(self, strict_check=False):
         '''
         This function contains a bunch of assertions to make sure strict rules(the invariants)
         for the internal dataframe(self.df) must stands. If not, clear and user-friendly error
@@ -564,7 +793,7 @@ class TSDataset:
         for target_col_name in self.target_col:
             _check_col_within(self.df, target_col_name)
         for feature_col_name in self.feature_col:
-            if self.roll_addional_feature and feature_col_name in self.roll_addional_feature:
+            if self.roll_additional_feature and feature_col_name in self.roll_additional_feature:
                 continue
             _check_col_within(self.df, feature_col_name)
 
@@ -572,27 +801,6 @@ class TSDataset:
         _check_col_no_na(self.df, self.dt_col)
         _check_col_no_na(self.df, self.id_col)
 
-
-def _to_list(item, name, expect_type=str):
-    if isinstance(item, list):
-        return item
-    if item is None:
-        return []
-    _check_type(item, name, expect_type)
-    return [item]
-
-
-def _check_type(item, name, expect_type):
-    assert isinstance(item, expect_type),\
-        f"a {str(expect_type)} is expected for {name} but found {type(item)}"
-
-
-def _check_col_within(df, col_name):
-    assert col_name in df.columns,\
-        f"{col_name} is expected in dataframe while not found"
-
-
-def _check_col_no_na(df, col_name):
-    _check_col_within(df, col_name)
-    assert df[col_name].isna().sum() == 0,\
-        f"{col_name} column should not have N/A."
+        # check dt sorted
+        if strict_check:
+            _check_dt_is_sorted(self.df, self.dt_col)

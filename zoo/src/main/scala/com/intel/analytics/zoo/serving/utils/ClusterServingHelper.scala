@@ -56,7 +56,7 @@ class ClusterServingHelper
   // secure attributes
   @BeanProperty var redisSecureEnabled = false
   @BeanProperty var redisSecureTrustStorePath = ""
-  @BeanProperty var redisSecureStructStorePassword = ""
+  @BeanProperty var redisSecureTrustStorePassword = ""
   @BeanProperty var modelEncrypted = false
   @BeanProperty var recordEncrypted = false
 
@@ -69,8 +69,6 @@ class ClusterServingHelper
   var modelType: String = _
   var weightPath: String = _
   var defPath: String = _
-  var redisSecureTrustStoreToken: String = ""
-
 
   def parseConfigStrings(): Unit = {
     redisHost = redisUrl.split(":").head.trim
@@ -128,7 +126,7 @@ class ClusterServingHelper
       case "openvino" => modelEncrypted match {
         case true => model.doLoadEncryptedOpenVINO(
           defPath, weightPath, secret, salt, threadPerModel)
-        case false => model.doLoadOpenVINO(defPath, weightPath, threadPerModel)
+        case false => model.doLoadOpenVINONg(defPath, weightPath, threadPerModel)
       }
       case _ => logError("Invalid model type, please check your model directory")
     }
@@ -268,7 +266,6 @@ class ClusterServingHelper
     if (coreNumberPerMachine > 0) {
       if (modelType == "openvino") {
         threadPerModel = coreNumberPerMachine
-        modelParallelism = 1
       } else {
         threadPerModel = 1
         modelParallelism = coreNumberPerMachine

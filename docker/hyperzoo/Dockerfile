@@ -1,9 +1,9 @@
-ARG SPARK_VERSION=2.4.3
+ARG SPARK_VERSION=2.4.6
 ARG SPARK_HOME=/opt/spark
 ARG JDK_VERSION=8u192
 ARG JDK_URL=your_jdk_url
-ARG BIGDL_VERSION=0.12.2
-ARG ANALYTICS_ZOO_VERSION=0.11.0-SNAPSHOT
+ARG BIGDL_VERSION=0.13.0
+ARG ANALYTICS_ZOO_VERSION=0.12.0-SNAPSHOT
 ARG TINI_VERSION=v0.18.0
 
 # stage.1 jdk & spark
@@ -29,10 +29,17 @@ RUN apt-get update --fix-missing && \
     tar -zxvf spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     mv spark-${SPARK_VERSION}-bin-hadoop2.7 /opt/spark && \
     rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
-    cp /opt/spark/kubernetes/dockerfiles/spark/entrypoint.sh /opt && \
-    rm $SPARK_HOME/jars/kubernetes-client-*.jar
+    cp /opt/spark/kubernetes/dockerfiles/spark/entrypoint.sh /opt
 
-ADD https://repo1.maven.org/maven2/io/fabric8/kubernetes-client/4.4.2/kubernetes-client-4.4.2.jar $SPARK_HOME/jars
+RUN ln -fs /bin/bash /bin/sh
+RUN if [ $SPARK_VERSION = "3.1.2" ]; then \
+        rm $SPARK_HOME/jars/okhttp-*.jar && \
+        wget -P $SPARK_HOME/jars https://repo1.maven.org/maven2/com/squareup/okhttp3/okhttp/3.8.0/okhttp-3.8.0.jar; \
+    elif [ $SPARK_VERSION = "2.4.6" ]; then \
+        rm $SPARK_HOME/jars/kubernetes-client-*.jar && \
+        wget -P $SPARK_HOME/jars https://repo1.maven.org/maven2/io/fabric8/kubernetes-client/4.4.2/kubernetes-client-4.4.2.jar; \
+    fi
+
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /sbin/tini
 
 # stage.2 analytics-zoo
@@ -108,6 +115,9 @@ ENV CS_HOME                             /opt/work/cluster-serving
 ENV PYTHONPATH                          ${ANALYTICS_ZOO_HOME}/lib/analytics-zoo-bigdl_${BIGDL_VERSION}-spark_${SPARK_VERSION}-${ANALYTICS_ZOO_VERSION}-python-api.zip:${SPARK_HOME}/python/lib/pyspark.zip:${SPARK_HOME}/python/lib/py4j-*.zip:${CS_HOME}/serving-python.zip:/opt/models/research/slim
 ENV PATH                                ${ANALYTICS_ZOO_HOME}/bin/cluster-serving:${JAVA_HOME}/bin:/root/miniconda3/bin:${PATH}
 ENV TINI_VERSION                        ${TINI_VERSION}
+ENV LC_ALL                              C.UTF-8
+ENV LANG                                C.UTF-8
+
 
 COPY --from=copies-layer /opt /opt
 COPY --from=spark /sbin/tini /sbin/tini
@@ -131,7 +141,7 @@ RUN mkdir -p /opt/analytics-zoo-examples/python && \
     pip install --no-cache-dir --upgrade setuptools && \
     pip install --no-cache-dir numpy==1.18.1 scipy && \
     pip install --no-cache-dir pandas==1.0.3 && \
-    pip install --no-cache-dir scikit-learn matplotlib seaborn jupyter jupyterlab requests h5py tensorflow==1.15.0 && \
+    pip install --no-cache-dir scikit-learn matplotlib seaborn jupyter jupyterlab requests h5py && \
     ln -s /usr/bin/python3 /usr/bin/python && \
     #Fix tornado await process
     pip uninstall -y -q tornado && \
@@ -148,10 +158,18 @@ RUN mkdir -p /opt/analytics-zoo-examples/python && \
     pip install --no-cache-dir psutil aiohttp && \
     pip install --no-cache-dir py4j && \
     pip install --no-cache-dir cmake==3.16.3 && \
+    pip install --no-cache-dir torch==1.7.1 torchvision==0.8.2 && \
+    pip install --no-cache-dir horovod==0.19.2 && \
+#tf2
+    pip install --no-cache-dir pyarrow && \
+    pip install opencv-python==4.2.0.34 && \
+    pip install aioredis==1.1.0 && \
+    pip install tensorflow==2.4.0 && \
 # chmod
     chmod a+x /opt/start-notebook-spark.sh && \
     chmod a+x /opt/start-notebook-k8s.sh && \
-    chmod +x /sbin/tini
+    chmod +x /sbin/tini && \
+    cp /sbin/tini /usr/bin/tini
 
 WORKDIR /opt/spark/work-dir
 

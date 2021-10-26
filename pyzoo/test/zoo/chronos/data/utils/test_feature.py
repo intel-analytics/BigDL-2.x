@@ -35,19 +35,21 @@ class TestFeature(ZooTestCase):
         data = np.random.randn(8, 3)
         df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
                            "A": data[:, 1], "B": data[:, 2]})
-        df = generate_dt_features(df, dt_col="datetime")
-        assert set(df.columns) == {'IS_AWAKE(datetime)',
-                                   'IS_BUSY_HOURS(datetime)',
-                                   'HOUR(datetime)',
-                                   'DAY(datetime)',
-                                   'IS_WEEKEND(datetime)',
-                                   'WEEKDAY(datetime)',
-                                   'MONTH(datetime)',
-                                   'DAYOFYEAR(datetime)',
-                                   'WEEKOFYEAR(datetime)',
-                                   'MINUTE(datetime)',
+        df = generate_dt_features(df,
+                                  dt_col="datetime",
+                                  features="auto",
+                                  one_hot_features=None,
+                                  freq=pd.Timedelta("1D"),
+                                  features_generated=[])
+        assert set(df.columns) == {'DAY',
+                                   'IS_WEEKEND',
+                                   'WEEKDAY',
+                                   'MONTH',
+                                   'DAYOFYEAR',
+                                   'WEEKOFYEAR',
                                    'A',
                                    'B',
+                                   'YEAR',
                                    'values',
                                    'datetime'}
 
@@ -57,12 +59,8 @@ class TestFeature(ZooTestCase):
         df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
                            "A": data[:, 1], "B": data[:, 2],
                            "id": ["00"]*8})
-        from tsfresh.feature_extraction import ComprehensiveFCParameters
         from tsfresh.feature_extraction import MinimalFCParameters
-        from tsfresh.feature_extraction import EfficientFCParameters
-        for params in [ComprehensiveFCParameters(),
-                       MinimalFCParameters(),
-                       EfficientFCParameters()]:
+        for params in [MinimalFCParameters()]:
             output_df, _ = generate_global_features(input_df=df,
                                                     column_id="id",
                                                     column_sort="datetime",
@@ -86,12 +84,8 @@ class TestFeature(ZooTestCase):
         df = pd.DataFrame({"datetime": dates, "values": data[:, 0],
                            "A": data[:, 1], "B": data[:, 2],
                            "id": ["00"]*4+["01"]*4})
-        from tsfresh.feature_extraction import ComprehensiveFCParameters
         from tsfresh.feature_extraction import MinimalFCParameters
-        from tsfresh.feature_extraction import EfficientFCParameters
-        for params in [ComprehensiveFCParameters(),
-                       MinimalFCParameters(),
-                       EfficientFCParameters()]:
+        for params in [MinimalFCParameters()]:
             output_df, _ = generate_global_features(input_df=df,
                                                     column_id="id",
                                                     column_sort="datetime",

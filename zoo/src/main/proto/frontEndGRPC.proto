@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+option java_package = "com.intel.analytics.zoo.serving.grpc.service.generated";
+option java_multiple_files = true;
+option java_outer_classname = "GrpcFrontEndProto";
+option objc_class_prefix = "grpc";
+
+package grpc;
+
+
+service FrontEndGRPCService {
+
+    //ping port
+    rpc Ping (Empty) returns (StringReply) {}
+
+    //metrics port
+    rpc GetMetrics (Empty) returns (MetricsReply) {}
+
+    //get models port
+    rpc GetAllModels (Empty) returns (ModelsReply) {}
+
+    //get models with model name port
+    rpc GetModelsWithName (GetModelsWithNameReq) returns (ModelsReply) {}
+
+    //get models with model name port
+    rpc GetModelsWithNameAndVersion (GetModelsWithNameAndVersionReq) returns (ModelsReply) {}
+
+    //predict
+    rpc Predict (PredictReq) returns (PredictReply) {}
+
+}
+
+message Empty {
+}
+
+message GetModelsWithNameReq {
+    string modelName = 1;
+}
+
+message GetModelsWithNameAndVersionReq {
+    string modelName = 1;
+    string modelVersion = 2;
+}
+
+// The response message containing the greetings
+message StringReply {
+    string message = 1;
+}
+
+// The response message containing the greetings
+message MetricsReply {
+  message Metric {
+     string name = 1;
+     int64 count = 2;
+     double meanRate = 3;
+     int64 min = 4;
+     int64 max = 5;
+     double mean = 6;
+     double median = 7;
+     double stdDev = 8;
+     double Percentile75th = 9;
+     double Percentile95th = 10;
+     double Percentile98th = 11;
+     double Percentile99th = 12;
+     double Percentile999th = 13;
+  }
+  repeated Metric metrics = 1;
+}
+
+message InferenceModelGRPCMetaData {
+    string modelName = 1;
+    string modelVersion = 2;
+    string modelPath = 3;
+    string modelType = 4;
+    string weightPath = 5;
+    int32 modelConCurrentNum = 6;
+    string inputCompileType = 7; //direct or instance
+    string features = 8;
+}
+
+message ClusterServingGRPCMetaData {
+    string modelName = 1;
+    string modelVersion = 2;
+    string redisHost = 3;
+    string redisPort = 4;
+    string redisInputQueue = 5;
+    string redisOutputQueue = 6;
+    int32 timeWindow = 7;
+    int32 countWindow = 8;
+    bool redisSecureEnabled = 9;
+    string redisTrustStorePath = 10;
+    string redisTrustStoreToken = 11;
+    string features = 12;
+}
+
+message ModelsReply {
+    repeated InferenceModelGRPCMetaData inferenceModelMetaDatas = 1;
+    repeated ClusterServingGRPCMetaData clusterServingMetaDatas = 2;
+}
+
+message PredictReq{
+    string modelName = 1;
+    string modelVersion = 2;
+    string input = 3;
+}
+
+message PredictReply{
+    string response = 1;
+}

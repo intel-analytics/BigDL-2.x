@@ -132,7 +132,7 @@ class ClusterServingInference() {
         // dimCheck(t, "add", modelType)
         val result =
           ClusterServing.model.doPredict(t)
-        dimCheck(result, "remove", helper.modelType)
+//        dimCheck(result, "remove", helper.modelType)
         // dimCheck(t, "remove", modelType)
         val kvResult =
           (0 until size).toParArray.map(i => {

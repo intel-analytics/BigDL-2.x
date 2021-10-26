@@ -436,6 +436,63 @@ class TestTFRayEstimator(TestCase):
                          label_cols=["label"])
         trainer.predict(df, feature_cols=["feature"]).collect()
 
+    def test_partition_num_less_than_workers(self):
+        sc = init_nncontext()
+        rdd = sc.range(200, numSlices=1)
+        assert rdd.getNumPartitions() == 1
+        from pyspark.sql import SparkSession
+        spark = SparkSession(sc)
+        from pyspark.ml.linalg import DenseVector
+        df = rdd.map(lambda x: (DenseVector(np.random.randn(1,).astype(np.float)),
+                                int(np.random.randint(0, 1, size=())))).toDF(["feature", "label"])
+
+        config = {
+            "lr": 0.8
+        }
+        trainer = Estimator.from_keras(
+            model_creator=model_creator,
+            verbose=True,
+            config=config,
+            workers_per_node=2)
+        assert df.rdd.getNumPartitions() < trainer.num_workers
+
+        trainer.fit(df, epochs=1, batch_size=4, steps_per_epoch=25,
+                    validation_data=df, validation_steps=1,
+                    feature_cols=["feature"],
+                    label_cols=["label"])
+        trainer.evaluate(df, batch_size=4, num_steps=25, feature_cols=["feature"],
+                         label_cols=["label"])
+        trainer.predict(df, feature_cols=["feature"]).collect()
+
+    def test_num_part_data_diff_val_data(self):
+        sc = init_nncontext()
+        rdd = sc.range(200, numSlices=10)
+        val_rdd = sc.range(60, numSlices=8)
+        from pyspark.sql import SparkSession
+        spark = SparkSession(sc)
+        from pyspark.ml.linalg import DenseVector
+        df = rdd.map(lambda x: (DenseVector(np.random.randn(1,).astype(np.float)),
+                                int(np.random.randint(0, 1, size=())))).toDF(["feature", "label"])
+        val_df = val_rdd.map(lambda x: (DenseVector(np.random.randn(1,).astype(np.float)),
+                                        int(np.random.randint(0, 1, size=()))))\
+            .toDF(["feature", "label"])
+
+        config = {
+            "lr": 0.8
+        }
+        trainer = Estimator.from_keras(
+            model_creator=model_creator,
+            verbose=True,
+            config=config,
+            workers_per_node=2)
+        assert df.rdd.getNumPartitions() > trainer.num_workers
+        assert df.rdd.getNumPartitions() != val_df.rdd.getNumPartitions()
+
+        trainer.fit(df, epochs=1, batch_size=4, steps_per_epoch=25,
+                    validation_data=val_df, validation_steps=1,
+                    feature_cols=["feature"],
+                    label_cols=["label"])
+
     def test_dataframe_predict(self):
         sc = init_nncontext()
         rdd = sc.parallelize(range(20))
@@ -550,6 +607,28 @@ class TestTFRayEstimator(TestCase):
             print("save success")
         finally:
             os.remove("/tmp/cifar10_keras.ckpt")
+
+    def test_string_input(self):
+
+        def model_creator(config):
+            import tensorflow as tf
+            vectorize_layer = tf.keras.layers.experimental.preprocessing.TextVectorization(
+                max_tokens=10, output_mode='int', output_sequence_length=4)
+            model = tf.keras.models.Sequential()
+            model.add(tf.keras.Input(shape=(1,), dtype=tf.string))
+            model.add(vectorize_layer)
+            return model
+
+        from zoo.orca import OrcaContext
+        from pyspark.sql.types import StructType, StructField, StringType
+        spark = OrcaContext.get_spark_session()
+        schema = StructType([StructField("input", StringType(), True)])
+        input_data = [["foo qux bar"], ["qux baz"]]
+        input_df = spark.createDataFrame(input_data, schema)
+        estimator = Estimator.from_keras(model_creator=model_creator)
+        output_df = estimator.predict(input_df, batch_size=1, feature_cols=["input"])
+        output = output_df.collect()
+        print(output)
 
 
 if __name__ == "__main__":

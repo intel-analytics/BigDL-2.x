@@ -1,6 +1,6 @@
 # Hadoop/YARN User Guide
 
-Hadoop version: Hadoop >= 2.7 or CDH 5.X, Hadoop 3.X or CHD 6.X are not supported
+Hadoop version: Hadoop >= 2.7 or [CDH](https://www.cloudera.com/products/open-source/apache-hadoop/key-cdh-components.html) 5.X. Hadoop 3.X or CDH 6.X have not been tested and thus currently not supported.
 
 ---
 
@@ -40,9 +40,13 @@ You can run Analytics Zoo programs on standard Hadoop/YARN clusters without any 
   export HADOOP_CONF_DIR=the directory of the hadoop and yarn configurations
   ```
 
-### **1.1 Setup for CDH**
+- **For CDH users**
 
-CDH Version: CDH 5.X, CDH 6.X is not supported
+If your CDH cluster has already installed Spark, the CDH's spark will have conflict with the pyspark installed by pip required by analytics-zoo in next section.
+
+Thus before running analytics-zoo applications, you should unset all the spark related environment variables. You can use `env | grep SPARK` to find all the existing spark environment variables.
+
+Also, CDH cluster's `HADOOP_CONF_DIR` should by default be set to `/etc/hadoop/conf`.
 
 ---
 ### **2. YARN Client Mode**

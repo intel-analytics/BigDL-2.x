@@ -7,8 +7,9 @@
     <groupId>com.intel.analytics.zoo</groupId>
     <artifactId>analytics-zoo-bigdl_${bigdl.version}-spark_${spark.version}</artifactId>
     <packaging>jar</packaging>
-    <version>0.11.0-SNAPSHOT</version>
-    
+    <version>0.12.0-SNAPSHOT</version>
+
+    <name>analytics-zoo</name>
     <description>Big Data AI platform for distributed TensorFlow and PyTorch on Apache Spark.</description>
     <url>https://github.com/intel-analytics/analytics-zoo</url>
 
@@ -25,17 +26,21 @@
         <connection>scm:git:git@github.com:intel-analytics/analytics-zoo.git</connection>
         <url>https://github.com/intel-analytics/analytics-zoo/tree/master</url>
     </scm>
-    
+
     <properties>
         <java.version>1.7</java.version>
         <javac.version>1.7</javac.version>
         <scala-library-scope>compile</scala-library-scope>
+        <spark-mllib-scope>compile</spark-mllib-scope>
         <scala.major.version>2.11</scala.major.version>
+        <akka.http.version>10.1.11</akka.http.version>
+        <akka.actor.version>2.5.26</akka.actor.version>
+        <guava.version>15.0</guava.version>
         <scala.version>2.11.8</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>3.0.7</scalatest.version>
-        <spark.version>2.4.3</spark.version>
-        <bigdl.version>0.12.2</bigdl.version>
+        <spark.version>2.4.6</spark.version>
+        <bigdl.version>0.13.0</bigdl.version>
         <bigdl.artifactId>bigdl-SPARK_2.4</bigdl.artifactId>
         <maven-site-plugin.version>3.4</maven-site-plugin.version>
         <wagon-ssh.version>1.0</wagon-ssh.version>
@@ -49,6 +54,9 @@
         <data-store-url>http://download.tensorflow.org</data-store-url>
         <inner-ftp-uri>http://10.239.45.10:8081/repository/raw</inner-ftp-uri>
         <tf-shade>bushade</tf-shade>
+        <grpc.scope>compile</grpc.scope>
+        <grpc.version>1.37.0</grpc.version>
+        <grpc.scope>compile</grpc.scope>
     </properties>
 
     <distributionManagement>
@@ -64,16 +72,32 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <source>1.8</source>
+                            <target>1.8</target>
+                            <excludes>
+                                <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/ppml/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/serving/grpc/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                    <plugin>
                         <groupId>net.alchim31.maven</groupId>
                         <artifactId>scala-maven-plugin</artifactId>
                         <configuration>
                             <excludes>
                                 <exclude>**/com/intel/analytics/zoo/examples/serving/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/serving/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/ppml/**</exclude>
                                 <exclude>**/com/intel/analytics/zoo/pipeline/nnframes/XgboostTrainSpec.scala</exclude>
                                 <exclude>**/com/intel/analytics/zoo/friesian/python/PythonFriesian.scala</exclude>
                                 <exclude>**/com/intel/analytics/zoo/friesian/feature/Utils.scala</exclude>
                                 <exclude>**/com/intel/analytics/zoo/friesian/FriesianSpec.scala</exclude>
+                                <exclude>**/com/intel/analytics/zoo/serving/grpc/**</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
@@ -99,8 +123,28 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <source>1.8</source>
+                            <target>1.8</target>
+                            <excludes>
+                                <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/ppml/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/serving/grpc/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                    <plugin>
                         <groupId>net.alchim31.maven</groupId>
                         <artifactId>scala-maven-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/com/intel/analytics/zoo/grpc/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/ppml/**</exclude>
+                                <exclude>**/com/intel/analytics/zoo/serving/grpc/**</exclude>
+                            </excludes>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -108,7 +152,7 @@
                 <java.version>1.8</java.version>
                 <javac.version>1.8</javac.version>
                 <spark-version.project>2.4</spark-version.project>
-                <spark.version>2.4.3</spark.version>
+                <spark.version>2.4.6</spark.version>
                 <scala.major.version>2.11</scala.major.version>
                 <scala.version>2.11.8</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
@@ -124,6 +168,22 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
                     <version>1.7.5</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>log4j</groupId>
+                            <artifactId>log4j</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-api</artifactId>
+                    <version>2.14.1</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-core</artifactId>
+                    <version>2.14.1</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -136,16 +196,85 @@
                         <groupId>net.alchim31.maven</groupId>
                         <artifactId>scala-maven-plugin</artifactId>
                     </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <version>3.2.1</version>
+                        <configuration>
+                            <createDependencyReducedPom>true</createDependencyReducedPom>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.google.protobuf</pattern>
+                                    <shadedPattern>com.intel.analytics.shaded.protobuf_v_3_5_1</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>io.netty</pattern>
+                                    <shadedPattern>com.intel.analytics.zoo.shaded.io.netty</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.apache.arrow</pattern>
+                                    <shadedPattern>com.intel.analytics.zoo.shaded.arrow</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>grpc</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>shade</goal>
+                                </goals>
+                                <configuration>
+                                    <shadedArtifactAttached>true</shadedArtifactAttached>
+                                    <shadedClassifierName>grpc</shadedClassifierName>
+                                    <transformers>
+                                        <transformer
+                                                implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                            <resource>reference.conf</resource>
+                                        </transformer>
+                                        <transformer
+                                                implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                            <manifestEntries>
+                                                <Main-Class>com.intel.analytics.zoo.serving.grpc.FrontEndGRPCServiceImpl</Main-Class>
+                                            </manifestEntries>
+                                        </transformer>
+                                    </transformers>
+                                    <artifactSet>
+                                        <excludes>
+                                            <exclude>ml.dmlc:xgboost4j</exclude>
+                                            <exclude>black.ninia:jep</exclude>
+                                            <exclude>org.tensorflow:tensorflow-hadoop</exclude>
+                                            <exclude>it.unimi.dsi:fastutil</exclude>
+                                        </excludes>
+                                    </artifactSet>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
             <properties>
                 <java.version>1.8</java.version>
                 <javac.version>1.8</javac.version>
-                <spark-version.project>3.0</spark-version.project>
-                <spark.version>3.0.0</spark.version>
+                <spark-version.project>3.1</spark-version.project>
+                <spark.version>3.1.2</spark.version>
                 <scala.major.version>2.12</scala.major.version>
                 <scala.version>2.12.10</scala.version>
                 <scala.macros.version>2.1.0</scala.macros.version>
+                <akka.http.version>10.2.3</akka.http.version>
+                <akka.actor.version>2.6.9</akka.actor.version>
+                <guava.version>23.0</guava.version>
                 <maven.compiler.source>${java.version}</maven.compiler.source>
                 <maven.compiler.target>${java.version}</maven.compiler.target>
                 <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
@@ -160,6 +289,32 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
                     <version>1.7.5</version>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>log4j</groupId>
+                            <artifactId>log4j</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-api</artifactId>
+                    <version>2.14.1</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-core</artifactId>
+                    <version>2.14.1</version>
+                </dependency>
+                <dependency>
+                    <groupId>io.grpc</groupId>
+                    <artifactId>grpc-core</artifactId>
+                    <version>${grpc.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.thesamet.scalapb</groupId>
+                    <artifactId>scalapb-runtime_${scala.major.version}</artifactId>
+                    <version>0.11.3</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -169,6 +324,7 @@
             <properties>
                 <bigdl-scope>provided</bigdl-scope>
                 <tf-shade>org.tensorflow</tf-shade>
+                <grpc.scope>provided</grpc.scope>
             </properties>
         </profile>
 
@@ -202,6 +358,7 @@
             <properties>
                 <core.artifactId>zoo-core-dist-linux64</core.artifactId>
                 <core.dependencyType>pom</core.dependencyType>
+                <spark-mllib-scope>provided</spark-mllib-scope>
             </properties>
         </profile>
 
@@ -210,18 +367,19 @@
             <properties>
                 <core.artifactId>zoo-core-dist-mac</core.artifactId>
                 <core.dependencyType>pom</core.dependencyType>
+                <spark-mllib-scope>provided</spark-mllib-scope>
             </properties>
             <!--these are not supported right now, added to make the project compiles-->
             <dependencies>
                 <dependency>
                     <groupId>com.intel.analytics.zoo</groupId>
                     <artifactId>zoo-core-mkl-linux</artifactId>
-                    <version>0.11.0-SNAPSHOT</version>
+                    <version>0.12.0-SNAPSHOT</version>
                 </dependency>
                 <dependency>
                     <groupId>com.intel.analytics.zoo</groupId>
                     <artifactId>zoo-core-pmem-java-linux</artifactId>
-                    <version>0.11.0-SNAPSHOT</version>
+                    <version>0.12.0-SNAPSHOT</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -329,7 +487,7 @@
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-reflect</artifactId>
             <version>${scala.version}</version>
-            <scope>${spark-scope}</scope>
+            <scope>${scala-library-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>
@@ -350,19 +508,19 @@
             <scope>${spark-scope}</scope>
         </dependency>
 
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.spark</groupId>-->
-        <!--            <artifactId>spark-core_${scala.major.version}</artifactId>-->
-        <!--            <version>${spark.version}</version>-->
-        <!--            <scope>${spark-scope}</scope>-->
-        <!--        </dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.apache.spark</groupId>-->
+            <!--<artifactId>spark-core_${scala.major.version}</artifactId>-->
+            <!--<version>${spark.version}</version>-->
+            <!--<scope>${scala-library-scope}</scope>-->
+        <!--</dependency>-->
 
 
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_${scala.major.version}</artifactId>
             <version>${spark.version}</version>
-            <scope>${spark-scope}</scope>
+            <scope>${spark-mllib-scope}</scope>
         </dependency>
         <dependency>
             <groupId>com.intel.analytics.bigdl</groupId>
@@ -445,7 +603,7 @@
         <dependency>
             <groupId>com.intel.analytics.zoo</groupId>
             <artifactId>${core.artifactId}</artifactId>
-            <version>0.11.0-SNAPSHOT</version>
+            <version>0.12.0-SNAPSHOT</version>
             <type>${core.dependencyType}</type>
         </dependency>
         <dependency>
@@ -466,17 +624,22 @@
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-actor_${scala.major.version}</artifactId>
-            <version>2.5.26</version>
+            <version>${akka.actor.version}</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-http_${scala.major.version}</artifactId>
-            <version>10.1.11</version>
+            <version>${akka.http.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-http-core_${scala.major.version}</artifactId>
+            <version>${akka.http.version}</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-stream_${scala.major.version}</artifactId>
-            <version>2.5.26</version>
+            <version>${akka.actor.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
@@ -501,8 +664,13 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>15.0</version>
+            <version>${guava.version}</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.google.guava</groupId>-->
+<!--            <artifactId>guava</artifactId>-->
+<!--            <version>23.6-jre</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.apache.arrow</groupId>
             <artifactId>arrow-vector</artifactId>
@@ -538,43 +706,43 @@
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-scala_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-scala_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-clients_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>${spark-scope}</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-api-scala-bridge_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-common</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-planner-blink_${scala.major.version}</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-csv</artifactId>
-            <version>1.11.2</version>
+            <version>1.11.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -602,6 +770,49 @@
             <artifactId>kafka-streams-scala_2.11</artifactId>
             <version>2.4.1</version>
         </dependency>
+        <!-- grpc dependency -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <version>${grpc.version}</version>
+            <scope>${grpc.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>${grpc.version}</version>
+            <scope>${grpc.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+            <version>${grpc.version}</version>
+            <scope>${grpc.scope}</scope>
+        </dependency>
+        <dependency> <!-- necessary for Java 9+ -->
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>annotations-api</artifactId>
+            <version>6.0.53</version>
+            <scope>${grpc.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.15.8</version>
+            <scope>${grpc.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java-util</artifactId>
+            <version>3.15.8</version>
+            <scope>${grpc.scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.flatbuffers</groupId>
+            <artifactId>flatbuffers-java</artifactId>
+            <version>1.9.0</version>
+            <scope>${grpc.scope}</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -628,8 +839,17 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
+        <!-- grpc extension -->
+        <extensions>
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.6.2</version>
+            </extension>
+        </extensions>
         <pluginManagement>
             <plugins>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
@@ -678,6 +898,33 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <!-- grpc plugin -->
+            <!--<plugin>-->
+                <!--<groupId>org.xolstice.maven.plugins</groupId>-->
+                <!--<artifactId>protobuf-maven-plugin</artifactId>-->
+                <!--<version>0.6.1</version>-->
+                <!--<configuration>-->
+                    <!--<protocArtifact>com.google.protobuf:protoc:3.12.0:exe:${os.detected.classifier}</protocArtifact>-->
+                    <!--<pluginId>grpc-java</pluginId>-->
+                    <!--<pluginArtifact>io.grpc:protoc-gen-grpc-java:1.37.0:exe:${os.detected.classifier}</pluginArtifact>-->
+                    <!--<protocExecutable>/usr/bin/protoc</protocExecutable>-->
+                <!--</configuration>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<goals>-->
+                            <!--<goal>compile</goal>-->
+                            <!--<goal>compile-custom</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -844,6 +1091,31 @@
                                     <include>io.netty</include>
                                     <include>org.apache.arrow</include>
                                 </includes>
+                                <excludes>
+                                    <exclude>org.apache.spark:*</exclude>
+                                    <exclude>net.sf.py4j:*</exclude>
+                                    <exclude>org.apache.hadoop:*</exclude>
+                                    <exclude>org.apache.parquet:*</exclude>
+                                    <exclude>org.apache.orc:*</exclude>
+                                    <exclude>org.apache.avro:*</exclude>
+                                    <exclude>org.apache.ivy:*</exclude>
+                                    <exclude>org.xerial.snappy:*</exclude>
+                                    <exclude>org.glassfish.hk2:*</exclude>
+                                    <exclude>org.glassfish.jersey.core:*</exclude>
+                                    <exclude>org.codehaus.jackson:*</exclude>
+                                    <exclude>org.codehaus.janino:janino</exclude>
+                                    <exclude>io.netty:netty</exclude>
+                                    <exclude>org.apache.commons:commons-math3</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
+                                    <exclude>xerces:xercesImpl</exclude>
+				    <exclude>org.scalanlp:*</exclude>
+				    <exclude>net.sf.opencsv:*</exclude>
+				    <exclude>com.github.rwl:*</exclude>
+				    <exclude>org.spire-math:*</exclude>
+				    <exclude>org.typelevel:*</exclude>
+				    <exclude>com.chuusai:*</exclude>
+                                </excludes>
                             </artifactSet>
                         </configuration>
                         <goals>
@@ -863,6 +1135,29 @@
                             <artifactSet>
                                 <excludes>
                                     <exclude>org.scala-lang:scala-library</exclude>
+                                    <exclude>org.apache.spark:*</exclude>
+                                    <exclude>net.sf.py4j:*</exclude>
+                                    <exclude>org.apache.hadoop:*</exclude>
+                                    <exclude>org.apache.parquet:*</exclude>
+                                    <exclude>org.apache.orc:*</exclude>
+                                    <exclude>org.apache.avro:*</exclude>
+                                    <exclude>org.apache.ivy:*</exclude>
+                                    <exclude>org.xerial.snappy:*</exclude>
+                                    <exclude>org.glassfish.hk2:*</exclude>
+                                    <exclude>org.glassfish.jersey.core:*</exclude>
+                                    <exclude>org.codehaus.jackson:*</exclude>
+                                    <exclude>org.codehaus.janino:janino</exclude>
+                                    <exclude>io.netty:netty</exclude>
+                                    <exclude>org.apache.commons:commons-math3</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
+                                    <exclude>xerces:xercesImpl</exclude>
+				    <exclude>org.scalanlp:*</exclude>
+				    <exclude>net.sf.opencsv:*</exclude>
+				    <exclude>com.github.rwl:*</exclude>
+				    <exclude>org.spire-math:*</exclude>
+				    <exclude>org.typelevel:*</exclude>
+				    <exclude>com.chuusai:*</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -891,24 +1186,9 @@
                             </transformers>
                             <artifactSet>
                                 <excludes>
-                                    <exclude>com.intel.analytics.bigdl:bigdl-SPARK_2.4</exclude>
                                     <exclude>ml.dmlc:xgboost4j</exclude>
-                                    <exclude>org.spark-project.spark:unused</exclude>
-                                    <exclude>org.tensorflow:libtensorflow</exclude>
-                                    <exclude>org.tensorflow:proto</exclude>
                                     <exclude>black.ninia:jep</exclude>
                                     <exclude>org.tensorflow:tensorflow-hadoop</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-dist-all</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-linux</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-pmem-java-linux</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-tfnet-linux</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-mkl-linux</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-dist-mac</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
-                                    <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
-                                    <exclude>com.intel.analytics.bigdl.core.dist:all</exclude>
-                                    <exclude>com.intel.analytics.bigdl.spark-version</exclude>
-                                    <exclude>org.scalanlp:breeze_${scala.major.version}</exclude>
                                     <exclude>it.unimi.dsi:fastutil</exclude>
                                 </excludes>
                             </artifactSet>
@@ -943,6 +1223,23 @@
                                     <exclude>com.intel.analytics.zoo:zoo-core-dist-mac</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-tfnet-mac</exclude>
                                     <exclude>com.intel.analytics.zoo:zoo-core-openvino-java-mac</exclude>
+                                    <exclude>org.apache.spark:*</exclude>
+                                    <exclude>net.sf.py4j:*</exclude>
+                                    <exclude>org.apache.hadoop:*</exclude>
+                                    <exclude>org.apache.parquet:*</exclude>
+                                    <exclude>org.apache.orc:*</exclude>
+                                    <exclude>org.apache.avro:*</exclude>
+                                    <exclude>org.apache.ivy:*</exclude>
+                                    <exclude>org.xerial.snappy:*</exclude>
+                                    <exclude>org.glassfish.hk2:*</exclude>
+                                    <exclude>org.glassfish.jersey.core:*</exclude>
+                                    <exclude>org.codehaus.jackson:*</exclude>
+                                    <exclude>org.codehaus.janino:janino</exclude>
+                                    <exclude>io.netty:netty</exclude>
+                                    <exclude>org.apache.commons:commons-math3</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
+                                    <exclude>xerces:xercesImpl</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>
@@ -1162,5 +1459,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

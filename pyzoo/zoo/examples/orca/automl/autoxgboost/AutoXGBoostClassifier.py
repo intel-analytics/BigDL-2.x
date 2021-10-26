@@ -17,11 +17,13 @@
 import argparse
 
 import pandas as pd
+import numpy as np
 
 from sklearn.model_selection import train_test_split
 from zoo import init_spark_on_local, init_spark_on_yarn
 from zoo.ray import RayContext
-from zoo.chronos.config.recipe import *
+from zoo.chronos.autots.deprecated.config.recipe import\
+    XgbRegressorSkOptRecipe, XgbRegressorGridRandomRecipe
 from zoo.orca.automl.xgboost import AutoXGBClassifier
 
 
@@ -151,5 +153,8 @@ if __name__ == '__main__':
     end = time.time()
     print("elapse: ", (end-start), "s")
     best_model = auto_xgb_clf.get_best_model()
-    accuracy = best_model.evaluate(X_val, y_val, metrics=["accuracy"])
+
+    y_hat = best_model.predict(X_val)
+    from zoo.orca.automl.metrics import Evaluator
+    accuracy = Evaluator.evaluate(metric="accuracy", y_true=y_val, y_pred=y_hat)
     print("Evaluate: accuracy is", accuracy)
