@@ -515,6 +515,12 @@
             <artifactId>${bigdl.artifactId}</artifactId>
             <version>${bigdl.version}</version>
             <scope>${bigdl-scope}</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>ml.dmlc</groupId>
