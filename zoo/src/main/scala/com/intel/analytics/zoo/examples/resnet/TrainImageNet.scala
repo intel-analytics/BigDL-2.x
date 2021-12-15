@@ -30,13 +30,14 @@ import com.intel.analytics.zoo.examples.resnet.Utils._
 import com.intel.analytics.zoo.feature.pmem.{DIRECT, DRAM, MemoryType, PMEM}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.estimator.Estimator
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.{Level, LogManager}
+import org.apache.logging.log4j.core.config.Configurator
 import org.apache.spark.SparkConf
 
 object TrainImageNet {
   LoggerFilter.redirectSparkInfoLogs()
-  Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
-  val logger = Logger.getLogger(getClass)
+  Configurator.setLevel("com.intel.analytics.bigdl.optim", Level.INFO)
+  val logger = LogManager.getLogger(getClass)
 
   def imageNetDecay(epoch: Int): Double = {
     if (epoch >= 80) {

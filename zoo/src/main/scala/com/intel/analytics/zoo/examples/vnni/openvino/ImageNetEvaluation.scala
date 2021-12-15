@@ -23,7 +23,8 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.optim.{Top1Accuracy, Top5Accuracy}
 import com.intel.analytics.zoo.feature.image.{ImageCenterCrop, ImageMatToTensor, ImageResize, ImageSet, ImageSetToSample}
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.{Level, LogManager}
+import org.apache.logging.log4j.core.config.Configurator
 import scopt.OptionParser
 
 
@@ -35,13 +36,13 @@ case class ImageNetEvaluationParams(folder: String = "./",
 
 object ImageNetEvaluation {
   LoggerFilter.redirectSparkInfoLogs()
-  Logger.getLogger("org").setLevel(Level.ERROR)
-  Logger.getLogger("akka").setLevel(Level.ERROR)
-  Logger.getLogger("breeze").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.zoo.feature.image").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
+  Configurator.setLevel("org", Level.ERROR)
+  Configurator.setLevel("akka", Level.ERROR)
+  Configurator.setLevel("breeze", Level.ERROR)
+  Configurator.setLevel("com.intel.analytics.zoo.feature.image", Level.ERROR)
+  Configurator.setLevel("com.intel.analytics.zoo", Level.INFO)
 
-  val logger: Logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
     val parser = new OptionParser[ImageNetEvaluationParams]("ImageNet Int8 Example") {

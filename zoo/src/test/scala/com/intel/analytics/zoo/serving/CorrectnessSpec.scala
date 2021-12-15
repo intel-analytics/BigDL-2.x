@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.serving
 import java.io.{ByteArrayOutputStream, File, PrintWriter}
 import java.util.Base64
 
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 import org.scalatest.{FlatSpec, Matchers}
 
 import sys.process._
@@ -53,7 +53,7 @@ class CorrectnessSpec extends FlatSpec with Matchers {
 //  val configPath = "/home/litchy/pro/analytics-zoo/config.yaml"
   var redisHost: String = "localhost"
   var redisPort: Int = 6379
-  val logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
   def resize(p: String): String = {
     val source = ImageIO.read(new File(p))
     val outputImage: BufferedImage = new BufferedImage(224, 224, source.getType)

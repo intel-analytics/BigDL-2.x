@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 import com.intel.analytics.zoo.models.image.objectdetection.common.BboxUtil
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.PascalVoc._
 import org.apache.commons.lang3.SerializationUtils
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -95,7 +95,7 @@ class PascalVocEvaluator(imageSet: String) extends DetectionEvaluator {
 }
 
 object PascalVocEvaluator {
-  val logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   def meanAveragePrecision(results: Array[(Int, Array[(Float, Int, Int)])],
     use07metric: Boolean, classes: Array[String]): ArrayBuffer[(String, Float)] = {

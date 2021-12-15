@@ -22,7 +22,8 @@ import com.intel.analytics.bigdl.utils.LoggerFilter
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.{Level, LogManager}
+import org.apache.logging.log4j.core.config.Configurator
 import scopt.OptionParser
 
 case class ImageNetEvaluationParams(folder: String = "./",
@@ -31,10 +32,10 @@ case class ImageNetEvaluationParams(folder: String = "./",
 
 object ImageNetEvaluation {
   LoggerFilter.redirectSparkInfoLogs()
-  Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
-  Logger.getLogger("com.intel.analytics.bigdl.transform.vision").setLevel(Level.ERROR)
+  Configurator.setLevel("com.intel.analytics.bigdl.optim", Level.INFO)
+  Configurator.setLevel("com.intel.analytics.bigdl.transform.vision", Level.ERROR)
 
-  val logger: Logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
     System.setProperty("bigdl.engineType", "mkldnn")

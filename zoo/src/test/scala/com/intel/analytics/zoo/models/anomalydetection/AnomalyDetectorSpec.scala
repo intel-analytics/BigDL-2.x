@@ -21,7 +21,8 @@ import com.intel.analytics.bigdl.utils.{Shape, T}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.{Level, LogManager}
+import org.apache.logging.log4j.core.config.Configurator
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.{SparkConf, SparkContext}
@@ -33,7 +34,7 @@ class AnomalyDetectorSpec extends ZooSpecHelper {
   var sc: SparkContext = _
 
   override def doBefore(): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
+    Configurator.setLevel("org", Level.ERROR)
     val conf = new SparkConf().setMaster("local[1]").setAppName("AnomalyTest")
     sc = NNContext.initNNContext(conf)
     sqlContext = SQLContext.getOrCreate(sc)

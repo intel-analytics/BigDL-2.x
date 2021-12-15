@@ -21,9 +21,9 @@ import com.intel.analytics.zoo.serving.utils.Conventions
 import scala.collection.JavaConverters._
 import redis.clients.jedis.exceptions.JedisConnectionException
 import redis.clients.jedis._
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 object RedisUtils {
-  val logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
   def createRedisGroupIfNotExist(jedis: Jedis, streamName: String): Unit = {
     try {
       jedis.xgroupCreate(streamName,

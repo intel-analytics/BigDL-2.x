@@ -21,7 +21,7 @@ import java.util.Properties
 
 import com.intel.analytics.bigdl.utils.{Engine, OptimizerV1, OptimizerV2, OptimizerVersion}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{EngineRef, KerasUtils}
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 import org.apache.spark.{SPARK_VERSION, SparkConf, SparkContext, SparkException}
 import sys.env
 
@@ -31,7 +31,7 @@ import sys.env
  */
 object NNContext {
 
-  private val logger = Logger.getLogger(getClass)
+  private val logger = LogManager.getLogger(getClass)
 
   private[zoo] def checkSparkVersion(reportWarning: Boolean = false) = {
     checkVersion(SPARK_VERSION, ZooBuildInfo.spark_version, "Spark", reportWarning)

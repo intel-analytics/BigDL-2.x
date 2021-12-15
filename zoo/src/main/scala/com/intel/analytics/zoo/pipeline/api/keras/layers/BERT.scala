@@ -30,7 +30,7 @@ import com.intel.analytics.zoo.pipeline.api.autograd.{AutoGrad, Variable}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.{GraphRef, KerasUtils}
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model
 import com.intel.analytics.zoo.pipeline.api.keras.models.Model.{apply => _, _}
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -113,7 +113,7 @@ object BERT extends KerasLayerSerializable {
     "com.intel.analytics.zoo.pipeline.api.keras.layers.BERT",
     BERT)
 
-  private val logger = Logger.getLogger(getClass)
+  private val logger = LogManager.getLogger(getClass)
 
   /**
    * [[BERT]] A self attention keras like layer

@@ -19,7 +19,7 @@ import com.intel.analytics.bigdl.dataset.ArraySample
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 import scala.reflect.ClassTag
 
@@ -84,7 +84,7 @@ class ImageSetToSample[T: ClassTag](inputKeys: Array[String] = Array(ImageFeatur
 }
 
 object ImageSetToSample {
-  val logger: Logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   def apply[T: ClassTag](inputKeys: Array[String] = Array(ImageFeature.imageTensor),
             targetKeys: Array[String] = Array(ImageFeature.label),

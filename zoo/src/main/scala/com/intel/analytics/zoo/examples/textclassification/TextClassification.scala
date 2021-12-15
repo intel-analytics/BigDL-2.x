@@ -23,7 +23,8 @@ import com.intel.analytics.zoo.feature.text.TextSet
 import com.intel.analytics.zoo.models.textclassification.TextClassifier
 import com.intel.analytics.zoo.pipeline.api.keras.metrics.Accuracy
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
-import org.apache.log4j.{Level => Level4j, Logger => Logger4j}
+import org.apache.logging.log4j.{LogManager => Logger4j, Level => Level4j}
+import org.apache.logging.log4j.core.config.Configurator
 import scopt.OptionParser
 
 
@@ -39,7 +40,7 @@ case class TextClassificationParams(
 
 
 object TextClassification {
-  Logger4j.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level4j.INFO)
+  Configurator.setLevel("com.intel.analytics.bigdl.optim", Level4j.INFO)
 
   def main(args: Array[String]): Unit = {
     val parser = new OptionParser[TextClassificationParams]("TextClassification Example") {

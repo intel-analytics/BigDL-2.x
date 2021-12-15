@@ -31,7 +31,8 @@ import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCr
 import com.intel.analytics.zoo.pipeline.api.keras.python.PythonZooKeras
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
 import com.intel.analytics.zoo.pipeline.estimator.Estimator
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.{Level, LogManager}
+import org.apache.logging.log4j.core.config.Configurator
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SQLContext}
@@ -46,7 +47,7 @@ class NeuralCFSpec extends ZooSpecHelper {
   val itemCount = 100
 
   override def doBefore(): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
+    Configurator.setLevel("org", Level.ERROR)
     val conf = new SparkConf().setMaster("local[1]").setAppName("NCFTest")
     sc = NNContext.initNNContext(conf)
     sqlContext = SQLContext.getOrCreate(sc)

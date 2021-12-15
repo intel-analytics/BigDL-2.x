@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 import scopt.OptionParser
 
 case class PerfParams(model: String = "",
@@ -29,7 +29,7 @@ case class PerfParams(model: String = "",
 
 object Perf {
 
-  val logger: Logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
     System.setProperty("bigdl.localMode", "true")

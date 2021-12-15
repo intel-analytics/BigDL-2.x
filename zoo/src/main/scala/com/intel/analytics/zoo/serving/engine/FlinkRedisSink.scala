@@ -22,7 +22,7 @@ import com.intel.analytics.zoo.serving.pipeline.RedisUtils
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{LogManager, Logger}
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, StreamEntryID}
 
 
@@ -33,7 +33,7 @@ class FlinkRedisSink(helperSer: ClusterServingHelper)
   var logger: Logger = null
   var helper: ClusterServingHelper = null
   override def open(parameters: Configuration): Unit = {
-    logger = Logger.getLogger(getClass)
+    logger = LogManager.getLogger(getClass)
     // Sink is first initialized among Source, Map, Sink, so initialize static variable in sink.
     ClusterServing.helper = helperSer
     if (ClusterServing.helper.redisSecureEnabled) {

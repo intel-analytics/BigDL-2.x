@@ -22,7 +22,8 @@ import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.zoo.models.recommendation.SessionRecommender
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.{Level, LogManager}
+import org.apache.logging.log4j.core.config.Configurator
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
@@ -74,7 +75,7 @@ object SessionRecExp {
   }
 
   def run(params: SessionParams): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
+    Configurator.setLevel("org", Level.ERROR)
     val conf = new SparkConf().setAppName("SessionRecExp")
     val sc = NNContext.initNNContext(conf)
     val sqlContext = SQLContext.getOrCreate(sc)

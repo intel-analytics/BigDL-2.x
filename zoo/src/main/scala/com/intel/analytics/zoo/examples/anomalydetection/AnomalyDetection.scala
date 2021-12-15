@@ -22,7 +22,8 @@ import com.intel.analytics.bigdl.utils.Shape
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.anomalydetection._
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.MeanSquaredError
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.{Level, LogManager}
+import org.apache.logging.log4j.core.config.Configurator
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, SQLContext}
@@ -65,7 +66,7 @@ object AnomalyDetection {
   }
 
   def run(param: LocalParams): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
+    Configurator.setLevel("org", Level.ERROR)
     val conf = new SparkConf()
     conf.setAppName("AnomalyDetectionExample")
     val sc = NNContext.initNNContext(conf)

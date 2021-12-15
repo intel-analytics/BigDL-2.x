@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.label.roi.RoiLabel
 import com.intel.analytics.zoo.feature.image.{ImageSet, LocalImageSet}
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
@@ -53,7 +53,7 @@ class Coco(val imageSet: String, devkitPath: String) extends Imdb {
 
 object Coco {
 
-  val logger = Logger.getLogger(getClass.getName)
+  val logger = LogManager.getLogger(getClass.getName)
 
   // original coco category id and corresponding class names
   val cocoCatIdAndClassName = Array(

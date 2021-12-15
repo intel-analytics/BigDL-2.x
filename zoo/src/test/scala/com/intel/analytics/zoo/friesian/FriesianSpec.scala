@@ -21,7 +21,8 @@ import java.net.URL
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.friesian.python.PythonFriesian
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.{Level, LogManager}
+import org.apache.logging.log4j.core.config.Configurator
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.{StructField, _}
 import org.apache.spark.{SparkConf, SparkContext}
@@ -38,7 +39,7 @@ class FriesianSpec extends ZooSpecHelper {
   val friesian = PythonFriesian.ofFloat()
 
   override def doBefore(): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
+    Configurator.setLevel("org", Level.ERROR)
     val conf = new SparkConf().setMaster("local[1]").setAppName("FriesianTest")
     sc = NNContext.initNNContext(conf)
     sqlContext = SQLContext.getOrCreate(sc)
