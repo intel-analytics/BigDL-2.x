@@ -24,7 +24,7 @@ import com.intel.analytics.bigdl.visualization.{TrainSummary, ValidationSummary}
 import com.intel.analytics.zoo.feature.{DiskFeatureSet, DistributedFeatureSet, FeatureSet}
 import com.intel.analytics.zoo.pipeline.api.keras.models.{InternalDistriOptimizer, InternalDistriOptimizerV2}
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -228,7 +228,7 @@ class Estimator[T: ClassTag] private[zoo](
 }
 
 object Estimator {
-  val logger = Logger.getLogger(this.getClass)
+  val logger = LogManager.getLogger(this.getClass)
   /**
    * Create an estimator
    * @param model model

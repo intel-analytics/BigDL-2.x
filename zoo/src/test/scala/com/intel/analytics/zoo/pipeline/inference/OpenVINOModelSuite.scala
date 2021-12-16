@@ -22,6 +22,7 @@ import java.util
 import java.util.{Arrays, Properties}
 
 import com.intel.analytics.zoo.common.Utils
+import org.apache.logging.log4j.LogManager
 import org.codehaus.plexus.util.FileUtils
 import org.scalatest._
 import org.slf4j.LoggerFactory
@@ -46,7 +47,7 @@ class OpenVINOModelSuite extends FunSuite with Matchers with BeforeAndAfterAll
   val url_ov_fasterrcnn_tests_inputdata1 = s"$s3DataUrl/inputdata_1"
   val url_ov_fasterrcnn_tests_inputdata2 = s"$s3DataUrl/inputdata_2"
 
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
   var tmpDir: File = _
 
   val fasterrcnnModelUrl = s"$s3Url" +

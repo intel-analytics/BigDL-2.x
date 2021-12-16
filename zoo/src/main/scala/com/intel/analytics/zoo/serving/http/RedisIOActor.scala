@@ -24,6 +24,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.serving.serialization.{ArrowDeserializer, StreamSerializer}
 import com.intel.analytics.zoo.serving.pipeline.RedisUtils
 import com.intel.analytics.zoo.serving.utils.Conventions
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.JedisPool
 
@@ -34,7 +35,7 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX +
   Conventions.SERVING_STREAM_DEFAULT_NAME + ":",
                    redisInputQueue: String = "serving_stream",
                    jedisPool: JedisPool = null) extends Actor with Supportive {
-  override val logger = LoggerFactory.getLogger(getClass)
+  override val logger = LogManager.getLogger(getClass)
   val jedis = if (jedisPool == null) {
     RedisUtils.getRedisClient(new JedisPool())
   } else {

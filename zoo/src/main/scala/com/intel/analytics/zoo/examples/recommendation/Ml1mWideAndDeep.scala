@@ -21,7 +21,8 @@ import com.intel.analytics.bigdl.optim.{Adam, Top1Accuracy}
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.core.config.Configurator
+import org.apache.logging.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SQLContext}
@@ -34,7 +35,7 @@ case class Item(itemId: Int, title: String, genres: String)
 object Ml1mWideAndDeep {
 
   def run(params: WNDParams): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
+    Configurator.setLevel("org", Level.ERROR)
     val conf = new SparkConf().setAppName("WideAndDeepExample")
     val sc = NNContext.initNNContext(conf)
     val sqlContext = SQLContext.getOrCreate(sc)

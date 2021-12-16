@@ -24,6 +24,7 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.pipeline.api.Predictable
 import com.intel.analytics.zoo.tfpark.{GraphRunner, TFUtils}
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 import org.tensorflow.framework.{GraphDef, MetaGraphDef}
 import org.tensorflow.op.Ops
@@ -181,7 +182,7 @@ object TFNetForInference {
   private val DEFAULT_SIGNATURE = "serving_default"
 
 
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   import scala.collection.JavaConverters._
 

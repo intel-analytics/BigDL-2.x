@@ -30,6 +30,7 @@ import com.intel.analytics.bigdl.utils.serializer.converters.{DataConverter, Ten
 import com.intel.analytics.zoo.common.CheckedObjectInputStream
 import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding.EmbeddingMatrixHolder
 import com.intel.analytics.zoo.pipeline.api.net.{NetUtils, RegistryMap, SerializationHolder}
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.{Map => MMap}
@@ -304,7 +305,7 @@ object WordEmbedding {
   @transient
   private lazy val inDriver = NetUtils.isDriver
 
-  private val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LogManager.getLogger(getClass)
 
   private val weightRegistry = new RegistryMap[Tensor[_]]()
 

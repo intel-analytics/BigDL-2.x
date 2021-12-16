@@ -23,7 +23,8 @@ import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.bigdl.utils.RandomGenerator.RNG
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.nnframes.{NNClassifier, NNClassifierModel, NNEstimatorSpec}
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.core.config.Configurator
+import org.apache.logging.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
@@ -37,7 +38,7 @@ class OptimizersSpec extends FlatSpec with Matchers with BeforeAndAfter {
   val nRecords = 100
 
   before {
-    Logger.getLogger("org").setLevel(Level.ERROR)
+    Configurator.setLevel("org", Level.ERROR)
     val conf = Engine.createSparkConf().setAppName("OptimizersSpec").setMaster("local[1]")
     sc = NNContext.initNNContext(conf)
     sqlContext = new SQLContext(sc)

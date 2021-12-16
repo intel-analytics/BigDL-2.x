@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.bigdl.utils.Table
 import com.intel.analytics.zoo.models.image.objectdetection.common.BboxUtil
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -616,7 +616,7 @@ class MultiBoxLoss[T: ClassTag](param: MultiBoxLossParam)
 }
 
 object MultiBoxLoss {
-  val logger = Logger.getLogger(getClass.getName)
+  val logger = LogManager.getLogger(getClass.getName)
   def apply[@specialized(Float, Double) T: ClassTag](param: MultiBoxLossParam)
     (implicit ev: TensorNumeric[T]): MultiBoxLoss[T] = new MultiBoxLoss[T](param)
 }

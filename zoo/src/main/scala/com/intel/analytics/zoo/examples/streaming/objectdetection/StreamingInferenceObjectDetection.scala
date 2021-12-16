@@ -26,19 +26,20 @@ import com.intel.analytics.zoo.models.image.objectdetection.{LabelReader, ScaleD
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.core.config.Configurator
+import org.apache.logging.log4j.{Level, Logger, LogManager}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.opencv.imgcodecs.Imgcodecs
 import scopt.OptionParser
 
 object StreamingInferenceObjectDetection {
-  Logger.getLogger("org").setLevel(Level.ERROR)
-  Logger.getLogger("akka").setLevel(Level.ERROR)
-  Logger.getLogger("breeze").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
-  Logger.getLogger("com.intel.analytics.zoo.feature.image").setLevel(Level.ERROR)
+  Configurator.setLevel("org", Level.ERROR)
+  Configurator.setLevel("akka", Level.ERROR)
+  Configurator.setLevel("breeze", Level.ERROR)
+  Configurator.setLevel("com.intel.analytics.zoo", Level.INFO)
+  Configurator.setLevel("com.intel.analytics.zoo.feature.image", Level.ERROR)
 
-  val logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
 
   val parser = new OptionParser[PredictParam]("Analytics Zoo Streaming Object Detection") {

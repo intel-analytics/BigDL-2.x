@@ -23,6 +23,7 @@ import com.intel.analytics.bigdl.nn.CrossEntropyCriterion
 import com.intel.analytics.bigdl.optim.{Adam, Loss, Top1Accuracy, Top5Accuracy}
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.pipeline.estimator.LocalEstimator
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 import scopt.OptionParser
 
@@ -33,7 +34,7 @@ case class ResnetLocalEstimatorParams(imageDirPath: String = "./",
 
 object ResnetLocalEstimator {
 
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   def main(args: Array[String]) : Unit = {
     val parser = new OptionParser[ResnetLocalEstimatorParams]("ResnetLocalEstimator Example") {

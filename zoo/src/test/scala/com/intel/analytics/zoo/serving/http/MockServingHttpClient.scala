@@ -25,6 +25,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
@@ -32,7 +33,7 @@ import scala.concurrent.duration.Duration
 
 object MockServingHttpClient extends App with Supportive {
 
-  override val logger = LoggerFactory.getLogger(getClass)
+  override val logger = LogManager.getLogger(getClass)
 
   implicit val system = ActorSystem("zoo-serving-frontend-system")
   implicit val materializer = ActorMaterializer()

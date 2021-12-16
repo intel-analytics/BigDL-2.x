@@ -21,6 +21,7 @@ import com.intel.analytics.bigdl.models.lenet.LeNet5
 import com.intel.analytics.bigdl.nn.ZooClassNLLCriterion
 import com.intel.analytics.bigdl.optim.{Adam, Loss, Top1Accuracy}
 import com.intel.analytics.zoo.pipeline.estimator.LocalEstimator
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 import scopt.OptionParser
 
@@ -31,7 +32,7 @@ case class LenetLocalEstimatorParams(imageDirPath: String = "./",
 
 object LenetLocalEstimator {
 
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   def main(args: Array[String]) : Unit = {
     val parser = new OptionParser[LenetLocalEstimatorParams]("LenetLocalEstimator Example") {

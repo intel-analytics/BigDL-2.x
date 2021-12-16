@@ -17,10 +17,11 @@
 package com.intel.analytics.zoo.serving.http
 
 import com.codahale.metrics.Timer
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 
 trait Supportive {
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   def timing[T](name: String)(timers: Timer*)(f: => T): T = {
     val begin = System.nanoTime()

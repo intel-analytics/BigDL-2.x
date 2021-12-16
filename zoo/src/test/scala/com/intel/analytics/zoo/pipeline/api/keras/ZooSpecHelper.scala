@@ -25,14 +25,14 @@ import com.intel.analytics.bigdl.utils.{RandomGenerator, Table}
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.models.common.ZooModel
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 import org.scalactic.TolerantNumerics
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 import scala.collection.mutable.ArrayBuffer
 
 abstract class ZooSpecHelper extends FlatSpec with Matchers with BeforeAndAfter {
-  protected val logger = Logger.getLogger(getClass)
+  protected val logger = LogManager.getLogger(getClass)
 
   private val epsilon = 1e-4f
 

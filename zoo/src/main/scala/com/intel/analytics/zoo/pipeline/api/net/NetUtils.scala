@@ -29,6 +29,7 @@ import com.intel.analytics.bigdl.utils.serializer._
 import com.intel.analytics.zoo.pipeline.api.Predictable
 import com.intel.analytics.zoo.pipeline.api.keras.layers.KerasLayerWrapper
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
+import org.apache.logging.log4j.LogManager
 import org.apache.spark.utils.SparkUtils
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -311,7 +312,7 @@ private[zoo] abstract class SerializationHolder
   extends Serializable with KryoSerializable {
 
   protected def timing[T](name: String)(f: => T): T = {
-    val logger = LoggerFactory.getLogger(getClass)
+    val logger = LogManager.getLogger(getClass)
     val begin = System.currentTimeMillis
     val result = f
     val end = System.currentTimeMillis
@@ -394,7 +395,7 @@ private[zoo] abstract class SerializationHolder
 
 private[zoo] class RegistryMap[T]() {
 
-  private val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LogManager.getLogger(getClass)
 
   private val registry = new mutable.WeakHashMap[String, T]()
 

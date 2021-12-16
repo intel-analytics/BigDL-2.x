@@ -26,7 +26,7 @@ import com.intel.analytics.bigdl.tensor.Storage
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.models.image.objectdetection.common.ModuleUtil
 import com.intel.analytics.bigdl.nn.DetectionOutputSSD
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 import scala.reflect.ClassTag
 
@@ -216,5 +216,5 @@ object SSDGraph {
       .setName(s"${ name }_mbox_priorbox").inputs(conv)
   }
 
-  private val logger = Logger.getLogger(getClass)
+  private val logger = LogManager.getLogger(getClass)
 }

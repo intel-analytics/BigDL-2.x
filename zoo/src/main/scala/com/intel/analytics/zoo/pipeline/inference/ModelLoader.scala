@@ -27,13 +27,14 @@ import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.pipeline.api.keras.layers.WordEmbedding
 import com.intel.analytics.zoo.pipeline.api.keras.models.{Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, TFNet, TorchModel}
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 
 import scala.language.postfixOps
 import sys.process._
 
 object ModelLoader extends InferenceSupportive {
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   Model
   Sequential

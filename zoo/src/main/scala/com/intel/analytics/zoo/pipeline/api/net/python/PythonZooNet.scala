@@ -26,7 +26,8 @@ import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.common.PythonZoo
 import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.net._
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.core.config.Configurator
+import org.apache.logging.log4j.{Level, Logger}
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
@@ -146,8 +147,8 @@ class PythonZooNet[T: ClassTag](implicit ev: TensorNumeric[T]) extends PythonZoo
   }
 
   private def registerKiller(): Unit = {
-    Logger.getLogger("py4j.reflection.ReflectionEngine").setLevel(Level.ERROR)
-    Logger.getLogger("py4j.GatewayConnection").setLevel(Level.ERROR)
+    Configurator.setLevel("py4j.reflection.ReflectionEngine", Level.ERROR)
+    Configurator.setLevel("py4j.GatewayConnection", Level.ERROR)
     Runtime.getRuntime().addShutdownHook(new Thread {
           override def run(): Unit = {
             // Give it a chance to be gracefully killed

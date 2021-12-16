@@ -39,7 +39,7 @@ import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.KerasUtils
 import com.intel.analytics.zoo.pipeline.api.keras.models.{KerasNet, Model, Sequential}
 import com.intel.analytics.zoo.pipeline.api.net.{GraphNet, NetUtils}
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 import org.apache.spark.bigdl.api.python.BigDLSerDe
 import org.apache.zookeeper.KeeperException.UnimplementedException
 
@@ -275,7 +275,7 @@ object Net {
   }
 
   protected object NetSaver {
-    private val logger = Logger.getLogger(getClass)
+    private val logger = LogManager.getLogger(getClass)
 
     protected val header =
       """

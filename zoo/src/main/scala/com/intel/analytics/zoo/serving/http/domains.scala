@@ -54,6 +54,7 @@ import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.serving.serialization.StreamSerializer
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 
 sealed trait ServingMessage
@@ -886,7 +887,7 @@ abstract class Servable(modelMetaData: ModelMetaData) {
 
 class InferenceModelServable(inferenceModelMetaData: InferenceModelMetaData)
   extends Servable(inferenceModelMetaData) {
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
   var model: InferenceModel = _
   var isFirstTimePredict = true
   val purePredictTimer = purePredictTimersMap(inferenceModelMetaData.modelName)(

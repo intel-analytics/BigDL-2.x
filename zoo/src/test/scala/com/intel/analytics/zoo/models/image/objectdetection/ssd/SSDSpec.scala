@@ -25,7 +25,7 @@ import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetector
 import com.intel.analytics.zoo.models.image.objectdetection.common.dataset.Imdb
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
@@ -69,7 +69,7 @@ class SSDSpec extends FlatSpec with Matchers with BeforeAndAfter {
 }
 
 class SSDVGGSerialTest extends ModuleSerializationTest {
-  protected val logger = Logger.getLogger(getClass)
+  protected val logger = LogManager.getLogger(getClass)
   override def test(): Unit = {
     val model1 = SSDVGG[Float](20)
 

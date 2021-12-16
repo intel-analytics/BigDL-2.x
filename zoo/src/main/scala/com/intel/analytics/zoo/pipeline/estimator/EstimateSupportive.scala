@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.pipeline.estimator
 
 import com.intel.analytics.zoo.pipeline.inference.InferenceSupportive
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 
 /**
@@ -70,5 +71,5 @@ trait EstimateSupportive extends InferenceSupportive {
 }
 
 object EstimateSupportive {
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 }
