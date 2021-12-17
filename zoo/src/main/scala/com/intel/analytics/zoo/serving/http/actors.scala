@@ -39,7 +39,7 @@ import org.apache.arrow.vector.ipc.ArrowStreamReader
 
 trait JedisEnabledActor extends Actor with Supportive {
   val actorName = self.path.name
-  override val logger = LogManager.getLogger(getClass)
+  override val logger = LoggerFactory.getLogger(getClass)
 
   def retrieveJedis(
       redisHost: String = "localhost",
