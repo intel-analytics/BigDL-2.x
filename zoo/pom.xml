@@ -852,6 +852,7 @@
                                 <exclude>META-INF/*.SF</exclude>
                                 <exclude>META-INF/*.DSA</exclude>
                                 <exclude>META-INF/*.RSA</exclude>
+                                <exclude>org/apache/log4j/net/JMSAppender.class</exclude>
                             </excludes>
                         </filter>
                     </filters>
