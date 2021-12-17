@@ -8,7 +8,7 @@ import org.opencv.imgcodecs.Imgcodecs
 import org.slf4j.LoggerFactory
 
 trait ImageProcessing {
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   // convert Array[byte] to OpenCVMat.
   def byteArrayToMat(bytes: Array[Byte], imageCodec: Int = Imgcodecs.CV_LOAD_IMAGE_UNCHANGED): OpenCVMat = {

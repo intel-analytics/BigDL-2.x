@@ -11,7 +11,7 @@ import scala.io.Source
 
 trait TextProcessing {
 
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   def doTokenize(text: String, toLowerCase: Boolean = true): List[String] = {
     val replaced = text.replaceAll("[^a-zA-Z]", " ")
