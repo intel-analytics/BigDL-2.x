@@ -33,7 +33,7 @@ import scala.concurrent.duration.Duration
 
 object MockServingHttpClient extends App with Supportive {
 
-  override val logger = LogManager.getLogger(getClass)
+  override val logger = LoggerFactory.getLogger(getClass)
 
   implicit val system = ActorSystem("zoo-serving-frontend-system")
   implicit val materializer = ActorMaterializer()

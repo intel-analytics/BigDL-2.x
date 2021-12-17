@@ -21,7 +21,7 @@ import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 
 trait Supportive {
-  val logger = LogManager.getLogger(getClass)
+  val logger = LoggerFactory.getLogger(getClass)
 
   def timing[T](name: String)(timers: Timer*)(f: => T): T = {
     val begin = System.nanoTime()

@@ -37,7 +37,7 @@ import scala.collection.mutable
 import scala.concurrent.Await
 
 object FrontEndApp extends Supportive with EncryptSupportive {
-  override val logger = LogManager.getLogger(getClass)
+  override val logger = LoggerFactory.getLogger(getClass)
 
   val name = "analytics zoo web serving frontend"
 

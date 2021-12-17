@@ -35,7 +35,7 @@ class RedisIOActor(redisOutputQueue: String = Conventions.RESULT_PREFIX +
   Conventions.SERVING_STREAM_DEFAULT_NAME + ":",
                    redisInputQueue: String = "serving_stream",
                    jedisPool: JedisPool = null) extends Actor with Supportive {
-  override val logger = LogManager.getLogger(getClass)
+  override val logger = LoggerFactory.getLogger(getClass)
   val jedis = if (jedisPool == null) {
     RedisUtils.getRedisClient(new JedisPool())
   } else {

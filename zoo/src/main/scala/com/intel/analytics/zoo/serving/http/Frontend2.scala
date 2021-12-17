@@ -44,7 +44,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
 object Frontend2 extends Supportive with EncryptSupportive {
-  override val logger = LogManager.getLogger(getClass)
+  override val logger = LoggerFactory.getLogger(getClass)
 
   val name = "analytics zoo web serving frontend"
 
