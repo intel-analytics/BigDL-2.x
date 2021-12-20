@@ -20,11 +20,13 @@ import com.intel.analytics.zoo.core.openvino.OpenvinoNativeLoader
 import com.intel.analytics.zoo.pipeline.inference.DeviceType.DeviceTypeEnumVal
 import com.intel.analytics.zoo.pipeline.inference.OpenVINOModel.OpenVINOModelHolder
 import org.slf4j.LoggerFactory
-
 import java.io.{File, FileOutputStream, InputStream}
 import java.nio.channels.Channels
 import java.nio.file.{Files, Paths}
 import java.util.{List => JList}
+
+import org.apache.logging.log4j.LogManager
+
 import scala.io.Source
 import scala.language.postfixOps
 
@@ -57,7 +59,7 @@ class OpenVinoInferenceSupportive extends InferenceSupportive with Serializable 
 }
 
 object OpenVinoInferenceSupportive extends InferenceSupportive with Serializable {
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   timing("load native so for OpenVINO") {
     OpenvinoNativeLoader.load()

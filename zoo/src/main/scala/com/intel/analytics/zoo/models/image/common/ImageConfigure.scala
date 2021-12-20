@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.transform.vision.image.{ImageFeature}
 import com.intel.analytics.zoo.feature.common.{Preprocessing}
 import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetectionConfig
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassificationConfig
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 import scala.reflect.ClassTag
 
@@ -44,7 +44,7 @@ case class ImageConfigure[T: ClassTag](
 }
 
 object ImageConfigure {
-  val logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   val splitter = "_"
 

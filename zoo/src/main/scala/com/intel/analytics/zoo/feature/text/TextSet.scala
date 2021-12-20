@@ -26,7 +26,7 @@ import com.intel.analytics.zoo.feature.text.TruncMode.TruncMode
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.util.StringUtils
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{Logger, LogManager}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -246,7 +246,7 @@ abstract class TextSet {
 
 object TextSet {
 
-  val logger: Logger = Logger.getLogger(getClass)
+  val logger: Logger = LogManager.getLogger(getClass)
 
   /**
    * Create a LocalTextSet from array of TextFeature.

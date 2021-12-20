@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.{Criterion, Module}
 import com.intel.analytics.bigdl.optim.{OptimMethod, ValidationMethod, ValidationResult}
 import com.intel.analytics.bigdl.tensor.{Storage, Tensor}
 import com.intel.analytics.bigdl.utils.{RandomGenerator, ThreadPool}
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag
@@ -42,7 +43,7 @@ case class LocalEstimator(model: AbstractModule[Activity, Activity, Float],
                           validations: Array[ValidationMethod[Float]],
                           threadNum: Int) extends EstimateSupportive {
 
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   require(threadNum >= 1, "the number of threads should >= 1")
   @volatile private var defaultThreadPool: ThreadPool = new ThreadPool(threadNum)

@@ -18,7 +18,9 @@ package com.intel.analytics.zoo.examples.streaming.objectdetection
 
 import com.intel.analytics.zoo.common.Utils
 import org.apache.hadoop.fs.Path
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.core.config.Configurator
+import org.apache.logging.log4j.{Level, LogManager, Logger}
+import org.codehaus.plexus.logging.LoggerManager
 import scopt.OptionParser
 
 /*
@@ -27,9 +29,9 @@ import scopt.OptionParser
 object ImagePathWriter {
 
   def main(args: Array[String]): Unit = {
-    Logger.getLogger("org").setLevel(Level.WARN)
+    Configurator.setLevel("org", Level.WARN)
 
-    val logger = Logger.getLogger(getClass)
+    val logger = LogManager.getLogger(getClass)
 
     parser.parse(args, PathWriterParam()).foreach { params =>
       val fs = Utils.getFileSystem(params.imageSourcePath)

@@ -24,7 +24,8 @@ import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalOptimizerUtil.getStateFromOptiMethod
 import com.intel.analytics.zoo.pipeline.api.net.TorchOptim.{EpochDecay, EpochDecayByScore, IterationDecay}
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.core.config.Configurator
+import org.apache.logging.log4j.{Level, Logger}
 
 @PythonInterpreterTest
 class TorchOptimSpec extends ZooSpecHelper{
@@ -35,7 +36,7 @@ class TorchOptimSpec extends ZooSpecHelper{
       cancel("Please export PYTHONHOME before this test.")
     } else {
       logger.info(s"use python home: ${System.getenv("PYTHONHOME")}")
-      Logger.getLogger(PythonInterpreter.getClass()).setLevel(Level.DEBUG)
+      Configurator.setLevel(PythonInterpreter.getClass().getName, Level.DEBUG)
       // Load TFNet before create interpreter, or the TFNet will throw an OMP error #13
       TFNetNative.isLoaded
     }

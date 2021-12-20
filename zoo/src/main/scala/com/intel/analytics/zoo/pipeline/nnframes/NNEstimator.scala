@@ -35,7 +35,7 @@ import com.intel.analytics.zoo.pipeline.api.Net
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.EngineRef
 import com.intel.analytics.zoo.pipeline.api.keras.models.InternalDistriOptimizer
 import org.apache.hadoop.fs.Path
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.adapter.{HasFeaturesCol, HasPredictionCol, SchemaUtils}
 import org.apache.spark.ml.param._
@@ -683,7 +683,7 @@ class NNModel[T: ClassTag] private[zoo](
     with HasBatchSize with MLWritable {
 
   @transient
-  private val logger = Logger.getLogger(getClass)
+  private val logger = LogManager.getLogger(getClass)
 
   setDefault(this.batchSize, EngineRef.getCoreNumber() * EngineRef.getNodeNumber() * 4)
 

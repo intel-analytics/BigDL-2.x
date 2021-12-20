@@ -25,6 +25,7 @@ import org.scalatest._
 import org.slf4j.LoggerFactory
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.common.Utils
+import org.apache.logging.log4j.LogManager
 
 import scala.io.Source
 import scala.language.postfixOps
@@ -42,7 +43,7 @@ class OpenVINOInt8Suite extends FunSuite with Matchers with BeforeAndAfterAll
     "https://s3-ap-southeast-1.amazonaws.com"
   }
 
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
   var tmpDir: File = _
 
   val resnet_v1_50_url = s"$s3Url/analytics-zoo-models/openvino/2018_R5/resnet_v1_50"

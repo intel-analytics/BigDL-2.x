@@ -36,7 +36,7 @@ import com.intel.analytics.zoo.serving.utils.Conventions
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intel.analytics.bigdl.nn.abstractnn.Activity
 import com.intel.analytics.zoo.serving.ClusterServing
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.JedisPool
 

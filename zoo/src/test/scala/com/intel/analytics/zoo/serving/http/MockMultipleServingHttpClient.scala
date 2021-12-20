@@ -26,6 +26,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await

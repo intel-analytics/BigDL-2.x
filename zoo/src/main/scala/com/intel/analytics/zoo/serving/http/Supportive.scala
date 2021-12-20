@@ -17,6 +17,7 @@
 package com.intel.analytics.zoo.serving.http
 
 import com.codahale.metrics.Timer
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 
 trait Supportive {

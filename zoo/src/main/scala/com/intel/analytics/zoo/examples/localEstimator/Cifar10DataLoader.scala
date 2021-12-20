@@ -23,12 +23,13 @@ import com.intel.analytics.bigdl.dataset.ByteRecord
 import com.intel.analytics.bigdl.dataset.image.LabeledBGRImage
 import com.intel.analytics.bigdl.utils.File
 import com.intel.analytics.zoo.pipeline.estimator.EstimateSupportive
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
 
 object Cifar10DataLoader extends ImageProcessing with EstimateSupportive {
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   val trainMean = (0.4913996898739353, 0.4821584196221302, 0.44653092422369434)
   val trainStd = (0.24703223517429462, 0.2434851308749409, 0.26158784442034005)

@@ -23,7 +23,8 @@ import com.intel.analytics.zoo.pipeline.nnframes._
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image._
 import org.apache.hadoop.fs.Path
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.core.config.Configurator
+import org.apache.logging.log4j.{Level, Logger}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.sql.functions.{col, udf}
@@ -39,7 +40,7 @@ object ImageTransferLearning {
   def main(args: Array[String]): Unit = {
 
     val defaultParams = Utils.LocalParams()
-    Logger.getLogger("org").setLevel(Level.WARN)
+    Configurator.setLevel("org", Level.WARN)
 
     Utils.parser.parse(args, defaultParams).foreach { params =>
       val sc = NNContext.initNNContext()

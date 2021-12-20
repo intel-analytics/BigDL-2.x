@@ -22,6 +22,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.T
 import com.intel.analytics.zoo.common.Utils
 import com.intel.analytics.zoo.core.TFNetNative
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 import org.tensorflow.DataType
 import org.tensorflow.framework.GraphDef
@@ -312,7 +313,7 @@ object TFTrainingHelper {
 
   assert(TFNetNative.isLoaded)
 
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   def apply(graphDef: GraphDef,
             checkpointPath: String,

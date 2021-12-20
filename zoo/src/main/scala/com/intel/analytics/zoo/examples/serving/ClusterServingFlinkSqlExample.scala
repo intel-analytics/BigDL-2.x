@@ -19,7 +19,8 @@ package com.intel.analytics.zoo.examples.serving
 
 import com.intel.analytics.zoo.serving.operator.ClusterServingFunction
 import org.apache.flink.table.api.{EnvironmentSettings, TableEnvironment}
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.core.config.Configurator
+import org.apache.logging.log4j.{Level, Logger}
 import scopt.OptionParser
 
 object ClusterServingFlinkSqlExample {
@@ -35,7 +36,7 @@ object ClusterServingFlinkSqlExample {
       .action((x, params) => params.copy(inputFile = x))
       .required()
   }
-  Logger.getLogger("org").setLevel(Level.ERROR)
+  Configurator.setLevel("org", Level.ERROR)
 
   def main(args: Array[String]): Unit = {
     val arg = parser.parse(args, ExampleParams()).head

@@ -27,10 +27,11 @@ import com.intel.analytics.zoo.pipeline.estimator.EstimateSupportive
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataInputStream, FileSystem, Path}
 import org.apache.hadoop.io.IOUtils
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 
 object MnistDataLoader extends ImageProcessing with EstimateSupportive {
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   val trainMean = 0.13066047740239506
   val trainStd = 0.3081078

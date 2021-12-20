@@ -19,6 +19,7 @@ import com.intel.analytics.bigdl.nn._
 import com.intel.analytics.bigdl.optim.{Adam, Loss, Top1Accuracy}
 import com.intel.analytics.zoo.pipeline.api.net.TFNet
 import com.intel.analytics.zoo.pipeline.estimator.LocalEstimator
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 import scopt.OptionParser
 
@@ -32,7 +33,7 @@ case class TransferLearningParams(imageDirPath: String = "./",
 
 object TransferLearning {
 
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
     val parser = new OptionParser[TransferLearningParams]("TransferLearning Example") {

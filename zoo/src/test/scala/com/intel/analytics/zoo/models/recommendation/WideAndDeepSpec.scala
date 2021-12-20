@@ -26,7 +26,8 @@ import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import com.intel.analytics.zoo.pipeline.api.keras.objectives.SparseCategoricalCrossEntropy
 import com.intel.analytics.zoo.pipeline.api.keras.serializer.ModuleSerializationTest
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.core.config.Configurator
+import org.apache.logging.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.rdd.RDD
@@ -43,7 +44,7 @@ class WideAndDeepSpec extends ZooSpecHelper {
   val bucketUDF = udf(Utils.buckBucket(100))
 
   override def doBefore(): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
+    Configurator.setLevel("org", Level.ERROR)
     val conf = new SparkConf().setMaster("local[1]").setAppName("WideNdeepTest")
     sc = NNContext.initNNContext(conf)
     sqlContext = SQLContext.getOrCreate(sc)

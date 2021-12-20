@@ -19,7 +19,8 @@ package com.intel.analytics.zoo.examples.vnni.bigdl
 import com.intel.analytics.zoo.common.NNContext
 import com.intel.analytics.zoo.feature.image.ImageSet
 import com.intel.analytics.zoo.models.image.imageclassification.{ImageClassifier, LabelOutput}
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.core.config.Configurator
+import org.apache.logging.log4j.{Level, Logger, LogManager}
 import org.opencv.imgcodecs.Imgcodecs
 import scopt.OptionParser
 
@@ -28,10 +29,10 @@ case class PredictParams(folder: String = "./",
                          topN: Int = 5)
 
 object Predict {
-  Logger.getLogger("com.intel.analytics.bigdl.transform.vision").setLevel(Level.ERROR)
-  Logger.getLogger("com.intel.analytics.zoo.feature.image").setLevel(Level.ERROR)
+  Configurator.setLevel("com.intel.analytics.bigdl.transform.vision", Level.ERROR)
+  Configurator.setLevel("com.intel.analytics.zoo.feature.image", Level.ERROR)
 
-  val logger: Logger = Logger.getLogger(getClass)
+  val logger: Logger = LogManager.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
     System.setProperty("bigdl.engineType", "mkldnn")

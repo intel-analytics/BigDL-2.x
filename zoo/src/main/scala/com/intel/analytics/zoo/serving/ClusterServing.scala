@@ -23,7 +23,7 @@ import com.intel.analytics.zoo.serving.engine.{FlinkInference, FlinkRedisSink, F
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, ConfigParser, Conventions, DeprecatedUtils}
 import org.apache.flink.core.execution.JobClient
 import org.apache.flink.streaming.api.scala.{StreamExecutionEnvironment, _}
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.{Level, LogManager, Logger}
 import redis.clients.jedis.{JedisPool, JedisPoolConfig}
 import scopt.OptionParser
 
@@ -31,7 +31,7 @@ import scopt.OptionParser
 object ClusterServing {
   case class ServingParams(configPath: String = "config.yaml",
                            timerMode: Boolean = false)
-  val logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
   var argv: ServingParams = _
   var helper: ClusterServingHelper = _
   var streamingEnv: StreamExecutionEnvironment = _
@@ -56,7 +56,7 @@ object ClusterServing {
      * Flink environment parallelism depends on model parallelism
      */
     // Uncomment this line if you need to check predict time in debug
-    // Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
+    // LogManager.getLogger("com.intel.analytics.zoo").setLevel(Level.DEBUG)
     streamingEnv.setParallelism(helper.modelParallelism)
     streamingEnv.addSource(new FlinkRedisSource())
       .map(new FlinkInference())

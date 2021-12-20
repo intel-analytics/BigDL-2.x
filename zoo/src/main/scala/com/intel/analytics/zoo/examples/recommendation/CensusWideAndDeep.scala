@@ -26,7 +26,8 @@ import com.intel.analytics.zoo.feature.FeatureSet
 import com.intel.analytics.zoo.feature.pmem.{DISK_AND_DRAM, MemoryType}
 import com.intel.analytics.zoo.models.recommendation._
 import com.intel.analytics.zoo.pipeline.estimator.Estimator
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.core.config.Configurator
+import org.apache.logging.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SQLContext}
@@ -76,7 +77,7 @@ object CensusWideAndDeep {
   case class RecordSample[T: ClassTag](sample: Sample[T])
 
   def run(params: WNDParams): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
+    Configurator.setLevel("org", Level.ERROR)
 
     val batchSize = params.batchSize
     val maxEpoch = params.maxEpoch

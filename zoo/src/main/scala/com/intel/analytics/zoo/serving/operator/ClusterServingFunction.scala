@@ -25,6 +25,7 @@ import com.intel.analytics.zoo.serving.utils.ClusterServingHelper
 import org.apache.flink.core.fs.Path
 import org.apache.flink.table.functions.{FunctionContext, ScalarFunction}
 import org.apache.flink.util.FileUtils
+import org.apache.logging.log4j.LogManager
 import org.slf4j.LoggerFactory
 
 @SerialVersionUID(1L)
@@ -33,7 +34,7 @@ class ClusterServingFunction()
   val clusterServingParams = new ClusterServingParams()
   ClusterServing.helper = new ClusterServingHelper()
   var inference: ClusterServingInference = null
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   def copyFileToLocal(modelPath: String): String = {
     val localModelPath =

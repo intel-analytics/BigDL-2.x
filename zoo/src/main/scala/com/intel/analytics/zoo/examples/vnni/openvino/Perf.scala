@@ -20,7 +20,7 @@ import com.intel.analytics.bigdl.numeric.NumericFloat
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.utils.Engine
 import com.intel.analytics.zoo.pipeline.inference.InferenceModel
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.{Logger, LogManager}
 import scopt.OptionParser
 
 
@@ -33,7 +33,7 @@ case class ResNet50PerfParams(model: String = "",
 
 object Perf {
 
-  val logger: Logger = Logger.getLogger(getClass)
+  val logger: Logger = LogManager.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
 
