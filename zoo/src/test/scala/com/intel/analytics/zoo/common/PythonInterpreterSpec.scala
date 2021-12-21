@@ -31,7 +31,7 @@ class PythonInterpreterSpec extends ZooSpecHelper{
       cancel("Please export PYTHONHOME before this test.")
     } else {
       logger.info(s"use python home: ${System.getenv("PYTHONHOME")}")
-      Configurator.setLevel("PythonInterpreter.getClass()", Level.DEBUG)
+      Configurator.setLevel(PythonInterpreter.getClass().getName, Level.DEBUG)
       // Load TFNet before create interpreter, or the TFNet will throw an OMP error #13
       TFNetNative.isLoaded
     }
