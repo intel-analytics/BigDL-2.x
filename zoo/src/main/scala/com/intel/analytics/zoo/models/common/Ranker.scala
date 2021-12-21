@@ -21,7 +21,7 @@ import com.intel.analytics.bigdl.nn.abstractnn.{AbstractModule, Activity}
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.tensor.TensorNumericMath.TensorNumeric
 import com.intel.analytics.zoo.feature.text.{DistributedTextSet, LocalTextSet, TextSet}
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 import scala.reflect.ClassTag
 import scala.util.Random
@@ -108,7 +108,7 @@ trait Ranker[T] {
 
 object Ranker {
 
-  val logger: Logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 
   def ndcg[@specialized(Float, Double) T: ClassTag](
       k: Int, threshold: Double = 0.0)

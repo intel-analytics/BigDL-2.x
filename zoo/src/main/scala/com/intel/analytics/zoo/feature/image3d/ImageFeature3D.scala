@@ -19,7 +19,7 @@ package com.intel.analytics.zoo.feature.image3d
 import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature
 import com.intel.analytics.bigdl.transform.vision.image.ImageFeature.getClass
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 
 /**
@@ -101,6 +101,6 @@ object ImageFeature3D {
 
   def apply(): ImageFeature3D = new ImageFeature3D()
 
-  val logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
 }
 

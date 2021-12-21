@@ -24,13 +24,13 @@ import com.intel.analytics.zoo.serving.ClusterServing
 import com.intel.analytics.zoo.serving.postprocessing.PostProcessing
 import com.intel.analytics.zoo.serving.preprocessing.PreProcessing
 import com.intel.analytics.zoo.serving.utils.{ClusterServingHelper, Conventions}
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 /**
  * Inference Logic of Cluster Serving
  */
 class ClusterServingInference() {
-  val logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
   val helper = ClusterServing.helper
   val preProcessing = new PreProcessing()
 

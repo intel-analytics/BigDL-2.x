@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.serving.engine
 
 import java.util.PriorityQueue
 
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 /**
  * Timer class
@@ -70,7 +70,7 @@ class Timer() {
     val result = f
     val end = System.nanoTime()
     val cost = (end - begin) / 1e6
-    Logger.getLogger(getClass).info(s"$name time elapsed [${(cost / 1e3).toInt} s, $cost ms].")
+    LogManager.getLogger(getClass).info(s"$name time elapsed [${(cost / 1e3).toInt} s, $cost ms].")
     if (!timerMap.contains(name)) {
       timerMap += (name -> new TimerUnit())
     }

@@ -18,7 +18,7 @@ package com.intel.analytics.zoo.grpc;
 
 
 import io.grpc.*;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 
 import java.io.IOException;
@@ -30,7 +30,7 @@ import java.util.function.Function;
  * To implement specific gRPC client, overwrite parseConfig() and loadServices() method
  */
 public class ZooGrpcClient extends AbstractZooGrpc{
-    protected static final Logger logger = Logger.getLogger(ZooGrpcClient.class.getName());
+    protected static final Logger logger = LogManager.getLogger(ZooGrpcClient.class.getName());
     protected String target;
     protected final String clientUUID;
     protected ManagedChannel channel;

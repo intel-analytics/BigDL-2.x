@@ -22,7 +22,8 @@ import com.intel.analytics.zoo.common.{PythonInterpreter, PythonInterpreterTest}
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
 import jep.NDArray
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.{Level, LogManager}
+import org.apache.logging.log4j.core.config.Configurator
 import org.apache.spark.{SparkConf, SparkContext}
 import com.intel.analytics.zoo.common.NNContext.initNNContext
 
@@ -35,7 +36,7 @@ class TorchModelSpec extends ZooSpecHelper{
       cancel("Please export PYTHONHOME before this test.")
     } else {
       logger.info(s"use python home: ${System.getenv("PYTHONHOME")}")
-      Logger.getLogger(PythonInterpreter.getClass()).setLevel(Level.DEBUG)
+      Configurator.setLevel(PythonInterpreter.getClass().getName, Level.DEBUG)
       // Load TFNet before create interpreter, or the TFNet will throw an OMP error #13
       TFNetNative.isLoaded
     }

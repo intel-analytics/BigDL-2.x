@@ -646,7 +646,7 @@ object DRAMFeatureSet {
 }
 
 object FeatureSet {
-  val logger: Logger = LoggerFactory.getLogger(this.getClass)
+  val logger = LoggerFactory.getLogger(this.getClass)
   private[zoo] def python[T: ClassTag](
       dataset: Array[Byte],
       getLoader: (Int, Int, String) => String,

@@ -22,7 +22,8 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.zoo.common.{PythonInterpreter, PythonInterpreterTest}
 import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.keras.ZooSpecHelper
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.{Level, LogManager}
+import org.apache.logging.log4j.core.config.Configurator
 
 import scala.language.postfixOps
 
@@ -52,7 +53,7 @@ class PyTorchModelSpec extends ZooSpecHelper with InferenceSupportive {
       cancel("Please export PYTHONHOME before this test.")
     } else {
       logger.info(s"use python home: ${System.getenv("PYTHONHOME")}")
-      Logger.getLogger(PythonInterpreter.getClass()).setLevel(Level.DEBUG)
+      Configurator.setLevel(PythonInterpreter.getClass().getName, Level.DEBUG)
       // Load TFNet before create interpreter, or the TFNet will throw an OMP error #13
       TFNetNative.isLoaded
       val resnetModel =

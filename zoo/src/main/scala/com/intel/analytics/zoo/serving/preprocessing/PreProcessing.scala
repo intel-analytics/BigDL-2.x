@@ -22,7 +22,7 @@ import com.intel.analytics.bigdl.tensor.Tensor
 import com.intel.analytics.bigdl.transform.vision.image.opencv.OpenCVMat
 import com.intel.analytics.zoo.feature.image.OpenCVMethod
 import org.opencv.imgcodecs.Imgcodecs
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 import scala.collection.mutable.ArrayBuffer
 import com.intel.analytics.bigdl.utils.{T, Table}
@@ -39,7 +39,7 @@ import redis.clients.jedis.Jedis
 
 class PreProcessing()
   extends EncryptSupportive with InferenceSupportive {
-  val logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
   if (ClusterServing.helper == null) {
     ClusterServing.helper = new ClusterServingHelper
   }

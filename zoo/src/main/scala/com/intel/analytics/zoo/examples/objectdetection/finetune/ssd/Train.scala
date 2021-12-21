@@ -29,7 +29,8 @@ import com.intel.analytics.zoo.models.image.objectdetection.common.evaluation.Me
 import com.intel.analytics.zoo.models.image.objectdetection.common.loss.{MultiBoxLoss, MultiBoxLossParam}
 import com.intel.analytics.zoo.models.image.objectdetection.ssd.{SSDDataSet, SSDMiniBatch, SSDVGG}
 import com.intel.analytics.zoo.pipeline.estimator.Estimator
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.{Level, LogManager}
+import org.apache.logging.log4j.core.config.Configurator
 import org.apache.spark.SparkConf
 import scopt.OptionParser
 
@@ -38,8 +39,8 @@ import scala.io.Source
 object Train {
 
   LoggerFilter.redirectSparkInfoLogs()
-  Logger.getLogger("com.intel.analytics.bigdl.optim").setLevel(Level.INFO)
-  Logger.getLogger("com.intel.analytics.zoo").setLevel(Level.INFO)
+  Configurator.setLevel("com.intel.analytics.bigdl.optim", Level.INFO)
+  Configurator.setLevel("com.intel.analytics.zoo", Level.INFO)
 
   case class TrainParams(
     trainFolder: String = "./",
@@ -115,7 +116,7 @@ object Train {
       .action((_, c) => c.copy(overWriteModel = true))
   }
 
-  val logger = Logger.getLogger(getClass.getName)
+  val logger = LogManager.getLogger(getClass.getName)
 
   def main(args: Array[String]): Unit = {
     trainParser.parse(args, TrainParams()).map(param => {

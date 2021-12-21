@@ -25,7 +25,7 @@ import com.intel.analytics.zoo.models.common.ZooModel
 import com.intel.analytics.zoo.models.image.imageclassification.ImageClassifier
 import com.intel.analytics.zoo.models.image.objectdetection.ObjectDetector
 import com.intel.analytics.zoo.pipeline.api.keras.layers.utils.MklInt8ConvertibleRef
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 
 import scala.reflect.ClassTag
 
@@ -115,7 +115,7 @@ abstract class ImageModel[T: ClassTag]()(implicit ev: TensorNumeric[T])
 
 object ImageModel {
 
-  val logger = Logger.getLogger(getClass)
+  val logger = LogManager.getLogger(getClass)
   /**
    * Load an pre-trained image model (with weights).
    *

@@ -21,13 +21,13 @@ import com.intel.analytics.zoo.core.TFNetNative
 import com.intel.analytics.zoo.pipeline.api.net.NetUtils
 import jep.{JepConfig, JepException, NamingConventionClassEnquirer, SharedInterpreter}
 import org.apache.commons.lang.exception.ExceptionUtils
-import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.{Level, LogManager}
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 
 object PythonInterpreter {
-  protected val logger = Logger.getLogger(this.getClass)
+  protected val logger = LogManager.getLogger(this.getClass)
 
   private var threadPool: ExecutorService = null
 

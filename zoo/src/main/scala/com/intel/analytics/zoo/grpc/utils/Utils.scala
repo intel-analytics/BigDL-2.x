@@ -28,7 +28,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.collection.JavaConverters._
 
 object Utils {
-  val logger: Logger = LoggerFactory.getLogger(getClass)
+  val logger = LoggerFactory.getLogger(getClass)
 
   def timing[T](name: String)(timers: Timer*)(f: => T): T = {
     val begin = System.nanoTime()

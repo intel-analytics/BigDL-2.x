@@ -21,7 +21,7 @@ import com.intel.analytics.zoo.serving.serialization.JsonInputDeserializer
 import com.intel.analytics.zoo.serving.http.Supportive
 import com.intel.analytics.zoo.serving.http.JsonUtil
 import com.intel.analytics.zoo.serving.http.ServingTimerMetrics
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
 import com.codahale.metrics.MetricRegistry
 import scopt.OptionParser
 
@@ -45,7 +45,7 @@ object Operations extends Supportive {
       .required()
   }
 
-  // val logger = Logger.getLogger(getClass)
+  // val logger = LogManager.getLogger(getClass)
   def main(args: Array[String]): Unit = {
     // read the path of model
     val arg = parser.parse(args, Config()).head

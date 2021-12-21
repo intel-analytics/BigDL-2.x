@@ -75,7 +75,7 @@ class gRPCHelper extends Serializable {
   var itemFeatureColArr: Array[String] = _
   var inferenceColArr: Array[String] = _
 
-  val logger: Logger = LoggerFactory.getLogger(getClass)
+  val logger = LoggerFactory.getLogger(getClass)
 
   def parseConfigStrings(): Unit = {
     redisHost = redisUrl.split(":").head.trim
