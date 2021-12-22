@@ -197,3 +197,5 @@ See the [PPML user guide](https://analytics-zoo.readthedocs.io/en/latest/doc/PPM
 _Older Documents_
 - [BigDL Paper](https://arxiv.org/abs/1804.05839)
 - [Documentation (old)](https://analytics-zoo.github.io/)
+
+***Note:*** Analytics Zoo v0.11.1 has been updated to include functional and security updates. Users should update to the latest version.
