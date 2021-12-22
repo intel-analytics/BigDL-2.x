@@ -25,7 +25,7 @@ RUN git clone https://github.com/redis/redis.git && \
 # stage. 2 Flink & analytics-zoo
 FROM ubuntu:18.04 as analytics-zoo
 
-ARG ANALYTICS_ZOO_VERSION=0.11.0
+ARG ANALYTICS_ZOO_VERSION=0.11.1
 ARG BIGDL_VERSION=0.13.0
 ARG SPARK_VERSION=2.4.6
 ARG SPARK_MAJOR_VERSION=2.4
@@ -71,7 +71,7 @@ RUN cd /opt && \
 # stage.3 az ppml occlum
 FROM ubuntu:18.04 as ppml
 
-ARG ANALYTICS_ZOO_VERSION=0.11.0
+ARG ANALYTICS_ZOO_VERSION=0.11.1
 ARG BIGDL_VERSION=0.13.0
 ARG SPARK_VERSION=2.4.6
 ARG FLINK_VERSION=1.10.1

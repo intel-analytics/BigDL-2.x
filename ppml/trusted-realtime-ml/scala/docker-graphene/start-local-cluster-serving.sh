@@ -21,5 +21,5 @@ sudo docker run -itd \
     --name=trusted-cluster-serving-local \
     -e LOCAL_IP=$LOCAL_IP \
     -e CORE_NUM=30 \
-    intelanalytics/analytics-zoo-ppml-trusted-realtime-ml-scala-graphene:0.11.0 \
+    intelanalytics/analytics-zoo-ppml-trusted-realtime-ml-scala-graphene:0.11.1 \
     bash  -c "cd /ppml/trusted-realtime-ml/ && ./start-all.sh && tail -f /dev/null"
