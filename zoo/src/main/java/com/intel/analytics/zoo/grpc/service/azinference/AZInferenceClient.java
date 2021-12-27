@@ -39,7 +39,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class AZInferenceClient {
-    private static final Logger logger = LogManager.getLogger(AZInferenceClient.class.getName());
+    private static final Logger logger = Logger.getLogger(AZInferenceClient.class.getName());
 
     private final AZInferenceBlockingStub blockingStub;
     private final AZInferenceStub asyncStub;

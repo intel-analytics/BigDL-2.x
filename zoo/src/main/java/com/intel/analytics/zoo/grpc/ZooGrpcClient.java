@@ -19,6 +19,7 @@ package com.intel.analytics.zoo.grpc;
 
 import io.grpc.*;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 
 import java.io.IOException;
