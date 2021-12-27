@@ -43,7 +43,7 @@ import java.util.logging.Logger;
  * This is an example class to run Analytics Zoo gRPC inference service
  */
 public class AZInferenceServer {
-    private static final Logger logger = LogManager.getLogger(AZInferenceServer.class.getName());
+    private static final Logger logger = Logger.getLogger(AZInferenceServer.class.getName());
 
     /**
      * Main method.  This comment makes the linter happy.
