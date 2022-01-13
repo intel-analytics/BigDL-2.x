@@ -20,7 +20,7 @@ MAINTAINER The Analytics-Zoo Authors https://github.com/intel-analytics/analytic
 
 WORKDIR /opt/work
 
-ARG ANALYTICS_ZOO_VERSION=0.11.1
+ARG ANALYTICS_ZOO_VERSION=0.11.2
 ARG BIGDL_VERSION=0.13.0
 ARG SPARK_VERSION=2.4.6
 ARG RUNTIME_SPARK_MASTER=local[4]
