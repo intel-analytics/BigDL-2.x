@@ -7,7 +7,7 @@
     <groupId>com.intel.analytics.zoo</groupId>
     <artifactId>analytics-zoo-bigdl_${bigdl.version}-spark_${spark.version}</artifactId>
     <packaging>jar</packaging>
-    <version>0.11.1</version>
+    <version>0.11.2</version>
 
     <name>analytics-zoo</name>
     <description>Big Data AI platform for distributed TensorFlow and PyTorch on Apache Spark.</description>
