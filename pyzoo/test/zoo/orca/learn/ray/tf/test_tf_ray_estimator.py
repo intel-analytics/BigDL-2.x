@@ -612,8 +612,9 @@ class TestTFRayEstimator(TestCase):
 
         def model_creator(config):
             import tensorflow as tf
-            vectorize_layer = tf.keras.layers.experimental.preprocessing.TextVectorization(
+            vectorize_layer = tf.keras.layers.TextVectorization(
                 max_tokens=10, output_mode='int', output_sequence_length=4)
+            vectorize_layer.adapt(config["vocabulary"])
             model = tf.keras.models.Sequential()
             model.add(tf.keras.Input(shape=(1,), dtype=tf.string))
             model.add(vectorize_layer)
@@ -625,7 +626,36 @@ class TestTFRayEstimator(TestCase):
         schema = StructType([StructField("input", StringType(), True)])
         input_data = [["foo qux bar"], ["qux baz"]]
         input_df = spark.createDataFrame(input_data, schema)
-        estimator = Estimator.from_keras(model_creator=model_creator)
+        config = {"vocabulary": input_data}
+        estimator = Estimator.from_keras(model_creator=model_creator, config=config)
+        output_df = estimator.predict(input_df, batch_size=1, feature_cols=["input"])
+        output = output_df.collect()
+        print(output)
+
+    def test_array_string_input(self):
+
+        def model_creator(config):
+            import tensorflow as tf
+            model = tf.keras.models.Sequential([
+	        tf.keras.Input(shape=(None,), dtype=tf.string, ragged=True),
+                tf.keras.layers.StringLookup(vocabulary=config["vocabulary"])
+            ])
+            return model
+
+        import itertools
+        from zoo.orca import OrcaContext
+        from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType
+        spark = OrcaContext.get_spark_session()
+        schema = StructType([
+            StructField("id", IntegerType(), True),
+            StructField("input", ArrayType(StringType(), True), True)
+        ])
+        input_data = [(0, ["foo", "qux", "bar"]), (1, ["qux", "baz"])]
+        input_df = spark.createDataFrame(input_data, schema)
+        string_data = [row["input"] for row in input_df.select("input").distinct().collect()]
+        vocabulary = list(set(itertools.chain(*string_data)))
+        config = {"vocabulary": vocabulary}
+        estimator = Estimator.from_keras(model_creator=model_creator, config=config)
         output_df = estimator.predict(input_df, batch_size=1, feature_cols=["input"])
         output = output_df.collect()
         print(output)
