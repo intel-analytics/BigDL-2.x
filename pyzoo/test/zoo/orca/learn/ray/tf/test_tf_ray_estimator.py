@@ -637,7 +637,7 @@ class TestTFRayEstimator(TestCase):
         def model_creator(config):
             import tensorflow as tf
             model = tf.keras.models.Sequential([
-	        tf.keras.Input(shape=(None,), dtype=tf.string, ragged=True),
+                tf.keras.Input(shape=(None,), dtype=tf.string, ragged=True),
                 tf.keras.layers.StringLookup(vocabulary=config["vocabulary"])
             ])
             return model
