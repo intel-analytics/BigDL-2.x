@@ -46,7 +46,7 @@ ENV JAVA_HOME                       /opt/jdk
 ENV PATH                            ${JAVA_HOME}/bin:${PATH}
 
 RUN apt-get update --fix-missing && \
-    apt-get install -y apt-utils vim curl nano wget unzip maven git && \
+    apt-get install -y apt-utils vim curl nano wget unzip git && \
     apt-get install -y libsm6
 
 #java
