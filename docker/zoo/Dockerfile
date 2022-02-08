@@ -76,7 +76,16 @@ RUN apt-get install -y python3-minimal && \
 RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     tar -zxvf spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
     mv spark-${SPARK_VERSION}-bin-hadoop2.7 spark-${SPARK_VERSION} && \
-    rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz
+    rm spark-${SPARK_VERSION}-bin-hadoop2.7.tgz && \
+    # remove log4j 1.x jars
+    rm -f spark-${SPARK_VERSION}/jars/log4j-1.2.17.jar && \
+    rm -f spark-${SPARK_VERSION}/jars/slf4j-log4j12-1.7.16.jar && \
+    rm -f spark-${SPARK_VERSION}/jars/apache-log4j-extras-1.2.17.jar && \
+    wget -P spark-${SPARK_VERSION}/jars/ https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-1.2-api/2.17.1/log4j-1.2-api-2.17.1.jar && \
+    wget -P spark-${SPARK_VERSION}/jars/ https://repo1.maven.org/maven2/org/slf4j/slf4j-reload4j/1.7.35/slf4j-reload4j-1.7.35.jar && \
+    wget -P spark-${SPARK_VERSION}/jars/ https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.17.1/log4j-api-2.17.1.jar && \
+    wget -P spark-${SPARK_VERSION}/jars/ https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.17.1/log4j-core-2.17.1.jar && \
+    wget -P spark-${SPARK_VERSION}/jars/ https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-slf4j-impl/2.17.1/log4j-slf4j-impl-2.17.1.jar
 
 ADD ./download-analytics-zoo.sh /opt/work
 ADD ./start-notebook.sh /opt/work
