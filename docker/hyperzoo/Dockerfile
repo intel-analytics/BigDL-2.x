@@ -147,6 +147,7 @@ RUN mkdir -p /opt/analytics-zoo-examples/python && \
     pip uninstall -y -q tornado && \
     pip install --no-cache-dir tornado && \
     python3 -m ipykernel.kernelspec && \
+    pip install --no-cache-dir protobuf==3.19.4 && \
     pip install --no-cache-dir tensorboard && \
     pip install --no-cache-dir jep && \
     pip install --no-cache-dir cloudpickle && \
