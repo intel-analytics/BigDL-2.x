@@ -36,7 +36,7 @@
         <akka.http.version>10.1.11</akka.http.version>
         <akka.actor.version>2.5.26</akka.actor.version>
         <guava.version>15.0</guava.version>
-        <scala.version>2.11.8</scala.version>
+        <scala.version>2.11.12</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>3.0.7</scalatest.version>
         <spark.version>2.4.6</spark.version>
@@ -651,7 +651,7 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>1.25</version>
+	    <version>1.31</version>
         </dependency>
         <dependency>
             <groupId>commons-lang</groupId>
@@ -686,7 +686,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.12.2</version>
+            <version>2.13.4.1</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
@@ -835,7 +835,7 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>3.15.8</version>
+            <version>3.16.1</version>
             <scope>${grpc.scope}</scope>
         </dependency>
         <dependency>
