@@ -50,6 +50,7 @@ For more information, you may [read the docs](https://analytics-zoo.readthedocs.
 TEMP_PATH = "zoo/share"
 analytics_zoo_home = os.path.abspath(__file__ + "/../../")
 SCRIPTS_TARGET = os.path.join(TEMP_PATH, "bin/cluster-serving")
+PYSPARK_VERSION = '3.1.3'
 
 exclude_patterns = ["*__pycache__*", "*ipynb_checkpoints*", "*chronos.use-case*"]
 
@@ -139,7 +140,7 @@ def setup_package():
         license='Apache License, Version 2.0',
         url='https://github.com/intel-analytics/analytics-zoo',
         packages=packages,
-        install_requires=['pyspark==3.1.3', 'bigdl==0.13.1.dev1', 'conda-pack==0.3.1',
+        install_requires=['pyspark=='+PYSPARK_VERSION, 'bigdl==0.13.1.dev1', 'conda-pack==0.3.1',
                           'packaging', 'filelock'],
         extras_require={'ray': ['ray==1.2.0', 'psutil', 'aiohttp==3.7.0', 'aioredis==1.1.0',
                                 'setproctitle', 'hiredis==1.1.0', 'async-timeout==3.0.1'],
