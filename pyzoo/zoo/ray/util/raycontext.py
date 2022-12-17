@@ -92,13 +92,12 @@ class RayServiceFuncGenerator(object):
         return modified_env
 
     def __init__(self, python_loc, redis_port, ray_node_cpu_cores, mkl_cores,
-                 password, object_store_memory, waitting_time_sec=6, verbose=False, env=None,
+                 object_store_memory, waitting_time_sec=6, verbose=False, env=None,
                  extra_params=None):
         """object_store_memory: integer in bytes"""
         self.env = env
         self.python_loc = python_loc
         self.redis_port = redis_port
-        self.password = password
         self.ray_node_cpu_cores = ray_node_cpu_cores
         self.mkl_cores = mkl_cores
         self.ray_exec = self._get_ray_exec()
@@ -129,8 +128,8 @@ class RayServiceFuncGenerator(object):
     def _gen_master_command(self):
         command = "{} start --head " \
                   "--include-webui --redis-port {} " \
-                  "--redis-password {} --num-cpus {} ". \
-            format(self.ray_exec, self.redis_port, self.password, self.ray_node_cpu_cores)
+                  "--num-cpus {} ". \
+            format(self.ray_exec, self.redis_port, self.ray_node_cpu_cores)
         return RayServiceFuncGenerator._enrich_command(command=command,
                                                        object_store_memory=self.object_store_memory,
                                                        extra_params=self.extra_params)
@@ -138,13 +137,12 @@ class RayServiceFuncGenerator(object):
     @staticmethod
     def _get_raylet_command(redis_address,
                             ray_exec,
-                            password,
                             ray_node_cpu_cores,
                             labels,
                             object_store_memory,
                             extra_params):
-        command = "{} start --redis-address {} --redis-password  {} --num-cpus {} {}  ".format(
-            ray_exec, redis_address, password, ray_node_cpu_cores, labels)
+        command = "{} start --redis-address {} --num-cpus {} {}  ".format(
+            ray_exec, redis_address, ray_node_cpu_cores, labels)
         return RayServiceFuncGenerator._enrich_command(command=command,
                                                        object_store_memory=object_store_memory,
                                                        extra_params=extra_params)
@@ -189,7 +187,6 @@ class RayServiceFuncGenerator(object):
                     command=RayServiceFuncGenerator._get_raylet_command(
                         redis_address=redis_address,
                         ray_exec=self.ray_exec,
-                        password=self.password,
                         ray_node_cpu_cores=self.ray_node_cpu_cores,
                         labels=self.labels,
                         object_store_memory=self.object_store_memory,
@@ -203,7 +200,7 @@ class RayServiceFuncGenerator(object):
 
 
 class RayContext(object):
-    def __init__(self, sc, redis_port=None, password="123456", object_store_memory=None,
+    def __init__(self, sc, redis_port=None, object_store_memory=None,
                  verbose=False, env=None, local_ray_node_num=2, waiting_time_sec=8,
                  extra_params=None):
         """
@@ -214,7 +211,6 @@ class RayContext(object):
         :param sc:
         :param redis_port: redis port for the "head" node.
                The value would be randomly picked if not specified.
-        :param password: [optional] password for the redis.
         :param object_store_memory: Memory size for the object_store.
         :param verbose: True for more logs.
         :param env: The environment variable dict for running Ray.
@@ -232,7 +228,6 @@ class RayContext(object):
         self.python_loc = os.environ['PYSPARK_PYTHON']
         self.ray_processesMonitor = None
         self.verbose = verbose
-        self.redis_password = password
         self.object_store_memory = object_store_memory
         self.redis_port = self._new_port() if not redis_port else redis_port
         self.ray_service = RayServiceFuncGenerator(
@@ -240,7 +235,6 @@ class RayContext(object):
             redis_port=self.redis_port,
             ray_node_cpu_cores=self.ray_node_cpu_cores,
             mkl_cores=self._get_mkl_cores(),
-            password=password,
             object_store_memory=self._enrich_object_sotre_memory(sc, object_store_memory),
             verbose=verbose,
             env=env,
@@ -385,7 +379,6 @@ class RayContext(object):
         command = RayServiceFuncGenerator._get_raylet_command(
             redis_address=self.redis_address,
             ray_exec="ray ",
-            password=self.redis_password,
             ray_node_cpu_cores=num_cores,
             labels=labels,
             object_store_memory=object_store_memory,
@@ -409,5 +402,4 @@ class RayContext(object):
                 extra_params=extra_params
             )
         ray.shutdown()
-        ray.init(redis_address=self.redis_address,
-                 redis_password=self.ray_service.password)
+        ray.init(redis_address=self.redis_address)
