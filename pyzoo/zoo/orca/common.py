@@ -254,7 +254,7 @@ def init_orca_context(cluster_mode="local", cores=2, memory="2g", num_nodes=1,
         raise ValueError("cluster_mode can only be local, yarn-client, standalone or spark-submit, "
                          "but got: %s".format(cluster_mode))
     ray_args = {}
-    for key in ["redis_port", "password", "object_store_memory", "verbose", "env",
+    for key in ["redis_port", "redis_password", "object_store_memory", "verbose", "env",
                 "extra_params", "num_ray_nodes", "ray_node_cpu_cores", "include_webui"]:
         if key in kwargs:
             ray_args[key] = kwargs[key]
