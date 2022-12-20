@@ -277,7 +277,7 @@ class RayContext(object):
         :param sc: An instance of SparkContext.
         :param redis_port: redis port for the "head" node.
         The value would be randomly picked if not specified.
-        :param password: Password for the redis. Default to be "" if not specified.
+        :param password: Password for the redis. Default to be None if not specified.
         :param object_store_memory: The memory size for ray object_store in string.
         This can be specified in bytes(b), kilobytes(k), megabytes(m) or gigabytes(g).
         For example, 50b, 100k, 250m, 30g.
