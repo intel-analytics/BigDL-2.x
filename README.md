@@ -1,4 +1,4 @@
-***Note: We are merging Analytics Zoo into [BigDL 2.0](https://github.com/intel-analytics/BigDL/issues/4085), and our future development will move to the [BigDL](https://github.com/intel-analytics/BigDL) project***
+***Note: We have merged Analytics Zoo into [BigDL 2.0](https://github.com/intel-analytics/BigDL/issues/4085), and our future development will move to the [BigDL](https://github.com/intel-analytics/BigDL) project***
 
 
 ---
