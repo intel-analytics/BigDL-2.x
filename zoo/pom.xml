@@ -35,7 +35,7 @@
         <scala.major.version>2.11</scala.major.version>
         <akka.http.version>10.1.11</akka.http.version>
         <akka.actor.version>2.5.26</akka.actor.version>
-        <guava.version>31.0.1-jre</guava.version>
+        <guava.version>32.0.0-jre</guava.version>
         <scala.version>2.11.12</scala.version>
         <scala.macros.version>2.1.0</scala.macros.version>
         <scalatest.version>3.0.7</scalatest.version>
