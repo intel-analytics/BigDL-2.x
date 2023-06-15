@@ -288,7 +288,7 @@
                 <scala.macros.version>2.1.0</scala.macros.version>
                 <akka.http.version>10.2.3</akka.http.version>
                 <akka.actor.version>2.6.9</akka.actor.version>
-                <guava.version>23.0</guava.version>
+                <guava.version>32.0.0-jre</guava.version>
                 <maven.compiler.source>${java.version}</maven.compiler.source>
                 <maven.compiler.target>${java.version}</maven.compiler.target>
                 <bigdl.artifactId>bigdl-SPARK_${spark-version.project}</bigdl.artifactId>
