@@ -55,7 +55,7 @@
         <inner-ftp-uri>http://10.239.45.10:8081/repository/raw</inner-ftp-uri>
         <tf-shade>bushade</tf-shade>
         <grpc.scope>compile</grpc.scope>
-        <grpc.version>1.37.0</grpc.version>
+        <grpc.version>1.53.0</grpc.version>
         <grpc.scope>compile</grpc.scope>
     </properties>
 
