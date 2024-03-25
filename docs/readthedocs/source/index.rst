@@ -1,7 +1,7 @@
 .. meta::
    :google-site-verification: S66K6GAclKw1RroxU0Rka_2d1LZFVe27M0gRneEsIVI
 
-🔔🔔🔔``bigdl-llm`` **has now become** ``ipex-llm``, **and our future development will move to the** `IPEX-LLM <https://github.com/intel-analytics/BigDL>`_ **project**🔔🔔🔔
+🔔🔔🔔 ``bigdl-llm`` **has now become** ``ipex-llm``, **and our future development will move to the** `IPEX-LLM <https://github.com/intel-analytics/BigDL>`_ **project** 🔔🔔🔔
 
 ################################################
 The BigDL Project
