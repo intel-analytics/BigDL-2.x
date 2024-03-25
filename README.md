@@ -4,6 +4,9 @@
 
 </div>
 
+> [!IMPORTANT]
+> ***`bigdl-llm` has now become [`ipex-llm`](https://github.com/intel-analytics/bigdl); this repo contains the original `BigDL` project.***
+
 ---
 ## BigDL-LLM
 
