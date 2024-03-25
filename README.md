@@ -1,11 +1,12 @@
+> [!IMPORTANT]
+> ***`bigdl-llm` has now become `ipex-llm`, and our future development will move to the [IPEX-LLM](https://github.com/intel-analytics/BigDL) project***
+
+---
 <div align="center">
 
 <p align="center"> <img src="https://llm-assets.readthedocs.io/en/latest/_images/bigdl_logo.jpg" height="140px"><br></p>
 
 </div>
-
-> [!IMPORTANT]
-> ***`bigdl-llm` has now become [`ipex-llm`](https://github.com/intel-analytics/bigdl); this repo contains the original `BigDL` project.***
 
 ---
 ## BigDL-LLM
