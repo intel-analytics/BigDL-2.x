@@ -1,7 +1,15 @@
 .. meta::
    :google-site-verification: S66K6GAclKw1RroxU0Rka_2d1LZFVe27M0gRneEsIVI
 
-🔔🔔🔔 ``bigdl-llm`` **has now become** ``ipex-llm``, **and our future development will move to the** `IPEX-LLM <https://github.com/intel-analytics/BigDL>`_ **project** 🔔🔔🔔
+.. important::
+   
+   .. raw:: html
+
+      <p>
+         <strong><em>
+            <code><span>bigdl-llm</span></code> has now become <code><span>ipex-llm</span></code>, and our future development will move to the <a href="https://github.com/intel-analytics/ipex-llm">IPEX-LLM</a> project.
+         </em></strong>
+      </p>
 
 ################################################
 The BigDL Project
@@ -24,7 +32,7 @@ BigDL-LLM
 ============================================
 Latest update 🔥
 ============================================
-- [2024/03] 🔔🔔🔔 ``bigdl-llm`` **has now become** `ipex-llm <https://github.com/intel-analytics/BigDL>`_; see the migration guide `here <https://ipex-llm.readthedocs.io/en/latest/doc/LLM/Quickstart/bigdl_llm_migration.html>`_.
+- [2024/03] 🔔🔔🔔 ``bigdl-llm`` **has now become** `ipex-llm <https://github.com/intel-analytics/ipex-llm>`_; see the migration guide `here <https://ipex-llm.readthedocs.io/en/latest/doc/LLM/Quickstart/bigdl_llm_migration.html>`_.
 - [2024/03] **LangChain** added support for ``bigdl-llm``; see the details `here <https://python.langchain.com/docs/integrations/llms/bigdl>`_.
 - [2024/02] ``bigdl-llm`` now supports directly loading model from `ModelScope <https://github.com/intel-analytics/BigDL/tree/main/python/llm/example/GPU/ModelScope-Models>`_ (`魔搭 <https://github.com/intel-analytics/BigDL/tree/main/python/llm/example/CPU/ModelScope-Models>`_).
 - [2024/02] ``bigdl-llm`` added inital **INT2** support (based on llama.cpp `IQ2 <https://github.com/intel-analytics/BigDL/tree/main/python/llm/example/GPU/HF-Transformers-AutoModels/Advanced-Quantizations/GGUF-IQ2>`_ mechanism), which makes it possible to run large-size LLM (e.g., Mixtral-8x7B) on Intel GPU with 16GB VRAM.
