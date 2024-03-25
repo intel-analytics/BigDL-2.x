@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> ***`bigdl-llm` has now become `ipex-llm`, and our future development will move to the [IPEX-LLM](https://github.com/intel-analytics/BigDL) project***
+> ***`bigdl-llm` has now become `ipex-llm`, and our future development will move to the [IPEX-LLM](https://github.com/intel-analytics/ipex-llm) project***
 
 ---
 <div align="center">
