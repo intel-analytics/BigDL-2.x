@@ -1,12 +1,12 @@
 name: BigDL-LLM Nightly Build
 
 on:
-  pull_request:
-    branches: [ main ]
+  # pull_request:
+  #   branches: [ main ]
   #   paths:
   #     - '.github/workflows/nightly_build.yml'
   schedule:
-    - cron: '30 11 * * *'  # GMT time, 11:30 GMT == 19:30 China
+    - cron: '30 12 * * *'  # GMT time, 12:30 GMT == 20:30 China
   workflow_dispatch:
 
 env:
@@ -22,7 +22,7 @@ jobs:
 
   ipex-llm-build:
     # python build can only be published once a day, please do not publish it manually
-    # if: ${{ github.event.schedule || github.event_name == 'workflow_dispatch' }} 
+    if: ${{ github.event.schedule || github.event_name == 'workflow_dispatch' }} 
     runs-on: [self-hosted, Bree]
     # needs: llm-cpp-build
     steps:
