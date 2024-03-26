@@ -4,8 +4,8 @@ permissions:
   contents: read
 
 on:
-  schedule:
-    - cron: '0 16 * * *'
+  # schedule:
+  #   - cron: '0 16 * * *'
   issue_comment:
     types: [created]
   pull_request:

@@ -19,8 +19,8 @@ on:
     paths:
       - 'scala/**'
       - '.github/workflows/scala-style-check.yml'
-  schedule:
-    - cron: '0 15 * * *'
+  # schedule:
+  #   - cron: '0 15 * * *'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 

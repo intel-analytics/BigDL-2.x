@@ -2,8 +2,8 @@ name: Chronos NB Python Spark3.1 py38 py39
 
 # Controls when the action will run. 
 on:
-  schedule:
-    - cron: '0 15 * * *' # GMT time, 15:00 GMT == 23:00 China
+  # schedule:
+  #   - cron: '0 15 * * *' # GMT time, 15:00 GMT == 23:00 China
   pull_request:
     branches: [ main ]
     paths:
