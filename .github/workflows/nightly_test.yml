@@ -5,8 +5,8 @@ on:
   #pull_request:
   #  branches: [ main ]
 
-  schedule:
-    - cron: '30 15 * * *' # GMT time, 15:30 GMT == 23:30 China
+  # schedule:
+  #   - cron: '30 15 * * *' # GMT time, 15:30 GMT == 23:30 China
   workflow_dispatch:
     inputs:
       artifact:

@@ -4,8 +4,8 @@ permissions:
   contents: read
 
 on:
-  schedule:
-    - cron: '0 13 * * 0' # GMT time, 13:00 GMT == 21:00 China
+  # schedule:
+  #   - cron: '0 13 * * 0' # GMT time, 13:00 GMT == 21:00 China
 
   workflow_dispatch:
 

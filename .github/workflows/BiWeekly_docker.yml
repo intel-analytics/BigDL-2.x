@@ -3,9 +3,9 @@ name: BiWeekly Release Docker
 on:
   #pull_request:
      #branchs: [ main ]
-  schedule:
-    - cron: '0 3 22 * *' # GMT time, 3:00 GMT == 11:00 China Every 22th in a month
-    - cron: '0 3 8 * *' # GMT time, 3:00 GMT == 11:00 China Every 22th in a month
+  # schedule:
+  #   - cron: '0 3 22 * *' # GMT time, 3:00 GMT == 11:00 China Every 22th in a month
+  #   - cron: '0 3 8 * *' # GMT time, 3:00 GMT == 11:00 China Every 22th in a month
  
   workflow_dispatch:
     inputs:

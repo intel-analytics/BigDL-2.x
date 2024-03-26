@@ -4,8 +4,8 @@ permissions:
   contents: read
 
 on:
-  schedule:
-    - cron: '0 17 * * *'
+  # schedule:
+  #   - cron: '0 17 * * *'
   workflow_dispatch:
     inputs:
       select_running_example:

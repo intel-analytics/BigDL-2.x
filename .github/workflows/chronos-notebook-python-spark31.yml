@@ -10,8 +10,8 @@ permissions:
 
 # Controls when the action will run. 
 on:
-  schedule:
-    - cron: '0 15 * * *' # GMT time, 15:00 GMT == 23:00 China
+  # schedule:
+  #   - cron: '0 15 * * *' # GMT time, 15:00 GMT == 23:00 China
   # Trigger the workflow on pull request events but only for the main branch
   pull_request:
     branches: [ main ]
