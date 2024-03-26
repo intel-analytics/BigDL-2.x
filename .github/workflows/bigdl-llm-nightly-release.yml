@@ -24,7 +24,7 @@ jobs:
     # python build can only be published once a day, please do not publish it manually
     # if: ${{ github.event.schedule || github.event_name == 'workflow_dispatch' }} 
     runs-on: [self-hosted, Bree]
-    needs: llm-cpp-build
+    # needs: llm-cpp-build
     steps:
     - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # actions/checkout@v3
 
