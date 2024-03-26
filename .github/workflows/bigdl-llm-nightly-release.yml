@@ -46,8 +46,7 @@ jobs:
     - name: Build package
       run: |
         export TIMESTAMP=`date '+%Y%m%d'`
-        # export TIMESTAMP=20240323
-        export PYPI_VERSION=2.1.0
+        export PYPI_VERSION=2.5.0
         nb_version=${PYPI_VERSION}b${TIMESTAMP}
         echo ${nb_version}
 
