@@ -168,7 +168,8 @@ def obtain_lib_urls():
         except Exception as e:
             print("error - > ", base_url, e)
             pass
-        reg = "https://sourceforge.net/projects/analytics-zoo/files/bigdl-llm/[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}/"
+        # reg = "https://sourceforge.net/projects/analytics-zoo/files/bigdl-llm/[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}/"
+        reg = "https://sourceforge.net/projects/analytics-zoo/files/bigdl-llm/2024-03-24/"
         urls = re.findall(reg, text)
         return urls
 
@@ -281,16 +282,16 @@ def setup_package():
     xpu_20_requires += ["torch==2.0.1a0;platform_system=='Linux'",
                         "torchvision==0.15.2a0;platform_system=='Linux'",
                         "intel_extension_for_pytorch==2.0.110+xpu;platform_system=='Linux'",
-                        "bigdl-core-xe==" + VERSION + ";platform_system=='Linux'",
-                        "bigdl-core-xe-esimd==" + VERSION + ";platform_system=='Linux'"]
+                        "bigdl-core-xe==2.5.0b20240324;platform_system=='Linux'",
+                        "bigdl-core-xe-esimd==2.5.0b20240324;platform_system=='Linux'"]
 
     xpu_21_requires = copy.deepcopy(all_requires)
     xpu_21_requires.remove('torch')
     xpu_21_requires += ["torch==2.1.0a0",
                         "torchvision==0.16.0a0",
                         "intel_extension_for_pytorch==2.1.10+xpu",
-                        "bigdl-core-xe-21==" + VERSION,
-                        "bigdl-core-xe-esimd-21==" + VERSION + ";platform_system=='Linux'"]
+                        "bigdl-core-xe-21==2.5.0b20240324",
+                        "bigdl-core-xe-esimd-21==2.5.0b20240324;platform_system=='Linux'"]
     # default to ipex 2.1 for linux and windows
     xpu_requires = copy.deepcopy(xpu_21_requires)
 
@@ -323,7 +324,7 @@ def setup_package():
                         "xpu-2-0": xpu_20_requires,
                         "xpu-2-1": xpu_21_requires,
                         "serving": serving_requires,
-                        "cpp": ["bigdl-core-cpp==" + VERSION]},
+                        "cpp": ["bigdl-core-cpp==2.5.0b20240324"]},
         classifiers=[
             'License :: OSI Approved :: Apache Software License',
             'Programming Language :: Python :: 3',
