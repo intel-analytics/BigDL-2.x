@@ -175,7 +175,7 @@ Overview of the complete BigDL project
 ************************************************
 `BigDL <https://github.com/intel-analytics/BigDL-2.x>`_ seamlessly scales your data analytics & AI applications from laptop to cloud, with the following libraries:
 
-- `LLM <doc/LLM/index.html>`_: Low-bit (INT3/INT4/INT5/INT8) large language model library for Intel CPU/GPU
+- ``LLM`` **(deprecated; please use `IPEX-LLM <https://github.com/intel-analytics/ipex-llm>`_ instead): Optimized large language model library for Intel CPU/GPU
 - `Orca <doc/Orca/index.html>`_: Distributed Big Data & AI (TF & PyTorch) Pipeline on Spark and Ray
 - `Nano <doc/Nano/index.html>`_: Transparent Acceleration of Tensorflow & PyTorch Programs on Intel CPU/GPU
 - `DLlib <doc/DLlib/index.html>`_: "Equivalent of Spark MLlib" for Deep Learning
@@ -201,7 +201,7 @@ Choosing the right BigDL library
         Feature3 [label="What type of application?"]
         Feature4 [label="Domain?"]
         
-        LLM[href="../doc/LLM/index.html" target="_blank" target="_blank" style="rounded,filled" fontcolor="#ffffff" tooltip="Go to BigDL-LLM document"]
+        LLM[href="https://github.com/intel-analytics/ipex-llm" target="_blank" target="_blank" style="rounded,filled" fontcolor="#ffffff" tooltip="Go to BigDL-LLM document"]
         Orca[href="../doc/Orca/index.html" target="_blank" target="_blank" style="rounded,filled" fontcolor="#ffffff" tooltip="Go to BigDL-Orca document"]
         Nano[href="../doc/Nano/index.html" target="_blank" target="_blank" style="rounded,filled" fontcolor="#ffffff" tooltip="Go to BigDL-Nano document"]
         DLlib1[label="DLlib" href="../doc/DLlib/index.html" target="_blank" style="rounded,filled" fontcolor="#ffffff" tooltip="Go to BigDL-DLlib document"]
