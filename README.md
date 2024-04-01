@@ -239,7 +239,7 @@ Trainer(use_ipex=True, precision='bf16', num_processes=2).train()
 
 </details>  
 
-*See Nano [user guide](https://bigdl.readthedocs.io/en/latest/doc/Nano/Overview/nano.html) and [tutotial](https://github.com/intel-analytics/BigDL/tree/main/python/nano/tutorial) for more details.*
+*See Nano [user guide](https://bigdl.readthedocs.io/en/latest/doc/Nano/Overview/nano.html) and [tutotial](https://github.com/intel-analytics/BigDL-2.x/tree/main/python/nano/tutorial) for more details.*
     
 ### DLlib
 
@@ -371,19 +371,19 @@ pred = tsppl.predict(tsdata_test)
 ### Friesian
 The *Friesian* library makes it easy to build end-to-end, large-scale **recommedation system** (including *offline* feature transformation and traning, *near-line* feature and model update, and *online* serving pipeline). 
 
-*See Freisian [readme](https://github.com/intel-analytics/BigDL/blob/main/python/friesian/README.md) for more details.* 
+*See Freisian [readme](https://github.com/intel-analytics/BigDL-2.x/blob/main/python/friesian/README.md) for more details.* 
 
 ### PPML
 
 *BigDL PPML* provides a **hardware (Intel SGX) protected** *Trusted Cluster Environment* for running distributed Big Data & AI applications (in a secure fashion on private or public cloud). 
 
-*See PPML [user guide](https://bigdl.readthedocs.io/en/latest/doc/PPML/Overview/ppml.html) and [tutorial](https://github.com/intel-analytics/BigDL/blob/main/ppml/README.md) for more details.* 
+*See PPML [user guide](https://bigdl.readthedocs.io/en/latest/doc/PPML/Overview/ppml.html) and [tutorial](https://github.com/intel-analytics/BigDL-2.x/blob/main/ppml/README.md) for more details.* 
 
 ## Getting Support
 
 - [Mail List](mailto:bigdl-user-group+subscribe@googlegroups.com)
 - [User Group](https://groups.google.com/forum/#!forum/bigdl-user-group)
-- [Github Issues](https://github.com/intel-analytics/BigDL/issues)
+- [Github Issues](https://github.com/intel-analytics/BigDL-2.x/issues)
 ---
 
 ## Citation
