@@ -143,7 +143,7 @@ def setup_package():
                         "pyyaml",
                         "packaging",
                         "sigfig",
-                        "setuptools<66"]
+                        "setuptools"]
     
     # diffusion requires
     diffusion_requires = pytorch_requires + [
