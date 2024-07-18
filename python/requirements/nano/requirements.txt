@@ -10,4 +10,4 @@ protobuf==3.19.5
 py-cpuinfo
 pyyaml
 packaging
-setuptools<66
+setuptools
