@@ -15,7 +15,7 @@ on:
 
 jobs:
   performace-regression-test:
-    runs-on: [Rohan, ubuntu-20.04-lts]
+    runs-on: [ubuntu-latest]
     if: github.event.pull_request || github.event.schedule || github.event.issue.pull_request && github.event.comment.body=='APRT'
     steps:
       # trigged by opening a PR which modifies this file or scheduling or commenting 'APRT' in a closed PR
